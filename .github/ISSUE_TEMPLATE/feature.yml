@@ -1,0 +1,44 @@
+name: Feature / gameplay task
+description: Propose a new feature, mechanic, or improvement.
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the idea. Keep it scoped to one increment where possible.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should exist that doesn't yet?
+      placeholder: e.g. Oncoming traffic cars the player can crash into.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why
+      description: How does this move the MW tribute forward?
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How do we know it's done?
+      placeholder: |
+        - [ ] Cars spawn at intervals and scale with distance
+        - [ ] Colliding with one slows the player
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - engine (rendering, physics, loop)
+        - gameplay (mechanics, progression)
+        - ui (HUD, menus)
+        - audio
+        - infra (build, CI, tooling)
+    validations:
+      required: true

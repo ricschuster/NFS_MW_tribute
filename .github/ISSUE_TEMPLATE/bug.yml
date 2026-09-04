@@ -1,0 +1,29 @@
+name: Bug report
+description: Something behaves incorrectly.
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. npm run dev
+        2. Drive off the left edge at full speed
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Browser + OS (and anything else relevant).
+      placeholder: Chrome 130 on Windows 11
+    validations:
+      required: false
