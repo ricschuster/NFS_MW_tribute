@@ -43,14 +43,22 @@ src/
   main.ts            entry point: sizes the canvas and starts the game
   style.css          page chrome around the canvas
   game/
-    game.ts          state, fixed-timestep loop, physics, top-level render
+    world.ts         headless simulation: step(dt, input) — physics, traffic, police
+    game.ts          presentation: canvas, input, animation loop, rendering
     road.ts          track authoring (straights, curves, hills)
-    render.ts        world→screen projection and segment drawing
+    traffic.ts       traffic cars attached to road segments
+    police.ts        the pursuit: heat, bust, and escape
+    render.ts        world→screen projection and sprite drawing
     input.ts         keyboard state (arrows + WASD)
-    math.ts          easing, interpolation, fog, looping helpers
+    math.ts          easing, interpolation, fog, looping, overlap helpers
     constants.ts     tunable world/camera/physics constants
     types.ts         shared interfaces
 ```
+
+The **simulation is split from rendering**: `world.ts` holds all game state and
+a pure `step(dt, input)` with no canvas or DOM, and `game.ts` just drives and
+draws it. That lets the *playtests* (`world.playtest.test.ts`) drive the real
+game with scripted inputs and assert on outcomes (`npm run playtest`).
 
 ## Roadmap
 
