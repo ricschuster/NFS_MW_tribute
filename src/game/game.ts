@@ -18,6 +18,8 @@ import {
   CAR_WIDTH_WORLD,
   CAR_ASPECT,
   CAR_WIDTH_OFFSET,
+  MIN_STEER,
+  REVERSE_SPEED_FRAC,
 } from './constants';
 import {
   accelerate,
@@ -55,6 +57,7 @@ export class Game {
   private readonly decel = -this.maxSpeed / 5;
   private readonly offRoadDecel = -this.maxSpeed / 2;
   private readonly offRoadLimit = this.maxSpeed / 4;
+  private readonly maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
   private readonly playerZ = CAMERA_HEIGHT * CAMERA_DEPTH; // camera-to-car distance
 
   private last = 0;
@@ -88,19 +91,30 @@ export class Game {
   private update(dt: number): void {
     const playerSegment = this.road.findSegment(this.position + this.playerZ);
     const speedPercent = this.speed / this.maxSpeed;
-    const dx = dt * 2 * speedPercent; // steering is proportional to speed
+    // curve push scales with actual speed; steering keeps a floor so you can
+    // peel out of a lane even when stopped (e.g. right after a crash)
+    const curveDx = dt * 2 * speedPercent;
+    const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER);
 
     this.position = increase(this.position, dt * this.speed, this.road.trackLength);
 
-    if (this.input.left) this.playerX -= dx;
-    if (this.input.right) this.playerX += dx;
+    if (this.input.left) this.playerX -= steerDx;
+    if (this.input.right) this.playerX += steerDx;
 
     // curves fling the car toward the outside of the bend
-    this.playerX -= dx * speedPercent * playerSegment.curve * CENTRIFUGAL;
+    this.playerX -= curveDx * speedPercent * playerSegment.curve * CENTRIFUGAL;
 
-    if (this.input.up) this.speed = accelerate(this.speed, this.accel, dt);
-    else if (this.input.down) this.speed = accelerate(this.speed, this.braking, dt);
-    else this.speed = accelerate(this.speed, this.decel, dt);
+    if (this.input.up) {
+      this.speed = accelerate(this.speed, this.accel, dt);
+    } else if (this.input.down) {
+      // brake, then reverse once stopped
+      this.speed = accelerate(this.speed, this.braking, dt);
+    } else if (this.speed > 0) {
+      this.speed = Math.max(0, accelerate(this.speed, this.decel, dt));
+    } else if (this.speed < 0) {
+      // coast a reversing car back up toward a standstill
+      this.speed = Math.min(0, accelerate(this.speed, -this.decel, dt));
+    }
 
     // off-road: bleed speed hard
     if ((this.playerX < -1 || this.playerX > 1) && this.speed > this.offRoadLimit) {
@@ -108,7 +122,7 @@ export class Game {
     }
 
     this.playerX = limit(this.playerX, -2, 2);
-    this.speed = limit(this.speed, 0, this.maxSpeed);
+    this.speed = limit(this.speed, this.maxReverse, this.maxSpeed);
 
     this.traffic.update(dt, this.road);
     this.checkCollisions();
@@ -134,7 +148,8 @@ export class Game {
 
         const shared = Math.max(car.speed, 0);
         this.speed = shared * (shared / this.speed); // drop below the car's speed (0 for parked/oncoming)
-        this.position = increase(car.z, -this.playerZ, road.trackLength);
+        // settle a little behind the car so we're not glued to its bumper
+        this.position = increase(car.z, -this.playerZ - SEGMENT_LENGTH, road.trackLength);
         this.crashFlash = 1;
         return;
       }

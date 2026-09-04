@@ -23,6 +23,11 @@ export const FOG_COLOR = '#0d2417';
 /** How hard curves push the player toward the outside of a bend. */
 export const CENTRIFUGAL = 0.3;
 
+/** Steering authority kept when nearly stopped, so you can peel off after a crash. */
+export const MIN_STEER = 0.3;
+/** Top reverse speed as a fraction of forward max speed. */
+export const REVERSE_SPEED_FRAC = 0.18;
+
 /** Fixed physics timestep (seconds). */
 export const STEP = 1 / 60;
 
