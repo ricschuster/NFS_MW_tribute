@@ -2,7 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { World, type InputState } from './world';
 import { STEP } from './constants';
 
-const NONE: InputState = { left: false, right: false, up: false, down: false, confirm: false };
+const NONE: InputState = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  confirm: false,
+  nitro: false,
+};
 
 function press(partial: Partial<InputState>): InputState {
   return { ...NONE, ...partial };
@@ -52,6 +59,23 @@ describe('playtest: driving', () => {
     play(w, 3, () => press({ up: true, right: true })); // floor it but veer off
     expect(w.playerX).toBeGreaterThan(1); // off the road surface
     expect(w.speed).toBeLessThan(onRoad); // ...and slower for it
+  });
+
+  it('nitrous pushes past the normal top speed, then drains and recharges', () => {
+    const w = new World({ traffic: false });
+    play(w, 6, () => press({ up: true }));
+    const normalTop = w.speed;
+    expect(normalTop).toBeGreaterThan(w.maxSpeed * 0.95);
+    expect(normalTop).toBeLessThanOrEqual(w.maxSpeed + 1);
+
+    play(w, 1.5, () => press({ up: true, nitro: true }));
+    expect(w.speed).toBeGreaterThan(w.maxSpeed); // above the normal cap
+    const drained = w.nitro;
+    expect(drained).toBeLessThan(1);
+
+    play(w, 3, () => press({ up: true })); // let it settle and recharge
+    expect(w.nitro).toBeGreaterThan(drained);
+    expect(w.speed).toBeLessThanOrEqual(w.maxSpeed + 1); // bled back to the normal cap
   });
 });
 
