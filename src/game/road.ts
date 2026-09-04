@@ -63,6 +63,8 @@ export class Road {
       color: Math.floor(n / RUMBLE_LENGTH) % 2 ? COLORS.DARK : COLORS.LIGHT,
       looped: false,
       fog: 0,
+      clip: 0,
+      cars: [],
     });
   }
 
