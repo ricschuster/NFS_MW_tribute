@@ -1,51 +1,77 @@
-# claude-project-template
+# NFS: Most Wanted — Tribute
 
-Stack-agnostic project harness for Claude Code workflows.
+A pseudo-3D, OutRun-style arcade racer paying tribute to *Need for Speed: Most
+Wanted* (2005). Built with TypeScript + HTML5 Canvas + Vite — no game engine,
+deploys anywhere as static files.
 
-> Status: WIP stub. The reusable harness lives in
-> [ricschuster/SCP_tutorial](https://github.com/ricschuster/SCP_tutorial) today
-> and has not yet been extracted and genericized here. See the checklist below.
+> Status: playable foundation. You can drive an endless track with hills,
+> curves, rumble strips and distance fog. Traffic, pursuits, and the Blacklist
+> are on the roadmap below.
 
-## What this will be
+## Quick start
 
-A GitHub template repository that seeds new projects with the process
-scaffolding (no tech stack baked in): docs framework (design notes, ADRs,
-handoffs), issue/PR templates, contribution and security policies, a license,
-and Claude Code working rules (`CLAUDE.md`, `.claude/settings.json`).
+```bash
+npm install
+npm run dev      # http://localhost:5173
+```
 
-## Setup checklist (to complete later)
+Drive with the **arrow keys** or **WASD** — Up to accelerate, Down to brake.
 
-Extraction and genericization:
+## Scripts
 
-- [ ] Copy the harness files from SCP_tutorial (everything except `src/` and
-      project-specific prose): `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
-      `CHANGELOG.md`, `LICENSE`, `.gitignore`, `.claude/settings.json`,
-      `.github/`, `docs/` framework.
-- [ ] Replace project-specific naming with placeholders (for example
-      `{{PROJECT_NAME}}`) or clearly generic text. Files to scrub: `README.md`,
-      `CLAUDE.md`, `docs/design/00_project_brief.md`, `CHANGELOG.md`.
-- [ ] Add a "Using this template" section listing exactly what a new user must
-      fill in and delete.
-- [ ] Add one example ADR to model the format (for example
-      `docs/decisions/0001-record-architecture-decisions.md`).
+| Command             | What it does                                  |
+| ------------------- | --------------------------------------------- |
+| `npm run dev`       | Start the Vite dev server with hot reload     |
+| `npm run build`     | Typecheck, then build a static bundle to `dist/` |
+| `npm run preview`   | Serve the production build locally            |
+| `npm run typecheck` | Run `tsc --noEmit` with no build              |
 
-Automation (files copy, settings do NOT):
+## How it works
 
-- [ ] Add a settings-bootstrap script (or first-run GitHub Action) that reapplies
-      repo settings a template does not carry: branch protection on `main`,
-      auto-merge, and labels.
-- [ ] Decide on variable substitution: plain GitHub template (manual find/
-      replace) vs. copier/cookiecutter vs. the self-deleting setup-workflow
-      trick that find-replaces placeholders on first push then removes itself.
-- [ ] (Optional) Add a stack-neutral CI workflow (markdown lint, the no-em-dash
-      rule, docs-structure check) so branch protection has a real required
-      check.
+The world is a flat list of **road segments** with fixed geometry, generated
+once at startup (`src/game/road.ts`). Each frame we project every visible
+segment from world space to the screen (`src/game/render.ts`) — farther
+segments scale down, which produces the pseudo-3D depth. The player never
+actually moves in 3D; the road is redrawn around a fixed camera. See
+[docs/decisions/0002-pseudo-3d-rendering.md](docs/decisions/0002-pseudo-3d-rendering.md)
+for the full rationale.
 
-Finalize:
+### Source layout
 
-- [ ] Enable the "Template repository" setting (already toggled on for this stub).
-- [ ] Update this README to real usage instructions and drop the WIP note.
+```
+src/
+  main.ts            entry point: sizes the canvas and starts the game
+  style.css          page chrome around the canvas
+  game/
+    game.ts          state, fixed-timestep loop, physics, top-level render
+    road.ts          track authoring (straights, curves, hills)
+    render.ts        world→screen projection and segment drawing
+    input.ts         keyboard state (arrows + WASD)
+    math.ts          easing, interpolation, fog, looping helpers
+    constants.ts     tunable world/camera/physics constants
+    types.ts         shared interfaces
+```
+
+## Roadmap
+
+Ordered roughly by build order — each item is a self-contained increment:
+
+- [ ] **Oncoming/parked traffic** — sprites projected like road segments; collisions
+- [ ] **Cop pursuit** — a chaser sprite, a heat meter that rises near cops
+- [ ] **The Blacklist** — race events against 15 rivals, ranked progression
+- [ ] **Nitrous + drift feel** — speed bursts, cornering slide
+- [ ] **Sound** — engine, sirens, a menu track
+- [ ] **Sprites over vector art** — replace drawn car/road with pixel art
+
+## Docs
+
+- [Project brief](docs/design/00_project_brief.md) — what we're building and why
+- [Architecture decisions](docs/decisions/) — ADRs for the choices that stick
 
 ## License
 
-GNU General Public License v3.0 (planned, to match SCP_tutorial).
+GNU General Public License v3.0 — see [LICENSE](LICENSE).
+
+This is a non-commercial fan tribute. *Need for Speed* and *Most Wanted* are
+trademarks of Electronic Arts Inc. This project is not affiliated with or
+endorsed by EA. No original game assets are included.
