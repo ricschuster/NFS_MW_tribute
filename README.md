@@ -43,13 +43,15 @@ src/
   main.ts            entry point: sizes the canvas and starts the game
   style.css          page chrome around the canvas
   game/
-    world.ts         headless simulation: step(dt, input) — physics, traffic, police
+    world.ts         headless simulation: step(dt, input) — physics, traffic, police, races
     game.ts          presentation: canvas, input, animation loop, rendering
     road.ts          track authoring (straights, curves, hills)
     traffic.ts       traffic cars attached to road segments
     police.ts        the pursuit: heat, bust, and escape
+    blacklist.ts     the 15 rivals (name, car, difficulty)
+    progress.ts      rank progression persisted to localStorage
     render.ts        world→screen projection and sprite drawing
-    input.ts         keyboard state (arrows + WASD)
+    input.ts         keyboard state (arrows + WASD + Enter)
     math.ts          easing, interpolation, fog, looping, overlap helpers
     constants.ts     tunable world/camera/physics constants
     types.ts         shared interfaces
@@ -68,7 +70,7 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **Collisions** — crashing into traffic costs speed (shake + flash)
 - [x] **Cop pursuit** — a chaser cop that hunts you, matches lane, can be outrun
 - [x] **Heat + bust/escape** — heat meter, more/faster cops, getting busted, shaking pursuit
-- [ ] **The Blacklist** — race events against 15 rivals, ranked progression
+- [x] **The Blacklist** — sprint races against 15 rivals, ranked progression (saved)
 - [ ] **Nitrous + drift feel** — speed bursts, cornering slide
 - [ ] **Sound** — engine, sirens, a menu track
 - [ ] **Sprites over vector art** — replace drawn car/road with pixel art

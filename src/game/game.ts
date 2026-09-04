@@ -17,6 +17,7 @@ import {
   CAR_ASPECT,
   MAX_HEAT_LEVEL,
   ESCAPED_FLASH,
+  RACE_DISTANCE,
 } from './constants';
 import { interpolate, percentRemaining, exponentialFog } from './math';
 
@@ -114,6 +115,7 @@ export class Game {
 
     this.renderTraffic(baseSegment);
     this.renderCops();
+    this.renderRival();
     this.renderCar();
     ctx.restore();
 
@@ -169,6 +171,27 @@ export class Game {
       const cx = s.x + cop.offset * s.w;
       renderCopSprite(ctx, cx, s.y, w, h, this.world.police.lightPhase, segment.clip);
     }
+  }
+
+  /** Draw the rival racer while it's ahead of the player during a race. */
+  private renderRival(): void {
+    const world = this.world;
+    const car = world.rivalCar;
+    const rival = world.raceRival;
+    if (!car || !rival) return;
+    const visible =
+      world.raceMode === 'countdown' ||
+      (world.raceMode === 'racing' && car.dist - world.playerRaceDist > 0);
+    if (!visible) return;
+
+    const segment = world.road.findSegment(car.z);
+    const s = segment.p1.screen;
+    if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) return;
+
+    const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
+    const h = w * CAR_ASPECT;
+    const cx = s.x + car.offset * s.w;
+    renderCarSprite(this.ctx, cx, s.y, w, h, rival.color, segment.clip);
   }
 
   private renderBackground(): void {
@@ -240,6 +263,96 @@ export class Game {
 
     this.renderHeatMeter();
     this.renderStatusOverlays();
+    this.renderRaceHud();
+  }
+
+  /** Blacklist HUD: challenge prompt, countdown, race progress, or result. */
+  private renderRaceHud(): void {
+    const ctx = this.ctx;
+    const world = this.world;
+    ctx.textAlign = 'center';
+
+    if (world.raceMode === 'cruise') {
+      const rival = world.currentRival;
+      const label = rival ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}` : 'BLACKLIST CLEARED';
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(WIDTH / 2 - tw / 2 - 16, HEIGHT - 58, tw + 32, 34);
+      ctx.fillStyle = rival ? '#ffffff' : '#5adc82';
+      ctx.fillText(label, WIDTH / 2, HEIGHT - 36);
+    } else if (world.raceMode === 'countdown') {
+      if (world.raceRival) {
+        ctx.font = 'bold 20px system-ui, sans-serif';
+        ctx.fillStyle = '#e8462b';
+        ctx.fillText(`#${world.raceRival.rank}  ${world.raceRival.name}`, WIDTH / 2, 60);
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 140px system-ui, sans-serif';
+      ctx.fillText(String(Math.max(1, Math.ceil(world.countdown))), WIDTH / 2, HEIGHT / 2 + 44);
+    } else if (world.raceMode === 'racing') {
+      this.renderRaceProgress();
+    } else if (world.raceMode === 'result') {
+      this.renderRaceResult();
+    }
+
+    ctx.textAlign = 'left';
+  }
+
+  private renderRaceProgress(): void {
+    const ctx = this.ctx;
+    const world = this.world;
+    const rival = world.raceRival;
+    const barW = 440;
+    const barX = WIDTH / 2 - barW / 2;
+    const barY = 44;
+    const barH = 10;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(barX - 14, barY - 28, barW + 28, 54);
+
+    if (rival) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText(`#${rival.rank}  ${rival.name.toUpperCase()}`, WIDTH / 2, barY - 10);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(barX, barY, barW, barH);
+
+    const rivalPct = world.rivalCar ? Math.min(1, world.rivalCar.dist / RACE_DISTANCE) : 0;
+    const playerPct = Math.min(1, world.playerRaceDist / RACE_DISTANCE);
+    ctx.fillStyle = rival ? rival.color : '#c33';
+    ctx.fillRect(barX + rivalPct * barW - 3, barY - 4, 6, barH + 8);
+    ctx.fillStyle = '#2a6cff';
+    ctx.fillRect(barX + playerPct * barW - 3, barY - 4, 6, barH + 8);
+  }
+
+  private renderRaceResult(): void {
+    const ctx = this.ctx;
+    const world = this.world;
+    const won = world.raceResult === 'won';
+
+    ctx.fillStyle = won ? 'rgba(0,50,20,0.55)' : 'rgba(50,0,0,0.55)';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.fillStyle = won ? '#5adc82' : '#ff5a5a';
+    ctx.font = 'bold 76px system-ui, sans-serif';
+    ctx.fillText(won ? 'YOU WIN' : 'YOU LOSE', WIDTH / 2, HEIGHT / 2 - 8);
+
+    const next = world.currentRival; // already advanced on a win
+    const sub = won
+      ? next
+        ? `Rank up — next: #${next.rank} ${next.name}`
+        : 'BLACKLIST CLEARED. You are Most Wanted.'
+      : 'Line up and try again';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px system-ui, sans-serif';
+    ctx.fillText(sub, WIDTH / 2, HEIGHT / 2 + 34);
+
+    ctx.fillStyle = '#9aa0aa';
+    ctx.font = '15px system-ui, sans-serif';
+    ctx.fillText('ENTER to continue', WIDTH / 2, HEIGHT / 2 + 70);
   }
 
   /** Heat bar with discrete level pips, shown while there's any heat. */
