@@ -10,8 +10,8 @@ function player(z: number, offset: number, speed: number): PlayerRef {
 }
 
 /** Run the pursuit forward, advancing the player at `speed` each tick. */
-function drive(p: Police, ticks: number, speed: number, offset = 0, startZ = 0): void {
-  let z = startZ;
+function drive(p: Police, ticks: number, speed: number, offset = 0): void {
+  let z = 0;
   for (let i = 0; i < ticks; i++) {
     p.update(0.1, player(z, offset, speed), MAX_SPEED, TRACK);
     z += speed * 0.1;
@@ -19,50 +19,75 @@ function drive(p: Police, ticks: number, speed: number, offset = 0, startZ = 0):
 }
 
 describe('Police spawning', () => {
-  it('has no cop before the first-spawn delay', () => {
+  it('has no cops before the first-spawn delay', () => {
     const p = new Police();
     drive(p, Math.floor(COP_FIRST_SPAWN / 0.1) - 2, MAX_SPEED * 0.5);
-    expect(p.cop).toBeNull();
+    expect(p.cops.length).toBe(0);
   });
 
-  it('spawns a cop once the delay elapses', () => {
+  it('starts a pursuit once the delay elapses', () => {
     const p = new Police();
     drive(p, Math.ceil(COP_FIRST_SPAWN / 0.1) + 5, MAX_SPEED * 0.5);
-    expect(p.cop).not.toBeNull();
+    expect(p.cops.length).toBeGreaterThan(0);
+    expect(p.pursuing).toBe(true);
   });
 });
 
 describe('Police pursuit AI', () => {
-  it('slides toward the player lane over time', () => {
+  it('slides toward the player lane', () => {
     const p = new Police();
-    drive(p, 60, MAX_SPEED * 0.6, 0.8); // spawn + settle at the player's lane
-    const cop = p.cop;
-    expect(cop).not.toBeNull();
-    // it should be close to the player's 0.8 offset, not its spawn lane
-    expect(Math.abs(cop!.offset - 0.8)).toBeLessThan(0.2);
+    drive(p, 60, MAX_SPEED * 0.5, 0.8);
+    expect(p.cops.length).toBeGreaterThan(0);
+    const nearest = p.cops.reduce((a, b) => (a.distance < b.distance ? a : b));
+    expect(Math.abs(nearest.offset - 0.8)).toBeLessThan(0.2);
   });
 
-  it('keeps pace with a slower player (stays on the hunt)', () => {
+  it('builds heat while a slower player is chased', () => {
     const p = new Police();
-    drive(p, 120, MAX_SPEED * 0.5);
-    expect(p.cop).not.toBeNull();
+    drive(p, 120, MAX_SPEED * 0.45);
     expect(p.heat).toBeGreaterThan(0);
+    expect(p.level).toBeGreaterThanOrEqual(1);
   });
 });
 
-describe('Police outrun', () => {
-  it('a full-throttle player eventually shakes the cop', () => {
+describe('Police outrun / escape', () => {
+  it('a full-throttle player shakes the cops and escapes', () => {
     const p = new Police();
+    let escaped = false;
     let existed = false;
-    let despawned = false;
     let z = 0;
-    for (let i = 0; i < 250; i++) {
+    for (let i = 0; i < 200; i++) {
       p.update(0.1, player(z, 0, MAX_SPEED), MAX_SPEED, TRACK);
       z += MAX_SPEED * 0.1;
-      if (p.cop) existed = true;
-      else if (existed) despawned = true;
+      if (p.cops.length > 0) existed = true;
+      if (p.justEscaped) escaped = true;
     }
     expect(existed).toBe(true);
-    expect(despawned).toBe(true);
+    expect(escaped).toBe(true);
+  });
+});
+
+describe('Police bust', () => {
+  it('busts a stopped player after being pinned', () => {
+    const p = new Police();
+    // player parked at the origin; cops close in and pin
+    for (let i = 0; i < 120; i++) {
+      p.update(0.1, player(0, 0, 0), MAX_SPEED, TRACK);
+      if (p.busted) break;
+    }
+    expect(p.busted).toBe(true);
+  });
+
+  it('reset() clears the pursuit and heat', () => {
+    const p = new Police();
+    for (let i = 0; i < 120; i++) {
+      p.update(0.1, player(0, 0, 0), MAX_SPEED, TRACK);
+      if (p.busted) break;
+    }
+    p.reset();
+    expect(p.busted).toBe(false);
+    expect(p.cops.length).toBe(0);
+    expect(p.heat).toBe(0);
+    expect(p.pursuing).toBe(false);
   });
 });

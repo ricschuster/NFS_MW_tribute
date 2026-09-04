@@ -54,17 +54,26 @@ export const CAR_COLORS = [
   '#6a4bc9',
 ];
 
-/** Distance from the camera to the player car; also the pursuit reference gap. */
+/** Distance from the camera to the player car. */
 export const PLAYER_Z = CAMERA_HEIGHT * CAMERA_DEPTH;
 
-/** Police pursuit. */
-export const COP_TARGET_LEAD = 900; // world units the cop tries to hold ahead of the player
-export const COP_SPAWN_LEAD = 1700; // spawns further ahead, then closes in
+/** Police pursuit. Cops are tracked by how far they trail the player (world units). */
 export const COP_MAX_SPEED_FRAC = 0.7; // cop top speed vs player max (base)
-export const COP_HEAT_SPEED_FRAC = 0.28; // extra cop top speed at full heat (<1 total, so always outrunnable)
-export const COP_LEAD_KP = 1.5; // station-keeping gain on the lead error
+export const COP_HEAT_SPEED_FRAC = 0.28; // extra at full heat (<1 total, so always outrunnable)
 export const COP_LANE_KP = 1.4; // how quickly the cop slides into your lane
-export const COP_FIRST_SPAWN = 3; // seconds before the first cop appears
-export const COP_RESPAWN = 5; // seconds between cops
-export const HEAT_RISE = 0.05; // heat gained per second while a cop is active
-export const HEAT_DECAY = 0.12; // heat lost per second while clear
+export const COP_FIRST_SPAWN = 3; // seconds before the first pursuit
+export const COP_RESPAWN = 5; // delay before a new pursuit after escaping
+export const COP_BUST_COOLDOWN = 6; // delay before a new pursuit after a bust
+export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
+export const COP_SPAWN_DISTANCE = 1300; // how far back a cop enters
+export const COP_OUTRUN_DISTANCE = 2200; // trail farther than this and the cop is lost
+export const COP_PIN_LEAD = 220; // render lead when on your bumper (large / near)
+export const COP_FAR_LEAD = 1400; // render lead when far behind (small / up-screen)
+export const PURSUIT_RANGE = 1500; // a cop trailing within this counts as "engaged"
+export const BUST_DISTANCE = 260; // this close (or closer) builds the bust timer
+export const BUST_TIME = 2.5; // seconds pinned before BUSTED
+export const ESCAPE_TIME = 4; // seconds clear of cops before ESCAPED
+export const MAX_COPS = 3; // spawn-count cap at high heat
+export const MAX_HEAT_LEVEL = 3; // discrete heat levels for the HUD
+export const HEAT_RISE = 0.08; // heat/sec while a cop is close
+export const HEAT_DECAY = 0.12; // heat/sec while clear
