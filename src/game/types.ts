@@ -26,6 +26,20 @@ export interface ColorSet {
   lane?: string;
 }
 
+/** A car sitting on the road: traffic, and later cops. */
+export interface Car {
+  /** Lateral position across the road, -1..1 = edges (like the player's X). */
+  offset: number;
+  /** World-z along the track. */
+  z: number;
+  /** World units per second. 0 = parked, negative = oncoming. */
+  speed: number;
+  /** Body colour. */
+  color: string;
+  /** Index of the segment this car currently belongs to (for fast reassignment). */
+  segmentIndex: number;
+}
+
 /** One slice of road between two z-planes (p1 near, p2 far). */
 export interface Segment {
   index: number;
@@ -38,4 +52,8 @@ export interface Segment {
   looped: boolean;
   /** Fog amount in [0,1]; 1 = fully visible, 0 = fully fogged. */
   fog: number;
+  /** Screen y of the occlusion line when this segment was drawn; clips sprites behind hills. */
+  clip: number;
+  /** Cars currently resting on this segment, drawn with its projection. */
+  cars: Car[];
 }

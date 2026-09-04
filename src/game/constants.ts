@@ -30,3 +30,19 @@ export const COLORS: Record<'LIGHT' | 'DARK', ColorSet> = {
   LIGHT: { road: '#6b6b6b', grass: '#12902c', rumble: '#e9e9e9', lane: '#ffffff' },
   DARK: { road: '#606060', grass: '#0f7f26', rumble: '#c0392b' },
 };
+
+/** Traffic. */
+export const TRAFFIC_COUNT = 40;
+/** Car body width in world units (road half-width is ROAD_WIDTH, so this spans ~1 lane). */
+export const CAR_WIDTH_WORLD = 1000;
+/** Car sprite height as a fraction of its drawn width. */
+export const CAR_ASPECT = 0.7;
+export const CAR_COLORS = [
+  '#c94b4b',
+  '#4b7bc9',
+  '#d8a13a',
+  '#3ca35a',
+  '#9aa0aa',
+  '#b0483f',
+  '#6a4bc9',
+];

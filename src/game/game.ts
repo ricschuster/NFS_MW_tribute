@@ -1,6 +1,8 @@
+import type { Segment } from './types';
 import { Input } from './input';
 import { Road } from './road';
-import { project, renderSegment, renderFog } from './render';
+import { Traffic } from './traffic';
+import { project, renderSegment, renderFog, renderCarSprite } from './render';
 import {
   WIDTH,
   HEIGHT,
@@ -13,6 +15,8 @@ import {
   FOG_COLOR,
   CENTRIFUGAL,
   STEP,
+  CAR_WIDTH_WORLD,
+  CAR_ASPECT,
 } from './constants';
 import {
   accelerate,
@@ -34,6 +38,7 @@ export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly input = new Input();
   private readonly road = new Road();
+  private readonly traffic = new Traffic();
 
   // Player state.
   private position = 0; // world-z along the track
@@ -57,6 +62,7 @@ export class Game {
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
     this.road.build();
+    this.traffic.build(this.road, this.maxSpeed);
   }
 
   start(): void {
@@ -100,6 +106,8 @@ export class Game {
 
     this.playerX = limit(this.playerX, -2, 2);
     this.speed = limit(this.speed, 0, this.maxSpeed);
+
+    this.traffic.update(dt, this.road);
   }
 
   private render(): void {
@@ -121,6 +129,7 @@ export class Game {
       const segment = road.segments[(baseSegment.index + n) % road.segments.length];
       segment.looped = segment.index < baseSegment.index;
       segment.fog = exponentialFog(n / DRAW_DISTANCE, FOG_DENSITY);
+      segment.clip = maxy; // occlusion line for any cars resting on this segment
 
       const cameraZ = this.position - (segment.looped ? road.trackLength : 0);
       project(segment.p1, this.playerX * ROAD_WIDTH - x, playerY + CAMERA_HEIGHT, cameraZ, CAMERA_DEPTH, WIDTH, HEIGHT, ROAD_WIDTH);
@@ -146,8 +155,32 @@ export class Game {
       maxy = segment.p1.screen.y;
     }
 
+    this.renderTraffic(baseSegment);
     this.renderCar();
     this.renderHud();
+  }
+
+  /**
+   * Draw traffic back-to-front (far segments first) so nearer cars overlap
+   * farther ones. Each car uses its segment's projection from the road pass.
+   */
+  private renderTraffic(baseSegment: Segment): void {
+    const { ctx, road } = this;
+    for (let n = DRAW_DISTANCE - 1; n >= 0; n--) {
+      const segment = road.segments[(baseSegment.index + n) % road.segments.length];
+      if (segment.cars.length === 0) continue;
+
+      const s = segment.p1.screen;
+      // skip segments not validly projected this frame (behind camera)
+      if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
+
+      const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
+      const h = w * CAR_ASPECT;
+      for (const car of segment.cars) {
+        const cx = s.x + car.offset * s.w;
+        renderCarSprite(ctx, cx, s.y, w, h, car.color, segment.clip);
+      }
+    }
   }
 
   private renderBackground(): void {

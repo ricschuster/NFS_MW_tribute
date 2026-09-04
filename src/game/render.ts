@@ -97,6 +97,49 @@ export function renderSegment(
   }
 }
 
+/**
+ * Draw a car sprite (rear view) standing on the road at (`cx`, `groundY`) with
+ * drawn size `w` x `h`. Anything below `clip` (behind a hill) is masked out.
+ */
+export function renderCarSprite(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  groundY: number,
+  w: number,
+  h: number,
+  color: string,
+  clip: number,
+): void {
+  const x = cx - w / 2;
+  const y = groundY - h;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, ctx.canvas.width, clip);
+  ctx.clip();
+
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY, w * 0.55, Math.max(1, h * 0.14), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // body
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h * 0.82);
+
+  // rear window
+  ctx.fillStyle = 'rgba(10,12,20,0.6)';
+  ctx.fillRect(x + w * 0.16, y + h * 0.08, w * 0.68, h * 0.4);
+
+  // tail lights
+  ctx.fillStyle = '#ff4433';
+  ctx.fillRect(x + w * 0.06, y + h * 0.56, w * 0.16, h * 0.16);
+  ctx.fillRect(x + w * 0.78, y + h * 0.56, w * 0.16, h * 0.16);
+
+  ctx.restore();
+}
+
 /** Overlay fog on a band of the screen; `fog` of 1 draws nothing. */
 export function renderFog(
   ctx: CanvasRenderingContext2D,
