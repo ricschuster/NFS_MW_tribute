@@ -53,3 +53,18 @@ export const CAR_COLORS = [
   '#b0483f',
   '#6a4bc9',
 ];
+
+/** Distance from the camera to the player car; also the pursuit reference gap. */
+export const PLAYER_Z = CAMERA_HEIGHT * CAMERA_DEPTH;
+
+/** Police pursuit. */
+export const COP_TARGET_LEAD = 900; // world units the cop tries to hold ahead of the player
+export const COP_SPAWN_LEAD = 1700; // spawns further ahead, then closes in
+export const COP_MAX_SPEED_FRAC = 0.7; // cop top speed vs player max (base)
+export const COP_HEAT_SPEED_FRAC = 0.28; // extra cop top speed at full heat (<1 total, so always outrunnable)
+export const COP_LEAD_KP = 1.5; // station-keeping gain on the lead error
+export const COP_LANE_KP = 1.4; // how quickly the cop slides into your lane
+export const COP_FIRST_SPAWN = 3; // seconds before the first cop appears
+export const COP_RESPAWN = 5; // seconds between cops
+export const HEAT_RISE = 0.05; // heat gained per second while a cop is active
+export const HEAT_DECAY = 0.12; // heat lost per second while clear

@@ -2,7 +2,8 @@ import type { Segment } from './types';
 import { Input } from './input';
 import { Road } from './road';
 import { Traffic } from './traffic';
-import { project, renderSegment, renderFog, renderCarSprite } from './render';
+import { Police } from './police';
+import { project, renderSegment, renderFog, renderCarSprite, renderCopSprite } from './render';
 import {
   WIDTH,
   HEIGHT,
@@ -43,6 +44,7 @@ export class Game {
   private readonly input = new Input();
   private readonly road = new Road();
   private readonly traffic = new Traffic();
+  private readonly police = new Police();
 
   // Player state.
   private position = 0; // world-z along the track
@@ -127,6 +129,13 @@ export class Game {
     this.traffic.update(dt, this.road);
     this.checkCollisions();
 
+    this.police.update(
+      dt,
+      { z: this.position + this.playerZ, offset: this.playerX, speed: this.speed },
+      this.maxSpeed,
+      this.road.trackLength,
+    );
+
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
   }
 
@@ -209,6 +218,7 @@ export class Game {
     }
 
     this.renderTraffic(baseSegment);
+    this.renderCop();
     this.renderCar();
     ctx.restore();
 
@@ -242,6 +252,22 @@ export class Game {
         renderCarSprite(ctx, cx, s.y, w, h, car.color, segment.clip);
       }
     }
+  }
+
+  /** Draw the pursuing cop, if any, using its segment's projection. */
+  private renderCop(): void {
+    const cop = this.police.cop;
+    if (!cop) return;
+
+    const { ctx, road } = this;
+    const segment = road.findSegment(cop.z);
+    const s = segment.p1.screen;
+    if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) return;
+
+    const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
+    const h = w * CAR_ASPECT;
+    const cx = s.x + cop.offset * s.w;
+    renderCopSprite(ctx, cx, s.y, w, h, this.police.lightPhase, segment.clip);
   }
 
   private renderBackground(): void {
@@ -309,5 +335,19 @@ export class Game {
     ctx.fillStyle = '#9aa0aa';
     ctx.font = '13px system-ui, sans-serif';
     ctx.fillText('km/h', 128, 84);
+
+    // pursuit indicator (full heat meter + bust/escape is #7)
+    if (this.police.cop) {
+      const on = Math.floor(this.police.lightPhase * 6) % 2 === 0;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(WIDTH - 194, 20, 174, 42);
+      ctx.fillStyle = on ? '#3b6bff' : '#ff3b30';
+      ctx.beginPath();
+      ctx.arc(WIDTH - 168, 41, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillText('PURSUIT', WIDTH - 148, 47);
+    }
   }
 }
