@@ -82,3 +82,13 @@ export const HEAT_DECAY = 0.12; // heat/sec while clear
 export const BUST_HOLD = 3;
 /** Seconds the ESCAPED banner lingers. */
 export const ESCAPED_FLASH = 2.5;
+
+/** Blacklist races. */
+export const RACE_DISTANCE = 120000; // world units from start to finish
+export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
+export const RIVAL_BASE_SPEED_FRAC = 0.7; // rival speed vs player max at difficulty 0
+export const RIVAL_DIFF_SPEED_FRAC = 0.22; // extra at difficulty 1 (max 0.92 < 1, so beatable clean)
+export const RIVAL_LANE = 0.4; // lane the rival lines up in
+export const RIVAL_NEAR_LEAD = 260; // render lead when the rival is just ahead
+export const RIVAL_FAR_LEAD = 1500; // render lead when the rival is far ahead
+export const RIVAL_VIEW_RANGE = 4000; // race-distance gap mapped across near..far lead

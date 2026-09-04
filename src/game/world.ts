@@ -1,6 +1,8 @@
 import { Road } from './road';
 import { Traffic } from './traffic';
 import { Police } from './police';
+import { BLACKLIST, type Rival } from './blacklist';
+import { loadProgress, saveProgress } from './progress';
 import {
   SEGMENT_LENGTH,
   CAMERA_HEIGHT,
@@ -12,15 +14,25 @@ import {
   REVERSE_SPEED_FRAC,
   BUST_HOLD,
   ESCAPED_FLASH,
+  RACE_DISTANCE,
+  COUNTDOWN_TIME,
+  RIVAL_BASE_SPEED_FRAC,
+  RIVAL_DIFF_SPEED_FRAC,
+  RIVAL_LANE,
+  RIVAL_NEAR_LEAD,
+  RIVAL_FAR_LEAD,
+  RIVAL_VIEW_RANGE,
 } from './constants';
-import { accelerate, limit, increase, overlap } from './math';
+import { accelerate, limit, increase, interpolate, overlap } from './math';
 
-/** A snapshot of which drive controls are held this step. */
+/** A snapshot of which controls are held this step. */
 export interface InputState {
   left: boolean;
   right: boolean;
   up: boolean;
   down: boolean;
+  /** Enter / Space: start a race, or dismiss a result. */
+  confirm: boolean;
 }
 
 export interface WorldOptions {
@@ -28,10 +40,22 @@ export interface WorldOptions {
   traffic?: boolean;
 }
 
+export type RaceMode = 'cruise' | 'countdown' | 'racing' | 'result';
+export type RaceResult = 'won' | 'lost';
+
+/** The rival racer during a Blacklist event. */
+export interface RivalCar {
+  /** Distance the rival has covered this race, in world units. */
+  dist: number;
+  offset: number;
+  /** Render position: world-z ahead of the player. */
+  z: number;
+}
+
 /**
- * The headless game simulation: player physics, traffic, and the police
- * pursuit, with no canvas or DOM. `step(dt, input)` advances the world, so the
- * same logic drives the render loop (see Game) and the playtests.
+ * The headless game simulation: player physics, traffic, the police pursuit,
+ * and Blacklist races — with no canvas or DOM. `step(dt, input)` advances the
+ * world, so the same logic drives the render loop (Game) and the playtests.
  */
 export class World {
   position = 0; // world-z along the track
@@ -40,6 +64,15 @@ export class World {
   crashFlash = 0; // 1 right after a crash, decays to 0
   busted = false; // frozen in the BUSTED state
   escapedFlash = 0; // seconds left on the ESCAPED banner
+
+  // Blacklist / race state.
+  raceMode: RaceMode = 'cruise';
+  countdown = 0; // seconds left in the 3-2-1
+  playerRaceDist = 0; // distance covered by the player this race
+  rivalCar: RivalCar | null = null;
+  raceRival: Rival | null = null; // the rival currently being raced
+  raceResult: RaceResult | null = null;
+  beaten: number; // rivals defeated so far
 
   readonly road = new Road();
   readonly traffic = new Traffic();
@@ -56,14 +89,46 @@ export class World {
   private readonly maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
 
   private bustHold = 0;
+  private prevConfirm = false;
 
   constructor(options: WorldOptions = {}) {
     this.road.build();
     if (options.traffic ?? true) this.traffic.build(this.road, this.maxSpeed);
+    this.beaten = loadProgress().beaten;
+  }
+
+  /** The rival the player would race next, or null once the Blacklist is cleared. */
+  get currentRival(): Rival | null {
+    return this.beaten < BLACKLIST.length ? BLACKLIST[this.beaten] : null;
   }
 
   /** Advance the simulation by `dt` seconds under the held `input`. */
   step(dt: number, input: InputState): void {
+    const confirmPressed = input.confirm && !this.prevConfirm;
+    this.prevConfirm = input.confirm;
+
+    switch (this.raceMode) {
+      case 'cruise':
+        this.stepCruise(dt, input, confirmPressed);
+        break;
+      case 'countdown':
+        this.stepCountdown(dt);
+        break;
+      case 'racing':
+        this.stepRacing(dt, input);
+        break;
+      case 'result':
+        if (confirmPressed) {
+          this.raceMode = 'cruise';
+          this.rivalCar = null;
+          this.raceResult = null;
+        }
+        break;
+    }
+  }
+
+  /** Free-drive: traffic, the police pursuit, and the option to start a race. */
+  private stepCruise(dt: number, input: InputState, confirmPressed: boolean): void {
     // BUSTED: freeze the world, hold the overlay, then clear the pursuit
     if (this.busted) {
       this.bustHold -= dt;
@@ -75,6 +140,62 @@ export class World {
       return;
     }
 
+    this.drive(dt, input);
+
+    this.police.update(
+      dt,
+      { z: this.position + this.playerZ, offset: this.playerX, speed: this.speed },
+      this.maxSpeed,
+      this.road.trackLength,
+    );
+
+    if (this.police.busted) {
+      this.busted = true;
+      this.bustHold = BUST_HOLD;
+      this.speed = 0;
+    }
+    if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
+    this.escapedFlash = Math.max(0, this.escapedFlash - dt);
+
+    if (confirmPressed && this.currentRival) this.startRace();
+  }
+
+  /** Lined up at the start: hold the player still and tick 3-2-1. */
+  private stepCountdown(dt: number): void {
+    this.speed = 0;
+    this.countdown -= dt;
+    if (this.rivalCar) {
+      this.rivalCar.z = increase(this.position + this.playerZ + RIVAL_NEAR_LEAD, 0, this.road.trackLength);
+    }
+    if (this.countdown <= 0) {
+      this.raceMode = 'racing';
+      this.playerRaceDist = 0;
+      if (this.rivalCar) this.rivalCar.dist = 0;
+    }
+  }
+
+  /** The sprint: drive, advance the rival, and check the finish line. */
+  private stepRacing(dt: number, input: InputState): void {
+    this.drive(dt, input);
+    this.playerRaceDist += Math.max(0, dt * this.speed);
+
+    const rival = this.raceRival;
+    const car = this.rivalCar;
+    if (!rival || !car) return;
+
+    const rivalSpeed = this.maxSpeed * (RIVAL_BASE_SPEED_FRAC + rival.difficulty * RIVAL_DIFF_SPEED_FRAC);
+    car.dist += rivalSpeed * dt;
+
+    const gap = car.dist - this.playerRaceDist;
+    const lead = interpolate(RIVAL_NEAR_LEAD, RIVAL_FAR_LEAD, Math.min(1, Math.max(0, gap) / RIVAL_VIEW_RANGE));
+    car.z = increase(this.position + this.playerZ + lead, 0, this.road.trackLength);
+
+    if (this.playerRaceDist >= RACE_DISTANCE) this.finishRace('won');
+    else if (car.dist >= RACE_DISTANCE) this.finishRace('lost');
+  }
+
+  /** Shared driving physics: steering, throttle, off-road, traffic, collisions. */
+  private drive(dt: number, input: InputState): void {
     const playerSegment = this.road.findSegment(this.position + this.playerZ);
     const speedPercent = this.speed / this.maxSpeed;
     // curve push scales with actual speed; steering keeps a floor so you can
@@ -113,22 +234,33 @@ export class World {
     this.traffic.update(dt, this.road);
     this.checkCollisions();
 
-    this.police.update(
-      dt,
-      { z: this.position + this.playerZ, offset: this.playerX, speed: this.speed },
-      this.maxSpeed,
-      this.road.trackLength,
-    );
-
-    if (this.police.busted) {
-      this.busted = true;
-      this.bustHold = BUST_HOLD;
-      this.speed = 0;
-    }
-    if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
-
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
-    this.escapedFlash = Math.max(0, this.escapedFlash - dt);
+  }
+
+  private startRace(): void {
+    this.raceRival = this.currentRival;
+    this.raceMode = 'countdown';
+    this.countdown = COUNTDOWN_TIME;
+    this.playerRaceDist = 0;
+    this.raceResult = null;
+    this.speed = 0;
+    this.escapedFlash = 0;
+    this.police.reset(); // no pursuit during a sanctioned race
+    this.rivalCar = {
+      dist: 0,
+      offset: RIVAL_LANE,
+      z: increase(this.position + this.playerZ + RIVAL_NEAR_LEAD, 0, this.road.trackLength),
+    };
+  }
+
+  private finishRace(result: RaceResult): void {
+    this.raceResult = result;
+    this.raceMode = 'result';
+    this.speed = 0;
+    if (result === 'won') {
+      this.beaten = Math.min(BLACKLIST.length, this.beaten + 1);
+      saveProgress({ beaten: this.beaten });
+    }
   }
 
   /**

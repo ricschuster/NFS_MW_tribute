@@ -4,6 +4,7 @@ export class Input {
   right = false;
   up = false;
   down = false;
+  confirm = false;
 
   constructor() {
     window.addEventListener('keydown', (e) => this.onKey(e, true));
@@ -31,6 +32,10 @@ export class Input {
       case 's':
       case 'S':
         this.down = pressed;
+        break;
+      case 'Enter':
+      case ' ':
+        this.confirm = pressed;
         break;
       default:
         return;

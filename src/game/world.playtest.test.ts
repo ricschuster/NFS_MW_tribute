@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { World, type InputState } from './world';
 import { STEP } from './constants';
 
-const NONE: InputState = { left: false, right: false, up: false, down: false };
+const NONE: InputState = { left: false, right: false, up: false, down: false, confirm: false };
 
 function press(partial: Partial<InputState>): InputState {
   return { ...NONE, ...partial };
@@ -82,5 +82,41 @@ describe('playtest: pursuit', () => {
       return press({ up: true });
     });
     expect(sawEscape).toBe(true);
+  });
+});
+
+describe('playtest: Blacklist race', () => {
+  // Press ENTER on the first step, then floor it while steering back to centre
+  // (holding only throttle would drift off-road on curves — a human steers).
+  function raceLine(t: number, w: World): InputState {
+    if (t < STEP * 0.5) return press({ confirm: true });
+    if (w.playerX > 0.05) return press({ up: true, left: true });
+    if (w.playerX < -0.05) return press({ up: true, right: true });
+    return press({ up: true });
+  }
+
+  it('wins a clean sprint and ranks up', () => {
+    const w = new World({ traffic: false });
+    const before = w.beaten;
+    play(w, 25, raceLine);
+    expect(w.raceMode).toBe('result');
+    expect(w.raceResult).toBe('won');
+    expect(w.beaten).toBe(before + 1);
+    expect(w.currentRival?.rank).toBe(14); // advanced from #15 to #14
+  });
+
+  it('loses when the player never leaves the line', () => {
+    const w = new World({ traffic: false });
+    play(w, 25, (t) => (t < STEP * 0.5 ? press({ confirm: true }) : NONE));
+    expect(w.raceResult).toBe('lost');
+    expect(w.beaten).toBe(0);
+  });
+
+  it('returns to cruise when the result is dismissed', () => {
+    const w = new World({ traffic: false });
+    play(w, 20, raceLine); // win, land on the result screen
+    expect(w.raceMode).toBe('result');
+    play(w, 1, () => press({ confirm: true })); // dismiss
+    expect(w.raceMode).toBe('cruise');
   });
 });
