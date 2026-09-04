@@ -58,7 +58,8 @@ Ordered roughly by build order — each item is a self-contained increment:
 
 - [x] **Oncoming/parked traffic** — sprites projected like road segments
 - [x] **Collisions** — crashing into traffic costs speed (shake + flash)
-- [ ] **Cop pursuit** — a chaser sprite, a heat meter that rises near cops
+- [x] **Cop pursuit** — a chaser cop that hunts you, matches lane, can be outrun
+- [ ] **Heat + bust/escape** — heat meter, getting busted, shaking pursuit
 - [ ] **The Blacklist** — race events against 15 rivals, ranked progression
 - [ ] **Nitrous + drift feel** — speed bursts, cornering slide
 - [ ] **Sound** — engine, sirens, a menu track

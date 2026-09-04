@@ -140,6 +140,62 @@ export function renderCarSprite(
   ctx.restore();
 }
 
+/**
+ * Draw a police car (rear view) with a flashing red/blue lightbar. `phase`
+ * (seconds) drives the flash. Otherwise like {@link renderCarSprite}.
+ */
+export function renderCopSprite(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  groundY: number,
+  w: number,
+  h: number,
+  phase: number,
+  clip: number,
+): void {
+  const x = cx - w / 2;
+  const y = groundY - h;
+  const blueLeft = Math.floor(phase * 6) % 2 === 0;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, ctx.canvas.width, clip);
+  ctx.clip();
+
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY, w * 0.55, Math.max(1, h * 0.14), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // black-and-white body
+  ctx.fillStyle = '#15171d';
+  ctx.fillRect(x, y, w, h * 0.82);
+  ctx.fillStyle = '#e9edf2';
+  ctx.fillRect(x, y + h * 0.36, w, h * 0.28);
+
+  // rear window
+  ctx.fillStyle = 'rgba(10,12,20,0.6)';
+  ctx.fillRect(x + w * 0.16, y + h * 0.06, w * 0.68, h * 0.3);
+
+  // lightbar glow
+  const barH = Math.max(2, h * 0.16);
+  const barY = y - barH;
+  const half = w * 0.34;
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = blueLeft ? '#3b6bff' : '#ff3b30';
+  ctx.fillRect(cx - half, barY - barH * 0.5, half * 2, barH * 1.6);
+  ctx.globalAlpha = 1;
+
+  // lightbar
+  ctx.fillStyle = blueLeft ? '#3b6bff' : '#3a0f0e';
+  ctx.fillRect(cx - half, barY, half, barH);
+  ctx.fillStyle = blueLeft ? '#3a0f0e' : '#ff3b30';
+  ctx.fillRect(cx, barY, half, barH);
+
+  ctx.restore();
+}
+
 /** Overlay fog on a band of the screen; `fog` of 1 draws nothing. */
 export function renderFog(
   ctx: CanvasRenderingContext2D,
