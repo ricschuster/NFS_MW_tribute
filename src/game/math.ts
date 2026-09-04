@@ -34,3 +34,22 @@ export function increase(start: number, increment: number, max: number): number 
 export function percentRemaining(n: number, total: number): number {
   return (n % total) / total;
 }
+
+/**
+ * Do two 1D spans overlap? Each span is centred on `center` and `percent` of
+ * `width` wide. Used for car-vs-car collision across the road (offset units).
+ */
+export function overlap(
+  center1: number,
+  w1: number,
+  center2: number,
+  w2: number,
+  percent = 1,
+): boolean {
+  const half = percent / 2;
+  const min1 = center1 - w1 * half;
+  const max1 = center1 + w1 * half;
+  const min2 = center2 - w2 * half;
+  const max2 = center2 + w2 * half;
+  return !(max1 < min2 || min1 > max2);
+}

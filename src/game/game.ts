@@ -17,6 +17,7 @@ import {
   STEP,
   CAR_WIDTH_WORLD,
   CAR_ASPECT,
+  CAR_WIDTH_OFFSET,
 } from './constants';
 import {
   accelerate,
@@ -25,6 +26,7 @@ import {
   interpolate,
   percentRemaining,
   exponentialFog,
+  overlap,
 } from './math';
 
 /** Top display speed, in km/h, used purely for the HUD readout. */
@@ -44,6 +46,7 @@ export class Game {
   private position = 0; // world-z along the track
   private playerX = 0; // -1..1 = road edges; beyond = off-road
   private speed = 0;
+  private crashFlash = 0; // 1 right after a crash, decays to 0 (shake + flash)
 
   // Derived physics tuning.
   private readonly maxSpeed = SEGMENT_LENGTH / STEP; // cap so we never skip a segment
@@ -108,6 +111,34 @@ export class Game {
     this.speed = limit(this.speed, 0, this.maxSpeed);
 
     this.traffic.update(dt, this.road);
+    this.checkCollisions();
+
+    this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
+  }
+
+  /**
+   * Crash the player into any overlapping traffic. Scans the player's segment
+   * and the next one (closing speeds can exceed one segment per step), bleeds
+   * speed on impact, and snaps the player just behind the car.
+   */
+  private checkCollisions(): void {
+    if (this.speed <= 0) return;
+    const road = this.road;
+    const baseZ = this.position + this.playerZ;
+
+    for (let s = 0; s < 2; s++) {
+      const segment = road.findSegment(baseZ + s * SEGMENT_LENGTH);
+      for (const car of segment.cars) {
+        if (this.speed <= car.speed) continue; // only when closing on it
+        if (!overlap(this.playerX, CAR_WIDTH_OFFSET, car.offset, CAR_WIDTH_OFFSET, 0.8)) continue;
+
+        const shared = Math.max(car.speed, 0);
+        this.speed = shared * (shared / this.speed); // drop below the car's speed (0 for parked/oncoming)
+        this.position = increase(car.z, -this.playerZ, road.trackLength);
+        this.crashFlash = 1;
+        return;
+      }
+    }
   }
 
   private render(): void {
@@ -118,6 +149,13 @@ export class Game {
     const playerSegment = road.findSegment(this.position + this.playerZ);
     const playerPercent = percentRemaining(this.position + this.playerZ, SEGMENT_LENGTH);
     const playerY = interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent);
+
+    // crash shake: jitter the whole world (the HUD stays put)
+    ctx.save();
+    if (this.crashFlash > 0) {
+      const k = this.crashFlash * 9;
+      ctx.translate((Math.random() * 2 - 1) * k, (Math.random() * 2 - 1) * k);
+    }
 
     this.renderBackground();
 
@@ -157,6 +195,14 @@ export class Game {
 
     this.renderTraffic(baseSegment);
     this.renderCar();
+    ctx.restore();
+
+    // red flash on impact, in screen space so it doesn't shake with the world
+    if (this.crashFlash > 0) {
+      ctx.fillStyle = `rgba(255,60,40,${0.35 * this.crashFlash})`;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+
     this.renderHud();
   }
 
@@ -190,7 +236,8 @@ export class Game {
     sky.addColorStop(0.55, '#43305a');
     sky.addColorStop(1, '#c9683a');
     ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    // over-fill so the crash shake never exposes an edge
+    ctx.fillRect(-12, -12, WIDTH + 24, HEIGHT + 24);
   }
 
   private renderCar(): void {
