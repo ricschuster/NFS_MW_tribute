@@ -14,6 +14,12 @@ import {
   REVERSE_SPEED_FRAC,
   BUST_HOLD,
   ESCAPED_FLASH,
+  NITRO_SPEED_MULT,
+  NITRO_ACCEL_MULT,
+  NITRO_DRAIN,
+  NITRO_RECHARGE,
+  NITRO_BLEED_FRAC,
+  DRIFT_SLIDE,
   RACE_DISTANCE,
   COUNTDOWN_TIME,
   RIVAL_BASE_SPEED_FRAC,
@@ -33,6 +39,8 @@ export interface InputState {
   down: boolean;
   /** Enter / Space: start a race, or dismiss a result. */
   confirm: boolean;
+  /** Shift: nitrous boost. */
+  nitro: boolean;
 }
 
 export interface WorldOptions {
@@ -64,6 +72,8 @@ export class World {
   crashFlash = 0; // 1 right after a crash, decays to 0
   busted = false; // frozen in the BUSTED state
   escapedFlash = 0; // seconds left on the ESCAPED banner
+  nitro = 1; // nitrous charge, 0..1
+  boosting = false; // nitrous active this step
 
   // Blacklist / race state.
   raceMode: RaceMode = 'cruise';
@@ -203,6 +213,14 @@ export class World {
     const curveDx = dt * 2 * speedPercent;
     const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER);
 
+    // nitrous: rechargeable boost to top speed and acceleration
+    const boosting = input.nitro && this.nitro > 0 && this.speed > this.maxSpeed * 0.15;
+    this.boosting = boosting;
+    this.nitro = boosting
+      ? Math.max(0, this.nitro - dt * NITRO_DRAIN)
+      : Math.min(1, this.nitro + dt * NITRO_RECHARGE);
+    const throttle = boosting ? this.accel * NITRO_ACCEL_MULT : this.accel;
+
     this.position = increase(this.position, dt * this.speed, this.road.trackLength);
 
     if (input.left) this.playerX -= steerDx;
@@ -211,8 +229,12 @@ export class World {
     // curves fling the car toward the outside of the bend
     this.playerX -= curveDx * speedPercent * playerSegment.curve * CENTRIFUGAL;
 
+    // drift: hard steering slides the car wider the faster you go
+    const steerInput = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    this.playerX += steerInput * dt * DRIFT_SLIDE * speedPercent * speedPercent;
+
     if (input.up) {
-      this.speed = accelerate(this.speed, this.accel, dt);
+      this.speed = accelerate(this.speed, throttle, dt);
     } else if (input.down) {
       // brake, then reverse once stopped
       this.speed = accelerate(this.speed, this.braking, dt);
@@ -229,7 +251,13 @@ export class World {
     }
 
     this.playerX = limit(this.playerX, -2, 2);
-    this.speed = limit(this.speed, this.maxReverse, this.maxSpeed);
+    const topSpeed = boosting ? this.maxSpeed * NITRO_SPEED_MULT : this.maxSpeed;
+    if (this.speed > topSpeed) {
+      // bleed overspeed (e.g. after a boost ends) smoothly back to the cap
+      this.speed = Math.max(topSpeed, this.speed - this.maxSpeed * NITRO_BLEED_FRAC * dt);
+    } else if (this.speed < this.maxReverse) {
+      this.speed = this.maxReverse;
+    }
 
     this.traffic.update(dt, this.road);
     this.checkCollisions();

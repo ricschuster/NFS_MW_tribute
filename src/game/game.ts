@@ -125,7 +125,29 @@ export class Game {
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
+    this.renderSpeedLines();
     this.renderHud();
+  }
+
+  /** Radial speed streaks while boosting, for a sense of raw pace. */
+  private renderSpeedLines(): void {
+    if (!this.world.boosting) return;
+    const ctx = this.ctx;
+    const cx = WIDTH / 2;
+    const cy = HEIGHT / 2 - 40;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(180, 210, 255, 0.35)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 16; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r1 = 220 + Math.random() * 140;
+      const r2 = r1 + 90 + Math.random() * 140;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   /**
@@ -217,6 +239,16 @@ export class Game {
     ctx.ellipse(cx, cy + 68, 96, 16, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // nitrous flames out the back
+    if (this.world.boosting) {
+      ctx.fillStyle = 'rgba(90,160,255,0.9)';
+      ctx.fillRect(cx - 30, cy + 66, 20, 22 + Math.random() * 18);
+      ctx.fillRect(cx + 10, cy + 66, 20, 22 + Math.random() * 18);
+      ctx.fillStyle = 'rgba(224,240,255,0.95)';
+      ctx.fillRect(cx - 26, cy + 66, 12, 12 + Math.random() * 12);
+      ctx.fillRect(cx + 14, cy + 66, 12, 12 + Math.random() * 12);
+    }
+
     // wheels
     ctx.fillStyle = '#0c0c0f';
     ctx.fillRect(cx - 86, cy + 50, 16, 18);
@@ -260,6 +292,20 @@ export class Game {
     ctx.fillStyle = '#9aa0aa';
     ctx.font = '13px system-ui, sans-serif';
     ctx.fillText('km/h', 128, 84);
+
+    // nitrous meter
+    const ny = 104;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(20, ny, 196, 28);
+    ctx.fillStyle = '#8fd0ff';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText('NITRO', 32, ny + 19);
+    const nbX = 92;
+    const nbW = 112;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(nbX, ny + 9, nbW, 10);
+    ctx.fillStyle = world.boosting ? '#bfe4ff' : '#3b6bff';
+    ctx.fillRect(nbX, ny + 9, nbW * world.nitro, 10);
 
     this.renderHeatMeter();
     this.renderStatusOverlays();

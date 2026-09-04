@@ -71,7 +71,7 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **Cop pursuit** — a chaser cop that hunts you, matches lane, can be outrun
 - [x] **Heat + bust/escape** — heat meter, more/faster cops, getting busted, shaking pursuit
 - [x] **The Blacklist** — sprint races against 15 rivals, ranked progression (saved)
-- [ ] **Nitrous + drift feel** — speed bursts, cornering slide
+- [x] **Nitrous + drift feel** — SHIFT boost with a meter, cornering slide, speed lines
 - [ ] **Sound** — engine, sirens, a menu track
 - [ ] **Sprites over vector art** — replace drawn car/road with pixel art
 
