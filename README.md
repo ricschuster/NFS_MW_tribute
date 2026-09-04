@@ -57,7 +57,7 @@ src/
 Ordered roughly by build order — each item is a self-contained increment:
 
 - [x] **Oncoming/parked traffic** — sprites projected like road segments
-- [ ] **Collisions** — crashing into traffic costs speed
+- [x] **Collisions** — crashing into traffic costs speed (shake + flash)
 - [ ] **Cop pursuit** — a chaser sprite, a heat meter that rises near cops
 - [ ] **The Blacklist** — race events against 15 rivals, ranked progression
 - [ ] **Nitrous + drift feel** — speed bursts, cornering slide

@@ -8,6 +8,7 @@ import {
   exponentialFog,
   increase,
   percentRemaining,
+  overlap,
 } from './math';
 
 describe('limit', () => {
@@ -78,5 +79,23 @@ describe('percentRemaining', () => {
   it('returns the fractional progress through a span', () => {
     expect(percentRemaining(0, 200)).toBe(0);
     expect(percentRemaining(250, 200)).toBeCloseTo(0.25);
+  });
+});
+
+describe('overlap', () => {
+  it('detects overlapping spans', () => {
+    expect(overlap(0, 1, 0, 1)).toBe(true);
+    expect(overlap(0, 1, 0.5, 1)).toBe(true);
+  });
+
+  it('rejects spans that are clear of each other', () => {
+    expect(overlap(0, 0.5, 2, 0.5)).toBe(false);
+    expect(overlap(-1, 0.5, 1, 0.5)).toBe(false);
+  });
+
+  it('shrinks the hit box with the percent factor', () => {
+    // full-width spans touch, but at 80% they no longer reach each other
+    expect(overlap(0, 1, 0.9, 1)).toBe(true);
+    expect(overlap(0, 1, 0.9, 1, 0.8)).toBe(false);
   });
 });

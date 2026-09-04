@@ -37,6 +37,8 @@ export const TRAFFIC_COUNT = 40;
 export const CAR_WIDTH_WORLD = 1000;
 /** Car sprite height as a fraction of its drawn width. */
 export const CAR_ASPECT = 0.7;
+/** Car width in offset units (-1..1 across the road), used for collision tests. */
+export const CAR_WIDTH_OFFSET = CAR_WIDTH_WORLD / ROAD_WIDTH;
 export const CAR_COLORS = [
   '#c94b4b',
   '#4b7bc9',
