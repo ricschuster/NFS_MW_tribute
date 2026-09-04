@@ -21,6 +21,7 @@ import {
   CAR_WIDTH_OFFSET,
   MIN_STEER,
   REVERSE_SPEED_FRAC,
+  MAX_HEAT_LEVEL,
 } from './constants';
 import {
   accelerate,
@@ -34,6 +35,10 @@ import {
 
 /** Top display speed, in km/h, used purely for the HUD readout. */
 const DISPLAY_MAX_KMH = 320;
+/** Seconds the BUSTED overlay holds before the pursuit resets. */
+const BUST_HOLD = 3;
+/** Seconds the ESCAPED banner lingers. */
+const ESCAPED_FLASH = 2.5;
 
 /**
  * The game: owns state, steps physics on a fixed timestep, and renders the
@@ -51,6 +56,9 @@ export class Game {
   private playerX = 0; // -1..1 = road edges; beyond = off-road
   private speed = 0;
   private crashFlash = 0; // 1 right after a crash, decays to 0 (shake + flash)
+  private busted = false; // frozen in the BUSTED state
+  private bustHold = 0; // seconds left on the BUSTED overlay
+  private escapedFlash = 0; // seconds left on the ESCAPED banner
 
   // Derived physics tuning.
   private readonly maxSpeed = SEGMENT_LENGTH / STEP; // cap so we never skip a segment
@@ -91,6 +99,17 @@ export class Game {
   }
 
   private update(dt: number): void {
+    // BUSTED: freeze the world, hold the overlay, then clear the pursuit
+    if (this.busted) {
+      this.bustHold -= dt;
+      if (this.bustHold <= 0) {
+        this.busted = false;
+        this.speed = 0;
+        this.police.reset();
+      }
+      return;
+    }
+
     const playerSegment = this.road.findSegment(this.position + this.playerZ);
     const speedPercent = this.speed / this.maxSpeed;
     // curve push scales with actual speed; steering keeps a floor so you can
@@ -136,7 +155,15 @@ export class Game {
       this.road.trackLength,
     );
 
+    if (this.police.busted) {
+      this.busted = true;
+      this.bustHold = BUST_HOLD;
+      this.speed = 0;
+    }
+    if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
+
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
+    this.escapedFlash = Math.max(0, this.escapedFlash - dt);
   }
 
   /**
@@ -218,7 +245,7 @@ export class Game {
     }
 
     this.renderTraffic(baseSegment);
-    this.renderCop();
+    this.renderCops();
     this.renderCar();
     ctx.restore();
 
@@ -254,20 +281,24 @@ export class Game {
     }
   }
 
-  /** Draw the pursuing cop, if any, using its segment's projection. */
-  private renderCop(): void {
-    const cop = this.police.cop;
-    if (!cop) return;
+  /** Draw the pursuing cops, farthest first, using each one's segment projection. */
+  private renderCops(): void {
+    const cops = this.police.cops;
+    if (cops.length === 0) return;
 
     const { ctx, road } = this;
-    const segment = road.findSegment(cop.z);
-    const s = segment.p1.screen;
-    if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) return;
+    // farthest-first so a nearer cop overlaps a farther one
+    const ordered = [...cops].sort((a, b) => b.distance - a.distance);
+    for (const cop of ordered) {
+      const segment = road.findSegment(cop.z);
+      const s = segment.p1.screen;
+      if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
 
-    const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
-    const h = w * CAR_ASPECT;
-    const cx = s.x + cop.offset * s.w;
-    renderCopSprite(ctx, cx, s.y, w, h, this.police.lightPhase, segment.clip);
+      const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
+      const h = w * CAR_ASPECT;
+      const cx = s.x + cop.offset * s.w;
+      renderCopSprite(ctx, cx, s.y, w, h, this.police.lightPhase, segment.clip);
+    }
   }
 
   private renderBackground(): void {
@@ -336,18 +367,77 @@ export class Game {
     ctx.font = '13px system-ui, sans-serif';
     ctx.fillText('km/h', 128, 84);
 
-    // pursuit indicator (full heat meter + bust/escape is #7)
-    if (this.police.cop) {
-      const on = Math.floor(this.police.lightPhase * 6) % 2 === 0;
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(WIDTH - 194, 20, 174, 42);
+    this.renderHeatMeter();
+    this.renderStatusOverlays();
+  }
+
+  /** Heat bar with discrete level pips, shown while there's any heat. */
+  private renderHeatMeter(): void {
+    const police = this.police;
+    if (police.heat <= 0 && !police.pursuing) return;
+
+    const ctx = this.ctx;
+    const bx = WIDTH - 236;
+    const by = 20;
+    const bw = 216;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(bx, by, bw, 62);
+
+    // flashing PURSUIT label
+    if (police.pursuing) {
+      const on = Math.floor(police.lightPhase * 6) % 2 === 0;
       ctx.fillStyle = on ? '#3b6bff' : '#ff3b30';
       ctx.beginPath();
-      ctx.arc(WIDTH - 168, 41, 8, 0, Math.PI * 2);
+      ctx.arc(bx + 20, by + 20, 7, 0, Math.PI * 2);
       ctx.fill();
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillText(police.pursuing ? 'PURSUIT' : 'COOLING', bx + 36, by + 25);
+
+    // heat bar
+    const barX = bx + 16;
+    const barY = by + 36;
+    const barW = bw - 32;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(barX, barY, barW, 12);
+    const hue = 45 - police.heat * 45; // yellow -> red
+    ctx.fillStyle = `hsl(${hue}, 90%, 55%)`;
+    ctx.fillRect(barX, barY, barW * police.heat, 12);
+
+    // level pips
+    for (let i = 0; i < MAX_HEAT_LEVEL; i++) {
+      ctx.fillStyle = i < police.level ? '#ffffff' : 'rgba(255,255,255,0.25)';
+      ctx.fillRect(barX + barW - 10 - i * 14, barY - 16, 10, 10);
+    }
+  }
+
+  /** Center-screen BUSTED / ESCAPED banners. */
+  private renderStatusOverlays(): void {
+    const ctx = this.ctx;
+
+    if (this.busted) {
+      ctx.fillStyle = 'rgba(120,0,0,0.45)';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px system-ui, sans-serif';
-      ctx.fillText('PURSUIT', WIDTH - 148, 47);
+      ctx.font = 'bold 84px system-ui, sans-serif';
+      ctx.fillText('BUSTED', WIDTH / 2, HEIGHT / 2);
+      ctx.fillStyle = '#ffd0d0';
+      ctx.font = '20px system-ui, sans-serif';
+      ctx.fillText('Pulled over', WIDTH / 2, HEIGHT / 2 + 40);
+      ctx.textAlign = 'left';
+      return;
+    }
+
+    if (this.escapedFlash > 0) {
+      const alpha = Math.min(1, this.escapedFlash / ESCAPED_FLASH);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = `rgba(90, 220, 130, ${alpha})`;
+      ctx.font = 'bold 60px system-ui, sans-serif';
+      ctx.fillText('COPS SHAKEN', WIDTH / 2, HEIGHT / 2 - 40);
+      ctx.textAlign = 'left';
     }
   }
 }
