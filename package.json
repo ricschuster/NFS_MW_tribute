@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "playtest": "vitest run src/game/world.playtest.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

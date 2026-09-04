@@ -77,3 +77,8 @@ export const MAX_COPS = 3; // spawn-count cap at high heat
 export const MAX_HEAT_LEVEL = 3; // discrete heat levels for the HUD
 export const HEAT_RISE = 0.08; // heat/sec while a cop is close
 export const HEAT_DECAY = 0.12; // heat/sec while clear
+
+/** Seconds the BUSTED overlay holds before the pursuit resets. */
+export const BUST_HOLD = 3;
+/** Seconds the ESCAPED banner lingers. */
+export const ESCAPED_FLASH = 2.5;

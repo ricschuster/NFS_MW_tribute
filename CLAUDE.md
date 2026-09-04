@@ -12,6 +12,8 @@ backend; it builds to static files.
 
 - `npm run dev` — dev server with HMR (http://localhost:5173)
 - `npm run typecheck` — `tsc --noEmit`; run before considering a change done
+- `npm run test` — unit tests + playtests
+- `npm run playtest` — just the headless playtests (drive the World, assert outcomes)
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)
@@ -33,6 +35,13 @@ Gordon's "How to build a racing game"). Key ideas:
 
 Tune feel via `constants.ts` first — most "how it drives / how it looks" knobs
 live there.
+
+**Simulation is split from rendering.** All game state and logic live in
+`world.ts` as a pure `step(dt, input)` with no canvas or DOM; `game.ts` only
+drives and draws it. Keep it that way: put new *behaviour* in `World` (so the
+playtests can cover it) and only *drawing* in `Game`. Playtests
+(`world.playtest.test.ts`) construct a `World`, feed scripted inputs, and assert
+on state — use `new World({ traffic: false })` for a deterministic road.
 
 ## Conventions
 
