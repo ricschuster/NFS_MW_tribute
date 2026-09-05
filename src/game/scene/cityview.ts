@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { Cityscape } from './cityscape';
+import { makeCar } from './cars';
+import type { CityWorld } from '../cityworld';
+import { STEP } from '../constants';
+import type { InputState } from '../world';
 
 const M = UNITS_PER_METRE;
 
@@ -43,6 +47,12 @@ export class CityView {
   private dragging = false;
   private last = performance.now();
 
+  /** When set, the camera chases this car instead of flying free. */
+  private world: CityWorld | null = null;
+  private readonly car = makeCar('#d8442f');
+  private readonly chase = new THREE.Vector3();
+  private accumulator = 0;
+
   constructor(canvas: HTMLCanvasElement, city: City) {
     this.city = city;
 
@@ -81,8 +91,22 @@ export class CityView {
     this.cityscape = new Cityscape(city);
     this.scene.add(this.cityscape.group);
 
+    this.car.visible = false;
+    this.scene.add(this.car);
+
     this.look('aerial');
     this.listen(canvas);
+  }
+
+  /**
+   * Drive `world` instead of flying. The camera becomes a chase camera and the
+   * car appears; #88 is where cameras become a first-class concept, so this is
+   * the simplest thing that lets the city be driven in the meantime.
+   */
+  drive(world: CityWorld): void {
+    this.world = world;
+    this.car.visible = true;
+    this.chase.set(world.x, world.y, world.z);
   }
 
   /** A gradient dome, so the horizon is a horizon and not a flat wall of colour. */
@@ -274,6 +298,11 @@ export class CityView {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
 
+    if (this.world) {
+      this.driveFrame(dt, this.world);
+      return;
+    }
+
     const held = (...keys: string[]) => keys.some((k) => this.held.has(k));
     const forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
     const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
@@ -302,6 +331,50 @@ export class CityView {
     fog.far = Math.max(2600 * M, this.camera.position.y * 4);
 
     this.aim();
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Step the sim on its fixed timestep, then follow the car.
+   *
+   * The accumulator is not optional: physics has to run at `STEP` regardless of
+   * frame rate or the car behaves differently on different machines, which is
+   * the same reason `game.ts` does it.
+   */
+  private driveFrame(dt: number, world: CityWorld): void {
+    const held = (...keys: string[]) => keys.some((k) => this.held.has(k));
+    const input: InputState = {
+      up: held('w', 'arrowup'),
+      down: held('s', 'arrowdown'),
+      left: held('a', 'arrowleft'),
+      right: held('d', 'arrowright'),
+      nitro: held('shift'),
+      confirm: held('enter', ' '),
+    };
+
+    this.accumulator = Math.min(this.accumulator + dt, 0.25);
+    while (this.accumulator >= STEP) {
+      world.step(STEP, input);
+      this.accumulator -= STEP;
+    }
+
+    this.car.position.set(world.x, world.y, world.z);
+    this.car.rotation.y = world.heading;
+
+    // Sit the camera behind and above, and let it lag: a camera welded to the
+    // car cannot show you turning, because the world turns with it.
+    const back = new THREE.Vector3(-Math.sin(world.heading), 0, -Math.cos(world.heading));
+    const want = new THREE.Vector3(world.x, world.y, world.z)
+      .addScaledVector(back, 15 * M)
+      .setY(world.y + 6 * M);
+    this.chase.lerp(want, Math.min(1, dt * 6));
+    this.camera.position.copy(this.chase);
+    this.camera.lookAt(world.x, world.y + 2 * M, world.z);
+
+    const fog = this.scene.fog as THREE.Fog;
+    fog.near = 300 * M;
+    fog.far = 2600 * M;
+    this.skyDome.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
   }
 

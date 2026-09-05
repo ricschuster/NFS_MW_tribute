@@ -32,7 +32,7 @@ async function boot(): Promise<void> {
   const params = new URLSearchParams(location.search);
   const renderer = params.get('renderer');
 
-  if (renderer === 'city') {
+  if (renderer === 'city' || renderer === 'drive') {
     const stage = canvas.parentElement;
     if (!stage) throw new Error('#game has no stage to draw into');
 
@@ -46,7 +46,14 @@ async function boot(): Promise<void> {
     stage.insertBefore(gl, canvas);
     canvas.style.display = 'none'; // there is no HUD over the city yet
 
-    const view = new CityView(gl, kestrelBay());
+    const city = kestrelBay();
+    const view = new CityView(gl, city);
+
+    if (renderer === 'drive') {
+      const { CityWorld } = await import('./game/cityworld');
+      view.drive(new CityWorld(city));
+    }
+
     const named = params.get('view');
     const views = ['aerial', 'downtown', 'bridge', 'street', 'overpass'] as const;
     const picked = views.find((v) => v === named);
