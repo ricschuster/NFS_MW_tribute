@@ -1,4 +1,5 @@
 import type { ColorSet } from './types';
+import type { DistrictCharacter, DistrictKind } from './city/types';
 
 /** Logical canvas resolution. The canvas is scaled to fit via CSS. */
 export const WIDTH = 1024;
@@ -129,3 +130,100 @@ export const PROP_HIT_WIDTH = 700;
 export const PROP_HIT_OFFSET = PROP_HIT_WIDTH / ROAD_WIDTH;
 /** Sideways nudge back toward the road on impact, so a car cannot wedge against a prop. */
 export const PROP_DEFLECT = 0.12;
+
+/* ------------------------------------------------------------------ */
+/* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The seed that produces *our* Kestrel Bay. Treat it as content, not as a
+ * tuning knob: changing it is publishing a different city, so the map every
+ * screenshot, playtest and event position assumes moves under them.
+ */
+export const CITY_SEED = 0x4b657374; // "Kest"
+
+/**
+ * World units per metre.
+ *
+ * The HUD calls `maxSpeed` (12000 units/s) 320 km/h, which is 88.9 m/s, so a
+ * metre works out at about 135 units. City sizes are written below in metres
+ * and converted, because "an 80 m block" is something you can picture and
+ * "10800 units" is not.
+ */
+export const UNITS_PER_METRE = 135;
+const m = (metres: number) => metres * UNITS_PER_METRE;
+/** km/h in world units per second, on the same scale: kmh(320) is `maxSpeed`. */
+const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
+
+/**
+ * Overall extent (ADR-0005). Sized from what the game needs rather than from a
+ * remembered figure: a pursuit should be able to cross the map in two to four
+ * minutes at the pace the car actually holds, which is a city about this big.
+ */
+export const CITY_WIDTH = m(5000);
+export const CITY_DEPTH = m(4000);
+
+/**
+ * Arterials are laid first and cross the whole city, so every local street
+ * meets one at both ends and the network cannot come out in pieces. Counts
+ * include both edges, which is what gives the city a perimeter road.
+ */
+export const CITY_ARTERIAL_COLS = 9;
+export const CITY_ARTERIAL_ROWS = 7;
+/** How far an interior arterial may wander, as a fraction of the even spacing. */
+export const CITY_ARTERIAL_JITTER = 0.16;
+export const CITY_ARTERIAL_LANES = 4;
+export const CITY_ARTERIAL_SPEED = kmh(90);
+
+/** One lane, matching the road the car already drives on (ROAD_WIDTH over LANES). */
+export const CITY_LANE_WIDTH = ROAD_WIDTH / LANES;
+
+/** How far the districts reach from their anchors. */
+export const CITY_DOWNTOWN_RADIUS = m(850);
+export const CITY_INDUSTRIAL_RADIUS = m(1250);
+/**
+ * How far the docks reach from the harbour. The waterfront is a port, not
+ * every square metre that happens to touch water: a city whose whole coast and
+ * both riverbanks are wharves has no city behind them.
+ */
+export const CITY_WATERFRONT_RADIUS = m(1350);
+
+/**
+ * The water (ADR-0005, rule 1). The bay eats into the north edge and the river
+ * runs inland from it and severs the city, which is what makes bridges worth
+ * having.
+ */
+export const CITY_BAY_DEPTH = m(750); // how far inland the bay reaches on average
+export const CITY_BAY_WAVE = m(380); // how far the coastline wanders either side of that
+export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
+export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
+export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth
+/** How finely water outlines are sampled. */
+export const CITY_WATER_STEP = m(40);
+
+/**
+ * Crossings (ADR-0005, rule 2). Few, and deliberate: a city where half the
+ * roads bridge the river has no chokepoints in it. Generation adds more only
+ * if the network would otherwise come apart.
+ */
+export const CITY_BRIDGES = 4;
+/** The longest gap a bridge will span. Wider than this and the road dead-ends. */
+export const CITY_MAX_BRIDGE = m(700);
+/** Bridges are kept this far apart, so they are separate decisions to make. */
+export const CITY_BRIDGE_SPACING = m(1200);
+/** Sampling resolution when clipping a road against water. */
+export const CITY_CLIP_STEP = m(15);
+/** A stretch of road shorter than this is a stub, not a street. */
+export const CITY_MIN_STREET = m(70);
+
+/**
+ * What each district is like to drive through. Block size and its variation do
+ * most of the work: a tight regular grid downtown, long shallow blocks facing
+ * the water, and sprawling lots with few streets out on the industrial edge.
+ */
+export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
+  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50) },
+  midtown: { blockX: m(135), blockZ: m(115), jitter: 0.22, skip: 0.12, lanes: 2, speed: kmh(60) },
+  waterfront: { blockX: m(135), blockZ: m(150), jitter: 0.18, skip: 0.08, lanes: 2, speed: kmh(70) },
+  industrial: { blockX: m(215), blockZ: m(200), jitter: 0.14, skip: 0.18, lanes: 2, speed: kmh(70) },
+};
