@@ -25,6 +25,7 @@ import {
 } from './constants';
 import { interpolate, percentRemaining, exponentialFog } from './math';
 import { propAt } from './scenery';
+import type { Scene3D } from './scene/scene3d';
 
 /** Top display speed, in km/h, used purely for the HUD readout. */
 const DISPLAY_MAX_KMH = 320;
@@ -45,6 +46,8 @@ export class Game {
   private readonly input = new Input();
   private readonly audio = new GameAudio();
   private readonly touch: TouchControls;
+  /** When present, the world is drawn in 3D and the canvas carries only the HUD. */
+  private readonly scene3d: Scene3D | null;
   private world = new World();
 
   private phase: 'title' | 'playing' | 'paused' = 'title';
@@ -57,10 +60,11 @@ export class Game {
   private suppressConfirm = false;
   private reducedMotion = false;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, scene3d: Scene3D | null = null) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
+    this.scene3d = scene3d;
     this.touch = new TouchControls(canvas, () => this.audio.start());
 
     // respect the OS "reduce motion" preference (shake, speed lines, strobing)
@@ -159,7 +163,14 @@ export class Game {
   }
 
   private render(): void {
-    this.renderScene();
+    if (this.scene3d) {
+      // the 3D scene draws the world on its own canvas underneath; clear ours
+      // so only the HUD sits on top of it (issue #89 makes this a real layer)
+      this.scene3d.render(this.world, this.reducedMotion);
+      this.ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    } else {
+      this.renderScene();
+    }
     if (this.phase === 'title') {
       this.renderTitle();
     } else {
