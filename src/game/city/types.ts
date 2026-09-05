@@ -119,6 +119,18 @@ export interface BuildingCharacter {
   kind: BuildingKind;
 }
 
+/** Street furniture: the same idea as the old roadside props, on real streets. */
+export type FurnitureKind = 'lamp' | 'sign' | 'barrier';
+
+/** One piece of street furniture, described rather than built. */
+export interface StreetProp {
+  at: Vec2;
+  /** Facing, in radians about y: along the road it stands beside. */
+  angle: number;
+  kind: FurnitureKind;
+  variant: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -142,4 +154,5 @@ export interface City {
   blocks: CityBlock[];
   superblocks: Superblock[];
   buildings: Building[];
+  furniture: StreetProp[];
 }

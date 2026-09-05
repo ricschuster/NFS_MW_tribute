@@ -19,6 +19,7 @@ import {
 } from '../constants';
 import { Rng } from './rng';
 import { buildingsOn } from './buildings';
+import { furnitureFor } from './furniture';
 import { makeWater, type Water } from './water';
 import type {
   Axis,
@@ -52,8 +53,9 @@ import type {
  *     water gaps become bridges.
  *  6. **The repair.** Cutting a network can strand a district, so generation
  *     ends by proving the city is drivable and fixing it if it is not.
- *  7. **Buildings.** Each block is divided into lots and built on. These are
- *     descriptions, never meshes: see `buildings.ts`.
+ *  7. **Buildings and furniture.** Each block is divided into lots and built
+ *     on, and the finished streets get lamps, signs and bridge parapets. Both
+ *     are descriptions and never meshes: see `buildings.ts`, `furniture.ts`.
  *
  * Roads are axis-aligned, which keeps blocks rectangular for the extrusions in
  * #84 and "which road am I on" cheap for #86. ADR-0005 rule 4 ends that for the
@@ -114,7 +116,21 @@ export function generateCity(seed: number): City {
     }
   }
 
-  return { seed, bounds, water: water.bodies, nodes, roads, blocks, superblocks, buildings };
+  const city: City = {
+    seed,
+    bounds,
+    water: water.bodies,
+    nodes,
+    roads,
+    blocks,
+    superblocks,
+    buildings,
+    furniture: [],
+  };
+  // Furniture is placed from the finished road graph, so it goes on kerbs that
+  // actually exist rather than on ones that were bridged or pruned away.
+  city.furniture = furnitureFor(rng, city);
+  return city;
 }
 
 /** A road centreline before it is cut at its crossings. */
