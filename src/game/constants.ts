@@ -1,5 +1,5 @@
 import type { ColorSet } from './types';
-import type { DistrictCharacter, DistrictKind } from './city/types';
+import type { BuildingCharacter, DistrictCharacter, DistrictKind } from './city/types';
 
 /** Logical canvas resolution. The canvas is scaled to fit via CSS. */
 export const WIDTH = 1024;
@@ -200,6 +200,8 @@ export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the 
 export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth
 /** How finely water outlines are sampled. */
 export const CITY_WATER_STEP = m(40);
+/** How far the sea is drawn beyond the map edge, so the bay reaches the horizon. */
+export const CITY_SEA_MARGIN = m(2500);
 
 /**
  * Crossings (ADR-0005, rule 2). Few, and deliberate: a city where half the
@@ -227,3 +229,19 @@ export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
   waterfront: { blockX: m(135), blockZ: m(150), jitter: 0.18, skip: 0.08, lanes: 2, speed: kmh(70) },
   industrial: { blockX: m(215), blockZ: m(200), jitter: 0.14, skip: 0.18, lanes: 2, speed: kmh(70) },
 };
+
+/**
+ * What stands on the blocks (#84). Heights are skewed low - most of a city is
+ * not its tallest building - so `landmark` is what puts the occasional tower
+ * above its neighbours and gives the skyline a shape.
+ */
+export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
+  downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.05, landmark: 0.07, kind: 'tower' },
+  midtown: { lot: m(34), setback: m(4), minHeight: m(10), maxHeight: m(34), empty: 0.1, landmark: 0.03, kind: 'block' },
+  waterfront: { lot: m(50), setback: m(6), minHeight: m(7), maxHeight: m(20), empty: 0.16, landmark: 0.02, kind: 'shed' },
+  industrial: { lot: m(62), setback: m(8), minHeight: m(6), maxHeight: m(18), empty: 0.2, landmark: 0.02, kind: 'shed' },
+};
+/** How much taller a landmark stands than the district's ordinary ceiling. */
+export const BUILDING_LANDMARK_MULT = 1.9;
+/** A lot smaller than this is a gap between buildings, not a plot. */
+export const BUILDING_MIN_LOT = m(14);

@@ -5,6 +5,7 @@ import {
   CITY_RIVER_WANDER,
   CITY_RIVER_MOUTH,
   CITY_WATER_STEP,
+  CITY_SEA_MARGIN,
 } from '../constants';
 import type { Rng } from './rng';
 import type { Rect, Vec2, WaterBody } from './types';
@@ -70,13 +71,17 @@ function outlines(
   riverX: (z: number) => number,
   riverHalfWidth: (z: number) => number,
 ): WaterBody[] {
-  const bay: Vec2[] = [];
+  // The shoreline is the interesting edge; the other three run well past the
+  // map so the sea reaches the horizon instead of stopping in a straight line
+  // somewhere out in the haze.
+  const bay: Vec2[] = [{ x: bounds.minX - CITY_SEA_MARGIN, z: shoreAt(bounds.minX) }];
   for (let x = bounds.minX; x < bounds.maxX; x += CITY_WATER_STEP) {
     bay.push({ x, z: shoreAt(x) });
   }
   bay.push({ x: bounds.maxX, z: shoreAt(bounds.maxX) });
-  bay.push({ x: bounds.maxX, z: bounds.maxZ });
-  bay.push({ x: bounds.minX, z: bounds.maxZ });
+  bay.push({ x: bounds.maxX + CITY_SEA_MARGIN, z: shoreAt(bounds.maxX) });
+  bay.push({ x: bounds.maxX + CITY_SEA_MARGIN, z: bounds.maxZ + CITY_SEA_MARGIN });
+  bay.push({ x: bounds.minX - CITY_SEA_MARGIN, z: bounds.maxZ + CITY_SEA_MARGIN });
 
   // Up the west bank and back down the east one.
   const river: Vec2[] = [];

@@ -100,6 +100,7 @@ npm run test       # 88 unit tests + playtests
 npm run feel       # measure driving feel; --baseline docs/feel-baseline.json
 npm run shot       # headless screenshots -> screenshots/*.png
 npm run city       # draw the generated city from above; --seed N for another
+npm run cityshot   # screenshot the 3D city from fixed viewpoints
 npm run build      # typecheck + static build
 ```
 
@@ -160,10 +161,12 @@ Nothing is wired into `World` or the renderer yet. That is #84 and #86.
 
 **M4: Kestrel Bay rebuild (6 open)** - the renderer, in dependency order:
 
-- **#84 city geometry** <- next up. It carries a required seam: the generator
-  emits descriptions and a provider turns them into meshes, so boxes can become
-  models later without a rewrite. Building footprints and heights belong in the
-  city data, not the renderer, because #86 has to collide with them
+- **#84 city geometry** <- mostly done. The city is visible at
+  `?renderer=city`: extruded buildings instanced per kind, water, bridges and
+  lane markings. What is left of it is street furniture (lamps, signs,
+  barriers). LOD and frustum culling were dropped on measurement rather than
+  built: the whole city is about 9 draw calls and 103k triangles, so the
+  premise that it needs them does not hold while buildings are boxes
 - #85 the elevated interstate - the feature that decided ADR-0004, and worth
   building early enough to prove the decision was right
 - #86 collision against the network, #87 traffic and police in world space,

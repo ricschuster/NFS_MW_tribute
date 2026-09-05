@@ -19,12 +19,47 @@ canvas.height = HEIGHT;
  * against the same `World`, so the game stays playable either way while the
  * renderer is rebuilt.
  *
+ * `?renderer=city` is neither: it flies a camera around generated Kestrel Bay
+ * with no game in it at all (#84). The car cannot be driven there until #86
+ * gives it a place in the world, so this is how the city gets looked at in the
+ * meantime. `&view=aerial|downtown|bridge|street` picks a named viewpoint.
+ *
  * three.js is imported dynamically so it stays out of the bundle everyone else
  * downloads: a static import puts 500 kB in front of players who never ask for
  * the 3D renderer.
  */
 async function boot(): Promise<void> {
-  const use3d = new URLSearchParams(location.search).get('renderer') === '3d';
+  const params = new URLSearchParams(location.search);
+  const renderer = params.get('renderer');
+
+  if (renderer === 'city') {
+    const stage = canvas.parentElement;
+    if (!stage) throw new Error('#game has no stage to draw into');
+
+    const [{ CityView }, { kestrelBay }] = await Promise.all([
+      import('./game/scene/cityview'),
+      import('./game/city/index'),
+    ]);
+
+    const gl = document.createElement('canvas');
+    gl.id = 'game3d';
+    stage.insertBefore(gl, canvas);
+    canvas.style.display = 'none'; // there is no HUD over the city yet
+
+    const view = new CityView(gl, kestrelBay());
+    const named = params.get('view');
+    if (named === 'aerial' || named === 'downtown' || named === 'bridge' || named === 'street') {
+      view.look(named);
+    }
+
+    const fit = () => view.resize(stage.clientWidth || WIDTH, stage.clientHeight || HEIGHT);
+    fit();
+    addEventListener('resize', fit);
+    view.start();
+    return;
+  }
+
+  const use3d = renderer === '3d';
   let scene3d: Scene3D | null = null;
 
   if (use3d) {

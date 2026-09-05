@@ -29,6 +29,8 @@ cameras that leave the car. Read that ADR before touching the renderer.
   compare against `docs/feel-baseline.json` after touching `constants.ts`
 - `npm run city` — draw the generated city from above to `screenshots/citymap.png`;
   `-- --seed N` tries another one
+- `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
+  own server, so nothing else needs running
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)
@@ -74,9 +76,20 @@ because they are the pursuit chokepoints, and generation ends by proving the
 city is drivable and bridging until it is. Rules 4-7 of that ADR (curved
 residential streets, the interstate loop, landmarks, relief) are not built yet.
 
-Look at what you changed with `npm run city` - the layout is much easier to
-judge as a picture than as a test, and both real bugs so far were found that
-way and not by the 34 tests.
+**The city is drawn through a provider seam** (issue #84). `city/` emits
+descriptions - blocks, buildings, water - and never constructs geometry or
+imports three.js; `scene/buildings.ts` turns those into one `InstancedMesh` per
+kind, and `scene/cityscape.ts` assembles the scene. Keep that seam: it is what
+lets boxes become models later by swapping a provider, and it is also why #86
+can collide with buildings without a renderer in the room. Building footprints
+and heights are city *data* for exactly that reason.
+
+`?renderer=city` flies a camera around it, since the car cannot be driven there
+until #86.
+
+Look at what you changed with `npm run city` and `npm run cityshot` - the city
+is much easier to judge as a picture than as a test, and every real bug in it
+so far was found that way rather than by the tests, which passed throughout.
 
 **Unchanged either way.** Physics runs on a **fixed timestep** (`STEP = 1/60`)
 with an accumulator, so behaviour is frame-rate independent; rendering happens

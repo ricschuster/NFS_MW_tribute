@@ -80,6 +80,45 @@ export interface WaterBody {
   outline: Vec2[];
 }
 
+/**
+ * What a building is, from the city's point of view. Kinds exist so the
+ * renderer can choose a mesh per kind (#84): today every kind is a scaled box,
+ * later some become modelled and the rest stay boxes, and nothing about the
+ * generator changes.
+ */
+export type BuildingKind = 'tower' | 'block' | 'shed';
+
+/**
+ * One building, as a description rather than as geometry. The generator emits
+ * these and never constructs a mesh: that seam is what lets the art be
+ * upgraded without a rewrite, and it is also what lets #86 collide with the
+ * city without a renderer in the room.
+ */
+export interface Building {
+  /** Ground footprint, axis-aligned like the block it stands in. */
+  footprint: Rect;
+  height: number;
+  kind: BuildingKind;
+  district: DistrictKind;
+  /** Seeded 0..1, so the provider can vary colour and detail deterministically. */
+  variant: number;
+}
+
+/** How tall the buildings on a block are, and how the land is divided into lots. */
+export interface BuildingCharacter {
+  /** Target lot size along each axis, before jitter. */
+  lot: number;
+  /** How far a building stands back from its lot edge. */
+  setback: number;
+  minHeight: number;
+  maxHeight: number;
+  /** Chance a lot is left open: a yard, a car park, a scrap of park. */
+  empty: number;
+  /** Chance a lot gets something much taller than its neighbours. */
+  landmark: number;
+  kind: BuildingKind;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -102,4 +141,5 @@ export interface City {
   roads: CityRoad[];
   blocks: CityBlock[];
   superblocks: Superblock[];
+  buildings: Building[];
 }
