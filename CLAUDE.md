@@ -42,6 +42,14 @@ Gordon's "How to build a racing game"):
   than one segment per physics step. This cap exists only to protect
   per-segment logic and goes away with the segments.
 
+**The car already moves like a free-roam car** (issue #82), in a road-relative
+frame: how far along the track it is, how far across, and a real `heading` it
+can be pointed with. Motion is velocity along the heading split onto those two
+axes, a bend rotates the frame under the car, and yaw is limited by
+`LATERAL_GRIP / speed` so corners have to be taken slower. That is the same
+physics a free-roam car has, written in the frame the track still provides, so
+issue #83 swaps the frame for a city without touching the model.
+
 **Next (ADR-0004).** A three.js scene: the car has a position and heading in a
 3D world, Fairhaven is generated procedurally (street network, extruded blocks
 per district, elevated interstate), and cameras become a first-class concept.

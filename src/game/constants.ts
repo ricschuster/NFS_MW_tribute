@@ -20,17 +20,32 @@ export const DRAW_DISTANCE = 300;
 export const FOG_DENSITY = 5;
 export const FOG_COLOR = '#0d2417';
 
-/** How hard curves push the player toward the outside of a bend. */
-export const CENTRIFUGAL = 0.24;
-
-/** Steering authority kept when nearly stopped, so you can peel off after a crash. */
-export const MIN_STEER = 0.3;
 /**
- * Steering authority left at top speed, as a fraction. Below 1 the car goes
- * light at the top end, so a fast bend has to be taken with a lift rather than
- * a flick of the wheel.
+ * How sharply an authored `curve` value bends the road, in radians of heading
+ * per world unit travelled. The car's heading is real now, so a bend rotates
+ * the road under it rather than shoving it sideways: hold a straight heading
+ * through a corner and you run wide on your own.
  */
-export const HIGH_SPEED_GRIP = 0.7;
+export const CURVE_TO_HEADING = 2.42e-5;
+/** Fastest the car can be turned at low speed, in radians per second. */
+export const TURN_RATE = 2.2;
+/**
+ * Lateral acceleration the tyres can hold, in world units per second squared.
+ *
+ * This is what makes speed matter in a corner. Turning at yaw rate w while
+ * travelling at v needs lateral acceleration v*w, so the fastest the car can be
+ * turned is LATERAL_GRIP / v: the quicker you go, the wider you turn. Without
+ * it, both the steering and the road's own curvature scale with speed, they
+ * cancel, and every bend can be taken flat out however sharp it is.
+ */
+export const LATERAL_GRIP = 14400;
+/**
+ * How far the car may point away from the road direction. The track model can
+ * only describe a car going forwards along it, so it cannot turn around; the
+ * limit goes away with the track itself in issue #83.
+ */
+export const HEADING_LIMIT = 0.9;
+
 /** Top reverse speed as a fraction of forward max speed. */
 export const REVERSE_SPEED_FRAC = 0.18;
 
@@ -41,7 +56,6 @@ export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from ful
 export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
 export const NITRO_MIN_ENGAGE = 0.25; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
-export const DRIFT_SLIDE = 0.35; // extra lateral slide when cornering hard at speed
 
 /** Fixed physics timestep (seconds). */
 export const STEP = 1 / 60;
@@ -101,8 +115,8 @@ export const ESCAPED_FLASH = 2.5;
 /** Blacklist races. */
 export const RACE_DISTANCE = 400000; // world units from start to finish
 export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
-export const RIVAL_BASE_SPEED_FRAC = 0.85; // rival speed vs player max at difficulty 0
-export const RIVAL_DIFF_SPEED_FRAC = 0.12; // extra at difficulty 1; the top rival (0.97) needs nitrous to beat
+export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at difficulty 0
+export const RIVAL_DIFF_SPEED_FRAC = 0.068; // extra at difficulty 1; the top rival (0.97) needs nitrous to beat
 export const RIVAL_LANE = 0.4; // lane the rival lines up in
 export const RIVAL_NEAR_LEAD = 420; // minimum render lead, so the rival is off the camera at the start line
 
