@@ -18,6 +18,7 @@ import {
   NITRO_ACCEL_MULT,
   NITRO_DRAIN,
   NITRO_RECHARGE,
+  NITRO_MIN_ENGAGE,
   NITRO_BLEED_FRAC,
   DRIFT_SLIDE,
   RACE_DISTANCE,
@@ -213,8 +214,11 @@ export class World {
     const curveDx = dt * 2 * speedPercent;
     const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER);
 
-    // nitrous: rechargeable boost to top speed and acceleration
-    const boosting = input.nitro && this.nitro > 0 && this.speed > this.maxSpeed * 0.15;
+    // nitrous: rechargeable boost to top speed and acceleration. Relighting it
+    // takes a real charge, not the sliver one frame of recharge puts back at
+    // empty - without that, holding the key boosts forever.
+    const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
+    const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15;
     this.boosting = boosting;
     this.nitro = boosting
       ? Math.max(0, this.nitro - dt * NITRO_DRAIN)

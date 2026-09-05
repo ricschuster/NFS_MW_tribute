@@ -33,6 +33,7 @@ export const NITRO_SPEED_MULT = 1.28; // top speed multiplier while boosting (mu
 export const NITRO_ACCEL_MULT = 2.6; // acceleration multiplier while boosting
 export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from full)
 export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
+export const NITRO_MIN_ENGAGE = 0.5; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
 export const DRIFT_SLIDE = 1.1; // extra lateral slide when cornering hard at speed
 
