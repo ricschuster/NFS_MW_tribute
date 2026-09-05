@@ -1,4 +1,4 @@
-import { CITY_GRID_CELL, SURFACE_REACH } from '../constants';
+import { CITY_GRID_CELL, SURFACE_REACH, COVER_MIN, COVER_MAX } from '../constants';
 import type { Building, City, CityRoad, Rect, Vec2 } from './types';
 
 /**
@@ -208,6 +208,26 @@ export function roadHeightAt(city: City, road: CityRoad, x: number, z: number): 
   if (lengthSquared < 1) return a.y;
   const t = Math.max(0, Math.min(1, ((x - a.pos.x) * dx + (z - a.pos.z) * dz) / lengthSquared));
   return a.y + (b.y - a.y) * t;
+}
+
+/**
+ * Is there something over this point (#62)?
+ *
+ * A road deck overhead - an overpass, or the elevated interstate - or being
+ * below street level at all, which is the tunnel. Buildings deliberately do
+ * not count: standing in a street between two towers is not being under
+ * anything, and a helicopter can see you perfectly well.
+ */
+export function coveredAt(city: City, grid: CityGrid, x: number, z: number, y: number): boolean {
+  if (y < -COVER_MIN) return true; // in the tunnel
+
+  for (const road of grid.roadsNear(x, z)) {
+    if (!onRoad(city, road, x, z)) continue;
+    const height = roadHeightAt(city, road, x, z);
+    if (height < y + COVER_MIN || height > y + COVER_MAX) continue;
+    return true;
+  }
+  return false;
 }
 
 /** What the car is standing on. */

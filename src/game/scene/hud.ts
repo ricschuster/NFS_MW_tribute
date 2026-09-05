@@ -40,6 +40,7 @@ export class Hud {
     this.takedowns(world);
     this.roadblock(world);
     this.shredded(world);
+    this.overhead(world);
     this.cooldown(world);
     this.banners(world);
 
@@ -232,6 +233,19 @@ export class Hud {
       ctx.fillRect(dx - 2, dz - 2, 4, 4);
     }
 
+    const heli = world.police.helicopter;
+    if (heli) {
+      const hx = (heli.x - world.x) * scale;
+      const hz = -(heli.z - world.z) * scale;
+      if (Math.hypot(hx, hz) <= radius) {
+        ctx.strokeStyle = heli.spotting ? '#ffd166' : 'rgba(255, 209, 102, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(hx, hz, 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
     for (const cop of world.police.cops) {
       const dx = (cop.x - world.x) * scale;
       const dz = -(cop.z - world.z) * scale;
@@ -336,6 +350,23 @@ export class Hud {
     ctx.fillRect(WIDTH / 2 - width / 2, HEIGHT - 86, width, 6);
     ctx.fillStyle = '#ffa23a';
     ctx.fillRect(WIDTH / 2 - width / 2, HEIGHT - 86, width * (world.shredded / SHRED_TIME), 6);
+  }
+
+  /**
+   * The helicopter warning (#62).
+   *
+   * What the helicopter does is invisible - it stops the cooldown starting -
+   * so it has to be said. Without this the player experiences a search that
+   * never begins and no reason for it.
+   */
+  private overhead(world: CityWorld): void {
+    const { ctx } = this;
+    if (!world.police.helicopter?.spotting) return;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd166';
+    ctx.font = '700 20px system-ui, sans-serif';
+    ctx.fillText('HELICOPTER OVERHEAD - FIND COVER', WIDTH / 2, 68);
   }
 
   /** The cooldown clock, and what it is waiting for. */

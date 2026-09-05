@@ -35,7 +35,9 @@ and, the hotter it gets, more often without. From heat three they also send
 Enforcers: heavy units that come at you head on and steer for the lane you are
 in rather than the one beside it. From heat four they lay spike strips across
 most of the road, and running over one takes your top speed and most of your
-steering for a few seconds. All of that is off under
+steering for a few seconds. From five a helicopter joins in: it never touches
+you, it keeps you *seen*, so the search never starts while it is up there and
+the way out is cover rather than speed. All of that is off under
 `prefers-reduced-motion`, which leaves a plain camera behind the car.
 
 **Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,

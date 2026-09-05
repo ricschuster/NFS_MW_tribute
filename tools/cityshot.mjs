@@ -29,12 +29,14 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
+  'helicopter',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
+      'helicopter',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -316,6 +318,42 @@ for (const view of VIEWS) {
       world.speed = 0;
     });
     await page.waitForTimeout(1200);
+  }
+
+  if (view === 'helicopter') {
+    // Drive out, wait for the chase camera, then put an aircraft on station
+    // overhead with its light on. What it does is invisible, so the picture is
+    // of the pool of light and the warning that goes with it.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.9;
+      world.crashFlash = 0;
+      world.police.helicopter = {
+        // Well up the street and off to one side. The chase camera looks
+        // roughly level, so an aircraft directly overhead is above the frame:
+        // it has to be far enough ahead to be inside the field of view.
+        // Where it flies anyway: out in front, low, over the street. Its
+        // height is not ours to set - the pursuit puts it back at
+        // `HELI_HEIGHT` on the very next step.
+        x: world.x + Math.sin(world.heading) * 120 * metre,
+        z: world.z + Math.cos(world.heading) * 120 * metre,
+        y: world.y + 28 * metre,
+        heading: world.heading,
+        onStation: 80,
+        spotting: true,
+      };
+      world.speed = 0;
+    });
+    await page.waitForTimeout(1400);
   }
 
   if (view === 'pursuit') {

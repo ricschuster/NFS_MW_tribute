@@ -685,3 +685,49 @@ export const SHRED_TIME = 7;
 export const SHRED_SPEED_FRAC = 0.4;
 /** How much of the steering is left. */
 export const SHRED_GRIP = 0.55;
+
+/**
+ * The police helicopter (#62).
+ *
+ * It never hits you. What it does is keep you *seen*, which is what gives the
+ * cooldown from #63 its teeth: while it is overhead the search never starts,
+ * so shaking it is a different problem from outrunning the cars. The answer is
+ * cover, not speed.
+ *
+ * It flies in a straight line at a shade under the car's top speed, so a long
+ * straight buys you room and a sequence of corners does not. That is the right
+ * way round: the way out is meant to be a decision about where to go rather
+ * than about how hard to press the throttle.
+ */
+export const HELI_MIN_LEVEL = 5;
+/** Seconds on station before it goes home, and how long before another comes. */
+export const HELI_TIME = 80;
+export const HELI_RETURN = 45;
+/** How high it hangs, and how far off it starts. */
+export const HELI_HEIGHT = m(28);
+export const HELI_ARRIVES = m(700);
+/** Top speed in the air, as a fraction of the player's on the ground. */
+export const HELI_SPEED_FRAC = 0.82;
+/**
+ * How far *ahead* of the car it flies.
+ *
+ * Ahead and low rather than high and behind, and that is a decision about
+ * being able to see the thing. The chase camera looks roughly level, so an
+ * aircraft hovering over the roof is permanently above the frame: the player
+ * would be told they were being kept in sight by a HUD line and never see what
+ * was doing it. Out in front it is in shot, its light is on the road you are
+ * driving into, and it swings across the junction when you turn.
+ */
+export const HELI_LEAD = m(120);
+/** How far its light reaches across the ground. */
+export const HELI_SEE_RADIUS = m(170);
+
+/**
+ * What counts as cover from the air (#62).
+ *
+ * A deck overhead - an overpass, the elevated interstate - or being below
+ * street level, which is the tunnel. Buildings do not count: standing in a
+ * street between two towers is not being under anything.
+ */
+export const COVER_MIN = m(3);
+export const COVER_MAX = m(22);

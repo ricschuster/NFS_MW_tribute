@@ -148,6 +148,15 @@ swept by how far the car travels in a step rather than tested against its drawn
 depth, because at top speed the car covers more ground in one step than the
 strip is wide.
 
+**The helicopter is not a cop** (issue #62). It does not navigate the graph,
+cannot be rammed and never busts anyone: what it does is keep you *seen*, which
+means the cooldown from #63 never starts while it is up. The answer to it is
+cover, and `coveredAt` says what cover is - a deck overhead, or being below
+street level, which is the tunnel. Buildings deliberately do not count, because
+a street between two towers is not being under anything. It flies low and
+*ahead* of the car rather than high and behind, because the chase camera looks
+roughly level and a thing you can never see is a thing the HUD has to explain.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup
