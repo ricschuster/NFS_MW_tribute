@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { World, type InputState } from './world';
-import { STEP } from './constants';
+import type { Car } from './types';
+import { STEP, SEGMENT_LENGTH } from './constants';
 
 const NONE: InputState = {
   left: false,
@@ -59,6 +60,29 @@ describe('playtest: driving', () => {
     play(w, 3, () => press({ up: true, right: true })); // floor it but veer off
     expect(w.playerX).toBeGreaterThan(1); // off the road surface
     expect(w.speed).toBeLessThan(onRoad); // ...and slower for it
+  });
+
+  it('crashing into a parked car in your lane costs speed', () => {
+    const w = new World({ traffic: false });
+    // drop a parked car dead-centre, a dozen segments ahead
+    const idx = 12;
+    const car: Car = { offset: 0, z: idx * SEGMENT_LENGTH, speed: 0, color: '#c94b4b', segmentIndex: idx };
+    w.road.segments[idx].cars.push(car);
+    w.traffic.cars.push(car);
+
+    let sawCrash = false;
+    let topSpeed = 0;
+    play(w, 4, (_t, world) => {
+      topSpeed = Math.max(topSpeed, world.speed);
+      if (world.crashFlash > 0) sawCrash = true;
+      // floor it, steering to stay in the car's lane
+      if (world.playerX > 0.03) return press({ up: true, left: true });
+      if (world.playerX < -0.03) return press({ up: true, right: true });
+      return press({ up: true });
+    });
+
+    expect(sawCrash).toBe(true); // we hit it
+    expect(w.speed).toBeLessThan(topSpeed); // and it cost us speed
   });
 
   it('nitrous pushes past the normal top speed, then drains and recharges', () => {
