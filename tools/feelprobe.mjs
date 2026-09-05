@@ -428,8 +428,10 @@ function measureRaces() {
       `#${r.rival.rank} ${r.rival.name}`,
       `${r.won ? 'WON ' : 'lost'}  ${secs(r.t)}`,
       `${r.won ? 'by' : 'behind by'} ${r.margin.toFixed(2)} s  ·  rival at ${pct(r.rivalSpeed / r.maxSpeed)}`,
-      `race_${r.rival.rank}_s`,
-      r.t,
+      // the player's time is the same for every rival, so the margin is the
+      // number that actually describes the ladder
+      `race_${r.rival.rank}_margin_s`,
+      r.won ? r.margin : -r.margin,
     );
   }
   const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -443,6 +445,7 @@ function measureRaces() {
   const noBoost = BLACKLIST.map((_, i) => race(i, POLICY.clean));
   const noBoostWins = noBoost.filter((r) => r.won).length;
   row('average with no nitrous', secs(mean(noBoost.map((r) => r.t))), `${noBoostWins}/${BLACKLIST.length} won`, 'race_avg_no_nitro_s', mean(noBoost.map((r) => r.t)));
+  metrics.race_wins_no_nitro = noBoostWins;
   const closest = noBoost.reduce((a, b) => (b.margin < a.margin ? b : a));
   row(
     'closest finish with no nitrous',
