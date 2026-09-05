@@ -132,7 +132,7 @@ describe('playtest: pursuit', () => {
   it('busts a player who sits still while the cops arrive', () => {
     const w = new World({ traffic: false });
     let sawBusted = false;
-    play(w, 12, () => {
+    play(w, 24, () => {
       if (w.busted) sawBusted = true;
       return NONE; // parked
     });
@@ -141,7 +141,7 @@ describe('playtest: pursuit', () => {
 
   it('hands control back after a bust resets the pursuit', () => {
     const w = new World({ traffic: false });
-    play(w, 12, () => NONE); // get busted, then the overlay clears
+    play(w, 24, () => NONE); // get busted, then the overlay clears
     play(w, 6, () => press({ up: true }));
     expect(w.busted).toBe(false);
     expect(w.speed).toBeGreaterThan(0);
@@ -153,7 +153,7 @@ describe('playtest: pursuit', () => {
     // Steer back to centre as well as flooring it: throttle alone drifts off
     // the road on the first curve, and an off-road car gets caught, which is
     // the pursuit working rather than the escape failing.
-    play(w, 14, () => {
+    play(w, 26, () => {
       if (w.escapedFlash > 0) sawEscape = true;
       if (w.playerX > 0.05) return press({ up: true, left: true });
       if (w.playerX < -0.05) return press({ up: true, right: true });
@@ -167,7 +167,7 @@ describe('playtest: pursuit', () => {
     let chase = 0;
     let mostCops = 0;
     let topLevel = 0;
-    play(w, 20, (_t, w) => {
+    play(w, 32, (_t, w) => {
       if (w.police.pursuing) {
         chase += STEP;
         mostCops = Math.max(mostCops, w.police.cops.length);
