@@ -4,9 +4,11 @@ A pseudo-3D, OutRun-style arcade racer paying tribute to *Need for Speed: Most
 Wanted* (2005). Built with TypeScript + HTML5 Canvas + Vite — no game engine,
 deploys anywhere as static files.
 
-> Status: playable foundation. You can drive an endless track with hills,
-> curves, rumble strips and distance fog. Traffic, pursuits, and the Blacklist
-> are on the roadmap below.
+**▶ Play: https://ricschuster.github.io/NFS_MW_tribute/**
+
+> Status: playable. Drive the open road, dodge traffic, outrun (or get busted
+> by) the cops, and climb the 15-strong Blacklist. Nitrous, sound, and touch
+> controls included. Remaining polish is on the roadmap below.
 
 ## Quick start
 
