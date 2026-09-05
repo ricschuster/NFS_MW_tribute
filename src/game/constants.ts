@@ -347,3 +347,23 @@ export const BOULEVARD_STEP = m(70);
 export const BOULEVARD_SWEEP = m(1400);
 /** Blocks and buildings within this of a boulevard centreline make way for it. */
 export const BOULEVARD_CLEARANCE = m(5);
+
+/**
+ * Traffic in the city (#87). Kept around the player rather than spread over
+ * the whole map: two thousand roads of ambient cars would be simulating a city
+ * nobody is looking at.
+ */
+export const TRAFFIC_IN_CITY = 75;
+export const TRAFFIC_RADIUS = m(360);
+/** Never spawn one closer than this, or cars appear out of nothing in view. */
+export const TRAFFIC_SPAWN_MIN = m(95);
+export const TRAFFIC_SPEED_MIN = 0.55;
+export const TRAFFIC_SPEED_MAX = 0.95;
+/** How far right of the centreline traffic sits. */
+export const TRAFFIC_LANE = m(3);
+/** Seed for everything that moves in the sim, so a playtest repeats exactly. */
+export const SIM_SEED = 0x5eed1;
+/** How much room a traffic car keeps behind the one in front. */
+export const TRAFFIC_GAP = m(14);
+/** Speed kept after hitting a traffic car - a shunt, not a wall. */
+export const SHUNT_SPEED_KEPT = 0.55;

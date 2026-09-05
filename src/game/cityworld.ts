@@ -12,12 +12,16 @@ import {
   NITRO_BLEED_FRAC,
   CAR_RADIUS,
   HIT_SPEED_KEPT,
+  SHUNT_SPEED_KEPT,
+  SIM_SEED,
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
 } from './constants';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
+import { Rng } from './city/rng';
+import { CityTraffic } from './citytraffic';
 import { CityGrid, surfaceAt, roadHeightAt, carriageway } from './city/grid';
 import type { City, CityRoad } from './city/types';
 import type { InputState } from './world';
@@ -43,9 +47,15 @@ import type { InputState } from './world';
  * deployed game keeps playing while the systems move across in #87, exactly as
  * the two renderers ran side by side during #81.
  */
+export interface CityWorldOptions {
+  /** Populate the city with traffic (default true). Turn off for a still world. */
+  traffic?: boolean;
+}
+
 export class CityWorld {
   readonly city: City;
   readonly grid: CityGrid;
+  readonly traffic: CityTraffic;
 
   /** Where the car is, on the map and above it. */
   x = 0;
@@ -81,9 +91,15 @@ export class CityWorld {
   private readonly maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
   private fallSpeed = 0;
 
-  constructor(city: City = kestrelBay()) {
+  /** Everything that moves draws from here, so a scripted drive repeats exactly. */
+  private readonly rng = new Rng(SIM_SEED);
+  private readonly withTraffic: boolean;
+
+  constructor(city: City = kestrelBay(), options: CityWorldOptions = {}) {
     this.city = city;
     this.grid = new CityGrid(city);
+    this.traffic = new CityTraffic(city, this.grid, this.rng);
+    this.withTraffic = options.traffic ?? true;
     this.spawn();
   }
 
@@ -169,6 +185,30 @@ export class CityWorld {
 
     this.move(dt);
     this.settle(dt);
+    if (this.withTraffic) {
+      this.traffic.update(dt, this);
+      this.shunt();
+    }
+  }
+
+  /**
+   * Hitting traffic. Softer than a building, because a car gives: you lose
+   * speed and it loses more, and both of you keep going.
+   */
+  private shunt(): void {
+    for (const car of this.traffic.cars) {
+      if (Math.abs(car.y - this.y) > CAR_RADIUS * 2) continue;
+      const gap = Math.hypot(car.x - this.x, car.z - this.z);
+      if (gap > CAR_RADIUS * 2.2) continue;
+
+      this.speed *= SHUNT_SPEED_KEPT;
+      this.crashFlash = 1;
+      // Shove it down its own road rather than sideways off it: traffic lives
+      // on the graph, and a car knocked off the graph has nowhere to be.
+      car.speed *= 0.4;
+      car.t = Math.min(1, car.t + (CAR_RADIUS * 2) / Math.max(1, car.road.length));
+      return;
+    }
   }
 
   /** Travel along the heading, then answer for whatever that ran into. */

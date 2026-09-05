@@ -101,6 +101,14 @@ you cannot turn from one onto the other. That is the case ADR-0004 exists to
 make possible, and it means anything asking "what is at this position" has to
 ask about a height too. Tunnels are the same mechanism with the sign flipped.
 
+**Traffic lives on the graph, not in the world** (issue #87). A traffic car is
+"which road, how far along, which way"; its position is derived from that each
+step. That is what makes it follow streets instead of drifting across them.
+Two things about it are easy to get wrong: it is kept *around the player*
+rather than spread over the map, and cars look for the one in front in **world
+space**, because roads are split at every junction so the car ahead is almost
+always on a different road object.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

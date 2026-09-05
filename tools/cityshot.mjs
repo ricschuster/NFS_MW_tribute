@@ -81,8 +81,10 @@ for (const view of VIEWS) {
   await page.waitForTimeout(2500);
 
   if (view === 'drive') {
+    // Long enough for traffic to reach the street the car is on: it spawns out
+    // of sight, so a shot taken immediately is of an empty city.
     await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(2600);
+    await page.waitForTimeout(7000);
   }
 
   const blank = await page.evaluate(() => {
