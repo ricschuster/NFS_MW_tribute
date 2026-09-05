@@ -1,14 +1,17 @@
 # NFS: Most Wanted — Tribute
 
-A pseudo-3D, OutRun-style arcade racer paying tribute to *Need for Speed: Most
-Wanted* (2005). Built with TypeScript + HTML5 Canvas + Vite — no game engine,
-deploys anywhere as static files.
+A fan tribute to *Need for Speed: Most Wanted* (2012) — Criterion's Fairhaven:
+a free-roam city, a Most Wanted list of ten, Speed Points, cars found parked in
+the world, and police pursuits that escalate through six heat levels. Built
+with TypeScript + Vite, deploys anywhere as static files.
 
 **▶ Play: https://ricschuster.github.io/NFS_MW_tribute/**
 
-> Status: playable. Drive the open road, dodge traffic, outrun (or get busted
-> by) the cops, and climb the 15-strong Blacklist. Nitrous, sound, and touch
-> controls included. Remaining polish is on the roadmap below.
+> **Status: mid-rebuild.** What is deployed today is a pseudo-3D racer on a
+> single closed track — drive, dodge traffic, outrun the cops, climb a rival
+> ladder. It was built against *Most Wanted* (2005), and the renderer is now
+> being rebuilt as a real 3D WebGL city so Fairhaven can be driven freely.
+> See [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md).
 
 ## Quick start
 
@@ -30,13 +33,24 @@ Drive with the **arrow keys** or **WASD** — Up to accelerate, Down to brake.
 
 ## How it works
 
-The world is a flat list of **road segments** with fixed geometry, generated
-once at startup (`src/game/road.ts`). Each frame we project every visible
-segment from world space to the screen (`src/game/render.ts`) — farther
+**Today**, the world is a flat list of **road segments** with fixed geometry,
+generated once at startup (`src/game/road.ts`). Each frame we project every
+visible segment from world space to the screen (`src/game/render.ts`) — farther
 segments scale down, which produces the pseudo-3D depth. The player never
 actually moves in 3D; the road is redrawn around a fixed camera. See
-[docs/decisions/0002-pseudo-3d-rendering.md](docs/decisions/0002-pseudo-3d-rendering.md)
-for the full rationale.
+[ADR-0002](docs/decisions/0002-pseudo-3d-rendering.md) for the original
+rationale.
+
+**Where it is going**, per
+[ADR-0004](docs/decisions/0004-webgl-free-roam-city.md): a real 3D scene in
+three.js, where the car has a position and heading in the world and can be
+driven anywhere. Fairhaven is generated procedurally — a street network,
+extruded building blocks per district, and an elevated interstate — so there is
+no asset pipeline and nothing licensed. That is what buys overpasses, and
+cameras that can leave the car for a takedown or a crash.
+
+The reason the rebuild is survivable is the split below: `world.ts` and the
+playtests are meant to come through it largely intact.
 
 ### Source layout
 

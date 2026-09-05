@@ -1,6 +1,6 @@
 # 2. Pseudo-3D projected-segment rendering
 
-- Status: accepted
+- Status: superseded by [0004](0004-webgl-free-roam-city.md)
 - Date: 2026-09-04
 
 ## Context
