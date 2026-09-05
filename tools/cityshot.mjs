@@ -29,14 +29,14 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'helicopter',
+  'helicopter', 'billboard', 'collection',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'helicopter',
+      'helicopter', 'billboard', 'collection',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -356,6 +356,37 @@ for (const view of VIEWS) {
     await page.waitForTimeout(1400);
   }
 
+  if (view === 'billboard' || view === 'collection') {
+    // Stand the car in front of a billboard it has not had yet. Waiting for a
+    // scripted drive to find one of ninety is waiting a long time.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const board = world.collectibles.billboards.find((b) => !world.collectibles.smashed.has(b.id));
+      if (!board) return;
+      // Back from it, facing it: `angle` is the way the board faces, so the
+      // car stands out along that and looks the other way.
+      world.x = board.at.x + Math.sin(board.angle) * 26 * metre;
+      world.z = board.at.z + Math.cos(board.angle) * 26 * metre;
+      world.y = board.y;
+      world.heading = board.angle + Math.PI;
+      world.speed = 0;
+      world.crashFlash = 0;
+      world.rep.total = 18400;
+      // Some of the collection already found, so the map has both states in it.
+      const some = world.collectibles.billboards.slice(1, 34).map((b) => b.id);
+      world.collectibles.load(some, world.collectibles.cameras.slice(0, 9).map((c) => [c.id, 0.8]));
+    });
+    await page.waitForTimeout(1200);
+    if (view === 'collection') {
+      await page.keyboard.down('Tab');
+      await page.waitForTimeout(900);
+    }
+  }
+
   if (view === 'pursuit') {
     // Long enough for the cops to arrive, driving a loop so the car stays in
     // the middle of the city rather than parking against the coast.
@@ -382,6 +413,7 @@ for (const view of VIEWS) {
   const shot = DRIVING.has(view) ? '.stage' : '#game3d';
   await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
   if (DRIVING.has(view)) {
+    if (view === 'collection') await page.keyboard.up('Tab');
     await page.keyboard.up('ArrowUp');
     if (view === 'pursuit') await page.keyboard.up('b');
   }

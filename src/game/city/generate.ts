@@ -27,6 +27,7 @@ import {
 import { Rng } from './rng';
 import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
+import { collectiblesFor } from './collectibles';
 import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { makeWater, type Water } from './water';
@@ -217,10 +218,14 @@ export function generateCity(seed: number): City {
     superblocks,
     buildings,
     furniture: [],
+    collectibles: [],
   };
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
   city.furniture = furnitureFor(rng, city);
+  // Collectibles come last, off the finished graph and the finished buildings:
+  // a billboard is placed on a kerb that exists and out of a wall that does.
+  city.collectibles = collectiblesFor(rng, city);
   return city;
 }
 

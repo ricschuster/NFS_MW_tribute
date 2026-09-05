@@ -794,3 +794,37 @@ export const REP_POPUP_TIME = 2.6;
 export const REP_POPUPS = 5;
 /** Seconds between writes to storage. Every award would hammer it. */
 export const REP_SAVE_INTERVAL = 4;
+
+/**
+ * Collectibles (#93).
+ *
+ * The main reason to drive around a city with no event running. Billboards are
+ * smashed by driving into them; speed cameras clock whatever passes and keep
+ * your best. Both pay Rep, which is what ties free roam to the ladder.
+ *
+ * Counts are targets rather than guarantees: they are placed against the
+ * generated street network with a minimum spacing, and a city that cannot fit
+ * that many gets fewer rather than a clump.
+ */
+export const BILLBOARD_COUNT = 90;
+export const CAMERA_COUNT = 30;
+/** How far apart they are kept, so finding one is not finding six. */
+export const BILLBOARD_SPACING = m(340);
+export const CAMERA_SPACING = m(700);
+/** Clear of the kerb, and how big the board is. */
+export const BILLBOARD_KERB_GAP = m(3);
+export const BILLBOARD_WIDTH = m(11);
+export const BILLBOARD_HEIGHT = m(5.5);
+export const BILLBOARD_POST = m(5);
+export const CAMERA_KERB_GAP = m(2);
+export const CAMERA_HEIGHT_ABOVE = m(6);
+/** How close the car has to get. A billboard is hit; a camera only watches. */
+export const BILLBOARD_HIT = m(7);
+export const CAMERA_RANGE = m(9);
+/** Rep for a billboard, and for a camera at the player's full top speed. */
+export const REP_BILLBOARD = 150;
+export const REP_CAMERA = 220;
+/** Below this fraction of top speed a camera is not worth photographing. */
+export const CAMERA_MIN_SPEED = 0.3;
+/** How far the minimap hints at what has not been found yet. */
+export const COLLECTIBLE_HINT_RANGE = m(300);

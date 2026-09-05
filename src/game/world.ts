@@ -386,7 +386,7 @@ export class World {
       // Finishing second still pays. The ladder should never be a hard wall.
       this.rep.award('raceLoss');
     }
-    saveProgress({ beaten: this.beaten, rep: this.rep.total });
+    saveProgress({ ...loadProgress(), beaten: this.beaten, rep: this.rep.total });
   }
 
   /**

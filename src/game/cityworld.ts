@@ -41,6 +41,7 @@ import {
   REP_SAVE_INTERVAL,
 } from './constants';
 import { RepLedger } from './rep';
+import { Collectibles } from './collectibles';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -154,6 +155,8 @@ export class CityWorld {
 
   /** Rep, the single progression currency (#64). */
   readonly rep = new RepLedger();
+  /** Billboards and speed cameras: what is left to find (#93). */
+  readonly collectibles: Collectibles;
 
   /**
    * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
@@ -191,9 +194,12 @@ export class CityWorld {
     this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
+    this.collectibles = new Collectibles(city);
     // Carried over from whatever this player has already earned, the same way
     // the track sim loads its rival count. Safe where there is no storage.
-    this.rep.total = loadProgress().rep;
+    const saved = loadProgress();
+    this.rep.total = saved.rep;
+    this.collectibles.load(saved.smashed, saved.clocked);
     this.spawn();
   }
 
@@ -336,6 +342,13 @@ export class CityWorld {
    */
   private earn(dt: number): void {
     this.nearMisses();
+    this.collectibles.update(
+      dt,
+      this,
+      Math.abs(this.speed) / this.maxSpeed,
+      this.rep,
+      this.level,
+    );
 
     if (this.police.state !== 'pursuit') {
       this.pursuitRep = 0;
@@ -388,7 +401,12 @@ export class CityWorld {
     this.sinceSave = 0;
     if (this.rep.total === this.savedAt) return;
     this.savedAt = this.rep.total;
-    saveProgress({ ...loadProgress(), rep: this.rep.total });
+    saveProgress({
+      ...loadProgress(),
+      rep: this.rep.total,
+      smashed: [...this.collectibles.smashed],
+      clocked: [...this.collectibles.clocked],
+    });
   }
 
   /**

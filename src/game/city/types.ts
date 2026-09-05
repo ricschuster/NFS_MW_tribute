@@ -164,6 +164,29 @@ export interface StreetProp {
   variant: number;
 }
 
+/**
+ * Something to find in the city (#93).
+ *
+ * A billboard is smashed by driving into it. A speed camera clocks whatever
+ * passes it and keeps your best. Both are city *data* for the same reason
+ * buildings are: the sim has to be able to collide with one without a renderer
+ * in the room, and the playtests have to be able to build a city headlessly.
+ */
+export type CollectibleKind = 'billboard' | 'camera';
+
+export interface Collectible {
+  /** Stable within one seed: it is what a save file records. */
+  id: number;
+  kind: CollectibleKind;
+  at: Vec2;
+  /** Height of the road it stands beside. */
+  y: number;
+  /** Facing, in radians about y. A billboard faces the traffic; a camera watches it. */
+  angle: number;
+  /** Which road it belongs to, so a camera knows what road it is clocking. */
+  road: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -199,4 +222,5 @@ export interface City {
   superblocks: Superblock[];
   buildings: Building[];
   furniture: StreetProp[];
+  collectibles: Collectible[];
 }

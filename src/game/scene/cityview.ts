@@ -348,7 +348,12 @@ export class CityView {
   }
 
   private listen(canvas: HTMLCanvasElement): void {
-    addEventListener('keydown', (e) => this.held.add(e.key.toLowerCase()));
+    addEventListener('keydown', (e) => {
+      // Tab holds the collection map open (#93), so it must not also walk the
+      // browser's focus off the canvas.
+      if (e.key === 'Tab') e.preventDefault();
+      this.held.add(e.key.toLowerCase());
+    });
     addEventListener('keyup', (e) => this.held.delete(e.key.toLowerCase()));
 
     canvas.addEventListener('pointerdown', () => (this.dragging = true));
@@ -438,6 +443,9 @@ export class CityView {
     this.car.position.set(world.x, world.y, world.z);
     this.car.rotation.y = world.heading;
     if (held('b')) this.director.glanceBack();
+    // Tab holds the collection map open: what has been found, and where the
+    // rest of it is. Held rather than toggled, so it cannot be left up.
+    if (this.hud) this.hud.showMap = held('tab');
 
     this.trafficCars.begin();
     for (const car of world.traffic.cars) {
@@ -472,6 +480,8 @@ export class CityView {
     this.wreckCars.end();
     this.spikes(world);
     this.chopper(dt, world);
+    // The board comes off a smashed billboard; the frame stays standing (#93).
+    this.cityscape.collectibles.setSmashed(world.collectibles.smashed);
 
     // The camera is the director's business now (#88), not this loop's.
     const shot = this.director.update(dt, world);
