@@ -44,8 +44,9 @@ Three things run off one deployment, and the query string picks between them.
 
 **There are two simulations, and that is deliberate.** `world.ts` is the track
 model the shipped game still runs on. `cityworld.ts` is the same car in the
-city. Traffic, police, collision and cameras have moved across; **races, rivals
-and Rep have not**, which is the main thing left before `world.ts` can retire.
+city. Traffic, police, collision, cameras and Rep have moved across; **races
+and rivals have not**, which is the main thing left before `world.ts` can
+retire.
 
 The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
 229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
@@ -70,6 +71,7 @@ src/game/
   game.ts         the Canvas renderer, HUD and state machine for that sim
   cityworld.ts    the car in the city: position, heading, height, collision
   impact.ts       what it takes to wreck a car: closing speed, angle, a wall
+  rep.ts          the award table: what everything you do is worth
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
                   roadblocks, spike strips, a helicopter, and Enforcers that
@@ -106,7 +108,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 217 unit tests + playtests
+npm run test       # 232 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -157,19 +159,22 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64
 from M5.
 
-**M5: Open-world systems - 16 open.** The pursuit is now most of the way
-built: #58 (six heat levels), #63 (cooldown), #94 (takedowns), #59
-(roadblocks), #61 (Enforcers), #60 (spike strips) and #62 (the helicopter).
+**M5: Open-world systems - 15 open.** The pursuit is built: #58 (six heat
+levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
+#60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency.
 That is the framework the rest keys off. Natural next ones, in order of
 how much they use what already exists:
 
+- **#91 the ladder of ten** - Rep exists now (#64), and the ladder is meant to
+  be unlocked by a Rep total rather than by a count of wins. This is what
+  turns the pursuit into a game.
 - **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and
   the last of the pursuit furniture.
 - **#92 ambushes**, **#76 radio chatter** - both key off the pursuit as it now
-  stands.
+  stands. **#93 collectibles** pays straight into Rep.
 - **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
   races into the city and are what let `world.ts` finally retire.
 
@@ -187,10 +192,10 @@ before the pivot and both still live.
   road, the other a distance between two points. Reusing them caused three
   separate bugs, one of which culled every cop the step after it spawned. Check
   which world a constant belongs to before reaching for it.
-- **Races, rivals and Rep are still only on the track**, so `?renderer=drive`
-  has nothing to *do* in it beyond driving and being chased. That is now the
-  single biggest gap: the pursuit is nearly finished and there is no game
-  around it.
+- **Races and rivals are still only on the track**, so `?renderer=drive` has
+  nothing to *do* in it beyond driving, being chased, and earning Rep for it.
+  That is now the single biggest gap: the pursuit is finished, the currency
+  exists, and there is no ladder to spend it on. #91 is the next move.
 - **The city has no sound.** `audio.ts` is wired to the Canvas game only, so
   none of the pursuit - sirens, the rotor, the spikes - is audible in Kestrel
   Bay. #62 assumed a rotor loop and did not get one.

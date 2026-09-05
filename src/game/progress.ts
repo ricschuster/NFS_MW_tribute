@@ -1,8 +1,16 @@
 const STORAGE_KEY = 'crosstown.progress.v1';
 
-/** Persisted player progress. `beaten` = how many rivals have been defeated. */
+/**
+ * Persisted player progress.
+ *
+ * `beaten` is how many track rivals have been defeated. `rep` is the free-roam
+ * currency from #64, and it is deliberately in the same record and the same
+ * storage key: they are one player's progress, and the ladder is about to be
+ * driven by Rep rather than by a count of wins (#91).
+ */
 export interface Progress {
   beaten: number;
+  rep: number;
 }
 
 /** Load progress from localStorage; returns a fresh start if unavailable. */
@@ -12,13 +20,16 @@ export function loadProgress(): Progress {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Progress>;
       if (typeof parsed.beaten === 'number' && parsed.beaten >= 0) {
-        return { beaten: Math.floor(parsed.beaten) };
+        // `rep` is read as optional so saves written before #64 still load
+        // rather than being thrown away as malformed.
+        const rep = typeof parsed.rep === 'number' && parsed.rep >= 0 ? Math.floor(parsed.rep) : 0;
+        return { beaten: Math.floor(parsed.beaten), rep };
       }
     }
   } catch {
     // no localStorage (e.g. tests / SSR) or malformed data — start fresh
   }
-  return { beaten: 0 };
+  return { beaten: 0, rep: 0 };
 }
 
 /** Persist progress; a no-op where localStorage is unavailable. */

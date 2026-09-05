@@ -731,3 +731,53 @@ export const HELI_SEE_RADIUS = m(170);
  */
 export const COVER_MIN = m(3);
 export const COVER_MAX = m(22);
+
+/**
+ * Rep (#64).
+ *
+ * The single progression currency, earned from everything rather than from
+ * winning races. That is the point of it: in a free-roam game the time between
+ * events is most of the game, and a currency that only pays for events makes
+ * driving around worth nothing.
+ *
+ * The numbers are round on purpose. They are a *scoring table*, and a table
+ * whose entries are 287 and 412 tells a player nothing about which of two
+ * things is worth doing.
+ */
+export const REP_TAKEDOWN = 300;
+export const REP_ROADBLOCK = 250;
+/** Wrecking a civilian car. Small: it is something that happened to you. */
+export const REP_WRECK = 40;
+export const REP_NEAR_MISS = 25;
+/** Per second of an active pursuit, multiplied by the heat level. */
+export const REP_PURSUIT_PER_SECOND = 10;
+/** How often the running total from a pursuit is actually shown. */
+export const REP_PURSUIT_TICK = 5;
+/** Getting away, multiplied by the heat level you got away at. */
+export const REP_ESCAPE = 400;
+
+/**
+ * How much more everything is worth while they are actually chasing you.
+ *
+ * This is the whole shape of the economy: a takedown in free roam is worth a
+ * takedown, and the same takedown at heat five is worth two and a half of
+ * them. Running is the multiplier.
+ */
+export const REP_HEAT_BONUS = 0.3;
+
+/**
+ * How close a car has to pass, and how fast, to count as a near miss.
+ *
+ * Written against `CAR_RADIUS` rather than in metres, because it has to be
+ * wider than the range at which the two cars are *touching* (`CAR_RADIUS *
+ * 2.2`). A near-miss band narrower than the collision band is a band that does
+ * not exist, and the first version of this was exactly that.
+ */
+export const REP_NEAR_MISS_RANGE = CAR_RADIUS * 4;
+export const REP_NEAR_MISS_SPEED = 0.35;
+
+/** How long an award stays on screen, and how many stack up at once. */
+export const REP_POPUP_TIME = 2.6;
+export const REP_POPUPS = 5;
+/** Seconds between writes to storage. Every award would hammer it. */
+export const REP_SAVE_INTERVAL = 4;

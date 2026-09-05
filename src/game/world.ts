@@ -324,7 +324,7 @@ export class World {
     this.speed = 0;
     if (result === 'won') {
       this.beaten = Math.min(RIVALS.length, this.beaten + 1);
-      saveProgress({ beaten: this.beaten });
+      saveProgress({ ...loadProgress(), beaten: this.beaten });
     }
   }
 
