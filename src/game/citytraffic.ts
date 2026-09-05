@@ -224,10 +224,24 @@ export class CityTraffic {
     if (nearby.length === 0) return null;
 
     const road = nearby[this.rng.int(nearby.length)];
+
+    // Put the car at the point on that road nearest where we were looking, not
+    // at a random point along it. An arterial can be kilometres long, so a
+    // random t drops the car anywhere on the map - it only has to *pass* near
+    // the player to be picked.
+    const a = this.city.nodes[road.a].pos;
+    const b = this.city.nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const lengthSquared = Math.max(1, dx * dx + dz * dz);
+    const nearest = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / lengthSquared));
+    const forward = this.rng.chance(0.5);
+
     const car: TrafficCar = {
       road,
-      t: this.rng.float(),
-      forward: this.rng.chance(0.5),
+      // `t` runs in the direction of travel, so it flips with `forward`.
+      t: forward ? nearest : 1 - nearest,
+      forward,
       speed: this.paceFor(road),
       colour: CAR_COLORS[this.rng.int(CAR_COLORS.length)],
       x: 0,
