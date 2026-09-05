@@ -73,24 +73,24 @@ export const CAR_COLORS = [
 export const PLAYER_Z = CAMERA_HEIGHT * CAMERA_DEPTH;
 
 /** Police pursuit. Cops are tracked by how far they trail the player (world units). */
-export const COP_MAX_SPEED_FRAC = 0.7; // cop top speed vs player max (base)
-export const COP_HEAT_SPEED_FRAC = 0.28; // extra at full heat (<1 total, so always outrunnable)
+export const COP_MAX_SPEED_FRAC = 0.9; // cop top speed vs player max (base)
+export const COP_HEAT_SPEED_FRAC = 0.08; // extra at full heat (<1 total, so always outrunnable)
 export const COP_LANE_KP = 1.4; // how quickly the cop slides into your lane
 export const COP_FIRST_SPAWN = 3; // seconds before the first pursuit
 export const COP_RESPAWN = 5; // delay before a new pursuit after escaping
 export const COP_BUST_COOLDOWN = 6; // delay before a new pursuit after a bust
 export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
-export const COP_SPAWN_DISTANCE = 1300; // how far back a cop enters
-export const COP_OUTRUN_DISTANCE = 2200; // trail farther than this and the cop is lost
+export const COP_SPAWN_DISTANCE = 1600; // how far back a cop enters
+export const COP_OUTRUN_DISTANCE = 5000; // trail farther than this and the cop is lost
 export const COP_PIN_LEAD = 220; // render lead when on your bumper (large / near)
 export const COP_FAR_LEAD = 1400; // render lead when far behind (small / up-screen)
-export const PURSUIT_RANGE = 1500; // a cop trailing within this counts as "engaged"
-export const BUST_DISTANCE = 260; // this close (or closer) builds the bust timer
-export const BUST_TIME = 2.5; // seconds pinned before BUSTED
+export const PURSUIT_RANGE = 3000; // a cop trailing within this counts as "engaged"
+export const BUST_DISTANCE = 200; // this close (or closer) builds the bust timer
+export const BUST_TIME = 3.5; // seconds pinned before BUSTED
 export const ESCAPE_TIME = 4; // seconds clear of cops before ESCAPED
 export const MAX_COPS = 3; // spawn-count cap at high heat
 export const MAX_HEAT_LEVEL = 3; // discrete heat levels for the HUD
-export const HEAT_RISE = 0.08; // heat/sec while a cop is close
+export const HEAT_RISE = 0.1; // heat/sec while a cop is close
 export const HEAT_DECAY = 0.12; // heat/sec while clear
 
 /** Seconds the BUSTED overlay holds before the pursuit resets. */

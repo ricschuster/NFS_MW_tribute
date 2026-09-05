@@ -150,11 +150,39 @@ describe('playtest: pursuit', () => {
   it('escapes when the player floors it away from the cops', () => {
     const w = new World({ traffic: false });
     let sawEscape = false;
+    // Steer back to centre as well as flooring it: throttle alone drifts off
+    // the road on the first curve, and an off-road car gets caught, which is
+    // the pursuit working rather than the escape failing.
     play(w, 14, () => {
       if (w.escapedFlash > 0) sawEscape = true;
+      if (w.playerX > 0.05) return press({ up: true, left: true });
+      if (w.playerX < -0.05) return press({ up: true, right: true });
       return press({ up: true });
     });
     expect(sawEscape).toBe(true);
+  });
+
+  it('escalates a mid-speed pursuit instead of settling it in a few seconds', () => {
+    const w = new World({ traffic: false });
+    let chase = 0;
+    let mostCops = 0;
+    let topLevel = 0;
+    play(w, 20, (_t, w) => {
+      if (w.police.pursuing) {
+        chase += STEP;
+        mostCops = Math.max(mostCops, w.police.cops.length);
+        topLevel = Math.max(topLevel, w.police.level);
+      }
+      // hold a fast-but-not-flat-out pace, staying on the road
+      const throttle = w.speed < w.maxSpeed * 0.9;
+      if (w.playerX > 0.05) return press({ up: throttle, left: true });
+      if (w.playerX < -0.05) return press({ up: throttle, right: true });
+      return press({ up: throttle });
+    });
+
+    expect(chase).toBeGreaterThan(6); // long enough to be a chase
+    expect(topLevel).toBeGreaterThanOrEqual(2); // heat actually climbs
+    expect(mostCops).toBeGreaterThan(1); // and pulls in backup
   });
 });
 
