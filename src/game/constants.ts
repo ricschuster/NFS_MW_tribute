@@ -436,7 +436,14 @@ export const MINIMAP_SIZE = 190;
  * outrun on speed alone is a pursuit with no answer, and `npm run feel` exists
  * partly to keep checking it.
  */
-export type CopKind = 'cruiser' | 'unmarked' | 'state' | 'suv' | 'federal' | 'elite';
+export type CopKind =
+  | 'cruiser'
+  | 'unmarked'
+  | 'state'
+  | 'suv'
+  | 'federal'
+  | 'elite'
+  | 'enforcer';
 
 export interface CopUnit {
   /** Body colour, so the threat can be read at a glance. */
@@ -454,6 +461,10 @@ export const COP_UNITS: Record<CopKind, CopUnit> = {
   suv: { colour: '#23282e', scale: 1.22, pace: 0.98 },
   federal: { colour: '#101820', scale: 1.08, pace: 1.09 },
   elite: { colour: '#2b0f14', scale: 1.16, pace: 1.11 },
+  // The heavy Enforcer (#61). Slower than everything else and much bigger,
+  // because it is not trying to follow you - it is trying to be where you are
+  // about to be, and it only has to be right once.
+  enforcer: { colour: '#171a1f', scale: 1.5, pace: 0.94 },
 };
 
 export interface HeatLevel {
@@ -463,6 +474,15 @@ export interface HeatLevel {
   maxCops: number;
   /** Base speed as a fraction of the player's top speed. Always under 1. */
   speed: number;
+  /**
+   * How many Enforcers come at you head on (#61), and which unit they are.
+   *
+   * A budget of their own rather than a share of `maxCops`: they are a
+   * different threat, and spending the chase budget on them would thin out the
+   * pursuit behind you every time one turned up in front of it.
+   */
+  enforcers: number;
+  enforcerUnit: CopKind;
 }
 
 /**
@@ -473,12 +493,12 @@ export interface HeatLevel {
  * with no answer.
  */
 export const HEAT_LEVELS: HeatLevel[] = [
-  { units: ['cruiser'], maxCops: 2, speed: 0.84 },
-  { units: ['cruiser', 'unmarked'], maxCops: 3, speed: 0.85 },
-  { units: ['unmarked', 'state'], maxCops: 4, speed: 0.86 },
-  { units: ['state', 'suv'], maxCops: 4, speed: 0.87 },
-  { units: ['state', 'suv', 'federal'], maxCops: 5, speed: 0.875 },
-  { units: ['federal', 'elite', 'suv'], maxCops: 6, speed: 0.88 },
+  { units: ['cruiser'], maxCops: 2, speed: 0.84, enforcers: 0, enforcerUnit: 'suv' },
+  { units: ['cruiser', 'unmarked'], maxCops: 3, speed: 0.85, enforcers: 0, enforcerUnit: 'suv' },
+  { units: ['unmarked', 'state'], maxCops: 4, speed: 0.86, enforcers: 1, enforcerUnit: 'suv' },
+  { units: ['state', 'suv'], maxCops: 4, speed: 0.87, enforcers: 1, enforcerUnit: 'enforcer' },
+  { units: ['state', 'suv', 'federal'], maxCops: 5, speed: 0.875, enforcers: 2, enforcerUnit: 'enforcer' },
+  { units: ['federal', 'elite', 'suv'], maxCops: 6, speed: 0.88, enforcers: 2, enforcerUnit: 'enforcer' },
 ];
 
 /** How many heat levels there are. Six, as the genre has had for twenty years. */
@@ -602,3 +622,23 @@ export const ROADBLOCK_SPEED_KEPT = 0.22;
 export const ROADBLOCK_CAR_SLOT = CAR_WIDTH_WORLD * 1.9;
 /** How far the cars are thrown when somebody comes through the middle. */
 export const ROADBLOCK_SCATTER = m(3);
+
+/**
+ * Enforcers (#61).
+ *
+ * Every other cop trails you and slides into your lane. An Enforcer is the
+ * other thing: it comes from in front, holds the line you are on, and tries to
+ * end the pursuit in one hit. Dodging it means committing late, which is why
+ * it is placed close enough to be a reaction rather than a route change.
+ *
+ * Light ones (an SUV) from heat three, heavy ones from four - see
+ * `HEAT_LEVELS`, which is where the counts live.
+ */
+export const ENFORCER_MIN_LEVEL = 3;
+/** How far ahead one comes in, and how long between them. */
+export const ENFORCER_SPAWN = m(300);
+export const ENFORCER_INTERVAL = 11;
+/** Speed the player keeps after being hit by one. It is meant to end you. */
+export const ENFORCER_SPEED_KEPT = 0.12;
+/** How much of a hit it shrugs off, on top of its size. It is built for this. */
+export const ENFORCER_TOUGHNESS = 1.5;

@@ -20,6 +20,10 @@ import {
   ROADBLOCK_GAP_CHANCE,
   ROADBLOCK_GAP_FALLOFF,
   ROADBLOCK_SPEED_KEPT,
+  ENFORCER_MIN_LEVEL,
+  ENFORCER_SPEED_KEPT,
+  ENFORCER_SPAWN,
+  SHUNT_SPEED_KEPT,
   type CopKind,
 } from './constants';
 import type { InputState } from './world';
@@ -353,9 +357,10 @@ describe('the police', () => {
     // Either it has you now or it had you and the state has cycled; what must
     // not happen is a pursuit that can never end either way.
     expect(world.police.heat).toBeGreaterThanOrEqual(0);
-    expect(world.police.cops.length).toBeLessThanOrEqual(
-      HEAT_LEVELS[HEAT_LEVEL_COUNT - 1].maxCops,
-    );
+    // Two budgets since #61: the ones following you and the ones sent to meet
+    // you. Neither grows without bound, which is the thing being asserted.
+    const top = HEAT_LEVELS[HEAT_LEVEL_COUNT - 1];
+    expect(world.police.cops.length).toBeLessThanOrEqual(top.maxCops + top.enforcers);
   });
 
   it('is deterministic', () => {
@@ -394,7 +399,7 @@ describe('heat levels', () => {
   it('never sends a car faster than yours', () => {
     for (const level of HEAT_LEVELS) {
       expect(level.speed).toBeLessThan(1);
-      for (const kind of level.units) {
+      for (const kind of [...level.units, level.enforcerUnit]) {
         const unit = COP_UNITS[kind];
         expect(level.speed * unit.pace).toBeLessThan(1);
       }
@@ -414,7 +419,10 @@ describe('heat levels', () => {
     for (let t = 0; t < 90; t += STEP) {
       world.step(STEP, press({ up: true, right: Math.floor(t / 5) % 2 === 0 }));
       for (const cop of world.police.cops) {
-        expect(HEAT_LEVELS.some((l) => l.units.includes(cop.kind))).toBe(true);
+        const from = HEAT_LEVELS.some((l) =>
+          cop.role === 'enforcer' ? l.enforcerUnit === cop.kind : l.units.includes(cop.kind),
+        );
+        expect(from).toBe(true);
       }
     }
   });
@@ -541,6 +549,7 @@ describe('takedowns', () => {
       y: world.y,
       heading: world.heading,
       kind,
+      role: 'chase',
     };
     world.police.cops.push(cop);
     return cop;
@@ -801,6 +810,7 @@ describe('roadblocks', () => {
       y: 0,
       heading: world.heading,
       kind: 'cruiser',
+      role: 'chase',
     };
     world.police.cops.push(cop);
 
@@ -861,5 +871,185 @@ describe('roadblocks', () => {
       ROADBLOCK_GAP_CHANCE - ROADBLOCK_GAP_FALLOFF * (level - ROADBLOCK_MIN_LEVEL);
     expect(chance(ROADBLOCK_MIN_LEVEL)).toBeGreaterThan(chance(HEAT_LEVEL_COUNT));
     expect(chance(HEAT_LEVEL_COUNT)).toBeLessThan(0.35);
+  });
+});
+
+/**
+ * Enforcers (#61).
+ *
+ * The pursuit is driven directly here, as it is for roadblocks and for the
+ * same reason: what is under test is where a unit comes from and what it does
+ * when it gets there, and a scripted drive answers whichever version of that
+ * question it happened to survive long enough to reach.
+ */
+describe('enforcers', () => {
+  const M = UNITS_PER_METRE;
+
+  /** A cop holding station behind, so the pursuit keeps running and has eyes on. */
+  function tail(world: CityWorld): Cop {
+    const cop: Cop = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: world.heading,
+      kind: 'cruiser',
+      role: 'chase',
+    };
+    world.police.cops.push(cop);
+    return cop;
+  }
+
+  /** Hold a pursuit at `heat` for `seconds` and hand back the Enforcers sent. */
+  function hunted(world: CityWorld, heat: number, seconds: number): Cop[] {
+    const cop = tail(world);
+    for (let t = 0; t < seconds; t += STEP) {
+      cop.x = world.x - Math.sin(world.heading) * 30 * M;
+      cop.z = world.z - Math.cos(world.heading) * 30 * M;
+      cop.y = world.y;
+      world.police.heat = heat;
+      world.police.update(STEP, world, world.maxSpeed);
+    }
+    return world.police.cops.filter((c) => c.role === 'enforcer');
+  }
+
+  const parked = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  it('stays away below heat three', () => {
+    const world = parked();
+    expect(hunted(world, 0, 40).length).toBe(0);
+  });
+
+  it('comes out once the heat is high enough', () => {
+    const world = parked();
+    world.police.heat = 0.5;
+    expect(world.police.level).toBeGreaterThanOrEqual(ENFORCER_MIN_LEVEL);
+    expect(hunted(world, 0.5, 40).length).toBeGreaterThan(0);
+  });
+
+  // The whole difference between an Enforcer and a cruiser: one is behind you
+  // and one is not.
+  it('arrives in front of you, not behind', () => {
+    const world = parked();
+    const sent = hunted(world, 0.5, 40);
+    expect(sent.length).toBeGreaterThan(0);
+    for (const cop of sent) {
+      const dx = cop.x - world.x;
+      const dz = cop.z - world.z;
+      const ahead = dx * Math.sin(world.heading) + dz * Math.cos(world.heading);
+      expect(ahead).toBeGreaterThan(0);
+      expect(Math.hypot(dx, dz)).toBeLessThan(ENFORCER_SPAWN * 1.6);
+    }
+  });
+
+  it('is a heavier unit than the cars chasing you', () => {
+    const world = parked();
+    const sent = hunted(world, 0.9, 40);
+    expect(sent.length).toBeGreaterThan(0);
+    for (const cop of sent) {
+      expect(COP_UNITS[cop.kind].scale).toBeGreaterThan(COP_UNITS.cruiser.scale);
+    }
+  });
+
+  it('does not eat the budget of the cars chasing you', () => {
+    const world = parked();
+    hunted(world, 0.9, 60);
+    const chasing = world.police.cops.filter((c) => c.role === 'chase').length;
+    // The tail we put in is one of them, and the pursuit is free to call more.
+    expect(chasing).toBeGreaterThan(0);
+  });
+
+  it('costs far more to hit than a cruiser does', () => {
+    const ram = (role: Cop['role'], kind: CopKind) => {
+      const world = parked();
+      const cop: Cop = {
+        road: world.onRoad!,
+        t: 0.5,
+        forward: true,
+        speed: 0,
+        damage: 0,
+        x: world.x + Math.sin(world.heading) * 3 * M,
+        z: world.z + Math.cos(world.heading) * 3 * M,
+        y: world.y,
+        heading: world.heading + Math.PI,
+        kind,
+        role,
+      };
+      world.police.cops.push(cop);
+      world.speed = world.maxSpeed * 0.3;
+      world.step(STEP, NONE);
+      return { speed: world.speed, damage: cop.damage, wrecked: cop.damage >= 1 };
+    };
+
+    const cruiser = ram('chase', 'cruiser');
+    const heavy = ram('enforcer', 'enforcer');
+
+    expect(heavy.speed).toBeLessThan(cruiser.speed);
+    expect(ENFORCER_SPEED_KEPT).toBeLessThan(SHUNT_SPEED_KEPT);
+    // And it takes far more to put one out than it takes to put a cruiser out.
+    expect(heavy.damage).toBeLessThan(cruiser.damage);
+  });
+
+  it('holds your line, where a chase unit keeps right whatever you do', () => {
+    const world = parked();
+    const road = world.onRoad!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    const length = Math.max(1, Math.hypot(b.x - a.x, b.z - a.z));
+    const hx = (b.x - a.x) / length;
+    const hz = (b.z - a.z) / length;
+
+    /** How far off its road's centreline a cop is sitting. */
+    const lateral = (cop: Cop) => {
+      const from = cop.forward ? a : b;
+      const to = cop.forward ? b : a;
+      const cx = from.x + (to.x - from.x) * cop.t;
+      const cz = from.z + (to.z - from.z) * cop.t;
+      const dx = (to.x - from.x) / length;
+      const dz = (to.z - from.z) / length;
+      return (cop.x - cx) * -dz + (cop.z - cz) * dx;
+    };
+
+    const put = (role: Cop['role']): Cop => {
+      const cop: Cop = {
+        road,
+        t: 0.2,
+        forward: true,
+        speed: 0,
+        damage: 0,
+        x: 0,
+        z: 0,
+        y: 0,
+        heading: 0,
+        kind: role === 'enforcer' ? 'enforcer' : 'cruiser',
+        role,
+      };
+      world.police.cops.push(cop);
+      return cop;
+    };
+
+    const enforcer = put('enforcer');
+    const chaser = put('chase');
+    world.police.heat = 0.9;
+
+    // Put the car well off the centreline, across the road, and let them steer.
+    world.x = a.x + (b.x - a.x) * 0.3 - hz * 5 * M;
+    world.z = a.z + (b.z - a.z) * 0.3 + hx * 5 * M;
+    for (let t = 0; t < 0.5; t += STEP) world.police.update(STEP, world, world.maxSpeed);
+    const enforcerLeft = lateral(enforcer);
+    const chaserLeft = lateral(chaser);
+
+    // Now the other side of the road.
+    world.x = a.x + (b.x - a.x) * 0.3 + hz * 5 * M;
+    world.z = a.z + (b.z - a.z) * 0.3 - hx * 5 * M;
+    for (let t = 0; t < 0.5; t += STEP) world.police.update(STEP, world, world.maxSpeed);
+
+    // The Enforcer moved across with the car; the chaser did not move at all.
+    expect(Math.abs(lateral(enforcer) - enforcerLeft)).toBeGreaterThan(M);
+    expect(Math.abs(lateral(chaser) - chaserLeft)).toBeLessThan(M * 0.5);
   });
 });

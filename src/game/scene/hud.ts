@@ -222,9 +222,12 @@ export class Hud {
       const dx = (cop.x - world.x) * scale;
       const dz = -(cop.z - world.z) * scale;
       if (Math.hypot(dx, dz) > radius) continue;
+      const enforcer = cop.role === 'enforcer';
       ctx.beginPath();
-      ctx.arc(dx, dz, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#4d8bff';
+      ctx.arc(dx, dz, enforcer ? 5 : 3.5, 0, Math.PI * 2);
+      // Enforcers in red and bigger: the one coming the other way is the one
+      // you need to have seen before you meet it (#61).
+      ctx.fillStyle = enforcer ? '#ff5a45' : '#4d8bff';
       ctx.fill();
     }
 

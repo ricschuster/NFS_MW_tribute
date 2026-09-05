@@ -28,6 +28,8 @@ import {
   ROADBLOCK_GAP,
   ROADBLOCK_SPEED_KEPT,
   ROADBLOCK_SCATTER,
+  ENFORCER_SPEED_KEPT,
+  ENFORCER_TOUGHNESS,
 } from './constants';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -315,8 +317,13 @@ export class CityWorld {
     for (const cop of this.police.cops) {
       if (!touching(this, cop)) continue;
       const unit = COP_UNITS[cop.kind];
-      const hurt = impactDamage(this, cop, this.maxSpeed, this.grid, unit.scale);
-      this.hit(cop, hurt, SHUNT_SPEED_KEPT);
+      // An Enforcer is here to end the pursuit in one hit, so it hits far
+      // harder than a cruiser and takes far more to put out. Taking one down
+      // is meant to be a thing you did on purpose, not a thing you drove into.
+      const enforcer = cop.role === 'enforcer';
+      const toughness = enforcer ? unit.scale * ENFORCER_TOUGHNESS : unit.scale;
+      const hurt = impactDamage(this, cop, this.maxSpeed, this.grid, toughness);
+      this.hit(cop, hurt, enforcer ? ENFORCER_SPEED_KEPT : SHUNT_SPEED_KEPT);
       if (cop.damage >= 1) {
         this.police.remove(cop);
         this.wreck(cop, unit.colour, unit.scale, true);

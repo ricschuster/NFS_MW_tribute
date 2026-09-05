@@ -31,7 +31,9 @@ the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck
 it: time slows and the camera swings round the wreck. From heat two the police
 start parking cruisers across the road in front of you, sometimes with a gap
-and, the hotter it gets, more often without. All of that is off under
+and, the hotter it gets, more often without. From heat three they also send
+Enforcers: heavy units that come at you head on and steer for the lane you are
+in rather than the one beside it. All of that is off under
 `prefers-reduced-motion`, which leaves a plain camera behind the car.
 
 **Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,
