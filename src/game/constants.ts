@@ -100,3 +100,8 @@ export const RIVAL_LANE = 0.4; // lane the rival lines up in
 export const RIVAL_NEAR_LEAD = 420; // render lead when the rival is just ahead (bigger = keeps it on-screen at the line)
 export const RIVAL_FAR_LEAD = 1500; // render lead when the rival is far ahead
 export const RIVAL_VIEW_RANGE = 4000; // race-distance gap mapped across near..far lead
+
+/** Roadside scenery (purely visual). */
+export const PROP_SPACING = 9; // a roadside prop every N segments
+export const PROP_WORLD = 1150; // base prop size in world units
+export const PROP_OFFSET = 1.55; // lateral offset; >1 places it beyond the road edge

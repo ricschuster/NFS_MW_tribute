@@ -77,6 +77,7 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **The Blacklist** — sprint races against 15 rivals, ranked progression (saved)
 - [x] **Nitrous + drift feel** — SHIFT boost with a meter, cornering slide, speed lines
 - [x] **Sound** — synthesized engine (pitches with speed), pursuit siren, title pad, M to mute
+- [x] **Roadside scenery** — trees, billboards, and lamp posts projected alongside the road
 - [ ] **Sprites over vector art** — replace drawn car/road with pixel art
 
 ## Docs
