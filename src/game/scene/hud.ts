@@ -3,6 +3,8 @@ import {
   HEIGHT,
   MINIMAP_RANGE,
   MINIMAP_SIZE,
+  ROADBLOCK_GAP,
+  ROADBLOCK_MAX_LEAD,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -35,6 +37,7 @@ export class Hud {
     this.heat(world);
     this.minimap(world);
     this.takedowns(world);
+    this.roadblock(world);
     this.cooldown(world);
     this.banners(world);
 
@@ -181,6 +184,32 @@ export class Hud {
       ctx.stroke();
     }
 
+    // Roadblocks, gap and all. Drawing the hole matters as much as drawing the
+    // wall: the decision is which one you are looking at.
+    for (const block of world.police.roadblocks) {
+      const bx = (block.x - world.x) * scale;
+      const bz = -(block.z - world.z) * scale;
+      if (Math.hypot(bx, bz) > radius + block.half * scale) continue;
+      const ax = block.ax * scale;
+      const az = -block.az * scale;
+      ctx.strokeStyle = '#ff5a45';
+      ctx.lineWidth = 3;
+      const ends: [number, number][] =
+        block.gap === null
+          ? [[-block.half, block.half]]
+          : [
+              [-block.half, block.gap - ROADBLOCK_GAP],
+              [block.gap + ROADBLOCK_GAP, block.half],
+            ];
+      for (const [from, to] of ends) {
+        if (to <= from) continue;
+        ctx.beginPath();
+        ctx.moveTo(bx + ax * from, bz + az * from);
+        ctx.lineTo(bx + ax * to, bz + az * to);
+        ctx.stroke();
+      }
+    }
+
     for (const wreck of world.wrecks) {
       const dx = (wreck.x - world.x) * scale;
       const dz = -(wreck.z - world.z) * scale;
@@ -236,6 +265,37 @@ export class Hud {
       }
     }
     return roads;
+  }
+
+  /**
+   * A warning for a roadblock you are actually driving at (#59).
+   *
+   * Distance alone is not the test: one on the road behind you is not a thing
+   * to warn about, and one on a street you are crossing is not either. It has
+   * to be in front and roughly on your line.
+   */
+  private roadblock(world: CityWorld): void {
+    const { ctx } = this;
+    let closest = Infinity;
+    for (const block of world.police.roadblocks) {
+      const dx = block.x - world.x;
+      const dz = block.z - world.z;
+      const ahead = dx * Math.sin(world.heading) + dz * Math.cos(world.heading);
+      if (ahead <= 0 || ahead > ROADBLOCK_MAX_LEAD) continue;
+      const across = Math.abs(dx * Math.cos(world.heading) - dz * Math.sin(world.heading));
+      if (across > block.half) continue;
+      closest = Math.min(closest, ahead);
+    }
+    if (closest === Infinity) return;
+
+    // Brighter the closer it is, so the warning says how much time is left as
+    // well as that there is something there.
+    ctx.globalAlpha = 0.45 + 0.55 * (1 - closest / ROADBLOCK_MAX_LEAD);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ff5a45';
+    ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillText('ROADBLOCK AHEAD', WIDTH / 2, 92);
+    ctx.globalAlpha = 1;
   }
 
   /** The cooldown clock, and what it is waiting for. */

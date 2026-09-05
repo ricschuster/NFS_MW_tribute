@@ -27,10 +27,10 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown']);
+const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown', 'roadblock']);
 const VIEWS = flag('--view')
   ? [flag('--view')]
-  : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash', 'takedown'];
+  : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash', 'takedown', 'roadblock'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -158,6 +158,59 @@ for (const view of VIEWS) {
       world.step(1 / 60, none);
     });
     // Inside the cut, which runs on the director's own clock.
+    await page.waitForTimeout(1200);
+  }
+
+  if (view === 'roadblock') {
+    // Drive first, so the car is out on a street with the chase camera settled
+    // behind it - the director runs on real seconds and headless renders at a
+    // couple of frames a second, so an earlier version of this shot was a
+    // picture of the opening orbit with the barrier out of frame.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+
+    // The barrier is authored rather than placed by the pursuit, and that is
+    // the honest trade: where one goes is asserted on in the playtests, and
+    // what this picture is for is whether it reads as a wall with a way
+    // through it from the driver's seat. Same shape, same renderer, same HUD.
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const at = 25 * metre;
+      const x = world.x + Math.sin(world.heading) * at;
+      const z = world.z + Math.cos(world.heading) * at;
+      // Across the way the car is pointing.
+      const ax = Math.cos(world.heading);
+      const az = -Math.sin(world.heading);
+      const half = 10 * metre;
+      const slot = 650 * 1.9;
+      const gap = half * 0.45;
+
+      const cars = [];
+      const slots = Math.max(2, Math.round((half * 2) / slot));
+      for (let i = 0; i < slots; i++) {
+        const offset = -half + ((half * 2) / slots) * (i + 0.5);
+        if (Math.abs(offset - gap) < 3.8 * metre) continue;
+        cars.push({
+          x: x + ax * offset,
+          z: z + az * offset,
+          y: world.y,
+          heading: Math.atan2(ax, az),
+          kind: 'state',
+        });
+      }
+      // A pursuit has to be running or the block is swept up on the next
+      // step: the police do not leave cruisers parked across a road they have
+      // stopped chasing anyone on.
+      world.police.state = 'pursuit';
+      world.police.roadblocks.push({ road: world.onRoad, x, z, y: world.y, ax, az, half, gap, cars });
+      world.police.heat = 0.6;
+      world.speed = 0;
+    });
     await page.waitForTimeout(1200);
   }
 

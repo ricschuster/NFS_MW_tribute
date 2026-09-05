@@ -117,6 +117,15 @@ than judged from a screenshot. A car that reaches full damage stops being a
 `GraphCar` and becomes a `Wreck` on `CityWorld` - lifted out of traffic and out
 of the pursuit entirely, so nothing in either has to remember to skip it.
 
+**A roadblock is a line, not a row of cars** (issue #59). A wall built out of
+circles has holes between the circles, and a barrier you slip through by
+accident is worse than no barrier: `Roadblock` is a segment across the road
+with an optional hole in it, and the parked cruisers are drawn along it. They
+only go on roads at least `ROADBLOCK_MIN_WIDTH` wide, because a cruiser is
+nearly as wide as a lane at this scale and a block across a two-lane street is
+a wall with no decision in it - which also leaves the side streets as the way
+round.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

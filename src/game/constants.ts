@@ -559,3 +559,46 @@ export const TAKEDOWN_SLOWMO = 0.35;
 /** How far off the takedown camera stands, and how fast it swings round. */
 export const TAKEDOWN_DISTANCE = m(15);
 export const TAKEDOWN_ORBIT = 0.45;
+
+/**
+ * Roadblocks (#59).
+ *
+ * From heat two the police start putting cruisers across the road in front of
+ * you. The point is that it is a decision made early: it is placed a few
+ * seconds ahead at the speed you are actually doing, so you can see it coming
+ * and choose - thread the gap, take a side street, or go through it and pay.
+ *
+ * They only go on the big roads. A cruiser is nearly as wide as a lane at this
+ * scale, so a block across a two-lane street is a wall with no gap in it,
+ * which is not a decision. Putting them on arterials, boulevards and the
+ * interstate also means the side streets stay the way round, which is what
+ * makes one worth having.
+ */
+export const ROADBLOCK_MIN_LEVEL = 2;
+/** How many can be out at once, and how long between attempts to place one. */
+export const ROADBLOCK_MAX = 2;
+export const ROADBLOCK_INTERVAL = 13;
+/** How far ahead: this many seconds at current speed, within these bounds. */
+export const ROADBLOCK_LEAD_TIME = 3.2;
+export const ROADBLOCK_MIN_LEAD = m(150);
+export const ROADBLOCK_MAX_LEAD = m(650);
+/** Kept apart, so two of them are two decisions rather than one long wall. */
+export const ROADBLOCK_SPACING = m(420);
+/** Forgotten once the pursuit has taken you this far from it. */
+export const ROADBLOCK_FORGET = m(800);
+/** How straight-on the road has to run to your heading to be worth blocking. */
+export const ROADBLOCK_ALIGN = 0.7;
+/** Narrower than this and a block is a wall with no gap in it. */
+export const ROADBLOCK_MIN_WIDTH = m(16);
+/** How deep the barrier is, and how wide the gap is when there is one. */
+export const ROADBLOCK_REACH = m(4);
+export const ROADBLOCK_GAP = m(3.8);
+/** Chance of a gap at level two, and how much each level above takes off it. */
+export const ROADBLOCK_GAP_CHANCE = 0.85;
+export const ROADBLOCK_GAP_FALLOFF = 0.17;
+/** Speed kept after going through one. Heavy, but not a dead stop. */
+export const ROADBLOCK_SPEED_KEPT = 0.22;
+/** How much room each parked cruiser takes along the barrier. */
+export const ROADBLOCK_CAR_SLOT = CAR_WIDTH_WORLD * 1.9;
+/** How far the cars are thrown when somebody comes through the middle. */
+export const ROADBLOCK_SCATTER = m(3);
