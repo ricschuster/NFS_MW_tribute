@@ -6,6 +6,8 @@ import {
   REP_ESCAPE,
   REP_RACE_WIN,
   REP_RACE_LOSS,
+  REP_BILLBOARD,
+  REP_CAMERA,
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
@@ -38,7 +40,9 @@ export type RepReason =
   | 'pursuit'
   | 'escape'
   | 'raceWin'
-  | 'raceLoss';
+  | 'raceLoss'
+  | 'billboard'
+  | 'camera';
 
 interface RepKind {
   /** Base value, before the heat multiplier. */
@@ -56,6 +60,8 @@ const KINDS: Record<RepReason, RepKind> = {
   escape: { value: REP_ESCAPE, label: 'ESCAPED' },
   raceWin: { value: REP_RACE_WIN, label: 'RACE WON' },
   raceLoss: { value: REP_RACE_LOSS, label: 'RACE FINISHED' },
+  billboard: { value: REP_BILLBOARD, label: 'BILLBOARD' },
+  camera: { value: REP_CAMERA, label: 'SPEED CAMERA' },
 };
 
 /** One award, still worth showing. */

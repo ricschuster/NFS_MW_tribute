@@ -173,6 +173,14 @@ ladder is everything you do rather than only the last race you won. That is
 also why `world.ts` earns Rep at all: a currency you could only earn in
 `?renderer=drive` would be a ladder most players cannot climb.
 
+**Collectibles are city data, and the collection is not** (issue #93).
+`city/collectibles.ts` places billboards and speed cameras against the finished
+street graph with a minimum spacing, so a seed always produces the same ninety
+boards in the same places; `collectibles.ts` owns the half that belongs to a
+player - which are gone, and what you have been clocked at - because that is
+the half that gets saved. Ids are stable within a seed, which is what makes a
+save file mean anything.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

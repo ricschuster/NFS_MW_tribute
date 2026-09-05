@@ -7,6 +7,7 @@ import {
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
   REP_POPUP_TIME,
+  COLLECTIBLE_HINT_RANGE,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -27,12 +28,24 @@ import type { CityWorld } from '../cityworld';
  * a player without a map is lost, and being lost is not the same as exploring.
  */
 export class Hud {
+  /** Held while the collection map is open (#93). Set by whoever reads input. */
+  showMap = false;
+
   constructor(private readonly ctx: CanvasRenderingContext2D) {}
 
   draw(world: CityWorld): void {
     const { ctx } = this;
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.save();
+
+    // The collection map takes the whole screen. Drawing the driving HUD under
+    // it leaves the speedo and the minimap ghosting through the panel, which
+    // reads as a rendering fault rather than as a map.
+    if (this.showMap) {
+      this.map(world);
+      ctx.restore();
+      return;
+    }
 
     this.speed(world);
     this.nitrous(world);
@@ -44,6 +57,7 @@ export class Hud {
     this.shredded(world);
     this.overhead(world);
     this.cooldown(world);
+    this.collection(world);
     this.banners(world);
 
     ctx.restore();
@@ -257,6 +271,22 @@ export class Hud {
       }
     }
 
+    // What is nearby and not yet found. Without this you can drive past a
+    // billboard on the other side of a block and never know it was there.
+    for (const item of world.collectibles.near(world.x, world.z)) {
+      const done =
+        item.kind === 'billboard'
+          ? world.collectibles.smashed.has(item.id)
+          : world.collectibles.clocked.has(item.id);
+      if (done) continue;
+      const ix = (item.at.x - world.x) * scale;
+      const iz = -(item.at.z - world.z) * scale;
+      if (Math.hypot(item.at.x - world.x, item.at.z - world.z) > COLLECTIBLE_HINT_RANGE) continue;
+      if (Math.hypot(ix, iz) > radius) continue;
+      ctx.fillStyle = item.kind === 'billboard' ? '#ff9f45' : '#ffd166';
+      ctx.fillRect(ix - 2, iz - 2, 4, 4);
+    }
+
     for (const strip of world.police.spikes) {
       const sx = (strip.x - world.x) * scale;
       const sz = -(strip.z - world.z) * scale;
@@ -411,6 +441,127 @@ export class Hud {
     ctx.fillStyle = '#ffd166';
     ctx.font = '700 20px system-ui, sans-serif';
     ctx.fillText('HELICOPTER OVERHEAD - FIND COVER', WIDTH / 2, 68);
+  }
+
+  /**
+   * What is left to find, and what the last camera saw (#93).
+   *
+   * The count is the whole mechanic on a single line: a city with ninety
+   * billboards in it and no count is a city with no billboards in it, because
+   * nobody knows there is anything to look for.
+   */
+  private collection(world: CityWorld): void {
+    const { ctx } = this;
+    const found = world.collectibles;
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.fillText(
+      `BILLBOARDS ${found.smashed.size}/${found.billboards.length}   ` +
+        `CAMERAS ${found.clockedCount}/${found.cameras.length}   TAB MAP`,
+      WIDTH - 26,
+      MINIMAP_SIZE + 48,
+    );
+
+    const flash = found.flash;
+    if (!flash) return;
+    const kmh = Math.round(flash.speed * DISPLAY_MAX_KMH);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = flash.best ? '#ffd166' : 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillText(
+      flash.best ? `CLOCKED ${kmh} km/h - BEST` : `CLOCKED ${kmh} km/h`,
+      WIDTH / 2,
+      HEIGHT - 130,
+    );
+  }
+
+  /**
+   * The collection map (#93): the whole city, and everything still out there.
+   *
+   * The minimap answers "what is the next corner"; this answers "where have I
+   * not been". They are different questions and a 280 m circle cannot answer
+   * the second one.
+   */
+  private map(world: CityWorld): void {
+    const { ctx } = this;
+    const bounds = world.city.bounds;
+    const width = bounds.maxX - bounds.minX;
+    const depth = bounds.maxZ - bounds.minZ;
+
+    const inset = 40;
+    const scale = Math.min((WIDTH - inset * 2) / width, (HEIGHT - inset * 2) / depth);
+    const originX = WIDTH / 2 - (width * scale) / 2;
+    const originY = HEIGHT / 2 - (depth * scale) / 2;
+    // North up, and the same way round as `npm run city` draws it: two maps of
+    // one city that disagree about which way is up are worth less than either.
+    const px = (x: number) => originX + (x - bounds.minX) * scale;
+    const py = (z: number) => originY + (bounds.maxZ - z) * scale;
+
+    ctx.fillStyle = 'rgba(6, 10, 16, 0.88)';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // The bay and the river first. Without them the map is a grid of lines
+    // that could be any city; with them it is Kestrel Bay, and the bridges are
+    // where the lines cross the water.
+    for (const body of world.city.water) {
+      if (body.outline.length < 3) continue;
+      ctx.beginPath();
+      ctx.moveTo(px(body.outline[0].x), py(body.outline[0].z));
+      for (const point of body.outline.slice(1)) ctx.lineTo(px(point.x), py(point.z));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(24, 58, 88, 0.85)';
+      ctx.fill();
+    }
+
+    // Only the roads that give the city a shape. Three thousand street pieces
+    // at this scale is a grey rectangle.
+    ctx.lineWidth = 1;
+    for (const road of world.city.roads) {
+      if (road.class === 'street' || road.class === 'ramp') continue;
+      const a = world.city.nodes[road.a].pos;
+      const b = world.city.nodes[road.b].pos;
+      ctx.strokeStyle =
+        road.class === 'interstate' ? 'rgba(200, 135, 214, 0.75)' : 'rgba(150, 160, 170, 0.5)';
+      ctx.beginPath();
+      ctx.moveTo(px(a.x), py(a.z));
+      ctx.lineTo(px(b.x), py(b.z));
+      ctx.stroke();
+    }
+
+    for (const item of world.city.collectibles) {
+      const done =
+        item.kind === 'billboard'
+          ? world.collectibles.smashed.has(item.id)
+          : world.collectibles.clocked.has(item.id);
+      ctx.fillStyle = done
+        ? 'rgba(255, 255, 255, 0.22)'
+        : item.kind === 'billboard'
+          ? '#ff9f45'
+          : '#ffd166';
+      const size = item.kind === 'billboard' ? 4 : 3;
+      ctx.fillRect(px(item.at.x) - size / 2, py(item.at.z) - size / 2, size, size);
+    }
+
+    // The car, so the map is a place you are in rather than a diagram.
+    ctx.beginPath();
+    ctx.arc(px(world.x), py(world.z), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#7fe3ff';
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 16px system-ui, sans-serif';
+    ctx.fillText('KESTREL BAY', WIDTH / 2, 28);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '500 12px system-ui, sans-serif';
+    ctx.fillText(
+      `${world.collectibles.remaining} billboards left  ·  ` +
+        `${world.collectibles.cameras.length - world.collectibles.clockedCount} cameras unclocked`,
+      WIDTH / 2,
+      HEIGHT - 20,
+    );
   }
 
   /** The cooldown clock, and what it is waiting for. */

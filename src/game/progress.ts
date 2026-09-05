@@ -11,6 +11,10 @@ const STORAGE_KEY = 'crosstown.progress.v1';
 export interface Progress {
   beaten: number;
   rep: number;
+  /** Ids of the billboards smashed so far (#93). */
+  smashed: number[];
+  /** Speed camera id to the best fraction of top speed clocked at it. */
+  clocked: [number, number][];
 }
 
 /** Load progress from localStorage; returns a fresh start if unavailable. */
@@ -23,13 +27,22 @@ export function loadProgress(): Progress {
         // `rep` is read as optional so saves written before #64 still load
         // rather than being thrown away as malformed.
         const rep = typeof parsed.rep === 'number' && parsed.rep >= 0 ? Math.floor(parsed.rep) : 0;
-        return { beaten: Math.floor(parsed.beaten), rep };
+        const smashed = Array.isArray(parsed.smashed)
+          ? parsed.smashed.filter((id): id is number => typeof id === 'number')
+          : [];
+        const clocked = Array.isArray(parsed.clocked)
+          ? parsed.clocked.filter(
+              (row): row is [number, number] =>
+                Array.isArray(row) && typeof row[0] === 'number' && typeof row[1] === 'number',
+            )
+          : [];
+        return { beaten: Math.floor(parsed.beaten), rep, smashed, clocked };
       }
     }
   } catch {
     // no localStorage (e.g. tests / SSR) or malformed data — start fresh
   }
-  return { beaten: 0, rep: 0 };
+  return { beaten: 0, rep: 0, smashed: [], clocked: [] };
 }
 
 /** Persist progress; a no-op where localStorage is unavailable. */

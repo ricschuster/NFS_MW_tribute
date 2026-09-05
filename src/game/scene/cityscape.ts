@@ -3,6 +3,7 @@ import type { City } from '../city/types';
 import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
+import { CityCollectibles } from './collectibles';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /**
@@ -41,6 +42,8 @@ export class Cityscape {
 
   private readonly provider: BuildingProvider;
   private readonly furniture: StreetFurniture;
+  /** Billboards and speed cameras (#93). Public: the sim smashes them. */
+  readonly collectibles: CityCollectibles;
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
@@ -58,6 +61,9 @@ export class Cityscape {
 
     this.furniture = new StreetFurniture(city.furniture);
     for (const mesh of this.furniture.meshes) this.group.add(mesh);
+
+    this.collectibles = new CityCollectibles(city.collectibles);
+    for (const mesh of this.collectibles.meshes) this.group.add(mesh);
   }
 
   /**
@@ -333,6 +339,7 @@ export class Cityscape {
   dispose(): void {
     this.provider.dispose();
     this.furniture.dispose();
+    this.collectibles.dispose();
     for (const thing of this.owned) thing.dispose();
     this.group.clear();
   }

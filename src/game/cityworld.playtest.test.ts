@@ -1460,3 +1460,63 @@ describe('Rep', () => {
     expect(world.rep.total).toBe(0);
   });
 });
+
+/**
+ * Collectibles in the world (#93).
+ *
+ * The collection itself is tested in `collectibles.test.ts`. These are about
+ * the wiring: that driving into a billboard in the running sim smashes it and
+ * pays, and that the pursuit multiplier reaches it like everything else.
+ */
+describe('billboards and cameras, driven at', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** Put the car on top of the nearest billboard to it. */
+  function atABillboard(world: CityWorld) {
+    const board = world.collectibles.billboards[0];
+    world.x = board.at.x;
+    world.z = board.at.z;
+    world.y = board.y;
+    return board;
+  }
+
+  it('smashes a billboard the car is driven into', () => {
+    const world = still();
+    const board = atABillboard(world);
+    world.step(STEP, NONE);
+
+    expect(world.collectibles.smashed.has(board.id)).toBe(true);
+    expect(world.rep.total).toBeGreaterThan(0);
+    expect(world.rep.recent.some((a) => a.reason === 'billboard')).toBe(true);
+  });
+
+  it('counts down what is left to find', () => {
+    const world = still();
+    const before = world.collectibles.remaining;
+    atABillboard(world);
+    world.step(STEP, NONE);
+    expect(world.collectibles.remaining).toBe(before - 1);
+  });
+
+  it('pays more for one smashed under a pursuit', () => {
+    const calm = still();
+    atABillboard(calm);
+    calm.step(STEP, NONE);
+
+    const hot = still();
+    hot.police.state = 'pursuit';
+    hot.police.heat = 0.9;
+    atABillboard(hot);
+    hot.step(STEP, NONE);
+
+    expect(hot.rep.total).toBeGreaterThan(calm.rep.total);
+  });
+
+  it('starts with nothing found', () => {
+    const world = still();
+    expect(world.collectibles.smashed.size).toBe(0);
+    expect(world.collectibles.clockedCount).toBe(0);
+    expect(world.collectibles.billboards.length).toBeGreaterThan(0);
+    expect(world.collectibles.cameras.length).toBeGreaterThan(0);
+  });
+});
