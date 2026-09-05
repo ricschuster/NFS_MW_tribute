@@ -1,7 +1,7 @@
 # Session handoff
 
-Where the project stands, so a fresh session or a new contributor can pick it up
-without re-deriving anything.
+Where the project stands, so a fresh session can pick it up without re-deriving
+anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`
 - **Play (live):** https://ricschuster.github.io/NFS_MW_tribute/
