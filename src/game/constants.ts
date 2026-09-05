@@ -1,4 +1,5 @@
 import type { ColorSet } from './types';
+import type { DistrictCharacter, DistrictKind } from './city/types';
 
 /** Logical canvas resolution. The canvas is scaled to fit via CSS. */
 export const WIDTH = 1024;
@@ -129,3 +130,68 @@ export const PROP_HIT_WIDTH = 700;
 export const PROP_HIT_OFFSET = PROP_HIT_WIDTH / ROAD_WIDTH;
 /** Sideways nudge back toward the road on impact, so a car cannot wedge against a prop. */
 export const PROP_DEFLECT = 0.12;
+
+/* ------------------------------------------------------------------ */
+/* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The seed that produces *our* Kestrel Bay. Treat it as content, not as a
+ * tuning knob: changing it is publishing a different city, so the map every
+ * screenshot, playtest and event position assumes moves under them.
+ */
+export const CITY_SEED = 0x4b657374; // "Kest"
+
+/**
+ * World units per metre.
+ *
+ * The HUD calls `maxSpeed` (12000 units/s) 320 km/h, which is 88.9 m/s, so a
+ * metre works out at about 135 units. City sizes are written below in metres
+ * and converted, because "an 80 m block" is something you can picture and
+ * "10800 units" is not.
+ */
+export const UNITS_PER_METRE = 135;
+const m = (metres: number) => metres * UNITS_PER_METRE;
+/** km/h in world units per second, on the same scale: kmh(320) is `maxSpeed`. */
+const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
+
+/** Overall extent. Water is off the north (+z) edge; the city is the land. */
+export const CITY_WIDTH = m(3000);
+export const CITY_DEPTH = m(2400);
+
+/**
+ * Arterials are laid first and cross the whole city, so every local street
+ * meets one at both ends and the network cannot come out in pieces. Counts
+ * include both edges, which is what gives the city a perimeter road.
+ */
+export const CITY_ARTERIAL_COLS = 6;
+export const CITY_ARTERIAL_ROWS = 5;
+/** How far an interior arterial may wander, as a fraction of the even spacing. */
+export const CITY_ARTERIAL_JITTER = 0.16;
+export const CITY_ARTERIAL_LANES = 4;
+export const CITY_ARTERIAL_SPEED = kmh(90);
+
+/** One lane, matching the road the car already drives on (ROAD_WIDTH over LANES). */
+export const CITY_LANE_WIDTH = ROAD_WIDTH / LANES;
+
+/** How far the districts reach from their anchors. */
+export const CITY_DOWNTOWN_RADIUS = m(620);
+export const CITY_INDUSTRIAL_RADIUS = m(700);
+/**
+ * How far the waterfront spreads either side of the harbour. Less than half
+ * the city width on purpose: a shore that is waterfront from end to end reads
+ * as a band drawn on a map rather than as a port with a city behind it.
+ */
+export const CITY_WATERFRONT_REACH = m(900);
+
+/**
+ * What each district is like to drive through. Block size and its variation do
+ * most of the work: a tight regular grid downtown, long shallow blocks facing
+ * the water, and sprawling lots with few streets out on the industrial edge.
+ */
+export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
+  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50) },
+  midtown: { blockX: m(120), blockZ: m(100), jitter: 0.22, skip: 0.1, lanes: 2, speed: kmh(60) },
+  waterfront: { blockX: m(150), blockZ: m(170), jitter: 0.18, skip: 0.12, lanes: 2, speed: kmh(70) },
+  industrial: { blockX: m(190), blockZ: m(180), jitter: 0.14, skip: 0.15, lanes: 2, speed: kmh(70) },
+};

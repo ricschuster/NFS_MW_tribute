@@ -27,6 +27,8 @@ cameras that leave the car. Read that ADR before touching the renderer.
 - `npm run playtest` — just the headless playtests (drive the World, assert outcomes)
 - `npm run feel` — measure driving feel (accel, steering, pursuit, race length);
   compare against `docs/feel-baseline.json` after touching `constants.ts`
+- `npm run city` — draw the generated city from above to `screenshots/citymap.png`;
+  `-- --seed N` tries another one
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)
@@ -58,6 +60,15 @@ issue #83 swaps the frame for a city without touching the model.
 3D world, Kestrel Bay is generated procedurally (street network, extruded blocks
 per district, elevated interstate), and cameras become a first-class concept.
 `road.ts` and `render.ts` are retired.
+
+**The city is data, and it exists already** (issue #83). `city/generate.ts`
+turns a seed into a street graph - junctions, roads, blocks and districts - as
+a pure function with no renderer and no `Math.random`, so `World` can use it
+for collision and the playtests can build one headlessly. `CITY_SEED` is
+content: changing it publishes a different city. Generation is axis-aligned on
+purpose, which is what keeps blocks rectangular for the extrusions and "which
+road am I on" cheap. Look at what you changed with `npm run city` - the layout
+is much easier to judge as a picture than as a test.
 
 **Unchanged either way.** Physics runs on a **fixed timestep** (`STEP = 1/60`)
 with an accumulator, so behaviour is frame-rate independent; rendering happens
