@@ -52,6 +52,12 @@ export interface DistrictCharacter {
   lanes: number;
   /** The speed this district's streets are built for, in world units per second. */
   speed: number;
+  /**
+   * Chance a quarter of this district comes out winding rather than gridded.
+   * A grid is right for a downtown and wrong for everywhere else, and the
+   * variation belongs between quarters, like density.
+   */
+  winding: number;
 }
 
 /**
@@ -170,6 +176,8 @@ export interface CityBlock {
 export interface Superblock {
   bounds: Rect;
   district: DistrictKind;
+  /** True where the local streets bend instead of running straight across. */
+  winding: boolean;
   /**
    * How built up this one is, around 1. Variation belongs *between* places
    * rather than within them: a district where every block is equally thinned

@@ -224,10 +224,10 @@ export const CITY_MIN_STREET = m(70);
  * the water, and sprawling lots with few streets out on the industrial edge.
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
-  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50) },
-  midtown: { blockX: m(150), blockZ: m(130), jitter: 0.26, skip: 0.2, lanes: 2, speed: kmh(60) },
-  waterfront: { blockX: m(170), blockZ: m(190), jitter: 0.2, skip: 0.24, lanes: 2, speed: kmh(70) },
-  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70) },
+  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 0 },
+  midtown: { blockX: m(150), blockZ: m(130), jitter: 0.26, skip: 0.2, lanes: 2, speed: kmh(60), winding: 0.45 },
+  waterfront: { blockX: m(170), blockZ: m(190), jitter: 0.2, skip: 0.24, lanes: 2, speed: kmh(70), winding: 0.35 },
+  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 0.2 },
 };
 
 /**
@@ -238,6 +238,15 @@ export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
 export const DENSITY_RANGE = 0.55;
 /** Chance a whole block is left open - a park, a yard, a lot - at density 1. */
 export const OPEN_BLOCK_CHANCE = 0.12;
+
+/**
+ * How far a winding street bows off the straight line it would otherwise have
+ * been, as a fraction of the block size beside it. Kept under half a block, or
+ * neighbouring streets bend into each other.
+ */
+export const WINDING_BOW = 0.42;
+/** How finely a winding street is sampled into segments. */
+export const WINDING_STEP = m(55);
 
 /**
  * What stands on the blocks (#84). Heights are skewed low - most of a city is

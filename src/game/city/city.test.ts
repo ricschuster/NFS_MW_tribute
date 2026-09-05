@@ -198,14 +198,24 @@ describe('the street network', () => {
     }
   });
 
-  it('keeps the grid streets axis-aligned, whatever the boulevards do', () => {
+  // Streets bend in winding quarters now, so most of them are not axis-aligned
+  // any more. What must stay true is that downtown is a grid: it is the one
+  // district defined by being one, and the arterials are the city's skeleton.
+  it('keeps downtown and the arterials on the grid', () => {
     for (const road of city.roads) {
-      if (road.class !== 'street' && road.class !== 'arterial') continue;
+      const gridded =
+        road.class === 'arterial' || (road.class === 'street' && road.district === 'downtown');
+      if (!gridded) continue;
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
-      const offAxis = Math.min(Math.abs(b.x - a.x), Math.abs(b.z - a.z));
-      expect(offAxis).toBeLessThan(1);
+      expect(Math.min(Math.abs(b.x - a.x), Math.abs(b.z - a.z))).toBeLessThan(1);
     }
+  });
+
+  it('winds some quarters and grids others', () => {
+    const winding = city.superblocks.filter((s) => s.winding);
+    expect(winding.length).toBeGreaterThan(2);
+    expect(winding.length).toBeLessThan(city.superblocks.length);
   });
 
   it('bends: some roads run at an angle', () => {
