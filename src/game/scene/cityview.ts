@@ -52,6 +52,8 @@ export class CityView {
   private world: CityWorld | null = null;
   private readonly car = makeCar('#d8442f');
   private readonly trafficCars: CarPool;
+  private readonly copCars: CarPool;
+  private siren = 0;
   private readonly chase = new THREE.Vector3();
   private accumulator = 0;
 
@@ -96,6 +98,7 @@ export class CityView {
     this.car.visible = false;
     this.scene.add(this.car);
     this.trafficCars = new CarPool(this.scene);
+    this.copCars = new CarPool(this.scene, true);
 
     this.look('aerial');
     this.listen(canvas);
@@ -358,6 +361,14 @@ export class CityView {
       this.trafficCars.place(car.x, car.y, car.z, car.colour).rotation.y = car.heading;
     }
     this.trafficCars.end();
+
+    this.copCars.begin();
+    for (const cop of world.police.cops) {
+      this.copCars.place(cop.x, cop.y, cop.z, '#15171d').rotation.y = cop.heading;
+    }
+    this.siren += dt;
+    this.copCars.flashLightbars(this.siren);
+    this.copCars.end();
 
     // Sit the camera behind and above, and let it lag: a camera welded to the
     // car cannot show you turning, because the world turns with it.

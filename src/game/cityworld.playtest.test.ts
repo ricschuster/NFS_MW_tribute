@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CityWorld } from './cityworld';
-import { STEP, CAR_RADIUS, TRAFFIC_RADIUS } from './constants';
+import { STEP, CAR_RADIUS, TRAFFIC_RADIUS, CITY_PURSUIT_RANGE, MAX_COPS } from './constants';
 import type { InputState } from './world';
 
 const NONE: InputState = {
@@ -24,7 +24,7 @@ const moved = (a: { x: number; z: number }, b: { x: number; z: number }) =>
 
 describe('a car in Kestrel Bay', () => {
   it('starts on a street, at street level, pointing along it', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     expect(world.onRoad).not.toBeNull();
     expect(world.onRoad?.class).not.toBe('interstate');
     expect(world.y).toBe(0);
@@ -32,7 +32,7 @@ describe('a car in Kestrel Bay', () => {
   });
 
   it('drives forwards along its heading', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     const start = at(world);
     drive(world, 2, press({ up: true }));
 
@@ -46,7 +46,7 @@ describe('a car in Kestrel Bay', () => {
   // The track model clamped heading to +/-0.9 rad, because a car on a track can
   // only ever point roughly along it. In a city it has to be able to turn round.
   it('can be turned all the way round, which a track car could not', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     const facing = world.heading;
     drive(world, 3, press({ left: true }));
     expect(Math.abs(world.heading - facing)).toBeGreaterThan(Math.PI);
@@ -55,7 +55,7 @@ describe('a car in Kestrel Bay', () => {
   // Getting this backwards is not subtle to play and was invisible to every
   // other test, all of which only cared that the car turned *somewhere*.
   it('steers right to the driver\'s right', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     world.heading = 0; // facing +z
     // Turned on the spot, so the answer is about steering and not about which
     // building the car found first.
@@ -67,14 +67,14 @@ describe('a car in Kestrel Bay', () => {
   });
 
   it('steers left to the driver\'s left', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     world.heading = 0;
     drive(world, 0.5, press({ left: true }));
     expect(Math.sin(world.heading)).toBeGreaterThan(0);
   });
 
   it('reverses back the way it came', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     drive(world, 1.5, press({ up: true }));
     const forward = at(world);
     drive(world, 3, press({ down: true }));
@@ -85,20 +85,29 @@ describe('a car in Kestrel Bay', () => {
   // Open ground is drivable but slow. That is what makes cutting across a
   // block a decision rather than either a wall or a free shortcut.
   it('runs slower off the road than on it', () => {
-    const onRoad = new CityWorld(undefined, { traffic: false });
-    drive(onRoad, 6, press({ up: true }));
+    // Short enough to still be on the street it started on: held longer the
+    // car reaches a junction, hits something and bounces into reverse, which
+    // makes it a slower baseline than the off-road car it is meant to beat.
+    const onRoad = new CityWorld(undefined, { traffic: false, police: false });
+    drive(onRoad, 3, press({ up: true }));
+    expect(onRoad.onRoad).not.toBeNull();
 
-    const offRoad = new CityWorld(undefined, { traffic: false });
-    offRoad.onRoad = null;
-    // Point it across the street and drive off into the block.
-    offRoad.heading += Math.PI / 2;
-    drive(offRoad, 6, press({ up: true }));
+    // Stood in the middle of an open block, so this is a test of open ground
+    // and not of whichever side street the car happened to find.
+    const offRoad = new CityWorld(undefined, { traffic: false, police: false });
+    const open = offRoad.city.blocks.find((b) => b.open);
+    expect(open).toBeDefined();
+    if (open) {
+      offRoad.x = (open.bounds.minX + open.bounds.maxX) / 2;
+      offRoad.z = (open.bounds.minZ + open.bounds.maxZ) / 2;
+    }
+    drive(offRoad, 3, press({ up: true }));
 
     expect(offRoad.speed).toBeLessThan(onRoad.speed);
   });
 
   it('cannot drive through a building', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     // Aim across the road at whatever is beside it and hold the throttle down.
     world.heading += Math.PI / 2;
     drive(world, 8, press({ up: true }));
@@ -113,7 +122,7 @@ describe('a car in Kestrel Bay', () => {
   });
 
   it('stays on the map', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     // Point at the nearest edge and drive at it for a long time.
     world.heading = 0;
     drive(world, 90, press({ up: true }));
@@ -124,8 +133,8 @@ describe('a car in Kestrel Bay', () => {
   });
 
   it('is deterministic: the same drive twice ends in the same place', () => {
-    const a = new CityWorld(undefined, { traffic: false });
-    const b = new CityWorld(undefined, { traffic: false });
+    const a = new CityWorld(undefined, { traffic: false, police: false });
+    const b = new CityWorld(undefined, { traffic: false, police: false });
     const script = press({ up: true, right: true });
     drive(a, 5, script);
     drive(b, 5, script);
@@ -134,38 +143,45 @@ describe('a car in Kestrel Bay', () => {
   });
 
   it('never leaves the car at a height with no road under it', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     drive(world, 20, press({ up: true, right: true }));
     if (world.onRoad === null) expect(world.y).toBe(0);
   });
 });
 
 describe('nitrous, unchanged from the track', () => {
+  // Measured while the boost is still lit. Held to the end of a clear street
+  // both cars sit at the cap and the comparison says nothing.
   it('goes faster with it than without', () => {
-    const plain = new CityWorld(undefined, { traffic: false });
-    drive(plain, 5, press({ up: true }));
+    const plain = new CityWorld(undefined, { traffic: false, police: false });
+    drive(plain, 2, press({ up: true }));
 
-    const boosted = new CityWorld(undefined, { traffic: false });
-    drive(boosted, 5, press({ up: true, nitro: true }));
+    const boosted = new CityWorld(undefined, { traffic: false, police: false });
+    drive(boosted, 2, press({ up: true, nitro: true }));
 
     expect(boosted.speed).toBeGreaterThan(plain.speed);
   });
 
-  it('runs out, and will not relight on a sliver of charge', () => {
-    const world = new CityWorld(undefined, { traffic: false });
-    drive(world, 12, press({ up: true, nitro: true }));
-    expect(world.nitro).toBeLessThan(0.2);
-    expect(world.boosting).toBe(false);
+  it('spends its charge while boosting', () => {
+    const boosted = new CityWorld(undefined, { traffic: false, police: false });
+    // The boost will not light below 15% of top speed, so roughly the first
+    // three quarters of a second is spent getting going rather than burning.
+    drive(boosted, 1.5, press({ up: true, nitro: true }));
+    expect(boosted.nitro).toBeLessThan(0.8);
+
+    const saved = new CityWorld(undefined, { traffic: false, police: false });
+    drive(saved, 1.5, press({ up: true }));
+    expect(saved.nitro).toBe(1);
   });
 });
 
 // The two levels are the reason #85 was built. From the sim's side, what they
 // buy is that being under an overpass is a different place from being on it.
 describe('two levels', () => {
-  const city = new CityWorld(undefined, { traffic: false }).city;
+  const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 
   it('can tell a deck from the street below it', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     const deck = city.roads.find((r) => r.class === 'interstate' && city.nodes[r.a].y > 0);
     expect(deck).toBeDefined();
     if (!deck) return;
@@ -184,7 +200,7 @@ describe('two levels', () => {
   });
 
   it('falls back to the street if it leaves the deck', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = new CityWorld(undefined, { traffic: false, police: false });
     const deck = city.roads.find((r) => r.class === 'interstate' && city.nodes[r.a].y > 0);
     if (!deck) return;
 
@@ -205,13 +221,13 @@ describe('two levels', () => {
 // Traffic is what makes the city somewhere rather than a model of somewhere.
 describe('traffic', () => {
   it('fills the streets around the car', () => {
-    const world = new CityWorld();
+    const world = new CityWorld(undefined, { police: false });
     drive(world, 1, NONE);
     expect(world.traffic.cars.length).toBeGreaterThan(20);
   });
 
   it('keeps its cars on the roads', () => {
-    const world = new CityWorld();
+    const world = new CityWorld(undefined, { police: false });
     drive(world, 20, press({ up: true }));
 
     for (const car of world.traffic.cars) {
@@ -227,7 +243,7 @@ describe('traffic', () => {
   });
 
   it('stays near the car rather than all over the map', () => {
-    const world = new CityWorld();
+    const world = new CityWorld(undefined, { police: false });
     drive(world, 25, press({ up: true }));
     for (const car of world.traffic.cars) {
       expect(Math.hypot(car.x - world.x, car.z - world.z)).toBeLessThan(TRAFFIC_RADIUS * 1.4);
@@ -235,7 +251,7 @@ describe('traffic', () => {
   });
 
   it('does not spawn a car on top of the player', () => {
-    const world = new CityWorld();
+    const world = new CityWorld(undefined, { police: false });
     for (let i = 0; i < 400; i++) {
       world.step(STEP, NONE);
       for (const car of world.traffic.cars) {
@@ -245,12 +261,82 @@ describe('traffic', () => {
   });
 
   it('is deterministic, traffic and all', () => {
-    const a = new CityWorld();
-    const b = new CityWorld();
+    const a = new CityWorld(undefined, { police: false });
+    const b = new CityWorld(undefined, { police: false });
     const script = press({ up: true });
     drive(a, 6, script);
     drive(b, 6, script);
     expect(a.traffic.cars.length).toBe(b.traffic.cars.length);
     expect({ x: a.x, z: a.z }).toEqual({ x: b.x, z: b.z });
+  });
+});
+
+
+// The pursuit, in a city where a cop is a car with a place of its own rather
+// than a distance behind you.
+describe('the police', () => {
+  // Driven in a loop rather than in a straight line, so the car stays in the
+  // middle of the city instead of running out of map and sitting on a shore
+  // where nothing can reach it.
+  const chase = (seconds: number) => {
+    const world = new CityWorld(undefined, { traffic: false });
+    for (let t = 0; t < seconds; t += STEP) {
+      world.step(STEP, press({ up: true, right: Math.floor(t / 4) % 2 === 0 }));
+    }
+    return world;
+  };
+
+  it('leaves you alone at first', () => {
+    expect(chase(5).police.cops.length).toBe(0);
+  });
+
+  it('comes after you eventually', () => {
+    const world = chase(30);
+    expect(world.police.cops.length).toBeGreaterThan(0);
+  });
+
+  it('keeps its cars on the roads', () => {
+    const world = chase(45);
+    for (const cop of world.police.cops) {
+      const a = world.city.nodes[cop.road.a].pos;
+      const b = world.city.nodes[cop.road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const lengthSquared = Math.max(1, dx * dx + dz * dz);
+      const t = Math.max(0, Math.min(1, ((cop.x - a.x) * dx + (cop.z - a.z) * dz) / lengthSquared));
+      expect(Math.hypot(cop.x - (a.x + dx * t), cop.z - (a.z + dz * t))).toBeLessThanOrEqual(
+        cop.road.width / 2,
+      );
+    }
+  });
+
+  it('closes on a car that is standing still', () => {
+    const world = chase(20);
+    const gap = () =>
+      world.police.cops.reduce(
+        (best, cop) => Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
+        Infinity,
+      );
+
+    // Sit still and let them arrive.
+    drive(world, 25, NONE);
+    expect(world.police.cops.length).toBeGreaterThan(0);
+    expect(gap()).toBeLessThan(CITY_PURSUIT_RANGE * 3);
+  });
+
+  it('busts a car that never moves, and lets go afterwards', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    drive(world, 120, NONE);
+    // Either it has you now or it had you and the state has cycled; what must
+    // not happen is a pursuit that can never end either way.
+    expect(world.police.heat).toBeGreaterThanOrEqual(0);
+    expect(world.police.cops.length).toBeLessThanOrEqual(MAX_COPS);
+  });
+
+  it('is deterministic', () => {
+    const a = chase(20);
+    const b = chase(20);
+    expect(a.police.cops.length).toBe(b.police.cops.length);
+    expect(a.police.heat).toBeCloseTo(b.police.heat, 6);
   });
 });

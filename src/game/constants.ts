@@ -341,7 +341,7 @@ export const GRAVITY = m(22);
  */
 export const SURFACE_REACH = m(3);
 /** Where a new car is put: on the interstate ring is wrong, so a street it is. */
-export const SPAWN_SEARCH = m(400);
+export const SPAWN_SEARCH = m(180);
 
 /**
  * Boulevards (#115): the roads that bend. Laid over the finished grid and
@@ -376,3 +376,22 @@ export const SIM_SEED = 0x5eed1;
 export const TRAFFIC_GAP = m(14);
 /** Speed kept after hitting a traffic car - a shunt, not a wall. */
 export const SHUNT_SPEED_KEPT = 0.55;
+
+/**
+ * The pursuit in world space (#87). The track version measures everything as a
+ * trail distance along one road; here a cop is a car somewhere in the city, so
+ * these are plain distances between two points.
+ */
+export const CITY_COP_SPAWN = m(260);
+export const CITY_BUST_DISTANCE = m(11);
+export const CITY_PURSUIT_RANGE = m(120);
+/**
+ * How far a cop can fall behind before it has lost you.
+ *
+ * Deliberately its own constant rather than the track's `COP_OUTRUN_DISTANCE`,
+ * which is a *trail* distance along one road and works out at about 37 m in
+ * world units. Reusing it culled every cop on the step after it spawned.
+ */
+export const CITY_COP_LOSE = m(500);
+/** Seconds the BUSTED state holds before the pursuit is cleared. */
+export const CITY_BUST_HOLD = 3;

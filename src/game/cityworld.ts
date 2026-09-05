@@ -4,6 +4,7 @@ import {
   SEGMENT_LENGTH,
   STEP,
   REVERSE_SPEED_FRAC,
+  ESCAPED_FLASH,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
   NITRO_DRAIN,
@@ -14,6 +15,7 @@ import {
   HIT_SPEED_KEPT,
   SHUNT_SPEED_KEPT,
   SIM_SEED,
+  CITY_BUST_HOLD,
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
@@ -22,7 +24,8 @@ import { accelerate } from './math';
 import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
-import { CityGrid, surfaceAt, roadHeightAt, carriageway } from './city/grid';
+import { CityPolice } from './citypolice';
+import { CityGrid, surfaceAt, roadHeightAt, carriageway, inWater } from './city/grid';
 import type { City, CityRoad } from './city/types';
 import type { InputState } from './world';
 
@@ -50,12 +53,15 @@ import type { InputState } from './world';
 export interface CityWorldOptions {
   /** Populate the city with traffic (default true). Turn off for a still world. */
   traffic?: boolean;
+  /** Run the police pursuit (default true). */
+  police?: boolean;
 }
 
 export class CityWorld {
   readonly city: City;
   readonly grid: CityGrid;
   readonly traffic: CityTraffic;
+  readonly police: CityPolice;
 
   /** Where the car is, on the map and above it. */
   x = 0;
@@ -74,6 +80,10 @@ export class CityWorld {
   onRoad: CityRoad | null = null;
   /** Set while the car is off a deck with nothing under it. */
   falling = false;
+  /** Frozen in the BUSTED state, holding the overlay before the pursuit resets. */
+  busted = false;
+  /** Seconds left on the ESCAPED banner. */
+  escapedFlash = 0;
 
   /**
    * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
@@ -94,12 +104,16 @@ export class CityWorld {
   /** Everything that moves draws from here, so a scripted drive repeats exactly. */
   private readonly rng = new Rng(SIM_SEED);
   private readonly withTraffic: boolean;
+  private readonly withPolice: boolean;
+  private bustHold = 0;
 
   constructor(city: City = kestrelBay(), options: CityWorldOptions = {}) {
     this.city = city;
     this.grid = new CityGrid(city);
     this.traffic = new CityTraffic(city, this.grid, this.rng);
+    this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
+    this.withPolice = options.police ?? true;
     this.spawn();
   }
 
@@ -116,8 +130,13 @@ export class CityWorld {
       // A street, at street level, long enough to be somewhere rather than a stub.
       if (road.class !== 'street' && road.class !== 'arterial') continue;
       if (this.city.nodes[road.a].y !== 0 || road.length < SPAWN_SEARCH) continue;
+      // Measured from the road's middle, not from one of its ends. A long
+      // arterial can pass through the centre of the city while both its ends
+      // are out at the coast, which is how the car came to start beside the
+      // bay with a couple of hundred metres of road in front of it.
       const a = this.city.nodes[road.a].pos;
-      const gap = Math.hypot(a.x - middle.x, a.z - middle.z);
+      const b = this.city.nodes[road.b].pos;
+      const gap = Math.hypot((a.x + b.x) / 2 - middle.x, (a.z + b.z) / 2 - middle.z);
       if (gap < bestGap) {
         bestGap = gap;
         best = road;
@@ -138,6 +157,18 @@ export class CityWorld {
   /** Advance the simulation by `dt` seconds under the held `input`. */
   step(dt: number, input: InputState): void {
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
+    this.escapedFlash = Math.max(0, this.escapedFlash - dt);
+
+    // BUSTED freezes the world, holds the overlay, then clears the pursuit.
+    if (this.busted) {
+      this.bustHold -= dt;
+      this.speed = 0;
+      if (this.bustHold <= 0) {
+        this.busted = false;
+        this.police.reset();
+      }
+      return;
+    }
 
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car
@@ -189,6 +220,15 @@ export class CityWorld {
       this.traffic.update(dt, this);
       this.shunt();
     }
+    if (this.withPolice) {
+      this.police.update(dt, this, this.maxSpeed);
+      if (this.police.busted) {
+        this.busted = true;
+        this.bustHold = CITY_BUST_HOLD;
+        this.speed = 0;
+      }
+      if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
+    }
   }
 
   /**
@@ -229,11 +269,23 @@ export class CityWorld {
       return;
     }
 
-    if (this.outOfBounds()) {
+    if (this.outOfBounds() || this.afloat()) {
       this.x = wasX;
       this.z = wasZ;
       this.speed = 0;
     }
+  }
+
+  /**
+   * Over water with nothing under the wheels.
+   *
+   * A bridge or a viaduct counts as something under the wheels, which is the
+   * whole reason the surface lookup takes a height: the deck crossing the river
+   * is drivable and the river beside it is not.
+   */
+  private afloat(): boolean {
+    if (!inWater(this.city, this.x, this.z)) return false;
+    return surfaceAt(this.city, this.grid, this.x, this.z, this.y).road === null;
   }
 
   /**

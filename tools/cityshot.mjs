@@ -24,7 +24,7 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive'];
+const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -73,7 +73,9 @@ for (const view of VIEWS) {
   // `drive` is not a viewpoint but a mode: put a car in the city, hold the
   // throttle for a moment, and photograph what the player would be looking at.
   const url =
-    view === 'drive' ? `${base}/?renderer=drive` : `${base}/?renderer=city&view=${view}`;
+    view === 'drive' || view === 'pursuit'
+      ? `${base}/?renderer=drive`
+      : `${base}/?renderer=city&view=${view}`;
   await page.goto(url, { waitUntil: 'load' });
   // Generating the city and building its instanced meshes takes a moment, and
   // a screenshot taken before that is a picture of an empty sky.
@@ -87,6 +89,17 @@ for (const view of VIEWS) {
     await page.waitForTimeout(7000);
   }
 
+  if (view === 'pursuit') {
+    // Long enough for the first cop to arrive, driving a loop so the car stays
+    // in the middle of the city rather than parking against the coast.
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.down('ArrowUp');
+      await page.keyboard.down(i % 2 ? 'ArrowRight' : 'ArrowLeft');
+      await page.waitForTimeout(1800);
+      await page.keyboard.up(i % 2 ? 'ArrowRight' : 'ArrowLeft');
+    }
+  }
+
   const blank = await page.evaluate(() => {
     const canvas = document.getElementById('game3d');
     return !canvas || canvas.width === 0;
@@ -94,7 +107,7 @@ for (const view of VIEWS) {
   if (blank) console.error(`  ${view}: no canvas`);
 
   await page.locator('#game3d').screenshot({ path: `${OUT}/city-${view}.png` });
-  if (view === 'drive') await page.keyboard.up('ArrowUp');
+  if (view === 'drive' || view === 'pursuit') await page.keyboard.up('ArrowUp');
   console.log(`captured ${OUT}/city-${view}.png`);
 }
 
