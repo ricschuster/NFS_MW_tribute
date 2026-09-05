@@ -18,9 +18,11 @@ import {
   DISTRICTS,
 } from '../constants';
 import { Rng } from './rng';
+import { buildingsOn } from './buildings';
 import { makeWater, type Water } from './water';
 import type {
   Axis,
+  Building,
   City,
   CityBlock,
   CityNode,
@@ -50,6 +52,8 @@ import type {
  *     water gaps become bridges.
  *  6. **The repair.** Cutting a network can strand a district, so generation
  *     ends by proving the city is drivable and fixing it if it is not.
+ *  7. **Buildings.** Each block is divided into lots and built on. These are
+ *     descriptions, never meshes: see `buildings.ts`.
  *
  * Roads are axis-aligned, which keeps blocks rectangular for the extrusions in
  * #84 and "which road am I on" cheap for #86. ADR-0005 rule 4 ends that for the
@@ -100,7 +104,17 @@ export function generateCity(seed: number): City {
 
   const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps));
 
-  return { seed, bounds, water: water.bodies, nodes, roads, blocks, superblocks };
+  // Blocks are checked against the water at block resolution, which a river
+  // can slip through at building resolution. Buildings are cheap to test
+  // exactly, so test them exactly rather than widening the block probe.
+  const buildings: Building[] = [];
+  for (const block of blocks) {
+    for (const building of buildingsOn(rng, block)) {
+      if (!anyWater(building.footprint, water)) buildings.push(building);
+    }
+  }
+
+  return { seed, bounds, water: water.bodies, nodes, roads, blocks, superblocks, buildings };
 }
 
 /** A road centreline before it is cut at its crossings. */

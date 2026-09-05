@@ -344,6 +344,65 @@ describe('every seed makes a drivable city', () => {
   }
 });
 
+describe('buildings', () => {
+  it('puts buildings on the city', () => {
+    expect(city.buildings.length).toBeGreaterThan(1000);
+  });
+
+  it('gives every building a real footprint and height', () => {
+    for (const b of city.buildings) {
+      expect(b.footprint.maxX).toBeGreaterThan(b.footprint.minX);
+      expect(b.footprint.maxZ).toBeGreaterThan(b.footprint.minZ);
+      expect(b.height).toBeGreaterThan(0);
+      expect(b.variant).toBeGreaterThanOrEqual(0);
+      expect(b.variant).toBeLessThan(1);
+    }
+  });
+
+  // Buildings are the reason blocks are kept clear of the carriageway, so a
+  // building outside its block is a building in the road.
+  it('keeps every building inside a block', () => {
+    const grid = index(city.blocks.map((b) => b.bounds));
+    const escaped: string[] = [];
+    for (const b of city.buildings) {
+      const inside = [...near(grid, b.footprint)].some((id) => {
+        const block = city.blocks[id].bounds;
+        return (
+          b.footprint.minX >= block.minX - 1 &&
+          b.footprint.maxX <= block.maxX + 1 &&
+          b.footprint.minZ >= block.minZ - 1 &&
+          b.footprint.maxZ <= block.maxZ + 1
+        );
+      });
+      if (!inside) escaped.push(`${Math.round(b.footprint.minX)},${Math.round(b.footprint.minZ)}`);
+    }
+    expect(escaped.slice(0, 5)).toEqual([]);
+  });
+
+  it('never puts a building in the water', () => {
+    expect(city.buildings.filter((b) => touchesWater(b.footprint)).length).toBe(0);
+  });
+
+  // Districts have to be visibly different places, and height is most of what
+  // does that: a downtown that is the same height as the docks is not downtown.
+  it('builds downtown taller than anywhere else', () => {
+    const mean = (kind: string) => {
+      const heights = city.buildings.filter((b) => b.district === kind).map((b) => b.height);
+      return heights.reduce((s, h) => s + h, 0) / heights.length;
+    };
+    expect(mean('downtown')).toBeGreaterThan(mean('midtown'));
+    expect(mean('midtown')).toBeGreaterThan(mean('industrial'));
+  });
+
+  it('leaves the tall buildings rare', () => {
+    const downtown = city.buildings.filter((b) => b.district === 'downtown');
+    const heights = downtown.map((b) => b.height).sort((a, b) => a - b);
+    const median = heights[Math.floor(heights.length / 2)];
+    const tallest = heights[heights.length - 1];
+    expect(tallest).toBeGreaterThan(median * 2);
+  });
+});
+
 describe('blocks', () => {
   it('gives every block a positive area inside the city', () => {
     for (const b of city.blocks) {
