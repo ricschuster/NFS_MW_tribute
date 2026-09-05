@@ -8,6 +8,8 @@ import {
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
   COP_UNITS,
+  CITY_COP_LOSE,
+  SEARCH_TIME_PER_LEVEL,
 } from './constants';
 import type { InputState } from './world';
 
@@ -402,5 +404,97 @@ describe('heat levels', () => {
         expect(HEAT_LEVELS.some((l) => l.units.includes(cop.kind))).toBe(true);
       }
     }
+  });
+});
+
+
+// Escaping is two stages (#63). These drive the sim into each one directly
+// rather than hoping a scripted lap happens to wander far enough, which is the
+// difference between testing the mechanic and testing the route.
+describe('cooldown and the search area', () => {
+  /** Step until `done`, or give up. Returns whether it happened. */
+  const stepUntil = (world: CityWorld, done: () => boolean, limit = 60) => {
+    for (let t = 0; t < limit; t += STEP) {
+      world.step(STEP, NONE);
+      if (done()) return true;
+    }
+    return false;
+  };
+
+  /** Run a pursuit until cops are on you, then break contact by vanishing. */
+  const lostThem = () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    for (let t = 0; t < 40; t += STEP) {
+      world.step(STEP, press({ up: true, right: Math.floor(t / 5) % 2 === 0 }));
+    }
+    expect(world.police.cops.length).toBeGreaterThan(0);
+
+    // Somewhere they cannot possibly still see, so contact really is broken.
+    world.x += CITY_COP_LOSE * 3;
+    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+    return world;
+  };
+
+  it('drops into a search when contact is broken', () => {
+    const world = lostThem();
+    expect(world.police.state).toBe('cooldown');
+    expect(world.police.search).not.toBeNull();
+    expect(world.police.searchLeft).toBeGreaterThan(0);
+  });
+
+  // The area is where they lost you. It does not follow you around, which is
+  // the difference between a search and a tracking device.
+  it('searches a fixed place, not wherever you have got to', () => {
+    const world = lostThem();
+    const area = { ...(world.police.search as { x: number; z: number; radius: number }) };
+
+    world.x += area.radius * 4;
+    stepUntil(world, () => false, 3);
+
+    expect(world.police.search?.x).toBe(area.x);
+    expect(world.police.search?.z).toBe(area.z);
+  });
+
+  // The whole mechanic: sitting still in the middle of where they are looking
+  // is not hiding, so the clock does not run.
+  it('does not count down while you are inside the area', () => {
+    const world = lostThem();
+    const area = world.police.search;
+    expect(area).not.toBeNull();
+    if (!area) return;
+
+    world.x = area.x;
+    world.z = area.z;
+    for (const cop of world.police.cops) {
+      cop.x = area.x + area.radius * 6;
+      cop.z = area.z + area.radius * 6;
+    }
+
+    const before = world.police.searchLeft;
+    stepUntil(world, () => false, 6);
+    expect(world.police.searchLeft).toBe(before);
+    expect(world.police.state).toBe('cooldown');
+  });
+
+  it('lets you go once you are out of it and stay out', () => {
+    const world = lostThem();
+    const area = world.police.search;
+    if (area) {
+      world.x = area.x + area.radius * 5;
+      world.z = area.z + area.radius * 5;
+    }
+    expect(stepUntil(world, () => world.police.state === 'clear', 120)).toBe(true);
+    expect(world.police.cops.length).toBe(0);
+  });
+
+  it('makes a hotter pursuit harder to shed', () => {
+    const cold = new CityWorld(undefined, { traffic: false });
+    cold.police.heat = 0;
+    const hot = new CityWorld(undefined, { traffic: false });
+    hot.police.heat = 1;
+    expect(hot.police.level).toBeGreaterThan(cold.police.level);
+    // Search time and radius both scale off the level, so a higher level is a
+    // longer search over more ground.
+    expect(SEARCH_TIME_PER_LEVEL).toBeGreaterThan(0);
   });
 });

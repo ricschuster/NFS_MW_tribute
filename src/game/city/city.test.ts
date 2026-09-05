@@ -4,6 +4,7 @@ import { kestrelBay } from './index';
 import { Rng } from './rng';
 import { CITY_SEED, DISTRICTS } from '../constants';
 import { makeWater } from './water';
+import { CityGrid, lineBlocked } from './grid';
 import { distanceToSegment } from './grid';
 import type { City, CityRoad, Rect } from './types';
 
@@ -681,6 +682,33 @@ describe('density', () => {
       }
     }
     expect(built).toEqual([]);
+  });
+});
+
+// What makes cover mean something in a pursuit (#63): a cop one street over
+// with a block in the way has not got you.
+describe('line of sight', () => {
+  const grid = new CityGrid(city);
+
+  it('is blocked by a building', () => {
+    const building = city.buildings[0];
+    const f = building.footprint;
+    const mid = { x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 };
+    const span = Math.max(f.maxX - f.minX, f.maxZ - f.minZ);
+
+    expect(
+      lineBlocked(grid, { x: mid.x - span, z: mid.z }, { x: mid.x + span, z: mid.z }),
+    ).toBe(true);
+  });
+
+  it('is clear down an empty street', () => {
+    // Along a road's own centreline, which by construction has no building on it.
+    const road = city.roads.find((r) => r.length > 3000 && r.class === 'street');
+    expect(road).toBeDefined();
+    if (!road) return;
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    expect(lineBlocked(grid, a, b)).toBe(false);
   });
 });
 

@@ -1,4 +1,12 @@
-import { WIDTH, HEIGHT, MINIMAP_RANGE, MINIMAP_SIZE, HEAT_LEVEL_COUNT } from '../constants';
+import {
+  WIDTH,
+  HEIGHT,
+  MINIMAP_RANGE,
+  MINIMAP_SIZE,
+  HEAT_LEVEL_COUNT,
+  SEARCH_TIME,
+  SEARCH_TIME_PER_LEVEL,
+} from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import type { CityWorld } from '../cityworld';
 
@@ -26,6 +34,7 @@ export class Hud {
     this.nitrous(world);
     this.heat(world);
     this.minimap(world);
+    this.cooldown(world);
     this.banners(world);
 
     ctx.restore();
@@ -139,6 +148,19 @@ export class Hud {
       ctx.stroke();
     }
 
+    // The search area, which is the whole point of a cooldown being visible:
+    // you cannot decide to leave a circle you cannot see.
+    const area = world.police.search;
+    if (area) {
+      ctx.beginPath();
+      ctx.arc((area.x - world.x) * scale, -(area.z - world.z) * scale, area.radius * scale, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 210, 90, 0.13)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 210, 90, 0.75)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
     for (const cop of world.police.cops) {
       const dx = (cop.x - world.x) * scale;
       const dz = -(cop.z - world.z) * scale;
@@ -186,6 +208,35 @@ export class Hud {
       }
     }
     return roads;
+  }
+
+  /** The cooldown clock, and what it is waiting for. */
+  private cooldown(world: CityWorld): void {
+    const { ctx } = this;
+    if (world.police.state !== 'cooldown') return;
+
+    const area = world.police.search;
+    const inside =
+      area !== null && Math.hypot(world.x - area.x, world.z - area.z) < area.radius;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = inside ? '#ffd166' : '#7fe3ff';
+    ctx.font = '700 20px system-ui, sans-serif';
+    ctx.fillText(inside ? 'SEARCH AREA - GET OUT' : 'COOLING DOWN', WIDTH / 2, 46);
+
+    if (inside) return; // no bar while the clock is not running
+
+    const full = SEARCH_TIME + SEARCH_TIME_PER_LEVEL * (world.police.level - 1);
+    const width = 220;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillRect(WIDTH / 2 - width / 2, 56, width, 6);
+    ctx.fillStyle = '#7fe3ff';
+    ctx.fillRect(
+      WIDTH / 2 - width / 2,
+      56,
+      width * Math.max(0, 1 - world.police.searchLeft / full),
+      6,
+    );
   }
 
   private banners(world: CityWorld): void {
