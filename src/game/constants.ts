@@ -21,10 +21,16 @@ export const FOG_DENSITY = 5;
 export const FOG_COLOR = '#0d2417';
 
 /** How hard curves push the player toward the outside of a bend. */
-export const CENTRIFUGAL = 0.3;
+export const CENTRIFUGAL = 0.24;
 
 /** Steering authority kept when nearly stopped, so you can peel off after a crash. */
 export const MIN_STEER = 0.3;
+/**
+ * Steering authority left at top speed, as a fraction. Below 1 the car goes
+ * light at the top end, so a fast bend has to be taken with a lift rather than
+ * a flick of the wheel.
+ */
+export const HIGH_SPEED_GRIP = 0.7;
 /** Top reverse speed as a fraction of forward max speed. */
 export const REVERSE_SPEED_FRAC = 0.18;
 
@@ -35,7 +41,7 @@ export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from ful
 export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
 export const NITRO_MIN_ENGAGE = 0.5; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
-export const DRIFT_SLIDE = 1.1; // extra lateral slide when cornering hard at speed
+export const DRIFT_SLIDE = 0.35; // extra lateral slide when cornering hard at speed
 
 /** Fixed physics timestep (seconds). */
 export const STEP = 1 / 60;

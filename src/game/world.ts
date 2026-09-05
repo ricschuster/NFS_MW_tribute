@@ -11,6 +11,7 @@ import {
   STEP,
   CAR_WIDTH_OFFSET,
   MIN_STEER,
+  HIGH_SPEED_GRIP,
   REVERSE_SPEED_FRAC,
   BUST_HOLD,
   ESCAPED_FLASH,
@@ -212,7 +213,10 @@ export class World {
     // curve push scales with actual speed; steering keeps a floor so you can
     // peel out of a lane even when stopped (e.g. right after a crash)
     const curveDx = dt * 2 * speedPercent;
-    const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER);
+    // steering also goes light as speed rises, so the sharpest bends cannot be
+    // held flat out; the floor keeps low-speed authority intact
+    const grip = interpolate(1, HIGH_SPEED_GRIP, Math.min(1, speedPercent * speedPercent));
+    const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER) * grip;
 
     // nitrous: rechargeable boost to top speed and acceleration. Relighting it
     // takes a real charge, not the sliver one frame of recharge puts back at

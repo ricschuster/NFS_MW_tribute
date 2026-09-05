@@ -155,9 +155,27 @@ function hardestCurve(road) {
   return best;
 }
 
-/** Drop the player into the hardest bend at speed, keeping their current pace. */
-function teleportToHardestCurve(w) {
-  const idx = hardestCurve(w.road);
+/**
+ * Index of a segment whose curve is closest to `magnitude` and which is part of
+ * a sustained stretch, not a single frame of the ease in or out.
+ */
+function curveOfMagnitude(road, magnitude) {
+  let best = 0;
+  let bestErr = Infinity;
+  for (const s of road.segments) {
+    const ahead = road.segments[(s.index + 6) % road.segments.length];
+    if (Math.abs(Math.abs(ahead.curve) - Math.abs(s.curve)) > 0.01) continue; // still easing
+    const err = Math.abs(Math.abs(s.curve) - magnitude);
+    if (err < bestErr) {
+      bestErr = err;
+      best = s.index;
+    }
+  }
+  return best;
+}
+
+/** Drop the player into the bend at `idx`, keeping their current pace. */
+function teleportToCurve(w, idx) {
   w.position = idx * SEGMENT_LENGTH - w.playerZ;
   w.playerX = 0;
   return idx;
@@ -242,46 +260,53 @@ function measureSteering() {
 }
 
 function measureCornering() {
-  section('CORNERING (hardest bend on the track)');
+  section('CORNERING (fastest speed that still holds the road)');
   seedRandom();
-  const probe = new World({ traffic: false });
-  const idx = hardestCurve(probe.road);
-  row('sharpest curve value', `${probe.road.segments[idx].curve.toFixed(1)}`, `segment ${idx}`);
+  const road = new World({ traffic: false }).road;
 
-  // Flat out with no steering at all: how long before the bend spits you off?
-  const f = atSpeed(1);
-  teleportToHardestCurve(f);
-  const offTime = until(f, POLICY.flatout, (w) => Math.abs(w.playerX) > 1, 20);
-  row('flat out, no steering, to off-road', secs(offTime), 'curve push vs. no correction', 'curve_offroad_s', offTime);
-
-  // The real question: how fast can you take it while still holding the road?
-  const holds = (frac) => {
-    const w = atSpeed(frac);
-    teleportToHardestCurve(w);
-    let worst = 0;
-    const seconds = Math.min(12, 24000 / Math.max(1, w.maxSpeed * frac));
-    run(w, seconds, (w) => {
-      worst = Math.max(worst, Math.abs(w.playerX));
-      return holdSpeed(w, frac);
-    });
-    return worst <= 1;
-  };
-  let lo = 0.2;
-  let hi = 1;
-  if (holds(hi)) lo = hi;
-  else {
+  /** Binary search the fastest pace that gets through the bend at `idx` on-road. */
+  function fastestHold(idx) {
+    const holds = (frac) => {
+      const w = atSpeed(frac);
+      teleportToCurve(w, idx);
+      let worst = 0;
+      const seconds = Math.min(12, 24000 / Math.max(1, w.maxSpeed * frac));
+      run(w, seconds, (w) => {
+        worst = Math.max(worst, Math.abs(w.playerX));
+        return holdSpeed(w, frac);
+      });
+      return worst <= 1;
+    };
+    if (holds(1)) return 1;
+    let lo = 0.2;
+    let hi = 1;
     for (let i = 0; i < 7; i++) {
       const mid = (lo + hi) / 2;
       if (holds(mid)) lo = mid;
       else hi = mid;
     }
+    return lo;
   }
-  const note = lo >= 1 ? 'the bend can be taken flat out' : 'above this, steering loses to the curve';
-  row('fastest speed that holds the line', pct(lo), note, 'corner_max_frac', lo);
+
+  // The track is authored from easy / medium / hard curves, so report all three:
+  // a difficulty spread matters more than any single bend.
+  for (const [name, magnitude] of [['easy bend', 2], ['medium bend', 4], ['hardest bend', 6]]) {
+    const idx = magnitude === 6 ? hardestCurve(road) : curveOfMagnitude(road, magnitude);
+    const frac = fastestHold(idx);
+    const note = frac >= 1 ? 'can be taken flat out' : `lift to ${kmh(frac, 1)}`;
+    row(`${name} (curve ${Math.abs(road.segments[idx].curve).toFixed(1)})`, pct(frac), note, `corner_max_frac_${magnitude}`, frac);
+  }
+
+  // Flat out with no steering at all: how long before the bend spits you off?
+  const hardest = hardestCurve(road);
+  const f = atSpeed(1);
+  teleportToCurve(f, hardest);
+  const offTime = until(f, POLICY.flatout, (w) => Math.abs(w.playerX) > 1, 20);
+  row('hardest bend, no steering, to off-road', secs(offTime), 'curve push vs. no correction', 'curve_offroad_s', offTime);
 
   // What flooring it blind actually costs, once off-road drag bites.
   const w = atSpeed(1);
-  teleportToHardestCurve(w);
+  teleportToCurve(w, hardest);
   let slowest = w.maxSpeed;
   run(w, 6, (w) => {
     slowest = Math.min(slowest, w.speed);
