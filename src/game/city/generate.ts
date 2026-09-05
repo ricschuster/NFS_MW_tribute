@@ -18,6 +18,8 @@ import {
   BOULEVARD_CLEARANCE,
   BOULEVARD_LANES,
   BOULEVARD_SPEED,
+  DENSITY_RANGE,
+  OPEN_BLOCK_CHANCE,
   DISTRICTS,
 } from '../constants';
 import { Rng } from './rng';
@@ -94,7 +96,13 @@ export function generateCity(seed: number): City {
   // A cell with no land in it is open water: no streets, no blocks, no district.
   const cells = cellsBetween(xLines, zLines).filter((cell) => !allWater(cell, water));
   const districts = assignDistricts(rng, cells, bounds, water);
-  const superblocks: Superblock[] = cells.map((c, i) => ({ bounds: c, district: districts[i] }));
+  // Each superblock gets its own density, so the city has thin quarters and
+  // dense ones rather than one even spread of buildings.
+  const superblocks: Superblock[] = cells.map((c, i) => ({
+    bounds: c,
+    district: districts[i],
+    density: 1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE),
+  }));
 
   const laid: Span[] = [];
   const blocks: CityBlock[] = [];
@@ -159,17 +167,38 @@ export function generateCity(seed: number): City {
 
   const standing: CityBlock[] = [];
   for (const block of blocks) {
-    const fitted = pullClear(block.bounds, onBoulevard);
-    if (fitted) standing.push({ district: block.district, bounds: fitted });
+    // Trim against the water as well as the boulevard: pulling a block back
+    // moves its corners, and the water test samples corners, so a block that
+    // was clear can stop being clear once it has been trimmed.
+    const fitted = pullClear(block.bounds, (r) => onBoulevard(r) || anyWater(r, water));
+    if (fitted) standing.push({ ...block, bounds: fitted });
   }
   blocks.length = 0;
   blocks.push(...standing);
 
+  // How built up a block is comes from the superblock it sits in, so the whole
+  // quarter thins together rather than block by block.
+  const densityAt = (block: CityBlock) => {
+    const x = (block.bounds.minX + block.bounds.maxX) / 2;
+    const z = (block.bounds.minZ + block.bounds.maxZ) / 2;
+    const cell = superblocks.find(
+      (s) => x >= s.bounds.minX && x <= s.bounds.maxX && z >= s.bounds.minZ && z <= s.bounds.maxZ,
+    );
+    return cell?.density ?? 1;
+  };
+
   const buildings: Building[] = [];
   for (const block of blocks) {
-    for (const building of buildingsOn(rng, block)) {
-      if (!anyWater(building.footprint, water)) buildings.push(building);
+    if (block.open) continue;
+    let built = 0;
+    for (const building of buildingsOn(rng, block, densityAt(block))) {
+      if (anyWater(building.footprint, water)) continue;
+      buildings.push(building);
+      built++;
     }
+    // A block that ended up with nothing on it is open ground, whatever the
+    // roll said. Left as a paved block it reads as an enormous empty forecourt.
+    if (built === 0) block.open = true;
   }
 
   const city: City = {
@@ -443,7 +472,10 @@ function fillSuperblock(
     maxZ: bounds.maxZ - arterialHalf,
   };
 
-  const keep = () => !rng.chance(character.skip);
+  // A thin superblock gets fewer streets as well as fewer buildings; without
+  // that it is a full grid with gaps in it rather than somewhere emptier.
+  const skip = Math.min(0.6, character.skip / Math.max(0.35, cell.density));
+  const keep = () => !rng.chance(skip);
   const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX, character.jitter).filter(keep);
   const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ, character.jitter).filter(keep);
 
@@ -477,7 +509,10 @@ function fillSuperblock(
         maxZ: zEdges[j + 1] - (j + 2 === zEdges.length ? 0 : streetHalf),
       };
       const fitted = pullClear(block, (r) => anyWater(r, water));
-      if (fitted) blocks.push({ district, bounds: fitted });
+      if (!fitted) continue;
+      // Some of a city is gaps: a park, a yard, a car park, a lot nobody built on.
+      const open = rng.chance(Math.min(0.5, OPEN_BLOCK_CHANCE / Math.max(0.35, cell.density)));
+      blocks.push({ district, bounds: fitted, open });
     }
   }
 }

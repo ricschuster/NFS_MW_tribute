@@ -647,6 +647,33 @@ describe('street furniture', () => {
   });
 });
 
+describe('density', () => {
+  it('varies how built up one quarter is against another', () => {
+    const densities = city.superblocks.map((s) => s.density);
+    expect(Math.max(...densities) - Math.min(...densities)).toBeGreaterThan(0.4);
+  });
+
+  // The variation has to be between places, not within them. A district where
+  // every block is thinned by a different amount is noise, not a quarter.
+  it('leaves some blocks open, and more of them where the quarter is thin', () => {
+    const open = city.blocks.filter((b) => b.open);
+    expect(open.length).toBeGreaterThan(10);
+    expect(open.length).toBeLessThan(city.blocks.length / 2);
+  });
+
+  it('builds nothing on an open block', () => {
+    const openBlocks = city.blocks.filter((b) => b.open).map((b) => b.bounds);
+    const grid = index(openBlocks);
+    const built: string[] = [];
+    for (const building of city.buildings) {
+      for (const id of near(grid, building.footprint)) {
+        if (overlaps(building.footprint, openBlocks[id], 1)) built.push('building on open ground');
+      }
+    }
+    expect(built).toEqual([]);
+  });
+});
+
 describe('blocks', () => {
   it('gives every block a positive area inside the city', () => {
     for (const b of city.blocks) {
