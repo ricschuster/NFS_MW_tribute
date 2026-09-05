@@ -3,7 +3,7 @@ import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
 import { Cityscape } from './cityscape';
-import { makeCar } from './cars';
+import { makeCar, CarPool } from './cars';
 import type { CityWorld } from '../cityworld';
 import { STEP } from '../constants';
 import type { InputState } from '../world';
@@ -51,6 +51,7 @@ export class CityView {
   /** When set, the camera chases this car instead of flying free. */
   private world: CityWorld | null = null;
   private readonly car = makeCar('#d8442f');
+  private readonly trafficCars: CarPool;
   private readonly chase = new THREE.Vector3();
   private accumulator = 0;
 
@@ -94,6 +95,7 @@ export class CityView {
 
     this.car.visible = false;
     this.scene.add(this.car);
+    this.trafficCars = new CarPool(this.scene);
 
     this.look('aerial');
     this.listen(canvas);
@@ -350,6 +352,12 @@ export class CityView {
 
     this.car.position.set(world.x, world.y, world.z);
     this.car.rotation.y = world.heading;
+
+    this.trafficCars.begin();
+    for (const car of world.traffic.cars) {
+      this.trafficCars.place(car.x, car.y, car.z, car.colour).rotation.y = car.heading;
+    }
+    this.trafficCars.end();
 
     // Sit the camera behind and above, and let it lag: a camera welded to the
     // car cannot show you turning, because the world turns with it.
