@@ -21,6 +21,9 @@ import {
   ESCAPED_FLASH,
   RACE_DISTANCE,
   COP_OUTRUN_DISTANCE,
+  PROP_SPACING,
+  PROP_WORLD,
+  PROP_OFFSET,
 } from './constants';
 import { interpolate, percentRemaining, exponentialFog } from './math';
 
@@ -225,6 +228,7 @@ export class Game {
       maxy = segment.p1.screen.y;
     }
 
+    this.renderProps(baseSegment);
     this.renderTraffic(baseSegment);
     this.renderRival();
     this.renderCar();
@@ -391,6 +395,90 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillText('REAR VIEW', cxm, my + mh + 13);
     ctx.textAlign = 'left';
+  }
+
+  /**
+   * Draw roadside scenery (trees / billboards / lamp posts) far-to-near, placed
+   * deterministically by segment index so it's stable frame to frame. Purely
+   * visual: props sit beyond the road edge and are clipped behind hills.
+   */
+  private renderProps(baseSegment: Segment): void {
+    const ctx = this.ctx;
+    const road = this.world.road;
+    for (let n = DRAW_DISTANCE - 1; n >= 0; n--) {
+      const segment = road.segments[(baseSegment.index + n) % road.segments.length];
+      if (segment.index % PROP_SPACING !== 0) continue;
+
+      const s = segment.p1.screen;
+      if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
+
+      const slot = Math.floor(segment.index / PROP_SPACING);
+      const side = slot % 2 === 0 ? -1 : 1;
+      const kind = slot % 3; // 0 tree, 1 billboard, 2 lamp
+      const cx = s.x + side * PROP_OFFSET * s.w;
+      const u = Math.min(WIDTH * 0.5, (s.scale * PROP_WORLD * WIDTH) / 2);
+      if (u < 2) continue;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, WIDTH, segment.clip);
+      ctx.clip();
+      this.drawProp(kind, cx, s.y, u, slot);
+      ctx.restore();
+    }
+  }
+
+  private drawProp(kind: number, cx: number, groundY: number, u: number, slot: number): void {
+    const ctx = this.ctx;
+    // shared ground shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY, u * 0.5, Math.max(1, u * 0.12), 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (kind === 0) {
+      // tree: trunk + two foliage blobs
+      ctx.fillStyle = '#4a2f1a';
+      ctx.fillRect(cx - u * 0.09, groundY - u * 0.7, u * 0.18, u * 0.7);
+      ctx.fillStyle = '#1f7a2e';
+      ctx.beginPath();
+      ctx.arc(cx, groundY - u * 0.9, u * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#248a34';
+      ctx.beginPath();
+      ctx.arc(cx - u * 0.22, groundY - u * 0.7, u * 0.34, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === 1) {
+      // billboard: post + panel
+      ctx.fillStyle = '#3a3a42';
+      ctx.fillRect(cx - u * 0.05, groundY - u * 0.95, u * 0.1, u * 0.95);
+      const pw = u * 1.15;
+      const ph = u * 0.62;
+      const py = groundY - u * 0.95 - ph;
+      ctx.fillStyle = '#12325a';
+      ctx.fillRect(cx - pw / 2, py, pw, ph);
+      ctx.fillStyle = '#e8462b';
+      ctx.fillRect(cx - pw / 2, py, pw, ph * 0.22);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(cx - pw * 0.36, py + ph * 0.42, pw * 0.72, ph * 0.12);
+      ctx.fillRect(cx - pw * 0.36, py + ph * 0.66, pw * 0.5, ph * 0.12);
+    } else {
+      // lamp post: pole + head + warm glow
+      ctx.fillStyle = '#4a4a52';
+      ctx.fillRect(cx - u * 0.05, groundY - u * 1.15, u * 0.1, u * 1.15);
+      const armDir = slot % 2 === 0 ? 1 : -1;
+      ctx.fillRect(cx, groundY - u * 1.15, armDir * u * 0.32, u * 0.08);
+      const hx = cx + armDir * u * 0.32;
+      ctx.fillStyle = '#ffd27a';
+      ctx.beginPath();
+      ctx.ellipse(hx, groundY - u * 1.12, u * 0.12, u * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.arc(hx, groundY - u * 1.05, u * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   }
 
   /** Draw the rival racer while it's ahead of the player during a race. */
