@@ -316,7 +316,7 @@ export class Game {
       // skip segments not validly projected this frame (behind camera)
       if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
 
-      const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
+      const w = Math.min(WIDTH * 0.52, (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2);
       const h = w * CAR_ASPECT;
       for (const car of segment.cars) {
         const cx = s.x + car.offset * s.w;
@@ -522,7 +522,7 @@ export class Game {
     const world = this.world;
     ctx.textAlign = 'center';
 
-    if (world.raceMode === 'cruise') {
+    if (world.raceMode === 'cruise' && !world.busted) {
       const rival = world.currentRival;
       const label = rival ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}` : 'BLACKLIST CLEARED';
       ctx.font = 'bold 16px system-ui, sans-serif';
