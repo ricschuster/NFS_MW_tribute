@@ -282,6 +282,16 @@ export const INTERSTATE_PILLAR_SPACING = m(45);
 /** Deck resolution: short enough that a slope reads as a slope. */
 export const INTERSTATE_SEGMENT = m(60);
 
+/**
+ * Freeway spurs (#115). The loop on its own is a circuit and nothing else, so
+ * every long fast line in the city is the same line. Spurs run off it to the
+ * map edges, which gives the network ends as well as a middle - and an end is
+ * somewhere a pursuit can be pushed towards.
+ */
+export const FREEWAY_SPURS = 3;
+/** A spur leaves the loop at a corner-ish point and heads for the nearest edge. */
+export const FREEWAY_SPUR_MIN = m(700);
+
 /** Ramps: the only way between the levels. */
 export const RAMP_COUNT_PER_SIDE = 2;
 export const RAMP_MIN_RUN = m(190);
