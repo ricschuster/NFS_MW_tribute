@@ -6,6 +6,8 @@ export class Input {
   down = false;
   confirm = false;
   nitro = false;
+  pause = false; // P / Esc (game-level, not part of InputState)
+  restart = false; // R (game-level)
 
   constructor() {
     window.addEventListener('keydown', (e) => this.onKey(e, true));
@@ -40,6 +42,15 @@ export class Input {
         break;
       case 'Shift':
         this.nitro = pressed;
+        break;
+      case 'p':
+      case 'P':
+      case 'Escape':
+        this.pause = pressed;
+        break;
+      case 'r':
+      case 'R':
+        this.restart = pressed;
         break;
       default:
         return;
