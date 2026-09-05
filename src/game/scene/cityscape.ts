@@ -135,7 +135,7 @@ export class Cityscape {
   private pavements(city: City): THREE.InstancedMesh {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     geometry.translate(0, -0.5, 0); // hang below y=0, so the top is the pavement
-    const material = new THREE.MeshLambertMaterial({ color: '#6a6f76' });
+    const material = new THREE.MeshLambertMaterial();
     this.owned.push(geometry, material);
 
     const mesh = new THREE.InstancedMesh(geometry, material, city.blocks.length);
@@ -143,13 +143,17 @@ export class Cityscape {
     mesh.receiveShadow = true;
 
     const matrix = new THREE.Matrix4();
+    const paving = new THREE.Color('#6a6f76');
+    const open = new THREE.Color('#4e6b47'); // a block nobody built on: park, yard, lot
     city.blocks.forEach((block, i) => {
       const b = block.bounds;
       matrix.makeScale(b.maxX - b.minX, PAVEMENT_HEIGHT, b.maxZ - b.minZ);
       matrix.setPosition((b.minX + b.maxX) / 2, PAVEMENT_HEIGHT, (b.minZ + b.maxZ) / 2);
       mesh.setMatrixAt(i, matrix);
+      mesh.setColorAt(i, block.open ? open : paving);
     });
     mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     return mesh;
   }
 

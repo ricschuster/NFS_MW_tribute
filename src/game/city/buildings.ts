@@ -14,8 +14,10 @@ import type { Building, CityBlock, Rect } from './types';
  * edges, and heights are skewed low so the occasional landmark reads as tall
  * rather than every building competing.
  */
-export function buildingsOn(rng: Rng, block: CityBlock): Building[] {
+export function buildingsOn(rng: Rng, block: CityBlock, density = 1): Building[] {
   const character = BUILDINGS[block.district];
+  // A thin quarter leaves more of its lots empty, and a dense one fewer.
+  const empty = Math.min(0.75, character.empty / Math.max(0.35, density));
   const out: Building[] = [];
 
   const xEdges = divideLots(rng, block.bounds.minX, block.bounds.maxX, character.lot);
@@ -31,7 +33,7 @@ export function buildingsOn(rng: Rng, block: CityBlock): Building[] {
       };
       // Draw for every lot whether or not it is built on, so that adding a
       // building later does not shuffle every one after it.
-      const skip = rng.chance(character.empty);
+      const skip = rng.chance(empty);
       const landmark = rng.chance(character.landmark);
       const roll = rng.float();
       const variant = rng.float();

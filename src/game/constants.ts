@@ -225,10 +225,19 @@ export const CITY_MIN_STREET = m(70);
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
   downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50) },
-  midtown: { blockX: m(135), blockZ: m(115), jitter: 0.22, skip: 0.12, lanes: 2, speed: kmh(60) },
-  waterfront: { blockX: m(135), blockZ: m(150), jitter: 0.18, skip: 0.08, lanes: 2, speed: kmh(70) },
-  industrial: { blockX: m(215), blockZ: m(200), jitter: 0.14, skip: 0.18, lanes: 2, speed: kmh(70) },
+  midtown: { blockX: m(150), blockZ: m(130), jitter: 0.26, skip: 0.2, lanes: 2, speed: kmh(60) },
+  waterfront: { blockX: m(170), blockZ: m(190), jitter: 0.2, skip: 0.24, lanes: 2, speed: kmh(70) },
+  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70) },
 };
+
+/**
+ * How much superblocks vary in how built up they are (#115). The point is
+ * variation *between* places: a city thinned evenly everywhere is just a
+ * smaller city, where a sparse quarter beside a dense one is two places.
+ */
+export const DENSITY_RANGE = 0.55;
+/** Chance a whole block is left open - a park, a yard, a lot - at density 1. */
+export const OPEN_BLOCK_CHANCE = 0.12;
 
 /**
  * What stands on the blocks (#84). Heights are skewed low - most of a city is
@@ -236,10 +245,10 @@ export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
  * above its neighbours and gives the skyline a shape.
  */
 export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
-  downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.05, landmark: 0.07, kind: 'tower' },
-  midtown: { lot: m(34), setback: m(4), minHeight: m(10), maxHeight: m(34), empty: 0.1, landmark: 0.03, kind: 'block' },
-  waterfront: { lot: m(50), setback: m(6), minHeight: m(7), maxHeight: m(20), empty: 0.16, landmark: 0.02, kind: 'shed' },
-  industrial: { lot: m(62), setback: m(8), minHeight: m(6), maxHeight: m(18), empty: 0.2, landmark: 0.02, kind: 'shed' },
+  downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.07, landmark: 0.07, kind: 'tower' },
+  midtown: { lot: m(38), setback: m(5), minHeight: m(10), maxHeight: m(34), empty: 0.2, landmark: 0.03, kind: 'block' },
+  waterfront: { lot: m(58), setback: m(7), minHeight: m(7), maxHeight: m(20), empty: 0.3, landmark: 0.02, kind: 'shed' },
+  industrial: { lot: m(72), setback: m(10), minHeight: m(6), maxHeight: m(18), empty: 0.36, landmark: 0.02, kind: 'shed' },
 };
 /** How much taller a landmark stands than the district's ordinary ceiling. */
 export const BUILDING_LANDMARK_MULT = 1.9;

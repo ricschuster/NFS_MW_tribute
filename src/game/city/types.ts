@@ -162,12 +162,21 @@ export interface StreetProp {
 export interface CityBlock {
   bounds: Rect;
   district: DistrictKind;
+  /** Nothing is built here: a park, a yard, a lot. Some of a city has to be gaps. */
+  open: boolean;
 }
 
 /** The area bounded by four arterials. One district, one street pattern. */
 export interface Superblock {
   bounds: Rect;
   district: DistrictKind;
+  /**
+   * How built up this one is, around 1. Variation belongs *between* places
+   * rather than within them: a district where every block is equally thinned
+   * reads as noise, where a thin district next to a dense one reads as two
+   * places.
+   */
+  density: number;
 }
 
 /** A generated city. A pure function of `seed`, and the same one every time. */
