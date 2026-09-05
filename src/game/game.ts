@@ -56,12 +56,25 @@ export class Game {
   private prevMute = false;
   // suppress a held ENTER (used to start/resume) so it doesn't also start a race
   private suppressConfirm = false;
+  private reducedMotion = false;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
     this.touch = new TouchControls(canvas, () => this.audio.start());
+
+    // respect the OS "reduce motion" preference (shake, speed lines, strobing)
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this.reducedMotion = mq?.matches ?? false;
+    mq?.addEventListener?.('change', (e) => {
+      this.reducedMotion = e.matches;
+    });
+  }
+
+  /** Lightbar / pursuit flash state; steady (no strobe) under reduced motion. */
+  private lightsOn(): boolean {
+    return this.reducedMotion ? true : Math.floor(this.world.police.lightPhase * 6) % 2 === 0;
   }
 
   start(): void {
@@ -194,7 +207,7 @@ export class Game {
 
     // crash shake: jitter the whole world (the HUD stays put)
     ctx.save();
-    if (world.crashFlash > 0) {
+    if (world.crashFlash > 0 && !this.reducedMotion) {
       const k = world.crashFlash * 9;
       ctx.translate((Math.random() * 2 - 1) * k, (Math.random() * 2 - 1) * k);
     }
@@ -293,7 +306,7 @@ export class Game {
 
   /** Radial speed streaks while boosting, for a sense of raw pace. */
   private renderSpeedLines(): void {
-    if (!this.world.boosting) return;
+    if (!this.world.boosting || this.reducedMotion) return;
     const ctx = this.ctx;
     const cx = WIDTH / 2;
     const cy = HEIGHT / 2 - 40;
@@ -378,7 +391,7 @@ export class Game {
     ctx.closePath();
     ctx.fill();
 
-    const on = Math.floor(police.lightPhase * 6) % 2 === 0;
+    const on = this.lightsOn();
     // farthest first so nearer cops draw on top
     const cops = [...police.cops].sort((a, b) => b.distance - a.distance);
     for (const cop of cops) {
@@ -745,7 +758,7 @@ export class Game {
 
     // flashing PURSUIT label
     if (police.pursuing) {
-      const on = Math.floor(police.lightPhase * 6) % 2 === 0;
+      const on = this.lightsOn();
       ctx.fillStyle = on ? '#3b6bff' : '#ff3b30';
       ctx.beginPath();
       ctx.arc(bx + 20, by + 20, 7, 0, Math.PI * 2);
