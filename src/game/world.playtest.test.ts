@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { World, type InputState } from './world';
 import type { Car } from './types';
-import { STEP, SEGMENT_LENGTH } from './constants';
+import { STEP, SEGMENT_LENGTH, NITRO_SPEED_MULT } from './constants';
 
 const NONE: InputState = {
   left: false,
@@ -100,6 +100,31 @@ describe('playtest: driving', () => {
     play(w, 3, () => press({ up: true })); // let it settle and recharge
     expect(w.nitro).toBeGreaterThan(drained);
     expect(w.speed).toBeLessThanOrEqual(w.maxSpeed + 1); // bled back to the normal cap
+  });
+
+  it('runs the nitrous dry even if the key is never released', () => {
+    const w = new World({ traffic: false });
+    play(w, 6, () => press({ up: true }));
+
+    // Holding the key used to boost forever: at empty the meter recharged for a
+    // single step, which was enough to light it again on the next one.
+    let sawEmpty = false;
+    let sawNormalSpeed = false;
+    let speedSum = 0;
+    let steps = 0;
+    play(w, 10, () => {
+      if (w.nitro <= 0) sawEmpty = true;
+      if (sawEmpty && w.speed <= w.maxSpeed + 1) sawNormalSpeed = true;
+      speedSum += w.speed;
+      steps++;
+      return press({ up: true, nitro: true });
+    });
+
+    expect(sawEmpty).toBe(true); // the charge actually runs out
+    expect(sawNormalSpeed).toBe(true); // and the car drops back to the normal cap
+    // some overspeed is expected (the charge is spent as it arrives), but
+    // nowhere near sitting at the boosted top speed the whole time
+    expect(speedSum / steps).toBeLessThan(w.maxSpeed * NITRO_SPEED_MULT * 0.9);
   });
 });
 
