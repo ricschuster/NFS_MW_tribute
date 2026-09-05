@@ -24,6 +24,11 @@ import {
   ENFORCER_SPEED_KEPT,
   ENFORCER_SPAWN,
   SHUNT_SPEED_KEPT,
+  SPIKE_MIN_LEVEL,
+  SPIKE_MAX,
+  SHRED_TIME,
+  SHRED_SPEED_FRAC,
+  SHRED_GRIP,
   type CopKind,
 } from './constants';
 import type { InputState } from './world';
@@ -48,6 +53,74 @@ function drive(world: CityWorld, seconds: number, input: InputState): void {
 const at = (world: CityWorld) => ({ x: world.x, z: world.z });
 const moved = (a: { x: number; z: number }, b: { x: number; z: number }) =>
   Math.hypot(b.x - a.x, b.z - a.z);
+
+const M = UNITS_PER_METRE;
+
+/**
+ * Put the car on a road wide enough for the police to bother blocking, at
+ * street level, pointing along it.
+ *
+ * Shared by the roadblock, Enforcer and spike-strip tests. All three are about
+ * something the police put in front of you, and all three need the car to be
+ * somewhere they would actually put it.
+ */
+function onAnArterial(): CityWorld {
+  const world = new CityWorld(undefined, { traffic: false, police: false });
+  const road = world.city.roads.find(
+    (r) => r.width >= ROADBLOCK_MIN_WIDTH && !r.bridge && world.city.nodes[r.a].y === 0,
+  );
+  if (!road) throw new Error('no road wide enough to block: the city changed');
+
+  const a = world.city.nodes[road.a].pos;
+  const b = world.city.nodes[road.b].pos;
+  world.x = a.x + (b.x - a.x) * 0.3;
+  world.z = a.z + (b.z - a.z) * 0.3;
+  world.y = 0;
+  world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+  world.onRoad = road;
+  return world;
+}
+
+/** A cop holding station behind the car, so the pursuit has eyes on it. */
+function tail(world: CityWorld): Cop {
+  const cop: Cop = {
+    road: world.onRoad!,
+    t: 0.5,
+    forward: true,
+    speed: 0,
+    damage: 0,
+    x: 0,
+    z: 0,
+    y: 0,
+    heading: world.heading,
+    kind: 'cruiser',
+    role: 'chase',
+  };
+  world.police.cops.push(cop);
+  return cop;
+}
+
+/**
+ * Hold a pursuit at a fixed heat for `seconds`, with the car where it is.
+ *
+ * The pursuit is driven directly rather than by holding the throttle, and that
+ * is not a shortcut. A scripted straight-line drive in this city wedges the
+ * car against a building inside a minute, and a test that measures how long
+ * the car survived is not a test about roadblocks, Enforcers or spikes.
+ *
+ * The tail is re-placed every step because, left to itself, it closes and
+ * busts you, which ends the pursuit the test is trying to observe.
+ */
+function hunt(world: CityWorld, heat: number, seconds: number): void {
+  const cop = tail(world);
+  for (let t = 0; t < seconds; t += STEP) {
+    cop.x = world.x - Math.sin(world.heading) * 35 * M;
+    cop.z = world.z - Math.cos(world.heading) * 35 * M;
+    cop.y = world.y;
+    world.police.heat = heat;
+    world.police.update(STEP, world, world.maxSpeed);
+  }
+}
 
 describe('a car in Kestrel Bay', () => {
   it('starts on a street, at street level, pointing along it', () => {
@@ -534,7 +607,6 @@ describe('cooldown and the search area', () => {
  * off the spot it was placed on; contact resolution runs either way.
  */
 describe('takedowns', () => {
-  const M = UNITS_PER_METRE;
 
   /** A stationary cop `metres` straight ahead of the car, facing the same way. */
   function copAhead(world: CityWorld, metres: number, kind: CopKind = 'cruiser'): Cop {
@@ -675,26 +747,6 @@ describe('takedowns', () => {
  * happened to arrive at.
  */
 describe('roadblocks', () => {
-  const M = UNITS_PER_METRE;
-
-  /** A world with the car on a road wide enough to be worth blocking. */
-  function onAnArterial(): CityWorld {
-    const world = new CityWorld(undefined, { traffic: false, police: false });
-    const road = world.city.roads.find(
-      (r) => r.width >= ROADBLOCK_MIN_WIDTH && !r.bridge && world.city.nodes[r.a].y === 0,
-    );
-    if (!road) throw new Error('no road wide enough to block: the city changed');
-
-    const a = world.city.nodes[road.a].pos;
-    const b = world.city.nodes[road.b].pos;
-    world.x = a.x + (b.x - a.x) * 0.3;
-    world.z = a.z + (b.z - a.z) * 0.3;
-    world.y = 0;
-    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
-    world.onRoad = road;
-    return world;
-  }
-
   /** A barrier straight across the car's path, `metres` ahead. */
   function blockAhead(world: CityWorld, metres: number, gap: number | null) {
     const road = world.onRoad!;
@@ -789,61 +841,24 @@ describe('roadblocks', () => {
     expect(world.speed).toBeGreaterThan(before * 0.9);
   });
 
-  /**
-   * Run a pursuit for `seconds` with the car parked on a wide road and the
-   * heat pinned, and count what gets placed.
-   *
-   * The pursuit is driven directly rather than by holding the throttle, and
-   * that is not a shortcut. A scripted straight-line drive in this city wedges
-   * the car against a building inside a minute, and a test that measures how
-   * long the car survived is not a test about roadblocks.
-   */
-  function blocksPlaced(world: CityWorld, heat: number, seconds: number): number {
-    const cop: Cop = {
-      road: world.onRoad!,
-      t: 0.5,
-      forward: true,
-      speed: 0,
-      damage: 0,
-      x: 0,
-      z: 0,
-      y: 0,
-      heading: world.heading,
-      kind: 'cruiser',
-      role: 'chase',
-    };
-    world.police.cops.push(cop);
-
-    let placed = 0;
-    for (let t = 0; t < seconds; t += STEP) {
-      // Holding station off the back bumper: close enough to keep eyes on,
-      // far enough not to bust. Left to itself it would close and end this.
-      cop.x = world.x - Math.sin(world.heading) * 40 * M;
-      cop.z = world.z - Math.cos(world.heading) * 40 * M;
-      world.police.heat = heat;
-      const before = world.police.roadblocks.length;
-      world.police.update(STEP, world, world.maxSpeed);
-      if (world.police.roadblocks.length > before) placed++;
-    }
-    return placed;
-  }
-
   it('does not turn up below heat two', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    expect(blocksPlaced(world, 0, 40)).toBe(0);
+    hunt(world, 0, 40);
+    expect(world.police.roadblocks.length).toBe(0);
   });
 
   it('turns up once the heat is high enough', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    expect(blocksPlaced(world, 0.6, 40)).toBeGreaterThan(0);
+    hunt(world, 0.6, 40);
+    expect(world.police.roadblocks.length).toBeGreaterThan(0);
   });
 
   it('places them ahead of you, on a road worth blocking', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    blocksPlaced(world, 0.6, 40);
+    hunt(world, 0.6, 40);
     expect(world.police.roadblocks.length).toBeGreaterThan(0);
 
     for (const block of world.police.roadblocks) {
@@ -859,7 +874,7 @@ describe('roadblocks', () => {
   it('gives up on them when the pursuit does', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    blocksPlaced(world, 0.6, 40);
+    hunt(world, 0.6, 40);
     expect(world.police.roadblocks.length).toBeGreaterThan(0);
 
     world.police.reset();
@@ -883,41 +898,13 @@ describe('roadblocks', () => {
  * question it happened to survive long enough to reach.
  */
 describe('enforcers', () => {
-  const M = UNITS_PER_METRE;
-
-  /** A cop holding station behind, so the pursuit keeps running and has eyes on. */
-  function tail(world: CityWorld): Cop {
-    const cop: Cop = {
-      road: world.onRoad!,
-      t: 0.5,
-      forward: true,
-      speed: 0,
-      damage: 0,
-      x: 0,
-      z: 0,
-      y: 0,
-      heading: world.heading,
-      kind: 'cruiser',
-      role: 'chase',
-    };
-    world.police.cops.push(cop);
-    return cop;
-  }
-
-  /** Hold a pursuit at `heat` for `seconds` and hand back the Enforcers sent. */
-  function hunted(world: CityWorld, heat: number, seconds: number): Cop[] {
-    const cop = tail(world);
-    for (let t = 0; t < seconds; t += STEP) {
-      cop.x = world.x - Math.sin(world.heading) * 30 * M;
-      cop.z = world.z - Math.cos(world.heading) * 30 * M;
-      cop.y = world.y;
-      world.police.heat = heat;
-      world.police.update(STEP, world, world.maxSpeed);
-    }
-    return world.police.cops.filter((c) => c.role === 'enforcer');
-  }
-
   const parked = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** Hold a pursuit for a while and hand back whatever Enforcers it sent. */
+  const hunted = (world: CityWorld, heat: number, seconds: number): Cop[] => {
+    hunt(world, heat, seconds);
+    return world.police.cops.filter((c) => c.role === 'enforcer');
+  };
 
   it('stays away below heat three', () => {
     const world = parked();
@@ -1051,5 +1038,156 @@ describe('enforcers', () => {
     // The Enforcer moved across with the car; the chaser did not move at all.
     expect(Math.abs(lateral(enforcer) - enforcerLeft)).toBeGreaterThan(M);
     expect(Math.abs(lateral(chaser) - chaserLeft)).toBeLessThan(M * 0.5);
+  });
+});
+
+/**
+ * Spike strips (#60).
+ *
+ * The strip itself is nearly nothing - a line and a span. What is worth
+ * asserting on is the several seconds afterwards, which is the part a picture
+ * cannot show and the part that decides whether it is a setback or a bust with
+ * extra steps.
+ */
+describe('spike strips', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** A strip straight across the car's path, `metres` ahead, covering it all. */
+  function stripAhead(world: CityWorld, metres: number, from: number, to: number) {
+    const strip = {
+      road: world.onRoad!,
+      x: world.x + Math.sin(world.heading) * metres * M,
+      z: world.z + Math.cos(world.heading) * metres * M,
+      y: world.y,
+      ax: Math.cos(world.heading),
+      az: -Math.sin(world.heading),
+      from,
+      to,
+    };
+    world.police.spikes.push(strip);
+    return strip;
+  }
+
+  it('shreds the tyres when you run over it', () => {
+    const world = still();
+    stripAhead(world, 0, -10 * M, 10 * M);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+
+    expect(world.shredded).toBeGreaterThan(0);
+    expect(world.police.spikes.length).toBe(0);
+  });
+
+  // A strip is not a wall. Nothing about this step should feel like an impact.
+  it('does not stop you or shake the screen', () => {
+    const world = still();
+    stripAhead(world, 0, -10 * M, 10 * M);
+    world.speed = world.maxSpeed * 0.5;
+    const before = world.speed;
+    world.step(STEP, NONE);
+
+    expect(world.speed).toBeGreaterThan(before * 0.95);
+    expect(world.crashFlash).toBe(0);
+  });
+
+  it('leaves a way past it', () => {
+    const world = still();
+    // Laid from one kerb, leaving the far side clean; the car sits out there.
+    const road = world.onRoad!;
+    stripAhead(world, 0, -road.width / 2, -road.width / 2 + road.width * 0.5);
+    world.x += Math.cos(world.heading) * (road.width * 0.42);
+    world.z -= Math.sin(world.heading) * (road.width * 0.42);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+
+    expect(world.shredded).toBe(0);
+    expect(world.police.spikes.length).toBe(1);
+  });
+
+  // At top speed the car covers more ground in a step than the strip is deep,
+  // and a hazard you can step over at speed is a hazard only for slow cars.
+  it('cannot be stepped over at top speed', () => {
+    const world = still();
+    stripAhead(world, 1.5, -10 * M, 10 * M);
+    world.speed = world.maxSpeed;
+    world.step(STEP, NONE);
+    expect(world.shredded).toBeGreaterThan(0);
+  });
+
+  it('is not in the way of a car on the deck above it', () => {
+    const world = still();
+    const strip = stripAhead(world, 0, -10 * M, 10 * M);
+    strip.y = 0;
+    world.y = 12 * M;
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+    expect(world.shredded).toBe(0);
+  });
+
+  it('caps the top speed hard while it lasts, nitrous included', () => {
+    const world = still();
+    stripAhead(world, 0, -10 * M, 10 * M);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+    expect(world.shredded).toBeGreaterThan(0);
+
+    drive(world, 3, press({ up: true, nitro: true }));
+    expect(world.speed).toBeLessThanOrEqual(world.maxSpeed * SHRED_SPEED_FRAC + 1);
+  });
+
+  it('takes most of the steering with it', () => {
+    const turn = (shredded: boolean) => {
+      const world = still();
+      if (shredded) world.shredded = SHRED_TIME;
+      const facing = world.heading;
+      // On the spot, so the answer is about steering and not about which
+      // building the car found first.
+      for (let t = 0; t < 0.5; t += STEP) world.step(STEP, press({ left: true }));
+      return Math.abs(world.heading - facing);
+    };
+    const hurt = turn(true);
+    const fine = turn(false);
+    expect(hurt).toBeLessThan(fine);
+    expect(hurt).toBeGreaterThan(fine * SHRED_GRIP * 0.8);
+  });
+
+  it('wears off, and the car comes back', () => {
+    const world = still();
+    world.shredded = SHRED_TIME;
+    // Standing still, so nothing but the clock clears it.
+    drive(world, SHRED_TIME + 0.5, NONE);
+    expect(world.shredded).toBe(0);
+
+    // Three seconds of throttle takes the car past the shredded cap, which it
+    // could not have done a moment ago. Three and not twelve: a straight line
+    // from here reaches a building, and that is a different test failing.
+    drive(world, 3, press({ up: true }));
+    expect(world.speed).toBeGreaterThan(world.maxSpeed * SHRED_SPEED_FRAC);
+  });
+
+  it('does not turn up below heat four', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    hunt(world, 0.2, 60);
+    expect(world.police.level).toBeLessThan(SPIKE_MIN_LEVEL);
+    expect(world.police.spikes.length).toBe(0);
+  });
+
+  it('turns up once the heat is high enough, and not without limit', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    hunt(world, 0.75, 90);
+    expect(world.police.level).toBeGreaterThanOrEqual(SPIKE_MIN_LEVEL);
+    expect(world.police.spikes.length).toBeGreaterThan(0);
+    expect(world.police.spikes.length).toBeLessThanOrEqual(SPIKE_MAX);
+  });
+
+  it('gives up on them when the pursuit does', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    hunt(world, 0.75, 90);
+    expect(world.police.spikes.length).toBeGreaterThan(0);
+    world.police.reset();
+    expect(world.police.spikes.length).toBe(0);
   });
 });

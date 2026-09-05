@@ -27,12 +27,14 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer']);
+const DRIVING = new Set([
+  'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
+]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
-      'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer',
+      'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -277,6 +279,44 @@ for (const view of VIEWS) {
     await page.waitForTimeout(600);
   }
 
+
+  if (view === 'spikes') {
+    // Drive out, wait for the chase camera, then lay a strip in front of the
+    // car with the sliver of clean road it always leaves.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      // Far enough out that the car in the foreground is not standing on it.
+      const at = 40 * metre;
+      const half = world.onRoad.width / 2;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.75;
+      world.crashFlash = 0;
+      world.police.spikes.push({
+        road: world.onRoad,
+        x: world.x + Math.sin(world.heading) * at,
+        z: world.z + Math.cos(world.heading) * at,
+        y: world.y,
+        ax: Math.cos(world.heading),
+        az: -Math.sin(world.heading),
+        from: -half,
+        to: half * 0.4,
+      });
+      // And the cost, in the same frame: one strip ahead and the clock from
+      // one already run over. Not a state the game puts you in on its own, but
+      // it puts both halves of the mechanic in one picture.
+      world.shredded = 5;
+      world.speed = 0;
+    });
+    await page.waitForTimeout(1200);
+  }
 
   if (view === 'pursuit') {
     // Long enough for the cops to arrive, driving a loop so the car stays in

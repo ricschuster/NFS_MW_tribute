@@ -7,7 +7,7 @@ import type { Hud } from './hud';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import type { CityWorld } from '../cityworld';
-import { STEP, COP_UNITS } from '../constants';
+import { STEP, COP_UNITS, SPIKE_REACH } from '../constants';
 import type { InputState } from '../world';
 
 const M = UNITS_PER_METRE;
@@ -57,6 +57,8 @@ export class CityView {
   private readonly trafficCars: CarPool;
   private readonly copCars: CarPool;
   private readonly wreckCars: CarPool;
+  /** Spike strips, reused frame to frame: they come and go with the pursuit. */
+  private readonly spikePlates: THREE.Mesh[] = [];
   private siren = 0;
   private readonly director: CameraDirector;
   private accumulator = 0;
@@ -403,6 +405,7 @@ export class CityView {
       car.rotation.set(0, wreck.heading, wreck.roll);
     }
     this.wreckCars.end();
+    this.spikes(world);
 
     // The camera is the director's business now (#88), not this loop's.
     const shot = this.director.update(dt, world);
@@ -419,6 +422,47 @@ export class CityView {
     this.skyDome.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
     this.hud?.draw(world);
+  }
+
+  /**
+   * Lay the spike strips on the road (#60).
+   *
+   * A flat plate rather than modelled teeth: what has to read at speed is a
+   * dark band across the road you are about to be on, and at this geometry
+   * budget anything finer is a smear. Sat a few centimetres above the asphalt
+   * so it does not z-fight with the road markings.
+   */
+  private spikes(world: CityWorld): void {
+    const strips = world.police.spikes;
+    while (this.spikePlates.length < strips.length) {
+      const plate = new THREE.Mesh(
+        // Rotating by `atan2(ax, az)` sends local +z along the strip and local
+        // +x down the road, so the unit side is the one that gets scaled to
+        // the span and the deep side is the strip's own width.
+        new THREE.BoxGeometry(SPIKE_REACH * 2, 0.35 * M, 1),
+        // Amber, not black. A dark band on dark asphalt at 20 m is invisible,
+        // and a hazard you cannot see is not a hazard, it is a punishment.
+        new THREE.MeshLambertMaterial({ color: '#e0a33a' }),
+      );
+      this.spikePlates.push(plate);
+      this.scene.add(plate);
+    }
+
+    for (let i = 0; i < this.spikePlates.length; i++) {
+      const plate = this.spikePlates[i];
+      const strip = strips[i];
+      plate.visible = strip !== undefined;
+      if (!strip) continue;
+
+      const middle = (strip.from + strip.to) / 2;
+      plate.position.set(
+        strip.x + strip.ax * middle,
+        strip.y + 0.12 * M,
+        strip.z + strip.az * middle,
+      );
+      plate.rotation.y = Math.atan2(strip.ax, strip.az);
+      plate.scale.set(1, 1, Math.max(1, strip.to - strip.from));
+    }
   }
 
   start(): void {

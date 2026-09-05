@@ -38,6 +38,15 @@ import {
   ENFORCER_MIN_LEVEL,
   ENFORCER_SPAWN,
   ENFORCER_INTERVAL,
+  SPIKE_MIN_LEVEL,
+  SPIKE_MAX,
+  SPIKE_INTERVAL,
+  SPIKE_LEAD_TIME,
+  SPIKE_MIN_LEAD,
+  SPIKE_MAX_LEAD,
+  SPIKE_SPACING,
+  SPIKE_COVER,
+  SPIKE_COVER_PER_LEVEL,
   type CopKind,
 } from './constants';
 import { lineBlocked, type CityGrid } from './city/grid';
@@ -109,6 +118,27 @@ export interface BlockCar {
  * can slip through by accident is worse than no barrier. The cars are drawn
  * along the line; the line is what you hit.
  */
+/**
+ * A spike strip across part of the road (#60).
+ *
+ * Held the same way a roadblock is - a line across the carriageway - but the
+ * span is what varies rather than the hole in it. A strip covers most of the
+ * road and leaves a sliver at one edge, which makes it a line to find rather
+ * than a side to pick.
+ */
+export interface SpikeStrip {
+  road: CityRoad;
+  x: number;
+  z: number;
+  y: number;
+  /** Unit vector across the road: the strip runs along this. */
+  ax: number;
+  az: number;
+  /** The span it covers, as offsets across the road from the centreline. */
+  from: number;
+  to: number;
+}
+
 export interface Roadblock {
   road: CityRoad;
   /** The middle of the barrier. */
@@ -144,6 +174,8 @@ export class CityPolice {
   readonly cops: Cop[] = [];
   /** Cruisers parked across the road ahead of you (#59). */
   readonly roadblocks: Roadblock[] = [];
+  /** Strips laid across most of the road ahead of you (#60). */
+  readonly spikes: SpikeStrip[] = [];
   /** 0..1. Rises while a cop is close, and drives the heat *level*. */
   heat = 0;
   busted = false;
@@ -160,6 +192,7 @@ export class CityPolice {
   private sinceSpawn = 0;
   private sinceBlock = 0;
   private sinceEnforcer = 0;
+  private sinceSpike = 0;
   private cooldown = COP_FIRST_SPAWN;
   private pinned = 0;
   private unseen = 0;
@@ -213,6 +246,7 @@ export class CityPolice {
     this.recruit(dt, player);
     this.summon(dt, player);
     this.blockade(dt, player);
+    this.lay(dt, player);
   }
 
   /**
@@ -247,6 +281,66 @@ export class CityPolice {
     this.sinceBlock = 0;
   }
 
+  /**
+   * Lay spike strips ahead of them (#60).
+   *
+   * Same shape as the roadblock rules and for the same reasons: only while a
+   * pursuit is actually running, on their own clock, and forgotten once the
+   * chase has left them behind.
+   */
+  private lay(dt: number, player: Chased): void {
+    for (let i = this.spikes.length - 1; i >= 0; i--) {
+      const strip = this.spikes[i];
+      if (Math.hypot(strip.x - player.x, strip.z - player.z) > ROADBLOCK_FORGET) {
+        this.spikes.splice(i, 1);
+      }
+    }
+    if (this.state !== 'pursuit') {
+      this.spikes.length = 0;
+      return;
+    }
+
+    this.sinceSpike += dt;
+    if (this.level < SPIKE_MIN_LEVEL) return;
+    if (this.spikes.length >= SPIKE_MAX) return;
+    if (this.sinceSpike < SPIKE_INTERVAL) return;
+
+    const spot = this.aheadOfThem(player, SPIKE_LEAD_TIME, SPIKE_MIN_LEAD, SPIKE_MAX_LEAD, 0);
+    if (!spot) return;
+    for (const other of this.spikes) {
+      if (Math.hypot(other.x - spot.x, other.z - spot.z) < SPIKE_SPACING) return;
+    }
+
+    // The hotter it is, the less road is left clean. The strip is laid from
+    // one kerb, so what is left is a sliver at the other one.
+    const cover = Math.min(
+      0.94,
+      SPIKE_COVER + SPIKE_COVER_PER_LEVEL * (this.level - SPIKE_MIN_LEVEL),
+    );
+    const half = spot.road.width / 2;
+    const side = this.rng.chance(0.5) ? 1 : -1;
+    const from = -half * side;
+    const to = from + half * 2 * cover * side;
+
+    this.spikes.push({
+      road: spot.road,
+      x: spot.x,
+      z: spot.z,
+      y: spot.y,
+      ax: spot.ax,
+      az: spot.az,
+      from: Math.min(from, to),
+      to: Math.max(from, to),
+    });
+    this.sinceSpike = 0;
+  }
+
+  /** Take a strip out of play once it has been run over. */
+  shred(strip: SpikeStrip): void {
+    const i = this.spikes.indexOf(strip);
+    if (i >= 0) this.spikes.splice(i, 1);
+  }
+
   /** Take a roadblock out of play once somebody has been through it. */
   breach(block: Roadblock): void {
     const i = this.roadblocks.indexOf(block);
@@ -254,25 +348,31 @@ export class CityPolice {
   }
 
   /**
-   * Find a road far enough ahead to be seen and wide enough to be a choice.
+   * A spot on a road far enough ahead to be seen, and running the way you are.
+   *
+   * Shared by roadblocks (#59) and spike strips (#60), because "put something
+   * in front of them" is one question and two answers to it would drift apart.
    *
    * The lead is measured in *seconds at the speed you are doing* rather than
    * in metres. A fixed distance is a warning at 80 km/h and a wall out of the
    * fog at 300.
    */
-  private setUp(player: Chased): Roadblock | null {
-    const lead = Math.min(
-      ROADBLOCK_MAX_LEAD,
-      Math.max(ROADBLOCK_MIN_LEAD, Math.abs(player.speed) * ROADBLOCK_LEAD_TIME),
-    );
+  private aheadOfThem(
+    player: Chased,
+    leadTime: number,
+    minLead: number,
+    maxLead: number,
+    minWidth: number,
+  ): { road: CityRoad; x: number; z: number; y: number; ax: number; az: number } | null {
+    const lead = Math.min(maxLead, Math.max(minLead, Math.abs(player.speed) * leadTime));
     const aimX = player.x + Math.sin(player.heading) * lead;
     const aimZ = player.z + Math.cos(player.heading) * lead;
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;
     for (const road of this.grid.roadsNear(aimX, aimZ)) {
-      if (road.width < ROADBLOCK_MIN_WIDTH || road.bridge) continue;
-      // At your level: a block on the deck overhead is not in your way.
+      if (road.width < minWidth || road.bridge) continue;
+      // At your level: anything on the deck overhead is not in your way.
       if (Math.abs(this.city.nodes[road.a].y - player.y) > SURFACE_REACH) continue;
 
       const a = this.city.nodes[road.a].pos;
@@ -305,28 +405,40 @@ export class CityPolice {
     const z = a.z + dz * t;
 
     // In front, and far enough in front to be a warning rather than a surprise.
-    const toBlockX = x - player.x;
-    const toBlockZ = z - player.z;
-    const ahead = toBlockX * Math.sin(player.heading) + toBlockZ * Math.cos(player.heading);
-    if (ahead < ROADBLOCK_MIN_LEAD) return null;
+    const ahead = (x - player.x) * Math.sin(player.heading) + (z - player.z) * Math.cos(player.heading);
+    if (ahead < minLead) return null;
+
+    return { road: best, x, z, y: this.city.nodes[best.a].y, ax: -dz / length, az: dx / length };
+  }
+
+  /** Build a barrier on a road wide enough for the gap to be a real choice. */
+  private setUp(player: Chased): Roadblock | null {
+    const spot = this.aheadOfThem(
+      player,
+      ROADBLOCK_LEAD_TIME,
+      ROADBLOCK_MIN_LEAD,
+      ROADBLOCK_MAX_LEAD,
+      ROADBLOCK_MIN_WIDTH,
+    );
+    if (!spot) return null;
 
     for (const other of this.roadblocks) {
-      if (Math.hypot(other.x - x, other.z - z) < ROADBLOCK_SPACING) return null;
+      if (Math.hypot(other.x - spot.x, other.z - spot.z) < ROADBLOCK_SPACING) return null;
     }
 
     // Higher heat means fewer ways through.
     const chance = ROADBLOCK_GAP_CHANCE - ROADBLOCK_GAP_FALLOFF * (this.level - ROADBLOCK_MIN_LEVEL);
-    const half = best.width / 2;
+    const half = spot.road.width / 2;
     const room = half - ROADBLOCK_GAP;
     const gap = room > 0 && this.rng.chance(chance) ? this.rng.range(-room, room) : null;
 
     const block: Roadblock = {
-      road: best,
-      x,
-      z,
-      y: this.city.nodes[best.a].y,
-      ax: -dz / length,
-      az: dx / length,
+      road: spot.road,
+      x: spot.x,
+      z: spot.z,
+      y: spot.y,
+      ax: spot.ax,
+      az: spot.az,
       half,
       gap,
       cars: [],
@@ -668,7 +780,9 @@ export class CityPolice {
   reset(): void {
     this.cops.length = 0;
     this.roadblocks.length = 0;
+    this.spikes.length = 0;
     this.sinceEnforcer = 0;
+    this.sinceSpike = 0;
     this.heat = 0;
     this.busted = false;
     this.pinned = 0;
