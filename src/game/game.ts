@@ -30,6 +30,13 @@ import { interpolate, percentRemaining, exponentialFog } from './math';
 /** Top display speed, in km/h, used purely for the HUD readout. */
 const DISPLAY_MAX_KMH = 320;
 
+/** Cheap stable integer hash, for deterministic (non-flickering) scenery. */
+function hash32(n: number): number {
+  let h = n | 0;
+  h = (h << 13) ^ h;
+  return ((h * (h * h * 15731 + 789221) + 1376312589) & 0x7fffffff) >>> 0;
+}
+
 /**
  * Presentation layer: owns the canvas, keyboard input, and the animation loop,
  * and renders the {@link World} it advances. All simulation lives in World.
@@ -511,6 +518,36 @@ export class Game {
     ctx.fillStyle = sky;
     // over-fill so the crash shake never exposes an edge
     ctx.fillRect(-12, -12, WIDTH + 24, HEIGHT + 24);
+
+    this.renderSkyline();
+  }
+
+  /** A distant city silhouette at the horizon, parallaxing gently with steering. */
+  private renderSkyline(): void {
+    const ctx = this.ctx;
+    const horizon = Math.round(HEIGHT * 0.46);
+    const shift = -this.world.playerX * 30;
+    const step = 66;
+
+    for (let k = -2; k <= Math.ceil(WIDTH / step) + 2; k++) {
+      const h = 42 + (hash32(k) % 104);
+      const w = step - 8;
+      const bx = k * step + shift;
+      const by = horizon - h;
+
+      ctx.fillStyle = '#241a3a';
+      ctx.fillRect(bx, by, w, h);
+
+      // a few lit windows, keyed to building-local coords so they don't flicker
+      ctx.fillStyle = 'rgba(255,210,120,0.45)';
+      let row = 0;
+      for (let wy = by + 8; wy < horizon - 6; wy += 12, row++) {
+        let col = 0;
+        for (let wx = bx + 6; wx < bx + w - 4; wx += 12, col++) {
+          if (hash32(k * 131 + row * 17 + col) % 4 === 0) ctx.fillRect(wx, wy, 4, 5);
+        }
+      }
+    }
   }
 
   private renderCar(): void {
