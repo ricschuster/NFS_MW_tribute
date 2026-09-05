@@ -13,6 +13,10 @@ import {
   LOOK_BACK_HOLD,
   SHAKE_DECAY,
   SHAKE_STRENGTH,
+  TAKEDOWN_HOLD,
+  TAKEDOWN_SLOWMO,
+  TAKEDOWN_DISTANCE,
+  TAKEDOWN_ORBIT,
 } from '../constants';
 import type { CityWorld } from '../cityworld';
 
@@ -22,7 +26,7 @@ const M = UNITS_PER_METRE;
  * Which camera is running. Named, because the point of #88 is that the camera
  * stops being "behind the car" and becomes a thing with opinions.
  */
-export type CameraMode = 'intro' | 'chase' | 'lookBack' | 'crash';
+export type CameraMode = 'intro' | 'chase' | 'lookBack' | 'crash' | 'takedown';
 
 /** Where a camera wants to be this frame. */
 export interface Shot {
@@ -51,6 +55,17 @@ export interface Shot {
 export class CameraDirector {
   mode: CameraMode = 'intro';
 
+  /**
+   * How fast time should run for the sim this frame (#94).
+   *
+   * The slow motion on a takedown belongs here rather than in `CityWorld`,
+   * because it is a property of watching rather than of the world: the cut
+   * runs on real seconds, so it lasts the same length whatever the physics is
+   * doing. The loop multiplies its accumulator by this and keeps stepping at
+   * the fixed `STEP`, which is how slow motion works without touching physics.
+   */
+  timeScale = 1;
+
   private readonly position = new THREE.Vector3();
   private readonly target = new THREE.Vector3();
   private fov = CHASE_FOV;
@@ -60,6 +75,9 @@ export class CameraDirector {
   private shake = 0;
   private lookBack = 0;
   private wasCrashing = false;
+  private wasTakedown = false;
+  /** Where the wreck was when the cut started; the car drives away from it. */
+  private readonly wreckAt = new THREE.Vector3();
 
   private readonly scratch = new THREE.Vector3();
 
@@ -93,8 +111,23 @@ export class CameraDirector {
     }
     this.wasCrashing = crashing;
 
+    // A takedown outranks the crash it arrived with: putting a cruiser into a
+    // wall sets `crashFlash` too, and the wreck is the shot worth having.
+    const took = world.takedownFlash > 0;
+    if (took && !this.wasTakedown && !this.calm && world.lastTakedown) {
+      this.mode = 'takedown';
+      this.elapsed = 0;
+      this.shake = SHAKE_STRENGTH;
+      const at = world.lastTakedown;
+      this.wreckAt.set(at.x, at.y, at.z);
+    }
+    this.wasTakedown = took;
+
     if (this.mode === 'intro' && (this.elapsed > INTRO_HOLD || this.calm)) this.mode = 'chase';
     if (this.mode === 'crash' && this.elapsed > CRASH_HOLD) this.mode = 'chase';
+    if (this.mode === 'takedown' && this.elapsed > TAKEDOWN_HOLD) this.mode = 'chase';
+    // Reduced motion gets no slow motion either: it is the same request.
+    this.timeScale = this.mode === 'takedown' ? TAKEDOWN_SLOWMO : 1;
     if (this.mode === 'chase' && this.lookBack > 0) this.mode = 'lookBack';
     if (this.mode === 'lookBack' && this.lookBack <= 0) this.mode = 'chase';
 
@@ -103,7 +136,7 @@ export class CameraDirector {
 
     // A crash cuts; everything else eases. Blending into a crash camera would
     // show the camera travelling to the spot, which is the opposite of a cut.
-    const cut = this.mode === 'crash' || !this.started;
+    const cut = this.mode === 'crash' || this.mode === 'takedown' || !this.started;
     this.started = true;
     const ease = cut ? 1 : Math.min(1, dt * CHASE_LAG);
 
@@ -165,6 +198,30 @@ export class CameraDirector {
           .add(new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle)).multiplyScalar(INTRO_RADIUS))
           .setY(world.y + 9 * M),
         target: car.clone().setY(world.y + 2 * M),
+        fov: CHASE_FOV,
+      };
+    }
+
+    if (this.mode === 'takedown') {
+      // Swing round the wreck rather than round the player: the wreck is what
+      // the shot is of, and the car that caused it is usually still leaving.
+      //
+      // The swing starts along the street rather than across it. A takedown
+      // happens where the cars were, which in this city is usually a street
+      // with a building either side, and a camera thrown out sideways lands in
+      // one of them - `unblock` then drags it back onto the wreck's bumper and
+      // the shot is of nothing. Down the line of the ram there is room.
+      const angle = world.heading - 0.3 + this.elapsed * TAKEDOWN_ORBIT;
+      return {
+        position: this.wreckAt
+          .clone()
+          .add(
+            new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle)).multiplyScalar(
+              TAKEDOWN_DISTANCE,
+            ),
+          )
+          .setY(this.wreckAt.y + 5 * M),
+        target: this.wreckAt.clone().setY(this.wreckAt.y + 1.5 * M),
         fov: CHASE_FOV,
       };
     }

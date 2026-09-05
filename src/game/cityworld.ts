@@ -19,6 +19,11 @@ import {
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
+  WRECK_LINGER,
+  TAKEDOWN_FLASH,
+  TAKEDOWN_SPEED_KEPT,
+  TAKEDOWN_HEAT,
+  COP_UNITS,
 } from './constants';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -26,8 +31,34 @@ import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
 import { CityPolice } from './citypolice';
 import { CityGrid, surfaceAt, roadHeightAt, carriageway, inWater } from './city/grid';
+import { impactDamage, touching } from './impact';
+import type { GraphCar } from './graphcar';
 import type { City, CityRoad } from './city/types';
 import type { InputState } from './world';
+
+/**
+ * A car that has been put out of play, left where it stopped (#94).
+ *
+ * A wreck is deliberately not a `GraphCar` any more. It has stopped
+ * navigating, so keeping it on the graph would mean every pursuit and traffic
+ * loop had to remember to skip it; lifting it out into a plain husk means they
+ * cannot forget. It is still solid, because a wreck you can drive through is a
+ * strange reward for having made it.
+ */
+export interface Wreck {
+  x: number;
+  y: number;
+  z: number;
+  heading: number;
+  colour: string;
+  scale: number;
+  /** True for a police car: only those count as takedowns. */
+  police: boolean;
+  /** Which way it came to rest, so the street is not full of level cars. */
+  roll: number;
+  /** Seconds since it was wrecked. Cleared away at `WRECK_LINGER`. */
+  age: number;
+}
 
 /**
  * The car, driving in Kestrel Bay (#113).
@@ -84,6 +115,14 @@ export class CityWorld {
   busted = false;
   /** Seconds left on the ESCAPED banner. */
   escapedFlash = 0;
+
+  /** Cars taken out of play, still sitting in the street (#94). */
+  readonly wrecks: Wreck[] = [];
+  /** How many police cars this drive has wrecked. */
+  takedowns = 0;
+  /** Seconds left on the TAKEDOWN banner, and where the camera should look. */
+  takedownFlash = 0;
+  lastTakedown: { x: number; y: number; z: number } | null = null;
 
   /**
    * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
@@ -158,6 +197,8 @@ export class CityWorld {
   step(dt: number, input: InputState): void {
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
+    this.takedownFlash = Math.max(0, this.takedownFlash - dt);
+    this.clearWrecks(dt);
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
     if (this.busted) {
@@ -216,10 +257,7 @@ export class CityWorld {
 
     this.move(dt);
     this.settle(dt);
-    if (this.withTraffic) {
-      this.traffic.update(dt, this);
-      this.shunt();
-    }
+    if (this.withTraffic) this.traffic.update(dt, this);
     if (this.withPolice) {
       this.police.update(dt, this, this.maxSpeed);
       if (this.police.busted) {
@@ -229,25 +267,102 @@ export class CityWorld {
       }
       if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
     }
+    // After both have moved, so a contact is judged where the cars actually
+    // are this step rather than where they were before one of them drove off.
+    this.contacts();
   }
 
   /**
-   * Hitting traffic. Softer than a building, because a car gives: you lose
-   * speed and it loses more, and both of you keep going.
+   * Hitting other cars: a shunt, damage, and sometimes a takedown (#94).
+   *
+   * One loop over everything solid rather than one per kind, because a hit is
+   * a hit: the only differences are how tough the thing is, whether wrecking
+   * it counts for anything, and what has to be told about it afterwards.
+   *
+   * A car is still shoved down its own road rather than sideways off it -
+   * traffic lives on the graph, and a car knocked off the graph has nowhere to
+   * be. What is new is that the shove is now recorded, so a car shoved hard
+   * enough stops being a car and becomes a wreck.
    */
-  private shunt(): void {
-    for (const car of this.traffic.cars) {
-      if (Math.abs(car.y - this.y) > CAR_RADIUS * 2) continue;
-      const gap = Math.hypot(car.x - this.x, car.z - this.z);
-      if (gap > CAR_RADIUS * 2.2) continue;
-
+  private contacts(): void {
+    // Wrecks first: they are already dead, so they only cost you speed. A
+    // wreck you can drive through is a strange reward for having made it.
+    for (const wreck of this.wrecks) {
+      if (!touching(this, wreck)) continue;
       this.speed *= SHUNT_SPEED_KEPT;
       this.crashFlash = 1;
-      // Shove it down its own road rather than sideways off it: traffic lives
-      // on the graph, and a car knocked off the graph has nowhere to be.
-      car.speed *= 0.4;
-      car.t = Math.min(1, car.t + (CAR_RADIUS * 2) / Math.max(1, car.road.length));
       return;
+    }
+
+    for (const car of this.traffic.cars) {
+      if (!touching(this, car)) continue;
+      const hurt = impactDamage(this, car, this.maxSpeed, this.grid);
+      this.hit(car, hurt, SHUNT_SPEED_KEPT);
+      if (car.damage >= 1) {
+        this.traffic.remove(car);
+        this.wreck(car, car.colour, 1, false);
+      }
+      return;
+    }
+
+    for (const cop of this.police.cops) {
+      if (!touching(this, cop)) continue;
+      const unit = COP_UNITS[cop.kind];
+      const hurt = impactDamage(this, cop, this.maxSpeed, this.grid, unit.scale);
+      this.hit(cop, hurt, SHUNT_SPEED_KEPT);
+      if (cop.damage >= 1) {
+        this.police.remove(cop);
+        this.wreck(cop, unit.colour, unit.scale, true);
+      }
+      return;
+    }
+  }
+
+  /** Bleed both cars, shove theirs along its road, and record the damage. */
+  private hit(car: GraphCar, damage: number, speedKept: number): void {
+    this.speed *= speedKept;
+    this.crashFlash = 1;
+    car.damage = Math.min(1, car.damage + damage);
+    car.speed *= 0.4;
+    car.t = Math.min(1, car.t + (CAR_RADIUS * 2) / Math.max(1, car.road.length));
+  }
+
+  /**
+   * Take a car out of play and leave the husk in the street.
+   *
+   * Only the police count as takedowns, and only they get the cut. Wrecking
+   * traffic is something that happens to you at 300 km/h rather than something
+   * you did, and a slow-motion camera every time you plough into a hatchback
+   * would make the road impossible to read.
+   */
+  private wreck(car: GraphCar, colour: string, scale: number, police: boolean): void {
+    this.wrecks.push({
+      x: car.x,
+      y: car.y,
+      z: car.z,
+      heading: car.heading,
+      colour,
+      scale,
+      police,
+      roll: this.rng.range(-0.5, 0.5),
+      age: 0,
+    });
+
+    if (!police) return;
+    this.takedowns++;
+    this.takedownFlash = TAKEDOWN_FLASH;
+    this.lastTakedown = { x: car.x, y: car.y, z: car.z };
+    // A takedown is not free: it costs speed, and it makes them angrier. The
+    // alternative is a pursuit you clear by driving through it.
+    this.speed *= TAKEDOWN_SPEED_KEPT;
+    this.police.provoke(TAKEDOWN_HEAT);
+  }
+
+  /** Wrecks are towed away eventually, or the city fills up with them. */
+  private clearWrecks(dt: number): void {
+    for (let i = this.wrecks.length - 1; i >= 0; i--) {
+      this.wrecks[i].age += dt;
+      if (this.wrecks[i].age > WRECK_LINGER) this.wrecks.splice(i, 1);
     }
   }
 

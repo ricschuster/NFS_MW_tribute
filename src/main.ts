@@ -57,7 +57,15 @@ async function boot(): Promise<void> {
         import('./game/scene/hud'),
       ]);
       const hud = new Hud(canvas.getContext('2d') as CanvasRenderingContext2D);
-      view.drive(new CityWorld(city), hud);
+      const world = new CityWorld(city);
+      view.drive(world, hud);
+      // A handle on the running sim, so the screenshot tools can set up a shot
+      // that would otherwise have to be driven into by luck - a takedown, a
+      // roadblock, a wreck. Dev only: this is scaffolding for looking at
+      // things, not an API, and it is not in the built bundle.
+      if (import.meta.env.DEV) {
+        (globalThis as Record<string, unknown>).crosstown = { world, view, city };
+      }
     } else {
       canvas.style.display = 'none'; // nothing to overlay on the free camera
     }

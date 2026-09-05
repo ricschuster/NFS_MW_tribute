@@ -46,6 +46,12 @@ export class CityTraffic {
     private readonly rng: Rng,
   ) {}
 
+  /** Take a car out of the traffic: wrecked, and no longer going anywhere (#94). */
+  remove(car: TrafficCar): void {
+    const i = this.cars.indexOf(car);
+    if (i >= 0) this.cars.splice(i, 1);
+  }
+
   update(dt: number, at: { x: number; z: number }): void {
     for (const car of this.cars) this.follow(car);
     for (const car of this.cars) this.advance(car, dt);
@@ -191,6 +197,7 @@ export class CityTraffic {
       forward,
       speed: this.paceFor(road),
       colour: CAR_COLORS[this.rng.int(CAR_COLORS.length)],
+      damage: 0,
       x: 0,
       z: 0,
       y: 0,

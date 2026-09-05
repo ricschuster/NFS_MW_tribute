@@ -56,6 +56,7 @@ export class CityView {
   private readonly car = makeCar('#d8442f');
   private readonly trafficCars: CarPool;
   private readonly copCars: CarPool;
+  private readonly wreckCars: CarPool;
   private siren = 0;
   private readonly director: CameraDirector;
   private accumulator = 0;
@@ -102,6 +103,9 @@ export class CityView {
     this.scene.add(this.car);
     this.trafficCars = new CarPool(this.scene);
     this.copCars = new CarPool(this.scene, true);
+    // Wrecks come out of their own pool rather than the one they were in: a
+    // wrecked cruiser has stopped being a cop car, lightbar included.
+    this.wreckCars = new CarPool(this.scene);
     // Honour the same preference the Canvas game does: no orbit, no cuts, no
     // shake, just a camera behind the car.
     this.director = new CameraDirector(
@@ -355,7 +359,10 @@ export class CityView {
       confirm: held('enter', ' '),
     };
 
-    this.accumulator = Math.min(this.accumulator + dt, 0.25);
+    // Slow motion is a multiplier on how much time the accumulator is fed, not
+    // a change to the timestep: physics still runs at STEP, there is just less
+    // of it per frame (#94).
+    this.accumulator = Math.min(this.accumulator + dt * this.director.timeScale, 0.25);
     while (this.accumulator >= STEP) {
       world.step(STEP, input);
       this.accumulator -= STEP;
@@ -379,6 +386,15 @@ export class CityView {
     this.siren += dt;
     this.copCars.flashLightbars(this.siren);
     this.copCars.end();
+
+    this.wreckCars.begin();
+    for (const wreck of world.wrecks) {
+      const car = this.wreckCars.place(wreck.x, wreck.y, wreck.z, wreck.colour, wreck.scale, 0.34);
+      // Rolled onto its side rather than sitting level, so a wreck reads as a
+      // wreck from the far end of the street.
+      car.rotation.set(0, wreck.heading, wreck.roll);
+    }
+    this.wreckCars.end();
 
     // The camera is the director's business now (#88), not this loop's.
     const shot = this.director.update(dt, world);

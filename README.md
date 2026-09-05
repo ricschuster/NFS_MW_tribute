@@ -20,16 +20,17 @@ Everything runs from the one deployment; the query string picks what you get.
 | | |
 | --- | --- |
 | **[▶ Play the game](https://ricschuster.github.io/NFS_MW_tribute/)** | The finished pseudo-3D racer: one closed track, traffic, police, a rival ladder. This is the game. |
-| **[▶ Drive in Kestrel Bay](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)** | A car in the generated city. Free roam, no traffic or police yet - those come across in #87. |
+| **[▶ Drive in Kestrel Bay](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)** | A car in the generated city: free roam, traffic, a six-level police pursuit, and takedowns. |
 | **[▶ Fly over the city](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)** | A free camera over Kestrel Bay, for looking at the map rather than driving it. |
 | [The 3D renderer on the old track](https://ricschuster.github.io/NFS_MW_tribute/?renderer=3d) | The same game as the first link, drawn with three.js instead of Canvas. Kept side by side while the renderer is swapped. |
 
 **Driving** (`?renderer=drive`): WASD or arrows to drive, **shift** for
-nitrous, **B** to glance behind. Speed, nitrous, heat and a heading-up minimap
-are drawn over the world. The camera opens on a pass around the car,
-chases it with a field of view that widens with speed, and cuts away when you
-hit something. All of that is off under `prefers-reduced-motion`, which leaves
-a plain camera behind the car.
+nitrous, **B** to glance behind. Speed, nitrous, heat, takedowns and a
+heading-up minimap are drawn over the world. The camera opens on a pass around
+the car, chases it with a field of view that widens with speed, and cuts away
+when you hit something. Ram a cop hard enough and squarely enough and you wreck
+it: time slows and the camera swings round the wreck. All of that is off under
+`prefers-reduced-motion`, which leaves a plain camera behind the car.
 
 **Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,
 **drag** the mouse to look, **hold ctrl** for four times the speed. Speed

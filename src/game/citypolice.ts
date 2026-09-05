@@ -344,6 +344,7 @@ export class CityPolice {
       z: 0,
       y: 0,
       heading: 0,
+      damage: 0,
       kind: this.rng.pick(this.force.units),
     };
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
@@ -357,6 +358,27 @@ export class CityPolice {
 
     if (this.gapTo(cop, player) < CITY_BUST_DISTANCE * 2) return null;
     return cop;
+  }
+
+  /**
+   * Take a wrecked cop out of the pursuit (#94).
+   *
+   * It leaves the array entirely rather than being flagged, so nothing in here
+   * has to remember to skip it. The seeing, the bust timer and the heat all
+   * read `cops`, and three places that each have to check a flag are three
+   * places one of them can forget to.
+   */
+  remove(cop: Cop): void {
+    const i = this.cops.indexOf(cop);
+    if (i >= 0) this.cops.splice(i, 1);
+  }
+
+  /**
+   * Make them angrier. Wrecking a cruiser raises heat rather than lowering it,
+   * so a takedown buys room now and costs more later.
+   */
+  provoke(amount: number): void {
+    this.heat = Math.min(1, this.heat + amount);
   }
 
   /** Clear the pursuit and start the cooldown. Called after a bust is served. */

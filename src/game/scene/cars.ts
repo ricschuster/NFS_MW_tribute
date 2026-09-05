@@ -70,8 +70,13 @@ export class CarPool {
     private readonly cop = false,
   ) {}
 
-  /** Take a car from the pool, placed, coloured and sized for this frame. */
-  place(x: number, y: number, z: number, color: string, scale = 1): THREE.Group {
+  /**
+   * Take a car from the pool, placed, coloured and sized for this frame.
+   *
+   * `dim` darkens the body without needing a second material: a wreck is the
+   * same car with the paint burnt off it (#94).
+   */
+  place(x: number, y: number, z: number, color: string, scale = 1, dim = 1): THREE.Group {
     let car = this.pool[this.used];
     if (!car) {
       car = makeCar(color, this.cop);
@@ -84,7 +89,9 @@ export class CarPool {
     // Cops are coloured too now that there are six kinds of them (#58): a
     // heavy SUV has to be readable as one before it is alongside you.
     const body = car.children[0] as THREE.Mesh;
-    (body.material as THREE.MeshLambertMaterial).color.set(color);
+    const paint = (body.material as THREE.MeshLambertMaterial).color;
+    paint.set(color);
+    if (dim !== 1) paint.multiplyScalar(dim);
     this.used++;
     return car;
   }
