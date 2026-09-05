@@ -24,7 +24,7 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit'];
+const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -73,7 +73,7 @@ for (const view of VIEWS) {
   // `drive` is not a viewpoint but a mode: put a car in the city, hold the
   // throttle for a moment, and photograph what the player would be looking at.
   const url =
-    view === 'drive' || view === 'pursuit'
+    view === 'drive' || view === 'pursuit' || view === 'crash'
       ? `${base}/?renderer=drive`
       : `${base}/?renderer=city&view=${view}`;
   await page.goto(url, { waitUntil: 'load' });
@@ -87,6 +87,16 @@ for (const view of VIEWS) {
     // of sight, so a shot taken immediately is of an empty city.
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
+  }
+
+  if (view === 'crash') {
+    // Held into a turn, the car reaches a building within a few seconds. The
+    // shot is taken straight after, while the crash camera is still running.
+    await page.keyboard.down('ArrowUp');
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForTimeout(6500);
+    await page.keyboard.up('ArrowLeft');
+    await page.waitForTimeout(400);
   }
 
   if (view === 'pursuit') {
@@ -107,7 +117,9 @@ for (const view of VIEWS) {
   if (blank) console.error(`  ${view}: no canvas`);
 
   await page.locator('#game3d').screenshot({ path: `${OUT}/city-${view}.png` });
-  if (view === 'drive' || view === 'pursuit') await page.keyboard.up('ArrowUp');
+  if (view === 'drive' || view === 'pursuit' || view === 'crash') {
+    await page.keyboard.up('ArrowUp');
+  }
   console.log(`captured ${OUT}/city-${view}.png`);
 }
 

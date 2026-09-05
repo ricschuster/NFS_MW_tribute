@@ -25,7 +25,10 @@ Everything runs from the one deployment; the query string picks what you get.
 | [The 3D renderer on the old track](https://ricschuster.github.io/NFS_MW_tribute/?renderer=3d) | The same game as the first link, drawn with three.js instead of Canvas. Kept side by side while the renderer is swapped. |
 
 **Driving** (`?renderer=drive`): WASD or arrows to drive, **shift** for
-nitrous. The camera chases the car.
+nitrous, **B** to glance behind. The camera opens on a pass around the car,
+chases it with a field of view that widens with speed, and cuts away when you
+hit something. All of that is off under `prefers-reduced-motion`, which leaves
+a plain camera behind the car.
 
 **Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,
 **drag** the mouse to look, **hold ctrl** for four times the speed. Speed
