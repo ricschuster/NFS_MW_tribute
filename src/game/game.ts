@@ -2,6 +2,7 @@ import type { Segment } from './types';
 import { Input } from './input';
 import { World, type InputState } from './world';
 import { GameAudio } from './audio';
+import { TouchControls } from './touch';
 import { project, renderSegment, renderFog, renderCarSprite, renderCopSprite } from './render';
 import {
   WIDTH,
@@ -33,6 +34,7 @@ export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly input = new Input();
   private readonly audio = new GameAudio();
+  private readonly touch: TouchControls;
   private world = new World();
 
   private phase: 'title' | 'playing' | 'paused' = 'title';
@@ -48,6 +50,7 @@ export class Game {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
+    this.touch = new TouchControls(canvas, () => this.audio.start());
   }
 
   start(): void {
@@ -59,8 +62,9 @@ export class Game {
     const dt = Math.min(1, (now - this.last) / 1000);
     this.last = now;
 
-    const confirmEdge = this.input.confirm && !this.prevConfirm;
-    this.prevConfirm = this.input.confirm;
+    const confirmHeld = this.input.confirm || this.touch.confirm;
+    const confirmEdge = confirmHeld && !this.prevConfirm;
+    this.prevConfirm = confirmHeld;
     const pauseEdge = this.input.pause && !this.prevPause;
     this.prevPause = this.input.pause;
     const muteEdge = this.input.mute && !this.prevMute;
@@ -80,7 +84,7 @@ export class Game {
       if (pauseEdge) {
         this.phase = 'paused';
       } else {
-        if (!this.input.confirm) this.suppressConfirm = false;
+        if (!confirmHeld) this.suppressConfirm = false;
         this.accumulator += dt;
         while (this.accumulator >= STEP) {
           this.accumulator -= STEP;
@@ -120,13 +124,14 @@ export class Game {
   /** The world only sees a live ENTER once it's been released after a start/resume. */
   private worldInput(): InputState {
     const i = this.input;
+    const t = this.touch;
     return {
-      left: i.left,
-      right: i.right,
-      up: i.up,
-      down: i.down,
-      nitro: i.nitro,
-      confirm: i.confirm && !this.suppressConfirm,
+      left: i.left || t.left,
+      right: i.right || t.right,
+      up: i.up || t.up,
+      down: i.down || t.down,
+      nitro: i.nitro || t.nitro,
+      confirm: (i.confirm || t.confirm) && !this.suppressConfirm,
     };
   }
 
@@ -134,10 +139,34 @@ export class Game {
     this.renderScene();
     if (this.phase === 'title') {
       this.renderTitle();
-      return;
+    } else {
+      this.renderHud();
+      if (this.phase === 'paused') this.renderPaused();
     }
-    this.renderHud();
-    if (this.phase === 'paused') this.renderPaused();
+    this.renderTouchControls(); // on top, when touch is in use
+  }
+
+  private renderTouchControls(): void {
+    if (!this.touch.active) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const b of this.touch.buttons) {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = b.down ? 'rgba(232,70,43,0.5)' : 'rgba(255,255,255,0.12)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.round(b.r * 0.5)}px system-ui, sans-serif`;
+      ctx.fillText(b.label, b.x, b.y);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.restore();
   }
 
   private renderScene(): void {
