@@ -37,7 +37,7 @@ Three things run off one deployment, and the query string picks between them.
 
 | | |
 | --- | --- |
-| `/` | The finished single-track racer: traffic, police, a rival ladder. Canvas. |
+| `/` | The finished single-track racer: traffic, police, and a ladder of ten unlocked by Rep. Canvas. |
 | `/?renderer=3d` | The same game drawn with three.js. Retired when the track is. |
 | `/?renderer=drive` | **A car in Kestrel Bay**: free roam, traffic, a six-level pursuit, roadblocks, Enforcers, spike strips, a helicopter, takedowns, a camera with opinions, a HUD and a minimap. |
 | `/?renderer=city` | A free camera over the city, for looking at the map rather than driving it. |
@@ -108,7 +108,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 232 unit tests + playtests
+npm run test       # 243 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -159,18 +159,20 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91
 from M5.
 
-**M5: Open-world systems - 15 open.** The pursuit is built: #58 (six heat
+**M5: Open-world systems - 14 open.** The pursuit is built: #58 (six heat
 levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
-#60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency.
-That is the framework the rest keys off. Natural next ones, in order of
+#60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency
+and #91 gives the currency somewhere to go. That is the framework the rest
+keys off. Natural next ones, in order of
 how much they use what already exists:
 
-- **#91 the ladder of ten** - Rep exists now (#64), and the ladder is meant to
-  be unlocked by a Rep total rather than by a count of wins. This is what
-  turns the pursuit into a game.
+- **#70/#72 event types** and **#71 a full field** - the ladder is a price now
+  (#91), and a sprint against one rival is the only thing to spend it on.
+- **#67 street finds**, **#93 collectibles**, **#68 mods** - all three pay into
+  Rep, which now exists.
 - **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and
   the last of the pursuit furniture.
 - **#92 ambushes**, **#76 radio chatter** - both key off the pursuit as it now
@@ -222,7 +224,12 @@ before the pivot and both still live.
   track sim, which is a gap worth closing before tuning city driving by feel.
 - **The rival ladder is tuned against the probe's reference driver** and will
   need retuning whenever the car changes. Expect it rather than treating it as a
-  regression.
+  regression. `npm run feel` has now been wrong a third time, for a third
+  reason: #91 gated races on Rep and the probe did not pay, so every race after
+  the first silently never started and the table read as ten losses by 33
+  seconds. If a number looks strange, suspect the probe.
+- **Beating the boss does not need nitrous.** The closest no-nitrous finish is
+  1.9 s in hand at rank 1, which is related to #105.
 
 ## If you are picking this up cold
 

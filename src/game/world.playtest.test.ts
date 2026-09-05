@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { World, type InputState } from './world';
 import type { Car } from './types';
-import { STEP, SEGMENT_LENGTH, NITRO_SPEED_MULT } from './constants';
+import { STEP, SEGMENT_LENGTH, NITRO_SPEED_MULT, REP_PURSUIT_TICK } from './constants';
+import { RIVALS } from './rivals';
 
 const NONE: InputState = {
   left: false,
@@ -230,14 +231,17 @@ describe('playtest: pursuit', () => {
   });
 });
 
-describe('playtest: Ladder race', () => {
-  // Press ENTER on the first step, then floor it while steering back to centre
-  // (holding only throttle would drift off-road on curves — a human steers).
-  function raceLine(t: number, w: World): InputState {
-    if (t < STEP * 0.5) return press({ confirm: true });
-    return steerToward(w, 0, { up: true });
-  }
+/**
+ * Press ENTER on the first step, then floor it while steering back to centre
+ * (holding only throttle would drift off-road on curves - a human steers).
+ * Shared with the ladder tests, which race the same way.
+ */
+function raceLine(t: number, w: World): InputState {
+  if (t < STEP * 0.5) return press({ confirm: true });
+  return steerToward(w, 0, { up: true });
+}
 
+describe('playtest: Ladder race', () => {
   it('wins a clean sprint and ranks up', () => {
     const w = new World({ traffic: false });
     const before = w.beaten;
@@ -245,7 +249,7 @@ describe('playtest: Ladder race', () => {
     expect(w.raceMode).toBe('result');
     expect(w.raceResult).toBe('won');
     expect(w.beaten).toBe(before + 1);
-    expect(w.currentRival?.rank).toBe(14); // advanced from #15 to #14
+    expect(w.currentRival?.rank).toBe(9); // advanced from #10 to #9
   });
 
   it('loses when the player never leaves the line', () => {
@@ -261,5 +265,86 @@ describe('playtest: Ladder race', () => {
     expect(w.raceMode).toBe('result');
     play(w, 1, () => press({ confirm: true })); // dismiss
     expect(w.raceMode).toBe('cruise');
+  });
+});
+
+/**
+ * The ladder of ten, gated on Rep (#91).
+ *
+ * The ladder used to be a queue: the only thing that moved you along it was
+ * beating the person in front. It is a price now, so what is worth asserting
+ * on is that the price is charged, that the first rung is free, and that the
+ * track can actually pay it - a currency you can only earn in a mode most
+ * players never open is a ladder most players cannot climb.
+ */
+describe('playtest: the ladder', () => {
+  it('lets you face the first rival for nothing', () => {
+    const w = new World({ traffic: false });
+    expect(w.currentRival?.rank).toBe(10);
+    expect(w.challengeReady).toBe(true);
+    expect(w.repToNext).toBe(0);
+  });
+
+  it('will not start a race you have not earned', () => {
+    const w = new World({ traffic: false });
+    w.beaten = 1; // the second rival wants Rep
+    w.rep.total = 0;
+    expect(w.challengeReady).toBe(false);
+    expect(w.repToNext).toBe(RIVALS[1].rep);
+
+    play(w, 1, () => press({ confirm: true }));
+    expect(w.raceMode).toBe('cruise');
+  });
+
+  it('starts it the moment the Rep is there', () => {
+    const w = new World({ traffic: false });
+    w.beaten = 1;
+    w.rep.total = RIVALS[1].rep;
+    expect(w.challengeReady).toBe(true);
+
+    play(w, 1, (t) => (t < STEP * 0.5 ? press({ confirm: true }) : NONE));
+    expect(w.raceMode).not.toBe('cruise');
+  });
+
+  it('pays for winning, and pays more for a harder rival', () => {
+    const easy = new World({ traffic: false });
+    play(easy, 45, raceLine);
+    expect(easy.raceResult).toBe('won');
+    const first = easy.rep.total;
+    expect(first).toBeGreaterThan(0);
+
+    const hard = new World({ traffic: false });
+    hard.beaten = RIVALS.length - 1; // the boss
+    hard.rep.total = RIVALS[RIVALS.length - 1].rep;
+    const before = hard.rep.total;
+    play(hard, 45, raceLine);
+    expect(hard.raceResult).toBe('won');
+    expect(hard.rep.total - before).toBeGreaterThan(first);
+  });
+
+  // The ladder should never be a hard wall: losing has to leave you closer to
+  // affording the next attempt than you were.
+  it('pays something for finishing second', () => {
+    const w = new World({ traffic: false });
+    play(w, 45, (t) => (t < STEP * 0.5 ? press({ confirm: true }) : NONE));
+    expect(w.raceResult).toBe('lost');
+    expect(w.rep.total).toBeGreaterThan(0);
+  });
+
+  it('pays for staying at large, so free driving climbs the ladder too', () => {
+    const w = new World({ traffic: false });
+    // Driving, not parked: a parked car is busted before the trickle pays, and
+    // the point of the award is that *evading* is worth something.
+    // Watched as it happens: popups expire, so a check at the end sees an
+    // empty feed however much it paid on the way.
+    let paidForEvading = false;
+    play(w, 30 + REP_PURSUIT_TICK * 2, (_t, world) => {
+      if (world.rep.recent.some((a) => a.reason === 'pursuit' || a.reason === 'escape')) {
+        paidForEvading = true;
+      }
+      return steerToward(world, 0, { up: world.speed < world.maxSpeed * 0.9 });
+    });
+    expect(w.rep.total).toBeGreaterThan(0);
+    expect(paidForEvading).toBe(true);
   });
 });

@@ -20,6 +20,7 @@ import {
   MAX_HEAT_LEVEL,
   ESCAPED_FLASH,
   RACE_DISTANCE,
+  REP_POPUP_TIME,
   COP_OUTRUN_DISTANCE,
   PROP_WORLD,
 } from './constants';
@@ -653,6 +654,7 @@ export class Game {
     ctx.fillStyle = world.boosting ? '#bfe4ff' : '#3b6bff';
     ctx.fillRect(nbX, ny + 9, nbW * world.nitro, 10);
 
+    this.renderRep();
     this.renderHeatMeter();
     this.renderStatusOverlays();
     this.renderRaceHud();
@@ -664,6 +666,38 @@ export class Game {
     }
   }
 
+  /**
+   * Rep, and what just paid into it (#64, #91).
+   *
+   * The ladder is unlocked by this number, so it has to be on screen. The
+   * popups are the other half: a total that goes up silently teaches nobody
+   * what is worth doing.
+   */
+  private renderRep(): void {
+    const ctx = this.ctx;
+    const rep = this.world.rep;
+
+    const y = 140;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(20, y, 196, 34);
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('REP', 32, y + 22);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.fillText(rep.total.toLocaleString('en-US'), 74, y + 23);
+
+    for (let i = 0; i < rep.recent.length; i++) {
+      const award = rep.recent[rep.recent.length - 1 - i];
+      ctx.globalAlpha = Math.max(0, Math.min(1, (REP_POPUP_TIME - award.age) / 0.6));
+      ctx.fillStyle = '#ffd166';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText(`+${award.amount}  ${award.label}`, 24, y + 52 + i * 20);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   /** Ladder HUD: challenge prompt, countdown, race progress, or result. */
   private renderRaceHud(): void {
     const ctx = this.ctx;
@@ -672,13 +706,25 @@ export class Game {
 
     if (world.raceMode === 'cruise' && !world.busted) {
       const rival = world.currentRival;
-      const label = rival ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}` : 'RIVALS CLEARED';
+      // The ladder is unlocked by Rep now (#91), so the prompt has to say
+      // which of the two it is: an invitation, or a price.
+      const label = !rival
+        ? 'RIVALS CLEARED'
+        : world.challengeReady
+          ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}`
+          : `#${rival.rank} ${rival.name} — ${world.repToNext.toLocaleString('en-US')} REP to go`;
       ctx.font = 'bold 16px system-ui, sans-serif';
       const tw = ctx.measureText(label).width;
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(WIDTH / 2 - tw / 2 - 16, HEIGHT - 58, tw + 32, 34);
-      ctx.fillStyle = rival ? '#ffffff' : '#5adc82';
+      ctx.fillStyle = !rival ? '#5adc82' : world.challengeReady ? '#ffffff' : '#ffd166';
       ctx.fillText(label, WIDTH / 2, HEIGHT - 36);
+
+      if (rival && world.challengeReady) {
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = '13px system-ui, sans-serif';
+        ctx.fillText(rival.character, WIDTH / 2, HEIGHT - 16);
+      }
     } else if (world.raceMode === 'countdown') {
       if (world.raceRival) {
         ctx.font = 'bold 20px system-ui, sans-serif';
@@ -742,7 +788,7 @@ export class Game {
     const sub = won
       ? next
         ? `Rank up — next: #${next.rank} ${next.name}`
-        : 'RIVALS CLEARED. You are the ladder.'
+        : 'RIVALS CLEARED. Kestrel Bay is yours.'
       : 'Line up and try again';
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px system-ui, sans-serif';

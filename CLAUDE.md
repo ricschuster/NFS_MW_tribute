@@ -166,6 +166,13 @@ races, collectibles and rivals are all meant to pay into it without reaching
 into the car's physics. Everything is worth more while a pursuit is running,
 which is the whole shape of the economy.
 
+**The ladder is a price, not a queue** (issue #91). Ten rivals, and each one
+takes the call at a Rep total rather than after you beat the one below. `World`
+gates `startRace` on `challengeReady`, so the thing that moves you up the
+ladder is everything you do rather than only the last race you won. That is
+also why `world.ts` earns Rep at all: a currency you could only earn in
+`?renderer=drive` would be a ladder most players cannot climb.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

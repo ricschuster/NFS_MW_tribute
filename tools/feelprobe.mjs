@@ -554,6 +554,11 @@ function measureRaces() {
     seedRandom();
     const w = new World({ traffic: false });
     w.beaten = i;
+    // The ladder is unlocked by Rep now (#91), so the probe has to pay. This
+    // measures race *pace*, not whether the rival has taken the call: without
+    // this every race after the first silently never starts, and the table
+    // reads as ten losses by 33 seconds.
+    w.rep.total = rival.rep;
     w.step(STEP, press({ confirm: true })); // starts the countdown
     until(w, () => NONE, (w) => w.raceMode === 'racing', 10);
     const t = until(w, policy, (w) => w.raceMode === 'result', 120);
