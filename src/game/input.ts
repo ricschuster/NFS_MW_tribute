@@ -8,6 +8,7 @@ export class Input {
   nitro = false;
   pause = false; // P / Esc (game-level, not part of InputState)
   restart = false; // R (game-level)
+  mute = false; // M (game-level)
 
   constructor() {
     window.addEventListener('keydown', (e) => this.onKey(e, true));
@@ -51,6 +52,10 @@ export class Input {
       case 'r':
       case 'R':
         this.restart = pressed;
+        break;
+      case 'm':
+      case 'M':
+        this.mute = pressed;
         break;
       default:
         return;
