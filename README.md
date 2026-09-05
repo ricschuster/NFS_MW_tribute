@@ -1,16 +1,19 @@
-# NFS: Most Wanted — Tribute
+# CROSSTOWN
 
-A fan tribute to *Need for Speed: Most Wanted* (2012) — Criterion's Fairhaven:
-a free-roam city, a Most Wanted list of ten, Speed Points, cars found parked in
-the world, and police pursuits that escalate through six heat levels. Built
-with TypeScript + Vite, deploys anywhere as static files.
+**Crosstown** is an open-world arcade street racer set in Kestrel Bay: a
+free-roam city, a ladder of ten rivals, Rep earned from everything you do, cars
+found parked around the city, and police pursuits that escalate through six
+heat levels. Built with TypeScript + Vite, deploys anywhere as static files.
+
+Original work. It takes its cues from the open-world street-racing genre, but
+the city, the cars, the rivals and every asset in it are its own.
 
 **▶ Play: https://ricschuster.github.io/NFS_MW_tribute/**
 
 > **Status: mid-rebuild.** What is deployed today is a pseudo-3D racer on a
 > single closed track — drive, dodge traffic, outrun the cops, climb a rival
-> ladder. It was built against *Most Wanted* (2005), and the renderer is now
-> being rebuilt as a real 3D WebGL city so Fairhaven can be driven freely.
+> ladder. That was the single-track starting point, and the renderer is now
+> being rebuilt as a real 3D WebGL city so Kestrel Bay can be driven freely.
 > See [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md).
 
 ## Quick start
@@ -44,7 +47,7 @@ rationale.
 **Where it is going**, per
 [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md): a real 3D scene in
 three.js, where the car has a position and heading in the world and can be
-driven anywhere. Fairhaven is generated procedurally — a street network,
+driven anywhere. Kestrel Bay is generated procedurally — a street network,
 extruded building blocks per district, and an elevated interstate — so there is
 no asset pipeline and nothing licensed. That is what buys overpasses, and
 cameras that can leave the car for a takedown or a crash.
@@ -64,7 +67,7 @@ src/
     road.ts          track authoring (straights, curves, hills)
     traffic.ts       traffic cars attached to road segments
     police.ts        the pursuit: heat, bust, and escape
-    blacklist.ts     the 15 rivals (name, car, difficulty)
+    rivals.ts     the 15 rivals (name, car, difficulty)
     progress.ts      rank progression persisted to localStorage
     audio.ts         synthesized engine / siren / pad (WebAudio)
     touch.ts         on-screen touch controls for mobile
@@ -88,7 +91,7 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **Collisions** — crashing into traffic costs speed (shake + flash)
 - [x] **Cop pursuit** — a chaser cop that hunts you, matches lane, can be outrun
 - [x] **Heat + bust/escape** — heat meter, more/faster cops, getting busted, shaking pursuit
-- [x] **The Blacklist** — sprint races against 15 rivals, ranked progression (saved)
+- [x] **The Ladder** — sprint races against 15 rivals, ranked progression (saved)
 - [x] **Nitrous + drift feel** — SHIFT boost with a meter, cornering slide, speed lines
 - [x] **Sound** — synthesized engine (pitches with speed), pursuit siren, title pad, M to mute
 - [x] **Roadside scenery** — trees, billboards, and lamp posts projected alongside the road
@@ -103,6 +106,6 @@ Ordered roughly by build order — each item is a self-contained increment:
 
 GNU General Public License v3.0 — see [LICENSE](LICENSE).
 
-This is a non-commercial fan tribute. *Need for Speed* and *Most Wanted* are
+This is a non-commercial fan tribute. *the genre* and *the ladder* are
 trademarks of Electronic Arts Inc. This project is not affiliated with or
 endorsed by EA. No original game assets are included.

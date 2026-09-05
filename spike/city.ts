@@ -1,4 +1,4 @@
-// Throwaway spike for ADR-0004: what does a generated Fairhaven actually look
+// Throwaway spike for ADR-0004: what does a generated Kestrel Bay actually look
 // like? A street grid, extruded blocks, an elevated interstate crossing over
 // them, and a car you can drive around it with a chase camera.
 //
@@ -154,7 +154,7 @@ addLaneMarkings();
 // --------------------------------------------------------------- buildings
 
 /**
- * Districts by distance from the centre, the way Fairhaven runs from a downtown
+ * Districts by distance from the centre, the way Kestrel Bay runs from a downtown
  * core out to the waterfront and the industrial edge. Height and palette are
  * what make them read as different places.
  */

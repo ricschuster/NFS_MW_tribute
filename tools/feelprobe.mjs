@@ -41,7 +41,7 @@ function seedRandom(seed = SEED) {
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { World } = await server.ssrLoadModule('/src/game/world.ts');
 const K = await server.ssrLoadModule('/src/game/constants.ts');
-const { BLACKLIST } = await server.ssrLoadModule('/src/game/blacklist.ts');
+const { RIVALS } = await server.ssrLoadModule('/src/game/rivals.ts');
 const { STEP, SEGMENT_LENGTH, LANES } = K;
 
 const LANE_WIDTH = 2 / LANES; // road spans -1..1, so one lane is this wide in offset units
@@ -547,10 +547,10 @@ function measurePursuit() {
 }
 
 function measureRaces() {
-  section('BLACKLIST RACES (race pace with nitrous, clear road, countdown excluded)');
+  section('RIVALS RACES (race pace with nitrous, clear road, countdown excluded)');
   /** Race rival `i` under `policy`, skipping the 3-2-1 from the clock. */
   function race(i, policy) {
-    const rival = BLACKLIST[i];
+    const rival = RIVALS[i];
     seedRandom();
     const w = new World({ traffic: false });
     w.beaten = i;
@@ -571,7 +571,7 @@ function measureRaces() {
     };
   }
 
-  const boosted = BLACKLIST.map((_, i) => race(i, POLICY.expert));
+  const boosted = RIVALS.map((_, i) => race(i, POLICY.expert));
   for (const r of boosted) {
     row(
       `#${r.rival.rank} ${r.rival.name}`,
@@ -586,14 +586,14 @@ function measureRaces() {
   const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
   const wins = boosted.filter((r) => r.won).length;
   const avg = mean(boosted.map((r) => r.t));
-  row('average race length', secs(avg), `${wins}/${BLACKLIST.length} won`, 'race_avg_s', avg);
+  row('average race length', secs(avg), `${wins}/${RIVALS.length} won`, 'race_avg_s', avg);
   metrics.race_wins = wins;
 
   // The same fifteen races without touching nitrous, to separate "the boost is
   // strong" from "the rivals are slow".
-  const noBoost = BLACKLIST.map((_, i) => race(i, POLICY.clean));
+  const noBoost = RIVALS.map((_, i) => race(i, POLICY.clean));
   const noBoostWins = noBoost.filter((r) => r.won).length;
-  row('average with no nitrous', secs(mean(noBoost.map((r) => r.t))), `${noBoostWins}/${BLACKLIST.length} won`, 'race_avg_no_nitro_s', mean(noBoost.map((r) => r.t)));
+  row('average with no nitrous', secs(mean(noBoost.map((r) => r.t))), `${noBoostWins}/${RIVALS.length} won`, 'race_avg_no_nitro_s', mean(noBoost.map((r) => r.t)));
   metrics.race_wins_no_nitro = noBoostWins;
   const closest = noBoost.reduce((a, b) => (b.margin < a.margin ? b : a));
   row(

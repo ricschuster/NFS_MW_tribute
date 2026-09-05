@@ -230,7 +230,7 @@ describe('playtest: pursuit', () => {
   });
 });
 
-describe('playtest: Blacklist race', () => {
+describe('playtest: Ladder race', () => {
   // Press ENTER on the first step, then floor it while steering back to centre
   // (holding only throttle would drift off-road on curves — a human steers).
   function raceLine(t: number, w: World): InputState {

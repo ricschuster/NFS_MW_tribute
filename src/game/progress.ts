@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'nfsmw.progress.v1';
+const STORAGE_KEY = 'crosstown.progress.v1';
 
 /** Persisted player progress. `beaten` = how many rivals have been defeated. */
 export interface Progress {

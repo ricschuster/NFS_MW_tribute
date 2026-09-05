@@ -144,7 +144,7 @@ export class Game {
   }
 
   private restart(): void {
-    this.world = new World(); // fresh drive; Blacklist progress persists via localStorage
+    this.world = new World(); // fresh drive; Ladder progress persists via localStorage
     this.enterPlaying();
   }
 
@@ -281,7 +281,7 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#e8462b';
     ctx.font = 'bold 92px system-ui, sans-serif';
-    ctx.fillText('MOST WANTED', WIDTH / 2, HEIGHT / 2 - 30);
+    ctx.fillText('CROSSTOWN', WIDTH / 2, HEIGHT / 2 - 30);
 
     ctx.fillStyle = '#c9ccd4';
     ctx.font = '20px system-ui, sans-serif';
@@ -664,7 +664,7 @@ export class Game {
     }
   }
 
-  /** Blacklist HUD: challenge prompt, countdown, race progress, or result. */
+  /** Ladder HUD: challenge prompt, countdown, race progress, or result. */
   private renderRaceHud(): void {
     const ctx = this.ctx;
     const world = this.world;
@@ -672,7 +672,7 @@ export class Game {
 
     if (world.raceMode === 'cruise' && !world.busted) {
       const rival = world.currentRival;
-      const label = rival ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}` : 'BLACKLIST CLEARED';
+      const label = rival ? `ENTER  ▶  Challenge #${rival.rank} ${rival.name}` : 'RIVALS CLEARED';
       ctx.font = 'bold 16px system-ui, sans-serif';
       const tw = ctx.measureText(label).width;
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -742,7 +742,7 @@ export class Game {
     const sub = won
       ? next
         ? `Rank up — next: #${next.rank} ${next.name}`
-        : 'BLACKLIST CLEARED. You are Most Wanted.'
+        : 'RIVALS CLEARED. You are the ladder.'
       : 'Line up and try again';
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px system-ui, sans-serif';

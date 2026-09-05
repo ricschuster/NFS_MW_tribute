@@ -9,14 +9,13 @@ cleanly.
 
 ## What it is
 
-A pseudo-3D, OutRun-style arcade racer — a fan tribute to *Need for Speed: Most
-Wanted* (2005). TypeScript + HTML5 Canvas + Vite, no engine, no backend; builds
+A pseudo-3D, OutRun-style arcade racer — a fan tribute to the mid-2000s street racers. TypeScript + HTML5 Canvas + Vite, no engine, no backend; builds
 to static files.
 
 ## What works (the whole loop)
 
 Drive the open road → dodge traffic → outrun or get **busted** by escalating
-cops → **nitro** past them → climb the 15-rival **Blacklist** (ranked races,
+cops → **nitro** past them → climb the 15-rival **Ladder** (ranked races,
 saved to localStorage).
 
 - Driving: accel/brake/**reverse**, off-road slowdown, drift, low-speed steering
@@ -24,7 +23,7 @@ saved to localStorage).
 - Traffic + collisions (crash = shake + flash + speed loss)
 - Police pursuit: heat meter, more/faster cops with heat, **BUSTED** / **ESCAPED**
 - Cops render in a **rear-view mirror** (they trail you), not faked ahead
-- Blacklist: 15 rivals, 3-2-1 sprint races vs. rival AI, rank progression saved
+- Ladder: 15 rivals, 3-2-1 sprint races vs. rival AI, rank progression saved
 - Game states: **title / pause (P) / restart (R)**
 - Synthesized audio: engine (pitches with speed), siren, title pad, **mute (M)**
 - **Touch controls** for mobile
@@ -41,7 +40,7 @@ Simulation is split from rendering (ADR-0003):
   DOM. Put new *behaviour* here so playtests can cover it.
 - **`src/game/game.ts`** — presentation only: canvas, input, loop, all drawing,
   and the title/pause state machine.
-- Others: `road`, `traffic`, `police` (heat/bust/escape), `blacklist`,
+- Others: `road`, `traffic`, `police` (heat/bust/escape), `rivals`,
   `progress` (localStorage), `audio`, `touch`, `render`, `math`, `constants`
   (tune feel here first).
 

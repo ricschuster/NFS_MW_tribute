@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping build the *Most Wanted* tribute. This is a small,
+Thanks for helping build the *the ladder* tribute. This is a small,
 dependency-light TypeScript + Canvas project; the goal is to keep it that way.
 
 ## Workflow
@@ -42,7 +42,7 @@ measurable. `npm run feel` drives the headless `World` with scripted inputs and
 prints the numbers behind it: 0-to-top-speed, braking distance, how long a lane
 change takes at each speed, the fastest speed that still holds the sharpest
 bend, nitrous duration and payoff, how quickly a cop busts you at a given pace,
-and how long each Blacklist race runs.
+and how long each Ladder race runs.
 
 ```bash
 npm run feel                                    # print the table

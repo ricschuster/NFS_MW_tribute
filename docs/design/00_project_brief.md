@@ -1,10 +1,9 @@
-# Project brief: NFS Most Wanted tribute
+# Project brief: Crosstown the ladder tribute
 
 ## The pitch
 
-A browser arcade racer that captures the *feeling* of *Need for Speed: Most
-Wanted* (2005) — raw speed, gritty dusk lighting, and (eventually) the thrill of
-outrunning cops and climbing the Blacklist — without attempting a full 3D
+A browser arcade racer that captures the *feeling* of the mid-2000s street racers — raw speed, gritty dusk lighting, and (eventually) the thrill of
+outrunning cops and climbing the Ladder — without attempting a full 3D
 open-world remake.
 
 ## Form
@@ -18,7 +17,7 @@ keeps the project buildable solo and deployable as static files.
 A true 3D open-world MW is a multi-year team effort. The pseudo-3D racer is the
 sweet spot: it delivers the core sensation (speed, traffic, a road rushing at
 you) with a small, well-understood codebase, and it leaves clear room to layer
-on the MW-specific fantasy (pursuits, Blacklist) increment by increment.
+on the MW-specific fantasy (pursuits, Ladder) increment by increment.
 
 ## What "done enough to be fun" looks like
 
@@ -27,7 +26,7 @@ Milestone targets, in order:
 1. **Drive** (done) — an endless track with hills, curves, and a speed HUD.
 2. **Dodge** — oncoming and parked traffic you can crash into.
 3. **Run** — a cop that chases you; a heat meter; escape/bust states.
-4. **Climb** — race events against Blacklist rivals with ranked progression.
+4. **Climb** — race events against Ladder rivals with ranked progression.
 
 ## Aesthetic north star
 

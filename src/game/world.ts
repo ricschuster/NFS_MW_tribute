@@ -1,7 +1,7 @@
 import { Road } from './road';
 import { Traffic } from './traffic';
 import { Police } from './police';
-import { BLACKLIST, type Rival } from './blacklist';
+import { RIVALS, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import {
   SEGMENT_LENGTH,
@@ -55,7 +55,7 @@ export interface WorldOptions {
 export type RaceMode = 'cruise' | 'countdown' | 'racing' | 'result';
 export type RaceResult = 'won' | 'lost';
 
-/** The rival racer during a Blacklist event. */
+/** The rival racer during a Ladder event. */
 export interface RivalCar {
   /** Distance the rival has covered this race, in world units. */
   dist: number;
@@ -66,7 +66,7 @@ export interface RivalCar {
 
 /**
  * The headless game simulation: player physics, traffic, the police pursuit,
- * and Blacklist races — with no canvas or DOM. `step(dt, input)` advances the
+ * and Ladder races — with no canvas or DOM. `step(dt, input)` advances the
  * world, so the same logic drives the render loop (Game) and the playtests.
  */
 export class World {
@@ -85,7 +85,7 @@ export class World {
   nitro = 1; // nitrous charge, 0..1
   boosting = false; // nitrous active this step
 
-  // Blacklist / race state.
+  // Ladder / race state.
   raceMode: RaceMode = 'cruise';
   countdown = 0; // seconds left in the 3-2-1
   playerRaceDist = 0; // distance covered by the player this race
@@ -117,9 +117,9 @@ export class World {
     this.beaten = loadProgress().beaten;
   }
 
-  /** The rival the player would race next, or null once the Blacklist is cleared. */
+  /** The rival the player would race next, or null once the Ladder is cleared. */
   get currentRival(): Rival | null {
-    return this.beaten < BLACKLIST.length ? BLACKLIST[this.beaten] : null;
+    return this.beaten < RIVALS.length ? RIVALS[this.beaten] : null;
   }
 
   /** Advance the simulation by `dt` seconds under the held `input`. */
@@ -323,7 +323,7 @@ export class World {
     this.raceMode = 'result';
     this.speed = 0;
     if (result === 'won') {
-      this.beaten = Math.min(BLACKLIST.length, this.beaten + 1);
+      this.beaten = Math.min(RIVALS.length, this.beaten + 1);
       saveProgress({ beaten: this.beaten });
     }
   }

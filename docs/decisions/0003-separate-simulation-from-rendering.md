@@ -8,7 +8,7 @@
 Early on, all game state and logic lived in `Game`, alongside the canvas, the
 keyboard `Input`, and the `requestAnimationFrame` loop. That coupling meant the
 interesting behaviour — player physics, traffic collisions, the police pursuit,
-the Blacklist race flow — could only be exercised by a human playing in a
+the Ladder race flow — could only be exercised by a human playing in a
 browser. Unit tests could reach the pure helpers (`math`, `road` geometry) but
 nothing that ties them together, so integration regressions were invisible to
 CI and only caught by manual play.
@@ -36,7 +36,7 @@ They run in `npm run test` and gate CI.
 ## Consequences
 
 - Integration behaviour is covered headlessly and in CI, not just by manual
-  play. The Blacklist race even surfaced a real bug during development (a
+  play. The Ladder race even surfaced a real bug during development (a
   throttle-only bot drifts off on curves and loses — the intended skill gate).
 - A clear rule for where code goes; `Game` stays a thin renderer.
 - The genuinely presentation-only parts — screens, input gating, audio, touch,

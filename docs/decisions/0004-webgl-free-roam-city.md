@@ -6,16 +6,18 @@
 
 ## Context
 
-The project was built as a tribute to *Need for Speed: Most Wanted* (2005) -
-Rockport, a Blacklist of fifteen, bounty and milestones. The intended target was
-always *Most Wanted* (2012): Criterion's Fairhaven, a Most Wanted list of ten,
-Speed Points, cars found parked in the world rather than bought, and no story.
+The project started as a single-track racer: one road, a ladder of fifteen
+rivals, and a bounty system. The intended target was the open-world arcade
+street racer instead - Kestrel Bay, a rival ladder of ten, Rep earned from
+everything you do, cars found parked around the city rather than bought, and no
+story mode.
 
-The two games differ in a way that reaches the renderer. The 2005 game can be
-approximated by a single road you drive along. The 2012 game cannot: its design
-is load-bearing on free roam. EasyDrive (menus while driving, never pausing),
-Jack Spots, the 123 billboards, speed cameras, security gates, and starting an
-event by driving to it all assume a city you can go anywhere in.
+Those two designs differ in a way that reaches the renderer. A single-track
+racer can be approximated by one road you drive along. An open-world one cannot,
+because its design is load-bearing on free roam: a menu you use while driving
+without ever pausing, cars found in the world, collectibles scattered across a
+city, and starting an event by driving to it all assume somewhere you can go
+anywhere in.
 
 ADR-0002 chose a pseudo-3D projected-segment renderer and explicitly rejected
 WebGL as out of scope. That decision was right for a single-track racer and is
@@ -28,11 +30,11 @@ wrong for this target. Three options were weighed:
 Two requirements settled it, and both are hard technical gates rather than
 matters of taste:
 
-- **Roads over roads.** Fairhaven's elevated I-92 crosses surface streets, with
+- **Roads over roads.** Kestrel Bay's elevated I-92 crosses surface streets, with
   tunnels, ramps and jumps. A projected ribbon and a mode-7 ground plane can
   each represent only one surface at a given map position, so neither can
   express an overpass at all.
-- **Camera freedom.** *Most Wanted* (2012) inherited Burnout's takedown and
+- **Camera freedom.** the 2010s template inherited Burnout's takedown and
   crash cameras, which cut to an angle away from the car. Both 2D approaches
   offer exactly one camera, fixed behind the car.
 
@@ -42,7 +44,7 @@ Rebuild the renderer as a **real 3D scene in WebGL, using three.js**.
 
 - The car has a position and orientation in a 3D world and can be driven
   anywhere, replacing "distance along a fixed track".
-- Fairhaven is generated procedurally: a street network, extruded building
+- Kestrel Bay is generated procedurally: a street network, extruded building
   blocks per district, and an elevated interstate. No modelled assets, so no
   asset pipeline and nothing licensed.
 - Cameras become a first-class concept: chase, takedown, crash and event intro.
