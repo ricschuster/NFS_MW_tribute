@@ -25,6 +25,9 @@ export function furnitureFor(rng: Rng, city: City): StreetProp[] {
   const props: StreetProp[] = [];
 
   for (const road of city.roads) {
+    // A ramp is short, sloped and joins two levels; lighting it properly means
+    // interpolating height along it, which is not worth it for a 200 m slip road.
+    if (road.class === 'ramp') continue;
     if (road.bridge) barriers(city, road, props);
     else lamps(rng, city, road, props);
   }
@@ -44,13 +47,14 @@ export function furnitureFor(rng: Rng, city: City): StreetProp[] {
   );
 }
 
-/** Where a road points, and the unit vector across it. */
+/** Where a road points, the unit vector across it, and the height it sits at. */
 function frame(city: City, road: CityRoad) {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   const length = Math.max(1, road.length);
   const along = { x: (b.x - a.x) / length, z: (b.z - a.z) / length };
-  return { a, along, across: { x: -along.z, z: along.x } };
+  const y = (city.nodes[road.a].y + city.nodes[road.b].y) / 2;
+  return { a, along, across: { x: -along.z, z: along.x }, y };
 }
 
 /**
@@ -65,7 +69,7 @@ function lamps(rng: Rng, city: City, road: CityRoad, props: StreetProp[]): void 
   // sideways to stand in the crossing road.
   if (road.length < LAMP_SPACING * 1.5) return;
 
-  const { a, along, across } = frame(city, road);
+  const { a, along, across, y } = frame(city, road);
   const offset = road.width / 2 + LAMP_KERB_GAP;
   const angle = Math.atan2(along.x, along.z);
 
@@ -76,6 +80,7 @@ function lamps(rng: Rng, city: City, road: CityRoad, props: StreetProp[]): void 
   for (let at = first; at < road.length - first * 0.5; at += LAMP_SPACING) {
     props.push({
       at: { x: a.x + along.x * at + across.x * offset * side, z: a.z + along.z * at + across.z * offset * side },
+      y,
       angle,
       kind: 'lamp',
       variant: rng.float(),
@@ -86,7 +91,7 @@ function lamps(rng: Rng, city: City, road: CityRoad, props: StreetProp[]): void 
 
 /** A parapet down both sides of every bridge deck, because the drop is real. */
 function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
-  const { a, along, across } = frame(city, road);
+  const { a, along, across, y } = frame(city, road);
   const offset = road.width / 2;
   const angle = Math.atan2(along.x, along.z);
 
@@ -97,6 +102,7 @@ function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
           x: a.x + along.x * at + across.x * offset * side,
           z: a.z + along.z * at + across.z * offset * side,
         },
+        y,
         angle,
         kind: 'barrier',
         variant: 0,
@@ -113,22 +119,30 @@ function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
  */
 function signs(rng: Rng, city: City, props: StreetProp[]): void {
   for (const node of city.nodes) {
-    if (node.roads.length < 3) continue;
+    // Street signs belong on streets. The interstate has no junctions to name,
+    // and a signpost on a viaduct deck is a signpost hanging in the air.
+    if (node.y !== 0) continue;
 
-    // Measure from the longest road at the junction, not whichever happened to
-    // be added first. The step back has to stay on the road it is stepping
-    // along; taken along an 11 m fragment of arterial it sails past the
-    // junction at the far end and lands in the street crossing *that* one.
-    const road = node.roads
+    // Only the roads at street level count, in both senses: a ramp arriving
+    // here does not make a crossroads out of a bend, and measuring against one
+    // would measure against a road that climbs away out of the junction.
+    const streets = node.roads
       .map((id) => city.roads[id])
-      .reduce((best, r) => (r.length > best.length ? r : best));
+      .filter((r) => r.class === 'street' || r.class === 'arterial');
+    if (streets.length < 3) continue;
+
+    // Measure from the longest of them, not whichever happened to be added
+    // first. The step back has to stay on the road it is stepping along; taken
+    // along an 11 m fragment of arterial it sails past the junction at the far
+    // end and lands in the street crossing *that* one.
+    const road = streets.reduce((best, r) => (r.length > best.length ? r : best));
     const { along, across } = frame(city, road);
 
     // A corner, not a side. Offsetting only across this road lands the sign on
     // the centreline of the road crossing it, which is the middle of the
     // junction. Stepping sideways clears this road and stepping along it clears
     // the crossing one, and doing both puts the sign on the kerb corner.
-    const widest = Math.max(...node.roads.map((id) => city.roads[id].width));
+    const widest = Math.max(...streets.map((r) => r.width));
     const sideways = road.width / 2 + SIGN_KERB_GAP;
     const backwards = widest / 2 + SIGN_KERB_GAP;
     // Nowhere safe to stand: a junction of nothing but stubs goes unsigned.
@@ -146,6 +160,7 @@ function signs(rng: Rng, city: City, props: StreetProp[]): void {
         x: node.pos.x + across.x * sideways * side + along.x * backwards * inward,
         z: node.pos.z + across.z * sideways * side + along.z * backwards * inward,
       },
+      y: 0,
       angle: Math.atan2(along.x, along.z),
       kind: 'sign',
       variant: rng.float(),

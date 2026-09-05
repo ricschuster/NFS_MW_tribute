@@ -84,8 +84,16 @@ lets boxes become models later by swapping a provider, and it is also why #86
 can collide with buildings without a renderer in the room. Building footprints
 and heights are city *data* for exactly that reason.
 
+**Height is a real property of the network** (issue #85). Nodes have a `y`, so
+two roads at the same map position and different heights are two different
+places: the interstate crossing a street overhead shares no node with it, and
+you cannot turn from one onto the other. That is the case ADR-0004 exists to
+make possible, and it means anything asking "what is at this position" has to
+ask about a height too. Tunnels are the same mechanism with the sign flipped.
+
 `?renderer=city` flies a camera around it, since the car cannot be driven there
-until #86.
+until #86. `&view=overpass` is the shot that shows why any of this was worth
+doing.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

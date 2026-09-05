@@ -25,8 +25,13 @@ export type Axis = 'x' | 'z';
 
 export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial';
 
-/** Arterials cross the whole city and carry the traffic; streets fill a district. */
-export type RoadClass = 'arterial' | 'street';
+/**
+ * Arterials cross the whole city and carry the traffic; streets fill a
+ * district. The interstate runs above (or below) both, and ramps are the only
+ * thing joining the two levels - which is what makes an overpass a route
+ * choice rather than scenery.
+ */
+export type RoadClass = 'arterial' | 'street' | 'interstate' | 'ramp';
 
 /**
  * What makes a district read as a place. Block size and how much it varies do
@@ -47,15 +52,25 @@ export interface DistrictCharacter {
   speed: number;
 }
 
-/** A junction. Roads meet here, and this is what routing walks. */
+/**
+ * A junction. Roads meet here, and this is what routing walks.
+ *
+ * `y` is why ADR-0004 exists. Two roads at the same map position and different
+ * heights are two different places, so node identity includes height: the
+ * interstate crossing a street overhead shares no node with it, and you cannot
+ * turn from one onto the other. That is the thing a projected ribbon or a
+ * ground plane cannot represent at all.
+ */
 export interface CityNode {
   id: number;
   pos: Vec2;
+  /** Height above the surface. 0 on the street, positive elevated, negative in a tunnel. */
+  y: number;
   /** Ids of the roads meeting at this node. */
   roads: number[];
 }
 
-/** One stretch of road between two junctions. Always axis-aligned. */
+/** One stretch of road between two junctions. Always axis-aligned in plan. */
 export interface CityRoad {
   id: number;
   /** Endpoint node ids. `a` is always the lower coordinate along `axis`. */
@@ -69,6 +84,7 @@ export interface CityRoad {
   width: number;
   /** The speed this road is built for, in world units per second. */
   speed: number;
+  /** Length across the map. A ramp's slope makes its real length a shade longer. */
   length: number;
   /** True where the road crosses water. Bridges are the chokepoints (ADR-0005). */
   bridge: boolean;
@@ -125,6 +141,8 @@ export type FurnitureKind = 'lamp' | 'sign' | 'barrier';
 /** One piece of street furniture, described rather than built. */
 export interface StreetProp {
   at: Vec2;
+  /** Height of the road it stands on: a lamp on the interstate is up there too. */
+  y: number;
   /** Facing, in radians about y: along the road it stands beside. */
   angle: number;
   kind: FurnitureKind;

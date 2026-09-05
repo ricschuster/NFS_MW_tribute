@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { City } from '../city/types';
-import { UNITS_PER_METRE } from '../constants';
+import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
 
@@ -20,6 +20,8 @@ const BRIDGE_HEIGHT = 1.2 * UNITS_PER_METRE;
 const MARKING_LEVEL = 0.06 * UNITS_PER_METRE;
 /** How far the open sea reaches past the map, so it always meets the horizon. */
 const SEA_REACH = 40000 * UNITS_PER_METRE;
+const DECK_THICKNESS = 1.1 * UNITS_PER_METRE;
+const PILLAR_WIDTH = 2.2 * UNITS_PER_METRE;
 
 /**
  * Turn a generated city into something to look at (#84).
@@ -51,6 +53,7 @@ export class Cityscape {
     this.group.add(this.markings(city));
     const bridges = this.bridges(city);
     if (bridges) this.group.add(bridges);
+    for (const mesh of this.viaduct(city)) this.group.add(mesh);
     for (const mesh of provider.build(city.buildings)) this.group.add(mesh);
 
     this.furniture = new StreetFurniture(city.furniture);
@@ -243,6 +246,84 @@ export class Cityscape {
     });
     mesh.instanceMatrix.needsUpdate = true;
     return mesh;
+  }
+
+  /**
+   * The interstate: its deck, and the pillars holding it up.
+   *
+   * Decks are sloped boxes rather than flat ones, because the deck really does
+   * change height - on the ramps, and on the dive into the tunnel. A pillar
+   * only goes under a stretch that is actually above the ground; the tunnel
+   * section is below it and needs nothing holding it up.
+   */
+  private viaduct(city: City): THREE.InstancedMesh[] {
+    const decks = city.roads.filter((r) => r.class === 'interstate' || r.class === 'ramp');
+    if (decks.length === 0) return [];
+
+    const deckGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const deckMaterial = new THREE.MeshLambertMaterial({ color: '#5a6068' });
+    this.owned.push(deckGeometry, deckMaterial);
+
+    const deck = new THREE.InstancedMesh(deckGeometry, deckMaterial, decks.length);
+    deck.name = 'interstate';
+
+    const pillarSpots: { x: number; z: number; height: number }[] = [];
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const euler = new THREE.Euler();
+    const scale = new THREE.Vector3();
+    const position = new THREE.Vector3();
+
+    decks.forEach((road, i) => {
+      const a = city.nodes[road.a];
+      const b = city.nodes[road.b];
+      const rise = b.y - a.y;
+      const run = road.length;
+      const slope = Math.atan2(rise, run);
+      const yaw = Math.atan2(b.pos.x - a.pos.x, b.pos.z - a.pos.z);
+
+      // Yaw the deck onto the road, then pitch it along the slope. Length is
+      // the real one along the surface, not the map distance.
+      euler.set(0, yaw, 0, 'YXZ');
+      quaternion.setFromEuler(euler);
+      quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -slope));
+
+      scale.set(road.width, DECK_THICKNESS, Math.hypot(run, rise));
+      position.set((a.pos.x + b.pos.x) / 2, (a.y + b.y) / 2, (a.pos.z + b.pos.z) / 2);
+      matrix.compose(position, quaternion, scale);
+      deck.setMatrixAt(i, matrix);
+
+      if (road.class !== 'interstate') return;
+      const count = Math.max(1, Math.round(run / INTERSTATE_PILLAR_SPACING));
+      for (let p = 0; p < count; p++) {
+        const t = (p + 0.5) / count;
+        const height = a.y + rise * t;
+        if (height < DECK_THICKNESS * 2) continue; // in the tunnel, or on the deck
+        pillarSpots.push({
+          x: a.pos.x + (b.pos.x - a.pos.x) * t,
+          z: a.pos.z + (b.pos.z - a.pos.z) * t,
+          height,
+        });
+      }
+    });
+    deck.instanceMatrix.needsUpdate = true;
+
+    const pillarGeometry = new THREE.BoxGeometry(1, 1, 1);
+    pillarGeometry.translate(0, -0.5, 0); // hang down from the deck
+    const pillarMaterial = new THREE.MeshLambertMaterial({ color: '#6d737a' });
+    this.owned.push(pillarGeometry, pillarMaterial);
+
+    const pillars = new THREE.InstancedMesh(pillarGeometry, pillarMaterial, Math.max(1, pillarSpots.length));
+    pillars.name = 'interstate-pillars';
+    pillarSpots.forEach((spot, i) => {
+      matrix.makeScale(PILLAR_WIDTH, spot.height, PILLAR_WIDTH);
+      matrix.setPosition(spot.x, spot.height, spot.z);
+      pillars.setMatrixAt(i, matrix);
+    });
+    pillars.count = pillarSpots.length;
+    pillars.instanceMatrix.needsUpdate = true;
+
+    return [deck, pillars];
   }
 
   dispose(): void {

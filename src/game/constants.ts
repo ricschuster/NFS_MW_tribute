@@ -254,3 +254,42 @@ export const BARRIER_SPACING = m(6);
 export const LAMP_HEIGHT = m(8);
 export const SIGN_HEIGHT = m(2.6);
 export const BARRIER_HEIGHT = m(1.1);
+
+/**
+ * The elevated interstate (#85, ADR-0005 rule 5). A circuit rather than a
+ * through route, so joining it is a decision: on the loop you go faster but
+ * you can only leave it where there is a ramp.
+ *
+ * It has its own alignment, deliberately not on top of an arterial, so it
+ * crosses the surface streets instead of shadowing them. Every one of those
+ * crossings is an overpass, which is the case ADR-0004 exists to make possible.
+ */
+export const INTERSTATE_INSET = 0.23; // of the map, in from each edge
+export const INTERSTATE_HEIGHT = m(12);
+export const INTERSTATE_LANES = 6;
+export const INTERSTATE_SPEED = kmh(140);
+/** How often a support pillar goes under the deck. */
+export const INTERSTATE_PILLAR_SPACING = m(45);
+/** Deck resolution: short enough that a slope reads as a slope. */
+export const INTERSTATE_SEGMENT = m(60);
+
+/** Ramps: the only way between the levels. */
+export const RAMP_COUNT_PER_SIDE = 2;
+export const RAMP_MIN_RUN = m(190);
+export const RAMP_MAX_RUN = m(320);
+export const RAMP_LANES = 2;
+export const RAMP_SPEED = kmh(70);
+
+/** One stretch of the loop dives instead of climbing, which is a tunnel. */
+export const TUNNEL_DEPTH = m(9);
+/** How much of the loop is tunnel, as a fraction of its perimeter. */
+export const TUNNEL_LENGTH = 0.12;
+/**
+ * Run needed to get between the two levels, so the grade stays drivable.
+ *
+ * Sized for the *steepest* point rather than the average: the transition eases
+ * in and out on a cosine, which is about 57% steeper in the middle than a
+ * straight line over the same run. At 430 m a 21 m dive peaks near 8%, which
+ * is a steep road rather than a wall.
+ */
+export const GRADE_RUN = m(430);

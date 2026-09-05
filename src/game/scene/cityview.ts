@@ -18,7 +18,7 @@ const M = UNITS_PER_METRE;
  * "wherever the camera drifted to" cannot show that a change made anything
  * better or worse.
  */
-export type Viewpoint = 'aerial' | 'downtown' | 'bridge' | 'street';
+export type Viewpoint = 'aerial' | 'downtown' | 'bridge' | 'street' | 'overpass';
 
 interface Shot {
   position: THREE.Vector3;
@@ -159,6 +159,17 @@ export class CityView {
       return { position: new THREE.Vector3(at.x - 700 * M, 280 * M, at.z + 900 * M), target: at };
     }
 
+    if (where === 'overpass') {
+      // Look along a street at the point the interstate crosses over it. This
+      // is the shot that shows what ADR-0004 bought: two roads, one map
+      // position, no way to turn from one onto the other. It has to be taken
+      // from the street below, so find a real crossing rather than guessing at
+      // a spot - guessing puts the camera inside a building.
+      const shot = this.underAnOverpass();
+      if (shot) return shot;
+      return { position: new THREE.Vector3(centre.x, 200 * M, centre.z), target: centre };
+    }
+
     if (where === 'bridge') {
       const span = this.city.roads.find((road) => road.bridge);
       if (!span) return { position: new THREE.Vector3(centre.x, 200 * M, centre.z), target: centre };
@@ -184,6 +195,49 @@ export class CityView {
     const along = new THREE.Vector3(to.x - from.x, 0, to.z - from.z).normalize();
     const eye = new THREE.Vector3(from.x, 5 * M, from.z);
     return { position: eye, target: eye.clone().addScaledVector(along, 600 * M).setY(24 * M) };
+  }
+
+  /** Stand on a street, looking at the deck passing over it. */
+  private underAnOverpass(): Shot | null {
+    const { nodes, roads } = this.city;
+    const deck = roads.filter((r) => r.class === 'interstate' && nodes[r.a].y > 4 * M);
+    const streets = roads.filter(
+      (r) => (r.class === 'street' || r.class === 'arterial') && r.length > 120 * M,
+    );
+
+    for (const span of deck) {
+      const ia = nodes[span.a].pos;
+      const ib = nodes[span.b].pos;
+      for (const road of streets) {
+        if (road.axis === span.axis) continue;
+        const ra = nodes[road.a].pos;
+        const rb = nodes[road.b].pos;
+
+        // Both are axis-aligned, so the crossing is just the two fixed coords.
+        const cross =
+          span.axis === 'x' ? { x: ra.x, z: ia.z } : { x: ia.x, z: ra.z };
+        const onSpan =
+          span.axis === 'x'
+            ? cross.x >= Math.min(ia.x, ib.x) && cross.x <= Math.max(ia.x, ib.x)
+            : cross.z >= Math.min(ia.z, ib.z) && cross.z <= Math.max(ia.z, ib.z);
+        const onRoad =
+          road.axis === 'x'
+            ? cross.x >= Math.min(ra.x, rb.x) && cross.x <= Math.max(ra.x, rb.x)
+            : cross.z >= Math.min(ra.z, rb.z) && cross.z <= Math.max(ra.z, rb.z);
+        if (!onSpan || !onRoad) continue;
+
+        // Stand back down the street, far enough that the deck is in frame.
+        const back = Math.min(150 * M, road.length * 0.8);
+        const dir = road.axis === 'x' ? { x: 1, z: 0 } : { x: 0, z: 1 };
+        const away = cross.x - ra.x + (cross.z - ra.z) > 0 ? -1 : 1;
+
+        return {
+          position: new THREE.Vector3(cross.x + dir.x * back * away, 6 * M, cross.z + dir.z * back * away),
+          target: new THREE.Vector3(cross.x, nodes[span.a].y * 0.65, cross.z),
+        };
+      }
+    }
+    return null;
   }
 
   private aim(): void {
