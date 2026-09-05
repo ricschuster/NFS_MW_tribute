@@ -28,8 +28,6 @@ import {
   RIVAL_DIFF_SPEED_FRAC,
   RIVAL_LANE,
   RIVAL_NEAR_LEAD,
-  RIVAL_FAR_LEAD,
-  RIVAL_VIEW_RANGE,
 } from './constants';
 import { accelerate, limit, increase, interpolate, overlap } from './math';
 
@@ -198,9 +196,13 @@ export class World {
     const rivalSpeed = this.maxSpeed * (RIVAL_BASE_SPEED_FRAC + rival.difficulty * RIVAL_DIFF_SPEED_FRAC);
     car.dist += rivalSpeed * dt;
 
+    // Put the rival where it actually is. A lead that stopped growing kept it
+    // pinned just ahead of the player's bumper however far up the road it
+    // really was, so losing time to a crash or a lift looked like the rival
+    // slowing down as well. RIVAL_NEAR_LEAD only keeps it off the camera at
+    // the start line, where the gap is zero.
     const gap = car.dist - this.playerRaceDist;
-    const lead = interpolate(RIVAL_NEAR_LEAD, RIVAL_FAR_LEAD, Math.min(1, Math.max(0, gap) / RIVAL_VIEW_RANGE));
-    car.z = increase(this.position + this.playerZ + lead, 0, this.road.trackLength);
+    car.z = increase(this.position + this.playerZ + Math.max(gap, RIVAL_NEAR_LEAD), 0, this.road.trackLength);
 
     if (this.playerRaceDist >= RACE_DISTANCE) this.finishRace('won');
     else if (car.dist >= RACE_DISTANCE) this.finishRace('lost');
