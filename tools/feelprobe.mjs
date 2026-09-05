@@ -60,6 +60,12 @@ function noPolice(w) {
   return w;
 }
 
+/** Undo `noPolice`, leaving the pursuit's own timers untouched. */
+function withPolice(w) {
+  delete w.police.update;
+  return w;
+}
+
 /** Steer back toward the middle of the road, like a player holding a line. */
 function centering(w, dead = 0.02) {
   if (w.playerX > dead) return { left: true };
@@ -357,10 +363,15 @@ function measureNitro() {
 }
 
 function measurePursuit() {
-  section('POLICE (steady speed held from the start, clear road)');
+  section('POLICE (already at speed when the pursuit starts, clear road)');
   for (const frac of [0.5, 0.6, 0.7, 0.8, 0.9, 1]) {
     seedRandom();
-    const w = new World({ traffic: false });
+    // Come up to speed *before* the pursuit starts. Measured from a standstill,
+    // the first cop arrives while the car is still accelerating, so every row
+    // would really be reporting the acceleration ramp.
+    const w = noPolice(new World({ traffic: false }));
+    run(w, 8, (w) => holdSpeed(w, frac));
+    withPolice(w);
     let spawned = null;
     let outcome = null;
     let at = null;
