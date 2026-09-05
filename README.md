@@ -33,7 +33,9 @@ it: time slows and the camera swings round the wreck. From heat two the police
 start parking cruisers across the road in front of you, sometimes with a gap
 and, the hotter it gets, more often without. From heat three they also send
 Enforcers: heavy units that come at you head on and steer for the lane you are
-in rather than the one beside it. All of that is off under
+in rather than the one beside it. From heat four they lay spike strips across
+most of the road, and running over one takes your top speed and most of your
+steering for a few seconds. All of that is off under
 `prefers-reduced-motion`, which leaves a plain camera behind the car.
 
 **Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,

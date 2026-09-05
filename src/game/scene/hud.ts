@@ -5,6 +5,7 @@ import {
   MINIMAP_SIZE,
   ROADBLOCK_GAP,
   ROADBLOCK_MAX_LEAD,
+  SHRED_TIME,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -38,6 +39,7 @@ export class Hud {
     this.minimap(world);
     this.takedowns(world);
     this.roadblock(world);
+    this.shredded(world);
     this.cooldown(world);
     this.banners(world);
 
@@ -210,6 +212,18 @@ export class Hud {
       }
     }
 
+    for (const strip of world.police.spikes) {
+      const sx = (strip.x - world.x) * scale;
+      const sz = -(strip.z - world.z) * scale;
+      if (Math.hypot(sx, sz) > radius + Math.abs(strip.to) * scale) continue;
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + strip.ax * scale * strip.from, sz - strip.az * scale * strip.from);
+      ctx.lineTo(sx + strip.ax * scale * strip.to, sz - strip.az * scale * strip.to);
+      ctx.stroke();
+    }
+
     for (const wreck of world.wrecks) {
       const dx = (wreck.x - world.x) * scale;
       const dz = -(wreck.z - world.z) * scale;
@@ -299,6 +313,29 @@ export class Hud {
     ctx.font = '700 22px system-ui, sans-serif';
     ctx.fillText('ROADBLOCK AHEAD', WIDTH / 2, 92);
     ctx.globalAlpha = 1;
+  }
+
+  /**
+   * The shredded-tyre clock (#60).
+   *
+   * A bar rather than a flash: what matters is how much longer it lasts, and
+   * a setback you can see the end of is something to drive out rather than
+   * something that has already happened to you.
+   */
+  private shredded(world: CityWorld): void {
+    const { ctx } = this;
+    if (world.shredded <= 0) return;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffa23a';
+    ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillText('TYRES SHREDDED', WIDTH / 2, HEIGHT - 96);
+
+    const width = 220;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillRect(WIDTH / 2 - width / 2, HEIGHT - 86, width, 6);
+    ctx.fillStyle = '#ffa23a';
+    ctx.fillRect(WIDTH / 2 - width / 2, HEIGHT - 86, width * (world.shredded / SHRED_TIME), 6);
   }
 
   /** The cooldown clock, and what it is waiting for. */

@@ -642,3 +642,46 @@ export const ENFORCER_INTERVAL = 11;
 export const ENFORCER_SPEED_KEPT = 0.12;
 /** How much of a hit it shrugs off, on top of its size. It is built for this. */
 export const ENFORCER_TOUGHNESS = 1.5;
+
+/**
+ * Spike strips (#60).
+ *
+ * From heat four the police start laying strips across part of the road. They
+ * do not stop you and they are not a wall: they cover most of the carriageway
+ * and leave a sliver, so the answer is a line rather than a decision about
+ * which side to take.
+ *
+ * What they cost is the thing that makes them different from a roadblock. A
+ * roadblock takes your speed and gives it straight back; a strip takes your
+ * *car* for a while - top speed and steering both - which is a setback you
+ * have to drive out of with a pursuit already on you.
+ */
+export const SPIKE_MIN_LEVEL = 4;
+export const SPIKE_MAX = 2;
+export const SPIKE_INTERVAL = 15;
+/**
+ * Less warning than a roadblock gets. A strip is a line on the road rather
+ * than four cars with their lights on, so seeing it late is part of it.
+ */
+export const SPIKE_LEAD_TIME = 2.5;
+export const SPIKE_MIN_LEAD = m(110);
+export const SPIKE_MAX_LEAD = m(500);
+export const SPIKE_SPACING = m(340);
+/** How deep the strip is, and how wide the tape reads when drawn. */
+export const SPIKE_REACH = m(1.6);
+/** How much of the road it covers at level four, and per level above. */
+export const SPIKE_COVER = 0.6;
+export const SPIKE_COVER_PER_LEVEL = 0.1;
+
+/**
+ * Shredded tyres.
+ *
+ * Long enough to be a real setback and short enough that it is not simply a
+ * delayed bust: the clock is on the HUD so it is something to drive out, not
+ * something that has already happened to you.
+ */
+export const SHRED_TIME = 7;
+/** Top speed while the tyres are gone, as a fraction of the usual. */
+export const SHRED_SPEED_FRAC = 0.4;
+/** How much of the steering is left. */
+export const SHRED_GRIP = 0.55;

@@ -30,6 +30,10 @@ import {
   ROADBLOCK_SCATTER,
   ENFORCER_SPEED_KEPT,
   ENFORCER_TOUGHNESS,
+  SPIKE_REACH,
+  SHRED_TIME,
+  SHRED_SPEED_FRAC,
+  SHRED_GRIP,
 } from './constants';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -132,6 +136,16 @@ export class CityWorld {
   lastTakedown: { x: number; y: number; z: number } | null = null;
 
   /**
+   * Seconds left on shredded tyres (#60).
+   *
+   * A spike strip does not take your speed, it takes your car: while this is
+   * running the top speed is capped hard and most of the steering is gone. It
+   * is on the HUD as a clock because it has to be something you drive out of
+   * rather than something that has already happened to you.
+   */
+  shredded = 0;
+
+  /**
    * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
    * stop the car crossing two segments in a step; there are no segments now, so
    * the number is kept purely because the HUD and every feel measurement are
@@ -205,6 +219,7 @@ export class CityWorld {
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
+    this.shredded = Math.max(0, this.shredded - dt);
     this.clearWrecks(dt);
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
@@ -221,10 +236,9 @@ export class CityWorld {
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car
     // goes the wider it turns. Unchanged from the track model on purpose.
-    const authority = Math.min(
-      TURN_RATE,
-      LATERAL_GRIP / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)),
-    );
+    const authority =
+      Math.min(TURN_RATE, LATERAL_GRIP / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed))) *
+      (this.shredded > 0 ? SHRED_GRIP : 1);
 
     const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
     const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15;
@@ -255,7 +269,12 @@ export class CityWorld {
       this.speed = Math.min(0, accelerate(this.speed, -this.decel, dt));
     }
 
-    const topSpeed = boosting ? this.maxSpeed * NITRO_SPEED_MULT : this.maxSpeed;
+    // Shredded tyres cap the top speed under everything, nitrous included:
+    // lighting the boost on four ruined tyres does not make them work.
+    const topSpeed = Math.min(
+      boosting ? this.maxSpeed * NITRO_SPEED_MULT : this.maxSpeed,
+      this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
+    );
     if (this.speed > topSpeed) {
       this.speed = Math.max(topSpeed, this.speed - this.maxSpeed * NITRO_BLEED_FRAC * dt);
     } else if (this.speed < this.maxReverse) {
@@ -292,6 +311,7 @@ export class CityWorld {
    * enough stops being a car and becomes a wreck.
    */
   private contacts(): void {
+    this.spikes();
     if (this.roadblock()) return;
 
     // Wrecks first: they are already dead, so they only cost you speed. A
@@ -362,6 +382,33 @@ export class CityWorld {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Running over a spike strip (#60).
+   *
+   * Deliberately not a collision. Nothing about the car's motion changes on
+   * the step it happens, which is what makes it read as tyres rather than as
+   * a wall: what changes is the next several seconds of driving.
+   */
+  private spikes(): void {
+    for (const strip of this.police.spikes) {
+      if (Math.abs(strip.y - this.y) > CAR_RADIUS * 2) continue;
+
+      const dx = this.x - strip.x;
+      const dz = this.z - strip.z;
+      const along = dx * strip.ax + dz * strip.az;
+      const through = dx * strip.az - dz * strip.ax;
+      // Swept by how far the car travels in a step, not just by how deep the
+      // strip is drawn. At top speed the car covers more ground in one step
+      // than the strip is wide, and a hazard you can step over is not one.
+      if (Math.abs(through) > SPIKE_REACH + Math.abs(this.speed) * STEP) continue;
+      if (along < strip.from - CAR_RADIUS || along > strip.to + CAR_RADIUS) continue;
+
+      this.shredded = SHRED_TIME;
+      this.police.shred(strip);
+      return;
+    }
   }
 
   /**

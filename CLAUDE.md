@@ -134,6 +134,20 @@ so dodging it means committing late. They have their own budget in
 budget on them would thin out the pursuit behind you every time one arrived in
 front of it.
 
+**"Put something in front of them" is one question** (issues #59, #60).
+`CityPolice.aheadOfThem` finds a spot on a road far enough ahead to be seen,
+running the way the player is going and at their height; roadblocks and spike
+strips both go through it. The lead is measured in *seconds at the speed the
+car is doing*, not in metres, because a fixed distance is a warning at 80 km/h
+and a wall out of the fog at 300.
+
+**A spike strip is not a collision** (issue #60). Nothing about the car's
+motion changes on the step it is run over: what changes is `CityWorld.shredded`
+and therefore the next several seconds of steering and top speed. It is also
+swept by how far the car travels in a step rather than tested against its drawn
+depth, because at top speed the car covers more ground in one step than the
+strip is wide.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup
