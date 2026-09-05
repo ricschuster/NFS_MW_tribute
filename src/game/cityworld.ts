@@ -34,7 +34,14 @@ import {
   SHRED_TIME,
   SHRED_SPEED_FRAC,
   SHRED_GRIP,
+  REP_PURSUIT_PER_SECOND,
+  REP_PURSUIT_TICK,
+  REP_NEAR_MISS_RANGE,
+  REP_NEAR_MISS_SPEED,
+  REP_SAVE_INTERVAL,
 } from './constants';
+import { RepLedger } from './rep';
+import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
@@ -145,6 +152,9 @@ export class CityWorld {
    */
   shredded = 0;
 
+  /** Rep, the single progression currency (#64). */
+  readonly rep = new RepLedger();
+
   /**
    * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
    * stop the car crossing two segments in a step; there are no segments now, so
@@ -163,6 +173,13 @@ export class CityWorld {
 
   /** Everything that moves draws from here, so a scripted drive repeats exactly. */
   private readonly rng = new Rng(SIM_SEED);
+  /** Traffic already scored for a near miss: each car is worth one (#64). */
+  private readonly grazed = new WeakSet<GraphCar>();
+  private pursuitRep = 0;
+  /** The hottest this pursuit got, which is what getting away is worth. */
+  private peakLevel = 1;
+  private sinceSave = 0;
+  private savedAt = 0;
   private readonly withTraffic: boolean;
   private readonly withPolice: boolean;
   private bustHold = 0;
@@ -174,6 +191,9 @@ export class CityWorld {
     this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
+    // Carried over from whatever this player has already earned, the same way
+    // the track sim loads its rival count. Safe where there is no storage.
+    this.rep.total = loadProgress().rep;
     this.spawn();
   }
 
@@ -220,6 +240,7 @@ export class CityWorld {
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
+    this.rep.step(dt);
     this.clearWrecks(dt);
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
@@ -291,11 +312,83 @@ export class CityWorld {
         this.bustHold = CITY_BUST_HOLD;
         this.speed = 0;
       }
-      if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
+      if (this.police.justEscaped) {
+        this.escapedFlash = ESCAPED_FLASH;
+        // Paid at the level the pursuit reached, so shaking a heat-six chase
+        // is worth what it cost to survive one.
+        this.rep.award('escape', this.peakLevel);
+        this.peakLevel = 1;
+      }
     }
     // After both have moved, so a contact is judged where the cars actually
     // are this step rather than where they were before one of them drove off.
     this.contacts();
+    this.earn(dt);
+    this.persist(dt);
+  }
+
+  /**
+   * What the last step was worth (#64).
+   *
+   * The two awards that are not events: threading traffic, and simply still
+   * being at large. Everything else is paid where it happens, because a
+   * takedown knows it is a takedown and this does not.
+   */
+  private earn(dt: number): void {
+    this.nearMisses();
+
+    if (this.police.state !== 'pursuit') {
+      this.pursuitRep = 0;
+      return;
+    }
+    // What the escape is worth is what the pursuit *got to*, not what is left
+    // of the heat by the time the search gives up - which is nearly nothing,
+    // because a cooldown is heat decaying for half a minute.
+    this.peakLevel = Math.max(this.peakLevel, this.police.level);
+
+    // Surviving a pursuit pays by the second, but it is *shown* every few
+    // seconds. A popup per frame is not feedback, it is a wall.
+    this.pursuitRep += dt;
+    if (this.pursuitRep < REP_PURSUIT_TICK) return;
+    this.rep.award('pursuit', this.level, REP_PURSUIT_PER_SECOND * this.pursuitRep);
+    this.pursuitRep = 0;
+  }
+
+  /**
+   * Passing close to a car at speed, once per car.
+   *
+   * Once is the whole difficulty here. Without the record of who has already
+   * been passed, sitting alongside a car in traffic pays out every frame, and
+   * the highest-scoring thing in the game is not moving.
+   */
+  private nearMisses(): void {
+    if (Math.abs(this.speed) < this.maxSpeed * REP_NEAR_MISS_SPEED) return;
+
+    for (const car of this.traffic.cars) {
+      if (this.grazed.has(car)) continue;
+      if (Math.abs(car.y - this.y) > CAR_RADIUS * 2) continue;
+      const gap = Math.hypot(car.x - this.x, car.z - this.z);
+      // Close, but not *touching*: hitting somebody is not a near miss, and
+      // paying for both would make the collision the better outcome.
+      if (gap > REP_NEAR_MISS_RANGE || gap < CAR_RADIUS * 2.2) continue;
+      this.grazed.add(car);
+      this.rep.award('nearMiss', this.level);
+    }
+  }
+
+  /** The heat level everything is scored at: 1 when nothing is chasing you. */
+  private get level(): number {
+    return this.police.state === 'pursuit' ? this.police.level : 1;
+  }
+
+  /** Write the total out now and then, rather than on every award. */
+  private persist(dt: number): void {
+    this.sinceSave += dt;
+    if (this.sinceSave < REP_SAVE_INTERVAL) return;
+    this.sinceSave = 0;
+    if (this.rep.total === this.savedAt) return;
+    this.savedAt = this.rep.total;
+    saveProgress({ ...loadProgress(), rep: this.rep.total });
   }
 
   /**
@@ -379,6 +472,7 @@ export class CityWorld {
       this.crashFlash = 1;
       this.scatter(block, along);
       this.police.breach(block);
+      this.rep.award('roadblock', this.level);
       return true;
     }
     return false;
@@ -469,8 +563,12 @@ export class CityWorld {
       age: 0,
     });
 
-    if (!police) return;
+    if (!police) {
+      this.rep.award('wreck', this.level);
+      return;
+    }
     this.takedowns++;
+    this.rep.award('takedown', this.level);
     this.takedownFlash = TAKEDOWN_FLASH;
     this.lastTakedown = { x: car.x, y: car.y, z: car.z };
     // A takedown is not free: it costs speed, and it makes them angrier. The

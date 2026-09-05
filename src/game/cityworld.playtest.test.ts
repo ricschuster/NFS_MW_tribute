@@ -34,6 +34,12 @@ import {
   HELI_SEE_RADIUS,
   COVER_MIN,
   LOSE_CONTACT_TIME,
+  REP_TAKEDOWN,
+  REP_ROADBLOCK,
+  REP_NEAR_MISS,
+  REP_WRECK,
+  REP_PURSUIT_TICK,
+  REP_NEAR_MISS_RANGE,
   type CopKind,
 } from './constants';
 import type { InputState } from './world';
@@ -1313,5 +1319,144 @@ describe('the helicopter', () => {
     expect(world.police.helicopter).not.toBeNull();
     world.police.reset();
     expect(world.police.helicopter).toBeNull();
+  });
+});
+
+/**
+ * Rep (#64).
+ *
+ * The award table itself is tested in `rep.test.ts`. What these are about is
+ * the wiring: that the things the player actually does reach the ledger, once
+ * each, at the right heat.
+ */
+describe('Rep', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  it('pays for a takedown', () => {
+    const world = still();
+    const cop: Cop = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: world.x + Math.sin(world.heading) * 3 * M,
+      z: world.z + Math.cos(world.heading) * 3 * M,
+      y: world.y,
+      heading: world.heading,
+      kind: 'cruiser',
+      role: 'chase',
+    };
+    world.police.cops.push(cop);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    expect(world.takedowns).toBe(1);
+    expect(world.rep.total).toBeGreaterThanOrEqual(REP_TAKEDOWN);
+    expect(world.rep.recent.some((a) => a.reason === 'takedown')).toBe(true);
+  });
+
+  it('pays for going through a roadblock', () => {
+    const world = onAnArterial();
+    const road = world.onRoad!;
+    world.police.roadblocks.push({
+      road,
+      x: world.x + Math.sin(world.heading) * M,
+      z: world.z + Math.cos(world.heading) * M,
+      y: 0,
+      ax: Math.cos(world.heading),
+      az: -Math.sin(world.heading),
+      half: road.width / 2,
+      gap: null,
+      cars: [],
+    });
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+
+    expect(world.rep.total).toBeGreaterThanOrEqual(REP_ROADBLOCK);
+  });
+
+  it('pays for wrecking traffic, but far less than for a cop', () => {
+    const world = still();
+    const car: TrafficCar = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      colour: '#c94b4b',
+      x: world.x + Math.sin(world.heading) * 3 * M,
+      z: world.z + Math.cos(world.heading) * 3 * M,
+      y: world.y,
+      heading: world.heading,
+    };
+    world.traffic.cars.push(car);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    expect(world.rep.total).toBeGreaterThanOrEqual(REP_WRECK);
+    expect(world.rep.total).toBeLessThan(REP_TAKEDOWN);
+  });
+
+  // Once per car is the whole difficulty. Without it, sitting alongside a car
+  // in traffic pays every frame and the highest-scoring thing is not moving.
+  it('pays for a near miss once per car, not once per frame', () => {
+    const world = still();
+    world.speed = world.maxSpeed * 0.5;
+    const beside: TrafficCar = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      colour: '#c94b4b',
+      x: 0,
+      z: 0,
+      y: world.y,
+      heading: world.heading,
+    };
+    world.traffic.cars.push(beside);
+
+    /** Hold it alongside, close but not touching. */
+    const alongside = () => {
+      beside.x = world.x + Math.cos(world.heading) * REP_NEAR_MISS_RANGE * 0.85;
+      beside.z = world.z - Math.sin(world.heading) * REP_NEAR_MISS_RANGE * 0.85;
+      beside.y = world.y;
+    };
+
+    // Wider than the range at which the two are touching, or there is no band
+    // to be in: a near miss has to be a miss.
+    expect(REP_NEAR_MISS_RANGE).toBeGreaterThan(CAR_RADIUS * 2.2);
+
+    alongside();
+    world.step(STEP, NONE);
+    const paid = world.rep.total;
+    expect(paid).toBeGreaterThanOrEqual(REP_NEAR_MISS);
+
+    for (let i = 0; i < 60; i++) {
+      alongside();
+      world.step(STEP, NONE);
+    }
+    expect(world.rep.total).toBe(paid);
+  });
+
+  it('pays by the second for still being at large', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.3;
+    // The pursuit is not stepped by this world, so its state is set directly:
+    // what is under test is the payout, not how the state got there.
+    world.police.state = 'pursuit';
+    world.police.heat = 0.5;
+
+    for (let t = 0; t < REP_PURSUIT_TICK + 1; t += STEP) world.step(STEP, NONE);
+
+    expect(world.rep.recent.some((a) => a.reason === 'pursuit')).toBe(true);
+    expect(world.rep.total).toBeGreaterThan(0);
+  });
+
+  it('pays nothing for driving around doing nothing', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    drive(world, 3, press({ up: true }));
+    expect(world.rep.total).toBe(0);
   });
 });

@@ -157,6 +157,15 @@ a street between two towers is not being under anything. It flies low and
 *ahead* of the car rather than high and behind, because the chase camera looks
 roughly level and a thing you can never see is a thing the HUD has to explain.
 
+**Rep is one currency and its own module** (issue #64). `rep.ts` holds the
+award table, the heat multiplier and the popup feed, and knows nothing about
+the renderer, storage or the pursuit: it is told what happened and at what heat
+and decides what that is worth. The table is a design document as much as it is
+code - it is the answer to "is a takedown worth more than getting away?" - and
+races, collectibles and rivals are all meant to pay into it without reaching
+into the car's physics. Everything is worth more while a pursuit is running,
+which is the whole shape of the economy.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

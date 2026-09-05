@@ -6,6 +6,7 @@ import {
   ROADBLOCK_GAP,
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
+  REP_POPUP_TIME,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -37,6 +38,7 @@ export class Hud {
     this.nitrous(world);
     this.heat(world);
     this.minimap(world);
+    this.rep(world);
     this.takedowns(world);
     this.roadblock(world);
     this.shredded(world);
@@ -110,6 +112,48 @@ export class Hud {
     // A sliver of the bar showing progress toward the next level.
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.fillRect(x, y + 11, 176 * heat, 2);
+  }
+
+  /**
+   * Rep: the running total, and what just paid into it (#64).
+   *
+   * The popups are most of how the genre communicates. A total that silently
+   * goes up teaches nobody what is worth doing; a line saying NEAR MISS +25
+   * teaches it once and for good.
+   */
+  private rep(world: CityWorld): void {
+    const { ctx } = this;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('REP', 34, 44);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 30px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillText(world.rep.total.toLocaleString('en-US'), 34, 76);
+
+    // Newest at the top of the stack, fading and drifting up as they age.
+    const awards = world.rep.recent;
+    for (let i = 0; i < awards.length; i++) {
+      const award = awards[awards.length - 1 - i];
+      const fade = Math.min(1, (REP_POPUP_TIME - award.age) / 0.6);
+      ctx.globalAlpha = Math.max(0, fade);
+      const y = 108 + i * 26 - Math.min(8, award.age * 12);
+
+      ctx.fillStyle = '#ffd166';
+      ctx.font = '700 18px ui-monospace, "SF Mono", Menlo, monospace';
+      const amount = `+${award.amount}`;
+      // Measured in the font it is drawn in, before switching to the small
+      // one. Measuring afterwards gives the label's width and puts the two on
+      // top of each other, which is the same trap the speed readout has.
+      const width = ctx.measureText(amount).width;
+      ctx.fillText(amount, 34, y);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.font = '600 13px system-ui, sans-serif';
+      ctx.fillText(award.label, 34 + width + 14, y);
+    }
+    ctx.globalAlpha = 1;
   }
 
   /**
