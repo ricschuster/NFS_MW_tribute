@@ -19,7 +19,7 @@ Everything runs from the one deployment; the query string picks what you get.
 
 | | |
 | --- | --- |
-| **[▶ Play the game](https://ricschuster.github.io/NFS_MW_tribute/)** | The finished pseudo-3D racer: one closed track, traffic, police, a rival ladder. This is the game. |
+| **[▶ Play the game](https://ricschuster.github.io/NFS_MW_tribute/)** | The finished pseudo-3D racer: one closed track, traffic, police, and a ladder of ten rivals unlocked by Rep. This is the game. |
 | **[▶ Drive in Kestrel Bay](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)** | A car in the generated city: free roam, traffic, a six-level police pursuit, roadblocks, and takedowns. |
 | **[▶ Fly over the city](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)** | A free camera over Kestrel Bay, for looking at the map rather than driving it. |
 | [The 3D renderer on the old track](https://ricschuster.github.io/NFS_MW_tribute/?renderer=3d) | The same game as the first link, drawn with three.js instead of Canvas. Kept side by side while the renderer is swapped. |
@@ -133,7 +133,8 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **Collisions** — crashing into traffic costs speed (shake + flash)
 - [x] **Cop pursuit** — a chaser cop that hunts you, matches lane, can be outrun
 - [x] **Heat + bust/escape** — heat meter, more/faster cops, getting busted, shaking pursuit
-- [x] **The Ladder** — sprint races against 15 rivals, ranked progression (saved)
+- [x] **The Ladder** — sprint races against ten rivals, each unlocked by a Rep
+  total rather than by beating the one below (saved)
 - [x] **Nitrous + drift feel** — SHIFT boost with a meter, cornering slide, speed lines
 - [x] **Sound** — synthesized engine (pitches with speed), pursuit siren, title pad, M to mute
 - [x] **Roadside scenery** — trees, billboards, and lamp posts projected alongside the road

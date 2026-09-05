@@ -1,5 +1,17 @@
-/** One Ladder rival. Ranks run 15 (first challenge) down to 1 (the boss). */
+/**
+ * The ladder of ten (#91).
+ *
+ * Ten, not fifteen, and unlocked by Rep rather than by a count of wins. That
+ * second half is the important one: the ladder used to be a queue, where the
+ * only thing that moved you along it was beating the person in front. Now
+ * every pursuit survived, every cop wrecked and every roadblock gone through
+ * moves you up it, and the race is the thing you spend the Rep on rather than
+ * the only thing that earns it.
+ *
+ * Names and cars are original, per the project's non-goals.
+ */
 export interface Rival {
+  /** 10 (the first challenge) down to 1 (the boss). */
   rank: number;
   name: string;
   car: string;
@@ -7,26 +19,113 @@ export interface Rival {
   color: string;
   /** 0..1; scales the rival's race speed. */
   difficulty: number;
+  /**
+   * Rep needed before they will take the call.
+   *
+   * The first is zero: a ladder whose bottom rung is locked is a game that
+   * starts by refusing to start.
+   */
+  rep: number;
+  /** How they drive, in a line. Shown when the challenge is offered. */
+  character: string;
 }
 
-/**
- * The 15-strong Ladder, ordered as you face them (rank 15 first). Names and
- * cars are original to keep this an unencumbered fan tribute.
- */
 export const RIVALS: Rival[] = [
-  { rank: 15, name: 'Vex', car: 'Tuned Hatch', color: '#4b7bc9', difficulty: 0.15 },
-  { rank: 14, name: 'Cinder', car: 'Hot Coupe', color: '#d8663a', difficulty: 0.21 },
-  { rank: 13, name: 'Halo', car: 'Street GT', color: '#d8b23a', difficulty: 0.27 },
-  { rank: 12, name: 'Torque', car: 'Muscle', color: '#8a3ad8', difficulty: 0.33 },
-  { rank: 11, name: 'Nyx', car: 'Widebody', color: '#3ac9a0', difficulty: 0.4 },
-  { rank: 10, name: 'Rook', car: 'Sport Sedan', color: '#c93a5a', difficulty: 0.47 },
-  { rank: 9, name: 'Blitz', car: 'Turbo Coupe', color: '#3a9ec9', difficulty: 0.54 },
-  { rank: 8, name: 'Mirage', car: 'Exotic', color: '#c9c33a', difficulty: 0.61 },
-  { rank: 7, name: 'Volt', car: 'Prototype', color: '#5ad86a', difficulty: 0.68 },
-  { rank: 6, name: 'Ember', car: 'GT Racer', color: '#d84b3a', difficulty: 0.74 },
-  { rank: 5, name: 'Onyx', car: 'Blacked Coupe', color: '#6a6f7a', difficulty: 0.8 },
-  { rank: 4, name: 'Saber', car: 'Track Weapon', color: '#3a6bd8', difficulty: 0.86 },
-  { rank: 3, name: 'Venom', car: 'Hypercar', color: '#7ad83a', difficulty: 0.91 },
-  { rank: 2, name: 'Ghost', car: 'Phantom GT', color: '#dcdfe6', difficulty: 0.96 },
-  { rank: 1, name: 'Reaper', car: 'The the ladder', color: '#e8462b', difficulty: 1.0 },
+  {
+    rank: 10,
+    name: 'Vex',
+    car: 'Tuned Hatch',
+    color: '#4b7bc9',
+    difficulty: 0.15,
+    rep: 0,
+    character: 'Quick off the line and nowhere near quick enough after it.',
+  },
+  {
+    rank: 9,
+    name: 'Cinder',
+    car: 'Hot Coupe',
+    color: '#d8663a',
+    difficulty: 0.24,
+    rep: 2000,
+    character: 'Brakes late, apologises never.',
+  },
+  {
+    rank: 8,
+    name: 'Halo',
+    car: 'Street GT',
+    color: '#d8b23a',
+    difficulty: 0.33,
+    rep: 5000,
+    character: 'Clean, tidy, and will not put a wheel wrong all night.',
+  },
+  {
+    rank: 7,
+    name: 'Nyx',
+    car: 'Widebody',
+    color: '#3ac9a0',
+    difficulty: 0.42,
+    rep: 9000,
+    character: 'Drives the whole road, yours included.',
+  },
+  {
+    rank: 6,
+    name: 'Rook',
+    car: 'Sport Sedan',
+    color: '#c93a5a',
+    difficulty: 0.51,
+    rep: 14000,
+    character: 'Patient. Sits on your bumper for a mile and then goes.',
+  },
+  {
+    rank: 5,
+    name: 'Blitz',
+    car: 'Turbo Coupe',
+    color: '#3a9ec9',
+    difficulty: 0.6,
+    rep: 20000,
+    character: 'All boost, all the time, and it usually works.',
+  },
+  {
+    rank: 4,
+    name: 'Volt',
+    car: 'Prototype',
+    color: '#5ad86a',
+    difficulty: 0.69,
+    rep: 28000,
+    character: 'Something unfinished with far too much power in it.',
+  },
+  {
+    rank: 3,
+    name: 'Onyx',
+    car: 'Blacked Coupe',
+    color: '#6a6f7a',
+    difficulty: 0.78,
+    rep: 38000,
+    character: 'No lights, no plates, no interest in talking about it.',
+  },
+  {
+    rank: 2,
+    name: 'Ghost',
+    car: 'Phantom GT',
+    color: '#dcdfe6',
+    difficulty: 0.89,
+    rep: 50000,
+    character: 'Never seen twice on the same street. Never once caught.',
+  },
+  {
+    rank: 1,
+    name: 'Reaper',
+    car: 'Nightfall',
+    color: '#e8462b',
+    difficulty: 1.0,
+    rep: 65000,
+    character: 'Runs Kestrel Bay after dark, and has not been beaten in it.',
+  },
 ];
+
+/** The rival the player faces next, or null once the ladder is cleared. */
+export const nextRival = (beaten: number): Rival | null => RIVALS[beaten] ?? null;
+
+/** Will they take the call at this Rep total? */
+export const unlocked = (rival: Rival | null, rep: number): boolean =>
+  rival !== null && rep >= rival.rep;

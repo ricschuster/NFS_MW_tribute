@@ -1,8 +1,9 @@
 import { Road } from './road';
 import { Traffic } from './traffic';
 import { Police } from './police';
-import { RIVALS, type Rival } from './rivals';
+import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
+import { RepLedger } from './rep';
 import {
   SEGMENT_LENGTH,
   CAMERA_HEIGHT,
@@ -31,6 +32,11 @@ import {
   RIVAL_DIFF_SPEED_FRAC,
   RIVAL_LANE,
   RIVAL_NEAR_LEAD,
+  REP_RACE_WIN_PER_DIFFICULTY,
+  REP_RACE_WIN,
+  REP_PURSUIT_PER_SECOND,
+  REP_PURSUIT_TICK,
+  MAX_HEAT_LEVEL,
 } from './constants';
 import { accelerate, limit, increase, overlap } from './math';
 import { propAt } from './scenery';
@@ -94,6 +100,15 @@ export class World {
   raceResult: RaceResult | null = null;
   beaten: number; // rivals defeated so far
 
+  /**
+   * Rep, shared with the city sim (#64, #91).
+   *
+   * The ladder is unlocked by a Rep total now, so the track has to be able to
+   * earn it: a currency you can only earn in a mode most players never open is
+   * a ladder most players cannot climb.
+   */
+  readonly rep = new RepLedger();
+
   readonly road = new Road();
   readonly traffic = new Traffic();
   readonly police = new Police();
@@ -110,22 +125,37 @@ export class World {
 
   private bustHold = 0;
   private prevConfirm = false;
+  private pursuitRep = 0;
 
   constructor(options: WorldOptions = {}) {
     this.road.build();
     if (options.traffic ?? true) this.traffic.build(this.road, this.maxSpeed);
-    this.beaten = loadProgress().beaten;
+    const saved = loadProgress();
+    this.beaten = saved.beaten;
+    this.rep.total = saved.rep;
   }
 
   /** The rival the player would race next, or null once the Ladder is cleared. */
   get currentRival(): Rival | null {
-    return this.beaten < RIVALS.length ? RIVALS[this.beaten] : null;
+    return nextRival(this.beaten);
+  }
+
+  /** Will they take the call? The ladder is gated on Rep now, not on wins. */
+  get challengeReady(): boolean {
+    return unlocked(this.currentRival, this.rep.total);
+  }
+
+  /** How much more Rep the next challenge wants. Zero once it is unlocked. */
+  get repToNext(): number {
+    const rival = this.currentRival;
+    return rival ? Math.max(0, rival.rep - this.rep.total) : 0;
   }
 
   /** Advance the simulation by `dt` seconds under the held `input`. */
   step(dt: number, input: InputState): void {
     const confirmPressed = input.confirm && !this.prevConfirm;
     this.prevConfirm = input.confirm;
+    this.rep.step(dt);
 
     switch (this.raceMode) {
       case 'cruise':
@@ -176,10 +206,32 @@ export class World {
       this.bustHold = BUST_HOLD;
       this.speed = 0;
     }
-    if (this.police.justEscaped) this.escapedFlash = ESCAPED_FLASH;
+    if (this.police.justEscaped) {
+      this.escapedFlash = ESCAPED_FLASH;
+      this.rep.award('escape', Math.max(1, this.police.level));
+    }
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
+    this.earn(dt);
 
-    if (confirmPressed && this.currentRival) this.startRace();
+    if (confirmPressed && this.challengeReady) this.startRace();
+  }
+
+  /**
+   * Rep for staying at large, paid by the second and shown every few (#91).
+   *
+   * The same trickle the city has, on the track's own three heat levels. A
+   * popup per frame is not feedback, it is a wall.
+   */
+  private earn(dt: number): void {
+    if (!this.police.pursuing) {
+      this.pursuitRep = 0;
+      return;
+    }
+    this.pursuitRep += dt;
+    if (this.pursuitRep < REP_PURSUIT_TICK) return;
+    const level = Math.max(1, Math.min(MAX_HEAT_LEVEL, this.police.level));
+    this.rep.award('pursuit', level, REP_PURSUIT_PER_SECOND * this.pursuitRep);
+    this.pursuitRep = 0;
   }
 
   /** Lined up at the start: hold the player still and tick 3-2-1. */
@@ -322,10 +374,19 @@ export class World {
     this.raceResult = result;
     this.raceMode = 'result';
     this.speed = 0;
+
+    const rival = this.raceRival;
     if (result === 'won') {
       this.beaten = Math.min(RIVALS.length, this.beaten + 1);
-      saveProgress({ ...loadProgress(), beaten: this.beaten });
+      // Priced off the rival rather than flat: beating the boss is worth about
+      // three times beating the first one.
+      const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;
+      this.rep.award('raceWin', 1, (REP_RACE_WIN + bonus) / REP_RACE_WIN);
+    } else {
+      // Finishing second still pays. The ladder should never be a hard wall.
+      this.rep.award('raceLoss');
     }
+    saveProgress({ beaten: this.beaten, rep: this.rep.total });
   }
 
   /**

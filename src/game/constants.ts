@@ -776,6 +776,19 @@ export const REP_HEAT_BONUS = 0.3;
 export const REP_NEAR_MISS_RANGE = CAR_RADIUS * 4;
 export const REP_NEAR_MISS_SPEED = 0.35;
 
+/**
+ * What a race win is worth (#91).
+ *
+ * The base, plus the rival's difficulty, so beating the boss is worth roughly
+ * three times beating the first one. Races are not the main earner and are not
+ * meant to be: a good pursuit is worth several of them, which is what makes
+ * free roam the game rather than the corridor between events.
+ */
+export const REP_RACE_WIN = 900;
+export const REP_RACE_WIN_PER_DIFFICULTY = 1800;
+/** Finishing second still pays: the ladder should never be a hard wall. */
+export const REP_RACE_LOSS = 200;
+
 /** How long an award stays on screen, and how many stack up at once. */
 export const REP_POPUP_TIME = 2.6;
 export const REP_POPUPS = 5;

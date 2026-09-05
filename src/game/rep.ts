@@ -4,6 +4,8 @@ import {
   REP_WRECK,
   REP_NEAR_MISS,
   REP_ESCAPE,
+  REP_RACE_WIN,
+  REP_RACE_LOSS,
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
@@ -28,7 +30,15 @@ import {
  */
 
 /** What an award was for. Each one has a fixed value and a fixed label. */
-export type RepReason = 'takedown' | 'roadblock' | 'wreck' | 'nearMiss' | 'pursuit' | 'escape';
+export type RepReason =
+  | 'takedown'
+  | 'roadblock'
+  | 'wreck'
+  | 'nearMiss'
+  | 'pursuit'
+  | 'escape'
+  | 'raceWin'
+  | 'raceLoss';
 
 interface RepKind {
   /** Base value, before the heat multiplier. */
@@ -44,6 +54,8 @@ const KINDS: Record<RepReason, RepKind> = {
   nearMiss: { value: REP_NEAR_MISS, label: 'NEAR MISS' },
   pursuit: { value: 0, label: 'EVADING' }, // valued by the caller, per second
   escape: { value: REP_ESCAPE, label: 'ESCAPED' },
+  raceWin: { value: REP_RACE_WIN, label: 'RACE WON' },
+  raceLoss: { value: REP_RACE_LOSS, label: 'RACE FINISHED' },
 };
 
 /** One award, still worth showing. */
