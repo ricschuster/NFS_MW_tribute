@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "playtest": "vitest run src/game/world.playtest.test.ts",
-    "shot": "node tools/screenshot.mjs"
+    "shot": "node tools/screenshot.mjs",
+    "feel": "node tools/feelprobe.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
