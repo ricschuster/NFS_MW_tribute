@@ -199,7 +199,7 @@ describe('playtest: Blacklist race', () => {
   it('wins a clean sprint and ranks up', () => {
     const w = new World({ traffic: false });
     const before = w.beaten;
-    play(w, 25, raceLine);
+    play(w, 45, raceLine); // a full-length sprint plus the 3-2-1
     expect(w.raceMode).toBe('result');
     expect(w.raceResult).toBe('won');
     expect(w.beaten).toBe(before + 1);
@@ -208,14 +208,14 @@ describe('playtest: Blacklist race', () => {
 
   it('loses when the player never leaves the line', () => {
     const w = new World({ traffic: false });
-    play(w, 25, (t) => (t < STEP * 0.5 ? press({ confirm: true }) : NONE));
+    play(w, 45, (t) => (t < STEP * 0.5 ? press({ confirm: true }) : NONE));
     expect(w.raceResult).toBe('lost');
     expect(w.beaten).toBe(0);
   });
 
   it('returns to cruise when the result is dismissed', () => {
     const w = new World({ traffic: false });
-    play(w, 20, raceLine); // win, land on the result screen
+    play(w, 45, raceLine); // win, land on the result screen
     expect(w.raceMode).toBe('result');
     play(w, 1, () => press({ confirm: true })); // dismiss
     expect(w.raceMode).toBe('cruise');

@@ -99,10 +99,10 @@ export const BUST_HOLD = 3;
 export const ESCAPED_FLASH = 2.5;
 
 /** Blacklist races. */
-export const RACE_DISTANCE = 120000; // world units from start to finish
+export const RACE_DISTANCE = 400000; // world units from start to finish
 export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
-export const RIVAL_BASE_SPEED_FRAC = 0.7; // rival speed vs player max at difficulty 0
-export const RIVAL_DIFF_SPEED_FRAC = 0.22; // extra at difficulty 1 (max 0.92 < 1, so beatable clean)
+export const RIVAL_BASE_SPEED_FRAC = 0.85; // rival speed vs player max at difficulty 0
+export const RIVAL_DIFF_SPEED_FRAC = 0.12; // extra at difficulty 1; the top rival (0.97) needs nitrous to beat
 export const RIVAL_LANE = 0.4; // lane the rival lines up in
 export const RIVAL_NEAR_LEAD = 420; // render lead when the rival is just ahead (bigger = keeps it on-screen at the line)
 export const RIVAL_FAR_LEAD = 1500; // render lead when the rival is far ahead
