@@ -3,7 +3,21 @@ import { generateCity } from './generate';
 import { kestrelBay } from './index';
 import { Rng } from './rng';
 import { CITY_SEED, DISTRICTS } from '../constants';
+import { makeWater } from './water';
 import type { City, CityRoad, Rect } from './types';
+
+// The same water the pinned city was cut against: `makeWater` is the first
+// thing generation draws from the seed, so a fresh Rng reproduces it exactly.
+const water = makeWater(new Rng(CITY_SEED), kestrelBay().bounds);
+
+const touchesWater = (r: Rect) => {
+  for (const x of [r.minX, (r.minX + r.maxX) / 2, r.maxX]) {
+    for (const z of [r.minZ, (r.minZ + r.maxZ) / 2, r.maxZ]) {
+      if (water.isWater(x, z)) return true;
+    }
+  }
+  return false;
+};
 
 const city = kestrelBay();
 
@@ -18,6 +32,38 @@ function carriageway(city: City, road: CityRoad): Rect {
     minZ: Math.min(a.z, b.z) - (road.axis === 'z' ? 0 : half),
     maxZ: Math.max(a.z, b.z) + (road.axis === 'z' ? 0 : half),
   };
+}
+
+/**
+ * A uniform grid over the map, so "what is near this rectangle" does not mean
+ * "compare it against everything". ADR-0005 called this out: at 20 km² the
+ * all-pairs versions of the tests below take longer than the whole suite.
+ */
+const BUCKET = 400 * 135; // ~400 m, a few blocks across
+function index(items: Rect[]): Map<string, number[]> {
+  const grid = new Map<string, number[]>();
+  items.forEach((r, id) => {
+    for (let gx = Math.floor(r.minX / BUCKET); gx <= Math.floor(r.maxX / BUCKET); gx++) {
+      for (let gz = Math.floor(r.minZ / BUCKET); gz <= Math.floor(r.maxZ / BUCKET); gz++) {
+        const k = `${gx}|${gz}`;
+        const cell = grid.get(k);
+        if (cell) cell.push(id);
+        else grid.set(k, [id]);
+      }
+    }
+  });
+  return grid;
+}
+
+/** The ids whose bucket any part of `r` falls in. */
+function near(grid: Map<string, number[]>, r: Rect): Set<number> {
+  const found = new Set<number>();
+  for (let gx = Math.floor(r.minX / BUCKET); gx <= Math.floor(r.maxX / BUCKET); gx++) {
+    for (let gz = Math.floor(r.minZ / BUCKET); gz <= Math.floor(r.maxZ / BUCKET); gz++) {
+      for (const id of grid.get(`${gx}|${gz}`) ?? []) found.add(id);
+    }
+  }
+  return found;
 }
 
 /** Overlap by more than `slack`, so touching kerb to kerb does not count. */
@@ -158,31 +204,26 @@ describe('the street network', () => {
     expect(seen.size).toBe(city.nodes.length);
   });
 
-  it('runs arterials right across the city', () => {
+  it('carries most of the city on arterials that cross it', () => {
     const arterials = city.roads.filter((r) => r.class === 'arterial');
     expect(arterials.length).toBeGreaterThan(0);
-    // Each arterial line is cut into pieces, but the pieces must reach both edges.
-    const spanning = (axis: 'x' | 'z') => {
-      const lines = new Map<number, { min: number; max: number }>();
+    // Water cuts arterials short, so they no longer all reach both edges. What
+    // has to stay true is that each line still crosses most of the map: an
+    // arterial reduced to a stub is a skeleton that is not holding anything up.
+    const reach = (axis: 'x' | 'z') => {
+      const lines = new Map<number, number>();
       for (const road of arterials.filter((r) => r.axis === axis)) {
-        const a = city.nodes[road.a].pos;
-        const b = city.nodes[road.b].pos;
-        const at = axis === 'x' ? a.z : a.x;
-        const lo = axis === 'x' ? Math.min(a.x, b.x) : Math.min(a.z, b.z);
-        const hi = axis === 'x' ? Math.max(a.x, b.x) : Math.max(a.z, b.z);
-        const line = lines.get(at) ?? { min: Infinity, max: -Infinity };
-        lines.set(at, { min: Math.min(line.min, lo), max: Math.max(line.max, hi) });
+        lines.set(road.axis === 'x' ? city.nodes[road.a].pos.z : city.nodes[road.a].pos.x,
+          (lines.get(road.axis === 'x' ? city.nodes[road.a].pos.z : city.nodes[road.a].pos.x) ?? 0) + road.length);
       }
-      return lines;
+      return [...lines.values()];
     };
-    for (const [, line] of spanning('x')) {
-      expect(line.min).toBeCloseTo(city.bounds.minX, 3);
-      expect(line.max).toBeCloseTo(city.bounds.maxX, 3);
-    }
-    for (const [, line] of spanning('z')) {
-      expect(line.min).toBeCloseTo(city.bounds.minZ, 3);
-      expect(line.max).toBeCloseTo(city.bounds.maxZ, 3);
-    }
+    const width = city.bounds.maxX - city.bounds.minX;
+    const depth = city.bounds.maxZ - city.bounds.minZ;
+    const crossing = (lengths: number[], full: number) =>
+      lengths.filter((l) => l > full * 0.6).length;
+    expect(crossing(reach('x'), width)).toBeGreaterThanOrEqual(4);
+    expect(crossing(reach('z'), depth)).toBeGreaterThanOrEqual(4);
   });
 });
 
@@ -192,10 +233,11 @@ describe('districts', () => {
     expect([...kinds].sort()).toEqual(['downtown', 'industrial', 'midtown', 'waterfront']);
   });
 
-  it('puts the waterfront on the shore', () => {
+  it('puts every waterfront district on the water', () => {
     const waterfront = city.superblocks.filter((s) => s.district === 'waterfront');
+    expect(waterfront.length).toBeGreaterThan(0);
     for (const cell of waterfront) {
-      expect(cell.bounds.maxZ).toBeCloseTo(city.shoreZ, 3);
+      expect(touchesWater(cell.bounds)).toBe(true);
     }
   });
 
@@ -224,6 +266,84 @@ describe('districts', () => {
   });
 });
 
+describe('water', () => {
+  it('generates a bay and a river with real outlines', () => {
+    expect(city.water.map((w) => w.kind).sort()).toEqual(['bay', 'river']);
+    for (const body of city.water) {
+      expect(body.outline.length).toBeGreaterThan(10);
+    }
+  });
+
+  // The cut is the whole point of ADR-0005: the network is generated over the
+  // map and then clipped, so a road left standing in the bay means it did not
+  // happen. Bridges are the deliberate exception.
+  it('never leaves a road in the water unless it is a bridge', () => {
+    const wet: string[] = [];
+    for (const road of city.roads) {
+      if (road.bridge) continue;
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      for (let i = 0; i <= 10; i++) {
+        const x = a.x + ((b.x - a.x) * i) / 10;
+        const z = a.z + ((b.z - a.z) * i) / 10;
+        if (water.isWater(x, z)) wet.push(`road ${road.id} at ${Math.round(x)},${Math.round(z)}`);
+      }
+    }
+    expect(wet.slice(0, 5)).toEqual([]);
+  });
+
+  it('only calls a road a bridge where it actually crosses water', () => {
+    const bridges = city.roads.filter((r) => r.bridge);
+    expect(bridges.length).toBeGreaterThan(0);
+    for (const road of bridges) {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      expect(water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2)).toBe(true);
+    }
+  });
+
+  it('keeps the crossings few, so they are chokepoints', () => {
+    const crossings = city.roads.filter((r) => r.bridge).length;
+    expect(crossings).toBeGreaterThan(0);
+    expect(crossings).toBeLessThan(12);
+  });
+
+  it('never puts a block in the water', () => {
+    const wet = city.blocks.filter((b) => touchesWater(b.bounds));
+    expect(wet.length).toBe(0);
+  });
+});
+
+// The repair pass (ADR-0005 rule 3) exists because cutting a network against
+// water can strand a district, and no one seed proves it does not. So sweep.
+describe('every seed makes a drivable city', () => {
+  const seeds = [1, 2, 7, 42, 777, 5150, 123456, 0x4b657374];
+  for (const seed of seeds) {
+    it(`seed ${seed} is connected, complete and on land`, () => {
+      const c = generateCity(seed);
+
+      const seen = new Set<number>([0]);
+      const queue = [0];
+      while (queue.length > 0) {
+        const node = c.nodes[queue.pop() as number];
+        for (const id of node.roads) {
+          const road = c.roads[id];
+          const next = road.a === node.id ? road.b : road.a;
+          if (!seen.has(next)) {
+            seen.add(next);
+            queue.push(next);
+          }
+        }
+      }
+      expect(seen.size).toBe(c.nodes.length);
+
+      expect(new Set(c.superblocks.map((s) => s.district)).size).toBe(4);
+      expect(c.roads.length).toBeGreaterThan(500);
+      expect(c.blocks.length).toBeGreaterThan(200);
+    });
+  }
+});
+
 describe('blocks', () => {
   it('gives every block a positive area inside the city', () => {
     for (const b of city.blocks) {
@@ -237,21 +357,28 @@ describe('blocks', () => {
   });
 
   it('never overlaps another block', () => {
-    for (let i = 0; i < city.blocks.length; i++) {
-      for (let j = i + 1; j < city.blocks.length; j++) {
-        expect(overlaps(city.blocks[i].bounds, city.blocks[j].bounds)).toBe(false);
+    const bounds = city.blocks.map((b) => b.bounds);
+    const grid = index(bounds);
+    const clashes: string[] = [];
+    for (let i = 0; i < bounds.length; i++) {
+      for (const j of near(grid, bounds[i])) {
+        if (j > i && overlaps(bounds[i], bounds[j])) clashes.push(`${i} overlaps ${j}`);
       }
     }
+    expect(clashes).toEqual([]);
   });
 
   // #84 extrudes buildings from these and #86 keeps the car out of them, so a
   // block that eats into a carriageway is a building standing in the road.
   it('never overlaps a carriageway', () => {
     const roads = city.roads.map((r) => carriageway(city, r));
+    const grid = index(roads);
+    const clashes: string[] = [];
     for (const block of city.blocks) {
-      for (const road of roads) {
-        expect(overlaps(block.bounds, road)).toBe(false);
+      for (const id of near(grid, block.bounds)) {
+        if (overlaps(block.bounds, roads[id])) clashes.push(`block over road ${id}`);
       }
     }
+    expect(clashes).toEqual([]);
   });
 });

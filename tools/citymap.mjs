@@ -51,8 +51,11 @@ const sy = (z) => ((city.bounds.maxZ - z) * scale).toFixed(1);
 const parts = [];
 parts.push(`<rect width="${W}" height="${H}" fill="#111820"/>`);
 
-// Water beyond the shore, as a reminder of which edge the bay is on.
-parts.push(`<rect x="0" y="0" width="${W}" height="6" fill="#2e6d85"/>`);
+// The bay and the river. Drawn first: everything else sits on the land.
+for (const body of city.water) {
+  const points = body.outline.map((p) => `${sx(p.x)},${sy(p.z)}`).join(' ');
+  parts.push(`<polygon points="${points}" fill="#22566b"/>`);
+}
 
 for (const block of city.blocks) {
   const b = block.bounds;
@@ -66,22 +69,19 @@ for (const road of city.roads) {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   const w = Math.max(0.6, road.width * scale);
+  const stroke = road.bridge ? '#ff8a4c' : road.class === 'arterial' ? '#e8d9a8' : '#7d8890';
   parts.push(
     `<line x1="${sx(a.x)}" y1="${sy(a.z)}" x2="${sx(b.x)}" y2="${sy(b.z)}" ` +
-      `stroke="${road.class === 'arterial' ? '#e8d9a8' : '#7d8890'}" stroke-width="${w.toFixed(2)}"/>`,
+      `stroke="${stroke}" stroke-width="${(road.bridge ? w * 1.8 : w).toFixed(2)}"/>`,
   );
 }
 
-// Superblock outlines, so the district layout reads even where blocks are sparse.
+// District labels, one per superblock, so the layout reads at a glance.
 for (const cell of city.superblocks) {
   const b = cell.bounds;
   parts.push(
-    `<rect x="${sx(b.minX)}" y="${sy(b.maxZ)}" width="${((b.maxX - b.minX) * scale).toFixed(1)}" ` +
-      `height="${((b.maxZ - b.minZ) * scale).toFixed(1)}" fill="none" stroke="#ffffff" stroke-opacity="0.18"/>`,
-  );
-  parts.push(
-    `<text x="${sx((b.minX + b.maxX) / 2)}" y="${sy((b.minZ + b.maxZ) / 2)}" fill="#fff" fill-opacity="0.5" ` +
-      `font-family="system-ui, sans-serif" font-size="15" text-anchor="middle">${cell.district}</text>`,
+    `<text x="${sx((b.minX + b.maxX) / 2)}" y="${sy((b.minZ + b.maxZ) / 2)}" fill="#fff" fill-opacity="0.45" ` +
+      `font-family="system-ui, sans-serif" font-size="13" text-anchor="middle">${cell.district}</text>`,
   );
 }
 
@@ -108,6 +108,30 @@ console.log(
   `  ${city.roads.length} roads, ${city.nodes.length} junctions, ${city.blocks.length} blocks, ` +
     `${roadKm.toFixed(1)} km of road`,
 );
+// One crossing may be cut into several sections, and one road may cross the
+// water twice, so group the bridge sections that actually touch each other.
+const bridges = city.roads.filter((r) => r.bridge);
+const groups = [];
+const placed = new Set();
+for (const road of bridges) {
+  if (placed.has(road.id)) continue;
+  const group = [road.id];
+  placed.add(road.id);
+  for (let i = 0; i < group.length; i++) {
+    const here = city.roads[group[i]];
+    for (const end of [here.a, here.b]) {
+      for (const id of city.nodes[end].roads) {
+        if (city.roads[id].bridge && !placed.has(id)) {
+          placed.add(id);
+          group.push(id);
+        }
+      }
+    }
+  }
+  groups.push(group);
+}
+const bridgeKm = bridges.reduce((s, r) => s + r.length, 0) / UNITS_PER_METRE / 1000;
+console.log(`  ${groups.length} water crossings (${bridgeKm.toFixed(2)} km of bridge)`);
 for (const [district, n] of Object.entries(counts).sort()) {
   const blocks = city.blocks.filter((b) => b.district === district);
   const side =

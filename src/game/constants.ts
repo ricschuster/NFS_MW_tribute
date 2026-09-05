@@ -155,17 +155,21 @@ const m = (metres: number) => metres * UNITS_PER_METRE;
 /** km/h in world units per second, on the same scale: kmh(320) is `maxSpeed`. */
 const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
 
-/** Overall extent. Water is off the north (+z) edge; the city is the land. */
-export const CITY_WIDTH = m(3000);
-export const CITY_DEPTH = m(2400);
+/**
+ * Overall extent (ADR-0005). Sized from what the game needs rather than from a
+ * remembered figure: a pursuit should be able to cross the map in two to four
+ * minutes at the pace the car actually holds, which is a city about this big.
+ */
+export const CITY_WIDTH = m(5000);
+export const CITY_DEPTH = m(4000);
 
 /**
  * Arterials are laid first and cross the whole city, so every local street
  * meets one at both ends and the network cannot come out in pieces. Counts
  * include both edges, which is what gives the city a perimeter road.
  */
-export const CITY_ARTERIAL_COLS = 6;
-export const CITY_ARTERIAL_ROWS = 5;
+export const CITY_ARTERIAL_COLS = 9;
+export const CITY_ARTERIAL_ROWS = 7;
 /** How far an interior arterial may wander, as a fraction of the even spacing. */
 export const CITY_ARTERIAL_JITTER = 0.16;
 export const CITY_ARTERIAL_LANES = 4;
@@ -175,14 +179,42 @@ export const CITY_ARTERIAL_SPEED = kmh(90);
 export const CITY_LANE_WIDTH = ROAD_WIDTH / LANES;
 
 /** How far the districts reach from their anchors. */
-export const CITY_DOWNTOWN_RADIUS = m(620);
-export const CITY_INDUSTRIAL_RADIUS = m(700);
+export const CITY_DOWNTOWN_RADIUS = m(850);
+export const CITY_INDUSTRIAL_RADIUS = m(1250);
 /**
- * How far the waterfront spreads either side of the harbour. Less than half
- * the city width on purpose: a shore that is waterfront from end to end reads
- * as a band drawn on a map rather than as a port with a city behind it.
+ * How far the docks reach from the harbour. The waterfront is a port, not
+ * every square metre that happens to touch water: a city whose whole coast and
+ * both riverbanks are wharves has no city behind them.
  */
-export const CITY_WATERFRONT_REACH = m(900);
+export const CITY_WATERFRONT_RADIUS = m(1350);
+
+/**
+ * The water (ADR-0005, rule 1). The bay eats into the north edge and the river
+ * runs inland from it and severs the city, which is what makes bridges worth
+ * having.
+ */
+export const CITY_BAY_DEPTH = m(750); // how far inland the bay reaches on average
+export const CITY_BAY_WAVE = m(380); // how far the coastline wanders either side of that
+export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
+export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
+export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth
+/** How finely water outlines are sampled. */
+export const CITY_WATER_STEP = m(40);
+
+/**
+ * Crossings (ADR-0005, rule 2). Few, and deliberate: a city where half the
+ * roads bridge the river has no chokepoints in it. Generation adds more only
+ * if the network would otherwise come apart.
+ */
+export const CITY_BRIDGES = 4;
+/** The longest gap a bridge will span. Wider than this and the road dead-ends. */
+export const CITY_MAX_BRIDGE = m(700);
+/** Bridges are kept this far apart, so they are separate decisions to make. */
+export const CITY_BRIDGE_SPACING = m(1200);
+/** Sampling resolution when clipping a road against water. */
+export const CITY_CLIP_STEP = m(15);
+/** A stretch of road shorter than this is a stub, not a street. */
+export const CITY_MIN_STREET = m(70);
 
 /**
  * What each district is like to drive through. Block size and its variation do
@@ -191,7 +223,7 @@ export const CITY_WATERFRONT_REACH = m(900);
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
   downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50) },
-  midtown: { blockX: m(120), blockZ: m(100), jitter: 0.22, skip: 0.1, lanes: 2, speed: kmh(60) },
-  waterfront: { blockX: m(150), blockZ: m(170), jitter: 0.18, skip: 0.12, lanes: 2, speed: kmh(70) },
-  industrial: { blockX: m(190), blockZ: m(180), jitter: 0.14, skip: 0.15, lanes: 2, speed: kmh(70) },
+  midtown: { blockX: m(135), blockZ: m(115), jitter: 0.22, skip: 0.12, lanes: 2, speed: kmh(60) },
+  waterfront: { blockX: m(135), blockZ: m(150), jitter: 0.18, skip: 0.08, lanes: 2, speed: kmh(70) },
+  industrial: { blockX: m(215), blockZ: m(200), jitter: 0.14, skip: 0.18, lanes: 2, speed: kmh(70) },
 };

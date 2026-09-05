@@ -65,10 +65,18 @@ per district, elevated interstate), and cameras become a first-class concept.
 turns a seed into a street graph - junctions, roads, blocks and districts - as
 a pure function with no renderer and no `Math.random`, so `World` can use it
 for collision and the playtests can build one headlessly. `CITY_SEED` is
-content: changing it publishes a different city. Generation is axis-aligned on
-purpose, which is what keeps blocks rectangular for the extrusions and "which
-road am I on" cheap. Look at what you changed with `npm run city` - the layout
-is much easier to judge as a picture than as a test.
+content: changing it publishes a different city.
+
+[ADR-0005](docs/decisions/0005-the-shape-of-kestrel-bay.md) is what the city is
+*shaped* like, and it is worth reading before changing the generator. Water is
+generated first and the streets are cut against it, bridges are few on purpose
+because they are the pursuit chokepoints, and generation ends by proving the
+city is drivable and bridging until it is. Rules 4-7 of that ADR (curved
+residential streets, the interstate loop, landmarks, relief) are not built yet.
+
+Look at what you changed with `npm run city` - the layout is much easier to
+judge as a picture than as a test, and both real bugs so far were found that
+way and not by the 34 tests.
 
 **Unchanged either way.** Physics runs on a **fixed timestep** (`STEP = 1/60`)
 with an accumulator, so behaviour is frame-rate independent; rendering happens

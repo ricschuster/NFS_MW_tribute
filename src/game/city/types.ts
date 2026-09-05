@@ -70,6 +70,14 @@ export interface CityRoad {
   /** The speed this road is built for, in world units per second. */
   speed: number;
   length: number;
+  /** True where the road crosses water. Bridges are the chokepoints (ADR-0005). */
+  bridge: boolean;
+}
+
+/** A bay or a river, as a closed outline in world space for #84 to build from. */
+export interface WaterBody {
+  kind: 'bay' | 'river';
+  outline: Vec2[];
 }
 
 /** A city block: the land between the roads, for #84 to put buildings on. */
@@ -88,8 +96,8 @@ export interface Superblock {
 export interface City {
   seed: number;
   bounds: Rect;
-  /** Water lies north of this z. The shore is the city's north edge. */
-  shoreZ: number;
+  /** The bay and the river, as outlines. Everything else is land. */
+  water: WaterBody[];
   nodes: CityNode[];
   roads: CityRoad[];
   blocks: CityBlock[];
