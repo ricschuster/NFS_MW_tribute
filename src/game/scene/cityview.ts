@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
+import { segmentIntersection } from '../city/grid';
 import { Cityscape } from './cityscape';
 import { makeCar } from './cars';
 import type { CityWorld } from '../cityworld';
@@ -233,27 +234,16 @@ export class CityView {
       const ia = nodes[span.a].pos;
       const ib = nodes[span.b].pos;
       for (const road of streets) {
-        if (road.axis === span.axis) continue;
         const ra = nodes[road.a].pos;
         const rb = nodes[road.b].pos;
-
-        // Both are axis-aligned, so the crossing is just the two fixed coords.
-        const cross =
-          span.axis === 'x' ? { x: ra.x, z: ia.z } : { x: ia.x, z: ra.z };
-        const onSpan =
-          span.axis === 'x'
-            ? cross.x >= Math.min(ia.x, ib.x) && cross.x <= Math.max(ia.x, ib.x)
-            : cross.z >= Math.min(ia.z, ib.z) && cross.z <= Math.max(ia.z, ib.z);
-        const onRoad =
-          road.axis === 'x'
-            ? cross.x >= Math.min(ra.x, rb.x) && cross.x <= Math.max(ra.x, rb.x)
-            : cross.z >= Math.min(ra.z, rb.z) && cross.z <= Math.max(ra.z, rb.z);
-        if (!onSpan || !onRoad) continue;
+        const cross = segmentIntersection(ia, ib, ra, rb);
+        if (!cross) continue;
 
         // Stand back down the street, far enough that the deck is in frame.
         const back = Math.min(150 * M, road.length * 0.8);
-        const dir = road.axis === 'x' ? { x: 1, z: 0 } : { x: 0, z: 1 };
-        const away = cross.x - ra.x + (cross.z - ra.z) > 0 ? -1 : 1;
+        const len = Math.max(1, Math.hypot(rb.x - ra.x, rb.z - ra.z));
+        const dir = { x: (rb.x - ra.x) / len, z: (rb.z - ra.z) / len };
+        const away = (cross.x - ra.x) * dir.x + (cross.z - ra.z) * dir.z > 0 ? -1 : 1;
 
         return {
           position: new THREE.Vector3(cross.x + dir.x * back * away, 6 * M, cross.z + dir.z * back * away),

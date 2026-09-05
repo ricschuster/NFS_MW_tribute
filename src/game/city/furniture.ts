@@ -38,13 +38,92 @@ export function furnitureFor(rng: Rng, city: City): StreetProp[] {
   // not exist, so it would stand in the sea. Drop it rather than clamp it: a
   // lamp shuffled back onto the kerb is a lamp in the road.
   const { bounds } = city;
-  return props.filter(
+  const inside = props.filter(
     (prop) =>
       prop.at.x >= bounds.minX &&
       prop.at.x <= bounds.maxX &&
       prop.at.z >= bounds.minZ &&
       prop.at.z <= bounds.maxZ,
   );
+
+  return inside.filter((prop) => prop.kind === 'barrier' || !inSomeRoad(city, prop));
+}
+
+/**
+ * Is this prop standing in a live lane of *any* road?
+ *
+ * Placing furniture relative to its own road is not enough once roads bend. A
+ * boulevard crosses a street at whatever angle it likes, so a lamp set neatly
+ * on one road's kerb can be in the middle of another one. Junction ends are
+ * excluded, where a kerb is legitimately inside the carriageway it corners on.
+ */
+function inSomeRoad(city: City, prop: StreetProp): boolean {
+  const cell = ROAD_LOOKUP_CELL;
+  const index = roadIndex(city);
+  const key = `${Math.floor(prop.at.x / cell)}|${Math.floor(prop.at.z / cell)}`;
+
+  for (const id of index.get(key) ?? []) {
+    const road = city.roads[id];
+    const a = city.nodes[road.a];
+    const b = city.nodes[road.b];
+    if (a.y !== prop.y || b.y !== prop.y) continue;
+
+    const distance = pointToSegment(prop.at.x, prop.at.z, a.pos.x, a.pos.z, b.pos.x, b.pos.z);
+    if (distance >= road.width / 2) continue;
+
+    const clear = Math.min(road.width, road.length / 3);
+    const fromA = Math.hypot(prop.at.x - a.pos.x, prop.at.z - a.pos.z);
+    const fromB = Math.hypot(prop.at.x - b.pos.x, prop.at.z - b.pos.z);
+    if (fromA > clear && fromB > clear) return true;
+  }
+  return false;
+}
+
+const ROAD_LOOKUP_CELL = 400 * 135;
+let cachedIndex: { city: City; cells: Map<string, number[]> } | null = null;
+
+/** A coarse road index, kept beside the city it was built for. */
+function roadIndex(city: City): Map<string, number[]> {
+  if (cachedIndex?.city === city) return cachedIndex.cells;
+
+  const cells = new Map<string, number[]>();
+  city.roads.forEach((road, id) => {
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    const half = road.width / 2;
+    const minX = Math.min(a.x, b.x) - half;
+    const maxX = Math.max(a.x, b.x) + half;
+    const minZ = Math.min(a.z, b.z) - half;
+    const maxZ = Math.max(a.z, b.z) + half;
+    for (let gx = Math.floor(minX / ROAD_LOOKUP_CELL); gx <= Math.floor(maxX / ROAD_LOOKUP_CELL); gx++) {
+      for (let gz = Math.floor(minZ / ROAD_LOOKUP_CELL); gz <= Math.floor(maxZ / ROAD_LOOKUP_CELL); gz++) {
+        const key = `${gx}|${gz}`;
+        const list = cells.get(key);
+        if (list) list.push(id);
+        else cells.set(key, [id]);
+      }
+    }
+  });
+
+  cachedIndex = { city, cells };
+  return cells;
+}
+
+/** Shortest distance from a point to a segment. */
+function pointToSegment(
+  px: number,
+  pz: number,
+  ax: number,
+  az: number,
+  bx: number,
+  bz: number,
+): number {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const lengthSquared = dx * dx + dz * dz;
+  if (lengthSquared < 1) return Math.hypot(px - ax, pz - az);
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / lengthSquared));
+  return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
 }
 
 /** Where a road points, the unit vector across it, and the height it sits at. */

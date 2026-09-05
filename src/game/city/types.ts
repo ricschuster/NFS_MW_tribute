@@ -27,11 +27,13 @@ export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial';
 
 /**
  * Arterials cross the whole city and carry the traffic; streets fill a
- * district. The interstate runs above (or below) both, and ramps are the only
+ * district. A boulevard is the one that bends: laid over the finished grid as
+ * a curve and spliced into it, because a pure grid has no line that sweeps.
+ * The interstate runs above (or below) all of them, and ramps are the only
  * thing joining the two levels - which is what makes an overpass a route
  * choice rather than scenery.
  */
-export type RoadClass = 'arterial' | 'street' | 'interstate' | 'ramp';
+export type RoadClass = 'arterial' | 'street' | 'boulevard' | 'interstate' | 'ramp';
 
 /**
  * What makes a district read as a place. Block size and how much it varies do
@@ -70,13 +72,20 @@ export interface CityNode {
   roads: number[];
 }
 
-/** One stretch of road between two junctions. Always axis-aligned in plan. */
+/**
+ * One stretch of road between two junctions: a straight piece, but not
+ * necessarily an axis-aligned one. A bend is a chain of these.
+ *
+ * There used to be an `axis` here, and every geometric test in the codebase
+ * leant on it. ADR-0005 rule 4 made it a lie, so it is gone: direction comes
+ * from the two endpoints, and "is this point on this road" is a distance to a
+ * segment rather than a rectangle test.
+ */
 export interface CityRoad {
   id: number;
-  /** Endpoint node ids. `a` is always the lower coordinate along `axis`. */
+  /** Endpoint node ids. */
   a: number;
   b: number;
-  axis: Axis;
   class: RoadClass;
   district: DistrictKind;
   lanes: number;

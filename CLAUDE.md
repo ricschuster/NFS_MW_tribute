@@ -84,6 +84,16 @@ lets boxes become models later by swapping a provider, and it is also why #86
 can collide with buildings without a renderer in the room. Building footprints
 and heights are city *data* for exactly that reason.
 
+**Roads are segments, not axis-aligned lines** (issue #115). `CityRoad` used
+to carry an `axis` and every geometric test leant on it; boulevards bend, so it
+is gone. Direction comes from the two endpoints, and "is this point on this
+road" is a distance to a segment. The street grid is still generated
+axis-aligned - that is what keeps blocks rectangular - but nothing may assume
+it. Boulevards go through the same pipeline as everything else rather than
+being spliced into a finished graph: that was tried first and meant
+reimplementing water-clipping, junction-splitting and the connectivity repair,
+badly.
+
 **Height is a real property of the network** (issue #85). Nodes have a `y`, so
 two roads at the same map position and different heights are two different
 places: the interstate crossing a street overhead shares no node with it, and

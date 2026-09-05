@@ -17,6 +17,7 @@ import {
 import type { Rng } from './rng';
 import type { Axis, CityNode, CityRoad, Rect } from './types';
 
+
 /**
  * The elevated interstate (#85).
  *
@@ -213,9 +214,9 @@ function link(
   if (length < 1) return;
 
   const lanes = kind === 'interstate' ? INTERSTATE_LANES : RAMP_LANES;
-  // `a` is the lower end along the axis, as everywhere else in the graph.
-  const axis: Axis = Math.abs(dx) >= Math.abs(dz) ? 'x' : 'z';
-  const forward = axis === 'x' ? dx >= 0 : dz >= 0;
+  // Keep the convention the rest of the graph uses: `a` is the lower end along
+  // whichever axis this piece mostly runs.
+  const forward = Math.abs(dx) >= Math.abs(dz) ? dx >= 0 : dz >= 0;
   const from = forward ? a : b;
   const to = forward ? b : a;
 
@@ -223,7 +224,6 @@ function link(
     id: roads.length,
     a: from.id,
     b: to.id,
-    axis,
     class: kind,
     district: 'midtown',
     lanes,
