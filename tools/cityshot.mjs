@@ -11,6 +11,9 @@
 // Usage:
 //   npm run cityshot                      # all viewpoints -> screenshots/city-*.png
 //   npm run cityshot -- --view downtown   # just one
+//
+// `drive`, `pursuit`, `crash` and `takedown` are not viewpoints but modes: they
+// put a car in the city and photograph what the player would be looking at.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -24,7 +27,10 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash'];
+const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown']);
+const VIEWS = flag('--view')
+  ? [flag('--view')]
+  : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash', 'takedown'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -72,10 +78,7 @@ page.on('console', (msg) => {
 for (const view of VIEWS) {
   // `drive` is not a viewpoint but a mode: put a car in the city, hold the
   // throttle for a moment, and photograph what the player would be looking at.
-  const url =
-    view === 'drive' || view === 'pursuit' || view === 'crash'
-      ? `${base}/?renderer=drive`
-      : `${base}/?renderer=city&view=${view}`;
+  const url = DRIVING.has(view) ? `${base}/?renderer=drive` : `${base}/?renderer=city&view=${view}`;
   await page.goto(url, { waitUntil: 'load' });
   // Generating the city and building its instanced meshes takes a moment, and
   // a screenshot taken before that is a picture of an empty sky.
@@ -97,6 +100,65 @@ for (const view of VIEWS) {
     await page.waitForTimeout(6500);
     await page.keyboard.up('ArrowLeft');
     await page.waitForTimeout(400);
+  }
+
+  if (view === 'takedown') {
+    // Driving into a cop hard enough to wreck one is a matter of luck, and a
+    // shot that depends on luck cannot be compared between runs. The dev-only
+    // handle on the sim sets the contact up exactly instead: a cruiser coming
+    // the other way, met head on in its own lane at 60% of top speed.
+    //
+    // The two `step` calls are the point. Headless Chromium renders this scene
+    // at a couple of frames a second, so a frame is fifteen physics steps and
+    // the cars pass through each other between the ones that matter. Stepping
+    // the sim by hand makes the ram exactly the one the playtests assert on.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(3000);
+    await page.keyboard.up('ArrowUp');
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const metre = 135; // UNITS_PER_METRE; the sim does not export it to the page
+      const road = world.onRoad;
+      const a = world.city.nodes[road.a].pos;
+      const b = world.city.nodes[road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len2 = Math.max(1, dx * dx + dz * dz);
+      const px = world.x + Math.sin(world.heading) * 25 * metre;
+      const pz = world.z + Math.cos(world.heading) * 25 * metre;
+      const along = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
+      // Facing back down the road, so it closes rather than driving away.
+      const forward = Math.sin(world.heading) * dx + Math.cos(world.heading) * dz < 0;
+      world.police.cops.push({
+        road,
+        t: forward ? along : 1 - along,
+        forward,
+        speed: 0,
+        damage: 0,
+        x: px,
+        z: pz,
+        y: world.y,
+        heading: world.heading + Math.PI,
+        kind: 'cruiser',
+      });
+
+      // One step for the pursuit to settle the cop into its own lane, then
+      // stand in that lane in front of it. Lining up on the line between the
+      // two cars is not the same thing: a cop sits a lane off the centreline,
+      // so it would arrive at an angle and only shunt.
+      world.step(1 / 60, none);
+      const cop = world.police.cops[0];
+      if (!cop) return;
+      world.x = cop.x + Math.sin(cop.heading) * 4 * metre;
+      world.z = cop.z + Math.cos(cop.heading) * 4 * metre;
+      world.y = cop.y;
+      world.heading = cop.heading + Math.PI;
+      world.speed = world.maxSpeed * 0.6;
+      world.step(1 / 60, none);
+    });
+    // Inside the cut, which runs on the director's own clock.
+    await page.waitForTimeout(1200);
   }
 
   if (view === 'pursuit') {
@@ -122,9 +184,9 @@ for (const view of VIEWS) {
 
   // The HUD is a separate canvas over the world, so a shot of the WebGL canvas
   // alone is a shot with no HUD in it. Capture the stage for the driving views.
-  const shot = view === 'drive' || view === 'pursuit' || view === 'crash' ? '.stage' : '#game3d';
+  const shot = DRIVING.has(view) ? '.stage' : '#game3d';
   await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
-  if (view === 'drive' || view === 'pursuit' || view === 'crash') {
+  if (DRIVING.has(view)) {
     await page.keyboard.up('ArrowUp');
     if (view === 'pursuit') await page.keyboard.up('b');
   }

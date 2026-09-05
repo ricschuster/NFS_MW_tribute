@@ -10,8 +10,14 @@ import {
   COP_UNITS,
   CITY_COP_LOSE,
   SEARCH_TIME_PER_LEVEL,
+  UNITS_PER_METRE,
+  WRECK_LINGER,
+  TAKEDOWN_MIN_CLOSING,
+  type CopKind,
 } from './constants';
 import type { InputState } from './world';
+import type { Cop } from './citypolice';
+import type { TrafficCar } from './citytraffic';
 
 const NONE: InputState = {
   left: false,
@@ -496,5 +502,150 @@ describe('cooldown and the search area', () => {
     // Search time and radius both scale off the level, so a higher level is a
     // longer search over more ground.
     expect(SEARCH_TIME_PER_LEVEL).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Takedowns (#94).
+ *
+ * Every one of these builds the contact by hand rather than driving into
+ * somebody, and that is deliberate. A takedown is a statement about closing
+ * speed and angle, and a scripted drive that happens to catch a cop delivers
+ * whichever closing speed and angle it happened to arrive at. Putting the car
+ * exactly where the assertion needs it is the only way the number under test
+ * is the number being asserted on.
+ *
+ * The worlds are built with `police: false` so the pursuit never moves the cop
+ * off the spot it was placed on; contact resolution runs either way.
+ */
+describe('takedowns', () => {
+  const M = UNITS_PER_METRE;
+
+  /** A stationary cop `metres` straight ahead of the car, facing the same way. */
+  function copAhead(world: CityWorld, metres: number, kind: CopKind = 'cruiser'): Cop {
+    const cop: Cop = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: world.x + Math.sin(world.heading) * metres * M,
+      z: world.z + Math.cos(world.heading) * metres * M,
+      y: world.y,
+      heading: world.heading,
+      kind,
+    };
+    world.police.cops.push(cop);
+    return cop;
+  }
+
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  it('wrecks a cop rammed square at speed, and counts it', () => {
+    const world = still();
+    copAhead(world, 3);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    expect(world.takedowns).toBe(1);
+    expect(world.police.cops.length).toBe(0);
+    expect(world.wrecks.length).toBe(1);
+    expect(world.wrecks[0].police).toBe(true);
+    expect(world.takedownFlash).toBeGreaterThan(0);
+    expect(world.lastTakedown).not.toBeNull();
+  });
+
+  it('costs you speed, so a takedown is not a free way through', () => {
+    const world = still();
+    copAhead(world, 3);
+    world.speed = world.maxSpeed * 0.6;
+    const before = world.speed;
+    world.step(STEP, NONE);
+    expect(world.speed).toBeLessThan(before * 0.5);
+  });
+
+  it('makes them angrier rather than calmer', () => {
+    const world = still();
+    world.police.heat = 0.3;
+    copAhead(world, 3);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+    expect(world.police.heat).toBeGreaterThan(0.3);
+  });
+
+  // Leaning on a cop at matched speed is the thing that must not work: it is
+  // free, it needs no commitment, and it would make the pursuit a formality.
+  it('does not wreck anybody by nudging them', () => {
+    const world = still();
+    const cop = copAhead(world, 2);
+    world.speed = world.maxSpeed * TAKEDOWN_MIN_CLOSING * 0.5;
+    for (let i = 0; i < 120; i++) world.step(STEP, NONE);
+
+    expect(cop.damage).toBe(0);
+    expect(world.takedowns).toBe(0);
+    expect(world.police.cops).toContain(cop);
+  });
+
+  it('takes more than one hit to put a heavy unit out', () => {
+    const world = still();
+    const suv = copAhead(world, 3, 'suv');
+    world.speed = world.maxSpeed * 0.3;
+    world.step(STEP, NONE);
+
+    expect(suv.damage).toBeGreaterThan(0);
+    expect(suv.damage).toBeLessThan(1);
+    expect(world.takedowns).toBe(0);
+  });
+
+  it('leaves a wreck in the street, then has it towed away', () => {
+    const world = still();
+    copAhead(world, 3);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+    expect(world.wrecks.length).toBe(1);
+
+    // Standing still beside it, so nothing but the clock clears it.
+    world.speed = 0;
+    drive(world, WRECK_LINGER + 1, NONE);
+    expect(world.wrecks.length).toBe(0);
+  });
+
+  it('does not count wrecked traffic as a takedown', () => {
+    const world = still();
+    const car: TrafficCar = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      colour: '#c94b4b',
+      x: world.x + Math.sin(world.heading) * 3 * M,
+      z: world.z + Math.cos(world.heading) * 3 * M,
+      y: world.y,
+      heading: world.heading,
+    };
+    world.traffic.cars.push(car);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    expect(world.traffic.cars).not.toContain(car);
+    expect(world.wrecks.length).toBe(1);
+    expect(world.wrecks[0].police).toBe(false);
+    expect(world.takedowns).toBe(0);
+    expect(world.takedownFlash).toBe(0);
+  });
+
+  // A wreck that stops being solid the moment it is made is a car that
+  // vanished, which is not what the picture says happened.
+  it('leaves the wreck solid enough to hit', () => {
+    const world = still();
+    copAhead(world, 3);
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    world.speed = world.maxSpeed * 0.2;
+    const before = world.speed;
+    world.step(STEP, NONE);
+    expect(world.speed).toBeLessThan(before);
   });
 });

@@ -34,6 +34,7 @@ export class Hud {
     this.nitrous(world);
     this.heat(world);
     this.minimap(world);
+    this.takedowns(world);
     this.cooldown(world);
     this.banners(world);
 
@@ -106,6 +107,25 @@ export class Hud {
   }
 
   /**
+   * The takedown tally (#94), under the heat pips.
+   *
+   * Shown only once you have one. A counter reading zero all game is a promise
+   * the HUD is making on behalf of a mechanic the player has not met yet.
+   */
+  private takedowns(world: CityWorld): void {
+    const { ctx } = this;
+    if (world.takedowns === 0) return;
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('TAKEDOWNS', WIDTH - 34, HEIGHT - 68);
+    ctx.fillStyle = '#ffd166';
+    ctx.font = '700 22px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillText(String(world.takedowns), WIDTH - 34, HEIGHT - 88);
+  }
+
+  /**
    * Streets around the car, turned so the way you are facing is up.
    *
    * North-up is easier to draw and worse to drive with: it makes you rotate
@@ -159,6 +179,14 @@ export class Hud {
       ctx.strokeStyle = 'rgba(255, 210, 90, 0.75)';
       ctx.lineWidth = 2;
       ctx.stroke();
+    }
+
+    for (const wreck of world.wrecks) {
+      const dx = (wreck.x - world.x) * scale;
+      const dz = -(wreck.z - world.z) * scale;
+      if (Math.hypot(dx, dz) > radius) continue;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillRect(dx - 2, dz - 2, 4, 4);
     }
 
     for (const cop of world.police.cops) {
@@ -250,6 +278,14 @@ export class Hud {
       ctx.font = '800 78px system-ui, sans-serif';
       ctx.fillText('BUSTED', WIDTH / 2, HEIGHT / 2);
       return;
+    }
+
+    if (world.takedownFlash > 0) {
+      ctx.globalAlpha = Math.min(1, world.takedownFlash);
+      ctx.fillStyle = '#ffd166';
+      ctx.font = '800 56px system-ui, sans-serif';
+      ctx.fillText('TAKEDOWN', WIDTH / 2, HEIGHT / 2 - 60);
+      ctx.globalAlpha = 1;
     }
 
     if (world.escapedFlash > 0) {

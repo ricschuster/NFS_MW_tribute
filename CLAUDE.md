@@ -109,6 +109,14 @@ rather than spread over the map, and cars look for the one in front in **world
 space**, because roads are split at every junction so the car ahead is almost
 always on a different road object.
 
+**A hit is one thing, wherever it lands** (issue #94). `impact.ts` is the whole
+damage model: closing speed along the line between the two cars, how square the
+hit is, and whether the car has a wall behind it. It is a pure function of two
+cars and the buildings around them, so it can be asserted on in numbers rather
+than judged from a screenshot. A car that reaches full damage stops being a
+`GraphCar` and becomes a `Wreck` on `CityWorld` - lifted out of traffic and out
+of the pursuit entirely, so nothing in either has to remember to skip it.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup
@@ -122,6 +130,12 @@ and `world.ts` retires when they have.
 car in it; `&view=aerial|downtown|bridge|street|overpass` picks a fixed
 viewpoint. The README lists them with controls - keep it current, since it is
 the only place a person is told these URLs exist.
+
+In dev only, `?renderer=drive` hangs the running sim off `globalThis.crosstown`
+(`{ world, view, city }`). That is how `npm run cityshot` sets up shots it
+could otherwise only get by luck: the `takedown` view puts a cop in front of
+the car and steps the sim by hand, because headless Chromium renders this scene
+at about two frames a second and a frame is fifteen physics steps.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

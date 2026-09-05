@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { CameraDirector } from './cameras';
-import { CHASE_FOV, CHASE_FOV_FAST, CRASH_HOLD, INTRO_HOLD } from '../constants';
+import {
+  CHASE_FOV,
+  CHASE_FOV_FAST,
+  CRASH_HOLD,
+  INTRO_HOLD,
+  TAKEDOWN_HOLD,
+  TAKEDOWN_SLOWMO,
+} from '../constants';
 import type { CityWorld } from '../cityworld';
 
 /**
@@ -17,6 +24,8 @@ function fakeWorld(over: Partial<CityWorld> = {}): CityWorld {
     speed: 0,
     maxSpeed: 12000,
     crashFlash: 0,
+    takedownFlash: 0,
+    lastTakedown: null,
     ...over,
   } as CityWorld;
 }
@@ -126,5 +135,53 @@ describe('the camera director', () => {
     director.glanceBack();
     director.update(1 / 60, fakeWorld({ crashFlash: 1 }));
     expect(director.mode).toBe('chase');
+  });
+
+  describe('takedowns (#94)', () => {
+    const wrecked = () =>
+      fakeWorld({ takedownFlash: 2, lastTakedown: { x: 100, y: 0, z: 100 } });
+
+    it('cuts to the wreck, runs slow, then comes back at normal speed', () => {
+      const director = new CameraDirector();
+      run(director, INTRO_HOLD + 0.2, fakeWorld());
+      expect(director.timeScale).toBe(1);
+
+      director.update(1 / 60, wrecked());
+      expect(director.mode).toBe('takedown');
+      expect(director.timeScale).toBe(TAKEDOWN_SLOWMO);
+
+      run(director, TAKEDOWN_HOLD + 0.2, wrecked());
+      expect(director.mode).toBe('chase');
+      expect(director.timeScale).toBe(1);
+    });
+
+    // The flash decays like crashFlash does, so a director watching its level
+    // rather than its edge would re-cut every frame and never let go.
+    it('treats a takedown as one event, not one per frame', () => {
+      const director = new CameraDirector();
+      run(director, INTRO_HOLD + 0.2, fakeWorld());
+      const held = wrecked();
+      for (let i = 0; i < 300; i++) director.update(1 / 60, held);
+      expect(director.mode).toBe('chase');
+    });
+
+    // A takedown sets crashFlash too, since it is a crash. The wreck is the
+    // shot worth having, so it has to win.
+    it('outranks the crash camera it arrives with', () => {
+      const director = new CameraDirector();
+      run(director, INTRO_HOLD + 0.2, fakeWorld());
+      director.update(
+        1 / 60,
+        fakeWorld({ crashFlash: 1, takedownFlash: 2, lastTakedown: { x: 0, y: 0, z: 0 } }),
+      );
+      expect(director.mode).toBe('takedown');
+    });
+
+    it('honours reduced motion: no cut, and no slow motion', () => {
+      const calm = new CameraDirector(true);
+      calm.update(1 / 60, wrecked());
+      expect(calm.mode).toBe('chase');
+      expect(calm.timeScale).toBe(1);
+    });
   });
 });

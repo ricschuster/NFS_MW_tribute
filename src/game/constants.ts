@@ -514,3 +514,48 @@ export const SEARCH_TIME_PER_LEVEL = 7;
 /** How big the search area is, and how much each heat level widens it. */
 export const SEARCH_RADIUS = m(320);
 export const SEARCH_RADIUS_PER_LEVEL = m(70);
+
+/**
+ * Takedowns (#94).
+ *
+ * The genre's answer to "what do I do about the cop on my bumper": you put him
+ * into something. A takedown is a hit hard enough to wreck another car, and
+ * wrecking one is meant to be a decision rather than an accident - it costs
+ * speed, it takes commitment, and doing it to the police makes them angrier.
+ *
+ * The thresholds are written as fractions of the player's top speed rather
+ * than as absolute damage, so retuning the car does not silently retune what
+ * it takes to wreck somebody.
+ */
+/** Below this closing speed a contact is a nudge and does no damage at all. */
+export const TAKEDOWN_MIN_CLOSING = 0.09;
+/** Closing speed that does a full car's worth of damage in one square hit. */
+export const TAKEDOWN_KILL_CLOSING = 0.52;
+/**
+ * How much harder a hit lands when the car has a wall behind it.
+ *
+ * Traffic and police live on the street graph and cannot be knocked off it, so
+ * "ram them into scenery" cannot be modelled by shoving them sideways into a
+ * building. Pinning is the same idea from the other end: a car with a building
+ * immediately behind it has nowhere to give, so the whole hit lands.
+ */
+export const TAKEDOWN_PINNED_MULT = 2.4;
+/** How far behind the car a building has to be to count as pinning it. */
+export const TAKEDOWN_PIN_REACH = m(6);
+/** How much of a hit a heavier unit shrugs off, per unit of `scale` over one. */
+export const TAKEDOWN_MASS_MULT = 1.6;
+/** Speed the player keeps after wrecking somebody: a takedown is not free. */
+export const TAKEDOWN_SPEED_KEPT = 0.62;
+/** Heat a police takedown adds. Wrecking a cruiser is not a way to calm things. */
+export const TAKEDOWN_HEAT = 0.06;
+
+/** Seconds a wreck is left in the street before it is cleared away. */
+export const WRECK_LINGER = 9;
+/** Seconds the TAKEDOWN banner holds on the HUD. */
+export const TAKEDOWN_FLASH = 2;
+/** How long the takedown cut runs, in real seconds, and how slowly time runs. */
+export const TAKEDOWN_HOLD = 1.5;
+export const TAKEDOWN_SLOWMO = 0.35;
+/** How far off the takedown camera stands, and how fast it swings round. */
+export const TAKEDOWN_DISTANCE = m(15);
+export const TAKEDOWN_ORBIT = 0.45;

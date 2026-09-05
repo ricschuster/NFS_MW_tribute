@@ -24,6 +24,12 @@ export interface GraphCar {
   z: number;
   y: number;
   heading: number;
+  /**
+   * How beaten up it is, 0..1 (#94). At 1 the car is wrecked and its owner
+   * takes it out of play. Every car on the graph carries it, because a
+   * takedown has to work the same way on a cruiser and on a hatchback.
+   */
+  damage: number;
 }
 
 /** The unit vector a car is travelling in. */
