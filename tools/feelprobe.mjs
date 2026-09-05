@@ -60,6 +60,38 @@ function noPolice(w) {
   return w;
 }
 
+/**
+ * Whether the world took a hit on the step that produced `flash`. crashFlash is
+ * set to 1 on impact and decays every step, so it is never observed at 1 - and
+ * back-to-back hits land on the same value. Anything above the decayed value is
+ * a fresh one.
+ */
+function tookHit(flash, prev) {
+  return flash > 0 && flash > prev - STEP * 2 + 1e-9;
+}
+
+/**
+ * Counts distinct impacts. A car grinding along a prop or the back of a truck
+ * collides on every step, which is one event to a player, not sixty a second,
+ * so a hit only counts after a clear stretch.
+ */
+function impactCounter(gap = 0.5) {
+  let prev = 0;
+  let clear = gap; // seconds since the last contact
+  let count = 0;
+  return (world) => {
+    const hit = tookHit(world.crashFlash, prev);
+    prev = world.crashFlash;
+    if (!hit) {
+      clear += STEP;
+    } else {
+      if (clear >= gap) count++;
+      clear = 0;
+    }
+    return count;
+  };
+}
+
 /** Undo `noPolice`, leaving the pursuit's own timers untouched. */
 function withPolice(w) {
   delete w.police.update;
@@ -101,6 +133,23 @@ function dodging(w, reaction = 0.6) {
 /** Throttle only as far as `frac` of top speed, holding the centre line. */
 const holdSpeed = (w, frac) => press({ up: w.speed < w.maxSpeed * frac, ...centering(w) });
 
+/**
+ * Throttle for a driver who knows the track: ease off for a bend ahead that the
+ * current pace cannot hold. Without this the race bot floors it through the one
+ * hard bend, goes off, and now hits the scenery - which measures the bot's
+ * mistake rather than the rival ladder.
+ */
+function racingThrottle(w, lookahead = 90) {
+  const base = w.position + w.playerZ;
+  let sharpest = 0;
+  for (let i = 0; i < lookahead; i++) {
+    sharpest = Math.max(sharpest, Math.abs(w.road.findSegment(base + i * SEGMENT_LENGTH).curve));
+  }
+  // on a straight, stay on the throttle so nitrous can push past the normal cap
+  const cap = sharpest >= 5 ? 0.82 : K.NITRO_SPEED_MULT;
+  return w.speed < w.maxSpeed * cap;
+}
+
 const POLICY = {
   /** Everything a good player does: flat out, on the line, boosting when charged. */
   expert: (w) => press({ up: true, nitro: true, ...centering(w) }),
@@ -110,6 +159,17 @@ const POLICY = {
   flatout: () => press({ up: true }),
   /** Flat out with nitrous, swerving around traffic. */
   dodger: (w) => press({ up: true, nitro: true, ...dodging(w) }),
+  /**
+   * Race pace: on the line, lifting for the bends that need it, and boosting
+   * only while on the throttle - nitrous drains whether or not you are
+   * accelerating, so holding it through a lift is charge thrown away.
+   */
+  racer: (w) => {
+    const up = racingThrottle(w);
+    return press({ up, nitro: up, ...centering(w) });
+  },
+  /** The same, with the boost left alone. */
+  racerNoNitro: (w) => press({ up: racingThrottle(w), ...centering(w) }),
 };
 
 /** Step `world` for `seconds`, choosing the held input each step via `control`. */
@@ -321,6 +381,31 @@ function measureCornering() {
   row('speed left after 6 s of that', pct(slowest / w.maxSpeed), kmh(slowest, w.maxSpeed), 'curve_speed_kept', slowest / w.maxSpeed);
 }
 
+function measureScenery() {
+  section('ROADSIDE SCENERY');
+
+  // Run off the road onto the line the props stand on and see how long it lasts.
+  const w = atSpeed(1);
+  const count = impactCounter();
+  let first = null;
+  let t = 0;
+  while (t < 20 && first === null) {
+    w.step(STEP, w.playerX > -1.55 ? press({ up: true, left: true }) : press({ up: true }));
+    t += STEP;
+    if (count(w) > 0) first = t;
+  }
+  row('leaving the road to first impact', secs(first), `a prop every ${K.PROP_SPACING} segments, sides alternating`, 'scenery_first_hit_s', first);
+
+  // Then drive back out of it. If this never completes, a car can wedge against
+  // a prop and the deflection on impact is not doing its job.
+  let back = 0;
+  while (back < 20 && !(Math.abs(w.playerX) < 1 && w.speed > w.maxSpeed * 0.5)) {
+    w.step(STEP, POLICY.expert(w));
+    back += STEP;
+  }
+  row('impact to back on the road at pace', back >= 20 ? 'never (wedged)' : secs(back), '', 'scenery_recover_s', back >= 20 ? null : back);
+}
+
 function measureNitro() {
   section('NITROUS');
   const w = atSpeed(1);
@@ -398,7 +483,7 @@ function measurePursuit() {
 }
 
 function measureRaces() {
-  section('BLACKLIST RACES (flat out with nitrous, clear road, countdown excluded)');
+  section('BLACKLIST RACES (race pace with nitrous, clear road, countdown excluded)');
   /** Race rival `i` under `policy`, skipping the 3-2-1 from the clock. */
   function race(i, policy) {
     const rival = BLACKLIST[i];
@@ -422,7 +507,7 @@ function measureRaces() {
     };
   }
 
-  const boosted = BLACKLIST.map((_, i) => race(i, POLICY.expert));
+  const boosted = BLACKLIST.map((_, i) => race(i, POLICY.racer));
   for (const r of boosted) {
     row(
       `#${r.rival.rank} ${r.rival.name}`,
@@ -442,7 +527,7 @@ function measureRaces() {
 
   // The same fifteen races without touching nitrous, to separate "the boost is
   // strong" from "the rivals are slow".
-  const noBoost = BLACKLIST.map((_, i) => race(i, POLICY.clean));
+  const noBoost = BLACKLIST.map((_, i) => race(i, POLICY.racerNoNitro));
   const noBoostWins = noBoost.filter((r) => r.won).length;
   row('average with no nitrous', secs(mean(noBoost.map((r) => r.t))), `${noBoostWins}/${BLACKLIST.length} won`, 'race_avg_no_nitro_s', mean(noBoost.map((r) => r.t)));
   metrics.race_wins_no_nitro = noBoostWins;
@@ -463,15 +548,12 @@ function measureTraffic() {
   function minute(traffic, control) {
     seedRandom();
     const w = noPolice(new World({ traffic }));
+    const count = impactCounter();
     let crashes = 0;
-    let last = 0;
     let sum = 0;
     let n = 0;
     run(w, 60, (w) => {
-      // crashFlash is set to 1 on impact and decays every step, so a rise in it
-      // is one crash. It is already below 1 by the time we can observe it.
-      if (w.crashFlash > last) crashes++;
-      last = w.crashFlash;
+      crashes = count(w);
       sum += w.speed;
       n++;
       return control(w);
@@ -497,6 +579,7 @@ function measureTraffic() {
 measureAcceleration();
 measureSteering();
 measureCornering();
+measureScenery();
 measureNitro();
 measurePursuit();
 measureRaces();

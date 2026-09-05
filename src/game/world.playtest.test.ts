@@ -62,6 +62,38 @@ describe('playtest: driving', () => {
     expect(w.speed).toBeLessThan(onRoad); // ...and slower for it
   });
 
+  it('stops the car dead against roadside scenery', () => {
+    const w = new World({ traffic: false });
+    play(w, 6, () => press({ up: true }));
+
+    // hold the car out on the left verge, where the props stand
+    let sawCrash = false;
+    let stopped = false;
+    play(w, 10, () => {
+      if (w.crashFlash > 0) sawCrash = true;
+      if (sawCrash && w.speed === 0) stopped = true;
+      if (w.playerX > -1.5) return press({ up: true, left: true });
+      if (w.playerX < -1.6) return press({ up: true, right: true });
+      return press({ up: true });
+    });
+
+    expect(sawCrash).toBe(true);
+    expect(stopped).toBe(true);
+  });
+
+  it('leaves you alone while you stay on the road', () => {
+    const w = new World({ traffic: false });
+    let sawCrash = false;
+    play(w, 12, () => {
+      if (w.crashFlash > 0) sawCrash = true;
+      // flat out down the middle: the props are all off the tarmac
+      if (w.playerX > 0.05) return press({ up: true, left: true });
+      if (w.playerX < -0.05) return press({ up: true, right: true });
+      return press({ up: true });
+    });
+    expect(sawCrash).toBe(false);
+  });
+
   it('crashing into a parked car in your lane costs speed', () => {
     const w = new World({ traffic: false });
     // drop a parked car dead-centre, a dozen segments ahead

@@ -110,3 +110,8 @@ export const RIVAL_NEAR_LEAD = 420; // minimum render lead, so the rival is off 
 export const PROP_SPACING = 9; // a roadside prop every N segments
 export const PROP_WORLD = 1150; // base prop size in world units
 export const PROP_OFFSET = 1.55; // lateral offset; >1 places it beyond the road edge
+/** Collision width of a prop in world units: narrower than it is drawn, so grazing the foliage is free. */
+export const PROP_HIT_WIDTH = 700;
+export const PROP_HIT_OFFSET = PROP_HIT_WIDTH / ROAD_WIDTH;
+/** Sideways nudge back toward the road on impact, so a car cannot wedge against a prop. */
+export const PROP_DEFLECT = 0.12;
