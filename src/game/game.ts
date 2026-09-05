@@ -1,6 +1,7 @@
 import type { Segment } from './types';
 import { Input } from './input';
 import { World, type InputState } from './world';
+import { GameAudio } from './audio';
 import { project, renderSegment, renderFog, renderCarSprite, renderCopSprite } from './render';
 import {
   WIDTH,
@@ -31,6 +32,7 @@ const DISPLAY_MAX_KMH = 320;
 export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly input = new Input();
+  private readonly audio = new GameAudio();
   private world = new World();
 
   private phase: 'title' | 'playing' | 'paused' = 'title';
@@ -38,6 +40,7 @@ export class Game {
   private accumulator = 0;
   private prevConfirm = false;
   private prevPause = false;
+  private prevMute = false;
   // suppress a held ENTER (used to start/resume) so it doesn't also start a race
   private suppressConfirm = false;
 
@@ -60,6 +63,12 @@ export class Game {
     this.prevConfirm = this.input.confirm;
     const pauseEdge = this.input.pause && !this.prevPause;
     this.prevPause = this.input.pause;
+    const muteEdge = this.input.mute && !this.prevMute;
+    this.prevMute = this.input.mute;
+
+    // any key gesture is enough to start the audio context
+    if (confirmEdge || pauseEdge || muteEdge) this.audio.start();
+    if (muteEdge) this.audio.toggleMute();
 
     if (this.phase === 'title') {
       if (confirmEdge) this.enterPlaying();
@@ -79,6 +88,14 @@ export class Game {
         }
       }
     }
+
+    const police = this.world.police;
+    this.audio.update({
+      playing: this.phase === 'playing',
+      speedFrac: Math.abs(this.world.speed) / this.world.maxSpeed,
+      boosting: this.world.boosting,
+      sirenLevel: police.pursuing ? Math.min(1, 0.4 + police.heat) : 0,
+    });
 
     this.render();
     requestAnimationFrame((t) => this.frame(t));
@@ -213,7 +230,7 @@ export class Game {
 
     ctx.fillStyle = '#9aa0aa';
     ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('WASD steer · SHIFT nitro · ENTER race · P pause', WIDTH / 2, HEIGHT - 40);
+    ctx.fillText('WASD steer · SHIFT nitro · ENTER race · P pause · M mute', WIDTH / 2, HEIGHT - 40);
     ctx.textAlign = 'left';
   }
 
@@ -414,6 +431,12 @@ export class Game {
     this.renderHeatMeter();
     this.renderStatusOverlays();
     this.renderRaceHud();
+
+    if (this.audio.muted) {
+      ctx.fillStyle = '#9aa0aa';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.fillText('MUTED (M)', 22, HEIGHT - 18);
+    }
   }
 
   /** Blacklist HUD: challenge prompt, countdown, race progress, or result. */

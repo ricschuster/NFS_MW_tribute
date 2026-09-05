@@ -50,8 +50,9 @@ src/
     police.ts        the pursuit: heat, bust, and escape
     blacklist.ts     the 15 rivals (name, car, difficulty)
     progress.ts      rank progression persisted to localStorage
+    audio.ts         synthesized engine / siren / pad (WebAudio)
     render.ts        world→screen projection and sprite drawing
-    input.ts         keyboard state (arrows + WASD + Enter)
+    input.ts         keyboard state (arrows + WASD + Enter + P/R/M)
     math.ts          easing, interpolation, fog, looping, overlap helpers
     constants.ts     tunable world/camera/physics constants
     types.ts         shared interfaces
@@ -72,7 +73,7 @@ Ordered roughly by build order — each item is a self-contained increment:
 - [x] **Heat + bust/escape** — heat meter, more/faster cops, getting busted, shaking pursuit
 - [x] **The Blacklist** — sprint races against 15 rivals, ranked progression (saved)
 - [x] **Nitrous + drift feel** — SHIFT boost with a meter, cornering slide, speed lines
-- [ ] **Sound** — engine, sirens, a menu track
+- [x] **Sound** — synthesized engine (pitches with speed), pursuit siren, title pad, M to mute
 - [ ] **Sprites over vector art** — replace drawn car/road with pixel art
 
 ## Docs
