@@ -196,6 +196,12 @@ before the pivot and both still live.
 
 ## Known problems, not papered over
 
+- **The city and the track have separate tuning now.** `CITY_HEAT_RISE`,
+  `CITY_COP_LOSE` and friends exist because the track's equivalents mean
+  different things - one is a trail distance along a road, the other a distance
+  between two points. Reusing them was the cause of three separate bugs. Check
+  which world a constant belongs to before reaching for it.
+
 - **#105: nitrous barely matters over a race.** It works on a straight (+15.9%
   over four seconds) but the track is corner-limited enough that a lap barely
   benefits, and boosting into a corner lift actively costs time. The obvious

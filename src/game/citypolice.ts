@@ -1,6 +1,4 @@
 import {
-  COP_MAX_SPEED_FRAC,
-  COP_HEAT_SPEED_FRAC,
   COP_FIRST_SPAWN,
   COP_RESPAWN,
   COP_BUST_COOLDOWN,
@@ -8,20 +6,26 @@ import {
   CITY_COP_LOSE,
   BUST_TIME,
   ESCAPE_TIME,
-  MAX_COPS,
-  HEAT_RISE,
-  HEAT_DECAY,
+  CITY_HEAT_RISE,
+  CITY_HEAT_DECAY,
   CITY_COP_SPAWN,
   CITY_BUST_DISTANCE,
   CITY_PURSUIT_RANGE,
   TRAFFIC_LANE,
+  HEAT_LEVELS,
+  HEAT_LEVEL_COUNT,
+  COP_UNITS,
+  type CopKind,
 } from './constants';
 import type { CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
 import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
 
-export interface Cop extends GraphCar {}
+export interface Cop extends GraphCar {
+  /** What kind of unit this is: decides its pace, and how it is drawn. */
+  kind: CopKind;
+}
 
 /** What the pursuit reacts to. */
 export interface Chased {
@@ -48,7 +52,7 @@ export interface Chased {
  */
 export class CityPolice {
   readonly cops: Cop[] = [];
-  /** 0..1. Rises while a cop is close, and scales how fast they are. */
+  /** 0..1. Rises while a cop is close, and drives the heat *level*. */
   heat = 0;
   busted = false;
   /** True on the step the last cop is shaken off. */
@@ -65,13 +69,30 @@ export class CityPolice {
     private readonly rng: Rng,
   ) {}
 
+  /**
+   * Which of the six levels the pursuit is at, 1 to 6.
+   *
+   * Derived from continuous heat rather than stored, so there is one number to
+   * get wrong instead of two that can disagree. Heat rises while they have you
+   * and falls while they do not, which means escalation happens *within* a
+   * pursuit - the longer they hold you the heavier what turns up.
+   */
+  get level(): number {
+    return Math.min(HEAT_LEVEL_COUNT, 1 + Math.floor(this.heat * HEAT_LEVEL_COUNT));
+  }
+
+  /** The units, speed and cop count this level brings. */
+  private get force() {
+    return HEAT_LEVELS[this.level - 1];
+  }
+
   update(dt: number, player: Chased, maxSpeed: number): void {
     this.justEscaped = false;
     if (this.busted) return;
 
-    const speed = maxSpeed * (COP_MAX_SPEED_FRAC + this.heat * COP_HEAT_SPEED_FRAC);
+    const speed = maxSpeed * this.force.speed;
     for (const cop of this.cops) {
-      cop.speed = speed;
+      cop.speed = speed * COP_UNITS[cop.kind].pace;
       advanceAlong(this.city, cop, dt, (c, node) => this.toward(c, node, player), TRAFFIC_LANE);
     }
 
@@ -96,15 +117,18 @@ export class CityPolice {
       // escape timer runs while you are alone, and the first cop to arrive -
       // which necessarily arrives from outside pursuit range - is declared
       // escaped on the step after it spawns.
-      this.heat = Math.max(0, this.heat - HEAT_DECAY * dt);
+      this.heat = Math.max(0, this.heat - CITY_HEAT_DECAY * dt);
       this.clear = 0;
-    } else if (nearest < CITY_PURSUIT_RANGE) {
-      this.heat = Math.min(1, this.heat + HEAT_RISE * dt);
-      this.clear = 0;
-    } else {
-      this.heat = Math.max(0, this.heat - HEAT_DECAY * dt);
-      this.clear += dt;
+      return;
     }
+
+    // Heat climbs while the pursuit is *running*, not only while a car is on
+    // your bumper. Cops chasing from a hundred metres back have not lost you,
+    // and an earlier version that only counted close contact left heat
+    // oscillating around zero through a pursuit that never ended.
+    const close = nearest < CITY_PURSUIT_RANGE;
+    this.heat = Math.min(1, this.heat + CITY_HEAT_RISE * dt * (close ? 1 : 0.5));
+    this.clear = close ? 0 : this.clear + dt;
 
     // Pinned: a cop on your bumper for long enough ends it.
     if (nearest < CITY_BUST_DISTANCE) {
@@ -130,7 +154,7 @@ export class CityPolice {
     this.cooldown -= dt;
     if (this.cooldown > 0) return;
 
-    const wanted = Math.min(MAX_COPS, 1 + Math.floor(this.heat * MAX_COPS));
+    const wanted = this.force.maxCops;
     this.sinceSpawn += dt;
     if (this.cops.length >= wanted || this.sinceSpawn < COP_SPAWN_INTERVAL) return;
 
@@ -189,7 +213,17 @@ export class CityPolice {
 
     // Point it at the player from the start, rather than letting it drive away
     // and turn round at the next junction.
-    const cop: Cop = { road, t: nearest, forward: true, speed: 0, x: 0, z: 0, y: 0, heading: 0 };
+    const cop: Cop = {
+      road,
+      t: nearest,
+      forward: true,
+      speed: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      kind: this.rng.pick(this.force.units),
+    };
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
     const facing = directionOf(this.city, cop);
     const toPlayer = { x: player.x - cop.x, z: player.z - cop.z };

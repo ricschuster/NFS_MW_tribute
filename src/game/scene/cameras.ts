@@ -99,6 +99,7 @@ export class CameraDirector {
     if (this.mode === 'lookBack' && this.lookBack <= 0) this.mode = 'chase';
 
     const want = this.shotFor(world);
+    want.position.copy(this.unblock(want.position, want.target, world));
 
     // A crash cuts; everything else eases. Blending into a crash camera would
     // show the camera travelling to the spot, which is the opposite of a cut.
@@ -119,6 +120,35 @@ export class CameraDirector {
     }
 
     return { position: this.position, target: this.target, fov: this.fov };
+  }
+
+  /**
+   * Pull the camera out of anything solid, toward the car.
+   *
+   * A camera that only knows where it wants to be will happily want to be
+   * inside a wall - which is not a rare case but the common one, since the
+   * moments the camera leaves the car are crashes, and a crash is usually
+   * against something. Walking back toward the car finds the nearest clear
+   * spot along the line the shot was framed on, so the framing survives.
+   */
+  private unblock(want: THREE.Vector3, car: THREE.Vector3, world: CityWorld): THREE.Vector3 {
+    if (!world.grid) return want; // a stand-in world in a test has no city
+    for (let t = 0; t <= 1.0001; t += 0.125) {
+      const at = want.clone().lerp(car, t);
+      if (!this.solidAt(at, world)) return at;
+    }
+    // Every point along the line is inside something: sit above the car, which
+    // is the one place that is reliably clear.
+    return car.clone().setY(car.y + 8 * M);
+  }
+
+  private solidAt(at: THREE.Vector3, world: CityWorld): boolean {
+    for (const building of world.grid.buildingsNear(at.x, at.z)) {
+      const f = building.footprint;
+      if (at.x < f.minX || at.x > f.maxX || at.z < f.minZ || at.z > f.maxZ) continue;
+      if (at.y < building.height) return true;
+    }
+    return false;
   }
 
   /** Where this mode wants the camera, before any smoothing. */

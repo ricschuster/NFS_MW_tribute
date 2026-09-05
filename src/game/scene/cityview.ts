@@ -7,7 +7,7 @@ import type { Hud } from './hud';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import type { CityWorld } from '../cityworld';
-import { STEP } from '../constants';
+import { STEP, COP_UNITS } from '../constants';
 import type { InputState } from '../world';
 
 const M = UNITS_PER_METRE;
@@ -373,7 +373,8 @@ export class CityView {
 
     this.copCars.begin();
     for (const cop of world.police.cops) {
-      this.copCars.place(cop.x, cop.y, cop.z, '#15171d').rotation.y = cop.heading;
+      const unit = COP_UNITS[cop.kind];
+      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
     }
     this.siren += dt;
     this.copCars.flashLightbars(this.siren);

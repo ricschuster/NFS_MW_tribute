@@ -94,6 +94,31 @@ describe('the camera director', () => {
 
   // Reduced motion is a preference, not a lesser mode: it gets the plain chase
   // camera, which is exactly what the projected renderer always had.
+  // A camera that only knows where it wants to be will want to be inside a
+  // wall, and the moments it leaves the car are crashes - which happen against
+  // things.
+  it('will not sit inside a building', () => {
+    const building = {
+      footprint: { minX: -1000, maxX: 1000, minZ: -1000, maxZ: 1000 },
+      height: 5000,
+    };
+    const world = fakeWorld({
+      grid: { buildingsNear: () => [building] },
+    } as unknown as Partial<CityWorld>);
+
+    const director = new CameraDirector(true);
+    for (let i = 0; i < 120; i++) director.update(1 / 60, world);
+    const shot = director.update(1 / 60, world);
+
+    const inside =
+      shot.position.x > -1000 &&
+      shot.position.x < 1000 &&
+      shot.position.z > -1000 &&
+      shot.position.z < 1000 &&
+      shot.position.y < 5000;
+    expect(inside).toBe(false);
+  });
+
   it('holds still for anyone who asked it to', () => {
     const director = new CameraDirector(true);
     expect(director.mode).toBe('chase');
