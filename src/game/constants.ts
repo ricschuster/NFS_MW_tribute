@@ -418,3 +418,7 @@ export const LOOK_BACK_HOLD = 0.9;
 /** Impact shake: how hard, and how fast it dies away. */
 export const SHAKE_STRENGTH = 0.5;
 export const SHAKE_DECAY = 2.2;
+
+/** The minimap (#89): how far it reaches, and how big it is drawn. */
+export const MINIMAP_RANGE = m(280);
+export const MINIMAP_SIZE = 190;

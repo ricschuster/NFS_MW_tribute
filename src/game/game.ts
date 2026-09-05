@@ -27,8 +27,8 @@ import { interpolate, percentRemaining, exponentialFog } from './math';
 import { propAt } from './scenery';
 import type { Scene3D } from './scene/scene3d';
 
-/** Top display speed, in km/h, used purely for the HUD readout. */
-const DISPLAY_MAX_KMH = 320;
+// Shared with the city HUD, so the two readouts cannot drift apart.
+import { DISPLAY_MAX_KMH } from './hudscale';
 
 /** Cheap stable integer hash, for deterministic (non-flickering) scenery. */
 function hash32(n: number): number {
