@@ -422,3 +422,76 @@ export const SHAKE_DECAY = 2.2;
 /** The minimap (#89): how far it reaches, and how big it is drawn. */
 export const MINIMAP_RANGE = m(280);
 export const MINIMAP_SIZE = 190;
+
+/**
+ * The six heat levels (#58), and what each one sends after you.
+ *
+ * Escalation happens *within* a pursuit rather than being gated behind career
+ * progress: the longer they have you, the heavier what arrives. That is the
+ * framework the rest of the pursuit work hangs off - roadblocks, spike strips
+ * and the helicopter all key off a level rather than off a raw heat number.
+ *
+ * `speed` is a fraction of the player's top speed and stays under 1 at every
+ * level, level six included. That is not a detail: a pursuit you cannot
+ * outrun on speed alone is a pursuit with no answer, and `npm run feel` exists
+ * partly to keep checking it.
+ */
+export type CopKind = 'cruiser' | 'unmarked' | 'state' | 'suv' | 'federal' | 'elite';
+
+export interface CopUnit {
+  /** Body colour, so the threat can be read at a glance. */
+  colour: string;
+  /** Size against an ordinary car. Heavier units are visibly bigger. */
+  scale: number;
+  /** Multiplies the level's speed. */
+  pace: number;
+}
+
+export const COP_UNITS: Record<CopKind, CopUnit> = {
+  cruiser: { colour: '#1b2740', scale: 1, pace: 1 },
+  unmarked: { colour: '#2a2a2f', scale: 1, pace: 1.04 },
+  state: { colour: '#14304a', scale: 1.05, pace: 1.06 },
+  suv: { colour: '#23282e', scale: 1.22, pace: 0.98 },
+  federal: { colour: '#101820', scale: 1.08, pace: 1.09 },
+  elite: { colour: '#2b0f14', scale: 1.16, pace: 1.11 },
+};
+
+export interface HeatLevel {
+  /** What can turn up at this level. */
+  units: CopKind[];
+  /** How many can be out at once. */
+  maxCops: number;
+  /** Base speed as a fraction of the player's top speed. Always under 1. */
+  speed: number;
+}
+
+/**
+ * Note the speeds: they are the level's base, and a unit's `pace` multiplies
+ * it. The product has to stay under 1 for *every* unit the level can send, not
+ * just the average one - the first version of this table looked fine per level
+ * and put elite units at 105% of the player's top speed, which is a pursuit
+ * with no answer.
+ */
+export const HEAT_LEVELS: HeatLevel[] = [
+  { units: ['cruiser'], maxCops: 2, speed: 0.84 },
+  { units: ['cruiser', 'unmarked'], maxCops: 3, speed: 0.85 },
+  { units: ['unmarked', 'state'], maxCops: 4, speed: 0.86 },
+  { units: ['state', 'suv'], maxCops: 4, speed: 0.87 },
+  { units: ['state', 'suv', 'federal'], maxCops: 5, speed: 0.875 },
+  { units: ['federal', 'elite', 'suv'], maxCops: 6, speed: 0.88 },
+];
+
+/** How many heat levels there are. Six, as the genre has had for twenty years. */
+export const HEAT_LEVEL_COUNT = HEAT_LEVELS.length;
+
+/**
+ * How fast heat builds and cools in the city.
+ *
+ * Its own constants rather than the track's, which fill the bar in ten seconds
+ * of contact. That is right for a single-track pursuit that is over in a
+ * minute and wrong for six levels: escalation has to be something you feel
+ * happening to you, not a number that saturates before you have found a corner
+ * to lose them on. About a minute and a half of being held to reach level six.
+ */
+export const CITY_HEAT_RISE = 0.012;
+export const CITY_HEAT_DECAY = 0.045;

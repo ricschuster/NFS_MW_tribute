@@ -1,4 +1,4 @@
-import { WIDTH, HEIGHT, MINIMAP_RANGE, MINIMAP_SIZE } from '../constants';
+import { WIDTH, HEIGHT, MINIMAP_RANGE, MINIMAP_SIZE, HEAT_LEVEL_COUNT } from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import type { CityWorld } from '../cityworld';
 
@@ -76,10 +76,24 @@ export class Hud {
     ctx.font = '600 13px system-ui, sans-serif';
     ctx.fillText('HEAT', x, y - 8);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
-    ctx.fillRect(x, y, 176, 9);
-    ctx.fillStyle = heat > 0.66 ? '#ff5a45' : heat > 0.33 ? '#ffa23a' : '#ffd166';
-    ctx.fillRect(x, y, 176 * heat, 9);
+    // Six pips rather than one bar: the level is what decides what turns up
+    // next, so it is the number worth being able to read at a glance.
+    const level = world.police.level;
+    const pip = 176 / HEAT_LEVEL_COUNT;
+    for (let i = 0; i < HEAT_LEVEL_COUNT; i++) {
+      const lit = i < level;
+      ctx.fillStyle = !lit
+        ? 'rgba(255, 255, 255, 0.16)'
+        : level >= 5
+          ? '#ff5a45'
+          : level >= 3
+            ? '#ffa23a'
+            : '#ffd166';
+      ctx.fillRect(x + i * pip, y, pip - 4, 9);
+    }
+    // A sliver of the bar showing progress toward the next level.
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillRect(x, y + 11, 176 * heat, 2);
   }
 
   /**

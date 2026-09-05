@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { CityWorld } from './cityworld';
-import { STEP, CAR_RADIUS, TRAFFIC_RADIUS, CITY_PURSUIT_RANGE, MAX_COPS } from './constants';
+import {
+  STEP,
+  CAR_RADIUS,
+  TRAFFIC_RADIUS,
+  CITY_PURSUIT_RANGE,
+  HEAT_LEVELS,
+  HEAT_LEVEL_COUNT,
+  COP_UNITS,
+} from './constants';
 import type { InputState } from './world';
 
 const NONE: InputState = {
@@ -330,7 +338,9 @@ describe('the police', () => {
     // Either it has you now or it had you and the state has cycled; what must
     // not happen is a pursuit that can never end either way.
     expect(world.police.heat).toBeGreaterThanOrEqual(0);
-    expect(world.police.cops.length).toBeLessThanOrEqual(MAX_COPS);
+    expect(world.police.cops.length).toBeLessThanOrEqual(
+      HEAT_LEVELS[HEAT_LEVEL_COUNT - 1].maxCops,
+    );
   });
 
   it('is deterministic', () => {
@@ -338,5 +348,59 @@ describe('the police', () => {
     const b = chase(20);
     expect(a.police.cops.length).toBe(b.police.cops.length);
     expect(a.police.heat).toBeCloseTo(b.police.heat, 6);
+  });
+});
+
+
+// Six levels, and what each sends after you (#58).
+describe('heat levels', () => {
+  it('starts at level one and climbs no higher than six', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    expect(world.police.level).toBe(1);
+    world.police.heat = 1;
+    expect(world.police.level).toBe(HEAT_LEVEL_COUNT);
+  });
+
+  it('covers the whole range without a gap or an overshoot', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const seen = new Set<number>();
+    for (let heat = 0; heat <= 1.0001; heat += 0.01) {
+      world.police.heat = Math.min(1, heat);
+      const level = world.police.level;
+      expect(level).toBeGreaterThanOrEqual(1);
+      expect(level).toBeLessThanOrEqual(HEAT_LEVEL_COUNT);
+      seen.add(level);
+    }
+    expect(seen.size).toBe(HEAT_LEVEL_COUNT);
+  });
+
+  // A pursuit that cannot be outrun on speed alone is a pursuit with no
+  // answer. This has to hold at level six as much as at level one.
+  it('never sends a car faster than yours', () => {
+    for (const level of HEAT_LEVELS) {
+      expect(level.speed).toBeLessThan(1);
+      for (const kind of level.units) {
+        const unit = COP_UNITS[kind];
+        expect(level.speed * unit.pace).toBeLessThan(1);
+      }
+    }
+  });
+
+  it('sends heavier units as the level rises', () => {
+    const early = new Set(HEAT_LEVELS[0].units);
+    const late = new Set(HEAT_LEVELS[HEAT_LEVEL_COUNT - 1].units);
+    expect(early.has('cruiser')).toBe(true);
+    expect(late.has('cruiser')).toBe(false);
+    expect(HEAT_LEVELS[HEAT_LEVEL_COUNT - 1].maxCops).toBeGreaterThan(HEAT_LEVELS[0].maxCops);
+  });
+
+  it('only spawns units its level actually has', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    for (let t = 0; t < 90; t += STEP) {
+      world.step(STEP, press({ up: true, right: Math.floor(t / 5) % 2 === 0 }));
+      for (const cop of world.police.cops) {
+        expect(HEAT_LEVELS.some((l) => l.units.includes(cop.kind))).toBe(true);
+      }
+    }
   });
 });
