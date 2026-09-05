@@ -13,6 +13,8 @@ import {
   TUNNEL_DEPTH,
   TUNNEL_LENGTH,
   GRADE_RUN,
+  FREEWAY_SPURS,
+  FREEWAY_SPUR_MIN,
 } from '../constants';
 import type { Rng } from './rng';
 import type { Axis, CityNode, CityRoad, Rect } from './types';
@@ -72,6 +74,10 @@ export function addInterstate(
   let travelled = 0;
   let previous: CityNode | null = null;
   let first: CityNode | null = null;
+  // Every node the loop is made of, so a spur can leave from one of them
+  // rather than from a new node that merely shares its position - which is a
+  // spur floating unattached above the city.
+  const built: { node: CityNode; side: Side }[] = [];
 
   for (const side of sides) {
     const ramps = rampsFor(rng, side, surface);
@@ -84,6 +90,7 @@ export function addInterstate(
       if (previous) link(roads, nodes, previous, node, 'interstate');
       else first = node;
       previous = node;
+      built.push({ node, side });
 
       // A ramp only makes sense where the deck is actually above the street.
       if (station.ramp && node.y > 0) {
@@ -96,6 +103,78 @@ export function addInterstate(
 
   // Close the circuit.
   if (previous && first) link(roads, nodes, previous, first, 'interstate');
+
+  addSpurs(rng, bounds, built, nodes, roads);
+}
+
+/**
+ * Freeway spurs off the loop.
+ *
+ * A circuit on its own means every long fast line in the city is the same
+ * line, and that you can only ever go round. Spurs give the network ends as
+ * well as a middle: somewhere to be chased towards, and a reason to pick a
+ * direction when you join.
+ *
+ * A spur leaves a side of the loop at right angles and runs to the map edge,
+ * elevated the whole way, which keeps it clear of the streets it crosses for
+ * the same reason the loop is.
+ */
+function addSpurs(
+  rng: Rng,
+  bounds: Rect,
+  stations: { node: CityNode; side: Side }[],
+  nodes: CityNode[],
+  roads: CityRoad[],
+): void {
+  const middleX = (bounds.minX + bounds.maxX) / 2;
+  const middleZ = (bounds.minZ + bounds.maxZ) / 2;
+
+  // Only stations up on the deck, and only ones with room to run to an edge.
+  const candidates = stations.filter(({ node, side }) => {
+    if (node.y <= 0) return false; // leaving from inside the tunnel is not a junction
+    const run =
+      side.axis === 'x'
+        ? Math.abs((side.at > middleZ ? bounds.maxZ : bounds.minZ) - node.pos.z)
+        : Math.abs((side.at > middleX ? bounds.maxX : bounds.minX) - node.pos.x);
+    return run >= FREEWAY_SPUR_MIN;
+  });
+
+  const chosen: CityNode[] = [];
+  for (let attempt = 0; attempt < 60 && chosen.length < FREEWAY_SPURS; attempt++) {
+    const pick = candidates[rng.int(candidates.length)];
+    if (!pick) break;
+    // Keep them apart, or three spurs leave from the same corner.
+    const crowded = chosen.some(
+      (other) => Math.hypot(other.pos.x - pick.node.pos.x, other.pos.z - pick.node.pos.z) < FREEWAY_SPUR_MIN,
+    );
+    if (crowded) continue;
+
+    const { node, side } = pick;
+    const outward =
+      side.axis === 'x'
+        ? { x: 0, z: side.at > middleZ ? 1 : -1 }
+        : { x: side.at > middleX ? 1 : -1, z: 0 };
+    const run =
+      outward.x !== 0
+        ? Math.abs((outward.x > 0 ? bounds.maxX : bounds.minX) - node.pos.x)
+        : Math.abs((outward.z > 0 ? bounds.maxZ : bounds.minZ) - node.pos.z);
+
+    // Elevated the whole way out, for the same reason the loop is: it crosses
+    // every street on the way and joins none of them.
+    const steps = Math.max(2, Math.round(run / INTERSTATE_SEGMENT));
+    let previous = node;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const next = make(
+        nodes,
+        { x: node.pos.x + outward.x * run * t, z: node.pos.z + outward.z * run * t },
+        node.y,
+      );
+      link(roads, nodes, previous, next, 'interstate');
+      previous = next;
+    }
+    chosen.push(node);
+  }
 }
 
 interface Side {
