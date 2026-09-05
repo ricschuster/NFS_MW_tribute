@@ -11,9 +11,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "playtest": "vitest run src/game/world.playtest.test.ts"
+    "playtest": "vitest run src/game/world.playtest.test.ts",
+    "shot": "node tools/screenshot.mjs"
   },
   "devDependencies": {
+    "playwright": "^1.63.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vitest": "^5.0.0"

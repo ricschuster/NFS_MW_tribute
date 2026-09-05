@@ -21,6 +21,20 @@ dependency-light TypeScript + Canvas project; the goal is to keep it that way.
 - No new runtime dependencies without an ADR explaining why.
 - No em dashes in prose or comments; use a hyphen or reword.
 
+## Visual checks
+
+Rendering can't be unit-tested, but you can eyeball it headlessly:
+
+```bash
+npx playwright install chromium   # one-time, ~180 MB browser
+npm run dev                        # serve the game
+npm run shot                       # writes screenshots/*.png of a few game states
+```
+
+`tools/screenshot.mjs` drives the game with scripted keys and screenshots the
+canvas at the title, driving, pursuit, countdown, and race states. Set
+`SHOT_URL` if your dev server isn't on the default port.
+
 ## Reporting bugs / ideas
 
 Use the issue templates (Feature or Bug). For gameplay tasks, a short
