@@ -8,13 +8,40 @@ heat levels. Built with TypeScript + Vite, deploys anywhere as static files.
 Original work. It takes its cues from the open-world street-racing genre, but
 the city, the cars, the rivals and every asset in it are its own.
 
-**▶ Play: https://ricschuster.github.io/NFS_MW_tribute/**
+> **Status: mid-rebuild.** What is deployed today is *two* things at once - the
+> finished single-track racer, and the generated city that is replacing it.
+> Both are live, at different URLs. See
+> [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md).
 
-> **Status: mid-rebuild.** What is deployed today is a pseudo-3D racer on a
-> single closed track — drive, dodge traffic, outrun the cops, climb a rival
-> ladder. That was the single-track starting point, and the renderer is now
-> being rebuilt as a real 3D WebGL city so Kestrel Bay can be driven freely.
-> See [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md).
+## Where to go
+
+Everything runs from the one deployment; the query string picks what you get.
+
+| | |
+| --- | --- |
+| **[▶ Play the game](https://ricschuster.github.io/NFS_MW_tribute/)** | The finished pseudo-3D racer: one closed track, traffic, police, a rival ladder. This is the game. |
+| **[▶ Drive in Kestrel Bay](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)** | A car in the generated city. Free roam, no traffic or police yet - those come across in #87. |
+| **[▶ Fly over the city](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)** | A free camera over Kestrel Bay, for looking at the map rather than driving it. |
+| [The 3D renderer on the old track](https://ricschuster.github.io/NFS_MW_tribute/?renderer=3d) | The same game as the first link, drawn with three.js instead of Canvas. Kept side by side while the renderer is swapped. |
+
+**Driving** (`?renderer=drive`): WASD or arrows to drive, **shift** for
+nitrous. The camera chases the car.
+
+**Flying** (`?renderer=city`): WASD or arrows to move, **Q**/**E** down and up,
+**drag** the mouse to look, **hold ctrl** for four times the speed. Speed
+scales with altitude, so climb to cross the map quickly.
+
+Add `&view=` to the flying URL to start at a fixed viewpoint. They exist so
+screenshots are comparable between runs, and they are the quickest tour of the
+city:
+
+| `&view=` | What it shows |
+| --- | --- |
+| `overpass` | The interstate crossing over a street on its pillars. This is the thing the old renderer could not draw at all, and the reason for the rebuild. |
+| `aerial` | The whole 5 x 4 km island: districts, the river, the bay, the freeway loop. |
+| `downtown` | The towers, with the water behind them. |
+| `street` | Street level, looking down a downtown block to the bay. |
+| `bridge` | One of the three river crossings. |
 
 ## Quick start
 

@@ -5,6 +5,9 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`
 - **Play (live):** https://ricschuster.github.io/NFS_MW_tribute/
+- **Drive the city:** [`?renderer=drive`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)
+  · **Fly over it:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
+  · see the README for the controls and the other viewpoints
 - **Status:** mid-rebuild, and deliberately so. Read ADR-0004, then ADR-0005.
 
 ## What this is

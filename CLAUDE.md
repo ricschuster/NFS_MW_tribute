@@ -110,8 +110,10 @@ feel work in #14 and #46 still applies - only the frame it resolves into moved,
 from along/across-track to x/z. Traffic, police and races come across in #87,
 and `world.ts` retires when they have.
 
-`?renderer=city` flies a camera around the city; `?renderer=drive` puts a car
-in it. `&view=overpass` is the shot that shows why any of this was worth doing.
+`?renderer=city` flies a camera around the city and `?renderer=drive` puts a
+car in it; `&view=aerial|downtown|bridge|street|overpass` picks a fixed
+viewpoint. The README lists them with controls - keep it current, since it is
+the only place a person is told these URLs exist.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it
