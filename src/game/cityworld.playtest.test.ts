@@ -52,6 +52,27 @@ describe('a car in Kestrel Bay', () => {
     expect(Math.abs(world.heading - facing)).toBeGreaterThan(Math.PI);
   });
 
+  // Getting this backwards is not subtle to play and was invisible to every
+  // other test, all of which only cared that the car turned *somewhere*.
+  it('steers right to the driver\'s right', () => {
+    const world = new CityWorld();
+    world.heading = 0; // facing +z
+    // Turned on the spot, so the answer is about steering and not about which
+    // building the car found first.
+    drive(world, 0.5, press({ right: true }));
+
+    // Facing +z with y up, the driver's right is -x: forward crossed with up.
+    // So a right turn has to send the car's nose toward -x.
+    expect(Math.sin(world.heading)).toBeLessThan(0);
+  });
+
+  it('steers left to the driver\'s left', () => {
+    const world = new CityWorld();
+    world.heading = 0;
+    drive(world, 0.5, press({ left: true }));
+    expect(Math.sin(world.heading)).toBeGreaterThan(0);
+  });
+
   it('reverses back the way it came', () => {
     const world = new CityWorld();
     drive(world, 1.5, press({ up: true }));
