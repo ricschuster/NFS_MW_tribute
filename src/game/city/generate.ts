@@ -20,6 +20,8 @@ import {
   BOULEVARD_SPEED,
   DENSITY_RANGE,
   OPEN_BLOCK_CHANCE,
+  WINDING_BOW,
+  WINDING_STEP,
   DISTRICTS,
 } from '../constants';
 import { Rng } from './rng';
@@ -102,6 +104,10 @@ export function generateCity(seed: number): City {
     bounds: c,
     district: districts[i],
     density: 1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE),
+    // Whether the streets here bend. Decided per quarter for the same reason
+    // density is: a city where every street bends a little is a wobbly grid,
+    // where a winding quarter beside a gridded one is two neighbourhoods.
+    winding: rng.chance(DISTRICTS[districts[i]].winding),
   }));
 
   const laid: Span[] = [];
@@ -479,24 +485,21 @@ function fillSuperblock(
   const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX, character.jitter).filter(keep);
   const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ, character.jitter).filter(keep);
 
+  // Collected separately so the blocks below can be trimmed off them. In a
+  // winding quarter the streets no longer sit on the lines the blocks were
+  // measured from, so without this a building ends up in the road.
+  const local: Span[] = [];
   for (const x of xCuts) {
-    spans.push({
-      from: { x, z: bounds.minZ },
-      to: { x, z: bounds.maxZ },
-      axis: 'z',
-      class: 'street',
-      district,
-    });
+    lay(local, { x, z: bounds.minZ }, { x, z: bounds.maxZ }, cell, character.blockX, rng, district);
   }
   for (const z of zCuts) {
-    spans.push({
-      from: { x: bounds.minX, z },
-      to: { x: bounds.maxX, z },
-      axis: 'x',
-      class: 'street',
-      district,
-    });
+    lay(local, { x: bounds.minX, z }, { x: bounds.maxX, z }, cell, character.blockZ, rng, district);
   }
+  spans.push(...local);
+
+  const clearsStreets = (r: Rect) =>
+    !cell.winding ||
+    !local.some((street) => segmentToRect(street.from, street.to, r) < streetHalf);
 
   const xEdges = [inner.minX, ...xCuts, inner.maxX];
   const zEdges = [inner.minZ, ...zCuts, inner.maxZ];
@@ -508,7 +511,7 @@ function fillSuperblock(
         minZ: zEdges[j] + (j === 0 ? 0 : streetHalf),
         maxZ: zEdges[j + 1] - (j + 2 === zEdges.length ? 0 : streetHalf),
       };
-      const fitted = pullClear(block, (r) => anyWater(r, water));
+      const fitted = pullClear(block, (r) => anyWater(r, water) || !clearsStreets(r));
       if (!fitted) continue;
       // Some of a city is gaps: a park, a yard, a car park, a lot nobody built on.
       const open = rng.chance(Math.min(0.5, OPEN_BLOCK_CHANCE / Math.max(0.35, cell.density)));
@@ -560,7 +563,12 @@ function clip(span: Span, water: Water, dry: Span[], gaps: Gap[]): void {
   }
   if (start !== null) runs.push({ from: start, to: 1 });
 
-  const kept = runs.filter((r) => (r.to - r.from) * length >= CITY_MIN_STREET);
+  // "Too short to be a street" has to mean short *for this span*, not short in
+  // absolute terms. A curve arrives as a chain of 55 m pieces, and a flat
+  // minimum of 70 m silently deleted every one of them - which is not a stub
+  // being tidied away but a whole neighbourhood's streets going missing.
+  const minRun = Math.min(CITY_MIN_STREET, length * 0.85);
+  const kept = runs.filter((r) => (r.to - r.from) * length >= minRun);
   for (const run of kept) {
     dry.push({ ...span, from: pointAt(span, run.from), to: pointAt(span, run.to) });
   }
@@ -601,6 +609,54 @@ function chooseBridges(gaps: Gap[]): number[] {
     if (!crowded) chosen.push(i);
   }
   return chosen;
+}
+
+/**
+ * Put one street down: straight across a gridded quarter, or bowed across a
+ * winding one.
+ *
+ * A winding street is a single smooth arc rather than a wiggle, because a
+ * street that changes its mind twice reads as a mistake. It is chopped into
+ * short segments, which the rest of the pipeline treats exactly as it treats
+ * any other road - the machinery stopped caring about direction when
+ * boulevards arrived.
+ */
+function lay(
+  spans: Span[],
+  from: Vec2,
+  to: Vec2,
+  cell: Superblock,
+  blockSize: number,
+  rng: Rng,
+  district: DistrictKind,
+): void {
+  const axis: Axis = Math.abs(to.x - from.x) >= Math.abs(to.z - from.z) ? 'x' : 'z';
+
+  if (!cell.winding) {
+    spans.push({ from, to, axis, class: 'street', district });
+    return;
+  }
+
+  // Bow perpendicular to the run, by less than half a block so neighbouring
+  // streets stay clear of each other.
+  const bow = rng.range(-1, 1) * WINDING_BOW * blockSize;
+  const dx = to.x - from.x;
+  const dz = to.z - from.z;
+  const length = Math.max(1, Math.hypot(dx, dz));
+  const across = { x: -dz / length, z: dx / length };
+
+  const steps = Math.max(3, Math.round(length / WINDING_STEP));
+  let previous = from;
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const arc = Math.sin(t * Math.PI) * bow;
+    const next = {
+      x: from.x + dx * t + across.x * arc,
+      z: from.z + dz * t + across.z * arc,
+    };
+    spans.push({ from: previous, to: next, class: 'street', district });
+    previous = next;
+  }
 }
 
 /** Snap a coordinate before it is used as a node key, so a shared line is one node. */
