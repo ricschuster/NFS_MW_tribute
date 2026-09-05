@@ -4,10 +4,10 @@ Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`
-- **Play (live):** https://ricschuster.github.io/NFS_MW_tribute/
+- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/
 - **Drive the city:** [`?renderer=drive`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)
   · **Fly over it:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
-  · see the README for the controls and the other viewpoints
+  · the README lists every URL, its controls, and the named viewpoints
 - **Status:** mid-rebuild, and deliberately so. Read ADR-0004, then ADR-0005.
 
 ## What this is
@@ -19,217 +19,191 @@ levels.
 
 Original work. It takes its cues from the open-world street-racing genre, not
 from any one game. No third-party names, places, cars or assets are in the repo,
-and none should be added.
+and none should be added. If asked to model the map on a specific game's city,
+the answer is the *structure* - waterfront, ring road, dense core, bridges as
+chokepoints - and never that game's layout.
 
 ### The names are placeholders
 
 *Crosstown* and *Kestrel Bay* were picked so the rename was not blocked on a
-decision. Both are one find-and-replace away from anything better:
+decision. `Crosstown` appears in `README.md`, `CLAUDE.md`, `index.html`,
+`package.json` and the `crosstown.progress.v1` save key; `Kestrel Bay` in the
+docs and issue text. The **GitHub slug was left alone on purpose** - renaming it
+breaks the Pages URL and every link to it.
 
-- `Crosstown` appears in `README.md`, `CLAUDE.md`, `index.html` (title and `h1`),
-  `package.json`, and the `crosstown.progress.v1` save key in `progress.ts`.
-- `Kestrel Bay` appears in `README.md`, `CLAUDE.md`, ADR-0004, and issue text.
+## The state of play
 
-**The GitHub repository slug was left alone on purpose.** Renaming it would
-break the published Pages URL and every link pointing at it. If you want it
-renamed, `gh repo rename` does it, then update the Pages URL in `README.md` and
-this file, and expect old links to die.
-
-## The state of play, honestly
-
-Two renderers currently run against the same simulation:
+Three things run off one deployment, and the query string picks between them.
 
 | | |
 | --- | --- |
-| `/` | the original pseudo-3D projected-segment racer. Complete and polished. |
-| `/?renderer=3d` | the three.js scene that replaces it. Playable, plain-looking. |
+| `/` | The finished single-track racer: traffic, police, a rival ladder. Canvas. |
+| `/?renderer=3d` | The same game drawn with three.js. Retired when the track is. |
+| `/?renderer=drive` | **A car in Kestrel Bay**: free roam, traffic, a six-level pursuit, a camera with opinions, a HUD and a minimap. |
+| `/?renderer=city` | A free camera over the city, for looking at the map rather than driving it. |
 
-The 3D path draws the same track, traffic, rival and HUD, and is the one being
-built on. The 2D path keeps the game playable while that happens; it is retired
-by ADR-0004 and disappears once the city lands.
+**There are two simulations, and that is deliberate.** `world.ts` is the track
+model the shipped game still runs on. `cityworld.ts` is the same car in the
+city. Traffic, police, collision and cameras have moved across; **races, rivals
+and Rep have not**, which is the main thing left before `world.ts` can retire.
 
-**The game will get worse before it gets better**, and that was accepted
-deliberately when the direction was set. The deployed build is a finished
-single-track racer; the destination is an open city that currently has neither
-traffic, police, nor events in it.
+The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
+229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
+tunnel, and 3 river crossings.
 
-## The decision that shapes everything
+## The decisions that shape everything
 
-[ADR-0004](decisions/0004-webgl-free-roam-city.md) supersedes ADR-0002 and moves
-the renderer to a real 3D WebGL scene using three.js, with the city generated
-procedurally. Two requirements forced it, both hard technical gates rather than
-matters of taste:
-
-- **Roads over roads.** An elevated interstate crossing surface streets cannot
-  be expressed by a projected ribbon or a mode-7 ground plane at all - each can
-  only represent one surface at a given map position.
-- **Cameras that leave the car**, for takedowns and crashes. Both 2D approaches
-  offer exactly one camera, fixed behind the car.
-
-[ADR-0003](decisions/0003-separate-simulation-from-rendering.md), the
-simulation/rendering split, is untouched and matters more than ever. It is the
-reason the renderer can be swapped at all: `world.ts` has no DOM in it, so the
-playtests kept passing through both #81 and #82.
+- [ADR-0003](decisions/0003-separate-simulation-from-rendering.md) - simulation
+  split from rendering. The reason any of the rest was survivable.
+- [ADR-0004](decisions/0004-webgl-free-roam-city.md) - a real 3D WebGL scene.
+  Two hard gates forced it: roads over roads, and cameras that leave the car.
+  **Both now exist and can be looked at** (`&view=overpass`, and the crash cut).
+- [ADR-0005](decisions/0005-the-shape-of-kestrel-bay.md) - what the city is
+  *shaped* like. Read before touching the generator. Rules 1-5 are built;
+  landmarks (6) and terrain relief (7) are not.
 
 ## Architecture
 
 ```
 src/game/
-  world.ts        headless sim: step(dt, input). All behaviour goes here.
-  game.ts         presentation: canvas, input, loop, HUD, the 2D renderer
-  scene/          the three.js renderer (scene3d, ribbon, cars)
-  road.ts         the authored track            <- retired by #83
-  render.ts       world -> screen projection    <- retired by #83
-  traffic, police, rivals, progress, audio, touch, scenery, input, math,
-  constants, types
-spike/city.html   throwaway 3D city spike; not part of the build
-tools/            screenshot.mjs, feelprobe.mjs
+  world.ts        the track sim, still shipping
+  game.ts         the Canvas renderer, HUD and state machine for that sim
+  cityworld.ts    the car in the city: position, heading, height, collision
+  citytraffic.ts  ambient traffic, kept around the player
+  citypolice.ts   the pursuit: six heat levels, cooldown, a search area
+  graphcar.ts     what it is to be a car on the street graph (traffic + police)
+  city/           the generator: types, rng, water, generate, boulevards,
+                  interstate, buildings, furniture, grid (spatial index)
+  scene/          the renderer: cityscape, buildings, furniture, cameras, hud,
+                  cityview, plus scene3d/ribbon/cars for the track
+  road.ts, render.ts   the projected-segment track   <- retired with world.ts
+tools/            screenshot, feelprobe, citymap, cityshot
 ```
 
-**The car already moves like a free-roam car** (#82), in a road-relative frame:
-distance along the track, distance across it, and a real `heading`. Motion is
-velocity along the heading split onto those two axes; a bend rotates the frame
-under the car; yaw is limited by `LATERAL_GRIP / speed`, which is what makes
-corners need a lift. That is the same physics a free-roam car has, written in
-the frame the track still provides - so **#83 swaps the frame for a city without
-touching the motion model.**
+**The city is data.** `city/` turns `CITY_SEED` into junctions, roads, blocks,
+districts, water, buildings and street furniture as plain data - no renderer, no
+`Math.random`. That is what lets `World` collide with it and the playtests build
+one headlessly. The generator must never import three.js.
+
+**Height is real.** Nodes carry a `y`, and node identity includes it, so two
+roads at the same map position at different heights are two different places.
+Anything asking "what is at this position" has to ask about a height too.
+
+**Roads are segments, not axis-aligned lines.** `CityRoad.axis` used to exist
+and every geometric test leant on it; boulevards and winding streets made it a
+lie. Direction comes from the endpoints, and "is this point on this road" is a
+distance to a segment.
+
+**Traffic and police live on the graph.** A car is *which road, how far along,
+which way*; its position is derived from that. The player is deliberately not
+one of these - a player pinned to the graph could not cut across a car park.
 
 ## Commands
 
 ```bash
-npm run dev        # http://localhost:5173  (add ?renderer=3d for the 3D path)
+npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 88 unit tests + playtests
-npm run feel       # measure driving feel; --baseline docs/feel-baseline.json
-npm run shot       # headless screenshots -> screenshots/*.png
+npm run test       # 158 unit tests + playtests
+npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
-npm run cityshot   # screenshot the 3D city from fixed viewpoints, and driving in it
+npm run cityshot   # screenshot the 3D city and the driving views
+npm run shot       # screenshot the Canvas game
 npm run build      # typecheck + static build
 ```
 
-### Three tools worth knowing about
+### Looking, and measuring
 
-**`npm run feel`** drives the headless `World` with scripted inputs and reports
-the numbers behind driving feel: acceleration, lane-change times, the fastest
-speed that holds each bend, nitrous, time-to-bust at a given pace, and every
-race margin. It asserts nothing - the playtests own the invariants - so tuning
-`constants.ts` is a before/after diff rather than a guess. Re-record
-`docs/feel-baseline.json` in the same PR that changes tuning.
+The single most useful thing to know about working here.
 
-It has repeatedly caught what reasoning missed: infinite nitrous, a pursuit with
-no middle, cornering that cancelled out mathematically. It has also been *wrong*
-twice, both times because its reference driver was no longer a good driver. If a
-number looks strange, suspect the probe's controllers before the game.
+**Almost every real defect this session was invisible to tests that passed
+throughout, and obvious in a picture** - buildings rendering black, water hidden
+under the ground plane, a sky dome centred on the world origin, road markings
+z-fighting into streaks, a camera sitting inside a wall, districts in a perfect
+checkerboard, a waterfront that had swallowed a third of the map.
 
-**`npm run shot`** screenshots the game headlessly. Every renderer bug in #81 -
-back-face-culled road, an invisible car, a missing ground plane - was found by
-looking at a PNG, not by reasoning. Use it.
+**And the converse: some defects are invisible in a picture and obvious in a
+number** - traffic driving through itself, a pursuit that could never be
+escaped, elite police cars at 105% of the player's top speed, a whole
+neighbourhood's streets silently deleted. When a screenshot looks fine and
+something still feels wrong, write a probe that prints numbers.
 
-**`npm run city`** draws the generated city from above. Same lesson again:
-every real defect in the generator so far was found by looking at the map and
-none by the 34 tests, which passed throughout. A city that is wrong is usually
-wrong in a way that is obvious in a picture and invisible in an assertion -
-districts in a perfect checkerboard, a waterfront that swallowed a third of the
-map, hundreds of metres of nothing along a river.
-
-## The city exists, as data
-
-`src/game/city/` turns `CITY_SEED` into Kestrel Bay: junctions, roads, blocks,
-districts and water, as plain data with no renderer in it and no `Math.random`.
-The pinned city is 5 x 4 km, 2124 roads, 1288 junctions, 883 blocks, 228 km of
-road and 3 water crossings.
-
-[ADR-0005](decisions/0005-the-shape-of-kestrel-bay.md) is what it is *shaped*
-like and is worth reading before changing the generator. Water is generated
-first and the streets are cut against it; bridges are few on purpose because
-they are the pursuit chokepoints; and generation ends by proving the city is
-drivable and bridging until it is. Its rules 1-3 are built. Rules 4-7 - curved
-residential streets, the interstate loop, landmarks, relief - are not, and are
-written down so they get designed together rather than discovered one at a time.
-
-Nothing is wired into `World` or the renderer yet. That is #84 and #86.
+`npm run feel` has also been *wrong* twice, both times because its reference
+driver was no longer a good driver. If a number looks strange, suspect the probe.
 
 ## Repo mechanics
 
-- Branch, PR, `gh pr merge --auto --squash`. Auto-merge and branch deletion are on.
-- `main` is protected; the `build` check (typecheck + test + build) must pass.
-- `.github/workflows/deploy.yml` publishes to Pages on every push to `main`.
-- After a merge, poll `gh pr view <n> --json mergedAt` until non-null before pulling.
-- Architectural decisions get an ADR in `docs/decisions/`. New runtime
-  dependencies need one saying why; three.js is the only one, via ADR-0004.
+- Branch, PR, `gh pr merge <n> --auto --squash`. **Auto-merge is a per-PR flag,
+  not a repo default** - `allow_auto_merge` only permits it. Enable it in the
+  same step as `gh pr create`, or the PR sits with green CI looking broken.
+- `main` is protected and requires branches to be **up to date**, so a PR that
+  falls behind reports `BEHIND` and stalls. Rebase onto `origin/main` and
+  force-push with lease.
+- Auto-delete of merged branches is on and works.
+- Architectural decisions get an ADR. New runtime dependencies need one;
+  three.js is still the only one.
 
 ## Where the work is
 
-36 open issues across three milestones.
+**M4: Kestrel Bay rebuild - 2 open, both partial.**
 
-**M4: Kestrel Bay rebuild (6 open)** - the renderer, in dependency order:
+- **#86** - car-to-car and building collision are done. What is left is
+  whatever falls out of takedowns in M5.
+- **#89** - the HUD and minimap are done. **Touch controls are not wired into
+  the city**, so Kestrel Bay cannot be driven on a phone. They only exist in
+  `game.ts`.
 
-- **#84 city geometry** <- mostly done. The city is visible at
-  `?renderer=city`: extruded buildings instanced per kind, water, bridges and
-  lane markings. What is left of it is street furniture (lamps, signs,
-  barriers). LOD and frustum culling were dropped on measurement rather than
-  built: the whole city is about 9 draw calls and 103k triangles, so the
-  premise that it needs them does not hold while buildings are boxes
-- #85 the elevated interstate - the feature that decided ADR-0004, and worth
-  building early enough to prove the decision was right
-- **#113 drive in Kestrel Bay** - done. `cityworld.ts` is the car in world
-  space, with a height-aware surface lookup and building collision. It runs
-  *alongside* the track `World`, so the deployed game keeps playing
-- ~~#87 traffic and police in world space~~ done, and with it the car-to-car
-  half of #86. Traffic and cops both live on the street graph (`graphcar.ts`)
-- ~~#86 collision~~ done #88 the camera system,
-  #89 HUD and minimap
+Done this session: #83 the generator, #84 geometry, #85 the elevated
+interstate, #113 the car in world space, #115 bends/density/freeways, #87
+traffic and police, #88 cameras, most of #89, and #58/#63 from M5.
 
-Done: #81 (three.js scene alongside the Canvas one), #82 (the car's heading),
-#83 (the city generator, plus ADR-0005's first three rules).
+**M5: Open-world systems - 21 open.** #58 (six heat levels) and #63 (cooldown)
+are done and are the framework the rest keys off. Natural next ones, in order of
+how much they use what already exists:
 
-**M5: Open-world systems (23 open)** - heat levels and pursuit tactics,
-cooldown, Rep, Street Finds, mods, the Quick Wheel, event types, takedowns,
-damage and repair. Most of it waits on free roam.
+- **#94 takedowns** - the crash camera machinery is already there.
+- **#59 roadblocks**, **#61 enforcer SUVs**, **#60 spike strips**, **#62 the
+  helicopter** - all now have a heat level to key off.
+- **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
+  races into the city and are what let `world.ts` finally retire.
 
-**M6: Beyond the browser (5 open)** - PWA, then a desktop shell. Deliberately
-last, but it is what lifts the download-size ceiling on asset quality, so the
-art ladder and the packaging ladder are the same conversation.
+**M6: Beyond the browser - 5 open.** PWA then a desktop shell. Deliberately
+last, but it is what lifts the download-size ceiling on asset quality.
 
 Also open: **#14** (tune driving feel) and **#11** (art direction), both from
 before the pivot and both still live.
 
 ## Known problems, not papered over
 
-- **The city and the track have separate tuning now.** `CITY_HEAT_RISE`,
-  `CITY_COP_LOSE` and friends exist because the track's equivalents mean
-  different things - one is a trail distance along a road, the other a distance
-  between two points. Reusing them was the cause of three separate bugs. Check
+- **The city and the track have separate tuning, and mixing them causes bugs.**
+  `CITY_HEAT_RISE`, `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` exist because the
+  track's equivalents mean different things - one is a trail distance along a
+  road, the other a distance between two points. Reusing them caused three
+  separate bugs, one of which culled every cop the step after it spawned. Check
   which world a constant belongs to before reaching for it.
-
-- **#105: nitrous barely matters over a race.** It works on a straight (+15.9%
-  over four seconds) but the track is corner-limited enough that a lap barely
-  benefits, and boosting into a corner lift actively costs time. The obvious
-  fixes are wrong: a stronger boost re-creates #45, easier corners undo #82
-  and #46.
-- **The 3D camera does not follow the car's heading**, so a hard turn slides the
-  car across the frame. That is #88.
-- **Cops are placed behind the car in 3D**, which is correct, so they are out of
-  shot in a forward view. The HUD mirror still shows them until #88.
-- **The rival ladder has been retuned twice** and will need it again. It is
-  tuned against the probe's reference driver, and every change to how the car
-  drives changes what that driver can do. Expect it rather than treating it as
-  a regression.
-- **The feel baseline's meaning shifts as the world model does.** Lane-change
-  times and corner-hold speeds survived #82; they will not survive free roam
-  unchanged, because "across the road" stops being a coordinate.
-- **The city's roads are axis-aligned, and that ends.** It is what keeps blocks
-  rectangular and "which road am I on" cheap today. ADR-0005 rule 4 (curved
-  residential streets) breaks it, so #86 cannot be written as a grid lookup.
-  The cost is recorded in the ADR rather than left to be discovered.
-- **228 km of road is dense** for a 5 x 4 km city. It is a tuning number rather
-  than a structural one, and it is much easier to judge once there is traffic
-  in it than by argument now.
+- **Races, rivals and Rep are still only on the track**, so `?renderer=drive`
+  has nothing to *do* in it beyond driving and being chased.
+- **Touch controls are track-only**, so the city is desktop-only.
+- **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
+  overlapping pair in ~2775 at last measurement: acceptable, not solved.
+- **Blocks stay rectangles in winding quarters**, so they do not follow the
+  curves. Reads acceptably; fixing it needs rotated or polygonal blocks.
+- **`npm run cityshot -- --view pursuit` is unreliable.** The scripted drive
+  tends to wedge the car against a building and the pursuit ends. The pursuit is
+  verified by probes and playtests instead.
+- **#105: nitrous barely matters over a race** on the track. Unchanged.
+- **There is no feel baseline for the city.** `npm run feel` only drives the
+  track sim, which is a gap worth closing before tuning city driving by feel.
+- **The rival ladder is tuned against the probe's reference driver** and will
+  need retuning whenever the car changes. Expect it rather than treating it as a
+  regression.
 
 ## If you are picking this up cold
 
-Read `CLAUDE.md`, then ADR-0004 and ADR-0005, then run both renderers side by
-side and `npm run city` to see the map. Start on **#84**. Keep behaviour in
-`world.ts` and drawing in the renderer, because that split is the only reason
-this rebuild is survivable - and keep the city's *descriptions* (footprints,
-heights) in the generator for the same reason.
+Read `CLAUDE.md`, then ADR-0004 and ADR-0005. Open `?renderer=drive` and drive
+for two minutes until the police escalate - that is most of the project in one
+go. Then `npm run city` for the map, and `&view=overpass` for the reason the
+renderer was rebuilt at all.
+
+Then pick from M5. Keep behaviour in the sim and drawing in the renderer,
+because that split is the only reason this rebuild has been survivable, and keep
+the city's *descriptions* in `city/` for the same reason.
