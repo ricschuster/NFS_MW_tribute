@@ -1,6 +1,6 @@
 import type { Segment } from './types';
 import { Input } from './input';
-import { World } from './world';
+import { World, type InputState } from './world';
 import { project, renderSegment, renderFog, renderCarSprite, renderCopSprite } from './render';
 import {
   WIDTH,
@@ -31,10 +31,15 @@ const DISPLAY_MAX_KMH = 320;
 export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly input = new Input();
-  private readonly world = new World();
+  private world = new World();
 
+  private phase: 'title' | 'playing' | 'paused' = 'title';
   private last = 0;
   private accumulator = 0;
+  private prevConfirm = false;
+  private prevPause = false;
+  // suppress a held ENTER (used to start/resume) so it doesn't also start a race
+  private suppressConfirm = false;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
@@ -50,16 +55,75 @@ export class Game {
   private frame(now: number): void {
     const dt = Math.min(1, (now - this.last) / 1000);
     this.last = now;
-    this.accumulator += dt;
-    while (this.accumulator >= STEP) {
-      this.accumulator -= STEP;
-      this.world.step(STEP, this.input);
+
+    const confirmEdge = this.input.confirm && !this.prevConfirm;
+    this.prevConfirm = this.input.confirm;
+    const pauseEdge = this.input.pause && !this.prevPause;
+    this.prevPause = this.input.pause;
+
+    if (this.phase === 'title') {
+      if (confirmEdge) this.enterPlaying();
+    } else if (this.phase === 'paused') {
+      if (this.input.restart) this.restart();
+      else if (pauseEdge || confirmEdge) this.resume();
+    } else {
+      // playing
+      if (pauseEdge) {
+        this.phase = 'paused';
+      } else {
+        if (!this.input.confirm) this.suppressConfirm = false;
+        this.accumulator += dt;
+        while (this.accumulator >= STEP) {
+          this.accumulator -= STEP;
+          this.world.step(STEP, this.worldInput());
+        }
+      }
     }
+
     this.render();
     requestAnimationFrame((t) => this.frame(t));
   }
 
+  private enterPlaying(): void {
+    this.phase = 'playing';
+    this.suppressConfirm = true;
+    this.accumulator = 0;
+  }
+
+  private resume(): void {
+    this.phase = 'playing';
+    this.suppressConfirm = true;
+  }
+
+  private restart(): void {
+    this.world = new World(); // fresh drive; Blacklist progress persists via localStorage
+    this.enterPlaying();
+  }
+
+  /** The world only sees a live ENTER once it's been released after a start/resume. */
+  private worldInput(): InputState {
+    const i = this.input;
+    return {
+      left: i.left,
+      right: i.right,
+      up: i.up,
+      down: i.down,
+      nitro: i.nitro,
+      confirm: i.confirm && !this.suppressConfirm,
+    };
+  }
+
   private render(): void {
+    this.renderScene();
+    if (this.phase === 'title') {
+      this.renderTitle();
+      return;
+    }
+    this.renderHud();
+    if (this.phase === 'paused') this.renderPaused();
+  }
+
+  private renderScene(): void {
     const ctx = this.ctx;
     const world = this.world;
     const road = world.road;
@@ -126,7 +190,47 @@ export class Game {
     }
 
     this.renderSpeedLines();
-    this.renderHud();
+  }
+
+  private renderTitle(): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e8462b';
+    ctx.font = 'bold 92px system-ui, sans-serif';
+    ctx.fillText('MOST WANTED', WIDTH / 2, HEIGHT / 2 - 30);
+
+    ctx.fillStyle = '#c9ccd4';
+    ctx.font = '20px system-ui, sans-serif';
+    ctx.fillText('A pseudo-3D tribute', WIDTH / 2, HEIGHT / 2 + 6);
+
+    const blink = 0.55 + 0.45 * Math.sin(this.last * 0.005);
+    ctx.fillStyle = `rgba(143, 208, 255, ${blink})`;
+    ctx.font = 'bold 24px system-ui, sans-serif';
+    ctx.fillText('Press ENTER to drive', WIDTH / 2, HEIGHT / 2 + 66);
+
+    ctx.fillStyle = '#9aa0aa';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillText('WASD steer · SHIFT nitro · ENTER race · P pause', WIDTH / 2, HEIGHT - 40);
+    ctx.textAlign = 'left';
+  }
+
+  private renderPaused(): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 72px system-ui, sans-serif';
+    ctx.fillText('PAUSED', WIDTH / 2, HEIGHT / 2);
+
+    ctx.fillStyle = '#9aa0aa';
+    ctx.font = '18px system-ui, sans-serif';
+    ctx.fillText('P or ESC to resume  ·  R to restart', WIDTH / 2, HEIGHT / 2 + 44);
+    ctx.textAlign = 'left';
   }
 
   /** Radial speed streaks while boosting, for a sense of raw pace. */
