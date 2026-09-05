@@ -8,30 +8,20 @@ import {
   TRAFFIC_GAP,
   CAR_COLORS,
 } from './constants';
-import { roadHeightAt, type CityGrid } from './city/grid';
+import type { CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
+import {
+  advanceAlong,
+  directionOf,
+  exitsFrom,
+  placeOnRoad,
+  type GraphCar,
+} from './graphcar';
 
-/**
- * One car going about its business on the street network.
- *
- * It is described by where it is on the graph - which road, how far along,
- * which way - rather than by a position, because that is what makes it follow
- * the streets rather than drift across them. The world position is derived
- * from that each step, not the other way round.
- */
-export interface TrafficCar {
-  road: CityRoad;
-  /** How far along the road, 0..1, in the direction of travel. */
-  t: number;
-  /** True when travelling from the road's `a` end toward its `b` end. */
-  forward: boolean;
-  speed: number;
+/** One car going about its business on the street network. */
+export interface TrafficCar extends GraphCar {
   colour: string;
-  x: number;
-  z: number;
-  y: number;
-  heading: number;
 }
 
 /**
@@ -124,27 +114,7 @@ export class CityTraffic {
 
   /** Move a car along its road, and pick a new one when it runs out. */
   private advance(car: TrafficCar, dt: number): void {
-    car.t += (car.speed * dt) / Math.max(1, car.road.length);
-
-    let hops = 0;
-    while (car.t >= 1 && hops < 4) {
-      hops++;
-      const ahead = car.forward ? car.road.b : car.road.a;
-      const next = this.nextRoad(car, ahead);
-      if (!next) {
-        // A dead end. Turn round rather than stop, or the street silts up.
-        car.forward = !car.forward;
-        car.t = 0;
-        break;
-      }
-      car.t = (car.t - 1) * (car.road.length / Math.max(1, next.length));
-      car.forward = next.a === ahead;
-      car.road = next;
-      car.speed = this.paceFor(next);
-    }
-    car.t = Math.min(car.t, 1);
-
-    this.place(car);
+    advanceAlong(this.city, car, dt, (c, node) => this.nextRoad(c as TrafficCar, node), TRAFFIC_LANE);
   }
 
   /**
@@ -156,9 +126,7 @@ export class CityTraffic {
    */
   private nextRoad(car: TrafficCar, node: number): CityRoad | null {
     const heading = this.direction(car);
-    const options = this.city.nodes[node].roads
-      .map((id) => this.city.roads[id])
-      .filter((road) => road !== car.road);
+    const options = exitsFrom(this.city, car, node);
     if (options.length === 0) return null;
 
     let best: CityRoad | null = null;
@@ -176,37 +144,16 @@ export class CityTraffic {
         best = road;
       }
     }
+    if (best) car.speed = this.paceFor(best);
     return best;
   }
 
-  /** The unit vector a car is travelling in. */
-  private direction(car: TrafficCar): { x: number; z: number } {
-    const a = this.city.nodes[car.road.a].pos;
-    const b = this.city.nodes[car.road.b].pos;
-    const dx = (b.x - a.x) * (car.forward ? 1 : -1);
-    const dz = (b.z - a.z) * (car.forward ? 1 : -1);
-    const length = Math.max(1, Math.hypot(dx, dz));
-    return { x: dx / length, z: dz / length };
+  private direction(car: TrafficCar) {
+    return directionOf(this.city, car);
   }
 
-  /** Derive the world position from where the car is on the graph. */
   private place(car: TrafficCar): void {
-    const a = this.city.nodes[car.road.a].pos;
-    const b = this.city.nodes[car.road.b].pos;
-    const from = car.forward ? a : b;
-    const to = car.forward ? b : a;
-
-    const x = from.x + (to.x - from.x) * car.t;
-    const z = from.z + (to.z - from.z) * car.t;
-
-    // Keep right of the centreline, so oncoming traffic passes on the correct
-    // side instead of through you.
-    const heading = this.direction(car);
-    const offset = Math.min(TRAFFIC_LANE, car.road.width / 4);
-    car.x = x - heading.z * offset;
-    car.z = z + heading.x * offset;
-    car.y = roadHeightAt(this.city, car.road, x, z);
-    car.heading = Math.atan2(heading.x, heading.z);
+    placeOnRoad(this.city, car, TRAFFIC_LANE);
   }
 
   private paceFor(road: CityRoad): number {

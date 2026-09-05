@@ -142,6 +142,29 @@ export function segmentToRect(from: Vec2, to: Vec2, r: Rect): number {
   return best;
 }
 
+/**
+ * Is this point in the bay or the river?
+ *
+ * Tested against the outlines the renderer draws, so what blocks the car is
+ * exactly what looks like water - rather than re-deriving the generator's
+ * water function, which would be a second source of truth for the same thing.
+ */
+export function inWater(city: City, x: number, z: number): boolean {
+  for (const body of city.water) {
+    const outline = body.outline;
+    let inside = false;
+    for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
+      const a = outline[i];
+      const b = outline[j];
+      if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) {
+        inside = !inside;
+      }
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+
 /** Is the point on the carriageway? */
 export const onRoad = (city: City, road: CityRoad, x: number, z: number) =>
   distanceToRoad(city, road, x, z) <= road.width / 2;

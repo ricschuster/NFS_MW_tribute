@@ -175,8 +175,9 @@ Nothing is wired into `World` or the renderer yet. That is #84 and #86.
 - **#113 drive in Kestrel Bay** - done. `cityworld.ts` is the car in world
   space, with a height-aware surface lookup and building collision. It runs
   *alongside* the track `World`, so the deployed game keeps playing
-- #86 collision against the network (car-to-car is what is left of it, and it
-  waits on #87), #87 traffic and police in world space, #88 the camera system,
+- ~~#87 traffic and police in world space~~ done, and with it the car-to-car
+  half of #86. Traffic and cops both live on the street graph (`graphcar.ts`)
+- ~~#86 collision~~ done #88 the camera system,
   #89 HUD and minimap
 
 Done: #81 (three.js scene alongside the Canvas one), #82 (the car's heading),
