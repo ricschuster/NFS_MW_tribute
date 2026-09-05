@@ -5,7 +5,7 @@
 
 ## Context
 
-We want the sensation of driving a *Need for Speed: Most Wanted* car — speed, a
+We want the sensation of driving a *the street-racer template* car — speed, a
 road rushing toward the horizon, hills and curves — as a solo-buildable browser
 project. The realistic options were:
 

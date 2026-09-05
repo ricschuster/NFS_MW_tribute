@@ -4,13 +4,17 @@ Working rules for Claude Code in this repo. Keep this short and current.
 
 ## What this is
 
-A fan tribute to *Need for Speed: Most Wanted* (2012) - Criterion's Fairhaven:
-a free-roam city, a Most Wanted list of ten, Speed Points, cars found parked in
-the world, and police pursuits with six heat levels. TypeScript + Vite, no
-backend; it builds to static files.
+**Crosstown** is an open-world arcade street racer set in Kestrel Bay: a
+free-roam city, a ladder of ten rivals, Rep earned from everything you do, cars
+found parked around the city, and police pursuits with six heat levels.
+TypeScript + Vite, no backend; it builds to static files.
+
+Original work. It takes its cues from the genre, not from any one game: no
+third-party names, places, cars or assets appear anywhere in the repo, and none
+should be added.
 
 **The renderer is being rebuilt.** What exists today is a pseudo-3D
-projected-segment racer on a single closed track, built against the 2005 game.
+projected-segment racer on a single closed track, built for a single track.
 [ADR-0004](docs/decisions/0004-webgl-free-roam-city.md) moves it to a real 3D
 WebGL scene (three.js) so the city can be driven freely, with overpasses and
 cameras that leave the car. Read that ADR before touching the renderer.
@@ -51,7 +55,7 @@ physics a free-roam car has, written in the frame the track still provides, so
 issue #83 swaps the frame for a city without touching the model.
 
 **Next (ADR-0004).** A three.js scene: the car has a position and heading in a
-3D world, Fairhaven is generated procedurally (street network, extruded blocks
+3D world, Kestrel Bay is generated procedurally (street network, extruded blocks
 per district, elevated interstate), and cameras become a first-class concept.
 `road.ts` and `render.ts` are retired.
 
@@ -91,12 +95,12 @@ out of the renderer even while the renderer is in flux.
 
 ## Non-goals
 
-- Not networked, not commercial. No EA assets and no imported map: Fairhaven
+- Not networked, not commercial. No EA assets and no imported map: Kestrel Bay
   is generated from a seed, not ripped.
 - Asset *quality* is a separate axis and is not a non-goal. Geometry may be
   upgraded behind the generator's interface - textures on the boxes first,
   then cars, then a modular building kit - as long as everything shipped is
   original, generated, or CC0.
-- Not Autolog. The 2012 game's social layer is out of scope.
-- Not *Most Wanted* (2005). Rockport, the Blacklist of fifteen, bounty,
+- Not the online social layer. The 2012 game's social layer is out of scope.
+- Not the mid-2000s template. the old city, the Ladder of fifteen, bounty,
   milestones and impound strikes belong to the other game; see ADR-0004.

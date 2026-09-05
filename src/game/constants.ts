@@ -112,7 +112,7 @@ export const BUST_HOLD = 3;
 /** Seconds the ESCAPED banner lingers. */
 export const ESCAPED_FLASH = 2.5;
 
-/** Blacklist races. */
+/** Ladder races. */
 export const RACE_DISTANCE = 400000; // world units from start to finish
 export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
 export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at difficulty 0

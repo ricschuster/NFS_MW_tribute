@@ -1,9 +1,9 @@
 {
-  "name": "nfs-mw-tribute",
+  "name": "crosstown",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A pseudo-3D, OutRun-style arcade racer paying tribute to Need for Speed: Most Wanted (2005).",
+  "description": "A pseudo-3D, OutRun-style arcade racer paying tribute to the street racers of the mid 2000s.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

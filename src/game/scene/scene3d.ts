@@ -106,7 +106,7 @@ export class Scene3D {
     this.camera = new THREE.PerspectiveCamera(58, 1, SEGMENT_LENGTH * 0.2, SEGMENT_LENGTH * DRAW_DISTANCE * 1.2);
 
     // Night lighting to match the palette the Canvas renderer uses today.
-    // Issue #75 is where this becomes Fairhaven daylight.
+    // Issue #75 is where this becomes Kestrel Bay daylight.
     const key = new THREE.DirectionalLight('#9fb6d8', 1.5);
     key.position.set(-1, 2.4, 1);
     this.scene.add(key);
