@@ -13,6 +13,13 @@ import {
   UNITS_PER_METRE,
   WRECK_LINGER,
   TAKEDOWN_MIN_CLOSING,
+  ROADBLOCK_MIN_LEVEL,
+  ROADBLOCK_MIN_WIDTH,
+  ROADBLOCK_MIN_LEAD,
+  ROADBLOCK_GAP,
+  ROADBLOCK_GAP_CHANCE,
+  ROADBLOCK_GAP_FALLOFF,
+  ROADBLOCK_SPEED_KEPT,
   type CopKind,
 } from './constants';
 import type { InputState } from './world';
@@ -647,5 +654,212 @@ describe('takedowns', () => {
     const before = world.speed;
     world.step(STEP, NONE);
     expect(world.speed).toBeLessThan(before);
+  });
+});
+
+/**
+ * Roadblocks (#59).
+ *
+ * Built by hand for the same reason the takedown tests are: whether a barrier
+ * stops you is a question about a line, a gap and a heading, and a scripted
+ * drive that happens to meet one answers whichever version of that question it
+ * happened to arrive at.
+ */
+describe('roadblocks', () => {
+  const M = UNITS_PER_METRE;
+
+  /** A world with the car on a road wide enough to be worth blocking. */
+  function onAnArterial(): CityWorld {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const road = world.city.roads.find(
+      (r) => r.width >= ROADBLOCK_MIN_WIDTH && !r.bridge && world.city.nodes[r.a].y === 0,
+    );
+    if (!road) throw new Error('no road wide enough to block: the city changed');
+
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = a.x + (b.x - a.x) * 0.3;
+    world.z = a.z + (b.z - a.z) * 0.3;
+    world.y = 0;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.onRoad = road;
+    return world;
+  }
+
+  /** A barrier straight across the car's path, `metres` ahead. */
+  function blockAhead(world: CityWorld, metres: number, gap: number | null) {
+    const road = world.onRoad!;
+    // Across the heading, which on this road is across the road.
+    const ax = Math.cos(world.heading);
+    const az = -Math.sin(world.heading);
+    const block = {
+      road,
+      x: world.x + Math.sin(world.heading) * metres * M,
+      z: world.z + Math.cos(world.heading) * metres * M,
+      y: 0,
+      ax,
+      az,
+      half: road.width / 2,
+      gap,
+      cars: [
+        {
+          x: world.x + Math.sin(world.heading) * metres * M,
+          z: world.z + Math.cos(world.heading) * metres * M,
+          y: 0,
+          heading: Math.atan2(ax, az),
+          kind: 'cruiser' as CopKind,
+        },
+      ],
+    };
+    world.police.roadblocks.push(block);
+    return block;
+  }
+
+  it('costs most of your speed when you go through the wall', () => {
+    const world = onAnArterial();
+    blockAhead(world, 1, null);
+    world.speed = world.maxSpeed * 0.5;
+    const before = world.speed;
+    world.step(STEP, NONE);
+
+    expect(world.speed).toBeLessThan(before * (ROADBLOCK_SPEED_KEPT + 0.05));
+    expect(world.crashFlash).toBe(1);
+  });
+
+  it('is not a dead stop: you come out the far side still moving', () => {
+    const world = onAnArterial();
+    blockAhead(world, 1, null);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+    expect(world.speed).toBeGreaterThan(0);
+  });
+
+  it('breaks apart where you came through, and stops being in the way', () => {
+    const world = onAnArterial();
+    blockAhead(world, 1, null);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+
+    expect(world.police.roadblocks.length).toBe(0);
+    expect(world.wrecks.length).toBeGreaterThan(0);
+    // A parked car is not somebody you took down.
+    expect(world.takedowns).toBe(0);
+  });
+
+  it('lets you through the gap untouched', () => {
+    const world = onAnArterial();
+    // The gap is straight ahead, so the car threads it without steering.
+    blockAhead(world, 1, 0);
+    world.speed = world.maxSpeed * 0.5;
+    const before = world.speed;
+    world.step(STEP, NONE);
+
+    expect(world.speed).toBeGreaterThan(before * 0.9);
+    expect(world.police.roadblocks.length).toBe(1);
+  });
+
+  it('catches you if you aim beside the gap', () => {
+    const world = onAnArterial();
+    const road = world.onRoad!;
+    // Gap at one edge of the road, car still down the middle.
+    blockAhead(world, 1, road.width / 2 - ROADBLOCK_GAP);
+    world.speed = world.maxSpeed * 0.5;
+    const before = world.speed;
+    world.step(STEP, NONE);
+    expect(world.speed).toBeLessThan(before * 0.5);
+  });
+
+  it('is not in the way of a car on the deck above it', () => {
+    const world = onAnArterial();
+    const block = blockAhead(world, 1, null);
+    block.y = 0;
+    world.y = 12 * M; // the interstate, passing over
+    world.speed = world.maxSpeed * 0.5;
+    const before = world.speed;
+    world.step(STEP, NONE);
+    expect(world.speed).toBeGreaterThan(before * 0.9);
+  });
+
+  /**
+   * Run a pursuit for `seconds` with the car parked on a wide road and the
+   * heat pinned, and count what gets placed.
+   *
+   * The pursuit is driven directly rather than by holding the throttle, and
+   * that is not a shortcut. A scripted straight-line drive in this city wedges
+   * the car against a building inside a minute, and a test that measures how
+   * long the car survived is not a test about roadblocks.
+   */
+  function blocksPlaced(world: CityWorld, heat: number, seconds: number): number {
+    const cop: Cop = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: world.heading,
+      kind: 'cruiser',
+    };
+    world.police.cops.push(cop);
+
+    let placed = 0;
+    for (let t = 0; t < seconds; t += STEP) {
+      // Holding station off the back bumper: close enough to keep eyes on,
+      // far enough not to bust. Left to itself it would close and end this.
+      cop.x = world.x - Math.sin(world.heading) * 40 * M;
+      cop.z = world.z - Math.cos(world.heading) * 40 * M;
+      world.police.heat = heat;
+      const before = world.police.roadblocks.length;
+      world.police.update(STEP, world, world.maxSpeed);
+      if (world.police.roadblocks.length > before) placed++;
+    }
+    return placed;
+  }
+
+  it('does not turn up below heat two', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    expect(blocksPlaced(world, 0, 40)).toBe(0);
+  });
+
+  it('turns up once the heat is high enough', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    expect(blocksPlaced(world, 0.6, 40)).toBeGreaterThan(0);
+  });
+
+  it('places them ahead of you, on a road worth blocking', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    blocksPlaced(world, 0.6, 40);
+    expect(world.police.roadblocks.length).toBeGreaterThan(0);
+
+    for (const block of world.police.roadblocks) {
+      const dx = block.x - world.x;
+      const dz = block.z - world.z;
+      const ahead = dx * Math.sin(world.heading) + dz * Math.cos(world.heading);
+      expect(ahead).toBeGreaterThanOrEqual(ROADBLOCK_MIN_LEAD);
+      expect(block.road.width).toBeGreaterThanOrEqual(ROADBLOCK_MIN_WIDTH);
+      expect(block.cars.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('gives up on them when the pursuit does', () => {
+    const world = onAnArterial();
+    world.speed = world.maxSpeed * 0.4;
+    blocksPlaced(world, 0.6, 40);
+    expect(world.police.roadblocks.length).toBeGreaterThan(0);
+
+    world.police.reset();
+    expect(world.police.roadblocks.length).toBe(0);
+  });
+
+  it('offers fewer ways through the hotter it gets', () => {
+    const chance = (level: number) =>
+      ROADBLOCK_GAP_CHANCE - ROADBLOCK_GAP_FALLOFF * (level - ROADBLOCK_MIN_LEVEL);
+    expect(chance(ROADBLOCK_MIN_LEVEL)).toBeGreaterThan(chance(HEAT_LEVEL_COUNT));
+    expect(chance(HEAT_LEVEL_COUNT)).toBeLessThan(0.35);
   });
 });

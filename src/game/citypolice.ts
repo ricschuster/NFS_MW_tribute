@@ -20,6 +20,21 @@ import {
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
   COP_UNITS,
+  SURFACE_REACH,
+  ROADBLOCK_MIN_LEVEL,
+  ROADBLOCK_MAX,
+  ROADBLOCK_INTERVAL,
+  ROADBLOCK_LEAD_TIME,
+  ROADBLOCK_MIN_LEAD,
+  ROADBLOCK_MAX_LEAD,
+  ROADBLOCK_SPACING,
+  ROADBLOCK_FORGET,
+  ROADBLOCK_ALIGN,
+  ROADBLOCK_MIN_WIDTH,
+  ROADBLOCK_GAP,
+  ROADBLOCK_GAP_CHANCE,
+  ROADBLOCK_GAP_FALLOFF,
+  ROADBLOCK_CAR_SLOT,
   type CopKind,
 } from './constants';
 import { lineBlocked, type CityGrid } from './city/grid';
@@ -58,6 +73,44 @@ export interface Chased {
   z: number;
   y: number;
   speed: number;
+  /**
+   * Which way they are pointing. Needed since #59: a roadblock goes where you
+   * are *going*, and a position on its own does not say that.
+   */
+  heading: number;
+}
+
+/** One parked cruiser in a roadblock, for the renderer to put a car on. */
+export interface BlockCar {
+  x: number;
+  z: number;
+  y: number;
+  heading: number;
+  kind: CopKind;
+}
+
+/**
+ * Cruisers across the road, ahead of you (#59).
+ *
+ * Held as a line rather than as a set of cars, and that is not a shortcut: a
+ * wall built out of circles has holes between the circles, and a barrier you
+ * can slip through by accident is worse than no barrier. The cars are drawn
+ * along the line; the line is what you hit.
+ */
+export interface Roadblock {
+  road: CityRoad;
+  /** The middle of the barrier. */
+  x: number;
+  z: number;
+  y: number;
+  /** Unit vector across the road: the barrier runs along this. */
+  ax: number;
+  az: number;
+  /** Half the barrier's length. */
+  half: number;
+  /** Where the gap is along the barrier, or null for a solid wall. */
+  gap: number | null;
+  cars: BlockCar[];
 }
 
 /**
@@ -77,6 +130,8 @@ export interface Chased {
  */
 export class CityPolice {
   readonly cops: Cop[] = [];
+  /** Cruisers parked across the road ahead of you (#59). */
+  readonly roadblocks: Roadblock[] = [];
   /** 0..1. Rises while a cop is close, and drives the heat *level*. */
   heat = 0;
   busted = false;
@@ -91,6 +146,7 @@ export class CityPolice {
   searchLeft = 0;
 
   private sinceSpawn = 0;
+  private sinceBlock = 0;
   private cooldown = COP_FIRST_SPAWN;
   private pinned = 0;
   private unseen = 0;
@@ -138,6 +194,147 @@ export class CityPolice {
 
     this.judge(dt, player);
     this.recruit(dt, player);
+    this.blockade(dt, player);
+  }
+
+  /**
+   * Put cruisers across the road in front of them (#59).
+   *
+   * Only while a pursuit is actually running: a roadblock during a cooldown
+   * would be the police blocking a road they have lost you on, and it would
+   * give away that they still know where you are.
+   */
+  private blockade(dt: number, player: Chased): void {
+    // Forget the ones the chase has left behind, so they are not still sitting
+    // there when the pursuit comes back round the block ten minutes later.
+    for (let i = this.roadblocks.length - 1; i >= 0; i--) {
+      const block = this.roadblocks[i];
+      if (Math.hypot(block.x - player.x, block.z - player.z) > ROADBLOCK_FORGET) {
+        this.roadblocks.splice(i, 1);
+      }
+    }
+    if (this.state !== 'pursuit') {
+      this.roadblocks.length = 0;
+      return;
+    }
+
+    this.sinceBlock += dt;
+    if (this.level < ROADBLOCK_MIN_LEVEL) return;
+    if (this.roadblocks.length >= ROADBLOCK_MAX) return;
+    if (this.sinceBlock < ROADBLOCK_INTERVAL) return;
+
+    const block = this.setUp(player);
+    if (!block) return;
+    this.roadblocks.push(block);
+    this.sinceBlock = 0;
+  }
+
+  /** Take a roadblock out of play once somebody has been through it. */
+  breach(block: Roadblock): void {
+    const i = this.roadblocks.indexOf(block);
+    if (i >= 0) this.roadblocks.splice(i, 1);
+  }
+
+  /**
+   * Find a road far enough ahead to be seen and wide enough to be a choice.
+   *
+   * The lead is measured in *seconds at the speed you are doing* rather than
+   * in metres. A fixed distance is a warning at 80 km/h and a wall out of the
+   * fog at 300.
+   */
+  private setUp(player: Chased): Roadblock | null {
+    const lead = Math.min(
+      ROADBLOCK_MAX_LEAD,
+      Math.max(ROADBLOCK_MIN_LEAD, Math.abs(player.speed) * ROADBLOCK_LEAD_TIME),
+    );
+    const aimX = player.x + Math.sin(player.heading) * lead;
+    const aimZ = player.z + Math.cos(player.heading) * lead;
+
+    let best: CityRoad | null = null;
+    let bestGap = Infinity;
+    for (const road of this.grid.roadsNear(aimX, aimZ)) {
+      if (road.width < ROADBLOCK_MIN_WIDTH || road.bridge) continue;
+      // At your level: a block on the deck overhead is not in your way.
+      if (Math.abs(this.city.nodes[road.a].y - player.y) > SURFACE_REACH) continue;
+
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const length = Math.max(1, Math.hypot(dx, dz));
+      // Running the way you are going, either direction: a road you are about
+      // to cross is not a road you are about to drive down.
+      const along = Math.abs(
+        (dx / length) * Math.sin(player.heading) + (dz / length) * Math.cos(player.heading),
+      );
+      if (along < ROADBLOCK_ALIGN) continue;
+
+      const gap = Math.hypot((a.x + b.x) / 2 - aimX, (a.z + b.z) / 2 - aimZ);
+      if (gap < bestGap) {
+        bestGap = gap;
+        best = road;
+      }
+    }
+    if (!best) return null;
+
+    const a = this.city.nodes[best.a].pos;
+    const b = this.city.nodes[best.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const length = Math.max(1, Math.hypot(dx, dz));
+    const t = Math.max(0, Math.min(1, ((aimX - a.x) * dx + (aimZ - a.z) * dz) / (length * length)));
+    const x = a.x + dx * t;
+    const z = a.z + dz * t;
+
+    // In front, and far enough in front to be a warning rather than a surprise.
+    const toBlockX = x - player.x;
+    const toBlockZ = z - player.z;
+    const ahead = toBlockX * Math.sin(player.heading) + toBlockZ * Math.cos(player.heading);
+    if (ahead < ROADBLOCK_MIN_LEAD) return null;
+
+    for (const other of this.roadblocks) {
+      if (Math.hypot(other.x - x, other.z - z) < ROADBLOCK_SPACING) return null;
+    }
+
+    // Higher heat means fewer ways through.
+    const chance = ROADBLOCK_GAP_CHANCE - ROADBLOCK_GAP_FALLOFF * (this.level - ROADBLOCK_MIN_LEVEL);
+    const half = best.width / 2;
+    const room = half - ROADBLOCK_GAP;
+    const gap = room > 0 && this.rng.chance(chance) ? this.rng.range(-room, room) : null;
+
+    const block: Roadblock = {
+      road: best,
+      x,
+      z,
+      y: this.city.nodes[best.a].y,
+      ax: -dz / length,
+      az: dx / length,
+      half,
+      gap,
+      cars: [],
+    };
+    this.park(block);
+    return block;
+  }
+
+  /** Fill the barrier with cruisers, leaving whatever gap it has. */
+  private park(block: Roadblock): void {
+    const slots = Math.max(2, Math.round((block.half * 2) / ROADBLOCK_CAR_SLOT));
+    const slot = (block.half * 2) / slots;
+    // Parked across the road, so the wall reads as a wall from a long way off.
+    const heading = Math.atan2(block.ax, block.az);
+
+    for (let i = 0; i < slots; i++) {
+      const offset = -block.half + slot * (i + 0.5);
+      if (block.gap !== null && Math.abs(offset - block.gap) < ROADBLOCK_GAP) continue;
+      block.cars.push({
+        x: block.x + block.ax * offset,
+        z: block.z + block.az * offset,
+        y: block.y,
+        heading,
+        kind: this.rng.pick(this.force.units),
+      });
+    }
   }
 
   /** Heat, the bust timer, and the three-stage escape. */
@@ -384,6 +581,7 @@ export class CityPolice {
   /** Clear the pursuit and start the cooldown. Called after a bust is served. */
   reset(): void {
     this.cops.length = 0;
+    this.roadblocks.length = 0;
     this.heat = 0;
     this.busted = false;
     this.pinned = 0;

@@ -39,7 +39,7 @@ Three things run off one deployment, and the query string picks between them.
 | --- | --- |
 | `/` | The finished single-track racer: traffic, police, a rival ladder. Canvas. |
 | `/?renderer=3d` | The same game drawn with three.js. Retired when the track is. |
-| `/?renderer=drive` | **A car in Kestrel Bay**: free roam, traffic, a six-level pursuit, takedowns, a camera with opinions, a HUD and a minimap. |
+| `/?renderer=drive` | **A car in Kestrel Bay**: free roam, traffic, a six-level pursuit, roadblocks, takedowns, a camera with opinions, a HUD and a minimap. |
 | `/?renderer=city` | A free camera over the city, for looking at the map rather than driving it. |
 
 **There are two simulations, and that is deliberate.** `world.ts` is the track
@@ -71,7 +71,7 @@ src/game/
   cityworld.ts    the car in the city: position, heading, height, collision
   impact.ts       what it takes to wreck a car: closing speed, angle, a wall
   citytraffic.ts  ambient traffic, kept around the player
-  citypolice.ts   the pursuit: six heat levels, cooldown, a search area
+  citypolice.ts   the pursuit: six heat levels, cooldown, a search area, roadblocks
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
   city/           the generator: types, rng, water, generate, boulevards,
                   interstate, buildings, furniture, grid (spatial index)
@@ -104,7 +104,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 180 unit tests + playtests
+npm run test       # 191 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -155,14 +155,16 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94 from M5.
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59 from M5.
 
-**M5: Open-world systems - 20 open.** #58 (six heat levels), #63 (cooldown)
-and #94 (takedowns) are done and are the framework the rest keys off. Natural next ones, in order of
+**M5: Open-world systems - 19 open.** #58 (six heat levels), #63 (cooldown),
+#94 (takedowns) and #59 (roadblocks) are done and are the framework the rest
+keys off. Natural next ones, in order of
 how much they use what already exists:
 
-- **#59 roadblocks**, **#61 enforcer SUVs**, **#60 spike strips**, **#62 the
-  helicopter** - all now have a heat level to key off.
+- **#61 enforcer SUVs**, **#60 spike strips**, **#62 the helicopter** - all now
+  have a heat level to key off, and #59 is the worked example of placing
+  something in front of the player.
 - **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
   races into the city and are what let `world.ts` finally retire.
 
@@ -194,7 +196,9 @@ before the pivot and both still live.
   which is the pattern to copy for anything else that needs an exact setup.
   Headless Chromium runs this scene at about two frames a second, so a rendered
   frame is fifteen physics steps and anything timed off `waitForTimeout` lands
-  wherever it lands.
+  wherever it lands. The same rate is why the camera director is still running
+  its opening orbit ten seconds in: wait on
+  `view.director.mode === 'chase'`, not on a clock.
 - **#105: nitrous barely matters over a race** on the track. Unchanged.
 - **There is no feel baseline for the city.** `npm run feel` only drives the
   track sim, which is a gap worth closing before tuning city driving by feel.

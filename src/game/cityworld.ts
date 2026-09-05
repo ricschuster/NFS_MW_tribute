@@ -24,6 +24,10 @@ import {
   TAKEDOWN_SPEED_KEPT,
   TAKEDOWN_HEAT,
   COP_UNITS,
+  ROADBLOCK_REACH,
+  ROADBLOCK_GAP,
+  ROADBLOCK_SPEED_KEPT,
+  ROADBLOCK_SCATTER,
 } from './constants';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -32,6 +36,7 @@ import { CityTraffic } from './citytraffic';
 import { CityPolice } from './citypolice';
 import { CityGrid, surfaceAt, roadHeightAt, carriageway, inWater } from './city/grid';
 import { impactDamage, touching } from './impact';
+import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
 import type { City, CityRoad } from './city/types';
 import type { InputState } from './world';
@@ -285,6 +290,8 @@ export class CityWorld {
    * enough stops being a car and becomes a wreck.
    */
   private contacts(): void {
+    if (this.roadblock()) return;
+
     // Wrecks first: they are already dead, so they only cost you speed. A
     // wreck you can drive through is a strange reward for having made it.
     for (const wreck of this.wrecks) {
@@ -315,6 +322,66 @@ export class CityWorld {
         this.wreck(cop, unit.colour, unit.scale, true);
       }
       return;
+    }
+  }
+
+  /**
+   * Going through a roadblock (#59).
+   *
+   * The barrier is a line with a hole in it rather than a row of circles,
+   * because a wall built from circles has gaps between the circles and a
+   * barrier you can slip through by accident is worse than no barrier.
+   *
+   * Hitting one is heavy but it is not a dead stop: you come out the far side
+   * doing very little, which is the worst place to be with cops behind you.
+   * Threading the gap is what the gap is for.
+   */
+  private roadblock(): boolean {
+    for (const block of this.police.roadblocks) {
+      if (Math.abs(block.y - this.y) > CAR_RADIUS * 2) continue;
+
+      const dx = this.x - block.x;
+      const dz = this.z - block.z;
+      // Along the barrier, and through it.
+      const along = dx * block.ax + dz * block.az;
+      const through = dx * block.az - dz * block.ax;
+      if (Math.abs(through) > ROADBLOCK_REACH || Math.abs(along) > block.half) continue;
+      if (block.gap !== null && Math.abs(along - block.gap) < ROADBLOCK_GAP - CAR_RADIUS) continue;
+
+      this.speed *= ROADBLOCK_SPEED_KEPT;
+      this.crashFlash = 1;
+      this.scatter(block, along);
+      this.police.breach(block);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Throw the barrier apart where it was hit.
+   *
+   * The cars become wrecks like any other, but shoved aside rather than left
+   * where they were parked: the player is standing in that spot, and a wreck
+   * dropped on top of them would be hit again on the very next step.
+   *
+   * They pay no takedown. Going through a parked car is not taking anyone
+   * down, and what it should actually be worth is Rep, which is #64.
+   */
+  private scatter(block: Roadblock, at: number): void {
+    for (const car of block.cars) {
+      const offset = (car.x - block.x) * block.ax + (car.z - block.z) * block.az;
+      const away = Math.sign(offset - at) || 1;
+      this.wrecks.push({
+        x: car.x + block.ax * away * ROADBLOCK_SCATTER,
+        y: car.y,
+        z: car.z + block.az * away * ROADBLOCK_SCATTER,
+        heading: car.heading,
+        colour: COP_UNITS[car.kind].colour,
+        scale: COP_UNITS[car.kind].scale,
+        police: true,
+        roll: this.rng.range(-0.7, 0.7),
+        age: 0,
+      });
     }
   }
 

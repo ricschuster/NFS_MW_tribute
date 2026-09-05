@@ -383,6 +383,14 @@ export class CityView {
       const unit = COP_UNITS[cop.kind];
       this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
     }
+    // Parked cruisers come out of the same pool: they are cop cars, lightbars
+    // and all, and a roadblock reads at distance because the lights do (#59).
+    for (const block of world.police.roadblocks) {
+      for (const car of block.cars) {
+        const unit = COP_UNITS[car.kind];
+        this.copCars.place(car.x, car.y, car.z, unit.colour, unit.scale).rotation.y = car.heading;
+      }
+    }
     this.siren += dt;
     this.copCars.flashLightbars(this.siren);
     this.copCars.end();
