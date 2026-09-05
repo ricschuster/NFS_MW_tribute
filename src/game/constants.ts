@@ -39,7 +39,7 @@ export const NITRO_SPEED_MULT = 1.28; // top speed multiplier while boosting (mu
 export const NITRO_ACCEL_MULT = 2.6; // acceleration multiplier while boosting
 export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from full)
 export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
-export const NITRO_MIN_ENGAGE = 0.5; // charge needed to light the boost again once it runs dry
+export const NITRO_MIN_ENGAGE = 0.25; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
 export const DRIFT_SLIDE = 0.35; // extra lateral slide when cornering hard at speed
 
@@ -52,9 +52,9 @@ export const COLORS: Record<'LIGHT' | 'DARK', ColorSet> = {
 };
 
 /** Traffic. */
-export const TRAFFIC_COUNT = 40;
-/** Car body width in world units (road half-width is ROAD_WIDTH, so this spans ~1 lane). */
-export const CAR_WIDTH_WORLD = 1000;
+export const TRAFFIC_COUNT = 24;
+/** Car body width in world units (road half-width is ROAD_WIDTH, so this spans about half a lane). */
+export const CAR_WIDTH_WORLD = 650;
 /** Car sprite height as a fraction of its drawn width. */
 export const CAR_ASPECT = 0.7;
 /** Car width in offset units (-1..1 across the road), used for collision tests. */
@@ -76,9 +76,9 @@ export const PLAYER_Z = CAMERA_HEIGHT * CAMERA_DEPTH;
 export const COP_MAX_SPEED_FRAC = 0.9; // cop top speed vs player max (base)
 export const COP_HEAT_SPEED_FRAC = 0.08; // extra at full heat (<1 total, so always outrunnable)
 export const COP_LANE_KP = 1.4; // how quickly the cop slides into your lane
-export const COP_FIRST_SPAWN = 3; // seconds before the first pursuit
-export const COP_RESPAWN = 5; // delay before a new pursuit after escaping
-export const COP_BUST_COOLDOWN = 6; // delay before a new pursuit after a bust
+export const COP_FIRST_SPAWN = 12; // seconds before the first pursuit
+export const COP_RESPAWN = 20; // delay before a new pursuit after escaping
+export const COP_BUST_COOLDOWN = 15; // delay before a new pursuit after a bust
 export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
 export const COP_SPAWN_DISTANCE = 1600; // how far back a cop enters
 export const COP_OUTRUN_DISTANCE = 5000; // trail farther than this and the cop is lost
