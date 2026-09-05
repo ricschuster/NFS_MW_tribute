@@ -140,7 +140,12 @@ export class CityWorld {
     const throttle = boosting ? this.accel * NITRO_ACCEL_MULT : this.accel;
 
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-    this.heading += steer * authority * dt * Math.sign(this.speed || 1);
+    // Subtracted, not added. Heading rotates the car's forward from +z toward
+    // +x, but a driver facing +z has their right hand pointing at -x - the
+    // right-handed cross product of forward and up. Adding here steers the car
+    // the opposite way from the one the wheel is turned, which is exactly how
+    // it felt: A went right and D went left.
+    this.heading -= steer * authority * dt * Math.sign(this.speed || 1);
     // No limit on heading any more. On a track the car could only ever be
     // pointed roughly along it; here it can be turned round, which is the
     // whole point of free roam.
