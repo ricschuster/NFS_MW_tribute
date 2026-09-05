@@ -21,6 +21,15 @@ const touchesWater = (r: Rect) => {
 
 const city = kestrelBay();
 
+/**
+ * A road on the street, as opposed to one flying over it. Most of the
+ * invariants below were written when there was only one level, and they are
+ * about the surface: the interstate is *supposed* to cross water, pass over
+ * blocks and ignore district character.
+ */
+const onSurface = (road: CityRoad) =>
+  city.nodes[road.a].y === 0 && city.nodes[road.b].y === 0 && road.class !== 'ramp';
+
 /** The rectangle a road's carriageway actually covers. */
 function carriageway(city: City, road: CityRoad): Rect {
   const a = city.nodes[road.a].pos;
@@ -243,7 +252,7 @@ describe('districts', () => {
 
   it('gives each district its own street character', () => {
     for (const road of city.roads) {
-      if (road.class === 'arterial') continue;
+      if (road.class !== 'street') continue;
       const character = DISTRICTS[road.district];
       expect(road.lanes).toBe(character.lanes);
       expect(road.speed).toBe(character.speed);
@@ -280,7 +289,7 @@ describe('water', () => {
   it('never leaves a road in the water unless it is a bridge', () => {
     const wet: string[] = [];
     for (const road of city.roads) {
-      if (road.bridge) continue;
+      if (road.bridge || !onSurface(road)) continue;
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
       for (let i = 0; i <= 10; i++) {
@@ -403,6 +412,88 @@ describe('buildings', () => {
   });
 });
 
+// The whole reason ADR-0004 exists. A projected ribbon or a ground plane can
+// hold one surface per map position; these tests are what that buys.
+describe('the elevated interstate', () => {
+  const interstate = () => city.roads.filter((r) => r.class === 'interstate');
+  const ramps = () => city.roads.filter((r) => r.class === 'ramp');
+
+  it('builds a circuit and ramps onto it', () => {
+    expect(interstate().length).toBeGreaterThan(20);
+    expect(ramps().length).toBeGreaterThan(2);
+  });
+
+  it('runs above the streets', () => {
+    const elevated = interstate().filter((r) => city.nodes[r.a].y > 0);
+    expect(elevated.length).toBeGreaterThan(interstate().length / 2);
+  });
+
+  it('dives into a tunnel somewhere, which is the same mechanism inverted', () => {
+    const below = city.nodes.filter((n) => n.y < 0);
+    expect(below.length).toBeGreaterThan(0);
+  });
+
+  // The point. Where the interstate passes over a street they occupy the same
+  // map position, and they must not have become the same junction: you cannot
+  // turn off an overpass onto the road beneath it.
+  it('never joins a road it merely crosses over', () => {
+    const surfaceRoads = city.roads.filter(onSurface).map((r) => carriageway(city, r));
+    const grid = index(surfaceRoads);
+
+    let crossings = 0;
+    const joined: string[] = [];
+    for (const road of interstate()) {
+      const a = city.nodes[road.a];
+      const b = city.nodes[road.b];
+      if (a.y <= 0 || b.y <= 0) continue;
+
+      const box = carriageway(city, road);
+      for (const id of near(grid, box)) {
+        if (!overlaps(box, surfaceRoads[id])) continue;
+        crossings++;
+        // A shared node would mean the two levels had been welded together.
+        const under = city.roads.filter(onSurface)[id];
+        for (const end of [a.id, b.id]) {
+          if (under.a === end || under.b === end) joined.push(`road ${road.id} welded to ${under.id}`);
+        }
+      }
+    }
+    expect(crossings).toBeGreaterThan(10); // it really does cross the grid
+    expect(joined).toEqual([]);
+  });
+
+  it('leaves the streets flat', () => {
+    for (const road of city.roads) {
+      if (road.class !== 'street' && road.class !== 'arterial') continue;
+      expect(city.nodes[road.a].y).toBe(0);
+      expect(city.nodes[road.b].y).toBe(0);
+    }
+  });
+
+  it('changes level only where it means to', () => {
+    // A ramp exists to change level, so one that does not is not a ramp.
+    for (const ramp of ramps()) {
+      expect(Math.abs(city.nodes[ramp.a].y - city.nodes[ramp.b].y)).toBeGreaterThan(0);
+    }
+    // The deck changes level too, on the run into and out of the tunnel. What
+    // must not happen is a step: every change is spread over enough road to
+    // drive up, which is what `GRADE_RUN` buys.
+    for (const road of city.roads) {
+      if (road.class !== 'ramp' && road.class !== 'interstate') continue;
+      const rise = Math.abs(city.nodes[road.a].y - city.nodes[road.b].y);
+      expect(rise / road.length).toBeLessThan(0.09);
+    }
+  });
+
+  it('stays reachable from the streets', () => {
+    // Already covered by the connectivity test, but state it directly: an
+    // interstate you cannot get onto is scenery.
+    const onRamp = new Set(ramps().flatMap((r) => [r.a, r.b]));
+    const touchesSurface = [...onRamp].some((id) => city.nodes[id].y === 0);
+    expect(touchesSurface).toBe(true);
+  });
+});
+
 describe('street furniture', () => {
   it('puts lamps, signs and barriers on the streets', () => {
     const kinds = new Set(city.furniture.map((p) => p.kind));
@@ -428,7 +519,7 @@ describe('street furniture', () => {
   // Junctions are excluded because a kerb there is genuinely inside the
   // carriageway of the road crossing it, which is not a bug.
   it('never stands a prop in the middle of a road', () => {
-    const midRoad = city.roads.map((road) => {
+    const midRoad = city.roads.filter(onSurface).map((road) => {
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
       const half = road.width / 2;
@@ -442,6 +533,7 @@ describe('street furniture', () => {
     const inTheRoad: string[] = [];
     for (const prop of city.furniture) {
       if (prop.kind === 'barrier') continue; // parapets live on the bridge itself
+      if (prop.y !== 0) continue; // a lamp on the viaduct is above the street, not in it
       const spot = { minX: prop.at.x, maxX: prop.at.x, minZ: prop.at.z, maxZ: prop.at.z };
       for (const id of near(grid, spot)) {
         const r = midRoad[id];
@@ -475,7 +567,11 @@ describe('street furniture', () => {
 
   it('signs only a real junction, not every cut in a road', () => {
     const signs = city.furniture.filter((p) => p.kind === 'sign');
-    const junctions = city.nodes.filter((n) => n.roads.length >= 3);
+    const junctions = city.nodes.filter(
+      (n) =>
+        n.y === 0 &&
+        n.roads.filter((id) => ['street', 'arterial'].includes(city.roads[id].class)).length >= 3,
+    );
     expect(signs.length).toBeGreaterThan(0);
     // At most one per junction, and fewer than the node count: a node that
     // exists only because a road was cut in two is not a junction to sign.
@@ -530,7 +626,7 @@ describe('blocks', () => {
   // #84 extrudes buildings from these and #86 keeps the car out of them, so a
   // block that eats into a carriageway is a building standing in the road.
   it('never overlaps a carriageway', () => {
-    const roads = city.roads.map((r) => carriageway(city, r));
+    const roads = city.roads.filter(onSurface).map((r) => carriageway(city, r));
     const grid = index(roads);
     const clashes: string[] = [];
     for (const block of city.blocks) {

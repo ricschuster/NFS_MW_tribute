@@ -48,9 +48,9 @@ async function boot(): Promise<void> {
 
     const view = new CityView(gl, kestrelBay());
     const named = params.get('view');
-    if (named === 'aerial' || named === 'downtown' || named === 'bridge' || named === 'street') {
-      view.look(named);
-    }
+    const views = ['aerial', 'downtown', 'bridge', 'street', 'overpass'] as const;
+    const picked = views.find((v) => v === named);
+    if (picked) view.look(picked);
 
     const fit = () => view.resize(stage.clientWidth || WIDTH, stage.clientHeight || HEIGHT);
     fit();

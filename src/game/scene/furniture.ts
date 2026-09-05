@@ -65,7 +65,7 @@ export class StreetFurniture {
 
     props.forEach((prop, i) => {
       quaternion.setFromAxisAngle(up, prop.angle);
-      position.set(prop.at.x, base, prop.at.z);
+      position.set(prop.at.x, prop.y + base, prop.at.z);
       matrix.compose(position, quaternion, scale);
       mesh.setMatrixAt(i, matrix);
     });

@@ -24,7 +24,7 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street'];
+const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();

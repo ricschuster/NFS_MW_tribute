@@ -20,6 +20,7 @@ import {
 import { Rng } from './rng';
 import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
+import { addInterstate } from './interstate';
 import { makeWater, type Water } from './water';
 import type {
   Axis,
@@ -53,7 +54,10 @@ import type {
  *     water gaps become bridges.
  *  6. **The repair.** Cutting a network can strand a district, so generation
  *     ends by proving the city is drivable and fixing it if it is not.
- *  7. **Buildings and furniture.** Each block is divided into lots and built
+ *  7. **The interstate.** An elevated circuit on its own alignment, joined to
+ *     the streets only by ramps. See `interstate.ts`: this is the one ADR-0004
+ *     was written for.
+ *  8. **Buildings and furniture.** Each block is divided into lots and built
  *     on, and the finished streets get lamps, signs and bridge parapets. Both
  *     are descriptions and never meshes: see `buildings.ts`, `furniture.ts`.
  *
@@ -109,6 +113,11 @@ export function generateCity(seed: number): City {
   // Blocks are checked against the water at block resolution, which a river
   // can slip through at building resolution. Buildings are cheap to test
   // exactly, so test them exactly rather than widening the block probe.
+  // The interstate goes on after the surface network is whole, and joins it
+  // only through its ramps. It is deliberately not part of the connectivity
+  // repair above: the surface city has to stand up without it.
+  addInterstate(rng, bounds, nodes, roads);
+
   const buildings: Building[] = [];
   for (const block of blocks) {
     for (const building of buildingsOn(rng, block)) {
@@ -472,7 +481,7 @@ function buildGraph(spans: Span[]): Graph {
     const k = key(x, z);
     let node = at.get(k);
     if (!node) {
-      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, roads: [] };
+      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, y: 0, roads: [] };
       at.set(k, node);
       nodes.push(node);
     }
@@ -604,7 +613,7 @@ function prune(graph: Graph): { nodes: CityNode[]; roads: CityRoad[] } {
   for (const node of graph.nodes) {
     if (parts.of[node.id] !== keep) continue;
     remap.set(node.id, nodes.length);
-    nodes.push({ id: nodes.length, pos: node.pos, roads: [] });
+    nodes.push({ id: nodes.length, pos: node.pos, y: node.y, roads: [] });
   }
 
   const roads: CityRoad[] = [];

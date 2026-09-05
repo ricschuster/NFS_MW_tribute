@@ -65,14 +65,26 @@ for (const block of city.blocks) {
   );
 }
 
-for (const road of city.roads) {
+const STROKE = {
+  interstate: '#c34bd0',
+  ramp: '#8f5fd6',
+  arterial: '#e8d9a8',
+  street: '#7d8890',
+};
+// Surface first, then the interstate over the top of it, which is also the
+// order they sit in the world.
+const order = (road) => (road.class === 'interstate' || road.class === 'ramp' ? 1 : 0);
+for (const road of [...city.roads].sort((p, q) => order(p) - order(q))) {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   const w = Math.max(0.6, road.width * scale);
-  const stroke = road.bridge ? '#ff8a4c' : road.class === 'arterial' ? '#e8d9a8' : '#7d8890';
+  // A tunnel is the same road with the sign flipped, and worth telling apart.
+  const underground = city.nodes[road.a].y < 0 && city.nodes[road.b].y < 0;
+  const stroke = road.bridge ? '#ff8a4c' : underground ? '#4a2d63' : STROKE[road.class];
+  const wide = road.bridge ? w * 1.8 : road.class === 'interstate' ? w * 1.1 : w;
   parts.push(
     `<line x1="${sx(a.x)}" y1="${sy(a.z)}" x2="${sx(b.x)}" y2="${sy(b.z)}" ` +
-      `stroke="${stroke}" stroke-width="${(road.bridge ? w * 1.8 : w).toFixed(2)}"/>`,
+      `stroke="${stroke}" stroke-width="${wide.toFixed(2)}" stroke-linecap="round"/>`,
   );
 }
 
@@ -110,6 +122,13 @@ console.log(
 );
 // One crossing may be cut into several sections, and one road may cross the
 // water twice, so group the bridge sections that actually touch each other.
+const elevated = city.roads.filter((r) => r.class === 'interstate');
+const ramps = city.roads.filter((r) => r.class === 'ramp');
+const tunnel = city.nodes.filter((n) => n.y < 0).length;
+console.log(
+  `  interstate: ${(elevated.reduce((s, r) => s + r.length, 0) / UNITS_PER_METRE / 1000).toFixed(1)} km loop, ` +
+    `${ramps.length} ramps, ${tunnel} nodes in tunnel`,
+);
 const bridges = city.roads.filter((r) => r.bridge);
 const groups = [];
 const placed = new Set();
