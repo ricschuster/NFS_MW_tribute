@@ -51,6 +51,7 @@ src/
     blacklist.ts     the 15 rivals (name, car, difficulty)
     progress.ts      rank progression persisted to localStorage
     audio.ts         synthesized engine / siren / pad (WebAudio)
+    touch.ts         on-screen touch controls for mobile
     render.ts        world→screen projection and sprite drawing
     input.ts         keyboard state (arrows + WASD + Enter + P/R/M)
     math.ts          easing, interpolation, fog, looping, overlap helpers
