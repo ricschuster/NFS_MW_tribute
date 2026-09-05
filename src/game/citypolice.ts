@@ -35,6 +35,9 @@ import {
   ROADBLOCK_GAP_CHANCE,
   ROADBLOCK_GAP_FALLOFF,
   ROADBLOCK_CAR_SLOT,
+  ENFORCER_MIN_LEVEL,
+  ENFORCER_SPAWN,
+  ENFORCER_INTERVAL,
   type CopKind,
 } from './constants';
 import { lineBlocked, type CityGrid } from './city/grid';
@@ -45,6 +48,15 @@ import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from
 export interface Cop extends GraphCar {
   /** What kind of unit this is: decides its pace, and how it is drawn. */
   kind: CopKind;
+  /**
+   * What it is here to do (#61).
+   *
+   * A `chase` unit follows you and sits in the lane beside yours. An
+   * `enforcer` comes in from in front and holds *your* line, which is a
+   * different job rather than a harder version of the same one: it is spawned
+   * ahead instead of behind, and it steers toward you rather than alongside.
+   */
+  role: 'chase' | 'enforcer';
 }
 
 /**
@@ -147,6 +159,7 @@ export class CityPolice {
 
   private sinceSpawn = 0;
   private sinceBlock = 0;
+  private sinceEnforcer = 0;
   private cooldown = COP_FIRST_SPAWN;
   private pinned = 0;
   private unseen = 0;
@@ -184,7 +197,11 @@ export class CityPolice {
     const speed = maxSpeed * this.force.speed;
     for (const cop of this.cops) {
       cop.speed = speed * COP_UNITS[cop.kind].pace;
-      advanceAlong(this.city, cop, dt, (c, node) => this.toward(c, node, player), TRAFFIC_LANE);
+      // An Enforcer aims at the line you are on rather than sitting in the
+      // lane beside it. Everything else keeps right, so oncoming traffic and
+      // oncoming police pass on the correct side.
+      const lane = cop.role === 'enforcer' ? this.aimingLane(cop, player) : TRAFFIC_LANE;
+      advanceAlong(this.city, cop, dt, (c, node) => this.toward(c, node, player), lane);
     }
 
     // Anything that has fallen a long way behind has lost you.
@@ -194,6 +211,7 @@ export class CityPolice {
 
     this.judge(dt, player);
     this.recruit(dt, player);
+    this.summon(dt, player);
     this.blockade(dt, player);
   }
 
@@ -457,6 +475,36 @@ export class CityPolice {
   }
 
   /** Bring more cops in, up to the count heat allows. */
+  /** How many are here to follow you, rather than to meet you (#61). */
+  private chasers(): number {
+    return this.cops.reduce((n, cop) => n + (cop.role === 'chase' ? 1 : 0), 0);
+  }
+
+  private enforcers(): number {
+    return this.cops.length - this.chasers();
+  }
+
+  /**
+   * Send something at you from in front (#61).
+   *
+   * On its own budget and its own clock, so an Enforcer arriving never thins
+   * out the pursuit behind you. It needs eyes on you like any other call-in:
+   * the police cannot put a unit in front of a car they have lost.
+   */
+  private summon(dt: number, player: Chased): void {
+    this.sinceEnforcer += dt;
+    if (this.state !== 'pursuit') return;
+    if (this.level < ENFORCER_MIN_LEVEL) return;
+    if (!this.seenNow) return;
+    if (this.enforcers() >= this.force.enforcers) return;
+    if (this.sinceEnforcer < ENFORCER_INTERVAL) return;
+
+    const cop = this.spawn(player, 'enforcer');
+    if (!cop) return;
+    this.cops.push(cop);
+    this.sinceEnforcer = 0;
+  }
+
   private recruit(dt: number, player: Chased): void {
     this.cooldown -= dt;
     if (this.cooldown > 0) return;
@@ -469,9 +517,9 @@ export class CityPolice {
 
     const wanted = this.force.maxCops;
     this.sinceSpawn += dt;
-    if (this.cops.length >= wanted || this.sinceSpawn < COP_SPAWN_INTERVAL) return;
+    if (this.chasers() >= wanted || this.sinceSpawn < COP_SPAWN_INTERVAL) return;
 
-    const cop = this.spawn(player);
+    const cop = this.spawn(player, 'chase');
     if (cop) {
       this.cops.push(cop);
       this.sinceSpawn = 0;
@@ -509,15 +557,52 @@ export class CityPolice {
     return best;
   }
 
+  /**
+   * The lane offset that puts an Enforcer on the player's line.
+   *
+   * Offsets are measured across the road from its centreline, so this is the
+   * player's own distance off that centreline, clamped to the carriageway. The
+   * effect is that the thing coming at you tracks across the road as you move,
+   * and the only way past it is to move late.
+   */
+  private aimingLane(cop: Cop, player: Chased): number {
+    const a = this.city.nodes[cop.road.a].pos;
+    const b = this.city.nodes[cop.road.b].pos;
+    const from = cop.forward ? a : b;
+    const to = cop.forward ? b : a;
+    const centreX = from.x + (to.x - from.x) * cop.t;
+    const centreZ = from.z + (to.z - from.z) * cop.t;
+
+    const heading = directionOf(this.city, cop);
+    // `placeOnRoad` offsets along (-heading.z, heading.x), so measure there.
+    const offset = (player.x - centreX) * -heading.z + (player.z - centreZ) * heading.x;
+    const limit = cop.road.width / 2;
+    return Math.max(-limit, Math.min(limit, offset));
+  }
+
   private gapTo(cop: Cop, player: Chased): number {
     return Math.hypot(cop.x - player.x, cop.z - player.z);
   }
 
-  /** Put a cop on a road behind the player, out of sight but not out of reach. */
-  private spawn(player: Chased): Cop | null {
-    const angle = this.rng.range(0, Math.PI * 2);
-    const x = player.x + Math.sin(angle) * CITY_COP_SPAWN;
-    const z = player.z + Math.cos(angle) * CITY_COP_SPAWN;
+  /**
+   * Put a cop on a road near the player, out of sight but not out of reach.
+   *
+   * Where "near" is depends on what it is for. A chaser comes in anywhere
+   * around you, because it only has to catch up. An Enforcer comes in on the
+   * road you are driving *at*, because the whole point of it is that it is
+   * already there when you arrive.
+   */
+  private spawn(player: Chased, role: Cop['role']): Cop | null {
+    let x: number;
+    let z: number;
+    if (role === 'enforcer') {
+      x = player.x + Math.sin(player.heading) * ENFORCER_SPAWN;
+      z = player.z + Math.cos(player.heading) * ENFORCER_SPAWN;
+    } else {
+      const angle = this.rng.range(0, Math.PI * 2);
+      x = player.x + Math.sin(angle) * CITY_COP_SPAWN;
+      z = player.z + Math.cos(angle) * CITY_COP_SPAWN;
+    }
 
     const nearby = this.grid.roadsNear(x, z).filter((road) => road.length > road.width * 2);
     if (nearby.length === 0) return null;
@@ -542,7 +627,8 @@ export class CityPolice {
       y: 0,
       heading: 0,
       damage: 0,
-      kind: this.rng.pick(this.force.units),
+      kind: role === 'enforcer' ? this.force.enforcerUnit : this.rng.pick(this.force.units),
+      role,
     };
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
     const facing = directionOf(this.city, cop);
@@ -582,6 +668,7 @@ export class CityPolice {
   reset(): void {
     this.cops.length = 0;
     this.roadblocks.length = 0;
+    this.sinceEnforcer = 0;
     this.heat = 0;
     this.busted = false;
     this.pinned = 0;

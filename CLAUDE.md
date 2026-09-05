@@ -126,6 +126,14 @@ nearly as wide as a lane at this scale and a block across a two-lane street is
 a wall with no decision in it - which also leaves the side streets as the way
 round.
 
+**Not every cop is chasing you** (issue #61). A `Cop` has a `role`: a `chase`
+unit is spawned behind you, navigates to close the distance and keeps right; an
+Enforcer is spawned *ahead* of you and steers to the lane you are actually in,
+so dodging it means committing late. They have their own budget in
+`HEAT_LEVELS` rather than a share of `maxCops`, because spending the chase
+budget on them would thin out the pursuit behind you every time one arrived in
+front of it.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup
@@ -142,9 +150,14 @@ the only place a person is told these URLs exist.
 
 In dev only, `?renderer=drive` hangs the running sim off `globalThis.crosstown`
 (`{ world, view, city }`). That is how `npm run cityshot` sets up shots it
-could otherwise only get by luck: the `takedown` view puts a cop in front of
-the car and steps the sim by hand, because headless Chromium renders this scene
-at about two frames a second and a frame is fifteen physics steps.
+could otherwise only get by luck: `takedown`, `roadblock` and `enforcer` all
+put the thing being photographed in front of the car rather than driving into
+one. Three things bite when writing one, all of them in the handoff: headless
+renders this scene at about two frames a second (so a frame is fifteen physics
+steps, and the camera director is still running its opening orbit ten seconds
+in - wait on `director.mode === 'chase'`), a cop pushed in with a position and
+a `t` is teleported onto its road on the next step unless the `t` matches, and
+the police sweep up roadblocks the instant the pursuit stops.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

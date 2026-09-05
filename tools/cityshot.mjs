@@ -27,10 +27,13 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown', 'roadblock']);
+const DRIVING = new Set(['drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer']);
 const VIEWS = flag('--view')
   ? [flag('--view')]
-  : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive', 'pursuit', 'crash', 'takedown', 'roadblock'];
+  : [
+      'aerial', 'downtown', 'bridge', 'street', 'overpass',
+      'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer',
+    ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -210,9 +213,70 @@ for (const view of VIEWS) {
       world.police.roadblocks.push({ road: world.onRoad, x, z, y: world.y, ax, az, half, gap, cars });
       world.police.heat = 0.6;
       world.speed = 0;
+      world.crashFlash = 0;
+    });
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
     });
     await page.waitForTimeout(1200);
   }
+
+  if (view === 'enforcer') {
+    // Same shape as the roadblock shot: drive out onto a street, wait for the
+    // chase camera, then put the thing being photographed in front of the car.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.7;
+      // The scripted drive is timed off the wall clock, so it does not always
+      // end in the same place: sometimes it ends against a building, and then
+      // the crash camera would be what is running when the shutter opens.
+      world.crashFlash = 0;
+
+      // On the graph, not just at a position. The pursuit re-derives every
+      // cop's place from its road and how far along it each step, so a cop
+      // pushed in with a position and `t: 0.5` is silently teleported to the
+      // middle of that road on the very next one.
+      const road = world.onRoad;
+      const a = world.city.nodes[road.a].pos;
+      const b = world.city.nodes[road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len2 = Math.max(1, dx * dx + dz * dz);
+      // Well back, because it closes at about 90 m of simulated time a second
+      // and the shot is taken a frame or two later.
+      const px = world.x + Math.sin(world.heading) * 70 * metre;
+      const pz = world.z + Math.cos(world.heading) * 70 * metre;
+      const along = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
+      // Facing back down the road at the car: head on is the whole point of it.
+      const forward = Math.sin(world.heading) * dx + Math.cos(world.heading) * dz < 0;
+
+      world.police.cops.push({
+        road,
+        t: forward ? along : 1 - along,
+        forward,
+        speed: 0,
+        damage: 0,
+        x: px,
+        z: pz,
+        y: world.y,
+        heading: world.heading + Math.PI,
+        kind: 'enforcer',
+        role: 'enforcer',
+      });
+      world.speed = 0;
+    });
+    await page.waitForTimeout(600);
+  }
+
 
   if (view === 'pursuit') {
     // Long enough for the cops to arrive, driving a loop so the car stays in
