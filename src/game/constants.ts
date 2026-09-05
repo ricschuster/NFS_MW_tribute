@@ -104,9 +104,7 @@ export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
 export const RIVAL_BASE_SPEED_FRAC = 0.85; // rival speed vs player max at difficulty 0
 export const RIVAL_DIFF_SPEED_FRAC = 0.12; // extra at difficulty 1; the top rival (0.97) needs nitrous to beat
 export const RIVAL_LANE = 0.4; // lane the rival lines up in
-export const RIVAL_NEAR_LEAD = 420; // render lead when the rival is just ahead (bigger = keeps it on-screen at the line)
-export const RIVAL_FAR_LEAD = 1500; // render lead when the rival is far ahead
-export const RIVAL_VIEW_RANGE = 4000; // race-distance gap mapped across near..far lead
+export const RIVAL_NEAR_LEAD = 420; // minimum render lead, so the rival is off the camera at the start line
 
 /** Roadside scenery (purely visual). */
 export const PROP_SPACING = 9; // a roadside prop every N segments

@@ -507,10 +507,12 @@ export class Game {
     const car = world.rivalCar;
     const rival = world.raceRival;
     if (!car || !rival) return;
-    const visible =
-      world.raceMode === 'countdown' ||
-      (world.raceMode === 'racing' && car.dist - world.playerRaceDist > 0);
+    const ahead = car.dist - world.playerRaceDist;
+    const visible = world.raceMode === 'countdown' || (world.raceMode === 'racing' && ahead > 0);
     if (!visible) return;
+    // The rival is drawn at its true gap now, so it can be further up the road
+    // than we project. Past that its segment holds stale screen data.
+    if (ahead > (DRAW_DISTANCE - 2) * SEGMENT_LENGTH) return;
 
     const segment = world.road.findSegment(car.z);
     const s = segment.p1.screen;
