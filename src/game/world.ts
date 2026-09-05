@@ -10,6 +10,8 @@ import {
   CENTRIFUGAL,
   STEP,
   CAR_WIDTH_OFFSET,
+  PROP_HIT_OFFSET,
+  PROP_DEFLECT,
   MIN_STEER,
   HIGH_SPEED_GRIP,
   REVERSE_SPEED_FRAC,
@@ -30,6 +32,7 @@ import {
   RIVAL_NEAR_LEAD,
 } from './constants';
 import { accelerate, limit, increase, interpolate, overlap } from './math';
+import { propAt } from './scenery';
 
 /** A snapshot of which controls are held this step. */
 export interface InputState {
@@ -271,6 +274,7 @@ export class World {
 
     this.traffic.update(dt, this.road);
     this.checkCollisions();
+    this.checkScenery();
 
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
   }
@@ -298,6 +302,33 @@ export class World {
     if (result === 'won') {
       this.beaten = Math.min(BLACKLIST.length, this.beaten + 1);
       saveProgress({ beaten: this.beaten });
+    }
+  }
+
+  /**
+   * Stop the player dead against a tree, billboard or lamp post. Props stand
+   * beyond the road edge, so this only bites once you have already left the
+   * tarmac - the off-road drag is the warning, the scenery is the penalty.
+   */
+  private checkScenery(): void {
+    if (this.speed <= 0) return;
+    if (Math.abs(this.playerX) < 1) return; // still on the road; nothing out there to hit
+
+    const baseZ = this.position + this.playerZ;
+    for (let s = 0; s < 2; s++) {
+      const segment = this.road.findSegment(baseZ + s * SEGMENT_LENGTH);
+      const prop = propAt(segment.index);
+      if (!prop) continue;
+      if (!overlap(this.playerX, CAR_WIDTH_OFFSET, prop.offset, PROP_HIT_OFFSET, 0.8)) continue;
+
+      this.speed = 0; // a tree does not give
+      // settle just short of it, so we are not parked inside the trunk, and
+      // glance back toward the road - otherwise the car wedges against the
+      // prop and every attempt to pull away hits it again
+      this.position = increase(segment.p1.world.z, -this.playerZ - SEGMENT_LENGTH, this.road.trackLength);
+      this.playerX -= prop.side * PROP_DEFLECT;
+      this.crashFlash = 1;
+      return;
     }
   }
 

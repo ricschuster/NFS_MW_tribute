@@ -21,11 +21,10 @@ import {
   ESCAPED_FLASH,
   RACE_DISTANCE,
   COP_OUTRUN_DISTANCE,
-  PROP_SPACING,
   PROP_WORLD,
-  PROP_OFFSET,
 } from './constants';
 import { interpolate, percentRemaining, exponentialFog } from './math';
+import { propAt } from './scenery';
 
 /** Top display speed, in km/h, used purely for the HUD readout. */
 const DISPLAY_MAX_KMH = 320;
@@ -427,15 +426,13 @@ export class Game {
     const road = this.world.road;
     for (let n = DRAW_DISTANCE - 1; n >= 0; n--) {
       const segment = road.segments[(baseSegment.index + n) % road.segments.length];
-      if (segment.index % PROP_SPACING !== 0) continue;
+      const prop = propAt(segment.index);
+      if (!prop) continue;
 
       const s = segment.p1.screen;
       if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
 
-      const slot = Math.floor(segment.index / PROP_SPACING);
-      const side = slot % 2 === 0 ? -1 : 1;
-      const kind = slot % 3; // 0 tree, 1 billboard, 2 lamp
-      const cx = s.x + side * PROP_OFFSET * s.w;
+      const cx = s.x + prop.offset * s.w;
       const u = Math.min(WIDTH * 0.5, (s.scale * PROP_WORLD * WIDTH) / 2);
       if (u < 2) continue;
 
@@ -443,7 +440,7 @@ export class Game {
       ctx.beginPath();
       ctx.rect(0, 0, WIDTH, segment.clip);
       ctx.clip();
-      this.drawProp(kind, cx, s.y, u, slot);
+      this.drawProp(prop.kind, cx, s.y, u, prop.slot);
       ctx.restore();
     }
   }
