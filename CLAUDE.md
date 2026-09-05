@@ -83,9 +83,12 @@ out of the renderer even while the renderer is in flux.
 
 ## Non-goals
 
-- Not networked, not commercial. No original EA assets in the repo, and no
-  modelled city either: Fairhaven is generated, not imported. Everything is
-  drawn, generated, or original.
+- Not networked, not commercial. No EA assets and no imported map: Fairhaven
+  is generated from a seed, not ripped.
+- Asset *quality* is a separate axis and is not a non-goal. Geometry may be
+  upgraded behind the generator's interface - textures on the boxes first,
+  then cars, then a modular building kit - as long as everything shipped is
+  original, generated, or CC0.
 - Not Autolog. The 2012 game's social layer is out of scope.
 - Not *Most Wanted* (2005). Rockport, the Blacklist of fifteen, bounty,
   milestones and impound strikes belong to the other game; see ADR-0004.
