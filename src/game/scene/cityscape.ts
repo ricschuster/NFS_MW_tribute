@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
+import { StreetFurniture } from './furniture';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /**
@@ -37,6 +38,7 @@ export class Cityscape {
   readonly group = new THREE.Group();
 
   private readonly provider: BuildingProvider;
+  private readonly furniture: StreetFurniture;
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
@@ -50,6 +52,9 @@ export class Cityscape {
     const bridges = this.bridges(city);
     if (bridges) this.group.add(bridges);
     for (const mesh of provider.build(city.buildings)) this.group.add(mesh);
+
+    this.furniture = new StreetFurniture(city.furniture);
+    for (const mesh of this.furniture.meshes) this.group.add(mesh);
   }
 
   /**
@@ -242,6 +247,7 @@ export class Cityscape {
 
   dispose(): void {
     this.provider.dispose();
+    this.furniture.dispose();
     for (const thing of this.owned) thing.dispose();
     this.group.clear();
   }

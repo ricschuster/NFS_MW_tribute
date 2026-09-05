@@ -403,6 +403,106 @@ describe('buildings', () => {
   });
 });
 
+describe('street furniture', () => {
+  it('puts lamps, signs and barriers on the streets', () => {
+    const kinds = new Set(city.furniture.map((p) => p.kind));
+    expect([...kinds].sort()).toEqual(['barrier', 'lamp', 'sign']);
+    expect(city.furniture.length).toBeGreaterThan(1000);
+  });
+
+  // Furniture on the perimeter road is offset outwards, off the ground and
+  // into the sea, so it has to be dropped rather than drawn.
+  it('never stands a prop outside the city', () => {
+    const outside = city.furniture.filter(
+      (p) =>
+        p.at.x < city.bounds.minX ||
+        p.at.x > city.bounds.maxX ||
+        p.at.z < city.bounds.minZ ||
+        p.at.z > city.bounds.maxZ,
+    );
+    expect(outside.length).toBe(0);
+  });
+
+  // The point of placing furniture from the road graph rather than scattering
+  // it: a lamp post standing in a live lane is the failure this rules out.
+  // Junctions are excluded because a kerb there is genuinely inside the
+  // carriageway of the road crossing it, which is not a bug.
+  it('never stands a prop in the middle of a road', () => {
+    const midRoad = city.roads.map((road) => {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      const half = road.width / 2;
+      const end = Math.min(road.width, road.length / 3); // clear of both junctions
+      return road.axis === 'x'
+        ? { minX: Math.min(a.x, b.x) + end, maxX: Math.max(a.x, b.x) - end, minZ: a.z - half, maxZ: a.z + half }
+        : { minX: a.x - half, maxX: a.x + half, minZ: Math.min(a.z, b.z) + end, maxZ: Math.max(a.z, b.z) - end };
+    });
+    const grid = index(midRoad);
+
+    const inTheRoad: string[] = [];
+    for (const prop of city.furniture) {
+      if (prop.kind === 'barrier') continue; // parapets live on the bridge itself
+      const spot = { minX: prop.at.x, maxX: prop.at.x, minZ: prop.at.z, maxZ: prop.at.z };
+      for (const id of near(grid, spot)) {
+        const r = midRoad[id];
+        if (prop.at.x > r.minX && prop.at.x < r.maxX && prop.at.z > r.minZ && prop.at.z < r.maxZ) {
+          inTheRoad.push(`${prop.kind} at ${Math.round(prop.at.x)},${Math.round(prop.at.z)}`);
+        }
+      }
+    }
+    expect(inTheRoad.slice(0, 5)).toEqual([]);
+  });
+
+  it('only puts parapets on bridges', () => {
+    const bridges = city.roads.filter((r) => r.bridge);
+    const barriers = city.furniture.filter((p) => p.kind === 'barrier');
+    expect(barriers.length).toBeGreaterThan(0);
+
+    for (const barrier of barriers) {
+      const beside = bridges.some((road) => {
+        const a = city.nodes[road.a].pos;
+        const b = city.nodes[road.b].pos;
+        return (
+          barrier.at.x >= Math.min(a.x, b.x) - road.width &&
+          barrier.at.x <= Math.max(a.x, b.x) + road.width &&
+          barrier.at.z >= Math.min(a.z, b.z) - road.width &&
+          barrier.at.z <= Math.max(a.z, b.z) + road.width
+        );
+      });
+      expect(beside).toBe(true);
+    }
+  });
+
+  it('signs only a real junction, not every cut in a road', () => {
+    const signs = city.furniture.filter((p) => p.kind === 'sign');
+    const junctions = city.nodes.filter((n) => n.roads.length >= 3);
+    expect(signs.length).toBeGreaterThan(0);
+    // At most one per junction, and fewer than the node count: a node that
+    // exists only because a road was cut in two is not a junction to sign.
+    expect(signs.length).toBeLessThanOrEqual(junctions.length);
+    expect(signs.length).toBeLessThan(city.nodes.length);
+
+    // And every one of them is actually beside a junction.
+    const reach = 2200; // widest carriageway plus the kerb gap, with room to spare
+    const grid = index(
+      junctions.map((n) => ({
+        minX: n.pos.x - reach,
+        maxX: n.pos.x + reach,
+        minZ: n.pos.z - reach,
+        maxZ: n.pos.z + reach,
+      })),
+    );
+    const stray = signs.filter((sign) => {
+      const spot = { minX: sign.at.x, maxX: sign.at.x, minZ: sign.at.z, maxZ: sign.at.z };
+      return [...near(grid, spot)].every((id) => {
+        const n = junctions[id].pos;
+        return Math.hypot(n.x - sign.at.x, n.z - sign.at.z) > reach;
+      });
+    });
+    expect(stray.length).toBe(0);
+  });
+});
+
 describe('blocks', () => {
   it('gives every block a positive area inside the city', () => {
     for (const b of city.blocks) {

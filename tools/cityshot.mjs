@@ -40,7 +40,13 @@ await server.listen();
     `scene: ${city.buildings.length} buildings in ${kinds} instanced meshes, ` +
       `${city.blocks.length} pavements, ~${(tris / 1000).toFixed(0)}k triangles before markings`,
   );
-  console.log(`draw calls: about ${kinds + 6} (sea, ground, 2 water, pavements, markings, bridges, buildings)`);
+  const furniture = {};
+  for (const prop of city.furniture) furniture[prop.kind] = (furniture[prop.kind] ?? 0) + 1;
+  console.log(
+    `furniture: ${Object.entries(furniture).map(([k, n]) => `${n} ${k}s`).join(', ')} ` +
+      `(5 instanced meshes)`,
+  );
+  console.log(`draw calls: about ${kinds + 11} (sea, ground, 2 water, pavements, markings, bridges, buildings, furniture)`);
 }
 const port = server.config.server.port ?? server.httpServer?.address()?.port;
 const base = `http://localhost:${port}`;

@@ -245,3 +245,12 @@ export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
 export const BUILDING_LANDMARK_MULT = 1.9;
 /** A lot smaller than this is a gap between buildings, not a plot. */
 export const BUILDING_MIN_LOT = m(14);
+
+/** Street furniture (#84), placed along the generated streets. */
+export const LAMP_SPACING = m(32);
+export const LAMP_KERB_GAP = m(1.2);
+export const SIGN_KERB_GAP = m(1.6);
+export const BARRIER_SPACING = m(6);
+export const LAMP_HEIGHT = m(8);
+export const SIGN_HEIGHT = m(2.6);
+export const BARRIER_HEIGHT = m(1.1);
