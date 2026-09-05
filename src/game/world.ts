@@ -7,13 +7,15 @@ import {
   SEGMENT_LENGTH,
   CAMERA_HEIGHT,
   CAMERA_DEPTH,
-  CENTRIFUGAL,
+  CURVE_TO_HEADING,
+  TURN_RATE,
+  HEADING_LIMIT,
+  ROAD_WIDTH,
   STEP,
   CAR_WIDTH_OFFSET,
   PROP_HIT_OFFSET,
   PROP_DEFLECT,
-  MIN_STEER,
-  HIGH_SPEED_GRIP,
+  LATERAL_GRIP,
   REVERSE_SPEED_FRAC,
   BUST_HOLD,
   ESCAPED_FLASH,
@@ -23,7 +25,6 @@ import {
   NITRO_RECHARGE,
   NITRO_MIN_ENGAGE,
   NITRO_BLEED_FRAC,
-  DRIFT_SLIDE,
   RACE_DISTANCE,
   COUNTDOWN_TIME,
   RIVAL_BASE_SPEED_FRAC,
@@ -31,7 +32,7 @@ import {
   RIVAL_LANE,
   RIVAL_NEAR_LEAD,
 } from './constants';
-import { accelerate, limit, increase, interpolate, overlap } from './math';
+import { accelerate, limit, increase, overlap } from './math';
 import { propAt } from './scenery';
 
 /** A snapshot of which controls are held this step. */
@@ -69,9 +70,15 @@ export interface RivalCar {
  * world, so the same logic drives the render loop (Game) and the playtests.
  */
 export class World {
-  position = 0; // world-z along the track
+  position = 0; // distance travelled along the track
   playerX = 0; // -1..1 = road edges; beyond = off-road
-  speed = 0;
+  /**
+   * Where the car points, in radians relative to the road direction. Positive
+   * is toward +playerX. Steering changes this rather than sliding the car
+   * sideways, so the car goes where it is aimed.
+   */
+  heading = 0;
+  speed = 0; // along the heading, not along the road
   crashFlash = 0; // 1 right after a crash, decays to 0
   busted = false; // frozen in the BUSTED state
   escapedFlash = 0; // seconds left on the ESCAPED banner
@@ -153,11 +160,13 @@ export class World {
       return;
     }
 
-    this.drive(dt, input);
+    const ds = this.drive(dt, input);
 
+    // the pursuit closes along the road, so what matters is how fast the player
+    // is covering it - pointing the car sideways is not an escape
     this.police.update(
       dt,
-      { z: this.position + this.playerZ, offset: this.playerX, speed: this.speed },
+      { z: this.position + this.playerZ, offset: this.playerX, speed: ds / dt },
       this.maxSpeed,
       this.road.trackLength,
     );
@@ -189,8 +198,8 @@ export class World {
 
   /** The sprint: drive, advance the rival, and check the finish line. */
   private stepRacing(dt: number, input: InputState): void {
-    this.drive(dt, input);
-    this.playerRaceDist += Math.max(0, dt * this.speed);
+    // race progress is distance along the route, not distance travelled
+    this.playerRaceDist += Math.max(0, this.drive(dt, input));
 
     const rival = this.raceRival;
     const car = this.rivalCar;
@@ -211,17 +220,24 @@ export class World {
     else if (car.dist >= RACE_DISTANCE) this.finishRace('lost');
   }
 
-  /** Shared driving physics: steering, throttle, off-road, traffic, collisions. */
-  private drive(dt: number, input: InputState): void {
+  /**
+   * Shared driving physics: steering, throttle, off-road, traffic, collisions.
+   * Returns the distance covered *along* the road this step, which is not the
+   * same as the distance travelled once the car is pointed across it.
+   *
+   * The car is tracked in a road-relative frame: how far along the track it is,
+   * how far across, and which way it points. Motion is velocity along the
+   * heading, split into those two axes. That is the same physics a free-roam
+   * car has, written in the frame the track still provides - so issue #83 can
+   * swap the frame for a city without touching the model.
+   */
+  private drive(dt: number, input: InputState): number {
     const playerSegment = this.road.findSegment(this.position + this.playerZ);
-    const speedPercent = this.speed / this.maxSpeed;
-    // curve push scales with actual speed; steering keeps a floor so you can
-    // peel out of a lane even when stopped (e.g. right after a crash)
-    const curveDx = dt * 2 * speedPercent;
-    // steering also goes light as speed rises, so the sharpest bends cannot be
-    // held flat out; the floor keeps low-speed authority intact
-    const grip = interpolate(1, HIGH_SPEED_GRIP, Math.min(1, speedPercent * speedPercent));
-    const steerDx = dt * 2 * Math.max(Math.abs(speedPercent), MIN_STEER) * grip;
+    // Yaw is limited by grip rather than by the wheel: turning at rate w while
+    // travelling at v costs v*w of lateral acceleration, so the faster the car
+    // goes the wider it has to turn. TURN_RATE caps it at low speed, which also
+    // leaves a stopped car free to be aimed away from whatever it just hit.
+    const authority = Math.min(TURN_RATE, LATERAL_GRIP / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)));
 
     // nitrous: rechargeable boost to top speed and acceleration. Relighting it
     // takes a real charge, not the sliver one frame of recharge puts back at
@@ -234,17 +250,22 @@ export class World {
       : Math.min(1, this.nitro + dt * NITRO_RECHARGE);
     const throttle = boosting ? this.accel * NITRO_ACCEL_MULT : this.accel;
 
-    this.position = increase(this.position, dt * this.speed, this.road.trackLength);
+    // point the car; reversing pivots it the other way, as a real car does
+    const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    this.heading += steer * authority * dt * Math.sign(this.speed || 1);
 
-    if (input.left) this.playerX -= steerDx;
-    if (input.right) this.playerX += steerDx;
+    // travel along the heading, split into along-road and across-road motion
+    const along = this.speed * Math.cos(this.heading);
+    const ds = along * dt;
+    this.position = increase(this.position, ds, this.road.trackLength);
+    this.playerX += (this.speed * Math.sin(this.heading) * dt) / ROAD_WIDTH;
 
-    // curves fling the car toward the outside of the bend
-    this.playerX -= curveDx * speedPercent * playerSegment.curve * CENTRIFUGAL;
-
-    // drift: hard steering slides the car wider the faster you go
-    const steerInput = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-    this.playerX += steerInput * dt * DRIFT_SLIDE * speedPercent * speedPercent;
+    // A bend rotates the road under the car, so a straight heading runs wide on
+    // its own. This is what the old centrifugal fudge was standing in for, and
+    // unlike that fudge it is symmetric: steering into the corner cancels it
+    // exactly.
+    this.heading -= playerSegment.curve * CURVE_TO_HEADING * ds;
+    this.heading = limit(this.heading, -HEADING_LIMIT, HEADING_LIMIT);
 
     if (input.up) {
       this.speed = accelerate(this.speed, throttle, dt);
@@ -277,6 +298,7 @@ export class World {
     this.checkScenery();
 
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
+    return ds;
   }
 
   private startRace(): void {
@@ -286,6 +308,7 @@ export class World {
     this.playerRaceDist = 0;
     this.raceResult = null;
     this.speed = 0;
+    this.heading = 0; // lined up straight on the grid
     this.escapedFlash = 0;
     this.police.reset(); // no pursuit during a sanctioned race
     this.rivalCar = {

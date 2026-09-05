@@ -24,6 +24,22 @@ function play(world: World, seconds: number, control: (t: number, w: World) => I
   }
 }
 
+/**
+ * Steer toward `targetX` across the road, with `extra` inputs held.
+ *
+ * Steering points the car now rather than sliding it sideways, so aiming at a
+ * lateral position takes two levels: pick the heading that would carry the car
+ * there, then steer toward that heading. Reacting to the lateral error alone
+ * just oscillates.
+ */
+function steerToward(w: World, targetX: number, extra: Partial<InputState> = {}): InputState {
+  const want = Math.max(-0.35, Math.min(0.35, (targetX - w.playerX) * 0.8));
+  const error = want - w.heading;
+  if (error > 0.01) return press({ ...extra, right: true });
+  if (error < -0.01) return press({ ...extra, left: true });
+  return press(extra);
+}
+
 // Traffic spawns at random positions, so these playtests run on a clear road to
 // stay deterministic. The pursuit's only randomness (a cop's spawn lane) does
 // not affect any asserted outcome.
@@ -45,12 +61,16 @@ describe('playtest: driving', () => {
     expect(w.speed).toBeLessThan(0); // now reversing
   });
 
-  it('lets you steer out of a lane while stopped (crash-recovery authority)', () => {
+  it('lets you point a stopped car away from what it hit (crash recovery)', () => {
     const w = new World({ traffic: false });
-    const before = w.playerX;
     play(w, 1, () => press({ left: true })); // never touch the throttle
     expect(w.speed).toBe(0);
-    expect(w.playerX).toBeLessThan(before);
+    // a stopped car cannot slide sideways any more, but it can still be aimed,
+    // which is what getting off a wall actually needs
+    expect(w.heading).toBeLessThan(-0.1);
+
+    play(w, 1.5, (_t, world) => press({ up: true, left: world.heading > -0.3 }));
+    expect(w.playerX).toBeLessThan(0); // and then driven off in that direction
   });
 
   it('bleeds speed when driven off the road', () => {
@@ -107,10 +127,7 @@ describe('playtest: driving', () => {
     play(w, 4, (_t, world) => {
       topSpeed = Math.max(topSpeed, world.speed);
       if (world.crashFlash > 0) sawCrash = true;
-      // floor it, steering to stay in the car's lane
-      if (world.playerX > 0.03) return press({ up: true, left: true });
-      if (world.playerX < -0.03) return press({ up: true, right: true });
-      return press({ up: true });
+      return steerToward(world, 0, { up: true }); // floor it, holding the car's lane
     });
 
     expect(sawCrash).toBe(true); // we hit it
@@ -185,11 +202,9 @@ describe('playtest: pursuit', () => {
     // Steer back to centre as well as flooring it: throttle alone drifts off
     // the road on the first curve, and an off-road car gets caught, which is
     // the pursuit working rather than the escape failing.
-    play(w, 26, () => {
-      if (w.escapedFlash > 0) sawEscape = true;
-      if (w.playerX > 0.05) return press({ up: true, left: true });
-      if (w.playerX < -0.05) return press({ up: true, right: true });
-      return press({ up: true });
+    play(w, 26, (_t, world) => {
+      if (world.escapedFlash > 0) sawEscape = true;
+      return steerToward(world, 0, { up: true });
     });
     expect(sawEscape).toBe(true);
   });
@@ -206,10 +221,7 @@ describe('playtest: pursuit', () => {
         topLevel = Math.max(topLevel, w.police.level);
       }
       // hold a fast-but-not-flat-out pace, staying on the road
-      const throttle = w.speed < w.maxSpeed * 0.9;
-      if (w.playerX > 0.05) return press({ up: throttle, left: true });
-      if (w.playerX < -0.05) return press({ up: throttle, right: true });
-      return press({ up: throttle });
+      return steerToward(w, 0, { up: w.speed < w.maxSpeed * 0.9 });
     });
 
     expect(chase).toBeGreaterThan(6); // long enough to be a chase
@@ -223,9 +235,7 @@ describe('playtest: Blacklist race', () => {
   // (holding only throttle would drift off-road on curves — a human steers).
   function raceLine(t: number, w: World): InputState {
     if (t < STEP * 0.5) return press({ confirm: true });
-    if (w.playerX > 0.05) return press({ up: true, left: true });
-    if (w.playerX < -0.05) return press({ up: true, right: true });
-    return press({ up: true });
+    return steerToward(w, 0, { up: true });
   }
 
   it('wins a clean sprint and ranks up', () => {

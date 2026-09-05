@@ -289,6 +289,8 @@ export class Scene3D {
     }
     const at = this.lateral(world.playerZ / SEGMENT_LENGTH);
     this.player.position.set(world.playerX * ROAD_WIDTH, at.y, world.playerZ);
+    // the car has a heading now, so point the mesh where it is actually going
+    this.player.rotation.y = -world.heading;
   }
 
   private placeCamera(world: World, reducedMotion: boolean): void {
