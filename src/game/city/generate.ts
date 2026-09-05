@@ -15,13 +15,18 @@ import {
   CITY_BRIDGE_SPACING,
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
+  BOULEVARD_CLEARANCE,
+  BOULEVARD_LANES,
+  BOULEVARD_SPEED,
   DISTRICTS,
 } from '../constants';
 import { Rng } from './rng';
 import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
 import { addInterstate } from './interstate';
+import { boulevardRoutes } from './boulevards';
 import { makeWater, type Water } from './water';
+import { segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
   Building,
@@ -33,6 +38,7 @@ import type {
   Rect,
   RoadClass,
   Superblock,
+  Vec2,
 } from './types';
 
 /**
@@ -54,7 +60,9 @@ import type {
  *     water gaps become bridges.
  *  6. **The repair.** Cutting a network can strand a district, so generation
  *     ends by proving the city is drivable and fixing it if it is not.
- *  7. **The interstate.** An elevated circuit on its own alignment, joined to
+ *  7. **Boulevards and the interstate.** Curves laid over the finished grid,
+ *     and an elevated circuit over all of it.
+ *  7b. **The interstate.** An elevated circuit on its own alignment, joined to
  *     the streets only by ramps. See `interstate.ts`: this is the one ADR-0004
  *     was written for.
  *  8. **Buildings and furniture.** Each block is divided into lots and built
@@ -92,15 +100,36 @@ export function generateCity(seed: number): City {
   const blocks: CityBlock[] = [];
 
   for (const x of xLines) {
-    laid.push({ axis: 'z', at: x, from: bounds.minZ, to: bounds.maxZ, class: 'arterial', district: 'midtown' });
+    laid.push({
+      from: { x, z: bounds.minZ },
+      to: { x, z: bounds.maxZ },
+      axis: 'z',
+      class: 'arterial',
+      district: 'midtown',
+    });
   }
   for (const z of zLines) {
-    laid.push({ axis: 'x', at: z, from: bounds.minX, to: bounds.maxX, class: 'arterial', district: 'midtown' });
+    laid.push({
+      from: { x: bounds.minX, z },
+      to: { x: bounds.maxX, z },
+      axis: 'x',
+      class: 'arterial',
+      district: 'midtown',
+    });
   }
 
   const arterialHalf = roadWidth(CITY_ARTERIAL_LANES) / 2;
   for (const cell of superblocks) {
     fillSuperblock(rng, cell, arterialHalf, water, laid, blocks);
+  }
+
+  // Boulevards go in as ordinary spans, so they are cut against the water and
+  // split at every crossing by the same code as everything else. Each curve is
+  // a chain of short straight pieces; the bend is in where the pieces point.
+  for (const route of boulevardRoutes(rng, bounds)) {
+    for (let i = 1; i < route.length; i++) {
+      laid.push({ from: route[i - 1], to: route[i], class: 'boulevard', district: 'midtown' });
+    }
   }
 
   // Cut the network against the water, keeping what crosses it as candidates.
@@ -117,6 +146,24 @@ export function generateCity(seed: number): City {
   // only through its ramps. It is deliberately not part of the connectivity
   // repair above: the surface city has to stand up without it.
   addInterstate(rng, bounds, nodes, roads);
+
+  // A boulevard runs through ground the grid had already parcelled up, so the
+  // blocks it crosses have to make way for it.
+  const swept = roads.filter((road) => road.class === 'boulevard');
+  const onBoulevard = (r: Rect) =>
+    swept.some((road) => {
+      const a = nodes[road.a].pos;
+      const b = nodes[road.b].pos;
+      return segmentToRect(a, b, r) < road.width / 2 + BOULEVARD_CLEARANCE;
+    });
+
+  const standing: CityBlock[] = [];
+  for (const block of blocks) {
+    const fitted = pullClear(block.bounds, onBoulevard);
+    if (fitted) standing.push({ district: block.district, bounds: fitted });
+  }
+  blocks.length = 0;
+  blocks.push(...standing);
 
   const buildings: Building[] = [];
   for (const block of blocks) {
@@ -142,29 +189,71 @@ export function generateCity(seed: number): City {
   return city;
 }
 
-/** A road centreline before it is cut at its crossings. */
+/**
+ * A road centreline before it is cut at its crossings.
+ *
+ * A segment between two points, not a coordinate on an axis. That is what lets
+ * a boulevard go through the same pipeline as a street: cut against the water,
+ * split at every crossing, repaired if it strands anything. `axis` survives
+ * only as a fast path - most spans really are axis-aligned, and knowing it
+ * turns a crossing test into two comparisons.
+ */
 interface Span {
-  axis: Axis;
-  /** The fixed coordinate: z for an 'x' road, x for a 'z' road. */
-  at: number;
-  from: number;
-  to: number;
+  from: Vec2;
+  to: Vec2;
   class: RoadClass;
   district: DistrictKind;
   bridge?: boolean;
+  axis?: Axis;
 }
 
 /** A stretch of water a road would have to cross: a bridge, or a dead end. */
 interface Gap {
   span: Span;
+  /** Where the land ends and starts again, as fractions along the span. */
   from: number;
   to: number;
   length: number;
 }
 
+const spanLength = (span: Span) =>
+  Math.hypot(span.to.x - span.from.x, span.to.z - span.from.z);
+
+/** A point a fraction `t` along a span. */
+function pointAt(span: Span, t: number): Vec2 {
+  return {
+    x: span.from.x + (span.to.x - span.from.x) * t,
+    z: span.from.z + (span.to.z - span.from.z) * t,
+  };
+}
+
+/** Where two spans cross, or null. Axis-aligned pairs take the cheap route. */
+function crossing(a: Span, b: Span): Vec2 | null {
+  if (a.axis && b.axis) {
+    if (a.axis === b.axis) return null;
+    const [along, across] = a.axis === 'x' ? [a, b] : [b, a];
+    const x = across.from.x;
+    const z = along.from.z;
+    if (x < Math.min(along.from.x, along.to.x) || x > Math.max(along.from.x, along.to.x)) return null;
+    if (z < Math.min(across.from.z, across.to.z) || z > Math.max(across.from.z, across.to.z)) return null;
+    return { x, z };
+  }
+  return segmentIntersection(a.from, a.to, b.from, b.to);
+}
+
 function roadWidth(lanes: number): number {
   return lanes * CITY_LANE_WIDTH;
 }
+
+/** Road classes that carry their own lane count and speed, whatever district they cross. */
+const LANES_FOR: Partial<Record<RoadClass, number>> = {
+  arterial: CITY_ARTERIAL_LANES,
+  boulevard: BOULEVARD_LANES,
+};
+const SPEED_FOR: Partial<Record<RoadClass, number>> = {
+  arterial: CITY_ARTERIAL_SPEED,
+  boulevard: BOULEVARD_SPEED,
+};
 
 /**
  * Positions for `count` arterials spanning [min, max], both edges included.
@@ -282,21 +371,26 @@ function pullIn(r: Rect, edge: 'minX' | 'maxX' | 'minZ' | 'maxZ', t: number): Re
 const area = (r: Rect) => (r.maxX - r.minX) * (r.maxZ - r.minZ);
 
 /**
- * Pull a block back from the water instead of deleting it, so the coast reads
- * as a quay rather than as a few hundred metres of nothing.
+ * Pull a block back off whatever is in the way, instead of deleting it.
  *
- * Water almost always arrives from one side, so each edge is tried in turn and
- * the roomiest dry result wins. A block the water reaches from two sides is a
- * sliver of bank, not a plot, and is dropped.
+ * Used for both the water and the boulevards, and for the same reason in each:
+ * deleting a whole block because something clips its corner takes a hundred
+ * metres of city out for the sake of ten. A diagonal boulevard clips a corner
+ * off every block it passes, so without this it carves a staircase-shaped hole
+ * far wider than the road.
+ *
+ * Whatever it is almost always arrives from one side, so each edge is tried in
+ * turn and the roomiest clear result wins. A block reached from two sides is a
+ * sliver, not a plot, and is dropped.
  */
-function fitToLand(block: Rect, water: Water): Rect | null {
-  if (!anyWater(block, water)) return block;
+function pullClear(block: Rect, blocked: (r: Rect) => boolean): Rect | null {
+  if (!blocked(block)) return block;
 
   let best: Rect | null = null;
   for (const edge of ['minX', 'maxX', 'minZ', 'maxZ'] as const) {
-    for (let t = 0.1; t <= 0.65; t += 0.05) {
+    for (let t = 0.1; t <= 0.7; t += 0.05) {
       const pulled = pullIn(block, edge, t);
-      if (anyWater(pulled, water)) continue;
+      if (blocked(pulled)) continue;
       if (!best || area(pulled) > area(best)) best = pulled;
       break;
     }
@@ -354,10 +448,22 @@ function fillSuperblock(
   const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ, character.jitter).filter(keep);
 
   for (const x of xCuts) {
-    spans.push({ axis: 'z', at: x, from: bounds.minZ, to: bounds.maxZ, class: 'street', district });
+    spans.push({
+      from: { x, z: bounds.minZ },
+      to: { x, z: bounds.maxZ },
+      axis: 'z',
+      class: 'street',
+      district,
+    });
   }
   for (const z of zCuts) {
-    spans.push({ axis: 'x', at: z, from: bounds.minX, to: bounds.maxX, class: 'street', district });
+    spans.push({
+      from: { x: bounds.minX, z },
+      to: { x: bounds.maxX, z },
+      axis: 'x',
+      class: 'street',
+      district,
+    });
   }
 
   const xEdges = [inner.minX, ...xCuts, inner.maxX];
@@ -370,28 +476,24 @@ function fillSuperblock(
         minZ: zEdges[j] + (j === 0 ? 0 : streetHalf),
         maxZ: zEdges[j + 1] - (j + 2 === zEdges.length ? 0 : streetHalf),
       };
-      const fitted = fitToLand(block, water);
+      const fitted = pullClear(block, (r) => anyWater(r, water));
       if (fitted) blocks.push({ district, bounds: fitted });
     }
   }
 }
 
-/** A point on a span, at `along` units through it. */
-function pointOn(span: Span, along: number): { x: number; z: number } {
-  return span.axis === 'x' ? { x: along, z: span.at } : { x: span.at, z: along };
-}
-
 /**
- * Find where a span leaves the land, to within a metre or so. Sampling alone
- * would put the bank up to a whole sample away from where it is, and a bridge
- * that starts short of the water is a road that stops in a field.
+ * Find where a span leaves the land, to within a metre or so, as a fraction
+ * along it. Sampling alone would put the bank up to a whole sample away from
+ * where it is, and a bridge that starts short of the water is a road that
+ * stops in a field.
  */
 function edge(span: Span, water: Water, dry: number, wet: number): number {
   let lo = dry;
   let hi = wet;
   for (let i = 0; i < 10; i++) {
     const mid = (lo + hi) / 2;
-    const p = pointOn(span, mid);
+    const p = pointAt(span, mid);
     if (water.isWater(p.x, p.z)) hi = mid;
     else lo = mid;
   }
@@ -403,38 +505,47 @@ function edge(span: Span, water: Water, dry: number, wet: number): number {
  * stretches of water between them are recorded as gaps a bridge could cross.
  */
 function clip(span: Span, water: Water, dry: Span[], gaps: Gap[]): void {
+  const length = spanLength(span);
   const runs: { from: number; to: number }[] = [];
   let start: number | null = null;
-  let previous = span.from;
+  let previous = 0;
 
-  const steps = Math.max(1, Math.ceil((span.to - span.from) / CITY_CLIP_STEP));
+  const steps = Math.max(1, Math.ceil(length / CITY_CLIP_STEP));
   for (let i = 0; i <= steps; i++) {
-    const along = span.from + ((span.to - span.from) * i) / steps;
-    const p = pointOn(span, along);
+    const t = i / steps;
+    const p = pointAt(span, t);
     const land = !water.isWater(p.x, p.z);
     if (land && start === null) {
-      start = i === 0 ? along : edge(span, water, along, previous);
+      start = i === 0 ? t : edge(span, water, t, previous);
     } else if (!land && start !== null) {
-      runs.push({ from: start, to: edge(span, water, previous, along) });
+      runs.push({ from: start, to: edge(span, water, previous, t) });
       start = null;
     }
-    previous = along;
+    previous = t;
   }
-  if (start !== null) runs.push({ from: start, to: span.to });
+  if (start !== null) runs.push({ from: start, to: 1 });
 
-  const kept = runs.filter((r) => r.to - r.from >= CITY_MIN_STREET);
-  for (const run of kept) dry.push({ ...span, from: run.from, to: run.to });
+  const kept = runs.filter((r) => (r.to - r.from) * length >= CITY_MIN_STREET);
+  for (const run of kept) {
+    dry.push({ ...span, from: pointAt(span, run.from), to: pointAt(span, run.to) });
+  }
 
-  // Only an arterial is ever worth bridging; a side street stops at the bank.
-  if (span.class !== 'arterial') return;
+  // Only a major road is worth bridging; a side street stops at the bank.
+  if (span.class !== 'arterial' && span.class !== 'boulevard') return;
   for (let i = 0; i < kept.length - 1; i++) {
     const from = kept[i].to;
     const to = kept[i + 1].from;
-    if (to - from <= CITY_MAX_BRIDGE) gaps.push({ span, from, to, length: to - from });
+    const gap = (to - from) * length;
+    if (gap <= CITY_MAX_BRIDGE) gaps.push({ span, from, to, length: gap });
   }
 }
 
-const bridgeSpan = (gap: Gap): Span => ({ ...gap.span, from: gap.from, to: gap.to, bridge: true });
+const bridgeSpan = (gap: Gap): Span => ({
+  ...gap.span,
+  from: pointAt(gap.span, gap.from),
+  to: pointAt(gap.span, gap.to),
+  bridge: true,
+});
 
 /**
  * Pick the crossings the city is designed around (ADR-0005 rule 2): the
@@ -442,7 +553,7 @@ const bridgeSpan = (gap: Gap): Span => ({ ...gap.span, from: gap.from, to: gap.t
  * make during a pursuit. The repair pass adds more only if it has to.
  */
 function chooseBridges(gaps: Gap[]): number[] {
-  const midpoint = (gap: Gap) => pointOn(gap.span, (gap.from + gap.to) / 2);
+  const midpoint = (gap: Gap) => pointAt(gap.span, (gap.from + gap.to) / 2);
   const order = gaps.map((_, i) => i).sort((a, b) => gaps[a].length - gaps[b].length);
   const chosen: number[] = [];
   for (const i of order) {
@@ -489,29 +600,34 @@ function buildGraph(spans: Span[]): Graph {
   };
 
   for (const span of spans) {
-    // Where the perpendicular spans cross this one, plus its own two ends.
-    const cuts = new Set([snap(span.from), snap(span.to)]);
+    const length = spanLength(span);
+    if (length < 1) continue;
+
+    // Everything crossing this span, as fractions along it, plus its own ends.
+    const cuts = new Set([0, 1]);
     for (const other of spans) {
-      if (other.axis === span.axis) continue;
-      if (other.at < span.from || other.at > span.to) continue;
-      if (span.at < other.from || span.at > other.to) continue;
-      cuts.add(snap(other.at));
+      if (other === span) continue;
+      const at = crossing(span, other);
+      if (!at) continue;
+      const t = Math.hypot(at.x - span.from.x, at.z - span.from.z) / length;
+      if (t > 0 && t < 1) cuts.add(t);
     }
 
     const along = [...cuts].sort((p, q) => p - q);
-    const lanes = span.class === 'arterial' ? CITY_ARTERIAL_LANES : DISTRICTS[span.district].lanes;
-    const speed = span.class === 'arterial' ? CITY_ARTERIAL_SPEED : DISTRICTS[span.district].speed;
+    const lanes = LANES_FOR[span.class] ?? DISTRICTS[span.district].lanes;
+    const speed = SPEED_FOR[span.class] ?? DISTRICTS[span.district].speed;
 
     for (let i = 0; i < along.length - 1; i++) {
-      const length = along[i + 1] - along[i];
-      if (length < 1) continue; // two crossings on top of each other
+      const p1 = pointAt(span, along[i]);
+      const p2 = pointAt(span, along[i + 1]);
+      const piece = Math.hypot(p2.x - p1.x, p2.z - p1.z);
+      if (piece < 1) continue; // two crossings on top of each other
 
-      const p1 = pointOn(span, along[i]);
-      const p2 = pointOn(span, along[i + 1]);
       const a = nodeAt(p1.x, p1.z);
       const b = nodeAt(p2.x, p2.z);
+      if (a.id === b.id) continue;
 
-      const k = `${a.id}-${b.id}`;
+      const k = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
       if (seen.has(k)) continue;
       seen.add(k);
 
@@ -519,13 +635,12 @@ function buildGraph(spans: Span[]): Graph {
         id: roads.length,
         a: a.id,
         b: b.id,
-        axis: span.axis,
         class: span.class,
         district: span.district,
         lanes,
         width: roadWidth(lanes),
         speed,
-        length,
+        length: piece,
         bridge: span.bridge ?? false,
       };
       roads.push(road);
@@ -585,8 +700,8 @@ function connect(dry: Span[], gaps: Gap[], initial: number[]): { nodes: CityNode
     for (let i = 0; i < gaps.length; i++) {
       if (chosen.has(i)) continue;
       const gap = gaps[i];
-      const p1 = pointOn(gap.span, gap.from);
-      const p2 = pointOn(gap.span, gap.to);
+      const p1 = pointAt(gap.span, gap.from);
+      const p2 = pointAt(gap.span, gap.to);
       const a = graph.at.get(key(p1.x, p1.z));
       const b = graph.at.get(key(p2.x, p2.z));
       if (!a || !b || parts.of[a.id] === parts.of[b.id]) continue;

@@ -314,3 +314,17 @@ export const GRAVITY = m(22);
 export const SURFACE_REACH = m(3);
 /** Where a new car is put: on the interstate ring is wrong, so a street it is. */
 export const SPAWN_SEARCH = m(400);
+
+/**
+ * Boulevards (#115): the roads that bend. Laid over the finished grid and
+ * spliced into it, because a grid on its own has no sweeping line through it.
+ */
+export const BOULEVARD_COUNT = 5;
+export const BOULEVARD_LANES = 4;
+export const BOULEVARD_SPEED = kmh(80);
+/** How finely the curve is sampled. Short enough that a bend reads as a bend. */
+export const BOULEVARD_STEP = m(70);
+/** How far the curve bows off a straight line between its ends. */
+export const BOULEVARD_SWEEP = m(1400);
+/** Blocks and buildings within this of a boulevard centreline make way for it. */
+export const BOULEVARD_CLEARANCE = m(5);

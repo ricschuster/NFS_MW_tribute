@@ -68,12 +68,14 @@ for (const block of city.blocks) {
 const STROKE = {
   interstate: '#c34bd0',
   ramp: '#8f5fd6',
+  boulevard: '#e07a3f',
   arterial: '#e8d9a8',
   street: '#7d8890',
 };
 // Surface first, then the interstate over the top of it, which is also the
 // order they sit in the world.
-const order = (road) => (road.class === 'interstate' || road.class === 'ramp' ? 1 : 0);
+const order = (road) =>
+  road.class === 'interstate' || road.class === 'ramp' ? 2 : road.class === 'boulevard' ? 1 : 0;
 for (const road of [...city.roads].sort((p, q) => order(p) - order(q))) {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
@@ -125,6 +127,10 @@ console.log(
 const elevated = city.roads.filter((r) => r.class === 'interstate');
 const ramps = city.roads.filter((r) => r.class === 'ramp');
 const tunnel = city.nodes.filter((n) => n.y < 0).length;
+const boulevards = city.roads.filter((r) => r.class === 'boulevard');
+console.log(
+  `  boulevards: ${(boulevards.reduce((s, r) => s + r.length, 0) / UNITS_PER_METRE / 1000).toFixed(1)} km`,
+);
 console.log(
   `  interstate: ${(elevated.reduce((s, r) => s + r.length, 0) / UNITS_PER_METRE / 1000).toFixed(1)} km loop, ` +
     `${ramps.length} ramps, ${tunnel} nodes in tunnel`,

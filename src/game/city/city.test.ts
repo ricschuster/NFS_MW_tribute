@@ -4,6 +4,7 @@ import { kestrelBay } from './index';
 import { Rng } from './rng';
 import { CITY_SEED, DISTRICTS } from '../constants';
 import { makeWater } from './water';
+import { distanceToSegment } from './grid';
 import type { City, CityRoad, Rect } from './types';
 
 // The same water the pinned city was cut against: `makeWater` is the first
@@ -30,17 +31,46 @@ const city = kestrelBay();
 const onSurface = (road: CityRoad) =>
   city.nodes[road.a].y === 0 && city.nodes[road.b].y === 0 && road.class !== 'ramp';
 
-/** The rectangle a road's carriageway actually covers. */
+/** A box that contains a road's carriageway; exact only for an axis-aligned one. */
 function carriageway(city: City, road: CityRoad): Rect {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   const half = road.width / 2;
   return {
-    minX: Math.min(a.x, b.x) - (road.axis === 'x' ? 0 : half),
-    maxX: Math.max(a.x, b.x) + (road.axis === 'x' ? 0 : half),
-    minZ: Math.min(a.z, b.z) - (road.axis === 'z' ? 0 : half),
-    maxZ: Math.max(a.z, b.z) + (road.axis === 'z' ? 0 : half),
+    minX: Math.min(a.x, b.x) - half,
+    maxX: Math.max(a.x, b.x) + half,
+    minZ: Math.min(a.z, b.z) - half,
+    maxZ: Math.max(a.z, b.z) + half,
   };
+}
+
+/**
+ * Does a road's carriageway actually reach into this rectangle? Since roads
+ * stopped being axis-aligned the bounding box is far too generous for one at
+ * an angle, so measure from the centreline to the rectangle instead.
+ */
+function roadReaches(city: City, road: CityRoad, r: Rect, slack: number): boolean {
+  const a = city.nodes[road.a].pos;
+  const b = city.nodes[road.b].pos;
+  const reach = road.width / 2 - slack;
+  // Sample the centreline; a road is long and thin, so this converges fast.
+  const steps = Math.max(2, Math.ceil(road.length / 400));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = a.x + (b.x - a.x) * t;
+    const z = a.z + (b.z - a.z) * t;
+    const nearestX = Math.max(r.minX, Math.min(x, r.maxX));
+    const nearestZ = Math.max(r.minZ, Math.min(z, r.maxZ));
+    if (Math.hypot(x - nearestX, z - nearestZ) < reach) return true;
+  }
+  return false;
+}
+
+/** Which way a road runs, from its endpoints. */
+function runsAlong(city: City, road: CityRoad): 'x' | 'z' {
+  const a = city.nodes[road.a].pos;
+  const b = city.nodes[road.b].pos;
+  return Math.abs(b.x - a.x) >= Math.abs(b.z - a.z) ? 'x' : 'z';
 }
 
 /**
@@ -157,19 +187,34 @@ describe('the street network', () => {
     }
   });
 
-  it('runs each road along its stated axis, from the lower end', () => {
+  // Roads used to be axis-aligned and this test used to say so. Boulevards
+  // bend, so what is left to assert is that a road's stated length is the
+  // distance between its ends - node positions are snapped, so allow for that.
+  it('gives every road a length matching its endpoints', () => {
     for (const road of city.roads) {
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
-      if (road.axis === 'x') {
-        expect(b.z).toBeCloseTo(a.z, 3);
-        expect(b.x).toBeGreaterThan(a.x);
-      } else {
-        expect(b.x).toBeCloseTo(a.x, 3);
-        expect(b.z).toBeGreaterThan(a.z);
-      }
-      expect(road.length).toBeCloseTo(Math.hypot(b.x - a.x, b.z - a.z), 3);
+      expect(road.length).toBeCloseTo(Math.hypot(b.x - a.x, b.z - a.z), 1);
     }
+  });
+
+  it('keeps the grid streets axis-aligned, whatever the boulevards do', () => {
+    for (const road of city.roads) {
+      if (road.class !== 'street' && road.class !== 'arterial') continue;
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      const offAxis = Math.min(Math.abs(b.x - a.x), Math.abs(b.z - a.z));
+      expect(offAxis).toBeLessThan(1);
+    }
+  });
+
+  it('bends: some roads run at an angle', () => {
+    const bent = city.roads.filter((road) => {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      return Math.min(Math.abs(b.x - a.x), Math.abs(b.z - a.z)) > road.width;
+    });
+    expect(bent.length).toBeGreaterThan(20);
   });
 
   it('links roads and nodes both ways', () => {
@@ -221,9 +266,9 @@ describe('the street network', () => {
     // arterial reduced to a stub is a skeleton that is not holding anything up.
     const reach = (axis: 'x' | 'z') => {
       const lines = new Map<number, number>();
-      for (const road of arterials.filter((r) => r.axis === axis)) {
-        lines.set(road.axis === 'x' ? city.nodes[road.a].pos.z : city.nodes[road.a].pos.x,
-          (lines.get(road.axis === 'x' ? city.nodes[road.a].pos.z : city.nodes[road.a].pos.x) ?? 0) + road.length);
+      for (const road of arterials.filter((r) => runsAlong(city, r) === axis)) {
+        const at = axis === 'x' ? city.nodes[road.a].pos.z : city.nodes[road.a].pos.x;
+        lines.set(at, (lines.get(at) ?? 0) + road.length);
       }
       return [...lines.values()];
     };
@@ -519,25 +564,28 @@ describe('street furniture', () => {
   // Junctions are excluded because a kerb there is genuinely inside the
   // carriageway of the road crossing it, which is not a bug.
   it('never stands a prop in the middle of a road', () => {
-    const midRoad = city.roads.filter(onSurface).map((road) => {
-      const a = city.nodes[road.a].pos;
-      const b = city.nodes[road.b].pos;
-      const half = road.width / 2;
-      const end = Math.min(road.width, road.length / 3); // clear of both junctions
-      return road.axis === 'x'
-        ? { minX: Math.min(a.x, b.x) + end, maxX: Math.max(a.x, b.x) - end, minZ: a.z - half, maxZ: a.z + half }
-        : { minX: a.x - half, maxX: a.x + half, minZ: Math.min(a.z, b.z) + end, maxZ: Math.max(a.z, b.z) - end };
-    });
-    const grid = index(midRoad);
+    // Measured from the centreline, which is the only way that works now that
+    // roads bend: a bounding box round a diagonal road is mostly not the road.
+    const surface = city.roads.filter(onSurface);
+    const grid = index(surface.map((r) => carriageway(city, r)));
 
     const inTheRoad: string[] = [];
     for (const prop of city.furniture) {
       if (prop.kind === 'barrier') continue; // parapets live on the bridge itself
       if (prop.y !== 0) continue; // a lamp on the viaduct is above the street, not in it
+
       const spot = { minX: prop.at.x, maxX: prop.at.x, minZ: prop.at.z, maxZ: prop.at.z };
       for (const id of near(grid, spot)) {
-        const r = midRoad[id];
-        if (prop.at.x > r.minX && prop.at.x < r.maxX && prop.at.z > r.minZ && prop.at.z < r.maxZ) {
+        const road = surface[id];
+        const a = city.nodes[road.a].pos;
+        const b = city.nodes[road.b].pos;
+        if (distanceToSegment(prop.at.x, prop.at.z, a.x, a.z, b.x, b.z) >= road.width / 2) continue;
+        // Junctions are excluded: a kerb there is genuinely inside the
+        // carriageway of the road crossing it, which is not a bug.
+        const clear = Math.min(road.width, road.length / 3);
+        const fromA = Math.hypot(prop.at.x - a.x, prop.at.z - a.z);
+        const fromB = Math.hypot(prop.at.x - b.x, prop.at.z - b.z);
+        if (fromA > clear && fromB > clear) {
           inTheRoad.push(`${prop.kind} at ${Math.round(prop.at.x)},${Math.round(prop.at.z)}`);
         }
       }
@@ -626,12 +674,16 @@ describe('blocks', () => {
   // #84 extrudes buildings from these and #86 keeps the car out of them, so a
   // block that eats into a carriageway is a building standing in the road.
   it('never overlaps a carriageway', () => {
-    const roads = city.roads.filter(onSurface).map((r) => carriageway(city, r));
-    const grid = index(roads);
+    const surface = city.roads.filter(onSurface);
+    const grid = index(surface.map((r) => carriageway(city, r)));
     const clashes: string[] = [];
     for (const block of city.blocks) {
       for (const id of near(grid, block.bounds)) {
-        if (overlaps(block.bounds, roads[id])) clashes.push(`block over road ${id}`);
+        // The bounding box only narrows the search; a road at an angle fills
+        // very little of its own box, so the real test is from the centreline.
+        if (roadReaches(city, surface[id], block.bounds, 1)) {
+          clashes.push(`block over road ${surface[id].id}`);
+        }
       }
     }
     expect(clashes).toEqual([]);
