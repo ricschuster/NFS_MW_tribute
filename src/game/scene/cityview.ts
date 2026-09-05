@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
+import { CameraDirector } from './cameras';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import type { CityWorld } from '../cityworld';
@@ -54,7 +55,7 @@ export class CityView {
   private readonly trafficCars: CarPool;
   private readonly copCars: CarPool;
   private siren = 0;
-  private readonly chase = new THREE.Vector3();
+  private readonly director: CameraDirector;
   private accumulator = 0;
 
   constructor(canvas: HTMLCanvasElement, city: City) {
@@ -99,6 +100,11 @@ export class CityView {
     this.scene.add(this.car);
     this.trafficCars = new CarPool(this.scene);
     this.copCars = new CarPool(this.scene, true);
+    // Honour the same preference the Canvas game does: no orbit, no cuts, no
+    // shake, just a camera behind the car.
+    this.director = new CameraDirector(
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+    );
 
     this.look('aerial');
     this.listen(canvas);
@@ -112,7 +118,6 @@ export class CityView {
   drive(world: CityWorld): void {
     this.world = world;
     this.car.visible = true;
-    this.chase.set(world.x, world.y, world.z);
   }
 
   /** A gradient dome, so the horizon is a horizon and not a flat wall of colour. */
@@ -355,6 +360,7 @@ export class CityView {
 
     this.car.position.set(world.x, world.y, world.z);
     this.car.rotation.y = world.heading;
+    if (held('b')) this.director.glanceBack();
 
     this.trafficCars.begin();
     for (const car of world.traffic.cars) {
@@ -370,15 +376,14 @@ export class CityView {
     this.copCars.flashLightbars(this.siren);
     this.copCars.end();
 
-    // Sit the camera behind and above, and let it lag: a camera welded to the
-    // car cannot show you turning, because the world turns with it.
-    const back = new THREE.Vector3(-Math.sin(world.heading), 0, -Math.cos(world.heading));
-    const want = new THREE.Vector3(world.x, world.y, world.z)
-      .addScaledVector(back, 15 * M)
-      .setY(world.y + 6 * M);
-    this.chase.lerp(want, Math.min(1, dt * 6));
-    this.camera.position.copy(this.chase);
-    this.camera.lookAt(world.x, world.y + 2 * M, world.z);
+    // The camera is the director's business now (#88), not this loop's.
+    const shot = this.director.update(dt, world);
+    this.camera.position.copy(shot.position);
+    this.camera.lookAt(shot.target);
+    if (Math.abs(this.camera.fov - shot.fov) > 0.01) {
+      this.camera.fov = shot.fov;
+      this.camera.updateProjectionMatrix();
+    }
 
     const fog = this.scene.fog as THREE.Fog;
     fog.near = 300 * M;

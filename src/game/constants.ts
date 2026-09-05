@@ -395,3 +395,26 @@ export const CITY_PURSUIT_RANGE = m(120);
 export const CITY_COP_LOSE = m(500);
 /** Seconds the BUSTED state holds before the pursuit is cleared. */
 export const CITY_BUST_HOLD = 3;
+
+/**
+ * Cameras (#88). The chase camera's numbers are most of how fast the game
+ * feels: the field of view opening with speed does more for it than the speed.
+ */
+export const CHASE_BACK = m(15);
+export const CHASE_HEIGHT = m(6);
+/** How quickly the camera catches up. Lower lags more, which reads as weight. */
+export const CHASE_LAG = 5;
+export const CHASE_FOV = 58;
+export const CHASE_FOV_FAST = 74;
+
+/** The crash cut: how long it holds, and how far off it stands. */
+export const CRASH_HOLD = 1.4;
+export const CRASH_DISTANCE = m(13);
+/** The opening pass around the car before you take control. */
+export const INTRO_HOLD = 2.6;
+export const INTRO_RADIUS = m(17);
+/** How long a glance behind is held, so a tap is readable. */
+export const LOOK_BACK_HOLD = 0.9;
+/** Impact shake: how hard, and how fast it dies away. */
+export const SHAKE_STRENGTH = 0.5;
+export const SHAKE_DECAY = 2.2;
