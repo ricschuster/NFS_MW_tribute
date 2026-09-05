@@ -165,6 +165,33 @@ export function inWater(city: City, x: number, z: number): boolean {
   return false;
 }
 
+/**
+ * Is there a building between these two points?
+ *
+ * Walked rather than solved, because buildings are axis-aligned boxes and a
+ * dozen samples over a sight line of at most a couple of hundred metres is
+ * both accurate enough and cheaper than being clever. This is what makes cover
+ * mean something: a cop one street over with a block in the way has not got
+ * you, and a pursuit that ignores walls makes side streets pointless.
+ */
+export function lineBlocked(
+  grid: CityGrid,
+  from: Vec2,
+  to: Vec2,
+  steps = 12,
+): boolean {
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    const x = from.x + (to.x - from.x) * t;
+    const z = from.z + (to.z - from.z) * t;
+    for (const building of grid.buildingsNear(x, z)) {
+      const f = building.footprint;
+      if (x >= f.minX && x <= f.maxX && z >= f.minZ && z <= f.maxZ) return true;
+    }
+  }
+  return false;
+}
+
 /** Is the point on the carriageway? */
 export const onRoad = (city: City, road: CityRoad, x: number, z: number) =>
   distanceToRoad(city, road, x, z) <= road.width / 2;

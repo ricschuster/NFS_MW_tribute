@@ -5,19 +5,24 @@ import {
   COP_SPAWN_INTERVAL,
   CITY_COP_LOSE,
   BUST_TIME,
-  ESCAPE_TIME,
   CITY_HEAT_RISE,
   CITY_HEAT_DECAY,
   CITY_COP_SPAWN,
   CITY_BUST_DISTANCE,
   CITY_PURSUIT_RANGE,
+  SEEN_RANGE,
+  LOSE_CONTACT_TIME,
+  SEARCH_TIME,
+  SEARCH_TIME_PER_LEVEL,
+  SEARCH_RADIUS,
+  SEARCH_RADIUS_PER_LEVEL,
   TRAFFIC_LANE,
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
   COP_UNITS,
   type CopKind,
 } from './constants';
-import type { CityGrid } from './city/grid';
+import { lineBlocked, type CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
 import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
@@ -25,6 +30,26 @@ import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from
 export interface Cop extends GraphCar {
   /** What kind of unit this is: decides its pace, and how it is drawn. */
   kind: CopKind;
+}
+
+/**
+ * Escaping is two stages, not one (#63).
+ *
+ * `pursuit` is being chased. Break contact and it becomes `cooldown`: a search
+ * area is drawn where they lost you and the cops sweep it. Be seen, or sit in
+ * it, and the pursuit resumes; get out and stay out and you are `clear`.
+ *
+ * The one-number version - trail a cop past a distance for a fixed time - made
+ * escaping close to binary. Two stages is what makes side streets and cover an
+ * escape route rather than scenery.
+ */
+export type PursuitState = 'clear' | 'pursuit' | 'cooldown';
+
+/** Where they think you went. */
+export interface SearchArea {
+  x: number;
+  z: number;
+  radius: number;
 }
 
 /** What the pursuit reacts to. */
@@ -58,10 +83,20 @@ export class CityPolice {
   /** True on the step the last cop is shaken off. */
   justEscaped = false;
 
+  /** Which of the three stages the pursuit is in. */
+  state: PursuitState = 'clear';
+  /** During a cooldown, where they are looking. Null otherwise. */
+  search: SearchArea | null = null;
+  /** Seconds of searching left, once you are out of the area. */
+  searchLeft = 0;
+
   private sinceSpawn = 0;
   private cooldown = COP_FIRST_SPAWN;
   private pinned = 0;
-  private clear = 0;
+  private unseen = 0;
+  private seenNow = false;
+  /** Where they last had eyes on you: the centre of any search that follows. */
+  private readonly lastSeen = { x: 0, z: 0 };
 
   constructor(
     private readonly city: City,
@@ -105,30 +140,25 @@ export class CityPolice {
     this.recruit(dt, player);
   }
 
-  /** Heat, the bust timer, and the escape timer. */
+  /** Heat, the bust timer, and the three-stage escape. */
   private judge(dt: number, player: Chased): void {
     const nearest = this.cops.reduce(
       (best, cop) => Math.min(best, this.gapTo(cop, player)),
       Infinity,
     );
+    const seen = this.seenBy(player);
+    this.seenNow = seen;
 
-    if (this.cops.length === 0) {
-      // Nothing to shake off, so nothing is being shaken off. Without this the
-      // escape timer runs while you are alone, and the first cop to arrive -
-      // which necessarily arrives from outside pursuit range - is declared
-      // escaped on the step after it spawns.
+    // Only a pursuit that has *ended* is clear. Cops dropping out of range is
+    // them losing you, not you being free: it has to lead into the search like
+    // any other broken contact, or outrunning them skips the whole mechanic
+    // and cooldown never happens to anyone who is actually fast.
+    if (this.state === 'clear' && this.cops.length === 0) {
       this.heat = Math.max(0, this.heat - CITY_HEAT_DECAY * dt);
-      this.clear = 0;
+      this.search = null;
+      this.unseen = 0;
       return;
     }
-
-    // Heat climbs while the pursuit is *running*, not only while a car is on
-    // your bumper. Cops chasing from a hundred metres back have not lost you,
-    // and an earlier version that only counted close contact left heat
-    // oscillating around zero through a pursuit that never ended.
-    const close = nearest < CITY_PURSUIT_RANGE;
-    this.heat = Math.min(1, this.heat + CITY_HEAT_RISE * dt * (close ? 1 : 0.5));
-    this.clear = close ? 0 : this.clear + dt;
 
     // Pinned: a cop on your bumper for long enough ends it.
     if (nearest < CITY_BUST_DISTANCE) {
@@ -141,18 +171,104 @@ export class CityPolice {
       this.pinned = 0;
     }
 
-    if (this.cops.length > 0 && this.clear >= ESCAPE_TIME) {
-      this.cops.length = 0;
-      this.justEscaped = true;
-      this.heat = 0;
-      this.cooldown = COP_RESPAWN;
+    if (this.state === 'cooldown') this.searching(dt, player, seen);
+    else this.chasing(dt, nearest, seen);
+  }
+
+  /** Being chased: heat climbs, and losing them for long enough starts a search. */
+  private chasing(dt: number, nearest: number, seen: boolean): void {
+    this.state = 'pursuit';
+
+    // Heat climbs while the pursuit is *running*, not only while a car is on
+    // your bumper. Cops chasing from a hundred metres back have not lost you,
+    // and an earlier version that only counted close contact left heat
+    // oscillating around zero through a pursuit that never ended.
+    const close = nearest < CITY_PURSUIT_RANGE;
+    this.heat = Math.min(1, this.heat + CITY_HEAT_RISE * dt * (close ? 1 : 0.5));
+
+    this.unseen = seen ? 0 : this.unseen + dt;
+    if (this.unseen < LOSE_CONTACT_TIME) return;
+
+    // Contact broken. They fall back on searching where they last had you.
+    this.state = 'cooldown';
+    this.searchLeft = SEARCH_TIME + SEARCH_TIME_PER_LEVEL * (this.level - 1);
+    this.search = {
+      x: this.lastSeen.x,
+      z: this.lastSeen.z,
+      radius: SEARCH_RADIUS + SEARCH_RADIUS_PER_LEVEL * (this.level - 1),
+    };
+  }
+
+  /**
+   * Being searched for.
+   *
+   * The clock only runs while you are outside the area, which is the whole
+   * mechanic: sitting still in the middle of where they are looking is not
+   * hiding. Heat carries over and decays slowly, so a hot pursuit takes longer
+   * to shed than a cold one.
+   */
+  private searching(dt: number, player: Chased, seen: boolean): void {
+    this.heat = Math.max(0, this.heat - CITY_HEAT_DECAY * dt * 0.5);
+
+    if (seen) {
+      this.state = 'pursuit';
+      this.search = null;
+      this.unseen = 0;
+      return;
     }
+
+    const area = this.search;
+    if (!area) {
+      this.state = 'pursuit';
+      return;
+    }
+
+    const inside = Math.hypot(player.x - area.x, player.z - area.z) < area.radius;
+    if (inside) return; // the clock does not run while you are in the net
+
+    this.searchLeft -= dt;
+    if (this.searchLeft > 0) return;
+
+    this.cops.length = 0;
+    this.justEscaped = true;
+    this.state = 'clear';
+    this.search = null;
+    this.cooldown = COP_RESPAWN;
+  }
+
+  /**
+   * Can any cop actually see you?
+   *
+   * Distance is not enough: a cop one street over with a block between you has
+   * not got you, and pretending otherwise makes cover meaningless. The check
+   * is a walk along the line between the two, looking for a building in the
+   * way - which is why buildings are city data rather than renderer state.
+   */
+  private seenBy(player: Chased): boolean {
+    for (const cop of this.cops) {
+      if (this.gapTo(cop, player) > SEEN_RANGE) continue;
+      if (this.blocked(cop, player)) continue;
+      this.lastSeen.x = player.x;
+      this.lastSeen.z = player.z;
+      return true;
+    }
+    return false;
+  }
+
+  private blocked(cop: Cop, player: Chased): boolean {
+    return lineBlocked(this.grid, cop, player);
   }
 
   /** Bring more cops in, up to the count heat allows. */
   private recruit(dt: number, player: Chased): void {
     this.cooldown -= dt;
     if (this.cooldown > 0) return;
+
+    // Nobody joins a pursuit that has lost you. Without this a new car appears
+    // 260 m away the moment the last one drops behind, and there is no speed
+    // at which you can ever break contact - the escape is not hard, it is
+    // absent. They may only call in more while somebody has eyes on you.
+    if (this.cops.length > 0 && !this.seenNow) return;
 
     const wanted = this.force.maxCops;
     this.sinceSpawn += dt;
@@ -163,7 +279,9 @@ export class CityPolice {
       this.cops.push(cop);
       this.sinceSpawn = 0;
       // It has only just arrived; it has not lost you yet.
-      this.clear = 0;
+      this.unseen = 0;
+      this.lastSeen.x = player.x;
+      this.lastSeen.z = player.z;
     }
   }
 
@@ -177,11 +295,15 @@ export class CityPolice {
     const options = exitsFrom(this.city, cop, node);
     if (options.length === 0) return null;
 
+    // During a search they do not know where you are, so they head for where
+    // they lost you rather than driving straight at a car they cannot see.
+    const aim = this.state === 'cooldown' && this.search ? this.search : player;
+
     let best: CityRoad | null = null;
     let bestGap = Infinity;
     for (const road of options) {
       const far = road.a === node ? this.city.nodes[road.b] : this.city.nodes[road.a];
-      const gap = Math.hypot(far.pos.x - player.x, far.pos.z - player.z);
+      const gap = Math.hypot(far.pos.x - aim.x, far.pos.z - aim.z);
       if (gap < bestGap) {
         bestGap = gap;
         best = road;
@@ -243,7 +365,9 @@ export class CityPolice {
     this.heat = 0;
     this.busted = false;
     this.pinned = 0;
-    this.clear = 0;
+    this.unseen = 0;
+    this.state = 'clear';
+    this.search = null;
     this.cooldown = COP_BUST_COOLDOWN;
   }
 }

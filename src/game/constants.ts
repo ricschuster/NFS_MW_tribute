@@ -495,3 +495,22 @@ export const HEAT_LEVEL_COUNT = HEAT_LEVELS.length;
  */
 export const CITY_HEAT_RISE = 0.012;
 export const CITY_HEAT_DECAY = 0.045;
+
+/**
+ * Cooldown (#63): escaping in two stages rather than one.
+ *
+ * Break contact and the pursuit drops into a search - a circle centred where
+ * they lost you, which they sweep. Stay in it or be seen and it resumes; get
+ * out and stay out and you are clear. This is the part that makes free roam
+ * matter: side streets and cover become an escape route instead of scenery.
+ */
+/** How close a cop has to be, with nothing between you, to have you in sight. */
+export const SEEN_RANGE = m(150);
+/** Seconds out of sight before the pursuit drops into a search. */
+export const LOSE_CONTACT_TIME = 4;
+/** How long the search lasts at heat level one, and how much each level adds. */
+export const SEARCH_TIME = 18;
+export const SEARCH_TIME_PER_LEVEL = 7;
+/** How big the search area is, and how much each heat level widens it. */
+export const SEARCH_RADIUS = m(320);
+export const SEARCH_RADIUS_PER_LEVEL = m(70);
