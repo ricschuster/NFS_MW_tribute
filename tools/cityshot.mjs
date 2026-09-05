@@ -100,14 +100,18 @@ for (const view of VIEWS) {
   }
 
   if (view === 'pursuit') {
-    // Long enough for the first cop to arrive, driving a loop so the car stays
-    // in the middle of the city rather than parking against the coast.
-    for (let i = 0; i < 12; i++) {
+    // Long enough for the cops to arrive, driving a loop so the car stays in
+    // the middle of the city rather than parking against the coast.
+    for (let i = 0; i < 16; i++) {
       await page.keyboard.down('ArrowUp');
       await page.keyboard.down(i % 2 ? 'ArrowRight' : 'ArrowLeft');
-      await page.waitForTimeout(1800);
+      await page.waitForTimeout(1600);
       await page.keyboard.up(i % 2 ? 'ArrowRight' : 'ArrowLeft');
     }
+    // Then glance behind, which is the only way to photograph something that
+    // is by definition behind you.
+    await page.keyboard.down('b');
+    await page.waitForTimeout(600);
   }
 
   const blank = await page.evaluate(() => {
@@ -116,9 +120,13 @@ for (const view of VIEWS) {
   });
   if (blank) console.error(`  ${view}: no canvas`);
 
-  await page.locator('#game3d').screenshot({ path: `${OUT}/city-${view}.png` });
+  // The HUD is a separate canvas over the world, so a shot of the WebGL canvas
+  // alone is a shot with no HUD in it. Capture the stage for the driving views.
+  const shot = view === 'drive' || view === 'pursuit' || view === 'crash' ? '.stage' : '#game3d';
+  await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
   if (view === 'drive' || view === 'pursuit' || view === 'crash') {
     await page.keyboard.up('ArrowUp');
+    if (view === 'pursuit') await page.keyboard.up('b');
   }
   console.log(`captured ${OUT}/city-${view}.png`);
 }

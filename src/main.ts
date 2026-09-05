@@ -44,14 +44,22 @@ async function boot(): Promise<void> {
     const gl = document.createElement('canvas');
     gl.id = 'game3d';
     stage.insertBefore(gl, canvas);
-    canvas.style.display = 'none'; // there is no HUD over the city yet
+    // The 2D canvas stays, as the HUD layer over the world - which is the
+    // layering the stage was already built for.
+    canvas.style.background = 'transparent';
 
     const city = kestrelBay();
     const view = new CityView(gl, city);
 
     if (renderer === 'drive') {
-      const { CityWorld } = await import('./game/cityworld');
-      view.drive(new CityWorld(city));
+      const [{ CityWorld }, { Hud }] = await Promise.all([
+        import('./game/cityworld'),
+        import('./game/scene/hud'),
+      ]);
+      const hud = new Hud(canvas.getContext('2d') as CanvasRenderingContext2D);
+      view.drive(new CityWorld(city), hud);
+    } else {
+      canvas.style.display = 'none'; // nothing to overlay on the free camera
     }
 
     const named = params.get('view');

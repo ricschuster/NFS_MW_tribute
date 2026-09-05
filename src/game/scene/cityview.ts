@@ -3,6 +3,7 @@ import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
 import { CameraDirector } from './cameras';
+import type { Hud } from './hud';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import type { CityWorld } from '../cityworld';
@@ -51,6 +52,7 @@ export class CityView {
 
   /** When set, the camera chases this car instead of flying free. */
   private world: CityWorld | null = null;
+  private hud: Hud | null = null;
   private readonly car = makeCar('#d8442f');
   private readonly trafficCars: CarPool;
   private readonly copCars: CarPool;
@@ -115,8 +117,9 @@ export class CityView {
    * car appears; #88 is where cameras become a first-class concept, so this is
    * the simplest thing that lets the city be driven in the meantime.
    */
-  drive(world: CityWorld): void {
+  drive(world: CityWorld, hud: Hud | null = null): void {
     this.world = world;
+    this.hud = hud;
     this.car.visible = true;
   }
 
@@ -390,6 +393,7 @@ export class CityView {
     fog.far = 2600 * M;
     this.skyDome.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
+    this.hud?.draw(world);
   }
 
   start(): void {
