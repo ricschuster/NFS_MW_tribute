@@ -100,7 +100,7 @@ npm run test       # 88 unit tests + playtests
 npm run feel       # measure driving feel; --baseline docs/feel-baseline.json
 npm run shot       # headless screenshots -> screenshots/*.png
 npm run city       # draw the generated city from above; --seed N for another
-npm run cityshot   # screenshot the 3D city from fixed viewpoints
+npm run cityshot   # screenshot the 3D city from fixed viewpoints, and driving in it
 npm run build      # typecheck + static build
 ```
 
@@ -169,8 +169,12 @@ Nothing is wired into `World` or the renderer yet. That is #84 and #86.
   premise that it needs them does not hold while buildings are boxes
 - #85 the elevated interstate - the feature that decided ADR-0004, and worth
   building early enough to prove the decision was right
-- #86 collision against the network, #87 traffic and police in world space,
-  #88 the camera system, #89 HUD and minimap
+- **#113 drive in Kestrel Bay** - done. `cityworld.ts` is the car in world
+  space, with a height-aware surface lookup and building collision. It runs
+  *alongside* the track `World`, so the deployed game keeps playing
+- #86 collision against the network (car-to-car is what is left of it, and it
+  waits on #87), #87 traffic and police in world space, #88 the camera system,
+  #89 HUD and minimap
 
 Done: #81 (three.js scene alongside the Canvas one), #82 (the car's heading),
 #83 (the city generator, plus ADR-0005's first three rules).

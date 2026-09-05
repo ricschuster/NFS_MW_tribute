@@ -24,7 +24,7 @@ const flag = (name) => {
 const OUT = 'screenshots';
 mkdirSync(OUT, { recursive: true });
 
-const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass'];
+const VIEWS = flag('--view') ? [flag('--view')] : ['aerial', 'downtown', 'bridge', 'street', 'overpass', 'drive'];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
@@ -70,11 +70,20 @@ page.on('console', (msg) => {
 });
 
 for (const view of VIEWS) {
-  await page.goto(`${base}/?renderer=city&view=${view}`, { waitUntil: 'load' });
+  // `drive` is not a viewpoint but a mode: put a car in the city, hold the
+  // throttle for a moment, and photograph what the player would be looking at.
+  const url =
+    view === 'drive' ? `${base}/?renderer=drive` : `${base}/?renderer=city&view=${view}`;
+  await page.goto(url, { waitUntil: 'load' });
   // Generating the city and building its instanced meshes takes a moment, and
   // a screenshot taken before that is a picture of an empty sky.
   await page.waitForSelector('#game3d', { timeout: 20000 });
   await page.waitForTimeout(2500);
+
+  if (view === 'drive') {
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(2600);
+  }
 
   const blank = await page.evaluate(() => {
     const canvas = document.getElementById('game3d');
@@ -83,6 +92,7 @@ for (const view of VIEWS) {
   if (blank) console.error(`  ${view}: no canvas`);
 
   await page.locator('#game3d').screenshot({ path: `${OUT}/city-${view}.png` });
+  if (view === 'drive') await page.keyboard.up('ArrowUp');
   console.log(`captured ${OUT}/city-${view}.png`);
 }
 

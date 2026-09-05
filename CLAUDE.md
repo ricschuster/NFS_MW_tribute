@@ -91,9 +91,17 @@ you cannot turn from one onto the other. That is the case ADR-0004 exists to
 make possible, and it means anything asking "what is at this position" has to
 ask about a height too. Tunnels are the same mechanism with the sign flipped.
 
-`?renderer=city` flies a camera around it, since the car cannot be driven there
-until #86. `&view=overpass` is the shot that shows why any of this was worth
-doing.
+**There are two sims, and that is deliberate.** `world.ts` is the track model
+that the deployed game still runs on. `cityworld.ts` is the same car in the
+city: a position, a heading and a height, with a height-aware surface lookup
+and building collision over a uniform spatial index (`city/grid.ts`). The
+motion model was carried over unchanged from #82 rather than rewritten, so the
+feel work in #14 and #46 still applies - only the frame it resolves into moved,
+from along/across-track to x/z. Traffic, police and races come across in #87,
+and `world.ts` retires when they have.
+
+`?renderer=city` flies a camera around the city; `?renderer=drive` puts a car
+in it. `&view=overpass` is the shot that shows why any of this was worth doing.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

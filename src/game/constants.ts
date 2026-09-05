@@ -293,3 +293,24 @@ export const TUNNEL_LENGTH = 0.12;
  * is a steep road rather than a wall.
  */
 export const GRADE_RUN = m(430);
+
+/** Driving in the city (#113). */
+/** Spatial index cell. About a block: big enough to be cheap, small enough to be selective. */
+export const CITY_GRID_CELL = m(120);
+/** The car's collision radius, from its centre. */
+export const CAR_RADIUS = m(2.2);
+/** Speed kept after hitting a building, as a fraction. */
+export const HIT_SPEED_KEPT = 0.25;
+/** How quickly the car settles onto the height of the road it is on. */
+export const RIDE_RATE = 8;
+/** Fall acceleration when the car leaves the deck, in world units per second squared. */
+export const GRAVITY = m(22);
+/**
+ * How far above or below a road the car can be and still count as on it.
+ * Without this, standing in the street under an overpass reports the deck 12 m
+ * overhead as the surface, and being *under* a road becomes the same as being
+ * *on* it - which is the exact distinction #85 exists to draw.
+ */
+export const SURFACE_REACH = m(3);
+/** Where a new car is put: on the interstate ring is wrong, so a street it is. */
+export const SPAWN_SEARCH = m(400);
