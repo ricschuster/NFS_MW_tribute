@@ -14,6 +14,8 @@ backend; it builds to static files.
 - `npm run typecheck` — `tsc --noEmit`; run before considering a change done
 - `npm run test` — unit tests + playtests
 - `npm run playtest` — just the headless playtests (drive the World, assert outcomes)
+- `npm run feel` — measure driving feel (accel, steering, pursuit, race length);
+  compare against `docs/feel-baseline.json` after touching `constants.ts`
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)

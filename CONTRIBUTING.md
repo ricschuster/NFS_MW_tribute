@@ -35,6 +35,26 @@ npm run shot                       # writes screenshots/*.png of a few game stat
 canvas at the title, driving, pursuit, countdown, and race states. Set
 `SHOT_URL` if your dev server isn't on the default port.
 
+## Feel checks
+
+How the car *feels* is a judgement call, but most of what goes into it is
+measurable. `npm run feel` drives the headless `World` with scripted inputs and
+prints the numbers behind it: 0-to-top-speed, braking distance, how long a lane
+change takes at each speed, the fastest speed that still holds the sharpest
+bend, nitrous duration and payoff, how quickly a cop busts you at a given pace,
+and how long each Blacklist race runs.
+
+```bash
+npm run feel                                    # print the table
+npm run feel -- --baseline docs/feel-baseline.json   # show only what moved
+npm run feel -- --out docs/feel-baseline.json        # re-record the baseline
+```
+
+It asserts nothing (the playtests do that) — it exists so a change to
+`constants.ts` is a before/after diff instead of a guess. Everything random is
+seeded, so two runs of the same constants are identical. Re-record the baseline
+in the same PR that changes the tuning, so the diff shows what you moved.
+
 ## Reporting bugs / ideas
 
 Use the issue templates (Feature or Bug). For gameplay tasks, a short
