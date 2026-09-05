@@ -3,7 +3,7 @@ import { Input } from './input';
 import { World, type InputState } from './world';
 import { GameAudio } from './audio';
 import { TouchControls } from './touch';
-import { project, renderSegment, renderFog, renderCarSprite, renderCopSprite } from './render';
+import { project, renderSegment, renderFog, renderCarSprite } from './render';
 import {
   WIDTH,
   HEIGHT,
@@ -20,6 +20,7 @@ import {
   MAX_HEAT_LEVEL,
   ESCAPED_FLASH,
   RACE_DISTANCE,
+  COP_OUTRUN_DISTANCE,
 } from './constants';
 import { interpolate, percentRemaining, exponentialFog } from './math';
 
@@ -141,6 +142,7 @@ export class Game {
       this.renderTitle();
     } else {
       this.renderHud();
+      this.renderMirror();
       if (this.phase === 'paused') this.renderPaused();
     }
     this.renderTouchControls(); // on top, when touch is in use
@@ -224,7 +226,6 @@ export class Game {
     }
 
     this.renderTraffic(baseSegment);
-    this.renderCops();
     this.renderRival();
     this.renderCar();
     ctx.restore();
@@ -324,25 +325,72 @@ export class Game {
     }
   }
 
-  /** Draw the pursuing cops, farthest first, using each one's segment projection. */
-  private renderCops(): void {
-    const cops = this.world.police.cops;
-    if (cops.length === 0) return;
+  /**
+   * Rear-view mirror: cops trail the player, so they show here (behind you) by
+   * their real trailing distance, rather than being faked ahead in the main
+   * view. A closer cop sits lower and larger in the mirror.
+   */
+  private renderMirror(): void {
+    const police = this.world.police;
+    if (!police.pursuing) return;
 
     const ctx = this.ctx;
-    const road = this.world.road;
-    // farthest-first so a nearer cop overlaps a farther one
-    const ordered = [...cops].sort((a, b) => b.distance - a.distance);
-    for (const cop of ordered) {
-      const segment = road.findSegment(cop.z);
-      const s = segment.p1.screen;
-      if (segment.p1.camera.z <= CAMERA_DEPTH || s.scale <= 0) continue;
+    const mw = 320;
+    const mh = 96;
+    const mx = (WIDTH - mw) / 2;
+    const my = 12;
+    const cxm = mx + mw / 2;
+    const roadTopY = my + mh * 0.28;
+    const bottomHalf = mw * 0.42;
+    const topHalf = mw * 0.06;
+    const rowHalf = (y: number): number =>
+      topHalf + (bottomHalf - topHalf) * ((y - roadTopY) / (my + mh - roadTopY));
 
-      const w = (s.scale * CAR_WIDTH_WORLD * WIDTH) / 2;
-      const h = w * CAR_ASPECT;
-      const cx = s.x + cop.offset * s.w;
-      renderCopSprite(ctx, cx, s.y, w, h, this.world.police.lightPhase, segment.clip);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(mx - 3, my - 3, mw + 6, mh + 6);
+    ctx.beginPath();
+    ctx.rect(mx, my, mw, mh);
+    ctx.clip();
+
+    // sky, grass, and a road trapezoid vanishing toward the top (looking back)
+    ctx.fillStyle = '#241a30';
+    ctx.fillRect(mx, my, mw, mh);
+    ctx.fillStyle = '#0f7f26';
+    ctx.fillRect(mx, roadTopY, mw, my + mh - roadTopY);
+    ctx.fillStyle = '#5a5a5a';
+    ctx.beginPath();
+    ctx.moveTo(cxm - topHalf, roadTopY);
+    ctx.lineTo(cxm + topHalf, roadTopY);
+    ctx.lineTo(cxm + bottomHalf, my + mh);
+    ctx.lineTo(cxm - bottomHalf, my + mh);
+    ctx.closePath();
+    ctx.fill();
+
+    const on = Math.floor(police.lightPhase * 6) % 2 === 0;
+    // farthest first so nearer cops draw on top
+    const cops = [...police.cops].sort((a, b) => b.distance - a.distance);
+    for (const cop of cops) {
+      const f = Math.min(1, cop.distance / COP_OUTRUN_DISTANCE); // 0 near .. 1 far
+      const y = my + mh - 8 - f * (mh * 0.66);
+      const scale = 1 - f * 0.72;
+      const cx = cxm - cop.offset * rowHalf(y) * 0.8; // mirror flips left/right
+      const cw = 40 * scale;
+      const ch = 24 * scale;
+      ctx.fillStyle = '#15171d';
+      ctx.fillRect(cx - cw / 2, y - ch, cw, ch);
+      ctx.fillStyle = on ? '#3b6bff' : '#ff3b30';
+      ctx.fillRect(cx - cw / 2, y - ch - 4 * scale, cw / 2, 4 * scale);
+      ctx.fillStyle = on ? '#ff3b30' : '#3b6bff';
+      ctx.fillRect(cx, y - ch - 4 * scale, cw / 2, 4 * scale);
     }
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '10px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('REAR VIEW', cxm, my + mh + 13);
+    ctx.textAlign = 'left';
   }
 
   /** Draw the rival racer while it's ahead of the player during a race. */
