@@ -21,12 +21,20 @@ export interface BuildingProvider {
   dispose(): void;
 }
 
-/** Per-district palettes. Colour is doing the work of texture for now. */
+/**
+ * Per-district palettes. Colour is doing the work of texture for now.
+ *
+ * Pulled further apart in #75 so the districts read as places rather than as
+ * one texture: cool grey-blue glass downtown, warm sand through midtown,
+ * bleached blue-white along the water, and rust and dust out on the industrial
+ * edge. The two light palettes are deliberately a shade off white - under a
+ * bright sun with bloom over it, a white wall is a white rectangle.
+ */
 const PALETTE: Record<string, string[]> = {
-  downtown: ['#8d97a6', '#7d8896', '#9aa5b3', '#6f7a88', '#69788c'],
-  midtown: ['#b9a894', '#a89880', '#c4b7a4', '#9d8f7d', '#ad9d88'],
-  waterfront: ['#cfd8dc', '#bcc9cf', '#dde5e8', '#aebcc4'],
-  industrial: ['#8a7f72', '#9c9184', '#776f64', '#a39786'],
+  downtown: ['#7c8796', '#6b7887', '#8d99a8', '#5f6d7e', '#55697f'],
+  midtown: ['#c0ad95', '#ac9a80', '#cdbfa8', '#9e8f79', '#b3a086'],
+  waterfront: ['#c2cdd3', '#aebbc3', '#d2dbe0', '#a2b0b9'],
+  industrial: ['#8a7566', '#9c8b78', '#77675a', '#a3907c'],
 };
 
 /**

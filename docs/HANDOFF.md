@@ -149,6 +149,13 @@ something still feels wrong, write a probe that prints numbers.
 `npm run feel` has also been *wrong* twice, both times because its reference
 driver was no longer a good driver. If a number looks strange, suspect the probe.
 
+And the third case: **a change that is obviously wrong in a picture and has no
+obvious cause.** #75's first attempt went through `EffectComposer` and came out
+with a pale sky and dark buildings; the answer was that three.js r185 applies
+tone mapping in its own compositing step, so the composer's `OutputPass` was
+mapping an already-mapped frame. An A/B of the same scene with the composer
+bypassed found it in one shot, and guessing at it did not.
+
 ## Repo mechanics
 
 - Branch, PR, `gh pr merge <n> --auto --squash`. **Auto-merge is a per-PR flag,
@@ -186,8 +193,8 @@ how much they use what already exists:
   now (#70 races, #94 takedowns); this joins them.
 - **#76 radio chatter** - wants audio in the city, which does not exist at all,
   so it is really two jobs.
-- **#75 the Kestrel Bay look** and **#11 art direction** - everything is still
-  boxes.
+- **#11 art direction** - everything is still boxes. #75 did what lighting can
+  do for them; the rest is geometry and textures.
 - **#68 mods** - earned by placing in a car's events, which needs #70/#72.
 - **#66 claim a rival's car** - the roster from #67 is the thing it claims.
 - **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and

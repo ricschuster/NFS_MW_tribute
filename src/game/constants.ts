@@ -1084,3 +1084,18 @@ export const REP_BREAKER = 120;
 export const BREAKER_HEAT = 0.02;
 /** How long the wreckage lies there. */
 export const BREAKER_DEBRIS = 7;
+
+/**
+ * The Kestrel Bay look (#75): bright, coastal, and blown out.
+ *
+ * Bloom is most of what makes the genre look the way it does. It is also the
+ * one thing here that costs a real pass over the frame, so the numbers are
+ * chosen to be readable rather than heavy: a threshold high enough that only
+ * the sky, the water and the lit surfaces bleed, and a strength that reads as
+ * sunlight rather than as a smeared lens.
+ */
+export const BLOOM_STRENGTH = 0.32;
+export const BLOOM_RADIUS = 0.55;
+export const BLOOM_THRESHOLD = 0.86;
+/** Bloom is rendered at a fraction of the frame; it is a blur, not detail. */
+export const BLOOM_SCALE = 0.5;

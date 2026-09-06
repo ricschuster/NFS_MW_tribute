@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
@@ -17,6 +18,10 @@ import {
   HELI_SEE_RADIUS,
   REPAIR_RANGE,
   DAMAGE_FREE,
+  BLOOM_STRENGTH,
+  BLOOM_RADIUS,
+  BLOOM_THRESHOLD,
+  BLOOM_SCALE,
 } from '../constants';
 import type { InputState } from '../world';
 
@@ -42,7 +47,14 @@ interface Shot {
   target: THREE.Vector3;
 }
 
-const HAZE = new THREE.Color('#b9d0e2');
+/**
+ * The haze the city sits in (#75).
+ *
+ * Pale and cool rather than the blue-grey it was: this is a coastal city in
+ * bright daylight, and the horizon is meant to wash out rather than to end in
+ * a line.
+ */
+const HAZE = new THREE.Color('#cfe1ef');
 
 /**
  * A checkpoint gate: two tall posts you drive between (#70).
@@ -158,6 +170,8 @@ function makeHelicopter(): THREE.Group {
 
 export class CityView {
   private readonly renderer: THREE.WebGLRenderer;
+  /** Bloom, which is most of what the look is (#75). */
+  private readonly bloom: UnrealBloomPass;
   private readonly scene = new THREE.Scene();
   private readonly camera: THREE.PerspectiveCamera;
   private readonly cityscape: Cityscape;
@@ -208,10 +222,20 @@ export class CityView {
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the
     // far side of the map. A logarithmic buffer spends its precision where the
     // geometry actually is.
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true });
+    // `outputBufferType` is what lets the renderer run post-processing effects
+    // at all (#75): it renders into a half-float buffer, applies the effects,
+    // and then does the tone mapping and the colour conversion once at the end.
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      logarithmicDepthBuffer: true,
+      outputBufferType: THREE.HalfFloatType,
+    });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
+    // Up from 1.25 (#75). ACES rolls the highlights off on its own, so a
+    // brighter exposure gives sunlight rather than a clipped white sky.
+    this.renderer.toneMappingExposure = 1.28;
 
     this.scene.background = HAZE;
     // The map has an edge, and fog is what stops you seeing it end. Its range
@@ -226,12 +250,15 @@ export class CityView {
     // gets clipped away and the bay ends in mid-air.
     this.camera = new THREE.PerspectiveCamera(60, 1, 2 * M, 14000 * M);
 
-    const sun = new THREE.DirectionalLight('#fff4e0', 2.1);
-    sun.position.set(-0.5, 1, 0.4).multiplyScalar(1000 * M);
+    // A hard warm sun low enough to throw the buildings' faces into relief.
+    const sun = new THREE.DirectionalLight('#fff0cf', 3.3);
+    sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
     this.scene.add(sun);
     // Generous fill: under a single hard sun every face turned away goes black
-    // and the city reads as silhouettes rather than as buildings.
-    this.scene.add(new THREE.HemisphereLight('#cfe6f7', '#7d7466', 1.7));
+    // and the city reads as silhouettes rather than as buildings. Cooler than
+    // the sun and warmer off the ground, which is what daylight by the sea
+    // actually does to a wall.
+    this.scene.add(new THREE.HemisphereLight('#dcefff', '#a2937c', 1.4));
 
     this.skyDome = this.sky();
     this.scene.add(this.skyDome);
@@ -259,6 +286,20 @@ export class CityView {
     this.director = new CameraDirector(
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
     );
+
+    // Bloom, through the renderer's own effect pipeline rather than through
+    // `EffectComposer`. The legacy composer applies tone mapping in its output
+    // pass *and* leaves the renderer applying it too, which double-maps the
+    // frame: pale sky, dark buildings, and no obvious cause. `three/examples/jsm`
+    // ships inside the three.js package, so this is not a new dependency -
+    // ADR-0004 already bought it.
+    this.bloom = new UnrealBloomPass(
+      new THREE.Vector2(1, 1),
+      BLOOM_STRENGTH,
+      BLOOM_RADIUS,
+      BLOOM_THRESHOLD,
+    );
+    this.renderer.setEffects([this.bloom]);
 
     this.look('aerial');
     this.listen(canvas);
@@ -291,7 +332,7 @@ export class CityView {
         side: THREE.BackSide,
         depthWrite: false,
         fog: false,
-        uniforms: { top: { value: new THREE.Color('#4d86c4') }, bottom: { value: HAZE } },
+        uniforms: { top: { value: new THREE.Color('#3f7fd0') }, bottom: { value: HAZE } },
         vertexShader: `
           varying vec3 vWorld;
           void main() {
@@ -304,7 +345,10 @@ export class CityView {
           uniform vec3 bottom;
           varying vec3 vWorld;
           void main() {
-            float h = clamp(pow(max(normalize(vWorld).y, 0.0), 0.55), 0.0, 1.0);
+            // A flatter curve than before, so the sky holds its blue overhead
+            // and blows out over a wide band at the horizon rather than in a
+            // thin strip (#75).
+            float h = clamp(pow(max(normalize(vWorld).y, 0.0), 0.42), 0.0, 1.0);
             gl_FragColor = vec4(mix(bottom, top, h), 1.0);
           }`,
       }),
@@ -458,6 +502,9 @@ export class CityView {
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    // The bloom buffers are a blur, not detail: at half size they cost a
+    // quarter as much and look the same.
+    this.bloom.setSize(width * BLOOM_SCALE, height * BLOOM_SCALE);
   }
 
   /** Fly, then draw. Speed scales with height, so the whole map is reachable. */
@@ -494,9 +541,12 @@ export class CityView {
     // in the middle of the map.
     this.skyDome.position.copy(this.camera.position);
 
+    // Held further off with altitude than it used to be (#75). Fog tuned for a
+    // street turns a city seen from two kilometres up into a white sheet, and
+    // the aerial view exists to be looked at.
     const fog = this.scene.fog as THREE.Fog;
-    fog.near = Math.max(300 * M, this.camera.position.y * 0.5);
-    fog.far = Math.max(2600 * M, this.camera.position.y * 4);
+    fog.near = Math.max(300 * M, this.camera.position.y * 1.3);
+    fog.far = Math.max(2600 * M, this.camera.position.y * 7);
 
     this.aim();
     this.renderer.render(this.scene, this.camera);
