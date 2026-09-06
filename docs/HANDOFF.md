@@ -129,7 +129,7 @@ npm run test       # 445 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
-npm run citylap    # drive a reference driver round every route; how far it got
+npm run citylap    # drive a reference driver round every route; vs. its baseline
 npm run shot       # screenshot the Canvas game
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
@@ -262,6 +262,16 @@ and textures, behind the provider seam in `scene/`.
   proof it is unwinnable - nitrous and a line that cuts corners are both
   available to a player and not to the driver - but it is the one number in
   the table that looks like a difficulty cliff, and it is #14's to settle.
+
+  The obvious fix was tried and does not work, which is worth knowing before
+  trying it again: scale the target by what each route's own geometry allows,
+  derived from `sqrt(LATERAL_GRIP * R)` with a forward and backward pass over
+  the polyline the way a racing-line solver does. The answer comes out nearly
+  flat - 75% to 83% across all six routes - because braking from top speed
+  takes only about 45 m in this sim, so a right-angle junction costs almost
+  nothing and corner density barely registers. The spread in the lap table is
+  the *driver*, not the routes. If the targets should vary per route, the
+  number to vary them by has to come from somewhere other than the geometry.
 - **The rival ladder is tuned against the probe's reference driver** and will
   need retuning whenever the car changes. Expect it rather than treating it as a
   regression. `npm run feel` has now been wrong a third time, for a third
