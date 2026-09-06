@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 
 /**
  * The shape of a car (#11).
@@ -107,9 +107,9 @@ export function carParts(width: number, aspect: number): CarParts {
     // Dark and slightly shiny. Phong rather than Lambert for one small mesh:
     // glass with no specular is a black hole where a windscreen should be.
     new THREE.MeshPhongMaterial({
-      color: "#141a26",
+      color: '#141a26',
       shininess: 70,
-      specular: "#8fa8c8",
+      specular: '#8fa8c8',
     }),
   );
   glass.position.set(0, floor + height * 0.92, -length * 0.04);
@@ -118,7 +118,7 @@ export function carParts(width: number, aspect: number): CarParts {
   // identical, and four of anything is worth not allocating four times.
   const wheelGeometry = new THREE.CylinderGeometry(tyre, tyre, w * 0.17, 10);
   wheelGeometry.rotateZ(Math.PI / 2);
-  const wheelMaterial = new THREE.MeshLambertMaterial({ color: "#15161a" });
+  const wheelMaterial = new THREE.MeshLambertMaterial({ color: '#15161a' });
   const wheels: THREE.Mesh[] = [];
   for (const side of [-1, 1]) {
     for (const end of [-1, 1]) {

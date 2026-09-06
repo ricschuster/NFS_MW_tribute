@@ -1,11 +1,11 @@
-import * as THREE from "three";
-import { asphaltTexture, disposeSurfaces } from "./surfaces";
-import type { City } from "../city/types";
-import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from "../constants";
-import { BoxBuildings, type BuildingProvider } from "./buildings";
-import { StreetFurniture } from "./furniture";
-import { CityCollectibles } from "./collectibles";
-import { CityBreakables } from "./breakables";
+import * as THREE from 'three';
+import { asphaltTexture, disposeSurfaces } from './surfaces';
+import type { City } from '../city/types';
+import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
+import { BoxBuildings, type BuildingProvider } from './buildings';
+import { StreetFurniture } from './furniture';
+import { CityCollectibles } from './collectibles';
+import { CityBreakables } from './breakables';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /**
@@ -85,7 +85,7 @@ export class Cityscape {
       width + SEA_REACH,
       depth + SEA_REACH,
     );
-    const material = new THREE.MeshLambertMaterial({ color: "#1a4557" });
+    const material = new THREE.MeshLambertMaterial({ color: '#1a4557' });
     this.owned.push(geometry, material);
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -95,7 +95,7 @@ export class Cityscape {
       -1.5 * UNITS_PER_METRE,
       (city.bounds.minZ + city.bounds.maxZ) / 2,
     );
-    mesh.name = "sea";
+    mesh.name = 'sea';
     return mesh;
   }
 
@@ -112,7 +112,7 @@ export class Cityscape {
     // from the ground's real size: one tile is the same number of metres
     // whatever the seed makes the map.
     const material = new THREE.MeshLambertMaterial({
-      color: "#4a5057",
+      color: '#4a5057',
       map: asphaltTexture(width, depth),
     });
     this.owned.push(geometry, material);
@@ -125,13 +125,13 @@ export class Cityscape {
       (city.bounds.minZ + city.bounds.maxZ) / 2,
     );
     mesh.receiveShadow = true;
-    mesh.name = "ground";
+    mesh.name = 'ground';
     return mesh;
   }
 
   /** The bay and the river, as flat polygons sunk below the road surface. */
   private water(city: City): THREE.Mesh[] {
-    const material = new THREE.MeshLambertMaterial({ color: "#1d4f63" });
+    const material = new THREE.MeshLambertMaterial({ color: '#1d4f63' });
     this.owned.push(material);
 
     return city.water.map((body, i) => {
@@ -167,12 +167,12 @@ export class Cityscape {
       material,
       city.blocks.length,
     );
-    mesh.name = "pavements";
+    mesh.name = 'pavements';
     mesh.receiveShadow = true;
 
     const matrix = new THREE.Matrix4();
-    const paving = new THREE.Color("#6a6f76");
-    const open = new THREE.Color("#4e6b47"); // a block nobody built on: park, yard, lot
+    const paving = new THREE.Color('#6a6f76');
+    const open = new THREE.Color('#4e6b47'); // a block nobody built on: park, yard, lot
     city.blocks.forEach((block, i) => {
       const b = block.bounds;
       matrix.makeScale(b.maxX - b.minX, PAVEMENT_HEIGHT, b.maxZ - b.minZ);
@@ -220,7 +220,7 @@ export class Cityscape {
     // Markings share a plane with the asphalt, so they need a depth offset as
     // well as a height one; the height alone is below the noise floor at range.
     const material = new THREE.MeshBasicMaterial({
-      color: "#c9c3ac",
+      color: '#c9c3ac',
       polygonOffset: true,
       polygonOffsetFactor: -4,
       polygonOffsetUnits: -8,
@@ -232,7 +232,7 @@ export class Cityscape {
       material,
       Math.max(1, total),
     );
-    mesh.name = "markings";
+    mesh.name = 'markings';
 
     const matrix = new THREE.Matrix4();
     let i = 0;
@@ -270,11 +270,11 @@ export class Cityscape {
 
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     geometry.translate(0, -0.5, 0);
-    const material = new THREE.MeshLambertMaterial({ color: "#54585e" });
+    const material = new THREE.MeshLambertMaterial({ color: '#54585e' });
     this.owned.push(geometry, material);
 
     const mesh = new THREE.InstancedMesh(geometry, material, spans.length);
-    mesh.name = "bridges";
+    mesh.name = 'bridges';
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
@@ -305,12 +305,12 @@ export class Cityscape {
    */
   private viaduct(city: City): THREE.InstancedMesh[] {
     const decks = city.roads.filter(
-      (r) => r.class === "interstate" || r.class === "ramp",
+      (r) => r.class === 'interstate' || r.class === 'ramp',
     );
     if (decks.length === 0) return [];
 
     const deckGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const deckMaterial = new THREE.MeshLambertMaterial({ color: "#5a6068" });
+    const deckMaterial = new THREE.MeshLambertMaterial({ color: '#5a6068' });
     this.owned.push(deckGeometry, deckMaterial);
 
     const deck = new THREE.InstancedMesh(
@@ -318,7 +318,7 @@ export class Cityscape {
       deckMaterial,
       decks.length,
     );
-    deck.name = "interstate";
+    deck.name = 'interstate';
 
     const pillarSpots: { x: number; z: number; height: number }[] = [];
     const matrix = new THREE.Matrix4();
@@ -337,7 +337,7 @@ export class Cityscape {
 
       // Yaw the deck onto the road, then pitch it along the slope. Length is
       // the real one along the surface, not the map distance.
-      euler.set(0, yaw, 0, "YXZ");
+      euler.set(0, yaw, 0, 'YXZ');
       quaternion.setFromEuler(euler);
       quaternion.multiply(
         new THREE.Quaternion().setFromAxisAngle(
@@ -355,7 +355,7 @@ export class Cityscape {
       matrix.compose(position, quaternion, scale);
       deck.setMatrixAt(i, matrix);
 
-      if (road.class !== "interstate") return;
+      if (road.class !== 'interstate') return;
       const count = Math.max(1, Math.round(run / INTERSTATE_PILLAR_SPACING));
       for (let p = 0; p < count; p++) {
         const t = (p + 0.5) / count;
@@ -372,7 +372,7 @@ export class Cityscape {
 
     const pillarGeometry = new THREE.BoxGeometry(1, 1, 1);
     pillarGeometry.translate(0, -0.5, 0); // hang down from the deck
-    const pillarMaterial = new THREE.MeshLambertMaterial({ color: "#6d737a" });
+    const pillarMaterial = new THREE.MeshLambertMaterial({ color: '#6d737a' });
     this.owned.push(pillarGeometry, pillarMaterial);
 
     const pillars = new THREE.InstancedMesh(
@@ -380,7 +380,7 @@ export class Cityscape {
       pillarMaterial,
       Math.max(1, pillarSpots.length),
     );
-    pillars.name = "interstate-pillars";
+    pillars.name = 'interstate-pillars';
     pillarSpots.forEach((spot, i) => {
       matrix.makeScale(PILLAR_WIDTH, spot.height, PILLAR_WIDTH);
       matrix.setPosition(spot.x, spot.height, spot.z);
