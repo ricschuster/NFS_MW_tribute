@@ -18,7 +18,8 @@
     "pwa": "node tools/pwacheck.mjs",
     "citylap": "node tools/citylap.mjs",
     "pace": "node tools/pace.mjs",
-    "patrol": "node tools/patrol.mjs"
+    "patrol": "node tools/patrol.mjs",
+    "drivers": "node tools/drivers.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",

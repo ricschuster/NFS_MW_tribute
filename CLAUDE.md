@@ -49,6 +49,10 @@ what the city is shaped like.
   and read what the game does over twenty minutes. An instrument, not a gate:
   it asserts nothing, and two of its numbers are skewed by the driver (#171),
   which the output says on the rows it affects
+- `npm run drivers` — the same routes driven by four people: beginner,
+  advanced, expert and perfect. `citylap` measures only the last of those, which
+  is a floor nobody stands on; this is what a change does to somebody who is not
+  perfect. Seeded, so a driver's mistakes land in the same places each run
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 

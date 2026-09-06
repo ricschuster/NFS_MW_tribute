@@ -129,6 +129,7 @@ npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic; vs. its baseline
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run patrol     # twenty minutes with the police live, and what came of it
+npm run drivers    # the same routes driven by beginner / advanced / expert / perfect
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
 npm run icons      # redraw the app icons from tools/icons.mjs
@@ -361,6 +362,19 @@ What is left, roughly in the order it would show:
   `police.cops` with a position but a `t` that does not match it is silently
   teleported onto its road on the next step, because the pursuit re-derives
   every cop's place from the graph.
+- **`citylap`'s driver is perfect, and nobody is.** It holds its lane exactly,
+  looks the whole braking window ahead, never misjudges a corner and never stops
+  paying attention. `npm run drivers` runs the same routes at four skill levels,
+  and the spread is large: in traffic a beginner holds 43-81% of the reference
+  driver's average speed depending on the route, an advanced driver 72-86% and
+  an expert 92-97%. Tune against the middle of that, not the top of it. **The
+  tier calibration is a first pass and wants a person**: the numbers were fitted
+  to make the gaps legible, not against anyone's actual play. Two things
+  the model got wrong on the way in are worth not repeating: faults have to be
+  square-rooted rather than linear, or an "expert" gets a 45 ms reaction time
+  that no person has; and reaction time must lag the *steering* only, because a
+  person brakes for a corner by anticipation and lagging that too turned the
+  expert into a driver who crashed 358 times over six routes.
 - **The city feel baseline is a driver's, not a player's.** `npm run citylap`
   gets a reference driver round all six routes, and the average-speed column is
   the only measurement of how fast Kestrel Bay can be driven. Read it as a floor

@@ -91,12 +91,14 @@ player has headroom it does not. And the probe that came before this one was *wr
 times, every time because its reference driver had stopped being a good driver.
 If a number looks strange, suspect the probe before the game.
 
-Two more, which answer different questions:
+Three more, which answer different questions:
 
 ```bash
 npm run pace                      # can the police be outrun?
 npm run patrol                    # twenty minutes with the police live
 npm run patrol -- --minutes 5 --quiet
+npm run drivers                   # the same routes at four skill levels
+npm run drivers -- --driver beginner --route "Old Quarter"
 ```
 
 `npm run pace` is a guard rather than a report. The police run at fractions of
@@ -113,5 +115,13 @@ did: when heat rose, what turned up, how many roadblocks and spikes, and what it
 all paid. It found three issues on its first run. Two of its numbers are skewed
 by the driver following a centreline and lapping one route rather than running
 (#171), and the output labels the rows that affects.
+
+`npm run drivers` exists because `citylap`'s driver is *perfect* - it holds its
+lane exactly, looks the whole braking window ahead, never misjudges a corner and
+never once stops paying attention. That is the right control and the wrong
+target. The other three drivers add the four things a person does wrong, all
+seeded so their mistakes land in the same places each run, and the gap between
+the bottom row and the top is the part of the game's difficulty that comes from
+the player rather than from the car.
 
 What no probe covers is the ladder - see issue #166.
