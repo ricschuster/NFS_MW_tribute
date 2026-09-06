@@ -573,7 +573,17 @@ export interface HeatLevel {
  * it. The product has to stay under 1 for *every* unit the level can send, not
  * just the average one - the first version of this table looked fine per level
  * and put elite units at 105% of the player's top speed, which is a pursuit
- * with no answer.
+ * with no answer. `npm run pace` is the guard on that.
+ *
+ * What these numbers are *not* is how you get away (#170). Being faster than
+ * them stops a pursuit being hopeless; it is not the escape. `seenBy` needs a
+ * unit within `SEEN_RANGE` with line of sight, so turning a corner breaks
+ * contact whatever your top speed is - and measured, a car at full damage
+ * escapes about as often as an undamaged one (67 / 17 / 50% against
+ * 50 / 17 / 67% at heat 1 / 3 / 6, which is inside the noise). Damage takes
+ * your speed and your grip and does not take the way out. Read the fractions
+ * as a floor under the pursuit rather than as the mechanic:
+ * `npm run endings -- --damage 1` is where that claim is checked.
  */
 export const HEAT_LEVELS: HeatLevel[] = [
   { units: ['cruiser'], maxCops: 2, speed: 0.84, enforcers: 0, enforcerUnit: 'suv' },

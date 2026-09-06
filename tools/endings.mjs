@@ -10,12 +10,23 @@
 // or neither happens and it simply carries on. The third is the one nobody
 // designed, and it is the one worth counting.
 //
+// `--damage 1` runs the whole thing in a wrecked car, which is #170's question:
+// the fractions in `HEAT_LEVELS` are written against an undamaged car, and a
+// wrecked one is slower than the slowest unit in the game. Measured, it makes
+// no consistent difference to whether you get away - because getting away is
+// line of sight, not speed.
+//
 // Read the caveat before reading the numbers. The driver laps a circuit rather
 // than running for the edge of the map, because that is the driver this repo
 // has (#171). A lap of 2.5-4 km does break line of sight and does leave a
 // search area behind - the escapes here are real - but a runner who kept going
 // in one direction would shed a pursuit more easily than this does. Treat the
 // escape rate as a floor and the stalemate rate as a ceiling.
+//
+// The busts are a floor too, in the other direction: the driver wedges itself
+// on traffic and three-point-turns out, and since #178 a stopped car with a
+// unit on it is busted in three and a half seconds. A player has #179's reset
+// for exactly that; this driver never presses it.
 //
 // Usage:
 //   npm run endings                    # 8 pursuits at each of heat 1, 3 and 6
@@ -34,6 +45,14 @@ const LIMIT = Number(flag('--minutes') ?? 3) * 60;
 const LEVELS = (flag('--levels') ?? '1,3,6').split(',').map(Number);
 /** Seconds before the driver in the second table gives up and stops. */
 const STOP_AFTER = 15;
+/**
+ * How beaten up the car is, held there (#170).
+ *
+ * `npm run endings -- --damage 1` runs the whole thing in a wrecked car. It is
+ * held rather than set, because the driver will go through a repair shop given
+ * the chance and the question is what a wrecked car can do.
+ */
+const DAMAGE = Number(flag('--damage') ?? 0);
 
 const server = await createServer({
   appType: 'custom',
@@ -67,6 +86,7 @@ function pursuit(route, level, seed, stopAfter = Infinity) {
 
   // Just inside the level, so `level` reads back as the one asked for.
   world.police.heat = Math.min(1, (level - 0.5) / K.HEAT_LEVEL_COUNT);
+  world.damage = DAMAGE;
   world.police.rammed(world);
 
   let along = 0;
@@ -136,6 +156,7 @@ function pursuit(route, level, seed, stopAfter = Infinity) {
       });
     }
 
+    world.damage = Math.max(world.damage, DAMAGE);
     const now = world.police.state === 'cooldown';
     if (now && !searching) searches++;
     searching = now;
@@ -152,7 +173,11 @@ function pursuit(route, level, seed, stopAfter = Infinity) {
 const world = new CityWorld(undefined, { traffic: false, police: false });
 const routes = world.city.routes;
 
-console.log(`HOW A PURSUIT ENDS - ${RUNS} runs at each level, ${LIMIT / 60} minutes each\n`);
+console.log(
+  `HOW A PURSUIT ENDS - ${RUNS} runs at each level, ${LIMIT / 60} minutes each` +
+    (DAMAGE > 0 ? `, in a car at ${Math.round(DAMAGE * 100)}% damage` : '') +
+    '\n',
+);
 
 const row = (cells) => console.log('  ' + cells.map(([v, w]) => String(v).padEnd(w)).join(''));
 

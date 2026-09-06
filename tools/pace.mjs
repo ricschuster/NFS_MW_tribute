@@ -19,8 +19,12 @@
 //
 // Exit status covers the clean car only. That case is settled and is currently
 // true, so breaking it should stop a PR. The hurt and shredded rows are
-// reported and not asserted, because whether they are meant to hold is issue
-// #170 and is undecided.
+// reported and not asserted, and #170 is why - but read them for what they
+// are. Being faster than them stops a pursuit being hopeless; it is not how
+// you get away. `seenBy` wants a unit within `SEEN_RANGE` with line of sight,
+// so a corner breaks contact at any speed, and `npm run endings -- --damage 1`
+// measures a wrecked car escaping about as often as a clean one. A red row
+// here means "cannot pull away on a straight", not "cannot escape".
 //
 // Usage:
 //   npm run pace
@@ -114,8 +118,11 @@ const wrecked = measured.find((m) => m.name === 'wrecked');
 const slowest = Math.min(...fastest.map((f) => f.speed));
 if (wrecked.mine < slowest) {
   console.log(`note: a wrecked car does ${pct(wrecked.mine)} and the slowest unit in the game does`);
-  console.log(`      ${pct(slowest)}, so damage cannot be outrun at any level. That is issue #170,`);
-  console.log('      and it is a design decision rather than a failure of this check.\n');
+  console.log(`      ${pct(slowest)}, so damage cannot be pulled away from on a straight.`);
+  console.log('      It can still be escaped: contact breaks on line of sight, not on');
+  console.log('      speed, and `npm run endings -- --damage 1` measures a wrecked car');
+  console.log('      getting away about as often as a clean one. #170 is the question of');
+  console.log('      whether that is the design, and it is a decision rather than a bug.\n');
 }
 
 if (broken) {
