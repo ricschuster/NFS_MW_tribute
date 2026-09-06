@@ -55,6 +55,12 @@ what the city is shaped like.
   heat level, in two tables - one for a driver who keeps going and one for a
   car that stops. The stalemate ("neither") is the number to watch; it was 100%
   of stopped pursuits at heat 6 before #178
+- `npm run playthrough` — play the whole game at every level it has one: four
+  driver tiers with the police live, six heat levels, six events, five
+  ambushes, reported as a session log rather than a table. It goes through
+  `driveRoute`, which is the only driver that applies the skill model - the
+  reaction lag, the lapses and the wander live in its hands, so `patrol` and
+  `endings` are always the perfect driver however they are asked
 - `npm run drivers` — the same routes driven by four people: beginner,
   advanced, expert and perfect. `citylap` measures only the last of those, which
   is a floor nobody stands on; this is what a change does to somebody who is not
