@@ -19,6 +19,7 @@ import {
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
+  CITY_EDGE_MARGIN,
   WRECK_LINGER,
   TAKEDOWN_FLASH,
   TAKEDOWN_SPEED_KEPT,
@@ -1096,10 +1097,23 @@ export class CityWorld {
     return false;
   }
 
-  /** The map ends at the coast, and the sea is not drivable. */
+  /**
+   * The map ends at the coast, and the sea is not drivable.
+   *
+   * With a margin, because the perimeter arterial's centreline *is* the
+   * boundary: its carriageway straddles it, and without the margin a car
+   * driving down the coast road is reverted and stopped on every step. What
+   * keeps the sea undrivable is `afloat`, not this.
+   */
   private outOfBounds(): boolean {
     const b = this.city.bounds;
-    return this.x < b.minX || this.x > b.maxX || this.z < b.minZ || this.z > b.maxZ;
+    const edge = CITY_EDGE_MARGIN;
+    return (
+      this.x < b.minX - edge ||
+      this.x > b.maxX + edge ||
+      this.z < b.minZ - edge ||
+      this.z > b.maxZ + edge
+    );
   }
 
   /** How high the road under the car is, for the renderer to sit the car on. */

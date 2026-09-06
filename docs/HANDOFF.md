@@ -125,10 +125,11 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 441 unit tests + playtests
+npm run test       # 445 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
+npm run citylap    # drive a reference driver round every route; how far it got
 npm run shot       # screenshot the Canvas game
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
@@ -175,47 +176,33 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**M4: Kestrel Bay rebuild - 1 open.**
+**Five issues are open, and nothing else is.** M4 (Kestrel Bay rebuild) and M5
+(open-world systems) are both closed: the generator, the geometry, the elevated
+interstate, traffic, police, six heat levels, cooldown, takedowns, roadblocks,
+Enforcers, spike strips, the helicopter, pursuit breakers, ambushes, radio
+chatter, collectibles, the car roster, mods, claiming a rival's car, Rep, the
+ladder of ten, and the city's own race types all shipped. `world.ts` still
+exists but nothing in the city needs it.
 
-- **#86** - car-to-car and building collision are done, and #94 added damage
-  and wrecks on top of them. Nothing is known to be missing; it wants a read
-  through rather than more code.
+**M6: Beyond the browser - 3 open, and deliberately not started.** #98 made the
+game installable and offline and #101 opened the storage seam a shell needs.
+What is left is picking a desktop shell (#99), a release pipeline for it (#100)
+and split asset budgets (#102). These were not attempted, for reasons that are
+about the environment rather than the work: there is no Rust toolchain and no
+display here, so a Tauri build cannot be compiled or run, and picking between
+Electron and Tauri is a heavyweight runtime dependency plus a CI and signing
+decision. Per the house rule that wants an ADR for a new dependency, that is a
+choice for a person, not something to settle by picking one and shipping it.
 
-Done this session: #83 the generator, #84 geometry, #85 the elevated
-interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70/#71/#72/#92/#95/#66/#90/#68/#57
-from M5, and #89 finished M4's touch controls.
+**#14 tune driving feel** is blocked on a measurement that does not exist yet.
+See the city feel baseline under known problems: `npm run citylap` is the probe
+it needs, and the probe gets round one route of six. Tuning the car against a
+driver that cannot lap the city would be tuning against the driver.
 
-**M5: Open-world systems - 3 open.** The pursuit is built: #58 (six heat
-levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
-#60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency
-and #91 gives the currency somewhere to go. #93 and #67 give free roam
-something to do between pursuits, and #70 puts the ladder's races in the city.
-That is the framework the rest keys off. Natural next ones, in order of
-how much they use what already exists:
-
-- **#66 claim a rival's car** - beat them, then wreck it. Both halves exist
-  now (#70 races, #94 takedowns); this joins them.
-- **#11 art direction** - everything is still boxes. #75 did what lighting can
-  do for them; the rest is geometry and textures.
-- **#68 mods** - earned by placing in a car's events, which needs #70/#72.
-- **#66 claim a rival's car** - the roster from #67 is the thing it claims.
-- **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and
-  the last of the pursuit furniture.
-- **#92 ambushes**, **#76 radio chatter** - both key off the pursuit as it now
-  stands. **#93 collectibles** pays straight into Rep.
-- **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
-  races into the city and are what let `world.ts` finally retire.
-
-**M6: Beyond the browser - 3 open.** #98 made it installable and offline and
-#101 opened the storage seam a shell needs. What is left is picking a shell
-(#99), a release pipeline for it (#100) and split asset budgets (#102) - and
-the first of those is a real dependency and a toolchain decision, so it wants
-an ADR and a person. It is what lifts the download-size ceiling on asset
-quality.
-
-Also open: **#14** (tune driving feel) and **#11** (art direction), both from
-before the pivot and both still live.
+**#11 replace vector-drawn art with sprites** is art for the *track* renderer,
+which ADR-0004 is retiring. Read it as "the city is still boxes" rather than as
+a sprite task: #75 did what lighting can do for them and the rest is geometry
+and textures, behind the provider seam in `scene/`.
 
 ## Known problems, not papered over
 
@@ -259,13 +246,20 @@ before the pivot and both still live.
   `police.cops` with a position but a `t` that does not match it is silently
   teleported onto its road on the next step, because the pursuit re-derives
   every cop's place from the graph.
-- **There is no feel baseline for the city.** `npm run feel` only drives the
-  track sim, which is a gap worth closing before tuning city driving by feel -
-  and more so now that #67 has given the city eight cars whose handling nobody
-  has measured. A throwaway probe written for #72 got a reference driver round
-  two of the six routes at 57% and 68% of top speed and stalled on the other
-  four; the speed-run targets (38% to 52%) are set under that. A driver that
-  can lap all six is the thing a city feel probe would need first.
+- **There is no feel baseline for the city, and #14 stays open until there is.**
+  `npm run feel` only drives the track sim, which is a gap worth closing before
+  tuning city driving by feel - and more so now that #67 has given the city
+  eight cars whose handling nobody has measured. The throwaway probe written for
+  #72 is now a real one, `npm run citylap`, and it completes **one of the six
+  routes**. Getting it there found two player-visible city bugs the tests had
+  passed over for months (every route doubled back on itself; the perimeter
+  arterial stopped the car dead), both fixed in #129. The remaining failures are
+  two distinct modes and neither is understood yet: hundreds of building clips
+  *while on the line*, which is either the driver's line or streets narrower
+  than the car needs; and losing the route entirely, where the windowed
+  progress search drops the line and never recovers (worst case a kilometre off
+  with zero crashes). Fix the losing-the-line mode first - it is almost
+  certainly the probe, and it is hiding whatever the crashes are.
 - **The rival ladder is tuned against the probe's reference driver** and will
   need retuning whenever the car changes. Expect it rather than treating it as a
   regression. `npm run feel` has now been wrong a third time, for a third

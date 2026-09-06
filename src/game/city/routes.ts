@@ -5,6 +5,7 @@ import {
   ROUTE_SPACING,
   ROUTE_MIN_LENGTH,
   ROUTE_MAX_LENGTH,
+  ROUTE_MAX_TURN,
   CHECKPOINT_SPACING,
 } from '../constants';
 import type { City, CityRoute, Vec2 } from './types';
@@ -37,15 +38,16 @@ export function routesFor(city: City): CityRoute[] {
     z: (city.bounds.minZ + city.bounds.maxZ) / 2,
   };
 
-  // Candidate centres on three rings around the middle of the map, so the six
-  // events land in six quarters rather than six times downtown. Three rings
-  // and not one because a single ring of the right radius only holds about
-  // three circuits at the spacing they need, and most candidates are rejected
-  // anyway - by the water, by a lap that came out too long, or by being too
-  // close to one already placed.
-  for (const reach of [ROUTE_RADIUS * 2.2, ROUTE_RADIUS * 3.2, ROUTE_RADIUS * 4.2]) {
-    for (let i = 0; i < 16 && routes.length < ROUTE_COUNT; i++) {
-      const angle = (i / 16) * Math.PI * 2;
+  // Candidate centres on a set of rings around the middle of the map, so the
+  // events land in six quarters rather than six times downtown. Many rings and
+  // many angles because most candidates are rejected: by the water, by a lap
+  // that came out too long or too short, by one that doubles back on itself,
+  // or by being too close to one already placed.
+  const rings = [1.2, 1.7, 2.2, 2.7, 3.2, 3.7, 4.2, 4.7];
+  for (const scale of rings) {
+    const reach = ROUTE_RADIUS * scale;
+    for (let i = 0; i < 24 && routes.length < ROUTE_COUNT; i++) {
+      const angle = (i / 24) * Math.PI * 2;
       const at = {
         x: centre.x + Math.sin(angle) * reach,
         z: centre.z + Math.cos(angle) * reach,
@@ -107,6 +109,12 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
   }
 
   const points: Vec2[] = [];
+  // Roads already used by an earlier leg, so a later one cannot retrace them.
+  // Without this, four independent shortest paths regularly share streets and
+  // the "circuit" is an out-and-back with U-turns in it - which is what every
+  // route in the city was until a reference driver tried to lap one.
+  const used = new Set<string>();
+
   for (let i = 0; i < corners.length; i++) {
     // Bounded by how far apart the two corners are. Unbounded, every leg
     // explores the whole city before it stops, and six routes cost a third of
@@ -114,8 +122,9 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
     const from = city.nodes[corners[i]].pos;
     const to = city.nodes[corners[(i + 1) % corners.length]].pos;
     const reach = Math.hypot(to.x - from.x, to.z - from.z) * 3 + ROUTE_RADIUS;
-    const leg = shortestPath(graph, corners[i], corners[(i + 1) % corners.length], reach);
+    const leg = shortestPath(graph, corners[i], corners[(i + 1) % corners.length], reach, used);
     if (!leg) return null;
+    for (let n = 1; n < leg.length; n++) used.add(edgeKey(leg[n - 1], leg[n]));
     // Drop the first node of every leg but the first: it is the last node of
     // the leg before it, and a duplicated point is a zero-length segment.
     for (const node of i === 0 ? leg : leg.slice(1)) points.push(city.nodes[node].pos);
@@ -126,6 +135,10 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
   // Too short and it is a car park; too long and it is a commute. The water
   // makes both happen: a loop that has to go round the bay is enormous.
   if (length < ROUTE_MIN_LENGTH || length > ROUTE_MAX_LENGTH) return null;
+  // Banning used roads stops a leg retracing another one, but a lap can still
+  // pinch to a point and turn back on itself through a junction. A corner
+  // sharper than this is a U-turn, and a lap with a U-turn in it is not a lap.
+  if (sharpestTurn(points) > ROUTE_MAX_TURN) return null;
 
   // Alternating, so the six events are three of each and they are spread
   // around the map rather than clustered by type.
@@ -180,7 +193,16 @@ function nearestNode(city: City, graph: Graph, to: Vec2): number | null {
  * four legs once, at generation time, on a graph of a couple of thousand
  * nodes; a priority queue here would be code nobody needs to read.
  */
-function shortestPath(graph: Graph, from: number, to: number, reach: number): number[] | null {
+/** One road, from either end. A lap may use it once. */
+const edgeKey = (a: number, b: number) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+function shortestPath(
+  graph: Graph,
+  from: number,
+  to: number,
+  reach: number,
+  banned: ReadonlySet<string>,
+): number[] | null {
   const dist = new Map<number, number>([[from, 0]]);
   const prev = new Map<number, number>();
   const open = new Set<number>([from]);
@@ -203,6 +225,7 @@ function shortestPath(graph: Graph, from: number, to: number, reach: number): nu
 
     for (const edge of graph.edges.get(at) ?? []) {
       if (done.has(edge.to)) continue;
+      if (banned.has(edgeKey(at, edge.to))) continue;
       const through = best + edge.cost;
       if (through > reach) continue;
       if (through >= (dist.get(edge.to) ?? Infinity)) continue;
@@ -222,6 +245,21 @@ function shortestPath(graph: Graph, from: number, to: number, reach: number): nu
     walk = back;
   }
   return path;
+}
+
+/** The sharpest corner in the loop, in radians. A U-turn is close to PI. */
+function sharpestTurn(points: Vec2[]): number {
+  let worst = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[(i - 1 + points.length) % points.length];
+    const b = points[i];
+    const c = points[(i + 1) % points.length];
+    let turn = Math.atan2(c.x - b.x, c.z - b.z) - Math.atan2(b.x - a.x, b.z - a.z);
+    while (turn > Math.PI) turn -= Math.PI * 2;
+    while (turn < -Math.PI) turn += Math.PI * 2;
+    worst = Math.max(worst, Math.abs(turn));
+  }
+  return worst;
 }
 
 function lengthOf(points: Vec2[]): number {

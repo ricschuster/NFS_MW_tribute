@@ -17,7 +17,8 @@
     "city": "node tools/citymap.mjs",
     "cityshot": "node tools/cityshot.mjs",
     "icons": "node tools/icons.mjs",
-    "pwa": "node tools/pwacheck.mjs"
+    "pwa": "node tools/pwacheck.mjs",
+    "citylap": "node tools/citylap.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",

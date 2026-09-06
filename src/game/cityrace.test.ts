@@ -7,6 +7,7 @@ import {
   ROUTE_COUNT,
   ROUTE_MIN_LENGTH,
   ROUTE_MAX_LENGTH,
+  ROUTE_MAX_TURN,
   ROUTE_SPACING,
   ROUTE_LAPS,
   CHECKPOINT_RANGE,
@@ -72,6 +73,45 @@ describe('the circuits', () => {
           Infinity,
         );
         expect(nearest).toBeLessThan(SURFACE_REACH * 4);
+      }
+    }
+  });
+
+  /**
+   * A lap has to be a loop, not an out-and-back.
+   *
+   * Four shortest paths between four corners will happily share streets, and
+   * every route in the city was a there-and-back-again with 180-degree turns
+   * in it until a reference driver tried to lap one. Nothing that was asserted
+   * - the length, the spacing, that every point is on a road - could tell the
+   * difference.
+   */
+  it('never doubles back on itself', () => {
+    for (const route of city.routes) {
+      for (let i = 0; i < route.points.length; i++) {
+        const a = route.points[(i - 1 + route.points.length) % route.points.length];
+        const b = route.points[i];
+        const c = route.points[(i + 1) % route.points.length];
+        let turn = Math.atan2(c.x - b.x, c.z - b.z) - Math.atan2(b.x - a.x, b.z - a.z);
+        while (turn > Math.PI) turn -= Math.PI * 2;
+        while (turn < -Math.PI) turn += Math.PI * 2;
+        expect(Math.abs(turn)).toBeLessThanOrEqual(ROUTE_MAX_TURN);
+      }
+    }
+  });
+
+  it('uses each road at most once', () => {
+    for (const route of city.routes) {
+      const used = new Set<string>();
+      for (let i = 0; i < route.points.length; i++) {
+        const a = route.points[i];
+        const b = route.points[(i + 1) % route.points.length];
+        const key = [a, b]
+          .map((p) => `${Math.round(p.x)}|${Math.round(p.z)}`)
+          .sort()
+          .join('>');
+        expect(used.has(key)).toBe(false);
+        used.add(key);
       }
     }
   });
