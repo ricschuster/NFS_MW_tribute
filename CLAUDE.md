@@ -243,6 +243,13 @@ and the direction keys are busy driving. Its "go to" branch sets a marker
 rather than teleporting: quick travel that moved the car would make the pursuit
 a formality and the city a menu of places rather than a place.
 
+**Parts are progress; a profile is content** (issue #68). `mods.ts` is the
+catalogue and `garage.ts` owns which car has earned what and what is bolted on,
+because two cars of the same model have the same profile and different parts -
+and the day the roster is edited nobody should lose an engine. Every mod is a
+*trade*: a part that is better at everything is an upgrade with a menu in front
+of it rather than a decision about what kind of car you want.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

@@ -239,7 +239,22 @@ export class Hud {
     // than the gap it looks like it has.
     ctx.fillText(world.car.name.toUpperCase(), 34, HEIGHT - 114);
 
-    const found = world.finds.flash;
+    // Not while the wheel is open: it is already listing the part, and a
+    // banner across the panel is two things saying one thing over each other.
+    const part = this.wheel ? null : world.finds.earned;
+    if (part) {
+      ctx.globalAlpha = Math.min(1, world.finds.earnedLeft / (FIND_FLASH * 0.4));
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd166';
+      ctx.font = '800 32px system-ui, sans-serif';
+      ctx.fillText(`${part.name.toUpperCase()} UNLOCKED`, WIDTH / 2, HEIGHT / 2 - 100);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.font = '500 14px system-ui, sans-serif';
+      ctx.fillText(`${part.detail}  ·  Q to fit it`, WIDTH / 2, HEIGHT / 2 - 76);
+      ctx.globalAlpha = 1;
+    }
+
+    const found = this.wheel ? null : world.finds.flash;
     if (!found) return;
     ctx.globalAlpha = Math.min(1, world.finds.flashLeft / (FIND_FLASH * 0.4));
     ctx.textAlign = 'center';
