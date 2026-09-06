@@ -30,7 +30,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -38,7 +38,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -635,6 +635,62 @@ for (const view of VIEWS) {
       });
     });
     await page.waitForTimeout(700);
+  }
+
+  if (view === 'radio') {
+    // Run a pursuit through several of the things that get called out, by
+    // hand: waiting for a scripted drive to draw a roadblock, a spike strip
+    // and air support in one go is waiting all afternoon.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(6000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      world.crashFlash = 0;
+      world.rep.total = 21900;
+
+      // A pursuit, then the hazards arriving one after another. The radio
+      // spaces them out on its own, which is the thing being photographed.
+      world.police.state = 'pursuit';
+      world.police.heat = 0.8;
+      world.police.cops.push({
+        road: world.onRoad, t: 0.5, forward: true, speed: 0, damage: 0,
+        x: world.x - Math.sin(world.heading) * 40 * metre,
+        z: world.z - Math.cos(world.heading) * 40 * metre,
+        y: world.y, heading: world.heading, kind: 'state', role: 'chase',
+      });
+      world.step(1 / 60, none);
+      world.police.roadblocks.push({
+        road: world.onRoad,
+        x: world.x + Math.sin(world.heading) * 200 * metre,
+        z: world.z + Math.cos(world.heading) * 200 * metre,
+        y: 0, ax: Math.cos(world.heading), az: -Math.sin(world.heading),
+        half: 10 * metre, gap: null, cars: [],
+      });
+      for (let t = 0; t < 2.4; t += 1 / 60) world.step(1 / 60, none);
+      world.police.spikes.push({
+        road: world.onRoad,
+        x: world.x + Math.sin(world.heading) * 400 * metre,
+        z: world.z + Math.cos(world.heading) * 400 * metre,
+        y: 0, ax: Math.cos(world.heading), az: -Math.sin(world.heading),
+        from: -10 * metre, to: 4 * metre,
+      });
+      for (let t = 0; t < 2.4; t += 1 / 60) world.step(1 / 60, none);
+      world.police.helicopter = {
+        x: world.x + Math.sin(world.heading) * 120 * metre,
+        z: world.z + Math.cos(world.heading) * 120 * metre,
+        y: world.y + 28 * metre,
+        heading: world.heading, onStation: 80, spotting: true,
+      };
+      for (let t = 0; t < 1.2; t += 1 / 60) world.step(1 / 60, none);
+      world.speed = world.maxSpeed * 0.4;
+    });
+    await page.waitForTimeout(900);
   }
 
   if (view === 'pursuit') {

@@ -84,6 +84,7 @@ src/game/
   cityclaim.ts    the second half of a ladder fight: run them down, take the car
   quickwheel.ts   the menu that never pauses: cars, parts, somewhere to go
   garage.ts       what the player owns: cars, parts earned, parts fitted
+  radio.ts        what the police say about you, and when
   mods.ts         the parts catalogue, as trades rather than upgrades
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
@@ -122,7 +123,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 409 unit tests + playtests
+npm run test       # 420 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -191,8 +192,6 @@ how much they use what already exists:
 
 - **#66 claim a rival's car** - beat them, then wreck it. Both halves exist
   now (#70 races, #94 takedowns); this joins them.
-- **#76 radio chatter** - wants audio in the city, which does not exist at all,
-  so it is really two jobs.
 - **#11 art direction** - everything is still boxes. #75 did what lighting can
   do for them; the rest is geometry and textures.
 - **#68 mods** - earned by placing in a car's events, which needs #70/#72.
@@ -232,9 +231,9 @@ before the pivot and both still live.
   by adding a chase to it.
   That is now the single biggest gap: the pursuit is finished, the currency
   exists, and there is no ladder to spend it on. #91 is the next move.
-- **The city has no sound.** `audio.ts` is wired to the Canvas game only, so
-  none of the pursuit - sirens, the rotor, the spikes - is audible in Kestrel
-  Bay. #62 assumed a rotor loop and did not get one.
+- **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
+  siren and a radio squelch - but there is still no rotor for the helicopter,
+  nothing for a takedown or a spike strip, and no music.
 - **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
   overlapping pair in ~2775 at last measurement: acceptable, not solved.
 - **Blocks stay rectangles in winding quarters**, so they do not follow the
