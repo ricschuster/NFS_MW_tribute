@@ -249,6 +249,13 @@ because two cars of the same model have the same profile and different parts -
 and the day the roster is edited nobody should lose an engine. Every mod is a
 *trade*: a part that is better at everything is an upgrade with a menu in front
 of it rather than a decision about what kind of car you want.
+**Touch is one reading, not a second control path** (issue #89). The drive loop
+asks `held(id, ...keys)` and never learns whether the answer came from a key or
+a thumb. `TouchControls` takes its button set from the caller, because the two
+games need different ones, and the Quick Wheel's rows are *published* by the
+HUD as touch regions - the thing that knows where it drew them is the thing
+that says where they are, and how many there are changes with what is in the
+wheel.
 
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the

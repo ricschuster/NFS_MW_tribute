@@ -30,7 +30,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel',
+  'ambush', 'repair', 'claim', 'wheel', 'touch',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -38,7 +38,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel',
+      'ambush', 'repair', 'claim', 'wheel', 'touch',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -555,6 +555,45 @@ for (const view of VIEWS) {
     await page.keyboard.down('e');
     await page.waitForTimeout(500);
     await page.keyboard.up('e');
+    await page.waitForTimeout(900);
+  }
+
+  if (view === 'touch') {
+    // The on-screen controls only appear once a finger has arrived, so the
+    // shot has to touch the screen before it can photograph them (#89).
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(6000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.crashFlash = 0;
+      world.rep.total = 12400;
+    });
+    // Two fingers: steering held left and the throttle down, which is also the
+    // multi-touch case the whole thing exists for. Dispatched by hand rather
+    // than through Playwright's touchscreen, which needs the context created
+    // with `hasTouch` and this one is shared with every other view.
+    await page.evaluate(() => {
+      const canvas = document.getElementById('game');
+      const rect = canvas.getBoundingClientRect();
+      const at = (x, y) => ({
+        clientX: rect.left + (x / 1024) * rect.width,
+        clientY: rect.top + (y / 640) * rect.height,
+      });
+      canvas.dispatchEvent(
+        new TouchEvent('touchstart', {
+          bubbles: true,
+          cancelable: true,
+          touches: [
+            new Touch({ identifier: 1, target: canvas, ...at(92, 562) }),
+            new Touch({ identifier: 2, target: canvas, ...at(810, 562) }),
+          ],
+        }),
+      );
+    });
     await page.waitForTimeout(900);
   }
 

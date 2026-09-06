@@ -21,6 +21,7 @@ import {
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import type { CityWorld } from '../cityworld';
 import type { QuickWheel } from '../quickwheel';
+import type { TouchControls } from '../touch';
 
 /**
  * The HUD over the 3D city (#89).
@@ -45,6 +46,19 @@ export class Hud {
   showMap = false;
   /** The Quick Wheel while it is held open (#90), or null. */
   wheel: QuickWheel | null = null;
+  /** On-screen controls, when there are any (#89). */
+  touch: TouchControls | null = null;
+
+  /**
+   * How far the bottom-left readouts move up once there are thumbpads.
+   *
+   * The speed, the nitrous bar and the damage bar all live where the steering
+   * buttons go, and a speedometer with a thumb over it is not a speedometer.
+   * Zero on a desktop, so nothing moves for anyone who is not on a phone.
+   */
+  private get lift(): number {
+    return this.touch?.active ? 150 : 0;
+  }
 
   constructor(private readonly ctx: CanvasRenderingContext2D) {}
 
@@ -78,6 +92,7 @@ export class Hud {
     this.event(world);
     this.banners(world);
     this.quickWheel(world);
+    this.buttons();
 
     ctx.restore();
   }
@@ -99,17 +114,17 @@ export class Hud {
     // measuring afterwards gives the label's own width and puts it on top of
     // the number.
     const width = ctx.measureText(String(kmh)).width;
-    ctx.fillText(String(kmh), 34, HEIGHT - 52);
+    ctx.fillText(String(kmh), 34, HEIGHT - 52 - this.lift);
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
     ctx.font = '500 18px system-ui, sans-serif';
-    ctx.fillText('km/h', 34 + width + 12, HEIGHT - 52);
+    ctx.fillText('km/h', 34 + width + 12, HEIGHT - 52 - this.lift);
   }
 
   private nitrous(world: CityWorld): void {
     const { ctx } = this;
     const x = 34;
-    const y = HEIGHT - 38;
+    const y = HEIGHT - 38 - this.lift;
     const width = 190;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
@@ -133,7 +148,7 @@ export class Hud {
     if (world.damage <= DAMAGE_FREE) return;
 
     const x = 34;
-    const y = HEIGHT - 24;
+    const y = HEIGHT - 24 - this.lift;
     const width = 190;
     const hurt = (world.damage - DAMAGE_FREE) / (1 - DAMAGE_FREE);
 
@@ -153,7 +168,7 @@ export class Hud {
     if (heat <= 0.01 && world.police.cops.length === 0) return;
 
     const x = WIDTH - 210;
-    const y = HEIGHT - 46;
+    const y = HEIGHT - 46 - this.lift;
 
     ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
@@ -237,7 +252,9 @@ export class Hud {
     ctx.font = '600 12px system-ui, sans-serif';
     // Clear of the speed readout above it: a 62px number has more cap height
     // than the gap it looks like it has.
-    ctx.fillText(world.car.name.toUpperCase(), 34, HEIGHT - 114);
+    // Indented past the look-back button once there is one there. Moving the
+    // button instead would put it out of a thumb's reach of the steering.
+    ctx.fillText(world.car.name.toUpperCase(), 34 + (this.lift ? 66 : 0), HEIGHT - 114 - this.lift);
 
     // Not while the wheel is open: it is already listing the part, and a
     // banner across the panel is two things saying one thing over each other.
@@ -280,10 +297,10 @@ export class Hud {
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
     ctx.font = '600 13px system-ui, sans-serif';
-    ctx.fillText('TAKEDOWNS', WIDTH - 34, HEIGHT - 68);
+    ctx.fillText('TAKEDOWNS', WIDTH - 34, HEIGHT - 68 - this.lift);
     ctx.fillStyle = '#ffd166';
     ctx.font = '700 22px ui-monospace, "SF Mono", Menlo, monospace';
-    ctx.fillText(String(world.takedowns), WIDTH - 34, HEIGHT - 88);
+    ctx.fillText(String(world.takedowns), WIDTH - 34, HEIGHT - 88 - this.lift);
   }
 
   /**
@@ -925,13 +942,27 @@ export class Hud {
   private quickWheel(world: CityWorld): void {
     const { ctx } = this;
     const wheel = this.wheel;
-    if (!wheel) return;
+    if (!wheel) {
+      // Cleared, or the rows keep answering touches after the panel has gone.
+      if (this.touch) this.touch.regions = [];
+      return;
+    }
 
     const entries = wheel.entries(world);
     const width = 470;
     const height = 54 + entries.length * 30;
     const x = WIDTH / 2 - width / 2;
     const y = HEIGHT / 2 - height / 2;
+
+    // Published for touch (#89): this is the only place that knows how many
+    // rows there are and where they ended up, and the wheel's length changes
+    // with what is in it.
+    if (this.touch) {
+      this.touch.regions = [
+        { id: 'wheel:branch', x, y, w: width, h: 44 },
+        ...entries.map((_, i) => ({ id: `wheel:${i}`, x, y: y + 42 + i * 30, w: width, h: 30 })),
+      ];
+    }
 
     ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
     ctx.fillRect(x, y, width, height);
@@ -969,6 +1000,35 @@ export class Hud {
       ctx.textAlign = 'left';
     }
     ctx.globalAlpha = 1;
+  }
+
+  /**
+   * The on-screen controls (#89).
+   *
+   * Drawn last so nothing covers them, and only once a finger has actually
+   * touched the screen - a desktop player should never see a thumbpad.
+   */
+  private buttons(): void {
+    const { ctx } = this;
+    const touch = this.touch;
+    if (!touch?.active) return;
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const button of touch.buttons) {
+      ctx.beginPath();
+      ctx.arc(button.x, button.y, button.r, 0, Math.PI * 2);
+      ctx.fillStyle = button.down ? 'rgba(127, 227, 255, 0.35)' : 'rgba(8, 12, 18, 0.4)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.font = `600 ${button.label.length > 1 ? 15 : 24}px system-ui, sans-serif`;
+      ctx.fillText(button.label, button.x, button.y);
+    }
+    ctx.textBaseline = 'alphabetic';
   }
 
   /**

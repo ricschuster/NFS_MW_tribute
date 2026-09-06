@@ -27,7 +27,9 @@ Everything runs from the one deployment; the query string picks what you get.
 **Driving** (`?renderer=drive`): WASD or arrows to drive, **shift** for
 nitrous, **Enter** to start an event you are parked on, **B** to glance behind,
 **Tab** to hold the collection map open, **Q** to hold the Quick Wheel open
-(**E** switches branch, **1**-**9** picks).
+(**E** switches branch, **1**-**9** picks). On a phone, on-screen controls
+appear as soon as you touch the screen: steering, throttle, brake, nitrous,
+enter, the map, the Quick Wheel and a glance behind.
 Speed, nitrous, heat, Rep, takedowns and a heading-up minimap are drawn over
 the world. Rep is earned from everything -
 takedowns, roadblocks gone through, cars threaded at speed, and every second

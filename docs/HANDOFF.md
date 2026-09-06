@@ -121,7 +121,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 387 unit tests + playtests
+npm run test       # 396 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -162,13 +162,11 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 ## Where the work is
 
-**M4: Kestrel Bay rebuild - 2 open, both partial.**
+**M4: Kestrel Bay rebuild - 1 open.**
 
 - **#86** - car-to-car and building collision are done, and #94 added damage
-  and wrecks on top of them. What is left is whatever falls out of rivals.
-- **#89** - the HUD and minimap are done. **Touch controls are not wired into
-  the city**, so Kestrel Bay cannot be driven on a phone. They only exist in
-  `game.ts`.
+  and wrecks on top of them. Nothing is known to be missing; it wants a read
+  through rather than more code.
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
@@ -230,7 +228,6 @@ before the pivot and both still live.
 - **The city has no sound.** `audio.ts` is wired to the Canvas game only, so
   none of the pursuit - sirens, the rotor, the spikes - is audible in Kestrel
   Bay. #62 assumed a rotor loop and did not get one.
-- **Touch controls are track-only**, so the city is desktop-only.
 - **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
   overlapping pair in ~2775 at last measurement: acceptable, not solved.
 - **Blocks stay rectangles in winding quarters**, so they do not follow the
