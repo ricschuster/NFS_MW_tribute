@@ -10,6 +10,7 @@ import {
   NITRO_RECHARGE,
   NITRO_MIN_ENGAGE,
   NITRO_BLEED_FRAC,
+  NITRO_TAPER,
   CAR_RADIUS,
   HIT_SPEED_KEPT,
   SHUNT_SPEED_KEPT,
@@ -466,7 +467,12 @@ export class CityWorld {
     this.nitro = boosting
       ? Math.max(0, this.nitro - dt * NITRO_DRAIN)
       : Math.min(1, this.nitro + dt * NITRO_RECHARGE);
-    const throttle = boosting ? this.accel * this.nitroAccel : this.accel;
+    // The boost fades as the car approaches its top speed (#105): what it buys
+    // is the way out of a corner, not another two per cent at the top end.
+    const pace = Math.min(1, Math.abs(this.speed) / this.maxSpeed);
+    const throttle = boosting
+      ? this.accel * (1 + (this.nitroAccel - 1) * (1 - pace * NITRO_TAPER))
+      : this.accel;
 
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     // Subtracted, not added. Heading rotates the car's forward from +z toward

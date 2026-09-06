@@ -241,6 +241,12 @@ function raceLine(t: number, w: World): InputState {
   return steerToward(w, 0, { up: true });
 }
 
+/** The same, using the boost, which the top of the ladder needs (#105). */
+function boostedLine(t: number, w: World): InputState {
+  if (t < STEP * 0.5) return press({ confirm: true });
+  return steerToward(w, 0, { up: true, nitro: true });
+}
+
 describe('playtest: Ladder race', () => {
   it('wins a clean sprint and ranks up', () => {
     const w = new World({ traffic: false });
@@ -317,7 +323,8 @@ describe('playtest: the ladder', () => {
     hard.beaten = RIVALS.length - 1; // the boss
     hard.rep.total = RIVALS[RIVALS.length - 1].rep;
     const before = hard.rep.total;
-    play(hard, 45, raceLine);
+    // With the boost: the boss cannot be beaten without it (#105).
+    play(hard, 45, boostedLine);
     expect(hard.raceResult).toBe('won');
     expect(hard.rep.total - before).toBeGreaterThan(first);
   });
@@ -346,5 +353,43 @@ describe('playtest: the ladder', () => {
     });
     expect(w.rep.total).toBeGreaterThan(0);
     expect(paidForEvading).toBe(true);
+  });
+});
+
+/**
+ * The boost has to matter (#105).
+ *
+ * It used to be worth *minus* a second over a race: corners are grip-limited,
+ * so extra top speed had nowhere to go and the charge bought overspeed that had
+ * to be scrubbed off before the next bend. It buys the way out of a corner now,
+ * and the top of the ladder is set so that it has to.
+ */
+describe('playtest: nitrous over a race', () => {
+  const raceBoss = (line: (t: number, w: World) => InputState) => {
+    const w = new World({ traffic: false });
+    w.beaten = RIVALS.length - 1;
+    w.rep.total = RIVALS[RIVALS.length - 1].rep;
+    play(w, 45, line);
+    return w;
+  };
+
+  it('is worth using over a whole race, not just on a straight', () => {
+    const clean = raceBoss(raceLine);
+    const boosted = raceBoss(boostedLine);
+    expect(boosted.playerRaceDist).toBeGreaterThan(clean.playerRaceDist);
+  });
+
+  // The property #48 tuned for and #105 lost: the back half of the ladder
+  // should need the boost used well.
+  it('is what the top of the ladder takes', () => {
+    expect(raceBoss(raceLine).raceResult).toBe('lost');
+    expect(raceBoss(boostedLine).raceResult).toBe('won');
+  });
+
+  // ...and the first rung must not, or the game opens on a wall.
+  it('is not what the bottom of the ladder takes', () => {
+    const w = new World({ traffic: false });
+    play(w, 45, raceLine);
+    expect(w.raceResult).toBe('won');
   });
 });

@@ -26,6 +26,7 @@ import {
   NITRO_RECHARGE,
   NITRO_MIN_ENGAGE,
   NITRO_BLEED_FRAC,
+  NITRO_TAPER,
   RACE_DISTANCE,
   COUNTDOWN_TIME,
   RIVAL_BASE_SPEED_FRAC,
@@ -300,7 +301,12 @@ export class World {
     this.nitro = boosting
       ? Math.max(0, this.nitro - dt * NITRO_DRAIN)
       : Math.min(1, this.nitro + dt * NITRO_RECHARGE);
-    const throttle = boosting ? this.accel * NITRO_ACCEL_MULT : this.accel;
+    // The boost fades as the car approaches its top speed (#105): what it buys
+    // is the way out of a corner, not another two per cent at the top end.
+    const pace = Math.min(1, Math.abs(this.speed) / this.maxSpeed);
+    const throttle = boosting
+      ? this.accel * (1 + (NITRO_ACCEL_MULT - 1) * (1 - pace * NITRO_TAPER))
+      : this.accel;
 
     // point the car; reversing pivots it the other way, as a real car does
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);

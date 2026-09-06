@@ -316,6 +316,15 @@ so far was found that way rather than by the tests, which passed throughout.
 with an accumulator, so behaviour is frame-rate independent; rendering happens
 once per animation frame after physics catches up.
 
+**Nitrous buys the way out of a corner** (issue #105). It used to be mostly
+top speed, and since #82 made corners grip-limited that had nowhere to go: the
+charge bought overspeed that had to be scrubbed off before the next bend, and a
+lap with the boost was measurably *slower* than one without. The acceleration
+multiplier tapers with speed now, so it is worth most where the car is slowest.
+`npm run feel` reports both numbers - +7% over four seconds from top speed and
++19% from a corner-exit speed - and the race section reports a lap with and
+without it, which is the pair this issue is about.
+
 Tune feel via `constants.ts` first — most "how it drives / how it looks" knobs
 live there.
 

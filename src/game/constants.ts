@@ -51,8 +51,30 @@ export const HEADING_LIMIT = 0.9;
 export const REVERSE_SPEED_FRAC = 0.18;
 
 /** Nitrous + drift. */
-export const NITRO_SPEED_MULT = 1.28; // top speed multiplier while boosting (must stay < 2)
-export const NITRO_ACCEL_MULT = 2.6; // acceleration multiplier while boosting
+/**
+ * Nitrous (#45, #48, #105).
+ *
+ * The boost is an *acceleration* boost first and a top-speed boost second, and
+ * #105 is why. When it was mostly top speed, the only way to spend it was on a
+ * straight, and the charge bought overspeed that then had to be scrubbed off
+ * before the next bend - measurably slower than never pressing it. Corners are
+ * grip-limited since #82, so extra top speed has nowhere to go.
+ *
+ * What it buys now is the way out of a corner. `NITRO_TAPER` fades the
+ * acceleration multiplier as the car approaches its top speed, so the boost is
+ * worth most where the car is slowest and worth least where it was already
+ * doing everything it could. That is also how the genre's nitrous reads.
+ */
+export const NITRO_SPEED_MULT = 1.13; // top speed multiplier while boosting (must stay < 2)
+export const NITRO_ACCEL_MULT = 3.4; // acceleration multiplier while boosting, at rest
+/**
+ * How much of that multiplier is gone by the time the car is at top speed.
+ *
+ * At 0 the boost is flat and spamming it on a straight is the best use of it;
+ * at 1 it does nothing at the top end at all, which makes holding it through a
+ * straight a waste rather than a choice. Most of the way, not all of it.
+ */
+export const NITRO_TAPER = 0.8;
 export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from full)
 export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
 export const NITRO_MIN_ENGAGE = 0.25; // charge needed to light the boost again once it runs dry
@@ -117,7 +139,16 @@ export const ESCAPED_FLASH = 2.5;
 export const RACE_DISTANCE = 400000; // world units from start to finish
 export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
 export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at difficulty 0
-export const RIVAL_DIFF_SPEED_FRAC = 0.068; // extra at difficulty 1; the top rival (0.97) needs nitrous to beat
+/**
+ * Extra rival pace at difficulty 1 (#48, #105).
+ *
+ * Set so the top of the ladder actually needs the boost. A reference lap
+ * averages 91% of top speed clean and 96% with nitrous used well, so the boss
+ * sits between the two: unwinnable without pressing it, and about a second and
+ * a half in hand with it. It was 0.068 while nitrous was worthless, which put
+ * the boss inside a clean lap and made the whole ladder a formality.
+ */
+export const RIVAL_DIFF_SPEED_FRAC = 0.125;
 export const RIVAL_LANE = 0.4; // lane the rival lines up in
 export const RIVAL_NEAR_LEAD = 420; // minimum render lead, so the rival is off the camera at the start line
 

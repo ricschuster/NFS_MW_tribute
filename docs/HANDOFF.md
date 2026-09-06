@@ -123,7 +123,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 420 unit tests + playtests
+npm run test       # 423 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -251,7 +251,6 @@ before the pivot and both still live.
   `police.cops` with a position but a `t` that does not match it is silently
   teleported onto its road on the next step, because the pursuit re-derives
   every cop's place from the graph.
-- **#105: nitrous barely matters over a race** on the track. Unchanged.
 - **There is no feel baseline for the city.** `npm run feel` only drives the
   track sim, which is a gap worth closing before tuning city driving by feel -
   and more so now that #67 has given the city eight cars whose handling nobody
@@ -265,8 +264,10 @@ before the pivot and both still live.
   reason: #91 gated races on Rep and the probe did not pay, so every race after
   the first silently never started and the table read as ten losses by 33
   seconds. If a number looks strange, suspect the probe.
-- **Beating the boss does not need nitrous.** The closest no-nitrous finish is
-  1.9 s in hand at rank 1, which is related to #105.
+- **Beating the boss needs nitrous**, which is the property #105 restored: a
+  reference lap wins nine of the ten clean and loses to rank one, and wins all
+  ten with the boost. If a change to the car moves that, it has moved the
+  ladder.
 
 ## If you are picking this up cold
 
