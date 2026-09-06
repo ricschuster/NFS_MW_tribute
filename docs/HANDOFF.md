@@ -129,6 +129,8 @@ npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run shot       # screenshot the Canvas game
 npm run build      # typecheck + static build
+npm run pwa        # serve dist/, cut the network, and check it still plays
+npm run icons      # redraw the app icons from tools/icons.mjs
 ```
 
 ### Looking, and measuring
@@ -203,8 +205,10 @@ how much they use what already exists:
 - **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
   races into the city and are what let `world.ts` finally retire.
 
-**M6: Beyond the browser - 5 open.** PWA then a desktop shell. Deliberately
-last, but it is what lifts the download-size ceiling on asset quality.
+**M6: Beyond the browser - 4 open.** #98 made it installable and offline; a
+desktop shell (#99, #100), a storage adapter (#101) and split asset budgets
+(#102) are what is left. It is what lifts the download-size ceiling on asset
+quality.
 
 Also open: **#14** (tune driving feel) and **#11** (art direction), both from
 before the pivot and both still live.

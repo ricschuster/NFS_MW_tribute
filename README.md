@@ -80,6 +80,16 @@ city:
 | `street` | Street level, looking down a downtown block to the bay. |
 | `bridge` | One of the three river crossings. |
 
+## Install it
+
+The build is a progressive web app: open it, install it from the browser's menu
+and it runs in its own window, offline, with no address bar. Everything it
+needs is precached on first load - the whole game is static files, and the city
+is generated from a seed rather than downloaded.
+
+Saves live in the browser's storage for now, so clearing site data clears
+progress. A storage adapter that survives leaving the browser is #101.
+
 ## Quick start
 
 ```bash
