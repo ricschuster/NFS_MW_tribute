@@ -36,6 +36,15 @@ what the city is shaped like.
   report what it held; compare against `docs/city-baseline.json` after touching
   `constants.ts`, and re-record with `-- --out docs/city-baseline.json`. This is
   the only driving baseline; the track's `npm run feel` retired with the track.
+- `npm run pace` — can the police be outrun? Compares your real top speed
+  against the quickest unit at every heat level, in every condition. Exits
+  non-zero if an *undamaged* car cannot outrun a level, which is an invariant
+  `HEAT_LEVELS` exists to hold; the damaged rows are reported, not asserted,
+  because whether they should hold is #170
+- `npm run patrol` — put the reference driver in the city with the police live
+  and read what the game does over twenty minutes. An instrument, not a gate:
+  it asserts nothing, and two of its numbers are skewed by the driver (#171),
+  which the output says on the rows it affects
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 

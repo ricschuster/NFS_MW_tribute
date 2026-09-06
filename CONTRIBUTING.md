@@ -89,4 +89,27 @@ headroom it does not. And the probe that came before this one was *wrong* three
 times, every time because its reference driver had stopped being a good driver.
 If a number looks strange, suspect the probe before the game.
 
-What no probe covers right now is the ladder - see issue #166.
+Two more, which answer different questions:
+
+```bash
+npm run pace                      # can the police be outrun?
+npm run patrol                    # twenty minutes with the police live
+npm run patrol -- --minutes 5 --quiet
+```
+
+`npm run pace` is a guard rather than a report. The police run at fractions of
+*your* top speed and `HEAT_LEVELS` keeps every one under 1 on purpose, because a
+pursuit you cannot outrun on speed alone has no answer in it. That invariant has
+been broken twice by accident and neither time went red, because nothing
+compared the two numbers. This does, and it exits non-zero if an undamaged car
+cannot outrun a level. Damaged and shredded rows are reported and not asserted:
+whether they are meant to hold is #170.
+
+`npm run patrol` is the opposite - an instrument that asserts nothing. It puts
+the reference driver in the city with the police live and reports what the game
+did: when heat rose, what turned up, how many roadblocks and spikes, and what it
+all paid. It found three issues on its first run. Two of its numbers are skewed
+by the driver following a centreline and lapping one route rather than running
+(#171), and the output labels the rows that affects.
+
+What no probe covers is the ladder - see issue #166.

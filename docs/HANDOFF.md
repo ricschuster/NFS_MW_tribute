@@ -127,6 +127,8 @@ npm run playtest   # just the playtests: drive CityWorld, assert outcomes
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # drive a reference driver round every route; vs. its baseline
+npm run pace       # can the police be outrun? yours vs theirs, every heat level
+npm run patrol     # twenty minutes with the police live, and what came of it
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
 npm run icons      # redraw the app icons from tools/icons.mjs
@@ -157,6 +159,15 @@ in it. The second was that the perimeter arterial stopped the car dead, its
 centreline being the map boundary exactly. Both had been shipped for months and
 both are obvious the moment something drives them. If a system has never been
 exercised end to end, that is where the bugs are.
+
+Two tools came out of that, and they answer different questions.
+`npm run pace` is a *guard*: it compares your real top speed against the
+quickest unit at every heat level and fails if an undamaged car cannot outrun
+one, which is an invariant `HEAT_LEVELS` exists to hold and which has been
+broken twice by accident without a test going red. `npm run patrol` is an
+*instrument*: twenty minutes in the city with the police live, reporting what
+the game did rather than asserting anything. It found #170, #171 and the shape
+of the Rep curve on its first run.
 
 The probes themselves have been wrong more often than the code has. The track's
 `npm run feel` was wrong three times, every time because its reference driver
@@ -279,7 +290,9 @@ What is left, roughly in the order it would show:
   a hurt one. Whether that is the design is a decision, not a fix: repair is
   drive-through and there are six shops, so "go to the workshop" may well be the
   intended answer. If it is, two docs need correcting and the HUD needs to say
-  so. Note the clean-car margin at heat 6 is 2 percentage points.
+  so. Note the clean-car margin at heat 6 is 2 percentage points, and that
+  half damage is already caught from heat 3. `npm run pace` prints the whole
+  table and is the guard on whichever way this is settled.
 - **The ladder is unmeasured.** See #166 above. It is the one regression #165
   shipped on purpose, and the reason `RIVAL_DIFF_SPEED_FRAC` carries a comment
   saying where its value came from.
