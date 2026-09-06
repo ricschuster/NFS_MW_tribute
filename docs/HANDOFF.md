@@ -382,7 +382,7 @@ What is left, roughly in the order it would show:
 
 ## Known problems, not papered over
 
-- **A wrecked car cannot outrun a heat 1 cruiser** (#170). At full damage the
+- **A wrecked car cannot pull away from a heat 1 cruiser** (#170). At full damage the
   player tops out at 72% of reference; the slowest unit in the game runs at 84%,
   and heat 6 elites at 98%. `cityworld.ts:535` hands the pursuit `this.maxSpeed`,
   which is the *undamaged* figure, while damage is applied only to the player's
@@ -403,11 +403,20 @@ What is left, roughly in the order it would show:
   67 / 50% at heat 1 / 3 / 6, wrecked 83 / 50 / 50%. Read that as *no effect*,
   not as "damage helps" - six runs a cell means one run is 17 points.
 
-  So the numbers now point at closing this as *design works, docs are wrong*:
-  the `HEAT_LEVELS` comment oversells speed as the escape route when line of
-  sight is the mechanism. It is still open because escapable and enjoyable are
-  different claims, and because the same probe found only 1 bust in 54 - the
-  real problem is #178, not this.
+  **The docs half of that is now fixed.** The `HEAT_LEVELS` comment and
+  `npm run pace` both said, or implied, that speed is how you get away; they
+  say what the fractions actually buy now, which is a floor under the pursuit
+  rather than the mechanic. And `npm run endings -- --damage 1` runs the whole
+  measurement in a wrecked car, so the claim is checked rather than argued:
+  driving, a wrecked car escapes 67 / 17 / 50% of the time at heat 1 / 3 / 6
+  against a clean car's 50 / 17 / 67% - no consistent difference, and inside
+  the noise at six runs a cell.
+  
+  What is left of #170 is a design question and only a person can answer it:
+  *should* a wrecked car be able to pull away from a heat 1 cruiser on a
+  straight? The mechanics work either way. The other half of the old note here
+  - "the real problem is #178" - is settled: #178 is done, and a bust is now a
+  thing that happens.
 - **A stuck car has a way out, and it is deliberately narrow** (#179, fixed).
   Three seconds of asking the car to move without covering twelve metres earns
   a prompt; taking it puts the car on the *nearest* road, keeping heat, damage
