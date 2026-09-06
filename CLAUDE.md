@@ -265,6 +265,14 @@ rather than stopping - something you have to slow down for is not worth aiming
 at while being chased - and what it does to a cop scales with how close they
 were, because a flat number makes it either useless or a button that deletes a
 pursuit.
+**Post-processing goes through the renderer, not `EffectComposer`** (issue
+#75). three.js r185 has its own effect pipeline: build the renderer with
+`outputBufferType: HalfFloatType` and hand it passes with `setEffects`. The
+legacy `EffectComposer` path applies tone mapping in its `OutputPass` *and*
+leaves the renderer applying it too, so the frame is ACES-mapped twice - a pale
+sky, dark buildings and no obvious cause. That cost an hour and is why the
+comment is there. `three/examples/jsm` ships inside the three.js package, so
+using its passes is not a new dependency; ADR-0004 already bought it.
 
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
