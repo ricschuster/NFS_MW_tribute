@@ -853,3 +853,39 @@ export const FIND_FLASH = 4;
  * reference rather than by the car, or every car reads 320 km/h flat out.
  */
 export const REFERENCE_TOP_SPEED = SEGMENT_LENGTH / STEP;
+
+/**
+ * Races in Kestrel Bay (#70).
+ *
+ * The event type the genre runs most: a circuit, two or three laps of a loop
+ * of real streets. Routes are generated off the road graph rather than
+ * authored, for the same reason the city is - the map is a seed, and an
+ * authored route would have to be redrawn every time the seed moved.
+ */
+export const ROUTE_COUNT = 6;
+/**
+ * How far across the city a lap reaches, and how many laps of it are run.
+ *
+ * Sized from how long a race should take rather than from how big the map is:
+ * three laps of about three and a half kilometres is a two-and-a-half minute
+ * event at the pace the car actually holds. The first version used a 900 m
+ * radius and produced a twelve-kilometre lap round the harbour, which is a
+ * seven-minute race.
+ */
+export const ROUTE_RADIUS = m(520);
+export const ROUTE_LAPS = 3;
+/** A lap outside this is not a circuit: it is a commute, or a car park. */
+export const ROUTE_MIN_LENGTH = m(2200);
+export const ROUTE_MAX_LENGTH = m(5200);
+/** Kept apart, so six events are six places rather than one crossroads. */
+export const ROUTE_SPACING = m(1100);
+/** How close you have to be to a start line for the event to be offered. */
+export const ROUTE_START_RANGE = m(28);
+/** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
+export const CHECKPOINT_RANGE = m(26);
+/** How far apart the checkpoints are laid along the route. */
+export const CHECKPOINT_SPACING = m(220);
+/** Seconds of 3-2-1 before a city race goes. */
+export const CITY_COUNTDOWN = 3;
+/** How long the result banner holds before control comes back. */
+export const CITY_RESULT_HOLD = 5;

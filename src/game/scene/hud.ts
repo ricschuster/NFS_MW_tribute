@@ -10,6 +10,7 @@ import {
   COLLECTIBLE_HINT_RANGE,
   REFERENCE_TOP_SPEED,
   FIND_FLASH,
+  ROUTE_START_RANGE,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -61,6 +62,7 @@ export class Hud {
     this.overhead(world);
     this.cooldown(world);
     this.collection(world);
+    this.event(world);
     this.banners(world);
 
     ctx.restore();
@@ -326,6 +328,21 @@ export class Hud {
       ctx.fillRect(ix - 2, iz - 2, 4, 4);
     }
 
+    // The lap you are on, so the next few corners are visible before they are
+    // the corner you are in.
+    const route = world.race.route;
+    if (route) {
+      ctx.beginPath();
+      ctx.moveTo((route.points[0].x - world.x) * scale, -(route.points[0].z - world.z) * scale);
+      for (const point of route.points.slice(1)) {
+        ctx.lineTo((point.x - world.x) * scale, -(point.z - world.z) * scale);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(127, 227, 255, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
     for (const find of world.finds.waiting) {
       const fx = (find.at.x - world.x) * scale;
       const fz = -(find.at.z - world.z) * scale;
@@ -528,6 +545,124 @@ export class Hud {
   }
 
   /**
+   * Everything about a race: the offer, the lights, the lap, and the result (#70).
+   *
+   * The one that matters most is the arrow. A circuit through a city is not a
+   * road you can see the end of, and a lap you have to guess your way round is
+   * a lap spent looking at the minimap instead of the street.
+   */
+  private event(world: CityWorld): void {
+    const { ctx } = this;
+    const race = world.race;
+    ctx.textAlign = 'center';
+
+    if (race.state === 'idle') {
+      const route = world.atStartLine;
+      if (!route) return;
+      const rival = world.currentRival;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 22px system-ui, sans-serif';
+      ctx.fillText(route.name.toUpperCase(), WIDTH / 2, HEIGHT - 150);
+      ctx.font = '600 15px system-ui, sans-serif';
+      ctx.fillStyle = !rival
+        ? '#5adc82'
+        : world.challengeReady
+          ? 'rgba(255, 255, 255, 0.8)'
+          : '#ffd166';
+      ctx.fillText(
+        !rival
+          ? 'RIVALS CLEARED'
+          : world.challengeReady
+            ? `ENTER  -  ${route.laps} laps against #${rival.rank} ${rival.name}`
+            : `#${rival.rank} ${rival.name} - ${world.repToNext.toLocaleString('en-US')} REP to go`,
+        WIDTH / 2,
+        HEIGHT - 126,
+      );
+      return;
+    }
+
+    if (race.state === 'countdown') {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 120px system-ui, sans-serif';
+      ctx.fillText(String(Math.max(1, Math.ceil(race.countdown))), WIDTH / 2, HEIGHT / 2 + 40);
+      if (race.rival) {
+        ctx.fillStyle = race.rival.rival.color;
+        ctx.font = '700 20px system-ui, sans-serif';
+        ctx.fillText(
+          `#${race.rival.rival.rank}  ${race.rival.rival.name.toUpperCase()}`,
+          WIDTH / 2,
+          HEIGHT / 2 - 90,
+        );
+      }
+      return;
+    }
+
+    if (race.state === 'finished') {
+      ctx.fillStyle = race.won ? 'rgba(0, 50, 20, 0.5)' : 'rgba(50, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.fillStyle = race.won ? '#5adc82' : '#ff5a5a';
+      ctx.font = '800 68px system-ui, sans-serif';
+      ctx.fillText(race.won ? 'YOU WIN' : 'YOU LOSE', WIDTH / 2, HEIGHT / 2);
+      return;
+    }
+
+    // Racing: laps, position, and where the next gate is.
+    const route = race.route;
+    if (!route) return;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('LAP', WIDTH / 2 - 90, 40);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillText(`${Math.min(route.laps, race.lap + 1)}/${route.laps}`, WIDTH / 2 - 50, 42);
+
+    const first = race.position === 1;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('POS', WIDTH / 2 + 30, 40);
+    ctx.fillStyle = first ? '#5adc82' : '#ff9f45';
+    ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillText(first ? '1st' : '2nd', WIDTH / 2 + 70, 42);
+
+    this.arrow(world);
+  }
+
+  /**
+   * An arrow at the top of the screen pointing at the next gate.
+   *
+   * Relative to where the car is pointing, not to north: the question it
+   * answers is "which way now", and a compass makes the driver do the
+   * subtraction at the moment they are busiest.
+   */
+  private arrow(world: CityWorld): void {
+    const { ctx } = this;
+    const gate = world.race.target;
+    if (!gate) return;
+
+    const dx = gate.x - world.x;
+    const dz = gate.z - world.z;
+    const bearing = Math.atan2(dx, dz) - world.heading;
+    const gap = Math.hypot(dx, dz);
+
+    ctx.save();
+    ctx.translate(WIDTH / 2, 100);
+    ctx.rotate(-bearing);
+    ctx.beginPath();
+    ctx.moveTo(0, -22);
+    ctx.lineTo(15, 14);
+    ctx.lineTo(0, 6);
+    ctx.lineTo(-15, 14);
+    ctx.closePath();
+    // Brighter the closer the gate is, so it reads as an approach.
+    ctx.fillStyle = gap < ROUTE_START_RANGE * 4 ? '#5adc82' : '#7fe3ff';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /**
    * The collection map (#93): the whole city, and everything still out there.
    *
    * The minimap answers "what is the next corner"; this answers "where have I
@@ -592,6 +727,23 @@ export class Hud {
           : '#ffd166';
       const size = item.kind === 'billboard' ? 4 : 3;
       ctx.fillRect(px(item.at.x) - size / 2, py(item.at.z) - size / 2, size, size);
+    }
+
+    // Where the events are. A circuit you have to stumble across is a circuit
+    // nobody runs.
+    for (const route of world.city.routes) {
+      ctx.strokeStyle = 'rgba(127, 227, 255, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px(route.points[0].x), py(route.points[0].z));
+      for (const point of route.points.slice(1)) ctx.lineTo(px(point.x), py(point.z));
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(px(route.start.x), py(route.start.z), 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#7fe3ff';
+      ctx.fill();
     }
 
     // Cars still parked out there. Drawn bigger and brighter than a billboard

@@ -29,6 +29,7 @@ import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
 import { collectiblesFor } from './collectibles';
 import { findsFor } from './streetfinds';
+import { routesFor } from './routes';
 import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { makeWater, type Water } from './water';
@@ -221,6 +222,7 @@ export function generateCity(seed: number): City {
     furniture: [],
     collectibles: [],
     finds: [],
+    routes: [],
   };
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
@@ -232,6 +234,10 @@ export function generateCity(seed: number): City {
   // buildings are placed: a block that ended up with nothing on it is open
   // whatever the roll said.
   city.finds = findsFor(rng, city);
+  // Routes come off the finished graph: a lap has to be a loop of roads that
+  // survived the water-clipping and the connectivity repair, not of ones that
+  // were laid out and then pruned.
+  city.routes = routesFor(city);
   return city;
 }
 

@@ -191,14 +191,25 @@ hypercar reads faster rather than reading 320 km/h like everything else; and
 `CityWorld.drive()` applies the profile once instead of multiplying it into
 eight expressions in the hot loop.
 
+**A race is checkpoints for you and a distance for the rival** (issue #70).
+`CityRace` scores the player on gates passed in order, because a city has more
+than one way round a corner and a race scored on distance travelled is a race
+won by driving in circles. The rival is a position along the route polyline,
+exactly as the track rival is - not a car navigating the graph, because a rival
+that could get lost would have whatever difficulty the junction picker happened
+to produce, and the ladder is tuned against a number. Routes come out of
+`city/routes.ts`: four corner junctions joined by Dijkstra over the surface
+graph, so every metre of a lap is a road that exists.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup
 and building collision over a uniform spatial index (`city/grid.ts`). The
 motion model was carried over unchanged from #82 rather than rewritten, so the
 feel work in #14 and #46 still applies - only the frame it resolves into moved,
-from along/across-track to x/z. Traffic, police and races come across in #87,
-and `world.ts` retires when they have.
+from along/across-track to x/z. Traffic, police, Rep, collectibles, cars and
+circuit races have all come across; `world.ts` retires when the last of the
+event types has.
 
 `?renderer=city` flies a camera around the city and `?renderer=drive` puts a
 car in it; `&view=aerial|downtown|bridge|street|overpass` picks a fixed

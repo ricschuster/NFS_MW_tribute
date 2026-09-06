@@ -42,6 +42,8 @@ import {
   REP_NEAR_MISS_RANGE,
   REFERENCE_TOP_SPEED,
   FIND_RANGE,
+  CITY_COUNTDOWN,
+  ROUTE_START_RANGE,
   type CopKind,
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
@@ -1639,5 +1641,113 @@ describe('street finds', () => {
     const other = still();
     other.finds.load([], 'halcyon');
     expect(other.finds.car).toBe(STARTER_CAR);
+  });
+});
+
+/**
+ * Races in the city (#70).
+ *
+ * The race itself is tested in `cityrace.test.ts`, driven by a perfect racer
+ * on the line. These are about the wiring: getting into one, what it does to
+ * the pursuit, and what winning it moves.
+ */
+describe('circuits', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** Put the car on a start line. */
+  function atTheLine(world: CityWorld) {
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.y = 0;
+    return route;
+  }
+
+  it('offers the event you are standing on, and nothing when you are not', () => {
+    const world = still();
+    expect(world.atStartLine).toBeNull();
+    const route = atTheLine(world);
+    expect(world.atStartLine).toBe(route);
+
+    world.x += ROUTE_START_RANGE * 4;
+    expect(world.atStartLine).toBeNull();
+  });
+
+  it('starts one when you press it, and lines you up on the grid', () => {
+    const world = still();
+    const route = atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+
+    expect(world.race.state).toBe('countdown');
+    expect(world.race.route).toBe(route);
+    expect(world.race.rival?.rival).toBe(world.currentRival);
+    expect(world.speed).toBe(0);
+  });
+
+  it('will not start one you have not earned', () => {
+    const world = still();
+    world.beaten = 1; // the second rival wants Rep
+    world.rep.total = 0;
+    atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.state).toBe('idle');
+  });
+
+  it('holds the car still while the lights run down', () => {
+    const world = still();
+    atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN - 0.5, press({ up: true }));
+    expect(world.race.state).toBe('countdown');
+    expect(world.speed).toBe(0);
+
+    drive(world, 1, press({ up: true }));
+    expect(world.race.state).toBe('racing');
+  });
+
+  // A race you have to win while being rammed by a heat-six Enforcer is not a
+  // race, it is a pursuit with a lap counter on it.
+  it('calls the police off for the duration', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    world.police.heat = 0.8;
+    atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+    expect(world.police.heat).toBe(0);
+
+    drive(world, 20, press({ up: true }));
+    expect(world.police.cops.length).toBe(0);
+  });
+
+  it('is abandoned if you are busted out of it', () => {
+    const world = still();
+    atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+    world.busted = true;
+    drive(world, 5, NONE);
+    expect(world.race.state).toBe('idle');
+  });
+
+  it('moves the same ladder the track does when it is won', () => {
+    const world = still();
+    const route = atTheLine(world);
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    expect(world.race.state).toBe('racing');
+
+    // Teleported round the gates: what is under test is what a win *does*,
+    // not whether this scripted driver can win one.
+    const before = world.beaten;
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+
+    expect(world.race.state).toBe('finished');
+    expect(world.race.won).toBe(true);
+    expect(world.beaten).toBe(before + 1);
+    expect(world.rep.recent.some((a) => a.reason === 'raceWin')).toBe(true);
   });
 });

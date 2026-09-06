@@ -36,6 +36,31 @@ interface Shot {
 const HAZE = new THREE.Color('#b9d0e2');
 
 /**
+ * A checkpoint gate: two tall posts you drive between (#70).
+ *
+ * Tall on purpose. The thing it has to do is be visible over traffic and over
+ * a rise from a couple of hundred metres away, because the moment it matters
+ * is the moment you are deciding which way to take the next junction.
+ */
+function makeGate(): THREE.Group {
+  const gate = new THREE.Group();
+  const M2 = UNITS_PER_METRE;
+  const material = new THREE.MeshBasicMaterial({
+    color: '#7fe3ff',
+    transparent: true,
+    opacity: 0.45,
+    depthWrite: false,
+    fog: false,
+  });
+  for (const side of [-1, 1]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(1.4 * M2, 16 * M2, 1.4 * M2), material);
+    post.position.set(side * 9 * M2, 8 * M2, 0);
+    gate.add(post);
+  }
+  return gate;
+}
+
+/**
  * A helicopter as a handful of boxes and a cone of light (#62).
  *
  * Crude on purpose, like the cars: at sixty metres up what has to read is the
@@ -123,6 +148,9 @@ export class CityView {
   private readonly copCars: CarPool;
   private readonly wreckCars: CarPool;
   private readonly parkedCars: CarPool;
+  private readonly rivalCars: CarPool;
+  /** The next gate, as a pair of posts. Reused: there is only ever one. */
+  private readonly gate = makeGate();
   /** Spike strips, reused frame to frame: they come and go with the pursuit. */
   private readonly spikePlates: THREE.Mesh[] = [];
   private readonly helicopter = makeHelicopter();
@@ -178,6 +206,9 @@ export class CityView {
     // The cars still waiting to be found (#67). Their own pool, because they
     // are neither traffic nor police and they must not flash a lightbar.
     this.parkedCars = new CarPool(this.scene);
+    this.rivalCars = new CarPool(this.scene);
+    this.gate.visible = false;
+    this.scene.add(this.gate);
     this.helicopter.visible = false;
     this.scene.add(this.helicopter);
     // Honour the same preference the Canvas game does: no orbit, no cuts, no
@@ -507,6 +538,25 @@ export class CityView {
       parked.rotation.y = find.angle;
     }
     this.parkedCars.end();
+
+    this.rivalCars.begin();
+    const racing = world.race.rival;
+    if (racing && world.race.state !== 'idle') {
+      this.rivalCars.place(
+        racing.x,
+        world.y,
+        racing.z,
+        racing.rival.color,
+        1,
+      ).rotation.y = racing.heading;
+    }
+    this.rivalCars.end();
+
+    // The gate stands at the next checkpoint, so the route is something you
+    // drive at rather than something you read off the minimap (#70).
+    const gate = world.race.target;
+    this.gate.visible = gate !== null;
+    if (gate) this.gate.position.set(gate.x, world.y, gate.z);
 
     this.spikes(world);
     this.chopper(dt, world);

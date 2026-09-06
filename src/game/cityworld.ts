@@ -39,11 +39,16 @@ import {
   REP_NEAR_MISS_SPEED,
   REP_SAVE_INTERVAL,
   REFERENCE_TOP_SPEED,
+  ROUTE_START_RANGE,
+  REP_RACE_WIN,
+  REP_RACE_WIN_PER_DIFFICULTY,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
 import { StreetFinds } from './streetfinds';
 import { STARTER_CAR, type CarProfile } from './cars';
+import { CityRace } from './cityrace';
+import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -54,7 +59,7 @@ import { CityGrid, surfaceAt, roadHeightAt, carriageway, inWater } from './city/
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
-import type { City, CityRoad } from './city/types';
+import type { City, CityRoad, CityRoute } from './city/types';
 import type { InputState } from './world';
 
 /**
@@ -163,6 +168,10 @@ export class CityWorld {
   readonly collectibles: Collectibles;
   /** The cars parked around the city, and the one being driven (#67). */
   readonly finds: StreetFinds;
+  /** The circuit being raced, if any (#70). */
+  readonly race = new CityRace();
+  /** How many ladder rivals have been beaten. Shared with the track sim. */
+  beaten = 0;
 
   /**
    * Top speed, and everything derived from it.
@@ -192,6 +201,7 @@ export class CityWorld {
   /** Traffic already scored for a near miss: each car is worth one (#64). */
   private readonly grazed = new WeakSet<GraphCar>();
   private pursuitRep = 0;
+  private prevConfirm = false;
   /** The hottest this pursuit got, which is what getting away is worth. */
   private peakLevel = 1;
   private sinceSave = 0;
@@ -215,6 +225,7 @@ export class CityWorld {
     this.rep.total = saved.rep;
     this.collectibles.load(saved.smashed, saved.clocked);
     this.finds.load(saved.cars, saved.car);
+    this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
   }
@@ -281,14 +292,55 @@ export class CityWorld {
     this.onRoad = best;
   }
 
+  /** The rival you would face next, or null once the ladder is cleared (#91). */
+  get currentRival(): Rival | null {
+    return nextRival(this.beaten);
+  }
+
+  /** Will they take the call? The ladder is gated on Rep, not on wins. */
+  get challengeReady(): boolean {
+    return unlocked(this.currentRival, this.rep.total);
+  }
+
+  /** How much more Rep the next challenge wants. Zero once it is unlocked. */
+  get repToNext(): number {
+    const rival = this.currentRival;
+    return rival ? Math.max(0, rival.rep - this.rep.total) : 0;
+  }
+
+  /** The circuit whose start line the car is sitting on, if any (#70). */
+  get atStartLine() {
+    for (const route of this.city.routes) {
+      if (Math.hypot(route.start.x - this.x, route.start.z - this.z) < ROUTE_START_RANGE) {
+        return route;
+      }
+    }
+    return null;
+  }
+
   /** Advance the simulation by `dt` seconds under the held `input`. */
   step(dt: number, input: InputState): void {
+    const confirmPressed = input.confirm && !this.prevConfirm;
+    this.prevConfirm = input.confirm;
     this.crashFlash = Math.max(0, this.crashFlash - dt * 2);
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
     this.rep.step(dt);
     this.clearWrecks(dt);
+
+    // Lining up: the car is held on the grid while the lights run down.
+    if (this.race.state === 'countdown') {
+      this.speed = 0;
+      this.race.update(dt, this, this.maxSpeed);
+      return;
+    }
+
+    const rival = this.currentRival;
+    if (confirmPressed && this.race.state === 'idle' && rival && this.challengeReady) {
+      const route = this.atStartLine;
+      if (route) this.startRace(route, rival);
+    }
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
     if (this.busted) {
@@ -298,6 +350,7 @@ export class CityWorld {
         this.busted = false;
         this.police.reset();
       }
+      this.race.abandon(); // whatever you were racing, you are not now
       return;
     }
 
@@ -352,7 +405,10 @@ export class CityWorld {
     this.move(dt);
     this.settle(dt);
     if (this.withTraffic) this.traffic.update(dt, this);
-    if (this.withPolice) {
+    // No pursuit during a sanctioned event: a race you have to win while
+    // being rammed by a heat-six Enforcer is not a race, it is a pursuit with
+    // a lap counter on it.
+    if (this.withPolice && this.race.state === 'idle') {
       this.police.update(dt, this, this.maxSpeed);
       if (this.police.busted) {
         this.busted = true;
@@ -370,8 +426,39 @@ export class CityWorld {
     // After both have moved, so a contact is judged where the cars actually
     // are this step rather than where they were before one of them drove off.
     this.contacts();
+    this.race.update(dt, this, this.maxSpeed);
+    if (this.race.justFinished) this.settleRace();
     this.earn(dt);
     this.persist(dt);
+  }
+
+  /** Line up for a circuit. No pursuit during a sanctioned event. */
+  private startRace(route: CityRoute, rival: Rival): void {
+    this.race.begin(route, rival);
+    this.speed = 0;
+    this.x = route.start.x;
+    this.z = route.start.z;
+    this.police.reset();
+    this.escapedFlash = 0;
+  }
+
+  /**
+   * Pay for the race that just ended, and move the ladder if it was won.
+   *
+   * The same `beaten` count the track sim keeps, in the same save: it is one
+   * ladder, and beating Nyx on the Foundry Mile has to mean the same thing as
+   * beating Nyx on the old track.
+   */
+  private settleRace(): void {
+    const rival = this.race.rival?.rival;
+    if (this.race.won) {
+      this.beaten = Math.min(RIVALS.length, this.beaten + 1);
+      const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;
+      this.rep.award('raceWin', 1, (REP_RACE_WIN + bonus) / REP_RACE_WIN);
+    } else {
+      this.rep.award('raceLoss');
+    }
+    this.savedAt = -1; // force the next save, win or lose
   }
 
   /**
@@ -453,6 +540,7 @@ export class CityWorld {
       clocked: [...this.collectibles.clocked],
       cars: [...this.finds.owned],
       car: this.car.id,
+      beaten: this.beaten,
     });
   }
 
