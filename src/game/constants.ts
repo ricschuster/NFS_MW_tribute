@@ -1001,3 +1001,26 @@ export const REPAIR_SPACING = m(950);
 export const REPAIR_RANGE = m(14);
 /** Seconds the REPAIRED banner holds. */
 export const REPAIR_FLASH = 2.5;
+
+/**
+ * Claiming a rival's car (#66).
+ *
+ * Beating them in the race is only the first half. They run, and you have to
+ * catch and wreck the car to take it - which is what makes the ladder a fight
+ * rather than a series of results, and what makes the takedown machinery from
+ * #94 the point of the game rather than a thing you can do to traffic.
+ */
+/** How long you have before they are gone. */
+export const CLAIM_TIME = 90;
+/** Beyond this and they have lost you; stay there and the clock runs out fast. */
+export const CLAIM_LOSE_RANGE = m(400);
+/** How much tougher their car is than a police cruiser. It is the prize. */
+export const CLAIM_TOUGHNESS = 2.6;
+/** Their pace, as a fraction of *your* top speed. Always under 1. */
+export const CLAIM_SPEED = 0.9;
+/** How much heat a ladder rival brings with them. They draw the police too. */
+export const CLAIM_HEAT = 0.45;
+/** Seconds the result holds before control comes back. */
+export const CLAIM_RESULT_HOLD = 5;
+/** Rep for taking one. It is the biggest single payment in the game. */
+export const REP_CLAIM = 2500;

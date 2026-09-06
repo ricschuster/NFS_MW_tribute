@@ -589,6 +589,14 @@ export class CityView {
           racer.heading;
       }
     }
+    // The one running for it (#66), in their own colour and their own car's
+    // size, so the thing you are chasing is the thing you are about to own.
+    const runner = world.claim.runner;
+    if (runner) {
+      const prize = carById(runner.rival.carId);
+      this.rivalCars.place(runner.x, runner.y, runner.z, prize.colour, prize.scale).rotation.y =
+        runner.heading;
+    }
     this.rivalCars.end();
 
     // The gate stands at the next checkpoint, so the route is something you

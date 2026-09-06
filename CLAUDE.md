@@ -226,6 +226,16 @@ comes out straight is not the car they are looking for. It does nothing while
 they still have eyes on you, which is what makes it a decision about when
 rather than a button that cancels a pursuit.
 
+**A ladder rival is two fights** (issue #66). Winning the race pays and
+nothing else: the rival runs, and the ladder does not move until you have
+caught the car and wrecked it. The runner is a `GraphCar` choosing junctions,
+not a position along a route like a race rival - which is the whole difference
+between the halves, because a car on the graph can get away from you down a
+street you did not take. Claiming adds the car to the garage but does not put
+you in it: being teleported into a different car mid-pursuit, having just
+wrecked somebody, would be absurd, and #90 is where changing car on purpose
+belongs.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

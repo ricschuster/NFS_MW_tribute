@@ -32,6 +32,7 @@ const DRIVING = new Set([
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
   'ambush',
   'repair',
+  'ambush', 'claim',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -41,6 +42,7 @@ const VIEWS = flag('--view')
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
       'ambush',
       'repair',
+      'ambush', 'claim',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -493,6 +495,33 @@ for (const view of VIEWS) {
       world.rep.total = 48300;
     });
     await page.waitForTimeout(2400);
+  }
+
+  if (view === 'claim') {
+    // Start the second half by hand: the first half is a three-lap race, and
+    // waiting for a scripted driver to win one is waiting a long time.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      world.crashFlash = 0;
+      world.rep.total = 57400;
+      world.claim.begin(world.currentRival, world);
+      world.police.heat = 0.45;
+      // A few seconds of them running, then sit on the bumper for the shot.
+      for (let t = 0; t < 4; t += 1 / 60) world.step(1 / 60, none);
+      const runner = world.claim.runner;
+      if (!runner) return;
+      world.x = runner.x - Math.sin(runner.heading) * 9 * metre;
+      world.z = runner.z - Math.cos(runner.heading) * 9 * metre;
+      world.y = runner.y;
+      world.heading = runner.heading;
+      world.speed = world.maxSpeed * 0.6;
+    });
+    await page.waitForTimeout(900);
   }
 
   if (view === 'pursuit') {

@@ -14,6 +14,10 @@
  * a hypercar as "1.14 times the top speed" keeps all three honest, where
  * expressing it as "13680 units per second" quietly detaches it from them.
  *
+ * Where a car comes from matters as much as what it is (#66). The starter is
+ * the one you begin in; seven are parked around the city; the other ten belong
+ * to the ladder and are only ever taken off the rival who was driving one.
+ *
  * Names and shapes are original, per the project's non-goals.
  */
 export interface CarProfile {
@@ -31,6 +35,11 @@ export interface CarProfile {
   nitro: number;
   /** How big it is drawn against the reference car. */
   scale: number;
+  /**
+   * How you get it: the one you start in, one parked in the city (#67), or one
+   * taken off a ladder rival (#66).
+   */
+  source: 'start' | 'street' | 'rival';
 }
 
 /**
@@ -53,6 +62,7 @@ export const CARS: CarProfile[] = [
     grip: 1,
     nitro: 1,
     scale: 1,
+    source: 'start',
   },
   {
     id: 'kite',
@@ -64,6 +74,7 @@ export const CARS: CarProfile[] = [
     grip: 1.22,
     nitro: 1,
     scale: 0.94,
+    source: 'street',
   },
   {
     id: 'verso',
@@ -75,6 +86,7 @@ export const CARS: CarProfile[] = [
     grip: 1.04,
     nitro: 1.04,
     scale: 1,
+    source: 'street',
   },
   {
     id: 'ridgeback',
@@ -86,6 +98,7 @@ export const CARS: CarProfile[] = [
     grip: 0.84,
     nitro: 1.12,
     scale: 1.1,
+    source: 'street',
   },
   {
     id: 'sable',
@@ -97,6 +110,7 @@ export const CARS: CarProfile[] = [
     grip: 1.1,
     nitro: 0.96,
     scale: 1.08,
+    source: 'street',
   },
   {
     id: 'ardent',
@@ -108,6 +122,7 @@ export const CARS: CarProfile[] = [
     grip: 1.12,
     nitro: 1.06,
     scale: 1.02,
+    source: 'street',
   },
   {
     id: 'halcyon',
@@ -119,6 +134,7 @@ export const CARS: CarProfile[] = [
     grip: 1.02,
     nitro: 1.14,
     scale: 0.98,
+    source: 'street',
   },
   {
     id: 'nightjar',
@@ -130,6 +146,133 @@ export const CARS: CarProfile[] = [
     grip: 1.18,
     nitro: 1.15,
     scale: 1.04,
+    source: 'street',
+  },
+
+  /* ---------------------------------------------------------------- */
+  /* The ladder's cars (#66). One each, and the only way to get one is  */
+  /* to beat the rival driving it and then wreck it. They run from      */
+  /* better-than-anything-on-the-street to the best thing in the game.  */
+  /* ---------------------------------------------------------------- */
+  {
+    id: 'hatchling',
+    name: 'Hatchling',
+    blurb: "Vex's. Every bolt on it has been changed and it is still a hatchback.",
+    colour: '#4b7bc9',
+    topSpeed: 1.02,
+    accel: 1.12,
+    grip: 1.14,
+    nitro: 1.02,
+    scale: 0.95,
+    source: 'rival',
+  },
+  {
+    id: 'emberline',
+    name: 'Emberline',
+    blurb: "Cinder's. Runs hot, sounds worse, and will not let go of a corner.",
+    colour: '#d8663a',
+    topSpeed: 1.05,
+    accel: 1.14,
+    grip: 1.1,
+    nitro: 1.08,
+    scale: 1,
+    source: 'rival',
+  },
+  {
+    id: 'corona',
+    name: 'Corona',
+    blurb: "Halo's. Set up by somebody who never makes a mistake in it.",
+    colour: '#d8b23a',
+    topSpeed: 1.08,
+    accel: 1.08,
+    grip: 1.2,
+    nitro: 1.04,
+    scale: 1,
+    source: 'rival',
+  },
+  {
+    id: 'wideboy',
+    name: 'Wideboy',
+    blurb: "Nyx's. Takes up the whole road, and knows it.",
+    colour: '#3ac9a0',
+    topSpeed: 1.09,
+    accel: 1.12,
+    grip: 1.06,
+    nitro: 1.1,
+    scale: 1.14,
+    source: 'rival',
+  },
+  {
+    id: 'castling',
+    name: 'Castling',
+    blurb: "Rook's. Patient, heavy, and quicker than it has any right to be.",
+    colour: '#c93a5a',
+    topSpeed: 1.1,
+    accel: 1.04,
+    grip: 1.18,
+    nitro: 1.02,
+    scale: 1.08,
+    source: 'rival',
+  },
+  {
+    id: 'surge',
+    name: 'Surge',
+    blurb: "Blitz's. Two turbochargers and no plan for what happens after.",
+    colour: '#3a9ec9',
+    topSpeed: 1.14,
+    accel: 1.2,
+    grip: 1.02,
+    nitro: 1.2,
+    scale: 1,
+    source: 'rival',
+  },
+  {
+    id: 'arcline',
+    name: 'Arcline',
+    blurb: "Volt's. Whatever it is, it was not finished before it was driven.",
+    colour: '#5ad86a',
+    topSpeed: 1.15,
+    accel: 1.26,
+    grip: 1.1,
+    nitro: 1.14,
+    scale: 0.98,
+    source: 'rival',
+  },
+  {
+    id: 'obsidian',
+    name: 'Obsidian',
+    blurb: "Onyx's. Black on black, and nothing written on it anywhere.",
+    colour: '#3a3f46',
+    topSpeed: 1.16,
+    accel: 1.18,
+    grip: 1.16,
+    nitro: 1.1,
+    scale: 1.02,
+    source: 'rival',
+  },
+  {
+    id: 'apparition',
+    name: 'Apparition',
+    blurb: "Ghost's. You will have seen it before. You will not have caught it.",
+    colour: '#dcdfe6',
+    topSpeed: 1.19,
+    accel: 1.2,
+    grip: 1.2,
+    nitro: 1.14,
+    scale: 1,
+    source: 'rival',
+  },
+  {
+    id: 'nightfall',
+    name: 'Nightfall',
+    blurb: "Reaper's. The best thing in Kestrel Bay, and now it is parked outside.",
+    colour: '#e8462b',
+    topSpeed: 1.22,
+    accel: 1.28,
+    grip: 1.28,
+    nitro: 1.2,
+    scale: 1.04,
+    source: 'rival',
   },
 ];
 

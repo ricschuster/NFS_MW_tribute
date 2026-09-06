@@ -54,6 +54,7 @@ import {
   DAMAGE_FREE,
   REPAIR_RANGE,
   REPAIR_FLASH,
+  CLAIM_HEAT,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
@@ -61,6 +62,7 @@ import { StreetFinds } from './streetfinds';
 import { STARTER_CAR, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
+import { CityClaim } from './cityclaim';
 import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
@@ -197,6 +199,8 @@ export class CityWorld {
   readonly race = new CityRace();
   /** The ambush being escaped, if any (#92). */
   readonly ambush = new CityAmbush();
+  /** The rival being run down for their car, if any (#66). */
+  readonly claim: CityClaim;
   /** How many ladder rivals have been beaten. Shared with the track sim. */
   beaten = 0;
 
@@ -246,6 +250,7 @@ export class CityWorld {
     this.withPolice = options.police ?? true;
     this.collectibles = new Collectibles(city);
     this.finds = new StreetFinds(city);
+    this.claim = new CityClaim(city, this.grid);
     // Carried over from whatever this player has already earned, the same way
     // the track sim loads its rival count. Safe where there is no storage.
     const saved = loadProgress();
@@ -394,7 +399,9 @@ export class CityWorld {
         this.busted = false;
         this.police.reset();
       }
-      this.race.abandon(); // whatever you were racing, you are not now
+      // Whatever you were racing or running down, you are not now.
+      this.race.abandon();
+      this.claim.abandon();
       return;
     }
 
@@ -476,6 +483,8 @@ export class CityWorld {
     this.contacts();
     this.race.update(dt, this, this.maxSpeed);
     if (this.race.justFinished) this.settleRace();
+    this.claim.update(dt, this, this.maxSpeed);
+    if (this.claim.justEnded) this.settleClaim();
     this.earn(dt);
     this.persist(dt);
   }
@@ -515,13 +524,39 @@ export class CityWorld {
   private settleRace(): void {
     const rival = this.race.challenger;
     if (this.race.won) {
-      this.beaten = Math.min(RIVALS.length, this.beaten + 1);
       const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;
       this.rep.award('raceWin', 1, (REP_RACE_WIN + bonus) / REP_RACE_WIN);
+      // Winning the race is the first half (#66). They run, and the ladder
+      // does not move until the car is actually taken off them.
+      if (rival) this.startClaim(rival);
     } else {
       this.rep.award('raceLoss');
     }
     this.savedAt = -1; // force the next save, win or lose
+  }
+
+  /** They run for it, and the police come out for both of you. */
+  private startClaim(rival: Rival): void {
+    if (!this.claim.begin(rival, this)) return;
+    // A ladder rival draws heat of their own. Running one down while being
+    // chased yourself is the point of the second half.
+    this.police.heat = Math.max(this.police.heat, CLAIM_HEAT);
+  }
+
+  /**
+   * Pay for a claim that has ended.
+   *
+   * The ladder moves here and nowhere else in the city: beating them in the
+   * race is a result, and taking the car is the thing that counts.
+   */
+  private settleClaim(): void {
+    const rival = this.claim.rival;
+    if (this.claim.state !== 'won' || !rival) return;
+
+    this.beaten = Math.min(RIVALS.length, this.beaten + 1);
+    this.rep.award('claim', this.level);
+    this.finds.claim(rival.carId);
+    this.savedAt = -1;
   }
 
   /**

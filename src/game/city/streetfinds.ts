@@ -6,18 +6,20 @@ import type { City, StreetFind, Vec2 } from './types';
 /**
  * Where the cars are parked (#67).
  *
- * One lot per car, every car except the one you start in, spread as far apart
- * as the map allows. The spread is the point: a Street Find is the reward for
+ * One lot per parked car, spread as far apart as the map allows. The spread is the point: a Street Find is the reward for
  * having driven somewhere, and eight cars in one district is one drive.
  *
  * They go on *open* blocks - the parks, yards and lots the generator leaves
  * unbuilt - because that is where a car would actually be left, and because a
  * car parked in a live carriageway is a car the traffic drives through.
  *
- * The starter car is not placed. You are already in it.
+ * The starter car is not placed - you are already in it - and neither are the
+ * ladder's, which are won rather than found.
  */
 export function findsFor(rng: Rng, city: City): StreetFind[] {
-  const wanted = CARS.slice(1);
+  // Only the cars that are *parked*. The ladder's ten are taken off the rival
+  // driving them (#66), and leaving one in a lot would be giving it away.
+  const wanted = CARS.filter((car) => car.source === 'street');
   const lots = city.blocks.filter((block) => block.open);
   if (lots.length === 0) return [];
 

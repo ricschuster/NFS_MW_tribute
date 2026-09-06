@@ -40,6 +40,18 @@ export class StreetFinds {
     this.car = this.owned.has(wanted.id) ? wanted : STARTER_CAR;
   }
 
+  /**
+   * Take a car off a ladder rival (#66).
+   *
+   * Added to the garage but *not* driven away in: you are in the middle of a
+   * pursuit having just wrecked somebody, and being teleported into a
+   * different car at that moment would be absurd. The Quick Wheel (#90) is
+   * where changing car deliberately belongs.
+   */
+  claim(id: string): void {
+    if (CARS.some((car) => car.id === id)) this.owned.add(id);
+  }
+
   /** Drive into a parked car and it is yours, immediately. */
   update(
     dt: number,
