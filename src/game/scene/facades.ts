@@ -136,5 +136,8 @@ export function facadeUvs(material: THREE.Material, kind: BuildingKind): void {
     faces: 'walls',
     tile: { u: tile.bay * UNITS_PER_METRE, v: tile.storey * UNITS_PER_METRE },
     key: kind,
+    // Roofs are tar and gravel, not the painted render of the walls, and from
+    // the interstate or from the air they are most of what the city is.
+    otherFaces: 0.62,
   });
 }
