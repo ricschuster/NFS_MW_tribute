@@ -28,7 +28,7 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+  'billboard', 'collection', 'streetfind', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
 ]);
 const VIEWS = flag('--view')
@@ -36,7 +36,7 @@ const VIEWS = flag('--view')
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+      'billboard', 'collection', 'streetfind', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
     ];
 
@@ -319,42 +319,6 @@ for (const view of VIEWS) {
       world.speed = 0;
     });
     await page.waitForTimeout(1200);
-  }
-
-  if (view === 'helicopter') {
-    // Drive out, wait for the chase camera, then put an aircraft on station
-    // overhead with its light on. What it does is invisible, so the picture is
-    // of the pool of light and the warning that goes with it.
-    await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(7000);
-    await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
-      timeout: 60000,
-    });
-
-    await page.evaluate(() => {
-      const { world } = globalThis.crosstown;
-      const metre = 135;
-      world.police.state = 'pursuit';
-      world.police.heat = 0.9;
-      world.crashFlash = 0;
-      world.police.helicopter = {
-        // Well up the street and off to one side. The chase camera looks
-        // roughly level, so an aircraft directly overhead is above the frame:
-        // it has to be far enough ahead to be inside the field of view.
-        // Where it flies anyway: out in front, low, over the street. Its
-        // height is not ours to set - the pursuit puts it back at
-        // `HELI_HEIGHT` on the very next step.
-        x: world.x + Math.sin(world.heading) * 120 * metre,
-        z: world.z + Math.cos(world.heading) * 120 * metre,
-        y: world.y + 28 * metre,
-        heading: world.heading,
-        onStation: 80,
-        spotting: true,
-      };
-      world.speed = 0;
-    });
-    await page.waitForTimeout(1400);
   }
 
   if (view === 'billboard' || view === 'collection') {
@@ -756,8 +720,8 @@ for (const view of VIEWS) {
 
   if (view === 'radio') {
     // Run a pursuit through several of the things that get called out, by
-    // hand: waiting for a scripted drive to draw a roadblock, a spike strip
-    // and air support in one go is waiting all afternoon.
+    // hand: waiting for a scripted drive to draw a roadblock and a spike strip
+    // in one go is waiting all afternoon.
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(6000);
     await page.keyboard.up('ArrowUp');
@@ -798,14 +762,19 @@ for (const view of VIEWS) {
         from: -10 * metre, to: 4 * metre,
       });
       for (let t = 0; t < 2.4; t += 1 / 60) world.step(1 / 60, none);
-      world.police.helicopter = {
-        x: world.x + Math.sin(world.heading) * 120 * metre,
-        z: world.z + Math.cos(world.heading) * 120 * metre,
-        y: world.y + 28 * metre,
-        heading: world.heading, onStation: 80, spotting: true,
-      };
-      for (let t = 0; t < 1.2; t += 1 / 60) world.step(1 / 60, none);
       world.speed = world.maxSpeed * 0.4;
+    });
+    // Held at speed while the radio catches up: since #178 a car standing
+    // still with a unit on it is busted in three and a half seconds, and the
+    // first version of this shot was a BUSTED overlay with the callouts behind
+    // it.
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      for (let t = 0; t < 3; t += 1 / 60) {
+        world.speed = world.maxSpeed * 0.4;
+        world.step(1 / 60, none);
+      }
     });
     await page.waitForTimeout(900);
   }

@@ -3,7 +3,7 @@
 // `npm run citylap` asks how fast a route can be driven, alone, on an empty
 // map. This asks the other question: put a competent driver in the city with
 // the police live and let it run, then read what came out. Heat escalation,
-// when the helicopter arrives, how many roadblocks and spikes, how much damage,
+// how many roadblocks and spikes turn up, how much damage they do,
 // how much Rep, and whether any of it ever ends.
 //
 // It found three issues on its first run - #170, #171 and the shape of the Rep
@@ -93,7 +93,6 @@ let roadblocks = 0;
 let spiked = 0;
 let timeWanted = 0;
 let timeSeen = 0;
-let timeHeli = 0;
 let pursuits = 0;
 let firstPursuit = null;
 let timeFree = 0;
@@ -161,7 +160,6 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
     reason: police.startedBy,
     searching: police.state === 'cooldown',
     blocks: police.roadblocks.length,
-    heli: !!police.helicopter,
     shredded: world.shredded,
     hurt: world.hurt,
   };
@@ -170,7 +168,6 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
   if (now.wanted) timeWanted += K.STEP;
   else timeFree += K.STEP;
   if (now.seen) timeSeen += K.STEP;
-  if (now.heli) timeHeli += K.STEP;
   speedSum += world.speed;
   samples++;
 
@@ -190,8 +187,6 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
       roadblocks++;
       say(t, 'roadblock across the road ahead');
     }
-    if (now.heli && !prev.heli) say(t, 'helicopter up');
-    if (!now.heli && prev.heli) say(t, 'helicopter gone');
     if (now.searching && !prev.searching) {
       searches++;
       say(t, `contact broken - searching for ${Math.round(police.searchLeft)}s`);
@@ -232,7 +227,6 @@ row(
 row('free roam', `${(timeFree / 60).toFixed(1)} min`, `of ${MINUTES}`);
 row('wanted', `${(timeWanted / 60).toFixed(1)} min`, `of ${MINUTES}`);
 row('in their sights', `${(timeSeen / 60).toFixed(1)} min`);
-row('helicopter up', `${(timeHeli / 60).toFixed(1)} min`);
 row('roadblocks', roadblocks);
 row('spike strips hit', spiked);
 row('searches started', searches, 'understated: this driver laps, it never runs');

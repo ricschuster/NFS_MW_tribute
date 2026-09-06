@@ -16,7 +16,6 @@ import {
   STEP,
   COP_UNITS,
   SPIKE_REACH,
-  HELI_SEE_RADIUS,
   REPAIR_RANGE,
   DAMAGE_FREE,
   REFERENCE_TOP_SPEED,
@@ -108,68 +107,6 @@ function makeGate(): THREE.Group {
   return gate;
 }
 
-/**
- * A helicopter as a handful of boxes and a cone of light (#62).
- *
- * Crude on purpose, like the cars: at sixty metres up what has to read is the
- * silhouette, the blur of the rotor and the pool of light on the road.
- */
-function makeHelicopter(): THREE.Group {
-  const heli = new THREE.Group();
-  const M2 = UNITS_PER_METRE;
-
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2 * M2, 2 * M2, 5 * M2),
-    new THREE.MeshLambertMaterial({ color: '#1b2028' }),
-  );
-  heli.add(body);
-
-  const boom = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6 * M2, 0.6 * M2, 5 * M2),
-    new THREE.MeshLambertMaterial({ color: '#1b2028' }),
-  );
-  boom.position.set(0, 0.4 * M2, -4.4 * M2);
-  heli.add(boom);
-
-  const rotor = new THREE.Mesh(
-    new THREE.BoxGeometry(12 * M2, 0.14 * M2, 0.8 * M2),
-    new THREE.MeshLambertMaterial({ color: '#2c333d' }),
-  );
-  rotor.name = 'rotor';
-  rotor.position.y = 1.5 * M2;
-  heli.add(rotor);
-
-  const tailRotor = new THREE.Mesh(
-    new THREE.BoxGeometry(0.12 * M2, 2.6 * M2, 0.5 * M2),
-    new THREE.MeshLambertMaterial({ color: '#2c333d' }),
-  );
-  tailRotor.name = 'tailrotor';
-  tailRotor.position.set(0.5 * M2, 0.6 * M2, -6.6 * M2);
-  heli.add(tailRotor);
-
-  // Apex at the aircraft, base on the road. Scaled per frame to reach whatever
-  // it is flying over, and drawn without writing depth so it does not carve a
-  // hole in the buildings it passes across.
-  const beam = new THREE.Mesh(
-    // Narrower than the radius it actually sees over: a pool of light you can
-    // point at reads as a searchlight, and one the width of the district reads
-    // as the sun coming out.
-    new THREE.ConeGeometry(HELI_SEE_RADIUS * 0.3, 1, 20, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: '#fff3c4',
-      transparent: true,
-      opacity: 0.26,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      fog: false,
-    }),
-  );
-  beam.name = 'beam';
-  heli.add(beam);
-
-  return heli;
-}
-
 export class CityView {
   private readonly renderer: THREE.WebGLRenderer;
   /** Bloom, which is most of what the look is (#75). */
@@ -206,7 +143,6 @@ export class CityView {
   /** Spike strips, reused frame to frame: they come and go with the pursuit. */
   private readonly spikePlates: THREE.Mesh[] = [];
   private readonly repairShops: THREE.Group[] = [];
-  private readonly helicopter = makeHelicopter();
   private siren = 0;
   /** The Quick Wheel (#90). Held open with Q while the world runs on. */
   private readonly wheel = new QuickWheel();
@@ -289,8 +225,6 @@ export class CityView {
     this.rivalCars = new CarPool(this.scene);
     this.gate.visible = false;
     this.scene.add(this.gate);
-    this.helicopter.visible = false;
-    this.scene.add(this.helicopter);
     // Honour the same preference the Canvas game does: no orbit, no cuts, no
     // shake, just a camera behind the car.
     this.director = new CameraDirector(
@@ -703,7 +637,6 @@ export class CityView {
     if (gate) this.gate.position.set(gate.x, world.y, gate.z);
 
     this.spikes(world);
-    this.chopper(dt, world);
     this.shops(world);
     // The board comes off a smashed billboard; the frame stays standing (#93).
     this.cityscape.collectibles.setSmashed(world.collectibles.smashed);
@@ -786,38 +719,6 @@ export class CityView {
       plate.rotation.y = Math.atan2(strip.ax, strip.az);
       plate.scale.set(1, 1, Math.max(1, strip.to - strip.from));
     }
-  }
-
-  /**
-   * The helicopter and its light (#62).
-   *
-   * The searchlight is the part that matters. What the helicopter *does* is
-   * invisible - it stops the cooldown starting - so the pool of light on the
-   * road is the only way the player is told why the search never began, and
-   * why driving under something would fix it.
-   */
-  private chopper(dt: number, world: CityWorld): void {
-    const heli = world.police.helicopter;
-    this.helicopter.visible = heli !== null;
-    if (!heli) return;
-
-    this.helicopter.position.set(heli.x, heli.y, heli.z);
-    this.helicopter.rotation.y = heli.heading;
-
-    const rotor = this.helicopter.getObjectByName('rotor');
-    if (rotor) rotor.rotation.y += dt * 26;
-    const tail = this.helicopter.getObjectByName('tailrotor');
-    if (tail) tail.rotation.x += dt * 34;
-
-    const beam = this.helicopter.getObjectByName('beam') as THREE.Mesh | undefined;
-    if (!beam) return;
-    beam.visible = heli.spotting;
-    if (!heli.spotting) return;
-    // The cone hangs from the aircraft down to the ground, so its length is
-    // however high it happens to be flying rather than a fixed number.
-    const drop = Math.max(1, heli.y - world.y);
-    beam.scale.set(1, drop, 1);
-    beam.position.y = -drop / 2;
   }
 
   /**

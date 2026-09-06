@@ -182,14 +182,16 @@ swept by how far the car travels in a step rather than tested against its drawn
 depth, because at top speed the car covers more ground in one step than the
 strip is wide.
 
-**The helicopter is not a cop** (issue #62). It does not navigate the graph,
-cannot be rammed and never busts anyone: what it does is keep you *seen*, which
-means the cooldown from #63 never starts while it is up. The answer to it is
-cover, and `coveredAt` says what cover is - a deck overhead, or being below
-street level, which is the tunnel. Buildings deliberately do not count, because
-a street between two towers is not being under anything. It flies low and
-*ahead* of the car rather than high and behind, because the chase camera looks
-roughly level and a thing you can never see is a thing the HUD has to explain.
+**There is no helicopter** (issue #183, and #62 before it). One existed and was
+cut. It kept you *seen*, so the cooldown never started while it was up, and the
+answer to it was cover. Two things finished it: in a rendered frame it is about
+four pixels, so #62's own test - "a thing you can never see is a thing the HUD
+has to explain" - was failing, and it was airborne for more than half of a
+high-heat session holding `seenBy` unconditionally true. Cover went with it:
+`coveredAt` and the `COVER_*` constants existed only to answer it, and the
+decks and the tunnel are geometry again. Nothing in the game watches you from
+above; if cover should mean something, it needs a new thing to mean it
+against.
 
 **Rep is one currency and its own module** (issue #64). `rep.ts` holds the
 award table, the heat multiplier and the popup feed, and knows nothing about
@@ -297,7 +299,7 @@ regions - the thing that knows where it drew them is the thing that says where
 they are, and how many there are changes with what is in the wheel.
 
 **A pursuit breaker is the one thing the city does to the police** (issue
-#57). Spike strips, Enforcers and a helicopter are all things the police do to
+#57). Spike strips, roadblocks and Enforcers are all things the police do to
 you; a gate that comes down on the cars behind you is the counterplay, and it
 turns knowing the map into an advantage rather than a convenience. It *gives*
 rather than stopping - something you have to slow down for is not worth aiming
@@ -315,7 +317,7 @@ comment is there. `three/examples/jsm` ships inside the three.js package, so
 using its passes is not a new dependency; ADR-0004 already bought it.
 
 **The radio watches; it is not told** (issue #76). Every system that could
-raise a callout - the roadblocks, the spikes, the helicopter, the Enforcers -
+raise a callout - the roadblocks, the spikes, the Enforcers -
 already says what it is doing, so `Radio` compares a report of the pursuit
 against the last step and queues what changed. One place that can be wrong
 beats eight places that can forget to speak. The lines are a table because they

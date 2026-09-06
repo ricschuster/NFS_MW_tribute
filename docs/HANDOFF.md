@@ -86,8 +86,8 @@ src/game/
   progress.ts     the save format, versioned, validated field by field
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
-                  roadblocks, spike strips, a helicopter, and Enforcers that
-                  come at you head on
+                  roadblocks, spike strips, and Enforcers that come at you
+                  head on
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
   audio.ts        synthesized engine / siren / squelch
   touch.ts        on-screen controls; one reading, not a second control path
@@ -237,12 +237,12 @@ ten minutes** on 2026-09-06, which is the single most important fact on this
 page. The test suite was green throughout, five probes were green throughout,
 and the playtest still found nine things. Do that before you do anything else.
 
-### The pursuit works now: #177 and #178 are done, #183 is not
+### The pursuit works now: the cluster is closed
 
-They were one problem in three issues and two of them are closed. What is left
-of the cluster is #183, the helicopter - which is still airborne for a large
-part of a high-heat session and still holds `seenBy` true unconditionally while
-it is up.
+It was one problem in three issues - #177, #178 and #183 - and all three are
+done. A pursuit starts because a unit saw you do something, it ends in an
+escape or a bust, and the helicopter that held `seenBy` unconditionally true is
+gone.
 
 **#177 is fixed, and it changed the shape of the other two.** A pursuit now
 starts because a unit *saw* you do something: `CityPolice.witness` runs the
@@ -304,10 +304,6 @@ purpose - five bolted-on hints would be worse than one decided layer.
 - **#185 a lot of land belongs to neither block nor road.** Surfaced by #176:
   until the ground stopped being asphalt, nobody could see how much. Blocks are
   rectangles, roads bend, and the leftovers are drivable-looking and slow.
-- **#183 does the helicopter earn its place?** It is about four pixels, the HUD
-  explains it, a genre-literate player did not expect it (neither MW game had
-  one), and it is airborne over half a high-heat session keeping `seenBy` true -
-  which makes it a large part of why #178's pursuits never end.
 - **#180 traffic is uniform everywhere.** Exactly constant: 75 cars kept within
   360 m of the player, same density downtown and on an industrial back street.
   Density-by-district is the cheap half; time of day belongs with #11's
@@ -441,21 +437,26 @@ What is left, roughly in the order it would show:
   `cornerSpeed` knew about the offset did holding a lane stop costing corners.
   Three changes, none of which works alone, and the issue as originally written
   named the smallest of the three.
-- **Pursuit Rep dominates the economy.** Twenty minutes at heat 6 earns roughly
-  what the whole ten-rival ladder costs (65,000) several times over;
-  `REP_PURSUIT_PER_SECOND` alone is about 28 Rep/s once the heat bonus is in,
-  so about forty minutes of being chased unlocks every rival without racing,
-  smashing or finding anything. #91 wants everything to pay into the ladder and
-  it does, but at high heat one activity pays for all of it. Not filed as an
-  issue: it wants a judgement about the curve rather than a fix, and it belongs
-  with #14.
-- **The helicopter is about four pixels** (#183). #62 flies it low and ahead
-  deliberately, on the grounds that "a thing you can never see is a thing the
-  HUD has to explain" - and in a rendered frame it is an indistinct speck
-  against the buildings with the HUD still explaining it, so it fails its own
-  design test. It is also airborne over half a high-heat session, and while it
-  is up `seenBy` is unconditionally true, which makes it a large part of why a
-  pursuit never ends.
+- **Pursuit Rep no longer dominates the economy, and the old note was right
+  when it was written.** It used to say twenty minutes at heat 6 earned several
+  times the whole ladder, because the helicopter held you seen and the heat
+  never came down. Measured after #177, #178 and #183: fifteen minutes of
+  `npm run patrol` earns **10,631** against a 65,000 ladder, across five
+  pursuits, four escapes and two busts, with 8.5 of the 15 minutes in free
+  roam. Three things moved it - pursuits have to be provoked, they end, and a
+  bust takes that pursuit's earnings back. Whether that is now too *thin* is
+  #14's to settle, and it should be settled against this number rather than
+  against the old one. Beware short samples: a six-minute slice of the same run
+  paid 575, because it happened to contain a bust and no long escape.
+- **Cover is not a mechanic any more** (#183, and read this before adding one).
+  The helicopter is deleted, and `coveredAt` with it: a deck overhead and the
+  tunnel are geometry now, because there is nothing left that watches you from
+  above. That was the one thing making map knowledge matter in a pursuit, so if
+  cover should mean something again it needs a new thing to mean it against -
+  and whatever that is has to be *visible*, which is the test the helicopter
+  failed. It was about four pixels in a rendered frame while the HUD explained
+  what it was doing, which is exactly what #62's own rationale said not to
+  build.
 - **The minimap is hard to read in daylight.** Its background is
   `rgba(8, 12, 18, 0.62)`, so a bright or busy scene shows through it and the
   roads lose contrast. It clips correctly - a building apparently spilling past
@@ -472,8 +473,8 @@ What is left, roughly in the order it would show:
   weather and wet roads being the biggest remaining visual step. The geometry is
   carrying the look on its own.
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
-  siren and a radio squelch - but there is still no rotor for the helicopter,
-  nothing for a takedown or a spike strip, and no music.
+  siren and a radio squelch - but there is still nothing for a takedown or a
+  spike strip, and no music.
 - **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
   overlapping pair in ~2775 at last measurement: acceptable, not solved.
 - **Blocks stay rectangles in winding quarters**, so they do not follow the

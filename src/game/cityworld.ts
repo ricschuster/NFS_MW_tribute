@@ -578,7 +578,6 @@ export class CityWorld {
       roadblocks: this.police.roadblocks.length,
       spikes: this.police.spikes.length,
       enforcers: this.police.cops.reduce((n, c) => n + (c.role === 'enforcer' ? 1 : 0), 0),
-      helicopter: this.police.helicopter !== null,
       state: this.police.state,
       busted: this.busted,
       takedowns: this.takedowns,
@@ -929,10 +928,10 @@ export class CityWorld {
   /**
    * Bring something down, and take whoever is behind you with it (#57).
    *
-   * This is the counterplay the pursuit was missing. Spike strips, Enforcers
-   * and a helicopter are all things the police do to you; this is the one
-   * thing the *city* does to them, and it turns knowing the map into an
-   * advantage rather than a convenience.
+   * This is the counterplay the pursuit was missing. Spike strips, roadblocks
+   * and Enforcers are all things the police do to you; this is the one thing
+   * the *city* does to them, and it turns knowing the map into an advantage
+   * rather than a convenience.
    *
    * It gives rather than stops: you come out the far side barely slower, which
    * is what makes it worth aiming at while being chased instead of a wall with
