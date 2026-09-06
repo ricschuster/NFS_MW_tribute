@@ -31,6 +31,7 @@ import { collectiblesFor } from './collectibles';
 import { findsFor } from './streetfinds';
 import { routesFor } from './routes';
 import { ambushesFor } from './ambushes';
+import { repairsFor } from './repairs';
 import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { makeWater, type Water } from './water';
@@ -225,6 +226,7 @@ export function generateCity(seed: number): City {
     finds: [],
     routes: [],
     ambushes: [],
+    repairs: [],
   };
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
@@ -241,6 +243,7 @@ export function generateCity(seed: number): City {
   // were laid out and then pruned.
   city.routes = routesFor(city);
   city.ambushes = ambushesFor(city);
+  city.repairs = repairsFor(city);
   return city;
 }
 

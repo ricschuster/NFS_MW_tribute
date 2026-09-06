@@ -36,7 +36,10 @@ cameras to be clocked by, and seven more cars are parked around it - drive into
 one and it is yours, no menu and no money. Six circuits run through the city -
 three laps of real streets against a field of six, or a single lap scored on
 the average speed you held over it, unlocked by Rep. Five ambushes drop you
-stationary and already surrounded, with one job. The
+stationary and already surrounded, with one job. The car takes damage and
+loses speed and grip with it; six drive-through workshops put it right without
+stopping, and doing that while the police are searching for you ends the
+search. The
 map on **Tab** shows the events and everything left to find. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck

@@ -216,6 +216,16 @@ other event asks you to stop being chased in order to play it. It also updates
 *before* the BUSTED early return in `step`, because being busted is one of the
 two ways it ends and the frozen world still has to notice.
 
+**Damage never ends the game** (issue #95). Being unable to drive is a bust
+with extra steps; being *slow* is a pursuit you have to think your way out of,
+so damage takes the top speed and the grip and stops there. The first fifth is
+cosmetic, because a model where the opening shunt makes the car worse turns
+every pursuit into a spiral from first contact. Repair is drive-through, and
+taking it *during a search* ends the search - a car that goes in beaten up and
+comes out straight is not the car they are looking for. It does nothing while
+they still have eyes on you, which is what makes it a decision about when
+rather than a button that cancels a pursuit.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

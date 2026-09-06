@@ -31,6 +31,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
   'ambush',
+  'repair',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,6 +40,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
       'ambush',
+      'repair',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -458,6 +460,9 @@ for (const view of VIEWS) {
   if (view === 'ambush') {
     // Park on a trap and spring it: the shot is of four cars already around
     // the car with the clock running, which is the whole event.
+  if (view === 'repair') {
+    // Stand a beaten-up car short of a repair gantry, looking at it: the shot
+    // is of the damage bar, the dulled paint and the thing that fixes both.
     await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
       timeout: 60000,
     });
@@ -474,6 +479,20 @@ for (const view of VIEWS) {
       for (let t = 0; t < 3; t += 1 / 60) world.step(1 / 60, none);
     });
     await page.waitForTimeout(1200);
+      const metre = 135;
+      const shop = world.city.repairs[0];
+      if (!shop) return;
+      // Back down the road it sits on, facing it.
+      world.x = shop.at.x - Math.sin(shop.angle) * 34 * metre;
+      world.z = shop.at.z - Math.cos(shop.angle) * 34 * metre;
+      world.y = shop.y;
+      world.heading = shop.angle;
+      world.speed = 0;
+      world.crashFlash = 0;
+      world.damage = 0.85;
+      world.rep.total = 48300;
+    });
+    await page.waitForTimeout(2400);
   }
 
   if (view === 'pursuit') {
