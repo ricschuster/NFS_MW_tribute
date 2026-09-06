@@ -118,6 +118,104 @@ export function tileRepeat(
   return { x: width / tile, y: depth / tile };
 }
 
+/** How much ground one paving or grass tile covers, in metres. */
+const BLOCK_TILE_METRES = 3.2;
+
+/**
+ * Paving slabs, for the kerb the buildings stand on.
+ *
+ * The joints are the point. A pavement is the surface the player is closest to
+ * whenever they clip a kerb, and a flat grey slab the size of a city block
+ * reads as a plinth rather than a pavement - it is the one surface where the
+ * absence of a texture actively tells you how big the untextured thing is.
+ */
+function pavingTile(): HTMLCanvasElement {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Four slabs to the tile, so the joint spacing is under a metre without the
+  // texture having to repeat that often.
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  for (const at of [0, size / 2]) {
+    ctx.fillRect(at, 0, 2, size);
+    ctx.fillRect(0, at, size, 2);
+  }
+  // Each slab a slightly different shade: real paving is laid, not poured.
+  for (let sx = 0; sx < 2; sx++) {
+    for (let sy = 0; sy < 2; sy++) {
+      const shade = hash(sx * 7.3 + sy * 3.1);
+      ctx.fillStyle = shade > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+      ctx.fillRect(sx * (size / 2) + 2, sy * (size / 2) + 2, size / 2 - 4, size / 2 - 4);
+    }
+  }
+  speckle(size, 260, 29, (x, y, i) => {
+    ctx.fillStyle = hash(i * 1.9) > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    ctx.fillRect(x, y, 1.2, 1.2);
+  });
+  return canvas;
+}
+
+/**
+ * Grass, for the blocks the generator left open.
+ *
+ * Mottle rather than blades: at any distance the player sees one of these
+ * from, a blade of grass is well under a pixel, and what actually reads is the
+ * unevenness of the colour.
+ */
+function grassTile(): HTMLCanvasElement {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+  speckle(size, 90, 53, (x, y, i) => {
+    ctx.fillStyle = hash(i * 2.7) > 0.5 ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.10)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 4 + hash(i * 3.3) * 9, 3 + hash(i * 5.1) * 7, hash(i) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  speckle(size, 700, 97, (x, y, i) => {
+    ctx.fillStyle = hash(i * 4.2) > 0.5 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+    ctx.fillRect(x, y, 1, 2);
+  });
+  return canvas;
+}
+
+/**
+ * One tile of a block surface, in world units.
+ *
+ * Blocks are instanced and each is scaled to its own size, so the repeat
+ * cannot live on the texture the way the ground's does - it is computed per
+ * instance in the shader by `worldUvs`. This is the number it divides by.
+ */
+export const BLOCK_TILE = BLOCK_TILE_METRES * UNITS_PER_METRE;
+
+const blockCache = new Map<'paving' | 'grass', THREE.CanvasTexture>();
+
+/** The paving or grass texture, built once and shared. */
+export function blockTexture(kind: 'paving' | 'grass'): THREE.CanvasTexture {
+  const hit = blockCache.get(kind);
+  if (hit) return hit;
+  const texture = new THREE.CanvasTexture(kind === 'paving' ? pavingTile() : grassTile());
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 8;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  blockCache.set(kind, texture);
+  return texture;
+}
+
 let cached: THREE.CanvasTexture | null = null;
 
 /**
@@ -151,4 +249,6 @@ export function asphaltTexture(
 export function disposeSurfaces(): void {
   cached?.dispose();
   cached = null;
+  for (const texture of blockCache.values()) texture.dispose();
+  blockCache.clear();
 }
