@@ -334,8 +334,20 @@ export class Hud {
     ctx.clip();
 
     ctx.translate(cx, cy);
-    // Rotate the world under the car, not the car on the map.
-    ctx.rotate(world.heading);
+    // Rotate the world under the car, not the car on the map - and rotate it by
+    // *minus* the heading, which is the whole of this fix.
+    //
+    // Work it through for a point directly ahead at distance d. Before the
+    // rotation it plots at `(d sin h, -d cos h)`, because the map negates z to
+    // put north up. Canvas `rotate(t)` sends `(x, y)` to
+    // `(x cos t - y sin t, x sin t + y cos t)`, so at `t = -h` that lands on
+    // `(0, -d)`: straight up the screen, which is what heading-up means. At
+    // `t = +h` it lands on `(d sin 2h, ...)`, and at a heading of 90 degrees
+    // that is `(0, +d)` - the road in front of you drawn behind you.
+    //
+    // It read as "the minimap is not aligned with what the driver sees", which
+    // is exactly what it was.
+    ctx.rotate(-world.heading);
 
     const near = this.roadsAround(world);
     for (const road of near) {
