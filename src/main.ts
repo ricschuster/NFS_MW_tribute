@@ -58,7 +58,10 @@ async function boot(): Promise<void> {
       ]);
       const hud = new Hud(canvas.getContext('2d') as CanvasRenderingContext2D);
       const world = new CityWorld(city);
-      view.drive(world, hud);
+      // The HUD canvas doubles as the touch layer: it is where the on-screen
+      // controls are drawn, and hit-testing has to happen in the same
+      // coordinates as the drawing (#89).
+      view.drive(world, hud, canvas);
       // A handle on the running sim, so the screenshot tools can set up a shot
       // that would otherwise have to be driven into by luck - a takedown, a
       // roadblock, a wreck. Dev only: this is scaffolding for looking at

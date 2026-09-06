@@ -2,7 +2,7 @@ import type { Segment } from './types';
 import { Input } from './input';
 import { World, type InputState } from './world';
 import { GameAudio } from './audio';
-import { TouchControls } from './touch';
+import { TouchControls, DRIVING_BUTTONS } from './touch';
 import { project, renderSegment, renderFog, renderCarSprite } from './render';
 import {
   WIDTH,
@@ -66,7 +66,7 @@ export class Game {
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
     this.scene3d = scene3d;
-    this.touch = new TouchControls(canvas, () => this.audio.start());
+    this.touch = new TouchControls(canvas, () => this.audio.start(), DRIVING_BUTTONS());
 
     // respect the OS "reduce motion" preference (shake, speed lines, strobing)
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');

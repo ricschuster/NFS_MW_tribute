@@ -5,6 +5,7 @@ import { segmentIntersection } from '../city/grid';
 import { CameraDirector } from './cameras';
 import type { Hud } from './hud';
 import { QuickWheel } from '../quickwheel';
+import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
@@ -195,6 +196,8 @@ export class CityView {
   private readonly wheel = new QuickWheel();
   /** Keys that were down last frame, so a hold is not nine presses. */
   private readonly wasDown = new Set<string>();
+  /** On-screen controls, so Kestrel Bay can be driven on a phone (#89). */
+  private touch: TouchControls | null = null;
   private readonly director: CameraDirector;
   private accumulator = 0;
 
@@ -266,10 +269,18 @@ export class CityView {
    * car appears; #88 is where cameras become a first-class concept, so this is
    * the simplest thing that lets the city be driven in the meantime.
    */
-  drive(world: CityWorld, hud: Hud | null = null): void {
+  drive(world: CityWorld, hud: Hud | null = null, overlay?: HTMLCanvasElement): void {
     this.world = world;
     this.hud = hud;
     this.car.visible = true;
+
+    // Bound to the HUD canvas rather than the WebGL one: the HUD is the layer
+    // the buttons are drawn on, and hit-testing has to happen in the same
+    // coordinates as the drawing or the buttons are not where they look.
+    if (overlay && hud) {
+      this.touch = new TouchControls(overlay, () => {}, CITY_BUTTONS());
+      hud.touch = this.touch;
+    }
   }
 
   /** A gradient dome, so the horizon is a horizon and not a flat wall of colour. */
@@ -499,14 +510,19 @@ export class CityView {
    * the same reason `game.ts` does it.
    */
   private driveFrame(dt: number, world: CityWorld): void {
-    const held = (...keys: string[]) => keys.some((k) => this.held.has(k));
+    // One reading of "is this control held", whether it came from a key or a
+    // thumb. Everything below asks this and nothing below knows which it was.
+    const touch = this.touch;
+    const held = (id: ControlId | null, ...keys: string[]) =>
+      keys.some((k) => this.held.has(k)) || (id !== null && touch !== null && touch.pressed(id));
+
     const input: InputState = {
-      up: held('w', 'arrowup'),
-      down: held('s', 'arrowdown'),
-      left: held('a', 'arrowleft'),
-      right: held('d', 'arrowright'),
-      nitro: held('shift'),
-      confirm: held('enter', ' '),
+      up: held('up', 'w', 'arrowup'),
+      down: held('down', 's', 'arrowdown'),
+      left: held('left', 'a', 'arrowleft'),
+      right: held('right', 'd', 'arrowright'),
+      nitro: held('nitro', 'shift'),
+      confirm: held('confirm', 'enter', ' '),
     };
 
     // Slow motion is a multiplier on how much time the accumulator is fed, not
@@ -536,10 +552,10 @@ export class CityView {
       paint.lerp(new THREE.Color('#4a4038'), hurt * 0.7);
       this.car.scale.setScalar(world.car.scale);
     }
-    if (held('b')) this.director.glanceBack();
+    if (held('look', 'b')) this.director.glanceBack();
     // Tab holds the collection map open: what has been found, and where the
     // rest of it is. Held rather than toggled, so it cannot be left up.
-    if (this.hud) this.hud.showMap = held('tab');
+    if (this.hud) this.hud.showMap = held('map', 'tab');
     this.quickWheel(world, held);
 
     this.trafficCars.begin();
@@ -733,8 +749,11 @@ export class CityView {
    * menu needs a cursor and a cursor needs direction keys, and the direction
    * keys are busy steering; a number goes straight to the thing.
    */
-  private quickWheel(world: CityWorld, held: (...keys: string[]) => boolean): void {
-    this.wheel.open = held('q');
+  private quickWheel(
+    world: CityWorld,
+    held: (id: ControlId | null, ...keys: string[]) => boolean,
+  ): void {
+    this.wheel.open = held('wheel', 'q');
     if (this.hud) this.hud.wheel = this.wheel.open ? this.wheel : null;
     if (!this.wheel.open) {
       this.wasDown.clear();
@@ -742,17 +761,25 @@ export class CityView {
     }
 
     // Edges, not levels: a key held for a fifth of a second is one choice.
-    const pressed = (key: string) => {
-      const down = held(key);
-      const was = this.wasDown.has(key);
-      if (down) this.wasDown.add(key);
-      else this.wasDown.delete(key);
+    const edge = (name: string, down: boolean) => {
+      const was = this.wasDown.has(name);
+      if (down) this.wasDown.add(name);
+      else this.wasDown.delete(name);
       return down && !was;
     };
 
-    if (pressed('e')) this.wheel.cycle();
+    if (edge('e', held(null, 'e'))) this.wheel.cycle();
     for (let i = 1; i <= 9; i++) {
-      if (pressed(String(i))) this.wheel.choose(world, i - 1);
+      if (edge(String(i), held(null, String(i)))) this.wheel.choose(world, i - 1);
+    }
+
+    // The same choices by thumb (#89). The HUD publishes a rectangle per row
+    // and one for the heading, because it is the thing that knows where it
+    // drew them - the wheel's length changes with what is in it.
+    if (!this.touch) return;
+    if (edge('touch-branch', this.touch.on('wheel:branch'))) this.wheel.cycle();
+    for (let i = 0; i < 9; i++) {
+      if (edge(`touch-row-${i}`, this.touch.on(`wheel:${i}`))) this.wheel.choose(world, i);
     }
   }
 
