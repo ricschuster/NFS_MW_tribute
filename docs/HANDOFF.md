@@ -205,9 +205,12 @@ driver.
 which ADR-0004 is retiring, so read it as "the city is still boxes" rather than
 as a sprite task. The buildings are no longer among them: `scene/facades.ts`
 gives every kind a generated window grid, sampled in world units so a window is
-the same size on a tower and on a shed. What is still a box, in the order that
-would show: the **cars**, then street furniture, then the buildings themselves
-wanting real geometry rather than a texture on a cuboid. All of it goes behind
+the same size on a tower and on a shed. The cars are no longer boxes either:
+`scene/carshape.ts` builds a body, a raked greenhouse and four wheels by
+moving the corners of box geometries, which is a lot of silhouette for no
+extra triangles. What is still a box, in the order that would show: street
+furniture, then the buildings themselves wanting real geometry rather than a
+texture on a cuboid. All of it goes behind
 the provider seam in `scene/`; none of it touches `city/`.
 
 ## Known problems, not papered over
