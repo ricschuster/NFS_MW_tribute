@@ -231,6 +231,18 @@ export interface CityRoute {
   laps: number;
 }
 
+/**
+ * A place the police will jump you (#92).
+ *
+ * Not a route and not a lot: an ambush needs nothing but a spot to be
+ * stationary in and a heat level to be surrounded at, so that is all it is.
+ */
+export interface AmbushSpot {
+  at: Vec2;
+  /** The heat it springs at, 1 to 6. Picking a spot is picking a difficulty. */
+  level: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -269,4 +281,5 @@ export interface City {
   collectibles: Collectible[];
   finds: StreetFind[];
   routes: CityRoute[];
+  ambushes: AmbushSpot[];
 }

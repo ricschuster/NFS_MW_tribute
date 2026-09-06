@@ -44,6 +44,8 @@ import {
   FIND_RANGE,
   CITY_COUNTDOWN,
   ROUTE_START_RANGE,
+  AMBUSH_RANGE,
+  AMBUSH_RING,
   type CopKind,
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
@@ -1750,5 +1752,96 @@ describe('circuits', () => {
     expect(world.race.won).toBe(true);
     expect(world.beaten).toBe(before + 1);
     expect(world.rep.recent.some((a) => a.reason === 'raceWin')).toBe(true);
+  });
+});
+
+/**
+ * Ambushes (#92).
+ *
+ * The event itself is nine lines of state machine and is tested next to it.
+ * These are about the thing that makes it an event at all: that pressing the
+ * button really does drop you stopped and surrounded, at the heat the spot
+ * says, with the ordinary escape as the only way out.
+ */
+describe('ambushes', () => {
+  function atATrap(world: CityWorld) {
+    const spot = world.city.ambushes[2];
+    world.x = spot.at.x;
+    world.z = spot.at.z;
+    world.y = 0;
+    return spot;
+  }
+
+  it('offers the trap you are parked on, and nothing when you are not', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    expect(world.atAmbush).toBeNull();
+    const spot = atATrap(world);
+    expect(world.atAmbush).toBe(spot);
+    world.x += AMBUSH_RANGE * 4;
+    expect(world.atAmbush).toBeNull();
+  });
+
+  it('drops you stopped, surrounded, and already at heat', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const spot = atATrap(world);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, press({ confirm: true }));
+
+    expect(world.ambush.state).toBe('running');
+    expect(world.speed).toBe(0);
+    expect(world.police.level).toBe(spot.level);
+    expect(world.police.cops.length).toBeGreaterThan(1);
+    for (const cop of world.police.cops) {
+      expect(Math.hypot(cop.x - world.x, cop.z - world.z)).toBeLessThan(AMBUSH_RING * 3);
+    }
+  });
+
+  // It asks nothing of the ladder. The pursuit is available to anyone who can
+  // drive, which is the point of having an event made of nothing else.
+  it('asks nothing of the ladder', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    world.beaten = 3;
+    world.rep.total = 0;
+    expect(world.challengeReady).toBe(false);
+    atATrap(world);
+    world.step(STEP, press({ confirm: true }));
+    expect(world.ambush.state).toBe('running');
+  });
+
+  it('pays when you get out of one', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    atATrap(world);
+    world.step(STEP, press({ confirm: true }));
+
+    // Cleared by hand: what is under test is the payout, not whether this
+    // scripted driver can lose four cars.
+    world.police.reset();
+    drive(world, 0.2, NONE);
+    expect(world.ambush.state).toBe('escaped');
+    expect(world.rep.recent.some((a) => a.reason === 'ambush')).toBe(true);
+  });
+
+  it('pays more for a hotter one', () => {
+    const escape = (which: number) => {
+      const world = new CityWorld(undefined, { traffic: false });
+      const spot = world.city.ambushes[which];
+      world.x = spot.at.x;
+      world.z = spot.at.z;
+      world.y = 0;
+      world.step(STEP, press({ confirm: true }));
+      world.police.reset();
+      drive(world, 0.2, NONE);
+      return world.rep.total;
+    };
+    expect(escape(4)).toBeGreaterThan(escape(0));
+  });
+
+  it('is lost by being busted in it', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    atATrap(world);
+    world.step(STEP, press({ confirm: true }));
+    world.busted = true;
+    world.step(STEP, NONE);
+    expect(world.ambush.state).toBe('busted');
   });
 });

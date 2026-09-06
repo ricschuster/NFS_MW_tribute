@@ -835,6 +835,11 @@ export class CityPolice {
       x = player.x + Math.sin(angle) * CITY_COP_SPAWN;
       z = player.z + Math.cos(angle) * CITY_COP_SPAWN;
     }
+    return this.spawnAt(player, x, z, role);
+  }
+
+  /** Put a cop on whatever road is nearest `(x, z)`, pointed at the player. */
+  private spawnAt(player: Chased, x: number, z: number, role: Cop['role']): Cop | null {
 
     const nearby = this.grid.roadsNear(x, z).filter((road) => road.length > road.width * 2);
     if (nearby.length === 0) return null;
@@ -873,6 +878,36 @@ export class CityPolice {
 
     if (this.gapTo(cop, player) < CITY_BUST_DISTANCE * 2) return null;
     return cop;
+  }
+
+  /**
+   * Spring a trap: heat straight to `level`, cars already around them (#92).
+   *
+   * Placed on the roads nearest the player rather than at the usual spawn
+   * distance, because being *surrounded* is the event: cars two hundred metres
+   * back is an ordinary pursuit that happened to start suddenly.
+   */
+  ambush(player: Chased, level: number, cars: number, ring: number): void {
+    this.reset();
+    // Just inside the level, so `level` reads back as the one that was asked
+    // for rather than the one below it.
+    this.heat = Math.min(1, (level - 0.5) / HEAT_LEVEL_COUNT);
+    this.state = 'pursuit';
+    this.cooldown = 0;
+    this.seenNow = true;
+    this.lastSeen.x = player.x;
+    this.lastSeen.z = player.z;
+
+    for (let i = 0; i < cars; i++) {
+      const angle = (i / cars) * Math.PI * 2;
+      const cop = this.spawnAt(
+        player,
+        player.x + Math.sin(angle) * ring,
+        player.z + Math.cos(angle) * ring,
+        'chase',
+      );
+      if (cop) this.cops.push(cop);
+    }
   }
 
   /**

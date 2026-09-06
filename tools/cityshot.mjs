@@ -30,6 +30,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+  'ambush',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,6 +38,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+      'ambush',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -451,6 +453,27 @@ for (const view of VIEWS) {
     if (view === 'race') await page.keyboard.up('Shift');
     await page.keyboard.up('ArrowUp');
     await page.waitForTimeout(400);
+  }
+
+  if (view === 'ambush') {
+    // Park on a trap and spring it: the shot is of four cars already around
+    // the car with the clock running, which is the whole event.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const spot = world.city.ambushes[3];
+      world.x = spot.at.x;
+      world.z = spot.at.z;
+      world.y = 0;
+      world.crashFlash = 0;
+      world.rep.total = 40100;
+      world.step(1 / 60, { ...none, confirm: true });
+      for (let t = 0; t < 3; t += 1 / 60) world.step(1 / 60, none);
+    });
+    await page.waitForTimeout(1200);
   }
 
   if (view === 'pursuit') {

@@ -562,7 +562,23 @@ export class Hud {
     const race = world.race;
     ctx.textAlign = 'center';
 
+    if (race.state === 'idle' && world.ambush.state !== 'idle') {
+      this.ambush(world);
+      return;
+    }
+
     if (race.state === 'idle') {
+      const spot = world.atAmbush;
+      if (spot) {
+        ctx.fillStyle = '#ff5a45';
+        ctx.font = '700 22px system-ui, sans-serif';
+        ctx.fillText(`AMBUSH  ·  HEAT ${spot.level}`, WIDTH / 2, HEIGHT - 150);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = '600 15px system-ui, sans-serif';
+        ctx.fillText('ENTER  -  surrounded, engine off, get out', WIDTH / 2, HEIGHT - 126);
+        return;
+      }
+
       const route = world.atStartLine;
       if (!route) return;
       const rival = world.currentRival;
@@ -663,6 +679,37 @@ export class Hud {
     ctx.fillText(`${ORDINALS[place] ?? place}/${race.runners}`, WIDTH / 2 + 70, 42);
 
     this.arrow(world);
+  }
+
+  /**
+   * The ambush clock, and how it ended (#92).
+   *
+   * A clock and not a bar: there is no target to be measured against, only
+   * how long they had you, which is the number worth remembering.
+   */
+  private ambush(world: CityWorld): void {
+    const { ctx } = this;
+    const run = world.ambush;
+    ctx.textAlign = 'center';
+
+    if (run.state === 'running') {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+      ctx.font = '600 13px system-ui, sans-serif';
+      ctx.fillText('AMBUSH', WIDTH / 2, 34);
+      ctx.fillStyle = '#ff5a45';
+      ctx.font = '700 44px ui-monospace, "SF Mono", Menlo, monospace';
+      ctx.fillText(run.elapsed.toFixed(1), WIDTH / 2, 76);
+      return;
+    }
+
+    const escaped = run.state === 'escaped';
+    ctx.fillStyle = escaped ? '#5adc82' : '#ff5a5a';
+    ctx.font = '800 60px system-ui, sans-serif';
+    ctx.fillText(escaped ? 'CLEAR' : 'CAUGHT', WIDTH / 2, HEIGHT / 2 - 40);
+    if (!escaped) return;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '500 20px system-ui, sans-serif';
+    ctx.fillText(`out in ${run.elapsed.toFixed(1)}s at heat ${run.level}`, WIDTH / 2, HEIGHT / 2 - 6);
   }
 
   /**
@@ -822,6 +869,18 @@ export class Hud {
       ctx.fillStyle = route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff';
       ctx.fill();
     }
+
+    // Where the traps are, with the heat they spring at.
+    for (const spot of world.city.ambushes) {
+      ctx.fillStyle = '#ff5a45';
+      ctx.beginPath();
+      ctx.arc(px(spot.at.x), py(spot.at.z), 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(String(spot.level), px(spot.at.x) + 6, py(spot.at.z) + 3);
+    }
+    ctx.textAlign = 'center';
 
     // Cars still parked out there. Drawn bigger and brighter than a billboard
     // because they are worth crossing the map for and a billboard is not.

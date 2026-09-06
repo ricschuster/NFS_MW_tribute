@@ -42,12 +42,16 @@ import {
   ROUTE_START_RANGE,
   REP_RACE_WIN,
   REP_RACE_WIN_PER_DIFFICULTY,
+  AMBUSH_RANGE,
+  AMBUSH_CARS,
+  AMBUSH_RING,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
 import { StreetFinds } from './streetfinds';
 import { STARTER_CAR, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
+import { CityAmbush } from './cityambush';
 import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
@@ -170,6 +174,8 @@ export class CityWorld {
   readonly finds: StreetFinds;
   /** The circuit being raced, if any (#70). */
   readonly race = new CityRace();
+  /** The ambush being escaped, if any (#92). */
+  readonly ambush = new CityAmbush();
   /** How many ladder rivals have been beaten. Shared with the track sim. */
   beaten = 0;
 
@@ -308,6 +314,14 @@ export class CityWorld {
     return rival ? Math.max(0, rival.rep - this.rep.total) : 0;
   }
 
+  /** The ambush the car is parked on, if any (#92). */
+  get atAmbush() {
+    for (const spot of this.city.ambushes) {
+      if (Math.hypot(spot.at.x - this.x, spot.at.z - this.z) < AMBUSH_RANGE) return spot;
+    }
+    return null;
+  }
+
   /** The circuit whose start line the car is sitting on, if any (#70). */
   get atStartLine() {
     for (const route of this.city.routes) {
@@ -327,6 +341,10 @@ export class CityWorld {
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
     this.rep.step(dt);
+    // Before the BUSTED early return, because being busted is one of the two
+    // ways an ambush ends and the frozen world still has to notice it.
+    this.ambush.update(dt, this.police.state === 'clear', this.busted);
+    if (this.ambush.justEnded) this.settleAmbush();
     this.clearWrecks(dt);
 
     // Lining up: the car is held on the grid while the lights run down.
@@ -337,9 +355,13 @@ export class CityWorld {
     }
 
     const rival = this.currentRival;
-    if (confirmPressed && this.race.state === 'idle' && rival && this.challengeReady) {
+    if (confirmPressed && this.race.state === 'idle' && this.ambush.state === 'idle') {
       const route = this.atStartLine;
-      if (route) this.startRace(route, rival);
+      const spot = this.atAmbush;
+      if (route && rival && this.challengeReady) this.startRace(route, rival);
+      // An ambush asks nothing of the ladder. It is the pursuit, and the
+      // pursuit is available to anyone who can drive.
+      else if (spot) this.startAmbush(spot.level);
     }
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
@@ -430,6 +452,21 @@ export class CityWorld {
     if (this.race.justFinished) this.settleRace();
     this.earn(dt);
     this.persist(dt);
+  }
+
+  /** Spring the trap: stopped, surrounded, and already at heat (#92). */
+  private startAmbush(level: number): void {
+    this.speed = 0;
+    this.escapedFlash = 0;
+    this.police.ambush(this, level, AMBUSH_CARS, AMBUSH_RING);
+    this.ambush.begin(level);
+  }
+
+  /** Pay for an ambush that has ended, one way or the other. */
+  private settleAmbush(): void {
+    if (this.ambush.state !== 'escaped') return;
+    this.rep.award('ambush', this.ambush.level);
+    this.savedAt = -1;
   }
 
   /** Line up for a circuit. No pursuit during a sanctioned event. */
