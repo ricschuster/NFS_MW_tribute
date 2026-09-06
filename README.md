@@ -42,7 +42,8 @@ the average speed you held over it, unlocked by Rep. Five ambushes drop you
 stationary and already surrounded, with one job. The car takes damage and
 loses speed and grip with it; six drive-through workshops put it right without
 stopping, and doing that while the police are searching for you ends the
-search. Each of the ten ladder rivals is two fights: beat them in the race,
+search, and the gates and pallet stacks around the city come down on whoever is
+on your bumper. Each of the ten ladder rivals is two fights: beat them in the race,
 then run them down and wreck the car to take it. Finishing first or second in a car earns it a part - engine, tyres, gearing,
 aero, each one a trade - and the Quick Wheel changes car, fits parts and sets a
 destination without ever stopping the world. The

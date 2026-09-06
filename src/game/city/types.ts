@@ -258,6 +258,26 @@ export interface RepairShop {
   y: number;
 }
 
+/**
+ * Something that breaks when you drive through it (#57).
+ *
+ * A gate across a yard entrance or a stack of pallets on an industrial kerb.
+ * City data like everything else here: the sim has to be able to bring one
+ * down without a renderer in the room.
+ */
+export type BreakableKind = 'gate' | 'stack';
+
+export interface Breakable {
+  id: number;
+  kind: BreakableKind;
+  at: Vec2;
+  y: number;
+  /** Facing: a gate stands across this, a stack sits along it. */
+  angle: number;
+  /** Half its width, so the sim knows what "through it" means. */
+  half: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -298,4 +318,5 @@ export interface City {
   routes: CityRoute[];
   ambushes: AmbushSpot[];
   repairs: RepairShop[];
+  breakables: Breakable[];
 }

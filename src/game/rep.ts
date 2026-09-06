@@ -11,6 +11,7 @@ import {
   REP_STREET_FIND,
   REP_AMBUSH,
   REP_CLAIM,
+  REP_BREAKER,
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
@@ -48,7 +49,8 @@ export type RepReason =
   | 'camera'
   | 'streetFind'
   | 'ambush'
-  | 'claim';
+  | 'claim'
+  | 'breaker';
 
 interface RepKind {
   /** Base value, before the heat multiplier. */
@@ -71,6 +73,7 @@ const KINDS: Record<RepReason, RepKind> = {
   streetFind: { value: REP_STREET_FIND, label: 'STREET FIND' },
   ambush: { value: REP_AMBUSH, label: 'AMBUSH SURVIVED' },
   claim: { value: REP_CLAIM, label: 'CAR CLAIMED' },
+  breaker: { value: REP_BREAKER, label: 'PURSUIT BREAKER' },
 };
 
 /** One award, still worth showing. */
