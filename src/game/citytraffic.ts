@@ -1,6 +1,8 @@
 import {
   TRAFFIC_IN_CITY,
   TRAFFIC_RADIUS,
+  TRAFFIC_DENSITY,
+  TRAFFIC_LANE_BIAS,
   TRAFFIC_SPAWN_MIN,
   TRAFFIC_SPEED_MIN,
   TRAFFIC_SPEED_MAX,
@@ -10,7 +12,7 @@ import {
 } from './constants';
 import type { CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
-import type { City, CityRoad } from './city/types';
+import type { City, CityRoad, DistrictKind } from './city/types';
 import {
   advanceAlong,
   directionOf,
@@ -51,7 +53,23 @@ export class CityTraffic {
     if (i >= 0) this.cars.splice(i, 1);
   }
 
-  update(dt: number, at: { x: number; z: number }): void {
+  /**
+   * Which district the traffic is behaving like (#180).
+   *
+   * Taken from the road under the car and *remembered*, because a car cutting
+   * across a car park has no road under it and traffic that thinned out every
+   * time you left the tarmac would read as a bug rather than as a district.
+   */
+  private district: DistrictKind = 'midtown';
+
+  /** How many cars this stretch of city should have around the player. */
+  private get wanted(): number {
+    return Math.round(TRAFFIC_IN_CITY * TRAFFIC_DENSITY[this.district]);
+  }
+
+  update(dt: number, at: { x: number; z: number; onRoad?: CityRoad | null }): void {
+    if (at.onRoad) this.district = at.onRoad.district;
+
     for (const car of this.cars) this.follow(car);
     for (const car of this.cars) this.advance(car, dt);
 
@@ -65,8 +83,14 @@ export class CityTraffic {
       }
     }
 
+    // Trimmed as well as topped up: driving from downtown into the industrial
+    // quarter has to be able to *lose* cars, or the density is whatever the
+    // busiest place you have been through was.
+    const wanted = this.wanted;
+    while (this.cars.length > wanted) this.cars.pop();
+
     let attempts = 0;
-    while (this.cars.length < TRAFFIC_IN_CITY && attempts < 30) {
+    while (this.cars.length < wanted && attempts < 30) {
       attempts++;
       const car = this.spawn(at);
       if (car) this.cars.push(car);
@@ -176,6 +200,17 @@ export class CityTraffic {
     if (nearby.length === 0) return null;
 
     const road = nearby[this.rng.int(nearby.length)];
+    // Turned down if it is a small road (#180), and the caller tries again
+    // somewhere else. A four-lane arterial and the side street crossing it used
+    // to be equally likely to get the car, which is most of why the city read
+    // as uniformly busy.
+    //
+    // Rejection rather than a weighted pick, and that is the whole trick:
+    // `roadsNear` answers with the roads in *one grid cell*, which are few and
+    // much of a muchness, so weighting inside that set moves nothing. Turning
+    // a spawn down sends the retry to a different part of the map, which is
+    // where the difference actually is.
+    if (!this.rng.chance(Math.min(1, road.lanes / TRAFFIC_LANE_BIAS))) return null;
 
     // Put the car at the point on that road nearest where we were looking, not
     // at a random point along it. An arterial can be kilometres long, so a

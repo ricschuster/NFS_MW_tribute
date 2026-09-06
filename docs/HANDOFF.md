@@ -311,10 +311,12 @@ and adding a mechanic means deciding where it gets explained.
 - **#185 a lot of land belongs to neither block nor road.** Surfaced by #176:
   until the ground stopped being asphalt, nobody could see how much. Blocks are
   rectangles, roads bend, and the leftovers are drivable-looking and slow.
-- **#180 traffic is uniform everywhere.** Exactly constant: 75 cars kept within
-  360 m of the player, same density downtown and on an industrial back street.
-  Density-by-district is the cheap half; time of day belongs with #11's
-  lighting work.
+- **#180's cheap half is done; time of day is not.** Traffic varies by district
+  now (downtown 94 cars, industrial 38) and spawns favour the bigger roads. A
+  day/night cycle with traffic that thins after dark is the other half, and it
+  is a lighting problem as much as a traffic one - it belongs with #11, where
+  night and weather are already named as the biggest visual step left. It has
+  no issue of its own yet.
 - **#192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
   races all ten rivals now, and the reference driver comes seventh of seven
   against every one of them - including the rival the game opens with - by most
@@ -489,6 +491,13 @@ What is left, roughly in the order it would show:
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
   siren and a radio squelch - but there is still nothing for a takedown or a
   spike strip, and no music.
+- **The traffic column in `citylap` moved per route with #180, in both
+  directions**, which is the point: routes through downtown got slower (Crosstown
+  29% -> 25%) and routes through the quieter quarters faster (Bayside 24% ->
+  29%). The average across the six is about where it was. Damage moved around a
+  lot at the same time and not obviously in one direction - it was already
+  anywhere from 0% to 100% route to route - so do not read a single route's
+  damage figure as a signal.
 - **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
   overlapping pair in ~2775 at last measurement: acceptable, not solved.
 - **Blocks stay rectangles in winding quarters**, so they do not follow the

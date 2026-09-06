@@ -393,6 +393,40 @@ export const BOULEVARD_CLEARANCE = m(5);
  */
 export const TRAFFIC_IN_CITY = 75;
 export const TRAFFIC_RADIUS = m(360);
+/**
+ * How much of that each district gets (#180).
+ *
+ * It used to be exactly constant: the same seventy-five cars in a downtown
+ * canyon and on an industrial back street, which is a large thing to have flat
+ * given traffic roughly halves the pace a good driver can hold. A playtest
+ * asked both halves of the question in one breath - "traffic is too dense; is
+ * it constant across the map?" - so these are centred a little under 1 rather
+ * than on it: downtown gets more than it had, everywhere else gets less, and
+ * the average across the city comes down.
+ *
+ * Read as multipliers on `TRAFFIC_IN_CITY`, chosen by the district of the road
+ * under the car. Time of day is the other half of the issue and belongs with
+ * #11's lighting work.
+ */
+export const TRAFFIC_DENSITY: Record<DistrictKind, number> = {
+  downtown: 1.25,
+  midtown: 1,
+  waterfront: 0.75,
+  industrial: 0.5,
+};
+/**
+ * The number of lanes a road needs before traffic will certainly spawn on it.
+ *
+ * A four-lane arterial carrying the same number of cars as the side street it
+ * crosses is the other half of "density is flat". A candidate road is accepted
+ * with probability `lanes / TRAFFIC_LANE_BIAS`, so a two-lane street is turned
+ * down half the time and the retry lands somewhere else.
+ *
+ * Rejection rather than a weighted pick because a weighted pick measurably did
+ * nothing: candidates come from one grid cell, and the roads in one cell are
+ * few and much of a muchness. Turning a spawn down moves it across the map.
+ */
+export const TRAFFIC_LANE_BIAS = 4;
 /** Never spawn one closer than this, or cars appear out of nothing in view. */
 export const TRAFFIC_SPAWN_MIN = m(95);
 export const TRAFFIC_SPEED_MIN = 0.55;
