@@ -118,7 +118,7 @@ export class Hud {
     this.radio(world);
     this.event(world);
     this.stuck(world);
-    this.hint();
+    this.hint(world);
     this.banners(world);
     this.quickWheel(world);
     this.buttons();
@@ -1549,9 +1549,19 @@ export class Hud {
     ctx.fillText('ENTER  -  back onto the road, heat and all', WIDTH / 2, y + 54);
   }
 
-  /** Where to find out what any of this means, until they have been (#181). */
-  private hint(): void {
+  /**
+   * Where to find out what any of this means, until they have been (#181).
+   *
+   * Only in quiet free roam. It sits at the top of the screen, which is also
+   * where the ambush clock and the roadblock warning go, and a playtest found
+   * it printed straight through "AMBUSH 3.5". A hint about the map is the
+   * least urgent thing on screen by definition: it yields to everything.
+   */
+  private hint(world: CityWorld): void {
     if (this.seenMap || this.touch?.active) return;
+    if (world.busted || world.police.state !== 'clear') return;
+    if (world.race.state !== 'idle' || world.ambush.state !== 'idle') return;
+    if (world.claim.state !== 'idle') return;
     const { ctx } = this;
     // Top centre. The bottom strip is speed, nitrous, damage and the line
     // pointing at the nearest workshop, and the hint was drawn straight

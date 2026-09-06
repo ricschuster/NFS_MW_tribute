@@ -109,6 +109,7 @@ npm run dev      # http://localhost:5173
 | `npm run pace`      | Can the police be outrun? Your top speed against theirs, at every heat level |
 | `npm run patrol`    | Twenty minutes in the city with the police live, and what came of it |
 | `npm run endings`   | How a pursuit ends: busted, escaped, or neither, at every heat level |
+| `npm run playthrough` | The whole game at every level: four drivers, six heat levels, six events, five ambushes |
 | `npm run drivers`   | The same routes driven by a beginner, an advanced, an expert and a perfect driver |
 | `npm run build`     | Typecheck, then build a static bundle to `dist/`    |
 | `npm run preview`   | Serve the production build locally                  |

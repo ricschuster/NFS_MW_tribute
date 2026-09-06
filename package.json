@@ -20,6 +20,7 @@
     "pace": "node tools/pace.mjs",
     "patrol": "node tools/patrol.mjs",
     "endings": "node tools/endings.mjs",
+    "playthrough": "node tools/playtest.mjs",
     "drivers": "node tools/drivers.mjs"
   },
   "devDependencies": {
