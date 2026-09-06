@@ -28,6 +28,7 @@ import { Rng } from './rng';
 import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
 import { collectiblesFor } from './collectibles';
+import { parksFor } from './parks';
 import { findsFor } from './streetfinds';
 import { routesFor } from './routes';
 import { ambushesFor } from './ambushes';
@@ -230,6 +231,10 @@ export function generateCity(seed: number): City {
     repairs: [],
     breakables: [],
   };
+  // Whatever the street grid did not claim becomes parkland (#185). After the
+  // blocks and before anything that reads them, and before the furniture in
+  // particular: a lamp belongs on a kerb, and the leftovers have no kerbs.
+  city.blocks.push(...parksFor(city, water));
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
   city.furniture = furnitureFor(rng, city);

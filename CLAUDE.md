@@ -83,6 +83,19 @@ chokepoints, and generation ends by proving the city is drivable and bridging
 until it is. Rules 4-7 of that ADR (curved residential streets, the interstate
 loop, landmarks, relief) are partly built: landmarks and relief are not.
 
+**Land belongs to something** (issue #185). Blocks are laid on lines and then
+pulled clear of the water, and one that will not fit is dropped, so a riverbank
+loses whole blocks at a time - a fifth of the map used to belong to neither
+block nor road, and #176 made that visible by painting the ground as not-road.
+`city/parks.ts` covers what is left at `PARK_CELL` and merges the free cells
+into open blocks, which is the answer to "what is that land *meant* to be":
+parkland. It is down to a tenth of the map, and what remains is margin - a
+median of 15 m from the nearest block rather than 50. Two things it has to get
+right, both of which it got wrong first: a pavement slab is *raised*, so a park
+laid over a carriageway is a kerb across the road, and the water *field* is not
+the water *outline* - everything upstream fits blocks against the field, and
+parks that agreed with the polygon went into the river.
+
 **The city is drawn through a provider seam** (issue #84). `city/` emits
 descriptions - blocks, buildings, water - and never constructs geometry or
 imports three.js; `scene/buildings.ts` turns those into one `InstancedMesh` per
