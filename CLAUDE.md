@@ -398,7 +398,8 @@ cache entry as `./` and that is the case that breaks.
   instance is scaled to, so the UV is computed in the vertex shader from the
   instance's own scale. Roof detail is derived in `scene/roofs.ts` from the building's
   `variant`, which is what that field is for: a rooftop box is geometry, so it
-  belongs on this side of the seam. Street furniture is still boxes.
+  belongs on this side of the seam. Street furniture is still boxes,
+  though the lamps have arms.
 - Not the online social layer. The 2012 game's social layer is out of scope.
 - Not the mid-2000s template. the old city, the Ladder of fifteen, bounty,
   milestones and impound strikes belong to the other game; see ADR-0004.
