@@ -5,11 +5,19 @@
 // can drive round it, and before that you need a city it is possible to drive
 // round. This measures the second thing.
 //
-// It is not a feel baseline yet, and the numbers below say so plainly: a
-// reference driver completes some of these laps and not others. Every failure
-// so far has been a defect in the *city* rather than in the driver - routes
-// that doubled back on themselves, a perimeter road that stopped the car dead
-// - so the table is worth having while it is still red.
+// The driver gets round all six now, so the table is a baseline: the average
+// speed column is how fast a competent driver can hold each route, and that
+// is the number #14 needs to tune the car against.
+//
+// It was red for a while, and what it caught on the way is the argument for
+// keeping it: two defects in the city (routes that doubled back on
+// themselves, a perimeter road that stopped the car dead) and three in the
+// driver, every one of them invisible to a test suite that was passing
+// throughout. Set TRACE to a route's name to watch one drive.
+//
+// Note what the numbers are *not*: a fast lap. This driver follows the
+// centreline at a margin under the grip limit and never uses nitrous, so
+// treat the speeds as a floor a player should beat, not a target.
 //
 // Usage: npm run citylap
 import { createServer } from 'vite';
