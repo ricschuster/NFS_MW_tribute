@@ -234,9 +234,12 @@ export class Hud {
       ctx.globalAlpha = Math.max(0, fade);
       const y = 108 + i * 26 - Math.min(8, award.age * 12);
 
-      ctx.fillStyle = '#ffd166';
+      // One popup subtracts (#178), and it has to look like it does: amber
+      // and a plus for everything earned, red and a minus for the one that is
+      // taken back.
+      ctx.fillStyle = award.amount < 0 ? '#ff5a45' : '#ffd166';
       ctx.font = '700 18px ui-monospace, "SF Mono", Menlo, monospace';
-      const amount = `+${award.amount}`;
+      const amount = award.amount < 0 ? String(award.amount) : `+${award.amount}`;
       // Measured in the font it is drawn in, before switching to the small
       // one. Measuring afterwards gives the label's width and puts the two on
       // top of each other, which is the same trap the speed readout has.
@@ -1355,6 +1358,18 @@ export class Hud {
       ctx.fillStyle = '#ff5a45';
       ctx.font = '800 78px system-ui, sans-serif';
       ctx.fillText('BUSTED', WIDTH / 2, HEIGHT / 2);
+      // What it cost (#178). A bust that quietly takes the pursuit's Rep back
+      // is a bust that reads as a bug in the counter, and the number is the
+      // whole argument for having got away instead.
+      if (world.bustCost > 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+        ctx.font = '700 22px system-ui, sans-serif';
+        ctx.fillText(
+          `-${world.bustCost.toLocaleString('en-US')} REP  ·  everything that pursuit paid`,
+          WIDTH / 2,
+          HEIGHT / 2 + 44,
+        );
+      }
       return;
     }
 

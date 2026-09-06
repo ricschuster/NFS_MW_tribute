@@ -19,6 +19,7 @@
     "citylap": "node tools/citylap.mjs",
     "pace": "node tools/pace.mjs",
     "patrol": "node tools/patrol.mjs",
+    "endings": "node tools/endings.mjs",
     "drivers": "node tools/drivers.mjs"
   },
   "devDependencies": {

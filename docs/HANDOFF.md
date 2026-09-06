@@ -134,6 +134,8 @@ npm run citylap    # every route, empty and in traffic; vs. its baseline
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run patrol     # twenty minutes with the police live: what started each
                    # pursuit, time to the first, and how much of it was free roam
+npm run endings    # how a pursuit ends - busted, escaped, or neither - at each
+                   # heat level, driving and stopped
 npm run drivers    # the same routes driven by beginner / advanced / expert / perfect
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
@@ -176,6 +178,12 @@ in it. The second was that the perimeter arterial stopped the car dead, its
 centreline being the map boundary exactly. Both had been shipped for months and
 both are obvious the moment something drives them. If a system has never been
 exercised end to end, that is where the bugs are.
+
+`npm run endings` came later and answers the one nobody had asked: *how does a
+pursuit finish?* It found that cops reach a stopped car to within 0.0 m and
+drive through it, and that a search had nobody in it - two things that were
+invisible to every test and every screenshot, and that between them meant a
+pursuit had one ending, the one that pays you.
 
 Three tools came out of that, and they answer different questions.
 `npm run drivers` runs the same routes at four skill levels, because `citylap`
@@ -222,16 +230,19 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Ten issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
+**Nine issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
 systems) are closed, and #165 closed the rebuild out by deleting the thing it
 replaced. Nearly everything now open came from **one person playing the game for
 ten minutes** on 2026-09-06, which is the single most important fact on this
 page. The test suite was green throughout, five probes were green throughout,
 and the playtest still found nine things. Do that before you do anything else.
 
-### The pursuit does not work, and it is one problem in three issues
+### The pursuit works now: #177 and #178 are done, #183 is not
 
-Take these together. Separately each fix makes the game worse.
+They were one problem in three issues and two of them are closed. What is left
+of the cluster is #183, the helicopter - which is still airborne for a large
+part of a high-heat session and still holds `seenBy` true unconditionally while
+it is up.
 
 **#177 is fixed, and it changed the shape of the other two.** A pursuit now
 starts because a unit *saw* you do something: `CityPolice.witness` runs the
@@ -247,24 +258,37 @@ of the ways #178's pursuits never ended. And the old `chase` playtest helper
 was driving a car that wedged itself against a building five seconds in: every
 pursuit test in the suite was measuring a stationary car that cops drove to.
 
-**#178: a bust almost never happens, and changes nothing when it does.** A probe
-got **1 bust in 54 attempts**. And at heat 6 half the attempts ended with the
-clock running out still wanted - not caught, not escaped. The pursuit has no
-terminal state that matters. A bust delays the next pursuit and nothing else:
-heat carries on from where it was. **Re-measure before designing:** `reset()`
-does set `heat = 0`, so the "heat carries on" half of that issue is at least
-partly wrong as written, and #177's recruit fix removed one of the reasons a
-pursuit could not be broken. The first run of `npm run patrol` after #177 got
-a bust at 04:27, which the old numbers say should almost never happen.
+**#178 is fixed, and half of what it said was wrong.** `reset()` always set
+`heat = 0`, so "heat carries on from where it was" was never true; and the
+"1 bust in 54" was right for a reason nobody had guessed. Cops *can* reach a
+stopped car - measured, to within **0.0 m** - and then drive straight through
+and away, because a car on the graph has a target speed and no notion of
+having arrived, so the bust timer was reset several times a second by their own
+units sailing past the suspect. The other half was worse: a car that stopped
+inside a search area was wanted indefinitely, because the clock did not run in
+there and nothing was ever sent to look. At heat 6 that was **100% of stopped
+pursuits**.
 
-**#170 sits downstream of both** and should not be settled first. It asks
-whether a wrecked car can escape, and measured under realistic conditions the
-answer is *damage makes no difference* - see Known problems. But "can I end
-this" turned out to be the more pressing question, and it belongs to #177/#178.
+Three changes, and none of them works alone. The bust clock runs on how slow
+you are rather than only on how close they are; a unit that has caught a
+stopped car holds station; and a search sends units to sweep the area while its
+clock keeps running, slowly, even with you sitting in the middle of it. The
+stake is the pursuit's own Rep - `RepLedger.forfeit` takes back what that
+pursuit paid and never reaches past where it started, so a bust cannot re-lock
+a rival that was already earned.
 
-The open decisions are economy ones and want a person: what a bust costs,
-whether heat resets on a bust, and whether the stalemate is fixed from the
-police end or the player end.
+`npm run endings` is the probe that settled it, and it is worth keeping
+pointed at this: stopped under heat now ends in a bust 83 / 67 / 100% of the
+time at heat 1 / 3 / 6, driving ends in an escape 67 / 67 / 83%, and the
+stalemate is down from 100% (stopped, heat 6) to 0%. What is left is 17% of
+heat 3 and 6 pursuits still running at three minutes for a driver who laps -
+which is partly the probe, since a 3 km circuit sits mostly inside a 670 m
+search area.
+
+**#170 sits downstream** and should not be settled first. It asks whether a
+wrecked car can escape, and measured under realistic conditions the answer is
+*damage makes no difference* - see Known problems. But "can I end this" turned
+out to be the more pressing question, and #177/#178 have now answered it.
 
 ### The game never explains itself
 

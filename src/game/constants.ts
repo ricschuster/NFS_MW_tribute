@@ -77,7 +77,25 @@ export const CAR_COLORS = [
 export const COP_RESPAWN = 20; // delay before a new pursuit after escaping
 export const COP_BUST_COOLDOWN = 15; // delay before a new pursuit after a bust
 export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
-export const BUST_TIME = 3.5; // seconds pinned before BUSTED
+/**
+ * Getting busted (#178).
+ *
+ * `BUST_TIME` is seconds pinned before BUSTED, and `BUST_SPEED_FRAC` is what
+ * "pinned" means. It used to mean only *close* - a unit within
+ * `CITY_BUST_DISTANCE` for three and a half unbroken seconds - and the
+ * measured result was **0 busts in 24 pursuits**: a car being chased is
+ * moving, and holding a bumper to within eleven metres of a moving car for
+ * three and a half seconds is not something a graph-following cop does.
+ *
+ * So the clock runs on how *slow* you are. At a standstill with a unit on you
+ * it runs at full rate; at `BUST_SPEED_FRAC` of your top speed it does not run
+ * at all. That is the genre's answer and it is legible in one sentence: if
+ * they box you in and you cannot move, you are done. It also gives the
+ * roadblocks, the spike strips and the Enforcers a point - all three exist to
+ * stop you moving, and until now none of them could actually finish anything.
+ */
+export const BUST_TIME = 3.5;
+export const BUST_SPEED_FRAC = 0.22;
 /** Seconds the ESCAPED banner lingers. */
 export const ESCAPED_FLASH = 2.5;
 
@@ -584,6 +602,40 @@ export const SEARCH_TIME_PER_LEVEL = 7;
 /** How big the search area is, and how much each heat level widens it. */
 export const SEARCH_RADIUS = m(320);
 export const SEARCH_RADIUS_PER_LEVEL = m(70);
+/**
+ * Units sent to sweep the area, as a share of the chase budget (#178).
+ *
+ * A search with nobody in it is not a search, and that is what this used to
+ * be: contact broken, an area drawn on the map, and no car ever sent to look
+ * in it. Stop inside one and the game deadlocked - the clock does not run
+ * while you are in the area, nothing could see you, and nothing may be called
+ * in on a pursuit that cannot see you, so the pursuit simply never ended.
+ * Measured at heat 6 that was **100% of stopped pursuits**.
+ *
+ * They come in at the *edge of the area*, not at the player. That distinction
+ * is the whole safety of it: a searcher spawned near you would re-find you
+ * wherever you had run to, which is the bug #177 closed. Spawned where they
+ * lost you, they sweep where they lost you - so running works and sitting
+ * still does not.
+ */
+export const SEARCH_UNITS = 0.5;
+/**
+ * How fast the search clock runs while you are *inside* the area (#178).
+ *
+ * It used to be zero, and the comment for it - "sitting still in the middle of
+ * where they are looking is not hiding" - was true only while something was
+ * coming to look. Nothing was, so a car parked inside the net was wanted
+ * indefinitely: at heat 6, 100% of stopped pursuits reached the end of a
+ * three-minute clock still wanted, which is a stalemate rather than a game.
+ *
+ * Slow rather than stopped. The area is 320 m across at heat 1 and 670 m at
+ * heat 6, and a unit can only see 150 m of that, so they can sweep it for a
+ * long time without finding you - but they do eventually give up, and a
+ * pursuit that always ends is the point of the issue.
+ */
+export const SEARCH_INSIDE_RATE = 0.3;
+/** How near a searcher has to get to the spot it is checking before moving on. */
+export const SEARCH_REACHED = m(60);
 
 /**
  * Takedowns (#94).

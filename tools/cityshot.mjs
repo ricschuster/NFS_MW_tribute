@@ -29,7 +29,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,7 +37,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -497,6 +497,35 @@ for (const view of VIEWS) {
       world.rep.total = 48300;
     });
     await page.waitForTimeout(2400);
+  }
+
+  if (view === 'busted') {
+    // What a bust costs (#178). Stepped by hand: a bust needs a unit holding
+    // station on a stopped car for `BUST_TIME`, and waiting for one to happen
+    // by driving is waiting for the thing the issue says never happens.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      world.rep.total = 24000;
+      world.crashFlash = 0;
+      // One step while still clear, because that is when the world records
+      // what a pursuit has to lose. Opening one by hand without it makes the
+      // whole total the stake, and the shot then shows a bust taking
+      // everything - which is the one thing #178 decided it must not do.
+      world.step(1 / 60, none);
+      // A pursuit that has been running and paying, then a car that stops.
+      world.police.heat = 0.62;
+      world.police.rammed(world);
+      for (let t = 0; t < 40; t += 1 / 60) {
+        if (t < 25) world.speed = world.maxSpeed * 0.7;
+        world.step(1 / 60, { ...none, up: t < 25 });
+        if (world.busted) break;
+      }
+    });
+    await page.waitForTimeout(900);
   }
 
   if (view === 'patrol') {
