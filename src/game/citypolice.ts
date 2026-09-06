@@ -4,6 +4,7 @@ import {
   COP_SPAWN_INTERVAL,
   CITY_COP_LOSE,
   BUST_TIME,
+  BUST_SPEED_FRAC,
   CITY_HEAT_RISE,
   CITY_HEAT_DECAY,
   CITY_COP_SPAWN,
@@ -15,6 +16,9 @@ import {
   SEARCH_TIME_PER_LEVEL,
   SEARCH_RADIUS,
   SEARCH_RADIUS_PER_LEVEL,
+  SEARCH_UNITS,
+  SEARCH_INSIDE_RATE,
+  SEARCH_REACHED,
   TRAFFIC_LANE,
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
@@ -83,6 +87,15 @@ export interface Cop extends GraphCar {
    * timer, the budget, eyes-on - skips them.
    */
   role: 'chase' | 'enforcer' | 'patrol';
+  /**
+   * The spot this unit is checking, while the pursuit is cooling (#178).
+   *
+   * A search where every car drives to the same point is a search that covers
+   * one street of a 670 m circle. Each unit gets its own place to look and
+   * takes another when it gets there, which is what makes sweeping an area
+   * different from converging on a dot.
+   */
+  look?: { x: number; z: number };
 }
 
 /**
@@ -290,6 +303,24 @@ export class CityPolice {
         continue;
       }
       cop.speed = speed * COP_UNITS[cop.kind].pace;
+      // Having caught a car that has stopped, stop (#178).
+      //
+      // Without this a bust is unreachable for a reason that has nothing to do
+      // with the bust timer: they *arrive* - measured, they get to within
+      // 0.0 m of a stationary car - and then drive straight through and away,
+      // because a unit on the graph has a target speed and no notion of having
+      // got there. The timer needs a unit within `CITY_BUST_DISTANCE` for
+      // `BUST_TIME` unbroken, and it was being reset several times a second by
+      // cars sailing past their own suspect.
+      //
+      // Only against a car that is already slow, so nothing about a pursuit at
+      // speed changes: at 200 km/h they still come past you.
+      if (
+        Math.abs(player.speed) < maxSpeed * BUST_SPEED_FRAC &&
+        this.gapTo(cop, player) < CITY_BUST_DISTANCE
+      ) {
+        cop.speed = Math.min(cop.speed, Math.abs(player.speed));
+      }
       // An Enforcer aims at the line you are on rather than sitting in the
       // lane beside it. Everything else keeps right, so oncoming traffic and
       // oncoming police pass on the correct side.
@@ -303,13 +334,23 @@ export class CityPolice {
     // notice it go.
     for (let i = this.cops.length - 1; i >= 0; i--) {
       const cop = this.cops[i];
-      const reach = cop.role === 'patrol' ? PATROL_RADIUS * 1.35 : CITY_COP_LOSE;
+      // A searcher is not chasing you, so "how far it has fallen behind" is the
+      // wrong question for it: it is out sweeping an area that can be wider
+      // than `CITY_COP_LOSE`, and culling it on distance from the car deleted
+      // every unit sent to look before it arrived (#178).
+      const searching = this.state === 'cooldown' && this.search;
+      const reach = cop.role === 'patrol'
+        ? PATROL_RADIUS * 1.35
+        : searching
+          ? Math.max(CITY_COP_LOSE, this.search!.radius * 1.6)
+          : CITY_COP_LOSE;
       if (this.gapTo(cop, player) > reach) this.cops.splice(i, 1);
     }
     this.muster(player);
 
-    this.judge(dt, player);
+    this.judge(dt, player, maxSpeed);
     this.recruit(dt, player);
+    this.sweep(dt, player);
     this.summon(dt, player);
     this.blockade(dt, player);
     this.lay(dt, player);
@@ -614,7 +655,7 @@ export class CityPolice {
   }
 
   /** Heat, the bust timer, and the three-stage escape. */
-  private judge(dt: number, player: Chased): void {
+  private judge(dt: number, player: Chased, maxSpeed: number): void {
     // Patrols are not part of this. A car cruising past you at heat zero must
     // not tick the bust timer, and it is not "close" for the purposes of heat.
     const nearest = this.cops.reduce(
@@ -635,9 +676,15 @@ export class CityPolice {
       return;
     }
 
-    // Pinned: a cop on your bumper for long enough ends it.
-    if (nearest < CITY_BUST_DISTANCE) {
-      this.pinned += dt;
+    // Pinned: a unit on you while you are going nowhere (#178). Close is not
+    // enough on its own - a cop holds a bumper to eleven metres of a car doing
+    // 200 km/h about as often as it holds anything, which measured as no busts
+    // at all - so the clock runs on how stopped you are. Flat out beside a
+    // cruiser is not a bust; stopped against a roadblock with one behind you
+    // is, in `BUST_TIME`.
+    const stopped = 1 - Math.min(1, Math.abs(player.speed) / (maxSpeed * BUST_SPEED_FRAC));
+    if (nearest < CITY_BUST_DISTANCE && stopped > 0) {
+      this.pinned += dt * stopped;
       if (this.pinned >= BUST_TIME) {
         this.busted = true;
         this.cooldown = COP_BUST_COOLDOWN;
@@ -700,10 +747,13 @@ export class CityPolice {
       return;
     }
 
+    // The clock runs wherever you are, and slowly while you are inside the net
+    // (#178). It used to stop dead in there, on the grounds that sitting still
+    // in the middle of where they are looking is not hiding - which was true
+    // only while something was coming to look. Nothing was, and a car parked
+    // inside the area stayed wanted for ever.
     const inside = Math.hypot(player.x - area.x, player.z - area.z) < area.radius;
-    if (inside) return; // the clock does not run while you are in the net
-
-    this.searchLeft -= dt;
+    this.searchLeft -= dt * (inside ? SEARCH_INSIDE_RATE : 1);
     if (this.searchLeft > 0) return;
 
     this.standDown();
@@ -1010,6 +1060,60 @@ export class CityPolice {
   }
 
   /**
+   * Send units to look where they lost you (#178).
+   *
+   * The search had nobody in it. `recruit` may not call anyone in on a pursuit
+   * that cannot see you - which is right, and is what makes an escape possible
+   * (#177) - but a *search* is exactly the case where they cannot see you and
+   * are looking anyway. With no unit ever sent, a car that stopped inside the
+   * area sat there wanted for ever: the clock does not run while you are in
+   * the net, and nothing was coming to find you in it.
+   *
+   * They arrive at the edge of the area rather than near the car, and
+   * `toward` already steers them at the search rather than at you while the
+   * pursuit is cooling. So this cannot re-find a car that has driven away: it
+   * puts cars where you *were*, which is the whole idea of a search, and makes
+   * sitting still in the middle of one the mistake it was always described as.
+   */
+  private sweep(dt: number, player: Chased): void {
+    const area = this.search;
+    if (this.state !== 'cooldown' || !area) return;
+
+    // Whoever has arrived where they were looking takes somewhere else to look.
+    for (const cop of this.cops) {
+      if (cop.role === 'patrol' || !cop.look) continue;
+      if (Math.hypot(cop.x - cop.look.x, cop.z - cop.look.z) > SEARCH_REACHED) continue;
+      cop.look = this.somewhereIn(area);
+    }
+
+    const wanted = Math.max(1, Math.round(this.force.maxCops * SEARCH_UNITS));
+    if (this.chasers() >= wanted) return;
+    this.sinceSpawn += dt;
+    if (this.sinceSpawn < COP_SPAWN_INTERVAL) return;
+
+    const angle = this.rng.range(0, Math.PI * 2);
+    const cop = this.spawnAt(
+      player,
+      area.x + Math.sin(angle) * area.radius,
+      area.z + Math.cos(angle) * area.radius,
+      'chase',
+    );
+    if (!cop) return;
+    cop.look = this.somewhereIn(area);
+    this.cops.push(cop);
+    this.sinceSpawn = 0;
+  }
+
+  /** A spot inside the area worth looking at, weighted toward the middle. */
+  private somewhereIn(area: SearchArea): { x: number; z: number } {
+    const angle = this.rng.range(0, Math.PI * 2);
+    // Square-rooted, or every spot lands out near the rim where most of the
+    // area is and the middle - where they actually lost you - never gets swept.
+    const reach = area.radius * Math.sqrt(this.rng.range(0, 1));
+    return { x: area.x + Math.sin(angle) * reach, z: area.z + Math.cos(angle) * reach };
+  }
+
+  /**
    * At a junction, take the road that gets closest to the player.
    *
    * Judged on where the road *ends*, not where it points: a road curving back
@@ -1019,9 +1123,12 @@ export class CityPolice {
     const options = exitsFrom(this.city, cop, node);
     if (options.length === 0) return null;
 
-    // During a search they do not know where you are, so they head for where
-    // they lost you rather than driving straight at a car they cannot see.
-    const aim = this.state === 'cooldown' && this.search ? this.search : player;
+    // During a search they do not know where you are, so they head for the
+    // spot they are checking rather than driving straight at a car they cannot
+    // see. Each unit has its own (#178), or a search is one car's worth of
+    // coverage however many cars are in it.
+    const aim =
+      this.state === 'cooldown' && this.search ? ((cop as Cop).look ?? this.search) : player;
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;

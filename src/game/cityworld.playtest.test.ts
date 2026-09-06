@@ -4,7 +4,6 @@ import {
   STEP,
   CAR_RADIUS,
   TRAFFIC_RADIUS,
-  CITY_PURSUIT_RANGE,
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
   COP_UNITS,
@@ -47,6 +46,8 @@ import {
   ROUTE_START_RANGE,
   STUCK_TIME,
   SPEEDING_TIME,
+  SEARCH_INSIDE_RATE,
+  CITY_BUST_HOLD,
   TRAFFIC_LANE,
   PATROL_RADIUS,
   BUST_TIME,
@@ -211,6 +212,12 @@ function hunt(world: CityWorld, heat: number, seconds: number): void {
     cop.x = world.x - Math.sin(world.heading) * 35 * M;
     cop.z = world.z - Math.cos(world.heading) * 35 * M;
     cop.y = world.y;
+    // The car is *going along*, it simply does not move: the pursuit reads
+    // `speed` to decide whether you are stopped, and since #178 a car sitting
+    // still with units on it gets busted in three and a half seconds - which
+    // is the right game and the wrong test. Same fiction as re-placing the
+    // tail, for the same reason.
+    world.speed = world.maxSpeed * 0.5;
     world.police.heat = heat;
     world.police.update(STEP, world, world.maxSpeed);
   }
@@ -511,20 +518,15 @@ describe('the police', () => {
     }
   });
 
-  it('closes on a car that is standing still', () => {
+  // Sitting still used to be safe: they arrived - measured, to within 0.0 m -
+  // drove straight through and away, and the bust timer was reset by their own
+  // cars sailing past the suspect. Now they arrive and stop (#178).
+  it('closes on a car that is standing still, and ends it', () => {
     const world = provoke(new CityWorld(undefined, { traffic: false }));
     expect(world.police.pursuers).toBeGreaterThan(0);
-    const gap = () =>
-      world.police.cops.reduce(
-        (best, cop) =>
-          cop.role === 'patrol' ? best : Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
-        Infinity,
-      );
 
-    // Sit still and let them arrive.
-    drive(world, 25, NONE);
-    expect(world.police.pursuers).toBeGreaterThan(0);
-    expect(gap()).toBeLessThan(CITY_PURSUIT_RANGE * 3);
+    drive(world, 60, NONE);
+    expect(world.busted || world.police.state === 'clear').toBe(true);
   });
 
   it('busts a car that never moves, and lets go afterwards', () => {
@@ -666,7 +668,14 @@ describe('cooldown and the search area', () => {
 
     const before = world.police.searchLeft;
     stepUntil(world, () => false, 6);
-    expect(world.police.searchLeft).toBe(before);
+    // Slowly, not never (#178). It used to stop dead in here, and since
+    // nothing was ever sent to look, a car parked inside the net stayed wanted
+    // for ever - measured at heat 6, 100% of stopped pursuits never ended.
+    // Hiding in the middle of where they are looking still buys most of the
+    // clock; what it no longer buys is all of it.
+    const spent = before - world.police.searchLeft;
+    expect(spent).toBeGreaterThan(0);
+    expect(spent).toBeLessThan(6 * SEARCH_INSIDE_RATE * 1.2);
     expect(world.police.state).toBe('cooldown');
   });
 
@@ -1033,6 +1042,7 @@ describe('enforcers', () => {
       cop.x = world.x - Math.sin(world.heading) * 35 * M;
       cop.z = world.z - Math.cos(world.heading) * 35 * M;
       cop.y = world.y;
+      world.speed = world.maxSpeed * 0.5; // going along, as `hunt` does (#178)
       world.police.heat = 0.5;
       world.police.update(STEP, world, world.maxSpeed);
       sent = world.police.cops.filter((c) => c.role === 'enforcer');
@@ -2519,6 +2529,161 @@ describe('free roam, and what ends it', () => {
       world.step(STEP, press({ up: true }));
     }
     expect(world.police.state).toBe('clear');
+  });
+});
+
+/**
+ * How a pursuit ends (#178).
+ *
+ * It had one ending that mattered and it was the one that pays you. A bust
+ * needed a unit within eleven metres for three and a half unbroken seconds and
+ * measured **0 in 24 pursuits** - not because they could not reach the car
+ * (they got to within 0.0 m of a stopped one) but because a car on the graph
+ * drives through and away, resetting the timer several times a second. And a
+ * car that stopped inside a search area was wanted indefinitely: the clock did
+ * not run in there and nothing was ever sent to look.
+ *
+ * `npm run endings` is the probe. Stopped under heat now ends in a bust 83% of
+ * the time at heat 1 and 100% at heat 6; driving, it ends in an escape.
+ */
+describe('the end of a pursuit', () => {
+  const stepUntil = (world: CityWorld, done: () => boolean, limit = 60) => {
+    for (let t = 0; t < limit; t += STEP) {
+      world.step(STEP, NONE);
+      if (done()) return true;
+    }
+    return false;
+  };
+
+  /**
+   * A pursuit at `level`, opened the way a rammed patrol opens one.
+   *
+   * One step is taken *before* it opens, because that is when the world
+   * records what the pursuit has to lose: whatever was banked before it
+   * started. Opening one by hand and then setting the Rep would make the whole
+   * total the stake, which is precisely what a bust must not be able to take.
+   */
+  const wanted = (level: number, banked = 0) => {
+    const world = new CityWorld(undefined, { traffic: false });
+    world.rep.total = banked;
+    world.step(STEP, NONE);
+    world.police.heat = Math.min(1, (level - 0.5) / HEAT_LEVEL_COUNT);
+    world.police.rammed(world);
+    return world;
+  };
+
+  /** A chase unit right on the car, where a bust is decided. */
+  function onTheBumper(world: CityWorld): Cop {
+    const cop = tail(world);
+    cop.role = 'chase';
+    return cop;
+  }
+
+  it('busts a car that has stopped with a unit on it', () => {
+    const world = wanted(3);
+    const cop = onTheBumper(world);
+
+    for (let t = 0; t < BUST_TIME * 1.5; t += STEP) {
+      cop.x = world.x + CAR_RADIUS * 2;
+      cop.z = world.z;
+      cop.y = world.y;
+      world.step(STEP, NONE);
+    }
+    expect(world.busted).toBe(true);
+  });
+
+  // The other half of the same rule. A cruiser alongside you at 200 km/h has
+  // not stopped anybody, and a bust that lands while you are driving away is
+  // the arbitrary one the speed test exists to prevent.
+  it('does not bust a car that is still going', () => {
+    const world = wanted(3);
+    const cop = onTheBumper(world);
+
+    for (let t = 0; t < BUST_TIME * 3; t += STEP) {
+      cop.x = world.x + CAR_RADIUS * 2;
+      cop.z = world.z;
+      cop.y = world.y;
+      world.speed = world.maxSpeed * 0.8;
+      world.step(STEP, press({ up: true }));
+    }
+    expect(world.busted).toBe(false);
+  });
+
+  it('takes back everything that pursuit paid, and nothing else', () => {
+    // Earned before any of this: a bust must never reach back past the start
+    // of the pursuit, or it can re-lock a rival that was already unlocked.
+    const banked = 20000;
+    const world = wanted(3, banked);
+
+    // Run for a while first, so the pursuit has actually paid something: the
+    // stake is what it earned, and a bust three seconds in takes nothing
+    // because nothing was won yet.
+    const cop = onTheBumper(world);
+    for (let t = 0; t < 40; t += STEP) {
+      cop.x = world.x + CAR_RADIUS * 2;
+      cop.z = world.z;
+      cop.y = world.y;
+      // Going along for the first twenty seconds, then stopped.
+      if (t < 20) world.speed = world.maxSpeed * 0.8;
+      world.step(STEP, t < 20 ? press({ up: true }) : NONE);
+      if (world.busted) break;
+    }
+
+    expect(world.busted).toBe(true);
+    expect(world.bustCost).toBeGreaterThan(0);
+    expect(world.rep.total).toBe(banked);
+    expect(world.rep.recent.some((a) => a.amount < 0)).toBe(true);
+  });
+
+  it('resets the heat it was earned at', () => {
+    const world = wanted(6);
+    const cop = onTheBumper(world);
+    for (let t = 0; t < 30; t += STEP) {
+      cop.x = world.x + CAR_RADIUS * 2;
+      cop.z = world.z;
+      cop.y = world.y;
+      world.step(STEP, NONE);
+      if (world.busted) break;
+    }
+    expect(world.busted).toBe(true);
+
+    drive(world, CITY_BUST_HOLD * 1.5, NONE);
+    expect(world.busted).toBe(false);
+    expect(world.police.heat).toBe(0);
+    expect(world.police.state).toBe('clear');
+  });
+
+  // A search with nobody in it is not a search, and that is what it was.
+  it('sends units to look where it lost you', () => {
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    // Somewhere they cannot see, so the pursuit drops into a search.
+    world.x += CITY_COP_LOSE * 3;
+    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+
+    const area = world.police.search!;
+    expect(area).not.toBeNull();
+    const sweeping = () =>
+      world.police.cops.filter(
+        (c) =>
+          c.role !== 'patrol' &&
+          Math.hypot(c.x - area.x, c.z - area.z) < area.radius * 1.6,
+      ).length;
+    expect(stepUntil(world, () => sweeping() > 0, 30)).toBe(true);
+  });
+
+  // The clock has to run wherever you are, or the pursuit has no ending at all
+  // for a player who simply parks.
+  it('gives up eventually even on a car sitting in the middle of the search', () => {
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    world.x += CITY_COP_LOSE * 3;
+    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+
+    // Parked on the spot they are searching, and left there.
+    const area = world.police.search!;
+    world.x = area.x;
+    world.z = area.z;
+    const ended = stepUntil(world, () => world.police.state === 'clear' || world.busted, 240);
+    expect(ended).toBe(true);
   });
 });
 

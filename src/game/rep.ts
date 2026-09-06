@@ -50,7 +50,9 @@ export type RepReason =
   | 'streetFind'
   | 'ambush'
   | 'claim'
-  | 'breaker';
+  | 'breaker'
+  /** Not an award: what a bust takes back (#178). Only `forfeit` uses it. */
+  | 'busted';
 
 interface RepKind {
   /** Base value, before the heat multiplier. */
@@ -74,6 +76,7 @@ const KINDS: Record<RepReason, RepKind> = {
   ambush: { value: REP_AMBUSH, label: 'AMBUSH SURVIVED' },
   claim: { value: REP_CLAIM, label: 'CAR CLAIMED' },
   breaker: { value: REP_BREAKER, label: 'PURSUIT BREAKER' },
+  busted: { value: 0, label: 'BUSTED' }, // taken, not paid: see `forfeit`
 };
 
 /** One award, still worth showing. */
@@ -121,6 +124,26 @@ export class RepLedger {
       if (this.recent.length > REP_POPUPS) this.recent.shift();
     }
     return amount;
+  }
+
+  /**
+   * Take back what a pursuit paid, because it ended badly (#178).
+   *
+   * The one thing that subtracts, and it is deliberately not a fine. A
+   * percentage of the running total can drop a player back below a rival's
+   * price and re-lock a challenge they had already earned, which is progress
+   * going backwards; this can only ever reach back to where the pursuit
+   * started. What it makes every pursuit is a decision - bank it by getting
+   * away, or stay out and earn more with more to lose.
+   */
+  forfeit(amount: number): number {
+    const lost = Math.min(Math.round(amount), this.total);
+    if (lost <= 0) return 0;
+
+    this.total -= lost;
+    this.recent.push({ reason: 'busted', label: 'BUSTED', amount: -lost, age: 0 });
+    if (this.recent.length > REP_POPUPS) this.recent.shift();
+    return lost;
   }
 
   /** Age the popups and drop the ones that have had their time. */

@@ -198,6 +198,15 @@ export class CityWorld {
   escapedFlash = 0;
 
   /**
+   * What the last bust took (#178).
+   *
+   * On `CityWorld` rather than inside the ledger because it is what the BUSTED
+   * banner says, and a bust that costs something without telling you is a bust
+   * that reads as a bug in the Rep counter.
+   */
+  bustCost = 0;
+
+  /**
    * How long the car has been trying to move and getting nowhere (#179).
    *
    * The one failure a player cannot play their way out of: every other bad
@@ -309,6 +318,8 @@ export class CityWorld {
   private progressZ = 0;
   /** Seconds spent well over the limit on the road under the car (#177). */
   private overLimit = 0;
+  /** Rep banked before the current pursuit opened: the stake it puts up (#178). */
+  private repAtLarge = 0;
 
   constructor(city: City = kestrelBay(), options: CityWorldOptions = {}) {
     this.city = city;
@@ -679,11 +690,21 @@ export class CityWorld {
     // being rammed by a heat-six Enforcer is not a race, it is a pursuit with
     // a lap counter on it.
     if (this.withPolice && this.race.state === 'idle') {
+      // What the pursuit has paid so far is what it has to lose (#178).
+      // Recorded on the step it opens, before anything is earned in it.
+      const wanted = this.police.state !== 'clear';
+      if (!wanted) this.repAtLarge = this.rep.total;
       this.police.update(dt, this, this.maxSpeed);
-      if (this.police.busted) {
+      if (this.police.busted && !this.busted) {
         this.busted = true;
         this.bustHold = CITY_BUST_HOLD;
         this.speed = 0;
+        // The stake, taken. Everything this pursuit paid out - the seconds of
+        // evading, the takedowns, the roadblocks, whatever was smashed on the
+        // way past - goes back, and nothing beyond it does: a bust must not be
+        // able to re-lock a rival that was already earned.
+        this.bustCost = this.rep.forfeit(this.rep.total - this.repAtLarge);
+        this.savedAt = -1;
       }
       if (this.police.justEscaped) {
         this.escapedFlash = ESCAPED_FLASH;

@@ -50,6 +50,10 @@ what the city is shaped like.
   how long the first one took to arrive, and how much of the session was free
   roam. An instrument, not a gate: it asserts nothing, and two of its numbers
   are skewed by the driver (#171), which the output says on the rows it affects
+- `npm run endings` — how a pursuit ends: busted, escaped, or neither, at each
+  heat level, in two tables - one for a driver who keeps going and one for a
+  car that stops. The stalemate ("neither") is the number to watch; it was 100%
+  of stopped pursuits at heat 6 before #178
 - `npm run drivers` — the same routes driven by four people: beginner,
   advanced, expert and perfect. `citylap` measures only the last of those, which
   is a floor nobody stands on; this is what a change does to somebody who is not
@@ -141,6 +145,20 @@ the car that turns in behind you: patrols convert to `chase` and spend the same
 budget `recruit` does, so the pursuit is made of cars that were already in the
 street. `startedBy` carries the reason so the radio can say it, and everything
 a pursuit reads - the bust timer, eyes-on, the budget - skips patrols.
+
+**A pursuit has to be able to end** (issue #178). Two things end one, and
+before this only one of them worked. A bust needs a unit within
+`CITY_BUST_DISTANCE` for `BUST_TIME`, and the clock now runs on how *slow* you
+are (`BUST_SPEED_FRAC`): flat out beside a cruiser is not a bust, stopped
+against a roadblock with one behind you is. Units that have caught a stopped
+car hold station instead of driving through it, which is what makes the timer
+reachable at all - measured, they got to within 0.0 m and kept going. A search
+sends units to sweep the area (`SEARCH_UNITS`), each checking its own spot in
+it, and the clock runs even while you sit inside it (`SEARCH_INSIDE_RATE`), so
+a pursuit always reaches an ending. The stake is the pursuit's own Rep:
+`RepLedger.forfeit` takes back what that pursuit paid and never reaches past
+where it started, because a bust that can re-lock a rival you already earned is
+progress going backwards. `npm run endings` is the probe for all of it.
 
 **Not every cop is chasing you** (issue #61). A `Cop` has a `role`: a `chase`
 unit is spawned behind you, navigates to close the distance and keeps right; an
