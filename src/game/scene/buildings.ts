@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Building, BuildingKind } from '../city/types';
+import { disposeFacades, facadeTexture, facadeUvs } from './facades';
 
 /**
  * The seam between what the city says is there and what gets drawn (#84).
@@ -63,7 +64,11 @@ export class BoxBuildings implements BuildingProvider {
       geometry.translate(0, 0.5, 0); // origin at the base, so scale is height
       // Not `vertexColors`: an InstancedMesh colours itself from `instanceColor`,
       // and asking for vertex colours on a geometry that has none renders black.
-      const material = new THREE.MeshLambertMaterial();
+      // The map is sampled in world units by the patch in `facades.ts`, not
+      // through the geometry's own UVs, so that one window is one window on
+      // every building however it is scaled.
+      const material = new THREE.MeshLambertMaterial({ map: facadeTexture(kind) });
+      facadeUvs(material, kind);
       const mesh = new THREE.InstancedMesh(geometry, material, group.length);
       mesh.name = `buildings:${kind}`;
       mesh.castShadow = true;
@@ -104,5 +109,6 @@ export class BoxBuildings implements BuildingProvider {
       mesh.dispose();
     }
     this.meshes.length = 0;
+    disposeFacades();
   }
 }
