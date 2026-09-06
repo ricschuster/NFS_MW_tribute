@@ -60,7 +60,7 @@ await server.listen();
     `furniture: ${Object.entries(furniture).map(([k, n]) => `${n} ${k}s`).join(', ')} ` +
       `(5 instanced meshes)`,
   );
-  console.log(`draw calls: about ${kinds + 11} (sea, ground, 2 water, pavements, markings, bridges, buildings, furniture)`);
+  console.log(`draw calls: about ${kinds + 12} (sea, ground, carriageways, 2 water, pavements, markings, bridges, buildings, furniture)`);
 }
 const port = server.config.server.port ?? server.httpServer?.address()?.port;
 const base = `http://localhost:${port}`;

@@ -15,6 +15,11 @@ import { CityCollectibles } from './collectibles';
 import { CityBreakables } from './breakables';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
+/** How far the tarmac sits above the bare ground. Enough to win the depth
+ * test at range, far below the pavement kerb. */
+const ROAD_LIFT = 0.02 * UNITS_PER_METRE;
+/** Metres of aggregate per texture tile. */
+const ROAD_TILE = 6 * UNITS_PER_METRE;
 /**
  * Water sits a little *above* the ground rather than below it, which is
  * backwards and deliberate. The road surface is the ground plane (see below),
@@ -63,6 +68,7 @@ export class Cityscape {
 
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
+    this.group.add(this.carriageways(city));
     for (const mesh of this.water(city)) this.group.add(mesh);
     for (const slab of this.pavements(city)) this.group.add(slab);
     this.group.add(this.markings(city));
@@ -110,20 +116,43 @@ export class Cityscape {
   }
 
   /**
-   * Asphalt over the land, and the road network is what shows through. It stops
-   * at the city bounds: past that is sea, which is what stops the map ending in
-   * a grey apron of nothing.
+   * The land the city stands on, and deliberately **not** asphalt (#176).
+   *
+   * It used to be: one asphalt plane, with the road network showing through
+   * the gaps between the raised block slabs. That is a tempting trick and it
+   * is wrong, because the gaps are not the roads. Blocks are rectangles on a
+   * grid and roads are segments that bend, get clipped against water and stop
+   * at the map edge, so every place the two disagree came out as tarmac the
+   * sim does not consider road. Driving onto it caps the car at a quarter of
+   * its top speed (`CityWorld.offRoadLimit`), so the player was slowed by
+   * something indistinguishable from the road they were on. Lane markings were
+   * the previous answer to this and they cannot carry it: junctions have no
+   * markings either.
+   *
+   * So the ground is paved-but-not-road now and `carriageways` below paints the
+   * roads, at exactly the width `onRoad` tests. That makes one rule carry the
+   * whole thing: **dark tarmac is drivable, everything lighter is not.** The
+   * pavement slabs are the same family a shade up, and the only green is a
+   * block the generator actually left open.
+   *
+   * It also stopped hiding something. Blocks are rectangles and roads bend, so
+   * there is more land belonging to neither than anyone thought - it used to
+   * read as tarmac, and now it reads as what it is. That is a generator
+   * question rather than a renderer one.
+   *
+   * It stops at the city bounds: past that is sea, which is what stops the map
+   * ending in a grey apron of nothing.
    */
   private ground(city: City): THREE.Mesh {
     const width = city.bounds.maxX - city.bounds.minX;
     const depth = city.bounds.maxZ - city.bounds.minZ;
     const geometry = new THREE.PlaneGeometry(width, depth);
-    // One plane covers every street in the city, so the texture repeat is set
-    // from the ground's real size: one tile is the same number of metres
-    // whatever the seed makes the map.
+    // One plane covers the whole city, so the texture repeat is set from the
+    // ground's real size: one tile is the same number of metres whatever the
+    // seed makes the map.
     const material = new THREE.MeshLambertMaterial({
-      color: '#4a5057',
-      map: asphaltTexture(width, depth),
+      color: '#61656b',
+      map: blockTexture('paving'),
     });
     this.owned.push(geometry, material);
 
@@ -233,6 +262,72 @@ export class Cityscape {
       // A block nobody built on: park, yard, lot.
       slab(city.blocks.filter((block) => block.open), 'pavements:open', 'grass', '#4e6b47'),
     ];
+  }
+
+  /**
+   * The tarmac, painted exactly where the sim says road is (#176).
+   *
+   * `onRoad` is `distanceToRoad(...) <= road.width / 2`, which is a capsule:
+   * a rectangle with a half-disc on each end. This draws the rectangle and
+   * extends it by half a width at both ends instead of drawing the caps, which
+   * costs one quad per road rather than three and has the useful side effect of
+   * filling the junctions - two crossing roads each reach half a width past
+   * their shared node, so the intersection is covered from both directions.
+   *
+   * Rotated to the segment rather than snapped to an axis. The grid is
+   * generated axis-aligned but boulevards bend (#115), and a quad that assumed
+   * otherwise would leave a bent road painted as a staircase.
+   *
+   * Bridges, the interstate and its ramps are not here: they carry their own
+   * geometry at their own height, and painting them twice would z-fight.
+   */
+  private carriageways(city: City): THREE.InstancedMesh {
+    const roads = city.roads.filter(
+      (road) =>
+        !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
+    );
+
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2); // lie flat, facing up
+    const material = new THREE.MeshLambertMaterial({
+      color: '#4a5057',
+      map: asphaltTexture(1, 1),
+    });
+    // One shared quad scaled per road, so a baked uv would size the aggregate
+    // by how long each street happens to be. Computed from the instance scale
+    // instead, the way every other instanced surface here does it.
+    worldUvs(material, {
+      faces: 'top',
+      tile: { u: ROAD_TILE, v: ROAD_TILE },
+      key: 'asphalt',
+    });
+    this.owned.push(geometry, material);
+
+    const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, roads.length));
+    mesh.name = 'carriageways';
+    mesh.count = roads.length;
+    mesh.receiveShadow = true;
+
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    const position = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+
+    roads.forEach((road, i) => {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      const angle = Math.atan2(b.x - a.x, b.z - a.z);
+      quaternion.setFromAxisAngle(up, angle);
+      // Half a width past each end, so junctions are covered and the capsule
+      // ends are approximated without drawing them.
+      scale.set(road.width, 1, road.length + road.width);
+      position.set((a.x + b.x) / 2, ROAD_LIFT, (a.z + b.z) / 2);
+      matrix.compose(position, quaternion, scale);
+      mesh.setMatrixAt(i, matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    return mesh;
   }
 
   /**
