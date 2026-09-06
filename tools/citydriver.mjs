@@ -41,7 +41,33 @@ function measure(points) {
   return cumulative;
 }
 
-export function routeDriver(route, K) {
+/**
+ * How far right of the centreline the driver sits, in world units.
+ *
+ * Traffic keeps right by `TRAFFIC_LANE` capped at a quarter of the road's
+ * width, which works out at 333 units on the narrowest two-lane street and 405
+ * on anything wider. Sitting on the centreline - which is what this driver did
+ * until #171 - straddles both lanes, so it meets oncoming traffic head on and
+ * cannot be run with traffic at all.
+ *
+ * Traffic keeps right by `TRAFFIC_LANE` capped at a quarter of the road's
+ * width, which is 333 units on the narrowest two-lane street and 405 on
+ * anything wider. This is 330: the widest offset that is still inside the
+ * narrowest street here, so the driver is never hung off the tarmac.
+ *
+ * Getting here took three measurements and two of them said the opposite of
+ * what was expected, so they are worth writing down. Classifying every impact
+ * on a traffic-on lap, the centreline driver met oncoming traffic head on in
+ * only 10% of them - it rear-ended same-direction traffic in 47% and hit
+ * buildings in 43%. So a lane on its own made things *worse*: it fixed the 10%
+ * and tripled the building impacts. Only once the driver braked for the car in
+ * front did head-ons become what they always looked like they should be - 59%
+ * of what was left - and only once `cornerSpeed` knew about the offset did
+ * holding it stop costing corners. All three are needed and none works alone.
+ */
+export const DRIVER_LANE = 330;
+
+export function routeDriver(route, K, { lane = DRIVER_LANE } = {}) {
   const points = route.points;
   const cumulative = measure(points);
   const length = cumulative[points.length];
@@ -155,8 +181,19 @@ export function routeDriver(route, K) {
    * hits a building.
    */
   const CORNER_MARGIN = 0.65;
-  const cornerSpeed = (radius) =>
-    radius === Infinity ? Infinity : CORNER_MARGIN * Math.sqrt(K.LATERAL_GRIP * radius);
+  /**
+   * A driver holding a lane corners on a tighter radius than the centreline
+   * one whenever the bend turns toward its side, and the route only knows the
+   * centreline. Taking the worst case - the whole offset off the radius - is
+   * what stops a lane-holding driver running wide into the outside of every
+   * bend. Measured: at traffic's own offset it takes building impacts on a
+   * traffic-on lap from 89 to 66, and the damage that goes with them.
+   */
+  const cornerSpeed = (radius) => {
+    if (radius === Infinity) return Infinity;
+    const effective = Math.max(radius * 0.25, radius - Math.abs(lane));
+    return CORNER_MARGIN * Math.sqrt(K.LATERAL_GRIP * effective);
+  };
 
   return {
     length,
@@ -194,7 +231,12 @@ export function routeDriver(route, K) {
      * pace is a turn.
      */
     steer(found, speed) {
-      const correction = Math.atan2(CROSS_GAIN * -found.side, Math.max(1200, Math.abs(speed)));
+      // Aim for the lane, not the line. `side` is positive on the far side of
+      // the centreline from traffic (see `progress`), so keeping right is a
+      // negative target and the error is measured against that rather than
+      // against zero.
+      const error = found.side - -lane;
+      const correction = Math.atan2(CROSS_GAIN * -error, Math.max(1200, Math.abs(speed)));
       return found.heading + correction;
     },
   };
@@ -206,8 +248,51 @@ export function routeDriver(route, K) {
  * `input` is the world's own input shape; the caller passes it in so this file
  * does not need to know what a `CityWorld` is.
  */
-export function driveRoute(world, route, K, { seconds = 240, none, hold = () => ({}) } = {}) {
-  const driver = routeDriver(route, K);
+
+/**
+ * The fastest this car should be going for whatever is in front of it.
+ *
+ * Without this the driver has no idea traffic exists and simply drives into the
+ * back of it: classifying impacts on a lap, 47% were rear-ending
+ * same-direction traffic, far and away the largest single kind (#171). A player
+ * lifts. This lifts.
+ *
+ * The cone is deliberately narrow and measured in world space rather than along
+ * the route, for the same reason traffic finds the car in front that way: roads
+ * are split at every junction, so the car ahead is usually on a different road
+ * object, and a route-relative search misses it at exactly the moment it
+ * matters.
+ */
+export function carAheadLimit(world, K) {
+  const cars = world.traffic?.cars;
+  if (!cars || cars.length === 0) return Infinity;
+
+  // Look as far ahead as it would take to stop, plus a car's length of room.
+  const reach = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * world.maxSpeed));
+  const fx = Math.sin(world.heading);
+  const fz = Math.cos(world.heading);
+
+  let limit = Infinity;
+  for (const car of cars) {
+    const dx = car.x - world.x;
+    const dz = car.z - world.z;
+    const ahead = dx * fx + dz * fz;
+    if (ahead <= 0 || ahead > reach) continue;
+    // How far off our line it is. A car in the next lane is not in the way.
+    const across = Math.abs(dx * fz - dz * fx);
+    if (across > K.CAR_RADIUS * 2.2) continue;
+    // Close the gap to a following distance, not to a touch.
+    const room = ahead - K.TRAFFIC_GAP;
+    if (room <= 0) return Math.min(limit, car.speed * 0.6);
+    // Fastest we can be here and still match their speed by the time we
+    // arrive: the same braking-window arithmetic the route target uses.
+    limit = Math.min(limit, Math.sqrt(car.speed * car.speed + 2 * world.maxSpeed * room));
+  }
+  return limit;
+}
+
+export function driveRoute(world, route, K, { seconds = 240, none, hold = () => ({}), lane = DRIVER_LANE } = {}) {
+  const driver = routeDriver(route, K, { lane });
   const start = driver.at(0);
   const facing = driver.at(400);
 
@@ -245,7 +330,9 @@ export function driveRoute(world, route, K, { seconds = 240, none, hold = () => 
     if (step < -driver.length / 2) step += driver.length;
     if (step > 0 && step < driver.length / 4) covered += step;
     along = found.along;
-    offRoute = Math.max(offRoute, found.off);
+    // Measured against the lane the driver is holding, not the centreline,
+    // or every run would report the lane offset as an error.
+    offRoute = Math.max(offRoute, Math.abs(found.side + lane));
 
     sinceHit += K.STEP;
     if (world.crashFlash > 0.9 && sinceHit > 0.5) {
@@ -302,7 +389,12 @@ export function driveRoute(world, route, K, { seconds = 240, none, hold = () => 
     }
     escape = 0;
 
-    const target = driver.target(along, world.speed, world.maxSpeed);
+    // The route says how fast the road allows; the car in front says how fast
+    // the road is actually going. Whichever is lower wins.
+    const target = Math.min(
+      driver.target(along, world.speed, world.maxSpeed),
+      carAheadLimit(world, K),
+    );
     // Left *increases* heading: the sim steers with `heading -= steer`, and a
     // driver facing +z has their right hand pointing at -x. Getting this the
     // other way round is a driver that steers away from every corner, which

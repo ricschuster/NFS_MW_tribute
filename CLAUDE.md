@@ -32,10 +32,14 @@ what the city is shaped like.
   `-- --seed N` tries another one
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
   own server, so nothing else needs running
-- `npm run citylap` — drive a reference driver round every generated route and
-  report what it held; compare against `docs/city-baseline.json` after touching
-  `constants.ts`, and re-record with `-- --out docs/city-baseline.json`. This is
-  the only driving baseline; the track's `npm run feel` retired with the track.
+- `npm run citylap` — drive a reference driver round every generated route,
+  twice: empty, and with traffic. Compare against `docs/city-baseline.json`
+  after touching `constants.ts`, and re-record with
+  `-- --out docs/city-baseline.json`. The empty lap says what the road allows;
+  the traffic lap says what the drive is like, and traffic roughly halves the
+  pace, so tuning against the empty number alone is tuning against a game
+  nobody plays. This is the only driving baseline; the track's `npm run feel`
+  retired with the track.
 - `npm run pace` — can the police be outrun? Compares your real top speed
   against the quickest unit at every heat level, in every condition. Exits
   non-zero if an *undamaged* car cannot outrun a level, which is an invariant

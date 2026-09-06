@@ -69,8 +69,10 @@ far was found by one of these and none by its tests, which passed throughout.
 How the car *feels* is a judgement call, but most of what goes into it is
 measurable. `npm run citylap` drives a headless reference driver round all six
 generated routes and reports what it held on each: lap completed, time, average
-speed as a fraction of top speed, crashes, and how far off the route it ever
-strayed.
+speed as a fraction of top speed, crashes, damage taken, and how far off its
+line it ever strayed. Every route runs twice, empty and in traffic - traffic
+roughly halves the pace, so the empty number on its own describes a game nobody
+plays.
 
 ```bash
 npm run citylap                                      # print the table
@@ -83,9 +85,9 @@ It asserts nothing (the playtests do that) - it exists so a change to
 seeded, so two runs of the same constants are identical. Re-record the baseline
 in the same PR that changes the tuning, so the diff shows what moved.
 
-Read the numbers as a floor, not a target: the driver follows the centreline at
-a margin under the grip limit and never touches nitrous, so a player has
-headroom it does not. And the probe that came before this one was *wrong* three
+Read the numbers as a floor, not a target: the driver holds a lane at a margin
+under the grip limit, never takes a racing line and never touches nitrous, so a
+player has headroom it does not. And the probe that came before this one was *wrong* three
 times, every time because its reference driver had stopped being a good driver.
 If a number looks strange, suspect the probe before the game.
 

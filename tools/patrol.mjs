@@ -13,12 +13,15 @@
 // **Read two of these numbers with care.** The driver comes from
 // `citydriver.mjs`, and it has two limits that matter here:
 //
-//   - It follows the route *centreline*, and traffic sits `TRAFFIC_LANE` right
-//     of that, so it collides with traffic far more than a player would. Damage
-//     and average speed are therefore pessimistic. That is issue #171.
 //   - It laps one route, so it never drives *away*. Breaking line of sight is
 //     how an escape actually happens, and a car going round a 3 km loop cannot
-//     do it. Escapes are understated; time-wanted is overstated.
+//     do it. Escapes are understated and time-wanted is overstated, which is
+//     the one caveat that still stands after #171.
+//
+// It holds a lane and brakes for the car in front, which #171 gave it, so the
+// damage and pace figures are a driver's rather than a crash test's. They are
+// still a floor: it never takes a racing line and only uses nitrous on a
+// straight.
 //
 // Everything else - when heat rises, what turns up, what they throw at you, and
 // what it all pays - is what the game does regardless of who is steering.
@@ -29,7 +32,7 @@
 //   npm run patrol -- --route "Old Quarter"
 //   npm run patrol -- --quiet             # summary only, no event log
 import { createServer } from 'vite';
-import { routeDriver } from './citydriver.mjs';
+import { routeDriver, carAheadLimit } from './citydriver.mjs';
 
 const flag = (name) => {
   const i = process.argv.indexOf(name);
@@ -128,7 +131,10 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
     }
   } else {
     escapeTurn = 0;
-    const target = driver.target(along, world.speed, world.maxSpeed);
+    const target = Math.min(
+      driver.target(along, world.speed, world.maxSpeed),
+      carAheadLimit(world, K),
+    );
     world.step(K.STEP, {
       ...NONE,
       left: error > 0.02,
@@ -207,11 +213,11 @@ row('in their sights', `${(timeSeen / 60).toFixed(1)} min`);
 row('helicopter up', `${(timeHeli / 60).toFixed(1)} min`);
 row('roadblocks', roadblocks);
 row('spike strips hit', spiked);
-row('searches started', searches, 'understated: this driver laps, it never runs (#171)');
+row('searches started', searches, 'understated: this driver laps, it never runs');
 row('escapes', escapes, 'same caveat');
 row('busts', busts);
-row('damage at the end', `${Math.round(world.hurt * 100)}%`, 'pessimistic: centreline driver (#171)');
-row('average speed', `${Math.round((speedSum / samples / K.REFERENCE_TOP_SPEED) * 100)}%`, 'same caveat');
+row('damage at the end', `${Math.round(world.hurt * 100)}%`);
+row('average speed', `${Math.round((speedSum / samples / K.REFERENCE_TOP_SPEED) * 100)}%`, 'a floor: no racing line');
 console.log('');
 console.log('WHAT IT PAID');
 row('Rep earned', Math.round(world.rep.total));

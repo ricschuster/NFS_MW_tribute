@@ -126,7 +126,7 @@ npm run test       # 436 unit tests + playtests
 npm run playtest   # just the playtests: drive CityWorld, assert outcomes
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
-npm run citylap    # drive a reference driver round every route; vs. its baseline
+npm run citylap    # every route, empty and in traffic; vs. its baseline
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run patrol     # twenty minutes with the police live, and what came of it
 npm run build      # typecheck + static build
@@ -302,13 +302,22 @@ What is left, roughly in the order it would show:
   separate bugs - one of which culled every cop the step after it spawned. There
   is only one world now, so the prefix is a scar. Leave it: renaming it touches
   every pursuit file for nothing.
-- **Traffic has no end-to-end probe** (#171). `npm run citylap` runs with
-  traffic off, and that is a limitation of the driver rather than a choice:
-  `routeDriver` follows the route *centreline* and traffic sits `TRAFFIC_LANE`
-  (3 m) right of it, so turning traffic on measures a head-on collision every
-  few seconds rather than the game. The system that is on screen every second of
-  every session is therefore the one nothing drives. Give the driver a lane and
-  the baseline can have a traffic column.
+- **Traffic halves the pace, and the baseline now says so** (#171, fixed). The
+  reference driver holds a lane, brakes for the car in front, and corners on the
+  radius its own line actually has, so `npm run citylap` runs every route twice
+  and records both. A good driver holds around 50% of top speed on an empty
+  road and around 26% in traffic. Tune against the traffic number: the empty one
+  describes a game nobody plays.
+
+  Worth knowing how that fix went, because two of the three measurements said
+  the opposite of what was expected. Classifying impacts, the centreline driver
+  met oncoming traffic head on in only **10%** of them - it rear-ended
+  same-direction traffic in 47% and hit buildings in 43%. So a lane on its own
+  made things *worse*, tripling building impacts. Only once it braked for the
+  car in front did head-ons become 59% of what was left, and only once
+  `cornerSpeed` knew about the offset did holding a lane stop costing corners.
+  Three changes, none of which works alone, and the issue as originally written
+  named the smallest of the three.
 - **Pursuit Rep dominates the economy.** Twenty minutes at heat 6 earns roughly
   what the whole ten-rival ladder costs (65,000) several times over;
   `REP_PURSUIT_PER_SECOND` alone is about 28 Rep/s once the heat bonus is in,
