@@ -1024,3 +1024,17 @@ export const CLAIM_HEAT = 0.45;
 export const CLAIM_RESULT_HOLD = 5;
 /** Rep for taking one. It is the biggest single payment in the game. */
 export const REP_CLAIM = 2500;
+
+/**
+ * The Quick Wheel (#90).
+ *
+ * The genre's entire menu system, and it never pauses. Held open with a key
+ * while the world keeps running underneath, so there is never a screen between
+ * the player and the city - which is a large part of why free roam feels
+ * continuous rather than like a hub with menus attached.
+ *
+ * Nine entries a branch, picked by number rather than navigated to. Navigation
+ * needs a cursor, a cursor needs direction keys, and the direction keys are
+ * busy driving the car.
+ */
+export const WHEEL_ENTRIES = 9;

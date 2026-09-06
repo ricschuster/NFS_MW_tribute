@@ -30,9 +30,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush',
-  'repair',
-  'ambush', 'claim',
+  'ambush', 'repair', 'claim', 'wheel',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -40,9 +38,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush',
-      'repair',
-      'ambush', 'claim',
+      'ambush', 'repair', 'claim', 'wheel',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -462,9 +458,6 @@ for (const view of VIEWS) {
   if (view === 'ambush') {
     // Park on a trap and spring it: the shot is of four cars already around
     // the car with the clock running, which is the whole event.
-  if (view === 'repair') {
-    // Stand a beaten-up car short of a repair gantry, looking at it: the shot
-    // is of the damage bar, the dulled paint and the thing that fixes both.
     await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
       timeout: 60000,
     });
@@ -481,6 +474,16 @@ for (const view of VIEWS) {
       for (let t = 0; t < 3; t += 1 / 60) world.step(1 / 60, none);
     });
     await page.waitForTimeout(1200);
+  }
+
+  if (view === 'repair') {
+    // Stand a beaten-up car short of a repair gantry, looking at it: the shot
+    // is of the damage bar, the dulled paint and the thing that fixes both.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
       const metre = 135;
       const shop = world.city.repairs[0];
       if (!shop) return;
@@ -524,6 +527,26 @@ for (const view of VIEWS) {
     await page.waitForTimeout(900);
   }
 
+  if (view === 'wheel') {
+    // Drive out, hand the player a garage worth looking at, then hold Q.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(6000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.crashFlash = 0;
+      world.rep.total = 61800;
+      for (const id of ['kite', 'verso', 'ridgeback', 'hatchling', 'surge', 'nightfall']) {
+        world.finds.claim(id);
+      }
+    });
+    await page.keyboard.down('q');
+    await page.waitForTimeout(1400);
+  }
+
   if (view === 'pursuit') {
     // Long enough for the cops to arrive, driving a loop so the car stays in
     // the middle of the city rather than parking against the coast.
@@ -551,6 +574,7 @@ for (const view of VIEWS) {
   await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
   if (DRIVING.has(view)) {
     if (view === 'collection') await page.keyboard.up('Tab');
+    if (view === 'wheel') await page.keyboard.up('q');
     await page.keyboard.up('ArrowUp');
     if (view === 'pursuit') await page.keyboard.up('b');
   }

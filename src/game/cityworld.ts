@@ -201,6 +201,14 @@ export class CityWorld {
   readonly ambush = new CityAmbush();
   /** The rival being run down for their car, if any (#66). */
   readonly claim: CityClaim;
+  /**
+   * Somewhere the player has asked to be pointed at (#90).
+   *
+   * A marker and not a teleport. Quick travel that moves the car would make
+   * the pursuit a formality and the city a menu of places rather than a place;
+   * an arrow and a distance is what a five-by-four-kilometre map needs.
+   */
+  marker: { x: number; z: number; label: string } | null = null;
   /** How many ladder rivals have been beaten. Shared with the track sim. */
   beaten = 0;
 
