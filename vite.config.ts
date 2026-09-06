@@ -1,4 +1,5 @@
-import { defineConfig, type Plugin } from 'vite';
+import type { Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 /**
  * What is copied out of `public/` and never passes through the bundle.
@@ -115,4 +116,9 @@ export default defineConfig({
   base: './',
   server: { open: false },
   plugins: [serviceWorker()],
+  test: {
+    // A save now survives within a process (#101), which is right for a tab
+    // and wrong for a test runner. This gives every test a fresh one.
+    setupFiles: ['./src/test-setup.ts'],
+  },
 });

@@ -87,8 +87,10 @@ and it runs in its own window, offline, with no address bar. Everything it
 needs is precached on first load - the whole game is static files, and the city
 is generated from a seed rather than downloaded.
 
-Saves live in the browser's storage for now, so clearing site data clears
-progress. A storage adapter that survives leaving the browser is #101.
+Saves go through a small storage adapter: the browser's own storage here, a
+file in the user's app data directory once there is a desktop shell to put one
+behind it. Clearing site data still clears progress in a browser, which is what
+browser storage is.
 
 ## Quick start
 
