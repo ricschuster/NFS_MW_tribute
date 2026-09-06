@@ -316,12 +316,7 @@ and adding a mechanic means deciding where it gets explained.
 ### The rest, roughly by how much they cost a player
 
 
-- **#180's cheap half is done; time of day is not.** Traffic varies by district
-  now (downtown 94 cars, industrial 38) and spawns favour the bigger roads. A
-  day/night cycle with traffic that thins after dark is the other half, and it
-  is a lighting problem as much as a traffic one - it belongs with #11, where
-  night and weather are already named as the biggest visual step left. It has
-  no issue of its own yet.
+
 - **#192 is fixed, and it was the whole event layer.** `npm run playthrough`
   found an expert losing every one of the six events - seventh of seven against
   #10, the rival the game opens with, and 19-25% against a 40% speed-run
@@ -517,11 +512,22 @@ What is left, roughly in the order it would show:
   by playing, settled by arithmetic - a screenshot could not, because the
   coloured line on the map was a boulevard crossing nearby rather than the
   street the car was on.
-- **The lighting is flat.** `castShadow` and `receiveShadow` are set throughout
-  `scene/`, and shadows still contribute almost nothing to a frame: everything
-  reads as evenly lit midday. This is the strongest argument for #11's night,
-  weather and wet roads being the biggest remaining visual step. The geometry is
-  carrying the look on its own.
+- **The lighting is no longer flat, and shadows are still doing nothing.** #180
+  put a clock in the sim and a palette on it, so the city runs from moonlight
+  through sunrise, a long afternoon and a sunset - and the difference between
+  three in the morning and half past eight is now the biggest thing in a frame.
+  What has *not* changed is that `castShadow` and `receiveShadow` contribute
+  almost nothing: the sun moves through the day and nothing casts a moving
+  shadow, which at sunrise is the most conspicuous it has ever been. Wet roads
+  and weather are still untouched, and both are #11.
+- **Night is a fake, and knowing which parts is the point.** The lamps do not
+  light anything: `lamp-glow` is an additive quad on the tarmac under each one,
+  because four thousand point lights is a slideshow. Lit windows are an
+  emissive map with *every* window lit - the tile is one bay wide, so "some
+  windows dark" would repeat in a perfect grid across every building. Cars have
+  no headlights at all. Each of those is a place the illusion ends, and the
+  order to fix them in is probably headlights, then window variety, then real
+  light from the lamps.
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
   siren and a radio squelch - but there is still nothing for a takedown or a
   spike strip, and no music.

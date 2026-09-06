@@ -135,6 +135,23 @@ rather than spread over the map, and cars look for the one in front in **world
 space**, because roads are split at every junction so the car ahead is almost
 always on a different road object.
 
+**The city keeps a clock, and the traffic reads it** (issue #180).
+`CityWorld.hour` is simulation, not decoration, because how busy a street is
+depends on it: `TRAFFIC_BY_HOUR` has two peaks and a long trough, so three in
+the morning on an industrial back street is a different drive from half past
+eight downtown. A day takes `DAY_MINUTES` of play and starts in the afternoon,
+which is why every screenshot in the repo is taken in daylight without having
+to say so. The renderer reads the *same* number: `scene/daylight.ts` is a pure
+function of the hour returning a palette - sun, fill, sky, haze, and how lit
+the lamps are - so the sky and the traffic cannot disagree about what time it
+is. Its 13:00 row is #75's shipped numbers to the letter, so midday looks like
+the game has always looked. Night is *moonlit* and not dark: the first version
+dropped the fill and the screenshot was a black rectangle with two tail lights
+in it. What actually says "night" in a street is not the lamp being bright but
+the ground under it being bright, which is `lamp-glow` - one additive quad per
+lamp, because four thousand point lights is a slideshow and four thousand
+instances of one quad is a draw call.
+
 **How much traffic depends on where you are** (issue #180). `TRAFFIC_DENSITY`
 scales the population by the district of the road under the car - downtown
 carries two and a half times what the industrial quarter does - and the count

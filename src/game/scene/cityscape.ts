@@ -195,6 +195,43 @@ export class Cityscape {
   }
 
   /**
+   * Bring the city's own lights up after dark (#180).
+   *
+   * `amount` is 0 in daylight and 1 at night. Two things answer to it: the
+   * buildings' emissive channel, which carries a map of just the windows, and
+   * the lamp heads, which stop being pale boxes on poles. Both *add* rather
+   * than replace, so at zero this is exactly the daytime scene that #75 tuned.
+   *
+   * Found by name rather than by holding a reference to every material: the
+   * buildings are built by a provider that could be swapped for a modelled one
+   * (#84), and a name is the one thing a provider already has to set.
+   */
+  setNight(amount: number): void {
+    const lit = Math.max(0, Math.min(1, amount));
+    this.group.traverse((object) => {
+      const mesh = object as THREE.Mesh;
+      const material = mesh.material as THREE.MeshLambertMaterial | undefined;
+      if (!material) return;
+      // The lamp pools are a decal and have no emissive: they fade in.
+      if (mesh.name === 'lamp-glow') {
+        // Half strength at full night. At one the pools read as white blobs on
+        // the pavement rather than as a lit road, which is the same mistake
+        // the windows made.
+        material.opacity = lit * 0.5;
+        mesh.visible = lit > 0.02;
+        return;
+      }
+      if (!(material as { emissive?: unknown }).emissive) return;
+      // Well under 1: emissive is added *after* the lighting and before the
+      // tone map, so a window at full strength clips to a white rectangle and
+      // a tower becomes a slab. What has to read is that the window is lit,
+      // not how bright the room is.
+      if (mesh.name.startsWith('buildings:')) material.emissiveIntensity = lit * 0.42;
+      else if (mesh.name === 'lamp-heads') material.emissive.setRGB(lit, lit * 0.9, lit * 0.68);
+    });
+  }
+
+  /**
    * The block slabs: the kerb the buildings stand on, and the open ground.
    *
    * Two instanced meshes rather than one, which is the change that lets these

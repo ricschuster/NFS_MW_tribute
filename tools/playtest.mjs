@@ -160,6 +160,7 @@ if (want('drivers')) {
         peakHeat: eye.peakHeat,
         stuck: eye.stuckCount,
         busted: world.busted,
+        hour: world.hour,
       });
       report(
         `${driver.name.toUpperCase()} on ${route.name}`,
@@ -369,7 +370,7 @@ const table = (rows, head, cells) => {
 
 table(
   runs.filter((r) => r.section === 'drivers'),
-  ['driver', 'route', 'lap', 'time', 'avg', 'impacts', 'damage', 'peak heat', 'stuck', 'Rep'],
+  ['driver', 'route', 'lap', 'time', 'avg', 'impacts', 'damage', 'peak heat', 'stuck', 'Rep', 'clock'],
   (r) => [
     r.who,
     r.route,
@@ -381,6 +382,7 @@ table(
     r.peakHeat || '-',
     r.stuck,
     Math.round(r.rep),
+    `${String(Math.floor(r.hour)).padStart(2, '0')}:${String(Math.floor((r.hour % 1) * 60)).padStart(2, '0')}`,
   ],
 );
 table(

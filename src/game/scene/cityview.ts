@@ -8,6 +8,7 @@ import type { Hud } from './hud';
 import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
+import { daylightAt } from './daylight';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
@@ -116,6 +117,10 @@ export class CityView {
   private readonly cityscape: Cityscape;
   private readonly city: City;
   private readonly skyDome: THREE.Mesh;
+  private readonly sun: THREE.DirectionalLight;
+  private readonly fill: THREE.HemisphereLight;
+  /** The hour the lights were last set to, so they are not rebuilt per frame. */
+  private litAt = -1;
 
   /** Where the camera is looking, in yaw/pitch, so flying feels like flying. */
   private yaw = 0;
@@ -197,14 +202,19 @@ export class CityView {
     this.camera = new THREE.PerspectiveCamera(60, 1, 2 * M, 14000 * M);
 
     // A hard warm sun low enough to throw the buildings' faces into relief.
-    const sun = new THREE.DirectionalLight('#fff0cf', 3.3);
-    sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
-    this.scene.add(sun);
+    // Kept, along with the fill, because both of them move through the day now
+    // (#180): `daylight.ts` decides what they are at an hour and `lighting`
+    // below applies it. These are the values it hands back at one in the
+    // afternoon, so nothing about midday changed.
+    this.sun = new THREE.DirectionalLight('#fff0cf', 3.3);
+    this.sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
+    this.scene.add(this.sun);
     // Generous fill: under a single hard sun every face turned away goes black
     // and the city reads as silhouettes rather than as buildings. Cooler than
     // the sun and warmer off the ground, which is what daylight by the sea
     // actually does to a wall.
-    this.scene.add(new THREE.HemisphereLight('#dcefff', '#a2937c', 1.4));
+    this.fill = new THREE.HemisphereLight('#dcefff', '#a2937c', 1.4);
+    this.scene.add(this.fill);
 
     this.skyDome = this.sky();
     this.scene.add(this.skyDome);
@@ -675,9 +685,51 @@ export class CityView {
     const fog = this.scene.fog as THREE.Fog;
     fog.near = 300 * M;
     fog.far = 2600 * M;
+    this.lighting(world.hour);
     this.skyDome.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
     this.hud?.draw(world);
+  }
+
+  /**
+   * Put the sky where the clock says it is (#180).
+   *
+   * Only when the hour has actually moved. A day takes half an hour of play,
+   * so at sixty frames a second the light is the same for hundreds of frames
+   * at a time, and setting eight colours from strings every one of them is
+   * work for nothing.
+   *
+   * The city's own lights come up with `lamps`: the street lamps stop being
+   * pale boxes on poles and the windows come on, which is most of what makes a
+   * city of boxes read as a city after dark.
+   */
+  private lighting(hour: number): void {
+    if (Math.abs(hour - this.litAt) < 0.01) return;
+    this.litAt = hour;
+    const light = daylightAt(hour);
+
+    this.sun.color.set(light.sun);
+    this.sun.intensity = light.sunStrength;
+    this.sun.position
+      .set(
+        Math.sin(light.sunBearing) * Math.sqrt(Math.max(0, 1 - light.sunHeight ** 2)),
+        Math.max(0.05, light.sunHeight),
+        Math.cos(light.sunBearing) * Math.sqrt(Math.max(0, 1 - light.sunHeight ** 2)),
+      )
+      .multiplyScalar(1000 * M);
+
+    this.fill.color.set(light.fill);
+    this.fill.groundColor.set(light.bounce);
+    this.fill.intensity = light.fillStrength;
+
+    const haze = new THREE.Color(light.haze);
+    (this.scene.background as THREE.Color).copy(haze);
+    (this.scene.fog as THREE.Fog).color.copy(haze);
+    const dome = this.skyDome.material as THREE.ShaderMaterial;
+    dome.uniforms.top.value.set(light.skyTop);
+    dome.uniforms.bottom.value.copy(haze);
+
+    this.cityscape.setNight(light.lamps);
   }
 
   /**

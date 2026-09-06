@@ -217,6 +217,7 @@ if (!QUIET) {
 
 const row = (label, value, note = '') => console.log(`  ${label.padEnd(20)} ${String(value).padStart(10)}   ${note}`);
 console.log('WHAT HAPPENED');
+row('clock', `${String(Math.floor(world.hour)).padStart(2, '0')}:${String(Math.floor((world.hour % 1) * 60)).padStart(2, '0')}`, `started ${K.DAY_START}:00, a day takes ${K.DAY_MINUTES} min`);
 row('peak heat', `${peakHeat} of ${K.HEAT_LEVEL_COUNT}`);
 row('pursuits', pursuits, Object.entries(startedBy).map(([k, n]) => `${n} ${k}`).join(', '));
 row(

@@ -56,4 +56,44 @@ export function signTexture(): THREE.CanvasTexture | null {
 export function disposeSignage(): void {
   cached?.dispose();
   cached = null;
+  glow?.dispose();
+  glow = null;
+}
+
+/**
+ * The pool of light a street lamp throws (#180).
+ *
+ * A radial gradient on a quad laid flat on the road, added rather than blended
+ * so it lights the tarmac instead of tinting it. Four thousand of these are
+ * one instanced draw call; four thousand real point lights are a slideshow,
+ * and that is the whole reason it is a fake rather than a light.
+ *
+ * What it buys is the thing that actually says "night" in a street: not the
+ * lamp being bright, but the ground under it being bright.
+ */
+let glow: THREE.CanvasTexture | null = null;
+
+export function lampGlowTexture(): THREE.CanvasTexture | null {
+  if (glow) return glow;
+  if (typeof document === 'undefined') return null;
+
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const half = size / 2;
+  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+  // Falls off fast: a pool with a hard edge reads as a decal, and one that
+  // reaches the edge of its quad tiles into a grid of squares.
+  gradient.addColorStop(0, 'rgba(255, 226, 170, 0.85)');
+  gradient.addColorStop(0.35, 'rgba(255, 214, 150, 0.34)');
+  gradient.addColorStop(1, 'rgba(255, 200, 130, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+
+  glow = new THREE.CanvasTexture(canvas);
+  return glow;
 }

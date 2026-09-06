@@ -102,7 +102,55 @@ function facadeTile(kind: BuildingKind): HTMLCanvasElement {
   return canvas;
 }
 
+/**
+ * The same facade with the lights on (#180).
+ *
+ * An emissive map, so it adds rather than replaces: black everywhere the wall
+ * is, and the window rectangle in warm light. The wall itself must stay black
+ * or the whole building glows and the city turns into a lantern.
+ *
+ * Every window lit, which is not what a real city does after midnight - but
+ * the tile is one bay wide, so "some windows dark" would repeat in a perfect
+ * grid across every building, which reads worse than uniform.
+ */
+function litTile(kind: BuildingKind): HTMLCanvasElement {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, size, size);
+
+  if (kind === 'shed') {
+    // A yard light over the door rather than a lit floor: nobody is working
+    // the night shift behind those roller shutters.
+    ctx.fillStyle = '#5a4a2a';
+    ctx.fillRect(0, size * 0.1, size, size * 0.1);
+    return canvas;
+  }
+
+  const inset = kind === 'tower' ? 0.08 : 0.16;
+  const x0 = size * inset;
+  const w = size * (1 - inset * 2);
+  const y0 = size * 0.16;
+  const h = size * (kind === 'tower' ? 0.62 : 0.5);
+  ctx.fillStyle = kind === 'tower' ? '#c8b487' : '#b09a६f'.slice(0, 7);
+  ctx.fillStyle = kind === 'tower' ? '#c8b487' : '#a8926a';
+  ctx.fillRect(x0, y0, w, h);
+  // The mullion stays dark, so a tower reads as two lit panes rather than one
+  // bright slab.
+  if (kind === 'tower') {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x0 + w / 2 - 1, y0, 2, h);
+  }
+  return canvas;
+}
+
 const cache = new Map<BuildingKind, THREE.CanvasTexture>();
+const litCache = new Map<BuildingKind, THREE.CanvasTexture>();
 
 /** The facade texture for a kind, built once and shared. */
 export function facadeTexture(kind: BuildingKind): THREE.CanvasTexture {
@@ -118,9 +166,26 @@ export function facadeTexture(kind: BuildingKind): THREE.CanvasTexture {
 }
 
 /** Drop the shared textures. For a scene teardown that means it. */
+/** The lit-window map for a kind, built once and shared (#180). */
+export function facadeLights(kind: BuildingKind): THREE.CanvasTexture | null {
+  const hit = litCache.get(kind);
+  if (hit) return hit;
+  // Headless, as `signTexture` is: the building provider is unit-tested
+  // without a DOM and a canvas needs one.
+  if (typeof document === 'undefined') return null;
+  const texture = new THREE.CanvasTexture(litTile(kind));
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 4;
+  litCache.set(kind, texture);
+  return texture;
+}
+
 export function disposeFacades(): void {
   for (const texture of cache.values()) texture.dispose();
   cache.clear();
+  for (const texture of litCache.values()) texture.dispose();
+  litCache.clear();
 }
 
 /**

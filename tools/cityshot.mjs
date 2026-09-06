@@ -29,7 +29,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,7 +37,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -558,6 +558,42 @@ for (const view of VIEWS) {
       world.crashFlash = 0;
     });
     await page.waitForTimeout(1500);
+  }
+
+  if (view === 'hour') {
+    // The city at a time of day (#180). `HOUR=3 npm run cityshot -- --view
+    // hour` takes the middle of the night; the default is dusk, which is the
+    // hour that shows both halves - the lamps and the windows on, and enough
+    // sky left to see the city against.
+    const hour = Number(process.env.HOUR ?? 19.5);
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate((at) => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const metre = 135;
+      // Down a long downtown street, where there are lamps and towers to light.
+      const road = world.city.roads.find(
+        (r) => r.district === 'downtown' && r.class === 'arterial' && r.length > 400 * metre,
+      );
+      if (road) {
+        const a = world.city.nodes[road.a].pos;
+        const b = world.city.nodes[road.b].pos;
+        world.x = a.x + (b.x - a.x) * 0.3;
+        world.z = a.z + (b.z - a.z) * 0.3;
+        world.y = 0;
+        world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+      }
+      world.speed = 0;
+      world.crashFlash = 0;
+      world.rep.total = 22400;
+      for (let t = 0; t < 6; t += 1 / 60) world.step(1 / 60, none);
+      // Set last: the clock runs while the world steps, and the point of the
+      // shot is the hour that was asked for.
+      world.hour = at;
+    }, hour);
+    await page.waitForTimeout(1400);
   }
 
   if (view === 'patrol') {
