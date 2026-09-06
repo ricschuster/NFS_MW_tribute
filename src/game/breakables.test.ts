@@ -68,6 +68,25 @@ describe('breaking one', () => {
     return thing;
   }
 
+  /** A unit close enough to see it happen, so the provocation lands (#177). */
+  function watching(world: CityWorld): Cop {
+    const cop: Cop = {
+      road: world.city.roads[0],
+      t: 0,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: world.x + 20 * M,
+      z: world.z,
+      y: world.y,
+      heading: 0,
+      kind: 'cruiser',
+      role: 'patrol',
+    };
+    world.police.cops.push(cop);
+    return cop;
+  }
+
   it('comes down when you drive through it', () => {
     const world = still();
     const thing = atOne(world);
@@ -185,14 +204,30 @@ describe('breaking one', () => {
     expect(cop.damage).toBe(0);
   });
 
-  // Using the city against them is not free.
-  it('makes them angrier', () => {
+  // Using the city against them is not free - while they are looking. Since
+  // #177 a provocation nobody saw is free, which is the whole point of the
+  // trigger: bringing a gate down on an empty street is not a crime scene.
+  it('makes them angrier while a pursuit is running', () => {
     const world = still();
     world.police.heat = 0.3;
     atOne(world);
+    watching(world);
     world.speed = world.maxSpeed * 0.5;
     world.step(STEP, NONE);
     expect(world.police.heat).toBeGreaterThan(0.3);
+    expect(world.police.state).toBe('pursuit');
+  });
+
+  it('is free when there is nobody there to see it', () => {
+    const world = still();
+    world.police.heat = 0;
+    atOne(world);
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+
+    expect(world.broken.size).toBe(1); // it still came down
+    expect(world.police.heat).toBe(0);
+    expect(world.police.state).toBe('clear');
   });
 
   it('leaves the wreckage in the road', () => {

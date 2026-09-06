@@ -29,7 +29,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,7 +37,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -497,6 +497,33 @@ for (const view of VIEWS) {
       world.rep.total = 48300;
     });
     await page.waitForTimeout(2400);
+  }
+
+  if (view === 'patrol') {
+    // Free roam with a patrol car in it (#177): no heat bar, no siren, a
+    // marked car going about its business, and nothing after you. The shot is
+    // of the state that did not exist before - twelve seconds in, this used to
+    // be a pursuit whatever anyone did.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const patrol = world.police.cops.find((c) => c.role === 'patrol');
+      if (!patrol) return;
+      // Put the car a little way behind the patrol, on the patrol's own road,
+      // looking at it. The pursuit re-derives a unit's place from the graph
+      // every step, so the *car* is what moves here, never the cop.
+      world.x = patrol.x - Math.sin(patrol.heading) * 26 * metre;
+      world.z = patrol.z - Math.cos(patrol.heading) * 26 * metre;
+      world.y = patrol.y;
+      world.heading = patrol.heading;
+      world.speed = 0;
+      world.crashFlash = 0;
+      world.rep.total = 22400;
+    });
+    await page.waitForTimeout(1200);
   }
 
   if (view === 'stuck') {

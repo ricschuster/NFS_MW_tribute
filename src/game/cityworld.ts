@@ -68,6 +68,9 @@ import {
   BREAKER_DEBRIS,
   STUCK_TIME,
   STUCK_PROGRESS,
+  SPEEDING_OVER,
+  SPEEDING_TIME,
+  TAKEDOWN_MIN_CLOSING,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
@@ -304,6 +307,8 @@ export class CityWorld {
   /** Where the car last put real ground behind it, for the stuck clock (#179). */
   private progressX = 0;
   private progressZ = 0;
+  /** Seconds spent well over the limit on the road under the car (#177). */
+  private overLimit = 0;
 
   constructor(city: City = kestrelBay(), options: CityWorldOptions = {}) {
     this.city = city;
@@ -556,7 +561,9 @@ export class CityWorld {
     // can be wrong instead of eight places that can forget to speak.
     this.radio.update(dt, {
       level: this.police.level,
-      cops: this.police.cops.length,
+      // The ones after you, not the ones driving past (#177): a patrol
+      // spawning in must not read as a unit joining the pursuit.
+      cops: this.police.pursuers,
       roadblocks: this.police.roadblocks.length,
       spikes: this.police.spikes.length,
       enforcers: this.police.cops.reduce((n, c) => n + (c.role === 'enforcer' ? 1 : 0), 0),
@@ -565,6 +572,7 @@ export class CityWorld {
       busted: this.busted,
       takedowns: this.takedowns,
       broken: this.broken.size,
+      reason: this.police.startedBy,
     });
     this.clearWrecks(dt);
 
@@ -779,6 +787,8 @@ export class CityWorld {
     this.repairs();
     this.breakThings();
     this.nearMisses();
+    this.speeding(dt);
+    const smashed = this.collectibles.smashed.size;
     this.collectibles.update(
       dt,
       this,
@@ -788,6 +798,10 @@ export class CityWorld {
       this.rep,
       this.level,
     );
+    // Asked afterwards rather than reported by the collection, which knows
+    // nothing about the pursuit and should carry on not knowing (#93).
+    if (this.collectibles.smashed.size > smashed) this.police.witness(this, 'damage');
+
     const swapped = this.finds.update(dt, this, this.rep, this.level);
     if (swapped) this.drive(swapped);
 
@@ -806,6 +820,51 @@ export class CityWorld {
     if (this.pursuitRep < REP_PURSUIT_TICK) return;
     this.rep.award('pursuit', this.level, REP_PURSUIT_PER_SECOND * this.pursuitRep);
     this.pursuitRep = 0;
+  }
+
+  /**
+   * Did we drive into them, or did they drive into us (#177)?
+   *
+   * `impactDamage` cannot answer this: it takes the closing speed between two
+   * cars, so a patrol rear-ending a car parked at the kerb reads exactly like
+   * that car reversing into the patrol. Being hit is not a provocation, and
+   * without this a police car that fails to stop in time starts a pursuit for
+   * a player who was not moving.
+   */
+  private droveInto(other: { x: number; z: number }): boolean {
+    const dx = other.x - this.x;
+    const dz = other.z - this.z;
+    const gap = Math.hypot(dx, dz);
+    if (gap < 1e-6) return false;
+    const closing = ((Math.sin(this.heading) * dx + Math.cos(this.heading) * dz) / gap) * this.speed;
+    return closing > this.maxSpeed * TAKEDOWN_MIN_CLOSING;
+  }
+
+  /**
+   * Driving far too fast in front of somebody who cares (#177).
+   *
+   * Against the limit on the road under the car rather than against the car's
+   * own top speed, so the interstate is a place you can use it and a downtown
+   * street is not. Only on a road at all: open ground caps you at a quarter of
+   * top speed anyway, and cutting across a car park is not a traffic offence.
+   *
+   * The clock is what keeps it from firing on a blip. It restarts either way,
+   * so a car held over the limit past a patrol gets looked at about once a
+   * second and a half rather than once a pursuit.
+   */
+  private speeding(dt: number): void {
+    if (!this.onRoad) {
+      this.overLimit = 0;
+      return;
+    }
+    if (Math.abs(this.speed) < this.onRoad.speed * SPEEDING_OVER) {
+      this.overLimit = 0;
+      return;
+    }
+    this.overLimit += dt;
+    if (this.overLimit < SPEEDING_TIME) return;
+    this.overLimit = 0;
+    this.police.witness(this, 'speeding');
   }
 
   /**
@@ -873,8 +932,10 @@ export class CityWorld {
       this.takeDamage(BREAKER_DAMAGE);
       this.crashFlash = 1;
       this.rep.award('breaker', this.level);
-      // Property damage is noticed. Using the city against them is not free.
-      this.police.provoke(BREAKER_HEAT);
+      // Property damage is noticed - if there is anybody there to notice it
+      // (#177). Bringing a gate down on an empty street is free; doing it in
+      // front of a patrol is how a quiet drive stops being one.
+      this.police.witness(this, 'damage', BREAKER_HEAT);
       this.bury(thing);
       return;
     }
@@ -993,6 +1054,11 @@ export class CityWorld {
       if (!touching(this, car)) continue;
       const hurt = impactDamage(this, car, this.maxSpeed, this.grid);
       this.hit(car, hurt, SHUNT_SPEED_KEPT);
+      // Ploughing into somebody in front of a patrol car is the most ordinary
+      // way there is to acquire a pursuit (#177). Only a hit you drove into,
+      // though: `impactDamage` is zero below a real closing speed, and being
+      // gently nudged from behind is not something you did.
+      if (hurt > 0 && this.droveInto(car)) this.police.witness(this, 'crashed');
       if (car.damage >= 1) {
         this.traffic.remove(car);
         this.wreck(car, car.colour, 1, false);
@@ -1010,6 +1076,11 @@ export class CityWorld {
       const toughness = enforcer ? unit.scale * ENFORCER_TOUGHNESS : unit.scale;
       const hurt = impactDamage(this, cop, this.maxSpeed, this.grid, toughness);
       this.hit(cop, hurt, enforcer ? ENFORCER_SPEED_KEPT : SHUNT_SPEED_KEPT);
+      // Hitting the police needs no witness: they were there (#177). What it
+      // does *not* do is add heat every step of contact - that is what the
+      // takedown is for, and a flat bump per frame saturates the whole curve
+      // in three seconds of grinding along a wing.
+      if (hurt > 0 && this.droveInto(cop)) this.police.rammed(this);
       if (cop.damage >= 1) {
         this.police.remove(cop);
         this.wreck(cop, unit.colour, unit.scale, true);

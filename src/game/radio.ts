@@ -42,6 +42,15 @@ export interface PursuitReport {
   takedowns: number;
   /** How many things the player has brought down, in total. */
   broken: number;
+  /**
+   * What set the pursuit off, or null (#177).
+   *
+   * The radio is where a trigger becomes legible. A pursuit that opens with
+   * "we have a runner" tells you one has started; one that opens with "vehicle
+   * at speed, unit is moving in" tells you what you did, which is the whole
+   * difference between a rule and a mood.
+   */
+  reason: string | null;
 }
 
 type Callout = { from: RadioVoice; lines: string[] };
@@ -60,6 +69,41 @@ const CALLOUTS: Record<string, Callout> = {
       'All units, we have a street racer running. Engage.',
       'Dispatch to all units - pursuit is active.',
       'We have a runner. All available units respond.',
+    ],
+  },
+  // One per trigger (#177). Whichever line opens the pursuit is the only
+  // explanation the player gets of what they did, so each of these has to name
+  // the offence rather than announce the chase.
+  'opened:speeding': {
+    from: 'unit',
+    lines: [
+      'Vehicle at speed past my position. Moving in.',
+      'Got one flying through here. In pursuit.',
+      'Clocked that one well over. Going after them.',
+    ],
+  },
+  'opened:rammed': {
+    from: 'unit',
+    lines: [
+      'They just hit my unit! In pursuit.',
+      'Suspect has struck a patrol car. Engaging.',
+      'I have been rammed. All units, this one is running.',
+    ],
+  },
+  'opened:crashed': {
+    from: 'dispatch',
+    lines: [
+      'Collision in view of a unit. They are not stopping.',
+      'Reckless driving, contact made. Units engage.',
+      'They put somebody off the road and kept going.',
+    ],
+  },
+  'opened:damage': {
+    from: 'dispatch',
+    lines: [
+      'Criminal damage in progress. Nearest unit respond.',
+      'They are wrecking the place. Get on them.',
+      'Property damage witnessed. All units, engage.',
     ],
   },
   joined: {
@@ -186,7 +230,12 @@ export class Radio {
     const was = this.was;
     if (!was) return;
 
-    if (was.state !== 'pursuit' && now.state === 'pursuit') this.call('opened');
+    if (was.state !== 'pursuit' && now.state === 'pursuit') {
+      // The generic line is the fallback for a pursuit nobody triggered: an
+      // ambush you drove onto, or the heat a ladder rival brings with them.
+      const key = `opened:${now.reason}`;
+      this.call(now.reason && CALLOUTS[key] ? key : 'opened');
+    }
     else if (now.cops > was.cops && now.state === 'pursuit') this.call('joined');
 
     if (now.level > was.level && now.state === 'pursuit') this.call('escalated');

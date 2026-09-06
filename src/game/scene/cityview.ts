@@ -629,7 +629,18 @@ export class CityView {
     this.trafficCars.end();
 
     this.copCars.begin();
+    // Patrols first, so everything placed after them is a car with its lights
+    // on (#177). Sorting the pool this way is cheaper than a second pool, and
+    // it is the only thing the renderer needs to know about the role.
+    let lit = 0;
     for (const cop of world.police.cops) {
+      if (cop.role !== 'patrol') continue;
+      const unit = COP_UNITS[cop.kind];
+      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
+      lit++;
+    }
+    for (const cop of world.police.cops) {
+      if (cop.role === 'patrol') continue;
       const unit = COP_UNITS[cop.kind];
       this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
     }
@@ -642,7 +653,7 @@ export class CityView {
       }
     }
     this.siren += dt;
-    this.copCars.flashLightbars(this.siren);
+    this.copCars.flashLightbars(this.siren, lit);
     this.copCars.end();
 
     this.wreckCars.begin();
@@ -701,8 +712,12 @@ export class CityView {
     // The camera is the director's business now (#88), not this loop's.
     // The pursuit is most of the sound: how loud the siren is is how close
     // they are, which is a thing you can hear before you can see it.
+    // The ones after you (#177). A patrol driving past with its siren off is
+    // not a pursuit, and hearing one wail every time a marked car goes by
+    // would make the sound meaningless.
     const nearest = world.police.cops.reduce(
-      (best, cop) => Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
+      (best, cop) =>
+        cop.role === 'patrol' ? best : Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
       Infinity,
     );
     this.audio.update({
@@ -710,7 +725,7 @@ export class CityView {
       speedFrac: Math.min(1, Math.abs(world.speed) / REFERENCE_TOP_SPEED),
       boosting: world.boosting,
       sirenLevel:
-        world.police.cops.length === 0
+        world.police.pursuers === 0
           ? 0
           : Math.max(0, Math.min(1, 1 - nearest / (CITY_COP_LOSE * 0.7))),
     });

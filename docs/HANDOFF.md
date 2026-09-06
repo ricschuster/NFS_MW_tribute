@@ -132,7 +132,8 @@ npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic; vs. its baseline
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
-npm run patrol     # twenty minutes with the police live, and what came of it
+npm run patrol     # twenty minutes with the police live: what started each
+                   # pursuit, time to the first, and how much of it was free roam
 npm run drivers    # the same routes driven by beginner / advanced / expert / perfect
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
@@ -221,7 +222,7 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Eleven issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
+**Ten issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
 systems) are closed, and #165 closed the rebuild out by deleting the thing it
 replaced. Nearly everything now open came from **one person playing the game for
 ten minutes** on 2026-09-06, which is the single most important fact on this
@@ -232,17 +233,29 @@ and the playtest still found nine things. Do that before you do anything else.
 
 Take these together. Separately each fix makes the game worse.
 
-**#177: a pursuit starts on a 12-second timer with no trigger.** `recruit()`
-counts down `COP_FIRST_SPAWN` and spawns, unconditionally. Nothing you do or
-avoid doing changes it, so there is no free-roam state at all - and #64's
-economy assumes heat is something you *chose* to accept. A trigger wants
-provocation-in-view, and `seenBy` already does line of sight.
+**#177 is fixed, and it changed the shape of the other two.** A pursuit now
+starts because a unit *saw* you do something: `CityPolice.witness` runs the
+provocation through the same line of sight the pursuit uses, and patrol cars
+cruise the network before there is any pursuit at all, so the car that turns in
+behind you was already in the street. `npm run patrol` reports 6.8 of 10
+minutes in free roam where the answer used to be zero, and a first pursuit at
+01:18 where it was always 00:12. Two things came out of doing it that matter
+here. `recruit` had a hole its own comment describes - it refused to call cars
+in on a pursuit that had lost you *unless the count was zero*, so shaking every
+car spawned a replacement onto the street you had got away down, which is one
+of the ways #178's pursuits never ended. And the old `chase` playtest helper
+was driving a car that wedged itself against a building five seconds in: every
+pursuit test in the suite was measuring a stationary car that cops drove to.
 
 **#178: a bust almost never happens, and changes nothing when it does.** A probe
 got **1 bust in 54 attempts**. And at heat 6 half the attempts ended with the
 clock running out still wanted - not caught, not escaped. The pursuit has no
 terminal state that matters. A bust delays the next pursuit and nothing else:
-heat carries on from where it was.
+heat carries on from where it was. **Re-measure before designing:** `reset()`
+does set `heat = 0`, so the "heat carries on" half of that issue is at least
+partly wrong as written, and #177's recruit fix removed one of the reasons a
+pursuit could not be broken. The first run of `npm run patrol` after #177 got
+a bust at 04:27, which the old numbers say should almost never happen.
 
 **#170 sits downstream of both** and should not be settled first. It asks
 whether a wrecked car can escape, and measured under realistic conditions the
