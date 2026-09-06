@@ -291,6 +291,20 @@ and the day the roster is edited nobody should lose an engine. Every mod is a
 *trade*: a part that is better at everything is an upgrade with a menu in front
 of it rather than a decision about what kind of car you want.
 
+**The map is where the game explains itself** (issue #181). A playtest produced
+five separate comments that were all one problem: every mechanic worked and
+none of them said so. The decision was one layer rather than five hints, and
+the layer has two halves. The Tab map carries a legend for every marker and the
+full list of keys, because it is already the screen a lost player opens and a
+legend you can only read while *not* driving is one you can actually read.
+Everything else is said at the moment it matters: a new car gets a plate saying
+you are driving it now, damage points at the nearest workshop and says a repair
+during a search ends the search, and a stuck car gets #179's prompt. One hint
+is volunteered - `TAB - map, legend and controls` - and it stops the first time
+the map is opened, because a timer either goes before a lost player has read it
+or nags one who is fine. The rule the legend has to keep holding: no two things
+share a colour *and* a shape.
+
 **Touch is one reading, not a second control path** (issue #89). The drive loop
 asks `held(id, ...keys)` and never learns whether the answer came from a key or
 a thumb. `TouchControls` takes its button set from the caller rather than

@@ -44,6 +44,15 @@ const VOICES: Record<string, string> = {
 };
 
 /**
+ * What the police have put across the road (#181).
+ *
+ * Roadblocks were drawn in the Enforcer's red and spike strips in the speed
+ * camera's yellow, so two of the six colours on the minimap meant two things
+ * each. A barrier is not a car and it is not a collectible; it gets its own.
+ */
+const HAZARD = '#ffffff';
+
+/**
  * 1st, 2nd, 3rd. Seven of them: a field is six cars and you are the seventh,
  * so last place is 7th and an array of six prints a bare number for it.
  */
@@ -56,6 +65,15 @@ export class Hud {
   wheel: QuickWheel | null = null;
   /** On-screen controls, when there are any (#89). */
   touch: TouchControls | null = null;
+  /**
+   * Whether the map has ever been opened this session (#181).
+   *
+   * The one hint the game volunteers, and it points at the screen that
+   * explains everything else. It is not on a timer: a timer either goes away
+   * before a lost player has read it or nags somebody who is fine. Opening the
+   * map once is proof they found it, and that is exactly when it should stop.
+   */
+  private seenMap = false;
 
   /**
    * How far the bottom-left readouts move up once there are thumbpads.
@@ -79,6 +97,7 @@ export class Hud {
     // it leaves the speedo and the minimap ghosting through the panel, which
     // reads as a rendering fault rather than as a map.
     if (this.showMap) {
+      this.seenMap = true;
       this.map(world);
       ctx.restore();
       return;
@@ -99,6 +118,7 @@ export class Hud {
     this.radio(world);
     this.event(world);
     this.stuck(world);
+    this.hint();
     this.banners(world);
     this.quickWheel(world);
     this.buttons();
@@ -169,6 +189,29 @@ export class Hud {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
     ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillText('DAMAGE', x + width + 10, y + 7);
+
+    // And where to do something about it (#181). "I have no clue how to repair
+    // damage" was a playtest comment about six workshops that exist, are on
+    // both maps, and that nothing ever points at. The distance is only shown
+    // once the damage is real, so it is an answer to a question the player is
+    // already asking.
+    let nearest = Infinity;
+    for (const shop of world.city.repairs) {
+      nearest = Math.min(nearest, Math.hypot(shop.at.x - world.x, shop.at.z - world.z));
+    }
+    if (nearest === Infinity) return;
+    const metres = Math.round(nearest / UNITS_PER_METRE);
+    const searching = world.police.state === 'cooldown';
+    ctx.fillStyle = searching ? '#5adc82' : 'rgba(90, 220, 130, 0.75)';
+    ctx.font = '600 11px system-ui, sans-serif';
+    // Beside the DAMAGE label rather than under the bar: under it is the last
+    // eight pixels of the canvas, and the line was drawn half off the screen.
+    const away = metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${metres} m`;
+    ctx.fillText(
+      searching ? `REPAIR ${away} - ENDS THE SEARCH` : `REPAIR ${away} - GREEN ON THE MAP`,
+      x + width + 72,
+      y + 7,
+    );
   }
 
   private heat(world: CityWorld): void {
@@ -287,14 +330,36 @@ export class Hud {
 
     const found = this.wheel ? null : world.finds.flash;
     if (!found) return;
+    // On a plate, and saying what happened (#181). The playtest comment was
+    // "the colour of my car just changed and I don't know why" - which is
+    // taking possession of a car, one of the better moments in the design,
+    // reading as a rendering glitch. A name on its own does not connect the
+    // two; "you are driving it now" does.
     ctx.globalAlpha = Math.min(1, world.finds.flashLeft / (FIND_FLASH * 0.4));
+    // Wide enough for the longest blurb in `cars.ts`, and clear of the
+    // collection counters that run across the top under the minimap.
+    const w = 580;
+    const x = WIDTH / 2 - w / 2;
+    const y = HEIGHT / 2 - 66;
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
+    ctx.fillRect(x, y, w, 116);
+    ctx.strokeStyle = 'rgba(127, 227, 255, 0.55)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, 116);
+
     ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(127, 227, 255, 0.75)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('NEW CAR  ·  FOUND PARKED', WIDTH / 2, y + 26);
     ctx.fillStyle = '#7fe3ff';
-    ctx.font = '800 44px system-ui, sans-serif';
-    ctx.fillText(found.name.toUpperCase(), WIDTH / 2, HEIGHT / 2 - 70);
+    ctx.font = '800 40px system-ui, sans-serif';
+    ctx.fillText(found.name.toUpperCase(), WIDTH / 2, y + 68);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '500 15px system-ui, sans-serif';
-    ctx.fillText(found.blurb, WIDTH / 2, HEIGHT / 2 - 42);
+    ctx.font = '500 14px system-ui, sans-serif';
+    ctx.fillText(found.blurb, WIDTH / 2, y + 92);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.font = '500 12px system-ui, sans-serif';
+    ctx.fillText('you are driving it now  ·  hold Q to change back', WIDTH / 2, y + 108);
     ctx.globalAlpha = 1;
   }
 
@@ -387,13 +452,20 @@ export class Hud {
 
     // Roadblocks, gap and all. Drawing the hole matters as much as drawing the
     // wall: the decision is which one you are looking at.
+    //
+    // White, not red (#181). Red was the Enforcer *and* the roadblock, and a
+    // player reading the map had no way to know which one they were looking
+    // at. The rule now is that a colour means one thing: red is the unit that
+    // comes at you head on, and `HAZARD` is anything the police have put
+    // across the road - a barrier or a strip - which is a different problem
+    // with a different answer.
     for (const block of world.police.roadblocks) {
       const bx = (block.x - world.x) * scale;
       const bz = -(block.z - world.z) * scale;
       if (Math.hypot(bx, bz) > radius + block.half * scale) continue;
       const ax = block.ax * scale;
       const az = -block.az * scale;
-      ctx.strokeStyle = '#ff5a45';
+      ctx.strokeStyle = HAZARD;
       ctx.lineWidth = 3;
       const ends: [number, number][] =
         block.gap === null
@@ -480,7 +552,9 @@ export class Hud {
       const sx = (strip.x - world.x) * scale;
       const sz = -(strip.z - world.z) * scale;
       if (Math.hypot(sx, sz) > radius + Math.abs(strip.to) * scale) continue;
-      ctx.strokeStyle = '#ffd166';
+      // Was the same yellow as a speed camera, which is a thing you drive at
+      // on purpose (#181).
+      ctx.strokeStyle = HAZARD;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(sx + strip.ax * scale * strip.from, sz - strip.az * scale * strip.from);
@@ -1199,12 +1273,17 @@ export class Hud {
       ctx.fill();
     }
 
-    // Where the traps are, with the heat they spring at.
+    // Where the traps are, with the heat they spring at. A ring rather than a
+    // dot (#181): red already means the Enforcer, and a place you can choose
+    // to drive to is not a car coming the other way. No two things on either
+    // map now share a colour *and* a shape.
     for (const spot of world.city.ambushes) {
-      ctx.fillStyle = '#ff5a45';
+      ctx.strokeStyle = '#ff5a45';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(px(spot.at.x), py(spot.at.z), 4, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(px(spot.at.x), py(spot.at.z), 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#ff5a45';
       ctx.font = '600 10px system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(String(spot.level), px(spot.at.x) + 6, py(spot.at.z) + 3);
@@ -1232,11 +1311,34 @@ export class Hud {
       ctx.fill();
     }
 
-    // The car, so the map is a place you are in rather than a diagram.
+    // You, and unmistakably (#181). It used to be a cyan dot the size of a
+    // parked car, on a map with seven parked cars on it, and the playtest
+    // comment was "make it easy to see the player - I am not sure I can". It
+    // is drawn last, in white, pointing the way the car is pointing, with a
+    // ring around it that nothing else has.
+    const mx = px(world.x);
+    const my = py(world.z);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(px(world.x), py(world.z), 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#7fe3ff';
+    ctx.arc(mx, my, 13, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(mx, my);
+    // North-up map, so the arrow carries the heading rather than the map.
+    ctx.rotate(world.heading);
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(6, 7);
+    ctx.lineTo(0, 4);
+    ctx.lineTo(-6, 7);
+    ctx.closePath();
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
+    ctx.restore();
+
+    this.legend(world);
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffffff';
@@ -1250,6 +1352,137 @@ export class Hud {
         `  ·  ${world.finds.waiting.length} cars still parked`,
       WIDTH / 2,
       HEIGHT - 20,
+    );
+  }
+
+  /**
+   * What everything means, and which key does it (#181).
+   *
+   * The one missing layer, and it lives here rather than in five places
+   * because that is the decision the issue asked for: the map is already the
+   * screen a lost player opens, it is already full-screen, and a legend that
+   * is only readable while you are *not* driving is a legend you can actually
+   * read. Everything else the game teaches, it teaches at the moment it
+   * matters - a new car, a repair, being stuck.
+   *
+   * The colours are read from the same constants the map draws with wherever
+   * there is one, because a legend that drifts out of step with the map is
+   * worse than none.
+   */
+  private legend(world: CityWorld): void {
+    const { ctx } = this;
+
+    const rows: [string, string, 'dot' | 'line' | 'cross' | 'ring'][] = [
+      ['you', '#ffffff', 'ring'],
+      ['police', '#4d8bff', 'dot'],
+      ['Enforcer - comes at you head on', '#ff5a45', 'dot'],
+      ['roadblock or spikes', HAZARD, 'line'],
+      ['they are searching here', 'rgba(255, 210, 90, 0.85)', 'ring'],
+      ['repair shop - drive through it', '#5adc82', 'cross'],
+      ['car parked, yours if you reach it', '#7fe3ff', 'dot'],
+      ['billboard', '#ff9f45', 'dot'],
+      ['speed camera', '#ffd166', 'dot'],
+      ['ambush - the number is the heat', '#ff5a45', 'ring'],
+      ['race route - orange for a speed run', '#7fe3ff', 'line'],
+      ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
+    ];
+
+    const keys: [string, string][] = [
+      ['ARROWS / WASD', 'drive'],
+      ['SHIFT', 'nitrous'],
+      ['ENTER', 'start what you are parked on'],
+      ['HOLD Q', 'Quick Wheel: E branch, 1-9 picks'],
+      ['TAB', 'this map'],
+      ['B', 'look back'],
+    ];
+
+    const panel = (x: number, y: number, w: number, h: number, title: string) => {
+      ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillText(title, x + 12, y + 18);
+    };
+
+    // Down the left, where the bay is: the water is the one part of the map
+    // with nothing on it worth covering.
+    const lx = 16;
+    const ly = 44;
+    const lw = 250;
+    panel(lx, ly, lw, 30 + rows.length * 19, 'WHAT THINGS ARE');
+
+    rows.forEach(([label, colour, shape], i) => {
+      const y = ly + 34 + i * 19;
+      ctx.strokeStyle = colour;
+      ctx.fillStyle = colour;
+      ctx.lineWidth = 2;
+      const x = lx + 18;
+      if (shape === 'dot') {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (shape === 'ring') {
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (shape === 'line') {
+        ctx.beginPath();
+        ctx.moveTo(x - 7, y);
+        ctx.lineTo(x + 7, y);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x - 5, y);
+        ctx.lineTo(x + 5, y);
+        ctx.moveTo(x, y - 5);
+        ctx.lineTo(x, y + 5);
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+      ctx.font = '500 12px system-ui, sans-serif';
+      ctx.fillText(label, lx + 34, y + 4);
+    });
+
+    const kw = 330;
+    const kx = WIDTH - 16 - kw;
+    const ky = 44;
+    // Tall enough to hold the note under the keys: a line of text hanging off
+    // the bottom of a panel reads as an overflow rather than as a footnote.
+    panel(kx, ky, kw, 30 + keys.length * 19 + 70, 'CONTROLS');
+    keys.forEach(([key, what], i) => {
+      const y = ky + 34 + i * 19;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#ffd166';
+      ctx.font = '600 11px ui-monospace, "SF Mono", Menlo, monospace';
+      ctx.fillText(key, kx + 12, y + 4);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+      ctx.font = '500 12px system-ui, sans-serif';
+      ctx.fillText(what, kx + 104, y + 4);
+    });
+
+    // The one mechanic nobody finds by playing, said where it is relevant: it
+    // is the smartest thing in the pursuit and it is invisible.
+    ctx.textAlign = 'left';
+    ctx.font = '500 12px system-ui, sans-serif';
+    const foot = ky + 30 + keys.length * 19;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(kx + 12, foot + 4);
+    ctx.lineTo(kx + kw - 12, foot + 4);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(90, 220, 130, 0.9)';
+    ctx.fillText('Driving through a repair shop while they', kx + 12, foot + 24);
+    ctx.fillText('are searching ends the search.', kx + 12, foot + 40);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillText(
+      `${world.city.repairs.length} workshops, marked in green.`,
+      kx + 12,
+      foot + 60,
     );
   }
 
@@ -1314,6 +1547,19 @@ export class Hud {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.font = '600 15px system-ui, sans-serif';
     ctx.fillText('ENTER  -  back onto the road, heat and all', WIDTH / 2, y + 54);
+  }
+
+  /** Where to find out what any of this means, until they have been (#181). */
+  private hint(): void {
+    if (this.seenMap || this.touch?.active) return;
+    const { ctx } = this;
+    // Top centre. The bottom strip is speed, nitrous, damage and the line
+    // pointing at the nearest workshop, and the hint was drawn straight
+    // through the last of those.
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.fillText('TAB  -  map, legend and controls', WIDTH / 2, 30);
   }
 
   private banners(world: CityWorld): void {

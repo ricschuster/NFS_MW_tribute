@@ -230,7 +230,7 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Nine issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
+**Eight issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
 systems) are closed, and #165 closed the rebuild out by deleting the thing it
 replaced. Nearly everything now open came from **one person playing the game for
 ten minutes** on 2026-09-06, which is the single most important fact on this
@@ -290,14 +290,20 @@ wrecked car can escape, and measured under realistic conditions the answer is
 *damage makes no difference* - see Known problems. But "can I end this" turned
 out to be the more pressing question, and #177/#178 have now answered it.
 
-### The game never explains itself
+### The game explains itself now (#181, done)
 
-**#181.** Five separate playtest comments, one missing layer: the minimap has no
-legend and red means two different things, taking possession of a car reads as a
-rendering glitch, six repair workshops exist and nothing points at them, the
-player is hard to find on the Tab map, and the Quick Wheel (hold **Q**, **E**
-switches branch, **1**-**9** picks) never says so. Filed as one issue on
-purpose - five bolted-on hints would be worse than one decided layer.
+Five playtest comments, one missing layer, and the layer went in as one thing
+rather than five hints. The Tab map carries a legend and the key list; a new car
+gets a plate saying you are driving it now; damage points at the nearest
+workshop and says that repairing during a search ends the search; the player is
+a white ringed arrow drawn last. One hint is volunteered, `TAB - map, legend and
+controls`, and it stops the first time the map is opened.
+
+**The rule to keep**: no two things share a colour *and* a shape. Roadblocks
+were the Enforcer's red and spike strips were the speed camera's yellow, so two
+of six colours meant two things each; police barriers are white lines now and
+ambushes are rings rather than dots. Adding a marker means checking that pair,
+and adding a mechanic means deciding where it gets explained.
 
 ### The rest, roughly by how much they cost a player
 

@@ -17,7 +17,8 @@ are parked on, **B** to glance behind, **Tab** to hold the collection map open,
 **Q** to hold the Quick Wheel open (**E** switches branch, **1**-**9** picks),
 **M** to mute. On a phone, on-screen controls appear as soon as you touch the
 screen: steering, throttle, brake, nitrous, enter, the map, the Quick Wheel and
-a glance behind.
+a glance behind. None of that has to be read here: **Tab** holds the map open,
+and the map carries a legend for every marker and the same list of keys.
 
 Speed, nitrous, heat, Rep, takedowns and a heading-up minimap are drawn over
 the world, and the police radio calls a roadblock before you can see it and air
