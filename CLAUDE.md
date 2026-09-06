@@ -223,6 +223,15 @@ comes out straight is not the car they are looking for. It does nothing while
 they still have eyes on you, which is what makes it a decision about when
 rather than a button that cancels a pursuit.
 
+**Being stuck is measured in ground covered, not in speed** (issue #179). A car
+wedged nose-first into a corner rocks back and forth for as long as the
+throttle is held, so any test on speed says it is moving. `CityWorld` watches
+how far it has got from where it last made progress, and after `STUCK_TIME` of
+being asked to move and not moving it offers a reset. The reset takes priority
+over everything else confirm can mean, and puts the car on the *nearest* road
+keeping heat, damage and any running event - which is what stops a free reset
+being a way out of a pursuit.
+
 **A ladder rival is two fights** (issue #66). Winning the race pays and
 nothing else: the rival runs, and the ladder does not move until you have
 caught the car and wrecked it. The runner is a `GraphCar` choosing junctions,

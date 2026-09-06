@@ -66,6 +66,8 @@ import {
   BREAKER_BLAST_DAMAGE,
   BREAKER_HEAT,
   BREAKER_DEBRIS,
+  STUCK_TIME,
+  STUCK_PROGRESS,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
@@ -82,7 +84,14 @@ import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
 import { CityPolice } from './citypolice';
-import { CityGrid, surfaceAt, roadHeightAt, carriageway, inWater } from './city/grid';
+import {
+  CityGrid,
+  surfaceAt,
+  roadHeightAt,
+  carriageway,
+  inWater,
+  distanceToRoad,
+} from './city/grid';
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -185,6 +194,16 @@ export class CityWorld {
   /** Seconds left on the ESCAPED banner. */
   escapedFlash = 0;
 
+  /**
+   * How long the car has been trying to move and getting nowhere (#179).
+   *
+   * The one failure a player cannot play their way out of: every other bad
+   * outcome - busted, wrecked, beaten - hands you back a car that drives, and
+   * a car wedged between a building and a wreck hands you back the menu. This
+   * is the clock that notices, and `canRecover` is what it earns.
+   */
+  stuckFor = 0;
+
   /** Cars taken out of play, still sitting in the street (#94). */
   readonly wrecks: Wreck[] = [];
   /** Things that have been brought down, by id, so they stay down (#57). */
@@ -282,6 +301,9 @@ export class CityWorld {
   private readonly withTraffic: boolean;
   private readonly withPolice: boolean;
   private bustHold = 0;
+  /** Where the car last put real ground behind it, for the stuck clock (#179). */
+  private progressX = 0;
+  private progressZ = 0;
 
   constructor(city: City = kestrelBay(), options: CityWorldOptions = {}) {
     this.city = city;
@@ -370,6 +392,115 @@ export class CityWorld {
     this.heading = Math.atan2(b.x - a.x, b.z - a.z);
     this.speed = 0;
     this.onRoad = best;
+    this.markProgress();
+  }
+
+  /**
+   * Is there a way out of where the car is (#179)?
+   *
+   * Offered rather than taken: a car that resets itself is a car that teleports
+   * out from under a player who was reversing off a kerb on purpose. What earns
+   * the offer is asking the car to move and it not moving, for `STUCK_TIME`.
+   */
+  get canRecover(): boolean {
+    if (this.busted || this.stuckFor < STUCK_TIME) return false;
+    // Still where it got stuck. Anything that puts the car somewhere else -
+    // lining up on a grid, a shot set up by hand - has already answered the
+    // question, and an offer left standing from a minute ago would eat the
+    // confirm that was meant to start the race.
+    return Math.hypot(this.x - this.progressX, this.z - this.progressZ) <= STUCK_PROGRESS;
+  }
+
+  /**
+   * Put the car back on the nearest road, pointing the way it was already
+   * facing (#179).
+   *
+   * *Nearest*, and that is the whole design. The reset has to cost nothing
+   * while being chased - a reset you have to save up for is a reset nobody
+   * takes when they need it - so what stops it being a way out of a pursuit is
+   * that it does not move you anywhere useful. Heat, damage, shredded tyres
+   * and whatever event is running all carry over; the cop that had you pinned
+   * is still beside you. What you get back is a car that can be driven.
+   */
+  recover(): void {
+    const road = this.nearestRoad();
+    if (!road) return;
+
+    const a = this.city.nodes[road.a].pos;
+    const b = this.city.nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const lengthSquared = dx * dx + dz * dz;
+    // Along the centreline, but kept off the ends: a junction is where the
+    // wrecks and the roadblocks are, and being dropped into one is how a car
+    // gets stuck a second time.
+    const t = lengthSquared < 1 ? 0.5 : ((this.x - a.x) * dx + (this.z - a.z) * dz) / lengthSquared;
+    const held = Math.max(0.15, Math.min(0.85, t));
+    this.x = a.x + dx * held;
+    this.z = a.z + dz * held;
+    this.y = roadHeightAt(this.city, road, this.x, this.z);
+    this.onRoad = road;
+
+    // Along the road, in whichever direction is closer to the way the car was
+    // already pointing. Being spun round by a reset is disorienting in a place
+    // where knowing which way you are facing is most of knowing where you are.
+    const along = Math.atan2(dx, dz);
+    const facing = Math.cos(along - this.heading) >= 0 ? along : along + Math.PI;
+    this.heading = facing;
+
+    this.speed = 0;
+    this.falling = false;
+    this.fallSpeed = 0;
+    this.crashFlash = 0;
+    this.markProgress();
+  }
+
+  /**
+   * The road this point belongs to, whatever it is standing on.
+   *
+   * A plain scan of every road rather than the grid, because the case this
+   * exists for is a car wedged somewhere with no road in its cell at all, and
+   * a few thousand distance tests once every few minutes is nothing. Height is
+   * a tie-break rather than a filter: a car that has fallen off the viaduct
+   * wants the street it landed on, and one wedged on the deck wants the deck.
+   */
+  private nearestRoad(): CityRoad | null {
+    let best: CityRoad | null = null;
+    let bestCost = Infinity;
+    for (const road of this.city.roads) {
+      const gap = distanceToRoad(this.city, road, this.x, this.z);
+      const drop = Math.abs(roadHeightAt(this.city, road, this.x, this.z) - this.y);
+      const cost = gap + drop * 4;
+      if (cost < bestCost) {
+        bestCost = cost;
+        best = road;
+      }
+    }
+    return best;
+  }
+
+  /** Here is where the car is getting somewhere from now. */
+  private markProgress(): void {
+    this.progressX = this.x;
+    this.progressZ = this.z;
+    this.stuckFor = 0;
+  }
+
+  /**
+   * Run the stuck clock (#179).
+   *
+   * Only while the car is being asked to move: a car parked at a start line
+   * reading the offer is not stuck, and a prompt that appears whenever you
+   * stop is a prompt nobody reads. Distance covered rather than speed, because
+   * a car rocking nose-first into a corner has plenty of speed and is going
+   * nowhere - which is precisely the state this exists to notice.
+   */
+  private watchProgress(dt: number, input: InputState): void {
+    if (Math.hypot(this.x - this.progressX, this.z - this.progressZ) > STUCK_PROGRESS) {
+      this.markProgress();
+      return;
+    }
+    if (input.up || input.down) this.stuckFor += dt;
   }
 
   /** The rival you would face next, or null once the ladder is cleared (#91). */
@@ -445,7 +576,12 @@ export class CityWorld {
     }
 
     const rival = this.currentRival;
-    if (confirmPressed && this.race.state === 'idle' && this.ambush.state === 'idle') {
+    // Ahead of everything else confirm can mean (#179). A car that has been
+    // wedged for three seconds on a start line is a car whose driver is asking
+    // to be unwedged, not one lining up for a race they cannot drive to.
+    if (confirmPressed && this.canRecover) {
+      this.recover();
+    } else if (confirmPressed && this.race.state === 'idle' && this.ambush.state === 'idle') {
       const route = this.atStartLine;
       const spot = this.atAmbush;
       if (route && rival && this.challengeReady) this.startRace(route, rival);
@@ -527,6 +663,9 @@ export class CityWorld {
 
     this.move(dt);
     this.settle(dt);
+    // After the move, so it reads where the car actually got to rather than
+    // where it was aimed.
+    this.watchProgress(dt, input);
     if (this.withTraffic) this.traffic.update(dt, this);
     // No pursuit during a sanctioned event: a race you have to win while
     // being rammed by a heat-six Enforcer is not a race, it is a pursuit with

@@ -29,7 +29,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,7 +37,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -497,6 +497,68 @@ for (const view of VIEWS) {
       world.rep.total = 48300;
     });
     await page.waitForTimeout(2400);
+  }
+
+  if (view === 'stuck') {
+    // The way out being offered (#179), and driven into rather than arranged:
+    // the same held turn that makes the `crash` shot ends nose-first against a
+    // building, and holding the throttle there is exactly the state a player
+    // gets into. Physics runs off real elapsed time rather than frames, so the
+    // stuck clock keeps its own time however slowly this renders.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+
+      // A wall with road in front of it. Driving into one at random is how the
+      // first attempt at this shot went and it photographed the inside of a
+      // block: what makes the picture legible is the street the car came off.
+      const buildings = [...world.city.buildings]
+        .sort(
+          (a, b) =>
+            Math.hypot((a.footprint.minX + a.footprint.maxX) / 2 - world.x, (a.footprint.minZ + a.footprint.maxZ) / 2 - world.z) -
+            Math.hypot((b.footprint.minX + b.footprint.maxX) / 2 - world.x, (b.footprint.minZ + b.footprint.maxZ) / 2 - world.z),
+        )
+        .slice(0, 40);
+      const faces = [
+        { x: 0, z: -1, heading: 0 },
+        { x: 0, z: 1, heading: Math.PI },
+        { x: -1, z: 0, heading: Math.PI / 2 },
+        { x: 1, z: 0, heading: -Math.PI / 2 },
+      ];
+
+      let placed = false;
+      for (const building of buildings) {
+        const f = building.footprint;
+        for (const face of faces) {
+          world.x = (f.minX + f.maxX) / 2 + face.x * ((f.maxX - f.minX) / 2 + 5 * metre);
+          world.z = (f.minZ + f.maxZ) / 2 + face.z * ((f.maxZ - f.minZ) / 2 + 5 * metre);
+          world.y = 0;
+          world.heading = face.heading;
+          world.speed = 0;
+          world.step(1 / 60, none);
+          if (world.onRoad) {
+            placed = true;
+            break;
+          }
+        }
+        if (placed) break;
+      }
+
+      // Then hold the throttle into it. Stepped by hand: the car rocks against
+      // the wall for the whole of `STUCK_TIME`, and at two frames a second a
+      // driven version of this is thirty seconds of real time and no more
+      // certain of where it ends up.
+      world.crashFlash = 0;
+      world.rep.total = 22400;
+      for (let t = 0; t < 5; t += 1 / 60) world.step(1 / 60, { ...none, up: true });
+      world.speed = 0;
+      world.crashFlash = 0;
+    });
+    await page.waitForTimeout(1600);
   }
 
   if (view === 'claim') {

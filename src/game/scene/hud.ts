@@ -100,6 +100,7 @@ export class Hud {
     this.collection(world);
     this.radio(world);
     this.event(world);
+    this.stuck(world);
     this.banners(world);
     this.quickWheel(world);
     this.buttons();
@@ -1302,6 +1303,40 @@ export class Hud {
       width * Math.max(0, 1 - world.police.searchLeft / full),
       6,
     );
+  }
+
+  /**
+   * The way out of a car that has stopped going anywhere (#179).
+   *
+   * Drawn in the middle of the screen rather than down with the event prompts,
+   * because it has to be read by somebody who has just concluded the game is
+   * broken - and because it must not take the place of the lap counter or the
+   * start-line offer, either of which can be on screen while the car is
+   * wedged.
+   */
+  private stuck(world: CityWorld): void {
+    if (!world.canRecover) return;
+    const { ctx } = this;
+
+    // On a plate, because what is behind it is the car: a stuck car is always
+    // in the middle of the screen, and amber text over an orange bonnet is a
+    // prompt nobody reads.
+    const width = 380;
+    const x = WIDTH / 2 - width / 2;
+    const y = HEIGHT / 2 + 72;
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
+    ctx.fillRect(x, y, width, 68);
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, 68);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd166';
+    ctx.font = '700 24px system-ui, sans-serif';
+    ctx.fillText('STUCK', WIDTH / 2, y + 30);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '600 15px system-ui, sans-serif';
+    ctx.fillText('ENTER  -  back onto the road, heat and all', WIDTH / 2, y + 54);
   }
 
   private banners(world: CityWorld): void {
