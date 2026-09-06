@@ -889,3 +889,38 @@ export const CHECKPOINT_SPACING = m(220);
 export const CITY_COUNTDOWN = 3;
 /** How long the result banner holds before control comes back. */
 export const CITY_RESULT_HOLD = 5;
+
+/**
+ * A full field (#71).
+ *
+ * A race against one car is a race with nothing happening in it. A field
+ * changes how a race reads more than any other single thing: there are cars to
+ * pass, a position to hold, and something going on ahead of you the whole way.
+ */
+export const FIELD_SIZE = 6;
+/**
+ * How much slower each car down the field is, as difficulty.
+ *
+ * The rival being challenged is always the quickest one in it, so winning the
+ * race and beating them are the same thing - a field where you could come
+ * second to somebody you have already beaten and still rank up would make the
+ * ladder mean nothing.
+ */
+export const FIELD_SPREAD = 0.07;
+/**
+ * How much a car's pace wanders over the race.
+ *
+ * Without it every position is settled in the first corner and the rest of the
+ * race is a procession. Kept small enough that the order still means what the
+ * difficulties say it means, and small enough that no car in the field ever
+ * goes quicker than the player's top speed.
+ */
+export const FIELD_WOBBLE = 0.06;
+/**
+ * How far apart the field runs across the road.
+ *
+ * The route is one line, and six cars driving down one line is one car drawn
+ * six times. Each takes its own offset from it, which is also what makes a
+ * pack look like a pack from behind.
+ */
+export const FIELD_LANE = m(3.2);

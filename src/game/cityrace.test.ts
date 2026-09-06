@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CityRace } from './cityrace';
+import { CityRace, fieldFor } from './cityrace';
 import { pointAt } from './city/routes';
 import { kestrelBay } from './city/index';
 import { RIVALS } from './rivals';
@@ -13,6 +13,10 @@ import {
   CITY_COUNTDOWN,
   REFERENCE_TOP_SPEED,
   SURFACE_REACH,
+  FIELD_SIZE,
+  FIELD_WOBBLE,
+  RIVAL_BASE_SPEED_FRAC,
+  RIVAL_DIFF_SPEED_FRAC,
 } from './constants';
 import { distanceToRoad } from './city/grid';
 
@@ -147,6 +151,51 @@ describe('racing one', () => {
     expect(race.won).toBe(false);
   });
 
+  it('lines up a full field, with the challenge rival quickest in it', () => {
+    const race = new CityRace();
+    race.begin(route, RIVALS[4]);
+    expect(race.runners).toBe(FIELD_SIZE + 1);
+    expect(race.challenger).toBe(RIVALS[4]);
+    for (const car of race.field.slice(1)) {
+      expect(car.rival.difficulty).toBeLessThan(RIVALS[4].difficulty);
+    }
+  });
+
+  // Winning the race and beating the rival have to be the same thing, or you
+  // could come second to somebody you have already beaten and still rank up.
+  it('makes the challenge rival the car to beat', () => {
+    for (const challenge of RIVALS) {
+      const field = fieldFor(challenge);
+      expect(field[0]).toBe(challenge);
+      for (const car of field.slice(1)) {
+        expect(car.difficulty).toBeLessThanOrEqual(challenge.difficulty);
+      }
+    }
+  });
+
+  // No car in the field may ever be quicker than the player's top speed, wobble
+  // and all: a race you cannot win is not an event.
+  it('never sends anybody faster than you can go', () => {
+    for (const challenge of RIVALS) {
+      for (const car of fieldFor(challenge)) {
+        const pace = RIVAL_BASE_SPEED_FRAC + car.difficulty * RIVAL_DIFF_SPEED_FRAC;
+        expect(pace * (1 + FIELD_WOBBLE)).toBeLessThan(1);
+      }
+    }
+  });
+
+  it('does not leave the field in lockstep', () => {
+    const race = new CityRace();
+    race.begin(route, RIVALS[5]);
+    run(race, 0, CITY_COUNTDOWN + 0.1, 'racing');
+    for (let t = 0; t < 30; t += STEP) race.update(STEP, route.start, REFERENCE_TOP_SPEED);
+
+    // Not simply ordered by difficulty at every instant: the wobble is what
+    // makes positions change rather than settle in the first corner.
+    const gaps = race.field.slice(1).map((car, i) => race.field[i].dist - car.dist);
+    expect(new Set(gaps.map((g) => Math.round(g))).size).toBeGreaterThan(1);
+  });
+
   it('says who is ahead', () => {
     const race = new CityRace();
     race.begin(route, rival);
@@ -158,7 +207,7 @@ describe('racing one', () => {
     behind.begin(route, rival);
     run(behind, 0, CITY_COUNTDOWN + 0.1, 'racing');
     for (let t = 0; t < 6; t += STEP) behind.update(STEP, route.start, REFERENCE_TOP_SPEED);
-    expect(behind.position).toBe(2);
+    expect(behind.position).toBeGreaterThan(1);
   });
 
   it('points at the next gate while racing, and at nothing otherwise', () => {
@@ -190,7 +239,7 @@ describe('racing one', () => {
       race.begin(route, RIVALS[which]);
       run(race, 0, CITY_COUNTDOWN + 0.1, 'racing');
       for (let t = 0; t < 10; t += STEP) race.update(STEP, route.start, REFERENCE_TOP_SPEED);
-      return race.rival!.dist;
+      return race.field[0].dist;
     };
     expect(covers(RIVALS.length - 1)).toBeGreaterThan(covers(0));
   });

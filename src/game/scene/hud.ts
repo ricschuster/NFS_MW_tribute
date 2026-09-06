@@ -30,6 +30,12 @@ import type { CityWorld } from '../cityworld';
  * you were, because there was one road and you were on it. In a 5 x 4 km city
  * a player without a map is lost, and being lost is not the same as exploring.
  */
+/**
+ * 1st, 2nd, 3rd. Seven of them: a field is six cars and you are the seventh,
+ * so last place is 7th and an array of six prints a bare number for it.
+ */
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
+
 export class Hud {
   /** Held while the collection map is open (#93). Set by whoever reads input. */
   showMap = false;
@@ -586,14 +592,18 @@ export class Hud {
       ctx.fillStyle = '#ffffff';
       ctx.font = '800 120px system-ui, sans-serif';
       ctx.fillText(String(Math.max(1, Math.ceil(race.countdown))), WIDTH / 2, HEIGHT / 2 + 40);
-      if (race.rival) {
-        ctx.fillStyle = race.rival.rival.color;
+      const challenger = race.challenger;
+      if (challenger) {
+        ctx.fillStyle = challenger.color;
         ctx.font = '700 20px system-ui, sans-serif';
         ctx.fillText(
-          `#${race.rival.rival.rank}  ${race.rival.rival.name.toUpperCase()}`,
+          `#${challenger.rank}  ${challenger.name.toUpperCase()}`,
           WIDTH / 2,
           HEIGHT / 2 - 90,
         );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.font = '500 14px system-ui, sans-serif';
+        ctx.fillText(`a field of ${race.runners}`, WIDTH / 2, HEIGHT / 2 - 66);
       }
       return;
     }
@@ -619,13 +629,13 @@ export class Hud {
     ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
     ctx.fillText(`${Math.min(route.laps, race.lap + 1)}/${route.laps}`, WIDTH / 2 - 50, 42);
 
-    const first = race.position === 1;
+    const place = race.position;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
     ctx.font = '600 13px system-ui, sans-serif';
     ctx.fillText('POS', WIDTH / 2 + 30, 40);
-    ctx.fillStyle = first ? '#5adc82' : '#ff9f45';
+    ctx.fillStyle = place === 1 ? '#5adc82' : '#ff9f45';
     ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
-    ctx.fillText(first ? '1st' : '2nd', WIDTH / 2 + 70, 42);
+    ctx.fillText(`${ORDINALS[place] ?? place}/${race.runners}`, WIDTH / 2 + 70, 42);
 
     this.arrow(world);
   }
