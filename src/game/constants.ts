@@ -924,3 +924,22 @@ export const FIELD_WOBBLE = 0.06;
  * pack look like a pack from behind.
  */
 export const FIELD_LANE = m(3.2);
+
+/**
+ * Speed Runs (#72).
+ *
+ * One lap, scored on your average speed over it rather than on where you
+ * finished. It rewards a committed line and punishes every moment spent slow,
+ * which makes traffic and corners cost far more than they do in a circuit: the
+ * clock keeps running whatever you are doing, so a crash is unrecoverable in a
+ * way it is not in a race you can claw back.
+ *
+ * The targets are set from measurement rather than from feel. A reference
+ * driver following the route line laps the city at 57% to 68% of top speed on
+ * the loops it can complete, so a target of 38% to 52% is a lap driven with
+ * commitment rather than a lap driven perfectly.
+ */
+export const SPEEDRUN_TARGET = 0.38;
+export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.14;
+/** The average is meaningless in the first instants; hold it back until then. */
+export const SPEEDRUN_SETTLE = 0.75;
