@@ -297,6 +297,14 @@ export const BUILDING_MIN_LOT = m(14);
 
 /** Street furniture (#84), placed along the generated streets. */
 export const LAMP_SPACING = m(32);
+/**
+ * How far a lamp's arm reaches out over the carriageway.
+ *
+ * Short of a full lane: the arm overhangs the kerb and the first metre of
+ * road, which is what a street lamp does, without a lamp head hanging over
+ * the middle of a two-lane street.
+ */
+export const LAMP_REACH = 2.2 * UNITS_PER_METRE;
 export const LAMP_KERB_GAP = m(1.2);
 export const SIGN_KERB_GAP = m(1.6);
 export const BARRIER_SPACING = m(6);

@@ -551,6 +551,22 @@ describe('the elevated interstate', () => {
 });
 
 describe('street furniture', () => {
+  // A lamp reaches over the carriageway, and only the generator knows which
+  // way that is: by the time a prop reaches the renderer it is a point with a
+  // facing, and both sides of the street look identical from there.
+  it('tells the renderer which way a lamp leans', () => {
+    const lamps = city.furniture.filter((prop) => prop.kind === 'lamp');
+    expect(lamps.length).toBeGreaterThan(0);
+    for (const lamp of lamps) expect(Math.abs(lamp.reach)).toBe(1);
+    // Lamps alternate down a kerb, so both directions have to occur.
+    expect(new Set(lamps.map((lamp) => lamp.reach)).size).toBe(2);
+    // Nothing else has a side to it, and a sign shoved sideways by a stray
+    // reach would stand in the road.
+    for (const prop of city.furniture) {
+      if (prop.kind !== 'lamp') expect(prop.reach).toBe(0);
+    }
+  });
+
   it('puts lamps, signs and barriers on the streets', () => {
     const kinds = new Set(city.furniture.map((p) => p.kind));
     expect([...kinds].sort()).toEqual(['barrier', 'lamp', 'sign']);

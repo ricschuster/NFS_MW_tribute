@@ -161,6 +161,8 @@ function lamps(rng: Rng, city: City, road: CityRoad, props: StreetProp[]): void 
       at: { x: a.x + along.x * at + across.x * offset * side, z: a.z + along.z * at + across.z * offset * side },
       y,
       angle,
+      // The arm reaches back over the road the lamp was offset from.
+      reach: -side as -1 | 1,
       kind: 'lamp',
       variant: rng.float(),
     });
@@ -183,6 +185,7 @@ function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
         },
         y,
         angle,
+        reach: 0,
         kind: 'barrier',
         variant: 0,
       });
@@ -241,6 +244,7 @@ function signs(rng: Rng, city: City, props: StreetProp[]): void {
       },
       y: 0,
       angle: Math.atan2(along.x, along.z),
+      reach: 0,
       kind: 'sign',
       variant: rng.float(),
     });

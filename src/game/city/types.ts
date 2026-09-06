@@ -160,6 +160,16 @@ export interface StreetProp {
   y: number;
   /** Facing, in radians about y: along the road it stands beside. */
   angle: number;
+  /**
+   * Which way the road is, across the prop's facing: -1 or 1.
+   *
+   * A lamp reaches over the carriageway rather than standing straight up, and
+   * nothing on the drawing side can work out which way that is - a prop knows
+   * where it is but not what it is beside. The generator does know, because it
+   * put the lamp a kerb's width off a centreline it was holding at the time,
+   * so it says. Zero for props with no side to them.
+   */
+  reach: -1 | 0 | 1;
   kind: FurnitureKind;
   variant: number;
 }
