@@ -194,10 +194,12 @@ Electron and Tauri is a heavyweight runtime dependency plus a CI and signing
 decision. Per the house rule that wants an ADR for a new dependency, that is a
 choice for a person, not something to settle by picking one and shipping it.
 
-**#14 tune driving feel** is blocked on a measurement that does not exist yet.
-See the city feel baseline under known problems: `npm run citylap` is the probe
-it needs, and the probe gets round one route of six. Tuning the car against a
-driver that cannot lap the city would be tuning against the driver.
+**#14 tune driving feel** is now unblocked. The measurement it wanted exists:
+`npm run citylap` gets a reference driver round all six routes and reports what
+it held on each. Start there rather than in `constants.ts` - and re-record both
+`docs/feel-baseline.json` and the lap table in whatever PR moves a constant,
+since the ladder in #91 and the speed-run targets are both tuned against this
+driver.
 
 **#11 replace vector-drawn art with sprites** is art for the *track* renderer,
 which ADR-0004 is retiring. Read it as "the city is still boxes" rather than as
@@ -246,20 +248,20 @@ and textures, behind the provider seam in `scene/`.
   `police.cops` with a position but a `t` that does not match it is silently
   teleported onto its road on the next step, because the pursuit re-derives
   every cop's place from the graph.
-- **There is no feel baseline for the city, and #14 stays open until there is.**
-  `npm run feel` only drives the track sim, which is a gap worth closing before
-  tuning city driving by feel - and more so now that #67 has given the city
-  eight cars whose handling nobody has measured. The throwaway probe written for
-  #72 is now a real one, `npm run citylap`, and it completes **one of the six
-  routes**. Getting it there found two player-visible city bugs the tests had
-  passed over for months (every route doubled back on itself; the perimeter
-  arterial stopped the car dead), both fixed in #129. The remaining failures are
-  two distinct modes and neither is understood yet: hundreds of building clips
-  *while on the line*, which is either the driver's line or streets narrower
-  than the car needs; and losing the route entirely, where the windowed
-  progress search drops the line and never recovers (worst case a kilometre off
-  with zero crashes). Fix the losing-the-line mode first - it is almost
-  certainly the probe, and it is hiding whatever the crashes are.
+- **The city feel baseline is a driver's, not a player's.** `npm run citylap`
+  now gets a reference driver round all six routes, and the average-speed
+  column is the first real measurement of how fast Kestrel Bay can be driven.
+  Read it as a floor rather than a target: the driver follows the centreline
+  at a margin under the grip limit and never touches nitrous, so a player has
+  headroom it does not. Getting it there found five bugs, two in the city and
+  three in the driver, and the test suite passed through every one of them.
+- **One speed run may not be winnable at the top difficulty.** The speed-run
+  target is `SPEEDRUN_TARGET` 0.38 rising to 0.52 with difficulty, and the
+  reference driver holds 39%, 57% and 62% on the three speed runs. Foundry
+  Mile at 39% clears the easiest target and nothing above it. That is not
+  proof it is unwinnable - nitrous and a line that cuts corners are both
+  available to a player and not to the driver - but it is the one number in
+  the table that looks like a difficulty cliff, and it is #14's to settle.
 - **The rival ladder is tuned against the probe's reference driver** and will
   need retuning whenever the car changes. Expect it rather than treating it as a
   regression. `npm run feel` has now been wrong a third time, for a third

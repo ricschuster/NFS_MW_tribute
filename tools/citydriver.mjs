@@ -101,7 +101,15 @@ export function routeDriver(route, K) {
       const px = a.x + dx * t;
       const pz = a.z + dz * t;
       const gap = Math.hypot(px - x, pz - z);
-      if (gap < bestGap) {
+      // `<=`, not `<`, and the difference is a driver that finishes. At a
+      // vertex the two segments share a point, so a car level with a corner
+      // is exactly as far from the road it is leaving as from the one it is
+      // joining. Keeping the first match points the driver back down the
+      // street it has already driven; because that heading is also the
+      // direction it is travelling, the cross-track term reads zero and
+      // nothing ever corrects it. It drives in a straight line to the edge of
+      // the map with the route reporting no error at all.
+      if (gap <= bestGap) {
         bestGap = gap;
         best = from + span * t;
         bestHeading = Math.atan2(dx, dz);
@@ -134,9 +142,21 @@ export function routeDriver(route, K) {
     return Math.abs(turn) < 1e-4 ? Infinity : arc / Math.abs(turn);
   }
 
-  /** The fastest the car can hold a bend of this radius. */
+  /**
+   * The fastest the car can hold a bend of this radius.
+   *
+   * `sqrt(grip * radius)` is the sim's own limit, and taking it literally is
+   * why this driver arrived at every right-angle junction sideways: the limit
+   * assumes an optimal line, and this follows the centreline. A right-angle
+   * turn taken at the limit sweeps a radius of roughly half the road's width,
+   * which fits only if the car starts hard against the outside kerb and clips
+   * the inside one. The margin is the difference between possible and
+   * repeatable, and it is the single biggest lever on how often this driver
+   * hits a building.
+   */
+  const CORNER_MARGIN = 0.65;
   const cornerSpeed = (radius) =>
-    radius === Infinity ? Infinity : Math.sqrt(K.LATERAL_GRIP * radius);
+    radius === Infinity ? Infinity : CORNER_MARGIN * Math.sqrt(K.LATERAL_GRIP * radius);
 
   return {
     length,
@@ -203,11 +223,22 @@ export function driveRoute(world, route, K, { seconds = 240, none, hold = () => 
   let crashes = 0;
   let offRoute = 0;
   let stuck = 0;
+  /** How long since the car last put any real distance of route behind it. */
+  let still = 0;
+  let lastCovered = 0;
+  /** Which way the current three-point turn is winding. 0 when not stuck. */
+  let escape = 0;
   let moved = false;
   let sinceHit = 1;
 
+  const trace = process.env.TRACE === route.name;
   for (let t = 0; t < seconds && covered < driver.length; t += K.STEP) {
     const found = driver.progress(world.x, world.z, along);
+    if (trace && Math.abs(t % 2) < K.STEP / 2) {
+      console.log(
+        `t=${t.toFixed(0)} lap=${((covered / driver.length) * 100).toFixed(0)}% x=${world.x.toFixed(0)} z=${world.z.toFixed(0)} spd=${world.speed.toFixed(0)} off=${(found.off / K.UNITS_PER_METRE).toFixed(1)}m hits=${crashes}`,
+      );
+    }
     let step = found.along - along;
     // Only forward motion counts, and only a plausible amount of it: a jump
     // across the loop is the search having been wrong, not distance covered.
@@ -228,14 +259,48 @@ export function driveRoute(world, route, K, { seconds = 240, none, hold = () => 
     while (error < -Math.PI) error += Math.PI * 2;
 
     if (covered > 3000) moved = true;
-    stuck = moved && Math.abs(world.speed) < world.maxSpeed * 0.02 ? stuck + K.STEP : 0;
-    if (stuck > 0.4 && stuck < 1.5) {
-      // Backing off whatever it is against, still aiming at the line.
-      world.step(K.STEP, { ...none, down: true, left: error > 0, right: error < 0, ...hold(world) });
+    // Stuck means "not getting anywhere", not "not moving". A car wedged nose
+    // into a corner rocks back and forth at a few hundred units per second
+    // for as long as you let it, which reads as moving to any speed test, and
+    // it will do that until the clock runs out. Measure the thing that
+    // actually matters: has any of the route gone by lately.
+    if (covered > lastCovered + 400) {
+      lastCovered = covered;
+      still = 0;
+    } else {
+      still += K.STEP;
+    }
+    stuck = moved && still > 1.5 ? stuck + K.STEP : 0;
+    if (stuck > 0.4) {
+      // A three-point turn, with the steering *latched*.
+      //
+      // Deciding which way to turn from the current heading error on every
+      // frame is what wedged this driver against a wall for three minutes at
+      // a time: pinned nose-in, the error is close to a half turn, its sign
+      // flips with every twitch, and the car rocks forward and back inside a
+      // half-metre box until the clock runs out. Pick a direction once and
+      // commit to it. Reversing swings the nose the other way, so the escape
+      // steers opposite to where the car wants to end up pointing.
+      if (escape === 0) escape = error > 0 ? -1 : 1;
+      const backing = stuck < 1.6;
+      const turn = backing ? escape : -escape;
+      world.step(K.STEP, {
+        ...none,
+        down: backing,
+        up: !backing,
+        left: turn > 0,
+        right: turn < 0,
+        ...hold(world),
+      });
       elapsed += K.STEP;
+      if (stuck > 2.4) {
+        stuck = 0;
+        still = 0;
+        escape = 0;
+      }
       continue;
     }
-    if (stuck >= 1.5) stuck = 0;
+    escape = 0;
 
     const target = driver.target(along, world.speed, world.maxSpeed);
     // Left *increases* heading: the sim steers with `heading -= steer`, and a
