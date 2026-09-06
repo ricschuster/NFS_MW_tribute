@@ -281,6 +281,7 @@ if (want('events')) {
               position: w.race.position,
               average: w.race.average,
               target: w.race.targetAverage,
+              took: elapsed,
             };
           }
           return { nitro: w.nitro > 0.35 && w.speed > w.maxSpeed * 0.5 };
@@ -292,8 +293,8 @@ if (want('events')) {
       `${route.name.toUpperCase()} (${route.kind})`,
       result
         ? route.kind === 'speedrun'
-          ? `${result.won ? 'WON' : 'LOST'} - held ${pct(result.average)}, needed ${pct(result.target)}`
-          : `${result.won ? 'WON' : 'LOST'} - ${result.position}th against #${rival?.rank} ${rival?.name}`
+          ? `${result.won ? 'WON' : 'LOST'} in ${result.took.toFixed(0)}s - held ${pct(result.average)}, needed ${pct(result.target)}`
+          : `${result.won ? 'WON' : 'LOST'} in ${result.took.toFixed(0)}s - ${result.position}th against #${rival?.rank} ${rival?.name}`
         : `no result after ${elapsed.toFixed(0)}s`,
       eye.seen,
     );
@@ -389,10 +390,11 @@ table(
 );
 table(
   runs.filter((r) => r.section === 'events'),
-  ['event', 'kind', 'result'],
+  ['event', 'kind', 'took', 'result'],
   (r) => [
     r.route,
     r.kind,
+    r.took ? `${r.took.toFixed(0)}s` : '-',
     r.won === undefined
       ? 'no result'
       : r.kind === 'speedrun'

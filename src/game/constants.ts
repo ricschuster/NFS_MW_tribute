@@ -103,7 +103,24 @@ export const ESCAPED_FLASH = 2.5;
 /* The ladder. What a rival is worth chasing at.                       */
 /* ------------------------------------------------------------------ */
 
-export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at difficulty 0
+/**
+ * How fast a rival runs, as a fraction of *your top speed*, held along the
+ * route line (#192).
+ *
+ * These were 0.8 and 0.125, set by `npm run feel` against the track sim, where
+ * a reference lap averaged 91% of top speed. That sim was deleted in #165 and
+ * a lap of Kestrel Bay averages a quarter of top speed in traffic, because the
+ * car has to corner and the road has other cars on it - so the same numbers
+ * described a field three times faster than anything that could be driven, and
+ * every rival on the ladder was unbeatable. `npm run playthrough` put an
+ * expert seventh of seven against #10, the rival the game opens with.
+ *
+ * Re-derived against an expert driver in traffic, which is what
+ * `npm run citylap`'s ladder table now races: the bottom of the ladder is won
+ * clean, and the boss is lost clean and won with the boost. That property is
+ * what `RIVAL_DIFF_SPEED_FRAC` exists for and what #105 bought.
+ */
+export const RIVAL_BASE_SPEED_FRAC = 0.19;
 /**
  * Extra rival pace at difficulty 1 (#48, #105).
  *
@@ -115,7 +132,7 @@ export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at diffic
  * Those figures came from the track sim's race probe, which retired with the
  * track (#165). Nothing measures the ladder end to end today - see the handoff.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.125;
+export const RIVAL_DIFF_SPEED_FRAC = 0.075;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -1013,13 +1030,21 @@ export const ROUTE_COUNT = 6;
  * How far across the city a lap reaches, and how many laps of it are run.
  *
  * Sized from how long a race should take rather than from how big the map is:
- * three laps of about three and a half kilometres is a two-and-a-half minute
- * event at the pace the car actually holds. The first version used a 900 m
- * radius and produced a twelve-kilometre lap round the harbour, which is a
- * seven-minute race.
+ * a two-and-a-half minute event at the pace the car actually holds. The first
+ * version used a 900 m radius and produced a twelve-kilometre lap round the
+ * harbour, which is a seven-minute race.
+ *
+ * "The pace the car actually holds" was measured on an empty road, and a race
+ * happens in traffic. At the pace it really holds - a quarter of top speed -
+ * three laps of three and a half kilometres is a *ten* minute race, which
+ * `npm run playthrough` measured at 575 to 611 seconds as soon as the events
+ * became winnable at all and a player could finish one. Two laps is five, and
+ * still over the intent: the honest fix is shorter routes, and that means
+ * regenerating every event's start line, so it is #201 rather than a
+ * number changed at the end of an afternoon.
  */
 export const ROUTE_RADIUS = m(520);
-export const ROUTE_LAPS = 3;
+export const ROUTE_LAPS = 2;
 /** A lap outside this is not a circuit: it is a commute, or a car park. */
 export const ROUTE_MIN_LENGTH = m(2000);
 export const ROUTE_MAX_LENGTH = m(5600);
@@ -1089,13 +1114,20 @@ export const FIELD_LANE = m(3.2);
  * clock keeps running whatever you are doing, so a crash is unrecoverable in a
  * way it is not in a race you can claw back.
  *
- * The targets are set from measurement rather than from feel. A reference
- * driver following the route line laps the city at 57% to 68% of top speed on
- * the loops it can complete, so a target of 38% to 52% is a lap driven with
- * commitment rather than a lap driven perfectly.
+ * The targets are set from measurement rather than from feel, and they were
+ * set against the wrong measurement. 38% to 52% came from a reference driver
+ * lapping at 57% to 68% - *on an empty road*, before #171 put traffic in the
+ * probe. A race happens in traffic, nothing turns it off, and in traffic the
+ * same driver holds a quarter of top speed. Every speed run in the game was
+ * therefore unwinnable: `npm run playthrough` had an expert hold 19%, 23% and
+ * 25% against a target of 40%.
+ *
+ * Re-derived against the traffic column, which is the one that describes a
+ * game somebody plays: the easiest is a lap a competent driver completes, the
+ * hardest wants a committed line and the boost.
  */
-export const SPEEDRUN_TARGET = 0.38;
-export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.14;
+export const SPEEDRUN_TARGET = 0.2;
+export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.08;
 /** The average is meaningless in the first instants; hold it back until then. */
 export const SPEEDRUN_SETTLE = 0.75;
 
@@ -1148,6 +1180,21 @@ export const DAMAGE_SPEED_LOSS = 0.28;
 export const DAMAGE_GRIP_LOSS = 0.32;
 /** Below this it is cosmetic: a scraped car should still drive like a car. */
 export const DAMAGE_FREE = 0.2;
+/**
+ * The shortest gap between two hits that can both hurt you.
+ *
+ * Damage is charged per *impact*, not per step of contact, and without this it
+ * was the second one. A car pressed against a building is reverted and bounced
+ * by `move` every step and billed every step with it, so grinding along a wall
+ * at 40 km/h cost more than driving into it at 300. Measured before this
+ * existed: a lap of the Harbour Loop by the *perfect* driver spent 86% of a
+ * car across 144 damaging steps, every one of them under 15% of top speed, and
+ * every tier of driver finished every lap at 100%.
+ *
+ * Short enough that two real collisions a corner apart both land, long enough
+ * that one collision is one collision.
+ */
+export const DAMAGE_HIT_GAP = 0.4;
 
 /** Drive-through repair (#95): no menu, no stopping. */
 export const REPAIR_COUNT = 6;

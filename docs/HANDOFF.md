@@ -322,7 +322,18 @@ and adding a mechanic means deciding where it gets explained.
   is a lighting problem as much as a traffic one - it belongs with #11, where
   night and weather are already named as the biggest visual step left. It has
   no issue of its own yet.
-- **#192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
+- **#192 is fixed, and it was the whole event layer.** `npm run playthrough`
+  found an expert losing every one of the six events - seventh of seven against
+  #10, the rival the game opens with, and 19-25% against a 40% speed-run
+  target. Both numbers came from the same place: a reference driver on an empty
+  road, measured before #171 put traffic in the probes. Recalibrated against
+  the traffic column, an expert now wins four of six with both losses narrow,
+  and `citylap`'s ladder reads "as designed" - the bottom won clean, the boss
+  lost clean and won on the boost. Two things worth keeping: the ladder probe
+  races an *expert* now rather than the perfect driver, per this file's own
+  rule; and a race got 4x longer the moment it became finishable, which is
+  #201.
+- **(was) #192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
   races all ten rivals now, and the reference driver comes seventh of seven
   against every one of them - including the rival the game opens with - by most
   of the race distance. The field runs at 82-93% of your top speed along the

@@ -216,7 +216,9 @@ function race(rival, index, boost) {
 }
 
 console.log('\nTHE LADDER');
-console.log(`  every rival on "${proving.name}", clean and with the boost used on the straights\n`);
+console.log(
+  `  every rival on "${proving.name}", driven by an expert in traffic, clean and boosted\n`,
+);
 
 const ladderHead = ['rival', 'their pace', 'clean', 'you held', 'gap', 'boosted', 'you held', 'gap'];
 const ladderRows = [ladderHead];
@@ -261,8 +263,11 @@ for (const row of ladderRows) {
 // ladder should be lost clean and won with the boost, or #105 bought nothing.
 // It is reported rather than thrown, because whether the ladder is right is a
 // judgement and this is an instrument.
-const boss = ladderRows[ladderRows.length - 1];
-const bottom = ladderRows[1];
+// The table is built from the boss down, because `RIVALS` runs rank 10 first
+// and this iterates it backwards - so row 1 is #1 and the last row is #10.
+// Reading those the other way round reported the property inverted.
+const boss = ladderRows[1];
+const bottom = ladderRows[ladderRows.length - 1];
 const asDesigned = boss[2] !== 'won' && boss[5] === 'won' && bottom[2] === 'won';
 console.log(
   `\n  designed for: the bottom of the ladder won clean, the boss lost clean and won on the boost`,
