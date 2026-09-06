@@ -173,11 +173,15 @@ describe('racing one', () => {
     expect(race.lap).toBeGreaterThanOrEqual(route.laps);
   });
 
+  // Long enough for the *field* to finish three laps, which is what ends a
+  // circuit you are not driving. #192 slowed the field from 80-93% of top
+  // speed to 19-27% - it was three times faster than anything a player could
+  // drive - so a race takes about four times as long as it used to.
   it('is lost by not driving it', () => {
     const race = new CityRace();
     race.begin(route, rival);
     run(race, 0, CITY_COUNTDOWN + 0.1, 'racing');
-    run(race, 0, 400);
+    run(race, 0, 1200);
 
     expect(race.state).toBe('finished');
     expect(race.won).toBe(false);
@@ -275,7 +279,7 @@ describe('racing one', () => {
     const race = new CityRace();
     race.begin(route, rival);
     run(race, 0, CITY_COUNTDOWN + 0.1, 'racing');
-    run(race, 0, 400);
+    run(race, 0, 1200);
     expect(race.state).toBe('finished');
     run(race, 0, 20, 'idle');
     expect(race.state).toBe('idle');
@@ -349,13 +353,22 @@ describe('a speed run', () => {
     );
   });
 
+  // Written against the target rather than against two numbers that happened
+  // to straddle it: #192 re-derived `SPEEDRUN_TARGET` from 38% to 20%, because
+  // the old figure came from a driver on an empty road and a race happens in
+  // traffic. A test that hardcodes 0.7 and 0.25 fails the day that moves, and
+  // it fails for a reason that has nothing to do with what it is testing.
   it('is won by holding the pace and lost by not', () => {
-    const quick = lap(0.7);
+    const target = new CityRace();
+    target.begin(route!, rival);
+    const needed = target.targetAverage;
+
+    const quick = lap(needed * 1.6);
     expect(quick.state).toBe('finished');
     expect(quick.won).toBe(true);
     expect(quick.average).toBeGreaterThanOrEqual(quick.targetAverage);
 
-    const slow = lap(0.25);
+    const slow = lap(needed * 0.6);
     expect(slow.state).toBe('finished');
     expect(slow.won).toBe(false);
   });
@@ -374,16 +387,27 @@ describe('a speed run', () => {
       for (let t = 0; t < seconds; t += STEP) race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
 
       let along = 0;
-      for (let t = 0; t < 400 && race.state === 'racing'; t += STEP) {
+      for (let t = 0; t < 1200 && race.state === 'racing'; t += STEP) {
         along += REFERENCE_TOP_SPEED * STEP;
         race.update(STEP, pointAt(route!.points, route!.length, along), REFERENCE_TOP_SPEED);
       }
       return race;
     };
 
-    // The same flat-out lap, driven after standing still for a while.
+    // The same flat-out lap, driven after standing still for long enough that
+    // it cannot be clawed back. Derived rather than picked: a flat-out lap
+    // covers the route in `route.length / REFERENCE_TOP_SPEED` seconds, so
+    // standing still for `lap * (1/target - 1)` puts the average exactly on
+    // the target and anything past that is a loss. Forty-five seconds was
+    // enough when the target was 52%; it is not when the target is 28%, and a
+    // test that hardcodes it fails on a recalibration for no reason.
+    const flatOut = route!.length / REFERENCE_TOP_SPEED;
+    const target = new CityRace();
+    target.begin(route!, boss);
+    const idle = flatOut * (1 / target.targetAverage - 1) * 1.3;
+
     const clean = stopped(0);
-    const spoiled = stopped(45);
+    const spoiled = stopped(idle);
     expect(clean.won).toBe(true);
     expect(spoiled.state).toBe('finished');
     expect(spoiled.average).toBeLessThan(clean.average);

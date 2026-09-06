@@ -55,6 +55,7 @@ import {
   DAMAGE_SPEED_LOSS,
   DAMAGE_GRIP_LOSS,
   DAMAGE_FREE,
+  DAMAGE_HIT_GAP,
   REPAIR_RANGE,
   REPAIR_FLASH,
   CLAIM_HEAT,
@@ -318,6 +319,8 @@ export class CityWorld {
   private progressZ = 0;
   /** Seconds spent well over the limit on the road under the car (#177). */
   private overLimit = 0;
+  /** Since the last hit that counted, so one collision is charged once. */
+  private sinceHurt = DAMAGE_HIT_GAP;
   /** Rep banked before the current pursuit opened: the stake it puts up (#178). */
   private repAtLarge = 0;
 
@@ -562,6 +565,7 @@ export class CityWorld {
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
     this.repairFlash = Math.max(0, this.repairFlash - dt);
+    this.sinceHurt += dt;
     this.rep.step(dt);
     // Before the BUSTED early return, because being busted is one of the two
     // ways an ambush ends and the frozen world still has to notice it.
@@ -921,7 +925,20 @@ export class CityWorld {
   }
 
   /** Take some, and never more than a whole car's worth. */
+  /**
+   * Take a hit, at most one every `DAMAGE_HIT_GAP`.
+   *
+   * Per impact rather than per step, and that distinction is the whole of it.
+   * `move` reverts the car out of a building and reverses its speed, so a car
+   * held against a wall hits it again on the very next step - and was charged
+   * again, sixty times a second. Grinding along a building at 40 km/h cost
+   * more than driving into one flat out, and every driver from beginner to
+   * perfect finished every lap at 100% damage, which left the whole model
+   * with no range to work in.
+   */
   private takeDamage(amount: number): void {
+    if (this.sinceHurt < DAMAGE_HIT_GAP) return;
+    this.sinceHurt = 0;
     this.damage = Math.max(0, Math.min(1, this.damage + amount));
   }
 
@@ -1073,7 +1090,7 @@ export class CityWorld {
     for (const car of this.traffic.cars) {
       if (!touching(this, car)) continue;
       const hurt = impactDamage(this, car, this.maxSpeed, this.grid);
-      this.hit(car, hurt, SHUNT_SPEED_KEPT);
+      this.hit(car, hurt, impactDamage(this, car, this.maxSpeed, null), SHUNT_SPEED_KEPT);
       // Ploughing into somebody in front of a patrol car is the most ordinary
       // way there is to acquire a pursuit (#177). Only a hit you drove into,
       // though: `impactDamage` is zero below a real closing speed, and being
@@ -1095,7 +1112,12 @@ export class CityWorld {
       const enforcer = cop.role === 'enforcer';
       const toughness = enforcer ? unit.scale * ENFORCER_TOUGHNESS : unit.scale;
       const hurt = impactDamage(this, cop, this.maxSpeed, this.grid, toughness);
-      this.hit(cop, hurt, enforcer ? ENFORCER_SPEED_KEPT : SHUNT_SPEED_KEPT);
+      this.hit(
+        cop,
+        hurt,
+        impactDamage(this, cop, this.maxSpeed, null, toughness),
+        enforcer ? ENFORCER_SPEED_KEPT : SHUNT_SPEED_KEPT,
+      );
       // Hitting the police needs no witness: they were there (#177). What it
       // does *not* do is add heat every step of contact - that is what the
       // takedown is for, and a flat bump per frame saturates the whole curve
@@ -1198,12 +1220,23 @@ export class CityWorld {
     }
   }
 
-  /** Bleed both cars, shove theirs along its road, and record the damage. */
-  private hit(car: GraphCar, damage: number, speedKept: number): void {
+  /**
+   * Bleed both cars, shove theirs along its road, and record the damage.
+   *
+   * `mine` is the same impact computed *without* the wall behind them, and it
+   * is not the same number as `damage`. `impactDamage` multiplies by
+   * `TAKEDOWN_PINNED_MULT` when the other car has nowhere to go, which is why
+   * putting somebody into scenery wrecks them - and taking a share of that
+   * multiplied figure meant the wall behind *their* car hurt *you*, at up to
+   * 0.4 x 2.4 of the impact. Measured, a 22% closing shunt on a pinned car
+   * cost the player 29% of their own. Ramming is supposed to favour the
+   * rammer; this is what makes it do so.
+   */
+  private hit(car: GraphCar, damage: number, mine: number, speedKept: number): void {
     this.speed *= speedKept;
     // A share of what you dealt comes back. Ramming favours the rammer, which
     // is what makes a takedown a thing worth doing rather than a trade.
-    this.takeDamage(damage * DAMAGE_SHARE);
+    this.takeDamage(mine * DAMAGE_SHARE);
     this.crashFlash = 1;
     car.damage = Math.min(1, car.damage + damage);
     car.speed *= 0.4;
