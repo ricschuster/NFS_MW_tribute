@@ -496,7 +496,23 @@ function measureNitro() {
   const withNitro = distanceOver(onStraight(1), window, boostOn);
   const withoutNitro = distanceOver(onStraight(1), window, flatOut);
   const gain = withNitro / withoutNitro - 1;
-  row(`distance gained over ${window} s`, `+${(gain * 100).toFixed(1)}%`, `${Math.round(withNitro - withoutNitro)} units`, 'nitro_gain_frac', gain);
+  row(`distance gained over ${window} s, from top speed`, `+${(gain * 100).toFixed(1)}%`, `${Math.round(withNitro - withoutNitro)} units`, 'nitro_gain_frac', gain);
+
+  // ...and the same from a corner-exit speed, which is the number #105 is
+  // about. The boost tapers with speed, so what it is worth flat out is the
+  // *least* it is ever worth; what it is worth coming out of a bend is the
+  // reason to have it at all.
+  const exitFrom = 0.4;
+  const exitNitro = distanceOver(onStraight(exitFrom), window, boostOn);
+  const exitClean = distanceOver(onStraight(exitFrom), window, flatOut);
+  const exitGain = exitNitro / exitClean - 1;
+  row(
+    `distance gained over ${window} s, from ${pct(exitFrom)}`,
+    `+${(exitGain * 100).toFixed(1)}%`,
+    `${Math.round(exitNitro - exitClean)} units`,
+    'nitro_gain_exit_frac',
+    exitGain,
+  );
 
   // Holding the key down never stops working: the charge refills for one step,
   // which is enough to boost again on the next one. Worth knowing it is free.
