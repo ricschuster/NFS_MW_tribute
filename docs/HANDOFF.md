@@ -208,7 +208,10 @@ gives every kind a generated window grid, sampled in world units so a window is
 the same size on a tower and on a shed. The cars are no longer boxes either:
 `scene/carshape.ts` builds a body, a raked greenhouse and four wheels by
 moving the corners of box geometries, which is a lot of silhouette for no
-extra triangles. What is still a box, in the order that would show: street
+extra triangles. The tarmac has aggregate and patches in it
+(`scene/surfaces.ts`), which matters more in motion than in a screenshot: a
+flat-coloured surface gives the eye nothing to measure speed against. What is
+still flat, in the order that would show: the **pavement slabs**, street
 furniture, then the buildings themselves wanting real geometry rather than a
 texture on a cuboid. All of it goes behind
 the provider seam in `scene/`; none of it touches `city/`.
