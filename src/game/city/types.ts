@@ -294,6 +294,13 @@ export interface CityBlock {
   district: DistrictKind;
   /** Nothing is built here: a park, a yard, a lot. Some of a city has to be gaps. */
   open: boolean;
+  /**
+   * Green space the street grid never claimed (#185), rather than a lot inside
+   * it. Both are `open`; the difference is that a lot is somewhere content
+   * goes - a street find is a car parked in a yard, and a riverside park is
+   * not a yard.
+   */
+  park?: boolean;
 }
 
 /** The area bounded by four arterials. One district, one street pattern. */

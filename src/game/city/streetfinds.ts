@@ -20,7 +20,10 @@ export function findsFor(rng: Rng, city: City): StreetFind[] {
   // Only the cars that are *parked*. The ladder's ten are taken off the rival
   // driving them (#66), and leaving one in a lot would be giving it away.
   const wanted = CARS.filter((car) => car.source === 'street');
-  const lots = city.blocks.filter((block) => block.open);
+  // Lots inside the street grid, not the parkland #185 laid over the
+  // leftovers: a car parked in a yard is a find, and one in a riverside park
+  // is litter.
+  const lots = city.blocks.filter((block) => block.open && !block.park);
   if (lots.length === 0) return [];
 
   // Shuffled once, then walked in order: taking a random lot per car would

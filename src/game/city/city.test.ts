@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { generateCity } from './generate';
 import { kestrelBay } from './index';
 import { Rng } from './rng';
-import { CITY_SEED, DISTRICTS } from '../constants';
+import { CITY_SEED, DISTRICTS, UNITS_PER_METRE } from '../constants';
 import { makeWater } from './water';
-import { CityGrid, lineBlocked } from './grid';
+import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import type { City, CityRoad, Rect } from './types';
 
@@ -22,6 +22,8 @@ const touchesWater = (r: Rect) => {
 };
 
 const city = kestrelBay();
+const cityGrid = new CityGrid(city);
+const M = UNITS_PER_METRE;
 
 /**
  * A road on the street, as opposed to one flying over it. Most of the
@@ -725,6 +727,76 @@ describe('line of sight', () => {
     const a = city.nodes[road.a].pos;
     const b = city.nodes[road.b].pos;
     expect(lineBlocked(grid, a, b)).toBe(false);
+  });
+});
+
+/**
+ * Land that belongs to something (#185).
+ *
+ * A fifth of the map used to belong to neither block nor road: blocks are laid
+ * on lines and pulled clear of the water, and one that will not fit is dropped,
+ * so a riverbank loses whole blocks and leaves an apron behind. #176 made that
+ * visible by painting the ground as not-road, and what it showed was aprons up
+ * to 400 m from the nearest block that a player can drive onto and be capped at
+ * a quarter of top speed.
+ *
+ * Sampled rather than reasoned about, because the question is "how much", and
+ * the number is the thing that regressed silently in the first place.
+ */
+describe('open land', () => {
+  const STEP = 40 * M;
+
+  it('leaves little of the map belonging to neither block nor road', () => {
+    const claimed = new Set<string>();
+    for (const block of city.blocks) {
+      for (let x = block.bounds.minX; x <= block.bounds.maxX + STEP; x += STEP / 2) {
+        for (let z = block.bounds.minZ; z <= block.bounds.maxZ + STEP; z += STEP / 2) {
+          if (x > block.bounds.maxX || z > block.bounds.maxZ) continue;
+          claimed.add(`${Math.round(x / STEP)},${Math.round(z / STEP)}`);
+        }
+      }
+    }
+
+    let total = 0;
+    let nothing = 0;
+    for (let x = city.bounds.minX; x <= city.bounds.maxX; x += STEP) {
+      for (let z = city.bounds.minZ; z <= city.bounds.maxZ; z += STEP) {
+        total++;
+        if (inWater(city, x, z)) continue;
+        if (surfaceAt(city, cityGrid, x, z, 0).road) continue;
+        if (claimed.has(`${Math.round(x / STEP)},${Math.round(z / STEP)}`)) continue;
+        nothing++;
+      }
+    }
+
+    // It was 19.3% of the map before the parks pass, with a median of 50 m to
+    // the nearest block and a worst case of 412 m. This is a ceiling on the
+    // regression, not a target: if it climbs back past a sixth, the generator
+    // has started dropping land again.
+    expect(nothing / total).toBeLessThan(0.16);
+  });
+
+  it('fills the leftovers with parks, and leaves the lots alone', () => {
+    const parks = city.blocks.filter((b) => b.park);
+    const lots = city.blocks.filter((b) => b.open && !b.park);
+    expect(parks.length).toBeGreaterThan(20);
+    expect(lots.length).toBeGreaterThan(20);
+    for (const park of parks) expect(park.open).toBe(true);
+  });
+
+  // A street find is a car parked in a yard; a car in a riverside park is
+  // litter. Same for a gate across the entrance to a lawn.
+  it('puts no street find or breakable on parkland', () => {
+    const parks = city.blocks.filter((b) => b.park);
+    const inside = (r: Rect, x: number, z: number) =>
+      x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
+
+    for (const find of city.finds) {
+      expect(parks.some((p) => inside(p.bounds, find.at.x, find.at.z))).toBe(false);
+    }
+    for (const thing of city.breakables) {
+      expect(parks.some((p) => inside(p.bounds, thing.at.x, thing.at.z))).toBe(false);
+    }
   });
 });
 

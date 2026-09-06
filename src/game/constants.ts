@@ -353,6 +353,24 @@ export const SURFACE_REACH = m(3);
  */
 export const CITY_EDGE_MARGIN = m(18);
 
+/**
+ * Parkland on the land the street grid never claimed (#185).
+ *
+ * A fifth of the map belonged to neither block nor road: blocks are laid on
+ * lines and then pulled clear of the water, and one that will not fit is
+ * dropped, so a riverbank loses whole blocks and leaves an apron behind. The
+ * leftovers are covered at `PARK_CELL` and merged into rectangles.
+ *
+ * `PARK_MIN_SIDE` is what stops it producing a thousand slivers - a strip
+ * narrower than this is a margin nobody looks at, and a park has to be
+ * somewhere you could drive into. `PARK_ROAD_CLEAR` keeps the grass off the
+ * tarmac: a pavement slab is raised, so a park laid over a carriageway is a
+ * kerb across the road.
+ */
+export const PARK_CELL = m(20);
+export const PARK_MIN_SIDE = m(40);
+export const PARK_ROAD_CLEAR = m(2);
+
 /** Where a new car is put: on the interstate ring is wrong, so a street it is. */
 export const SPAWN_SEARCH = m(180);
 

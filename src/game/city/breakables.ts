@@ -34,7 +34,9 @@ export function breakablesFor(rng: Rng, city: City): Breakable[] {
 
   /** Across the mouth of an open block, on the side a road runs down. */
   function gates(): void {
-    const lots = shuffled(rng, city.blocks.filter((block) => block.open));
+    // Yards, not parks (#185). A gate across the entrance to a lawn is not a
+  // gate anybody put there.
+  const lots = shuffled(rng, city.blocks.filter((block) => block.open && !block.park));
     for (const lot of lots) {
       if (count('gate') >= GATE_COUNT) return;
 

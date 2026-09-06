@@ -231,7 +231,7 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Nine issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world systems)
+**Eight issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world systems)
 are closed, and #165 closed the rebuild out by deleting the thing it replaced.
 
 Most of what was open came from **one person playing the game for ten minutes**
@@ -315,9 +315,7 @@ and adding a mechanic means deciding where it gets explained.
 
 ### The rest, roughly by how much they cost a player
 
-- **#185 a lot of land belongs to neither block nor road.** Surfaced by #176:
-  until the ground stopped being asphalt, nobody could see how much. Blocks are
-  rectangles, roads bend, and the leftovers are drivable-looking and slow.
+
 - **#180's cheap half is done; time of day is not.** Traffic varies by district
   now (downtown 94 cars, industrial 38) and spawns favour the bigger roads. A
   day/night cycle with traffic that thins after dark is the other half, and it
@@ -508,7 +506,12 @@ What is left, roughly in the order it would show:
 - **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
   overlapping pair in ~2775 at last measurement: acceptable, not solved.
 - **Blocks stay rectangles in winding quarters**, so they do not follow the
-  curves. Reads acceptably; fixing it needs rotated or polygonal blocks.
+  curves. Reads acceptably; fixing it needs rotated or polygonal blocks. #185
+  papered over the *consequence* rather than fixing this: the land a dropped or
+  shrunken block leaves behind is parkland now, so it reads as somewhere rather
+  than as an apron, but the blocks themselves are still rectangles and about a
+  tenth of the map still belongs to nothing. That tenth is margin - a median of
+  15 m from the nearest block - which is why it stopped being urgent.
 - **`npm run cityshot -- --view pursuit` is unreliable.** The scripted drive
   tends to wedge the car against a building and the pursuit ends. The pursuit is
   verified by probes and playtests instead. `--view takedown` is *not* scripted
