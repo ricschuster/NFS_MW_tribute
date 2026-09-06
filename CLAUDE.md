@@ -339,6 +339,16 @@ This split is what makes the renderer swap survivable: `world.ts` and the
 playtests are meant to come through ADR-0004 largely intact, so keep behaviour
 out of the renderer even while the renderer is in flux.
 
+**The service worker is generated, not written** (issue #98). Vite hashes every
+filename it emits, so a hand-written precache list is stale the first time
+anything changes: a small plugin in `vite.config.ts` lists the bundle plus the
+handful of stable files in `public/` and emits `sw.js` at build time. It runs
+`enforce: 'post'`, or `index.html` is not in the bundle yet and the one file
+every player asks for is the one not cached. `npm run pwa` serves `dist/`,
+cuts the network and checks the game still loads - including
+`?renderer=drive`, because a navigation with a query string is not the same
+cache entry as `./` and that is the case that breaks.
+
 ## Conventions
 
 - TypeScript is `strict`, with `noUnusedLocals`/`noUnusedParameters` and

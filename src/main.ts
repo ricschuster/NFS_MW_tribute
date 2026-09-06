@@ -108,4 +108,26 @@ async function boot(): Promise<void> {
   new Game(canvas, scene3d).start();
 }
 
+/**
+ * Register the service worker (#98).
+ *
+ * Production only: in dev the worker would sit in front of Vite's module
+ * graph and serve yesterday's code back to you, which is a debugging session
+ * nobody enjoys. It is deliberately fire-and-forget - a browser that refuses
+ * it, or a page served over plain HTTP, gets the game without the offline part
+ * rather than an error.
+ */
+function installWorker(): void {
+  if (import.meta.env.DEV) return;
+  if (!('serviceWorker' in navigator)) return;
+  addEventListener('load', () => {
+    // Relative, so it registers under whatever subpath the site is served
+    // from and its scope covers the game rather than the whole origin.
+    void navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Offline is a bonus, not a requirement.
+    });
+  });
+}
+
+installWorker();
 void boot();

@@ -15,7 +15,9 @@
     "shot": "node tools/screenshot.mjs",
     "feel": "node tools/feelprobe.mjs",
     "city": "node tools/citymap.mjs",
-    "cityshot": "node tools/cityshot.mjs"
+    "cityshot": "node tools/cityshot.mjs",
+    "icons": "node tools/icons.mjs",
+    "pwa": "node tools/pwacheck.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
