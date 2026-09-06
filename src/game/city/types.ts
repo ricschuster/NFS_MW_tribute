@@ -203,6 +203,25 @@ export interface StreetFind {
   angle: number;
 }
 
+/**
+ * A circuit through the city (#70).
+ *
+ * A closed loop of real streets, generated from the road graph. `points` is
+ * the line to drive; `checkpoints` are the gates you have to pass through in
+ * order, which is what stops a lap being a straight line between two corners.
+ */
+export interface CityRoute {
+  id: number;
+  name: string;
+  points: Vec2[];
+  checkpoints: Vec2[];
+  /** Where the lap starts and finishes. */
+  start: Vec2;
+  /** One lap, in world units. */
+  length: number;
+  laps: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -240,4 +259,5 @@ export interface City {
   furniture: StreetProp[];
   collectibles: Collectible[];
   finds: StreetFind[];
+  routes: CityRoute[];
 }

@@ -29,14 +29,14 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'helicopter', 'billboard', 'collection', 'streetfind',
+  'helicopter', 'billboard', 'collection', 'streetfind', 'race',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'helicopter', 'billboard', 'collection', 'streetfind',
+      'helicopter', 'billboard', 'collection', 'streetfind', 'race',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -409,6 +409,38 @@ for (const view of VIEWS) {
     // Long enough for the chase camera to catch up with the teleport: it eases
     // rather than cutting, and headless gives it about two frames a second.
     await page.waitForTimeout(2600);
+  }
+
+  if (view === 'race') {
+    // Start a circuit and run a few seconds of it, so the shot has the lap
+    // counter, the position, the arrow, the gate and the rival in it.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const route = world.city.routes[0];
+      world.x = route.start.x;
+      world.z = route.start.z;
+      world.y = 0;
+      world.crashFlash = 0;
+      world.rep.total = 31200;
+      // The countdown is stepped through by hand: at two frames a second the
+      // three seconds of lights would take most of a minute of real time.
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      world.step(1 / 60, { ...none, confirm: true });
+      for (let t = 0; t < 3.2; t += 1 / 60) world.step(1 / 60, none);
+      // Then a little way round the lap, so the arrow has somewhere to point.
+      world.heading = Math.atan2(
+        route.checkpoints[0].x - world.x,
+        route.checkpoints[0].z - world.z,
+      );
+      world.speed = world.maxSpeed * 0.45;
+    });
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(2000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForTimeout(400);
   }
 
   if (view === 'pursuit') {

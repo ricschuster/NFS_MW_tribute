@@ -39,18 +39,20 @@ Three things run off one deployment, and the query string picks between them.
 | --- | --- |
 | `/` | The finished single-track racer: traffic, police, and a ladder of ten unlocked by Rep. Canvas. |
 | `/?renderer=3d` | The same game drawn with three.js. Retired when the track is. |
-| `/?renderer=drive` | **A car in Kestrel Bay**: free roam, traffic, a six-level pursuit, roadblocks, Enforcers, spike strips, a helicopter, takedowns, a camera with opinions, a HUD and a minimap. |
+| `/?renderer=drive` | **The game, in Kestrel Bay**: free roam, traffic, a six-level pursuit with roadblocks, Enforcers, spike strips and a helicopter, takedowns, Rep, collectibles, cars to find and circuits to race. |
 | `/?renderer=city` | A free camera over the city, for looking at the map rather than driving it. |
 
 **There are two simulations, and that is deliberate.** `world.ts` is the track
 model the shipped game still runs on. `cityworld.ts` is the same car in the
-city. Traffic, police, collision, cameras and Rep have moved across; **races
-and rivals have not**, which is the main thing left before `world.ts` can
-retire.
+city. Traffic, police, collision, cameras, Rep, the ladder and circuit racing
+have all moved across. What is left before `world.ts` can retire is the other
+event types (#72 speed runs, #71 a full field) and deciding that the city is
+the default rather than a query string.
 
 The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
 229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
-tunnel, 3 river crossings, 90 billboards, 25 speed cameras and 7 parked cars.
+tunnel, 3 river crossings, 90 billboards, 25 speed cameras, 7 parked cars and
+6 circuits of 2.5 to 4 km.
 
 ## The decisions that shape everything
 
@@ -75,6 +77,7 @@ src/game/
   collectibles.ts what has been found: smashed billboards, clocked cameras
   cars.ts         the roster, as handling profiles against a reference car
   streetfinds.ts  which cars you have found, and which one you are driving
+  cityrace.ts     circuits: checkpoints, laps, a rival on the line
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
                   roadblocks, spike strips, a helicopter, and Enforcers that
@@ -82,7 +85,7 @@ src/game/
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
   city/           the generator: types, rng, water, generate, boulevards,
                   interstate, buildings, furniture, collectibles, streetfinds,
-                  grid
+                  routes, grid
   scene/          the renderer: cityscape, buildings, furniture, cameras, hud,
                   cityview, plus scene3d/ribbon/cars for the track
   road.ts, render.ts   the projected-segment track   <- retired with world.ts
@@ -112,7 +115,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 278 unit tests + playtests
+npm run test       # 299 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -163,18 +166,19 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70
 from M5.
 
-**M5: Open-world systems - 12 open.** The pursuit is built: #58 (six heat
+**M5: Open-world systems - 11 open.** The pursuit is built: #58 (six heat
 levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
 #60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency
 and #91 gives the currency somewhere to go. #93 and #67 give free roam
-something to do between pursuits. That is the framework the rest keys off. Natural next ones, in order of
+something to do between pursuits, and #70 puts the ladder's races in the city.
+That is the framework the rest keys off. Natural next ones, in order of
 how much they use what already exists:
 
-- **#70/#72 event types** and **#71 a full field** - the ladder is a price now
-  (#91), and a sprint against one rival is the only thing to spend it on.
+- **#72 speed runs** and **#71 a full field of rivals** - #70 built the race
+  machinery in the city, and both are additions to it rather than new systems.
 - **#68 mods** - earned by placing in a car's events, which needs #70/#72.
 - **#66 claim a rival's car** - the roster from #67 is the thing it claims.
 - **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and
@@ -198,9 +202,10 @@ before the pivot and both still live.
   road, the other a distance between two points. Reusing them caused three
   separate bugs, one of which culled every cop the step after it spawned. Check
   which world a constant belongs to before reaching for it.
-- **Races and rivals are still only on the track**, so `?renderer=drive` has
-  nothing to *do* in it beyond driving, being chased, smashing billboards,
-  finding cars and earning Rep for all of it.
+- **The city is still behind a query string.** `/` is the track game; the city
+  is `?renderer=drive`. Everything now works in both, and the ladder is one
+  ladder across the two, which is the last thing that had to be true before
+  the default can move.
 - **Only the city sim has cars.** `world.ts` still drives the one fixed car,
   because it retires with the track; a Street Find changes nothing about a
   Ladder race today.
