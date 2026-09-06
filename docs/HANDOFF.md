@@ -332,7 +332,7 @@ and adding a mechanic means deciding where it gets explained.
   lost clean and won on the boost. Two things worth keeping: the ladder probe
   races an *expert* now rather than the perfect driver, per this file's own
   rule; and a race got 4x longer the moment it became finishable, which is
-  #200.
+  #201.
 - **(was) #192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
   races all ten rivals now, and the reference driver comes seventh of seven
   against every one of them - including the rival the game opens with - by most

@@ -1040,7 +1040,7 @@ export const ROUTE_COUNT = 6;
  * `npm run playthrough` measured at 575 to 611 seconds as soon as the events
  * became winnable at all and a player could finish one. Two laps is five, and
  * still over the intent: the honest fix is shorter routes, and that means
- * regenerating every event's start line, so it is an issue rather than a
+ * regenerating every event's start line, so it is #201 rather than a
  * number changed at the end of an afternoon.
  */
 export const ROUTE_RADIUS = m(520);
