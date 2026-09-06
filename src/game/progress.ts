@@ -15,6 +15,9 @@ export interface Progress {
   smashed: number[];
   /** Speed camera id to the best fraction of top speed clocked at it. */
   clocked: [number, number][];
+  /** Ids of the cars found so far, and the one being driven (#67). */
+  cars: string[];
+  car: string;
 }
 
 /** Load progress from localStorage; returns a fresh start if unavailable. */
@@ -36,13 +39,17 @@ export function loadProgress(): Progress {
                 Array.isArray(row) && typeof row[0] === 'number' && typeof row[1] === 'number',
             )
           : [];
-        return { beaten: Math.floor(parsed.beaten), rep, smashed, clocked };
+        const cars = Array.isArray(parsed.cars)
+          ? parsed.cars.filter((id): id is string => typeof id === 'string')
+          : [];
+        const car = typeof parsed.car === 'string' ? parsed.car : '';
+        return { beaten: Math.floor(parsed.beaten), rep, smashed, clocked, cars, car };
       }
     }
   } catch {
     // no localStorage (e.g. tests / SSR) or malformed data — start fresh
   }
-  return { beaten: 0, rep: 0, smashed: [], clocked: [] };
+  return { beaten: 0, rep: 0, smashed: [], clocked: [], cars: [], car: '' };
 }
 
 /** Persist progress; a no-op where localStorage is unavailable. */

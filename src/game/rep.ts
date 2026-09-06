@@ -8,6 +8,7 @@ import {
   REP_RACE_LOSS,
   REP_BILLBOARD,
   REP_CAMERA,
+  REP_STREET_FIND,
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
@@ -42,7 +43,8 @@ export type RepReason =
   | 'raceWin'
   | 'raceLoss'
   | 'billboard'
-  | 'camera';
+  | 'camera'
+  | 'streetFind';
 
 interface RepKind {
   /** Base value, before the heat multiplier. */
@@ -62,6 +64,7 @@ const KINDS: Record<RepReason, RepKind> = {
   raceLoss: { value: REP_RACE_LOSS, label: 'RACE FINISHED' },
   billboard: { value: REP_BILLBOARD, label: 'BILLBOARD' },
   camera: { value: REP_CAMERA, label: 'SPEED CAMERA' },
+  streetFind: { value: REP_STREET_FIND, label: 'STREET FIND' },
 };
 
 /** One award, still worth showing. */

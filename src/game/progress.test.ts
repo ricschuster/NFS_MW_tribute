@@ -4,12 +4,26 @@ import { loadProgress, saveProgress } from './progress';
 // The test environment has no localStorage, which exercises the safe fallbacks.
 describe('progress persistence', () => {
   it('returns a fresh start when storage is unavailable', () => {
-    expect(loadProgress()).toEqual({ beaten: 0, rep: 0, smashed: [], clocked: [] });
+    expect(loadProgress()).toEqual({
+      beaten: 0,
+      rep: 0,
+      smashed: [],
+      clocked: [],
+      cars: [],
+      car: '',
+    });
   });
 
   it('saving is a safe no-op without storage', () => {
     expect(() =>
-      saveProgress({ beaten: 3, rep: 1200, smashed: [1, 2], clocked: [[4, 0.8]] }),
+      saveProgress({
+        beaten: 3,
+        rep: 1200,
+        smashed: [1, 2],
+        clocked: [[4, 0.8]],
+        cars: ['kestrel'],
+        car: 'kestrel',
+      }),
     ).not.toThrow();
   });
 });

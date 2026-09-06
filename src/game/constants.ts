@@ -828,3 +828,28 @@ export const REP_CAMERA = 220;
 export const CAMERA_MIN_SPEED = 0.3;
 /** How far the minimap hints at what has not been found yet. */
 export const COLLECTIBLE_HINT_RANGE = m(300);
+
+/**
+ * Street Finds (#67).
+ *
+ * There is no dealership: every car other than the one you start in is parked
+ * somewhere in the city. Finding one is the reward for exploring, so they are
+ * spread wide and put where a car would actually be left - on the open lots
+ * and yards rather than in the middle of a carriageway.
+ */
+export const FIND_SPACING = m(900);
+/** How close you have to get. Generous: this is a reward, not a test of aim. */
+export const FIND_RANGE = m(9);
+/** Rep for finding one. */
+export const REP_STREET_FIND = 800;
+/** Seconds the "you have a new car" banner holds. */
+export const FIND_FLASH = 4;
+
+/**
+ * The reference top speed every car profile is written against.
+ *
+ * The same number the game has always had. `CityWorld.maxSpeed` is per-car
+ * now, so anything that wants "how fast is this in km/h" has to divide by the
+ * reference rather than by the car, or every car reads 320 km/h flat out.
+ */
+export const REFERENCE_TOP_SPEED = SEGMENT_LENGTH / STEP;
