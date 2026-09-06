@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import * as THREE from "three";
-import { carParts } from "./carshape";
-import { makeCar } from "./cars";
+import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
+import { carParts } from './carshape';
+import { makeCar } from './cars';
 
 const WIDTH = 650;
 const ASPECT = 0.7;
@@ -12,8 +12,8 @@ function boxOf(mesh: THREE.Mesh): THREE.Box3 {
   return new THREE.Box3().setFromObject(mesh);
 }
 
-describe("the shape of a car", () => {
-  it("stands on its wheels", () => {
+describe('the shape of a car', () => {
+  it('stands on its wheels', () => {
     const { body, wheels } = carParts(WIDTH, ASPECT);
     for (const wheel of wheels) {
       const box = boxOf(wheel);
@@ -26,7 +26,7 @@ describe("the shape of a car", () => {
     expect(boxOf(body).min.y).toBeGreaterThan(0);
   });
 
-  it("keeps its wheels under its body", () => {
+  it('keeps its wheels under its body', () => {
     const { body, wheels } = carParts(WIDTH, ASPECT);
     const half = boxOf(body).max.x;
     for (const wheel of wheels) {
@@ -37,7 +37,7 @@ describe("the shape of a car", () => {
     }
   });
 
-  it("is a wedge, nose down", () => {
+  it('is a wedge, nose down', () => {
     const { body } = carParts(WIDTH, ASPECT);
     const pos = body.geometry.attributes.position as THREE.BufferAttribute;
     let nose = -Infinity;
@@ -51,7 +51,7 @@ describe("the shape of a car", () => {
     expect(nose).toBeLessThan(tail);
   });
 
-  it("puts the glass above the body and inside it", () => {
+  it('puts the glass above the body and inside it', () => {
     const { body, glass } = carParts(WIDTH, ASPECT);
     const b = boxOf(body);
     const g = boxOf(glass);
@@ -59,7 +59,7 @@ describe("the shape of a car", () => {
     expect(g.max.x).toBeLessThan(b.max.x);
   });
 
-  it("scales entirely off its width", () => {
+  it('scales entirely off its width', () => {
     const small = carParts(100, ASPECT);
     const big = carParts(400, ASPECT);
     expect(big.length / small.length).toBeCloseTo(4, 6);
@@ -67,21 +67,21 @@ describe("the shape of a car", () => {
   });
 });
 
-describe("an assembled car", () => {
+describe('an assembled car', () => {
   // `CarPool.place` repaints `children[0]` for every car on screen every
   // frame, so the body being first is load-bearing rather than incidental.
-  it("has its body first, so the pool can repaint it", () => {
-    const car = makeCar("#ff0000");
+  it('has its body first, so the pool can repaint it', () => {
+    const car = makeCar('#ff0000');
     const body = car.children[0] as THREE.Mesh;
     expect(body.isMesh).toBe(true);
     expect(
       (body.material as THREE.MeshLambertMaterial).color.getHexString(),
-    ).toBe("ff0000");
+    ).toBe('ff0000');
   });
 
-  it("gives a cop a lightbar, on the roof it actually has", () => {
-    const car = makeCar("#223344", true);
-    const bar = car.getObjectByName("lightbar");
+  it('gives a cop a lightbar, on the roof it actually has', () => {
+    const car = makeCar('#223344', true);
+    const bar = car.getObjectByName('lightbar');
     expect(bar).toBeDefined();
     const glass = car.children[1] as THREE.Mesh;
     expect(bar!.position.y).toBeGreaterThan(boxOf(glass).min.y);

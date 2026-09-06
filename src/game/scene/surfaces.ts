@@ -1,5 +1,5 @@
-import * as THREE from "three";
-import { UNITS_PER_METRE } from "../constants";
+import * as THREE from 'three';
+import { UNITS_PER_METRE } from '../constants';
 
 /**
  * Ground textures (#11).
@@ -58,23 +58,23 @@ function speckle(
 
 function asphaltTile(): HTMLCanvasElement {
   const size = 256;
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
 
   // White is "leave the material's colour alone": the tile multiplies it, so
   // the tarmac's actual shade still lives in `cityscape.ts` where the rest of
   // the palette is.
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, size, size);
 
   // Aggregate: the chips of stone in the mix. Fine and dense, and it is what
   // carries the sense of speed once the car is moving.
   speckle(size, 900, 11, (x, y, i) => {
     const shade = hash(i * 3.7);
-    ctx.fillStyle = shade > 0.5 ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.11)";
+    ctx.fillStyle = shade > 0.5 ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.11)';
     ctx.beginPath();
     ctx.arc(x, y, 0.7 + hash(i * 5.3) * 1.5, 0, Math.PI * 2);
     ctx.fill();
@@ -84,7 +84,7 @@ function asphaltTile(): HTMLCanvasElement {
   // the aggregate has long since blurred into flat grey again.
   speckle(size, 7, 71, (x, y, i) => {
     ctx.fillStyle =
-      hash(i * 9.1) > 0.5 ? "rgba(0,0,0,0.055)" : "rgba(255,255,255,0.04)";
+      hash(i * 9.1) > 0.5 ? 'rgba(0,0,0,0.055)' : 'rgba(255,255,255,0.04)';
     ctx.beginPath();
     ctx.ellipse(
       x,
