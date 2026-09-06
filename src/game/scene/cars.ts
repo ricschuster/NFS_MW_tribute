@@ -1,56 +1,57 @@
-import * as THREE from 'three';
-import { CAR_WIDTH_WORLD, CAR_ASPECT } from '../constants';
+import * as THREE from "three";
+import { CAR_WIDTH_WORLD, CAR_ASPECT } from "../constants";
+import { carParts } from "./carshape";
 
 const BODY_W = CAR_WIDTH_WORLD;
 const BODY_H = CAR_WIDTH_WORLD * CAR_ASPECT * 0.62;
 const BODY_L = CAR_WIDTH_WORLD * 1.9;
 
 /**
- * A car as a handful of boxes. Deliberately crude: issue #84's geometry
- * provider is where real meshes will come from, and until then the shape only
- * has to read as a car from behind at speed.
+ * One car, built out of `carshape`'s parts.
+ *
+ * The body goes in first and stays first: `CarPool.place` repaints
+ * `children[0]` every frame for every car on screen, and a name lookup there
+ * would be a scene-graph walk per car per frame for no gain.
  */
 export function makeCar(color: string, cop = false): THREE.Group {
   const car = new THREE.Group();
+  const parts = carParts(BODY_W, CAR_ASPECT);
 
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(BODY_W, BODY_H, BODY_L),
-    new THREE.MeshLambertMaterial({ color: cop ? '#15171d' : color }),
+  const body = parts.body;
+  (body.material as THREE.MeshLambertMaterial).color.set(
+    cop ? "#15171d" : color,
   );
-  body.position.y = BODY_H / 2 + BODY_W * 0.1;
   car.add(body);
-
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(BODY_W * 0.84, BODY_H * 0.8, BODY_L * 0.46),
-    new THREE.MeshLambertMaterial({ color: '#1a2030' }),
-  );
-  cabin.position.set(0, BODY_H * 1.28, -BODY_L * 0.06);
-  car.add(cabin);
+  car.add(parts.glass);
+  for (const wheel of parts.wheels) car.add(wheel);
 
   if (cop) {
     // white door band, so a cop reads as a cop rather than a dark car
     const band = new THREE.Mesh(
       new THREE.BoxGeometry(BODY_W * 1.01, BODY_H * 0.34, BODY_L * 0.9),
-      new THREE.MeshLambertMaterial({ color: '#e9edf2' }),
+      new THREE.MeshLambertMaterial({ color: "#e9edf2" }),
     );
     band.position.y = BODY_H * 0.62;
     car.add(band);
 
     const bar = new THREE.Mesh(
       new THREE.BoxGeometry(BODY_W * 0.66, BODY_H * 0.22, BODY_L * 0.14),
-      new THREE.MeshBasicMaterial({ color: '#3b6bff' }),
+      new THREE.MeshBasicMaterial({ color: "#3b6bff" }),
     );
-    bar.name = 'lightbar';
-    bar.position.y = BODY_H * 1.78;
+    bar.name = "lightbar";
+    // On the roof the shape actually has, rather than at a height guessed
+    // from the body: the greenhouse is raked now and its top is not the top
+    // of a box.
+    bar.position.y = parts.roof;
     car.add(bar);
   }
 
   for (const side of [-1, 1]) {
     const light = new THREE.Mesh(
       new THREE.BoxGeometry(BODY_W * 0.18, BODY_H * 0.2, BODY_L * 0.04),
-      new THREE.MeshBasicMaterial({ color: '#ff4433' }),
+      new THREE.MeshBasicMaterial({ color: "#ff4433" }),
     );
-    light.position.set(side * BODY_W * 0.33, BODY_H * 0.75, -BODY_L / 2);
+    light.position.set(side * BODY_W * 0.33, BODY_H * 0.75, -BODY_L * 0.49);
     car.add(light);
   }
 
@@ -76,7 +77,14 @@ export class CarPool {
    * `dim` darkens the body without needing a second material: a wreck is the
    * same car with the paint burnt off it (#94).
    */
-  place(x: number, y: number, z: number, color: string, scale = 1, dim = 1): THREE.Group {
+  place(
+    x: number,
+    y: number,
+    z: number,
+    color: string,
+    scale = 1,
+    dim = 1,
+  ): THREE.Group {
     let car = this.pool[this.used];
     if (!car) {
       car = makeCar(color, this.cop);
@@ -103,15 +111,20 @@ export class CarPool {
 
   /** Hide whatever was not used this frame. */
   end(): void {
-    for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
+    for (let i = this.used; i < this.pool.length; i++)
+      this.pool[i].visible = false;
   }
 
   /** Flash every visible lightbar in step; `phase` is seconds. */
   flashLightbars(phase: number): void {
     const blue = Math.floor(phase * 6) % 2 === 0;
     for (let i = 0; i < this.used; i++) {
-      const bar = this.pool[i].getObjectByName('lightbar') as THREE.Mesh | undefined;
-      if (bar) (bar.material as THREE.MeshBasicMaterial).color.set(blue ? '#3b6bff' : '#ff3b30');
+      const bar = this.pool[i].getObjectByName("lightbar") as
+        THREE.Mesh | undefined;
+      if (bar)
+        (bar.material as THREE.MeshBasicMaterial).color.set(
+          blue ? "#3b6bff" : "#ff3b30",
+        );
     }
   }
 }

@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import type { BuildingKind } from '../city/types';
-import { UNITS_PER_METRE } from '../constants';
+import * as THREE from "three";
+import type { BuildingKind } from "../city/types";
+import { UNITS_PER_METRE } from "../constants";
 
 /**
  * Windows for the boxes (#11).
@@ -47,33 +47,33 @@ const TILE: Record<BuildingKind, { bay: number; storey: number }> = {
  */
 function facadeTile(kind: BuildingKind): HTMLCanvasElement {
   const size = 128;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
 
   // White is "leave the instance colour alone": the tile multiplies the
   // per-building colour rather than replacing it, so the district palettes
   // from #75 still do the work of telling downtown from the waterfront.
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
 
-  if (kind === 'shed') {
+  if (kind === "shed") {
     // Industrial: profiled steel sheeting is vertical corrugation with a
     // horizontal seam where two sheets lap, and a band of roof glazing high
     // up. On a seven-metre tile that lands one band near the top of a typical
     // unit rather than a stripe every floor.
-    ctx.fillStyle = 'rgba(0,0,0,0.09)';
+    ctx.fillStyle = "rgba(0,0,0,0.09)";
     for (let x = 0; x < size; x += 7) ctx.fillRect(x, 0, 3, size);
-    ctx.fillStyle = 'rgba(0,0,0,0.14)';
+    ctx.fillStyle = "rgba(0,0,0,0.14)";
     ctx.fillRect(0, size * 0.62, size, 2);
-    ctx.fillStyle = 'rgba(26,34,42,0.5)';
+    ctx.fillStyle = "rgba(26,34,42,0.5)";
     ctx.fillRect(0, size * 0.1, size, size * 0.1);
     return canvas;
   }
 
-  const inset = kind === 'tower' ? 0.08 : 0.16;
+  const inset = kind === "tower" ? 0.08 : 0.16;
   const x0 = size * inset;
   const w = size * (1 - inset * 2);
   // The glass sits in the upper part of the storey, with the spandrel - the
@@ -81,22 +81,22 @@ function facadeTile(kind: BuildingKind): HTMLCanvasElement {
   // it. Centring the window instead is the giveaway that a facade was drawn
   // by someone who did not look at a building.
   const y0 = size * 0.16;
-  const h = size * (kind === 'tower' ? 0.62 : 0.5);
+  const h = size * (kind === "tower" ? 0.62 : 0.5);
 
-  ctx.fillStyle = 'rgba(16,22,30,0.62)';
+  ctx.fillStyle = "rgba(16,22,30,0.62)";
   ctx.fillRect(x0, y0, w, h);
   // A lighter top edge: glass reflects the sky, and the reflection is
   // brightest where the pane meets its head.
-  ctx.fillStyle = 'rgba(190,215,240,0.30)';
+  ctx.fillStyle = "rgba(190,215,240,0.30)";
   ctx.fillRect(x0, y0, w, Math.max(1, h * 0.14));
   // Mullion down the middle of a tower's bay: it doubles the apparent
   // resolution of the grid for one rectangle of cost.
-  if (kind === 'tower') {
-    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+  if (kind === "tower") {
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
     ctx.fillRect(x0 + w / 2 - 1, y0, 2, h);
   }
   // The floor slab, darkest right under the glass.
-  ctx.fillStyle = 'rgba(0,0,0,0.13)';
+  ctx.fillStyle = "rgba(0,0,0,0.13)";
   ctx.fillRect(0, y0 + h, size, Math.max(1, size * 0.05));
   return canvas;
 }
@@ -137,7 +137,7 @@ export function facadeUvs(material: THREE.Material, kind: BuildingKind): void {
 
     shader.vertexShader = shader.vertexShader
       .replace(
-        '#include <common>',
+        "#include <common>",
         `#include <common>
         uniform float uBay;
         uniform float uStorey;
@@ -145,7 +145,7 @@ export function facadeUvs(material: THREE.Material, kind: BuildingKind): void {
         varying float vFacadeWall;`,
       )
       .replace(
-        '#include <begin_vertex>',
+        "#include <begin_vertex>",
         `#include <begin_vertex>
         // Column lengths of the instance matrix are its scale, which for these
         // boxes is the building's width, height and depth in world units.
@@ -167,13 +167,13 @@ export function facadeUvs(material: THREE.Material, kind: BuildingKind): void {
 
     shader.fragmentShader = shader.fragmentShader
       .replace(
-        '#include <common>',
+        "#include <common>",
         `#include <common>
         varying vec2 vFacadeUv;
         varying float vFacadeWall;`,
       )
       .replace(
-        '#include <map_fragment>',
+        "#include <map_fragment>",
         `#ifdef USE_MAP
           vec4 facadeTexel = texture2D(map, vFacadeUv);
           diffuseColor *= mix(vec4(1.0), facadeTexel, vFacadeWall);
