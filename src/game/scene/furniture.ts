@@ -6,8 +6,9 @@ import {
   BARRIER_HEIGHT,
   BARRIER_SPACING,
   LAMP_REACH,
+  LAMP_GLOW,
 } from '../constants';
-import { signTexture } from './signage';
+import { lampGlowTexture, signTexture } from './signage';
 import type { StreetProp } from '../city/types';
 
 const M = UNITS_PER_METRE;
@@ -57,6 +58,12 @@ export class StreetFurniture {
       LAMP_HEIGHT - 0.3 * M,
       LAMP_REACH,
     );
+    // The pool of light on the road under each lamp (#180). Flat on the
+    // tarmac, out at the end of the arm where the head is, and invisible until
+    // `Cityscape.setNight` turns it up. This is the thing that says night in a
+    // street - not the lamp being bright, but the ground under it being so.
+    this.glow(lamps);
+
     this.add('sign-posts', signs, '#43484f', 0.16 * M, SIGN_HEIGHT, 0.16 * M, 0);
     // A plate with a face on it rather than a grey slab (#11). The texture is
     // a border and a bar, which is what a sign reads as at the distance one is
@@ -102,6 +109,60 @@ export class StreetFurniture {
   }
 
   /**
+   * A lit patch of road under every lamp.
+   *
+   * A quad rather than a light: four thousand point lights is a slideshow and
+   * four thousand instances of one quad is a draw call. Additive, so it
+   * brightens the tarmac rather than painting a beige disc on it, and with
+   * `depthWrite` off so the pools of two lamps overlap instead of cutting each
+   * other out.
+   */
+  private glow(lamps: StreetProp[]): void {
+    const map = lampGlowTexture();
+    if (lamps.length === 0 || !map) return;
+
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2); // face up at the sky
+    const material = new THREE.MeshBasicMaterial({
+      map,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      fog: true,
+    });
+    this.owned.push(geometry, material);
+
+    const mesh = new THREE.InstancedMesh(geometry, material, lamps.length);
+    mesh.name = 'lamp-glow';
+    // Nothing casts or receives on a decal: it *is* the light.
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.visible = false;
+
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3(LAMP_GLOW, 1, LAMP_GLOW);
+    const position = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+
+    lamps.forEach((prop, i) => {
+      quaternion.setFromAxisAngle(up, prop.angle);
+      const sideways = LAMP_REACH * prop.reach;
+      position.set(
+        prop.at.x + Math.cos(prop.angle) * sideways,
+        // Just off the road, or it z-fights with the markings.
+        prop.y + 0.12 * M,
+        prop.at.z - Math.sin(prop.angle) * sideways,
+      );
+      matrix.compose(position, quaternion, scale);
+      mesh.setMatrixAt(i, matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    this.meshes.push(mesh);
+  }
+
+  /**
    * One instanced box per prop, sized and stood at `base` above the road.
    *
    * `out` shifts the box sideways towards the road, in the prop's own rotated
@@ -127,7 +188,13 @@ export class StreetFurniture {
     // A box's own uvs, not `worldUvs`: a sign plate is the same size on every
     // instance, so the face wants to be stretched onto it rather than tiled at
     // world scale like paving.
-    const material = new THREE.MeshLambertMaterial({ color: colour, map });
+    // `emissive` starts black, so nothing about the daytime look changes; the
+    // lamp heads are turned up after dark by `Cityscape.setNight` (#180).
+    const material = new THREE.MeshLambertMaterial({
+      color: colour,
+      map,
+      emissive: new THREE.Color('#000000'),
+    });
     this.owned.push(geometry, material);
 
     const mesh = new THREE.InstancedMesh(geometry, material, props.length);

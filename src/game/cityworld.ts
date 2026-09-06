@@ -69,6 +69,8 @@ import {
   BREAKER_DEBRIS,
   STUCK_TIME,
   STUCK_PROGRESS,
+  DAY_START,
+  DAY_MINUTES,
   SPEEDING_OVER,
   SPEEDING_TIME,
   TAKEDOWN_MIN_CLOSING,
@@ -206,6 +208,16 @@ export class CityWorld {
    * that reads as a bug in the Rep counter.
    */
   bustCost = 0;
+
+  /**
+   * The time of day, in hours (#180).
+   *
+   * Simulation rather than decoration, because the traffic reads it: a back
+   * street at three in the morning is not a back street at half past eight.
+   * The renderer reads the same number to decide what the sky is doing, which
+   * is the only way those two can agree.
+   */
+  hour = DAY_START;
 
   /**
    * How long the car has been trying to move and getting nowhere (#179).
@@ -566,6 +578,9 @@ export class CityWorld {
     this.shredded = Math.max(0, this.shredded - dt);
     this.repairFlash = Math.max(0, this.repairFlash - dt);
     this.sinceHurt += dt;
+    // The clock, which runs whatever else is happening - including while the
+    // world is frozen on a bust, because a bust is three seconds of a day.
+    this.hour = (this.hour + (dt / 60 / DAY_MINUTES) * 24) % 24;
     this.rep.step(dt);
     // Before the BUSTED early return, because being busted is one of the two
     // ways an ambush ends and the frozen world still has to notice it.

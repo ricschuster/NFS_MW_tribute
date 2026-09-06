@@ -104,7 +104,7 @@ npm run dev      # http://localhost:5173
 | `npm run test`      | Unit tests and playtests                            |
 | `npm run playtest`  | Just the playtests: drive the sim, assert outcomes  |
 | `npm run city`      | Draw the generated city from above; `-- --seed N` for another |
-| `npm run cityshot`  | Screenshot the 3D city and the driving views        |
+| `npm run cityshot`  | Screenshot the 3D city and the driving views (`HOUR=2 ... --view hour` for night) |
 | `npm run citylap`   | Every route, empty and in traffic, then every ladder rival, against `docs/city-baseline.json` |
 | `npm run pace`      | Can the police be outrun? Your top speed against theirs, at every heat level |
 | `npm run patrol`    | Twenty minutes in the city with the police live, and what came of it |

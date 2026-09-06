@@ -284,6 +284,8 @@ export const LAMP_SPACING = m(32);
  * the middle of a two-lane street.
  */
 export const LAMP_REACH = 2.2 * UNITS_PER_METRE;
+/** How wide the pool of light under a lamp is at night (#180). */
+export const LAMP_GLOW = 10 * UNITS_PER_METRE;
 export const LAMP_KERB_GAP = m(1.2);
 export const SIGN_KERB_GAP = m(1.6);
 export const BARRIER_SPACING = m(6);
@@ -462,6 +464,44 @@ export const TRAFFIC_DENSITY: Record<DistrictKind, number> = {
  * few and much of a muchness. Turning a spawn down moves it across the map.
  */
 export const TRAFFIC_LANE_BIAS = 4;
+
+/**
+ * Time of day (#180), the other half of "how much traffic, where".
+ *
+ * The city keeps a clock because the traffic reads it: a back street at three
+ * in the morning is not a back street at half past eight. It is simulation
+ * rather than decoration for exactly that reason, and the renderer reads the
+ * same number to decide what the sky is doing.
+ *
+ * A full day in about half an hour of play. Fast enough that a session sees
+ * more than one hour of it, slow enough that the light is not visibly
+ * sliding while you drive down a street. It starts in the afternoon so a
+ * player's first minute is in daylight, and so every screenshot in the repo is
+ * taken at the same hour without having to say so.
+ */
+export const DAY_START = 14;
+export const DAY_MINUTES = 32;
+
+/**
+ * How busy the city is through the day, as multipliers on the district's own
+ * density. Hours between these are interpolated.
+ *
+ * Two peaks and a long trough, which is what traffic does. The night figure is
+ * what makes a three-in-the-morning pursuit a different drive from a
+ * six-o'clock one: the roads are yours, and so is every mistake.
+ */
+export const TRAFFIC_BY_HOUR: [number, number][] = [
+  [0, 0.4],
+  [3, 0.22],
+  [6, 0.75],
+  [8, 1.2],
+  [11, 0.95],
+  [13, 1],
+  [17, 1.2],
+  [20, 0.85],
+  [22, 0.6],
+  [24, 0.4],
+];
 /** Never spawn one closer than this, or cars appear out of nothing in view. */
 export const TRAFFIC_SPAWN_MIN = m(95);
 export const TRAFFIC_SPEED_MIN = 0.55;

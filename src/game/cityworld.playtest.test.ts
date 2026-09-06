@@ -46,6 +46,7 @@ import {
   TRAFFIC_LANE,
   TRAFFIC_DENSITY,
   TRAFFIC_IN_CITY,
+  DAY_MINUTES,
   PATROL_RADIUS,
   BUST_TIME,
   AMBUSH_RANGE,
@@ -60,6 +61,7 @@ import {
 import { CARS, STARTER_CAR, carById } from './cars';
 import { RIVALS } from './rivals';
 import { placeOnRoad } from './graphcar';
+import { hourly } from './citytraffic';
 import type { InputState } from './cityworld';
 import type { Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
@@ -2332,8 +2334,36 @@ describe('traffic density', () => {
   it('gives every district the share it is written down as having', () => {
     for (const [district, share] of Object.entries(TRAFFIC_DENSITY)) {
       const world = parkIn(district);
-      expect(world.traffic.cars.length).toBe(Math.round(TRAFFIC_IN_CITY * share));
+      // Times the hour, since #180's other half: the district says how busy
+      // this part of the city is and the clock says how busy this part of the
+      // day is, and the population is the product.
+      expect(world.traffic.cars.length).toBe(
+        Math.round(TRAFFIC_IN_CITY * share * hourly(world.hour)),
+      );
     }
+  });
+
+  // The whole point of a clock. Three in the morning on an industrial back
+  // street is a different drive from half past eight downtown, and until #180
+  // they were the same drive.
+  it('empties out at night and fills up at rush hour', () => {
+    const night = parkIn('midtown');
+    night.hour = 3;
+    drive(night, 3, NONE);
+    const rush = parkIn('midtown');
+    rush.hour = 8;
+    drive(rush, 3, NONE);
+
+    expect(rush.traffic.cars.length).toBeGreaterThan(night.traffic.cars.length * 3);
+  });
+
+  it('runs a clock that wraps round the day', () => {
+    const world = parkIn('midtown');
+    world.hour = 23.99;
+    drive(world, DAY_MINUTES * 60 * 0.02, NONE); // a bit under half an hour
+    expect(world.hour).toBeGreaterThanOrEqual(0);
+    expect(world.hour).toBeLessThan(24);
+    expect(world.hour).toBeLessThan(1);
   });
 
   it('makes downtown busier than the industrial quarter, by a lot', () => {

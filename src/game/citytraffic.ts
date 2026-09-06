@@ -3,6 +3,7 @@ import {
   TRAFFIC_RADIUS,
   TRAFFIC_DENSITY,
   TRAFFIC_LANE_BIAS,
+  TRAFFIC_BY_HOUR,
   TRAFFIC_SPAWN_MIN,
   TRAFFIC_SPEED_MIN,
   TRAFFIC_SPEED_MAX,
@@ -20,6 +21,24 @@ import {
   placeOnRoad,
   type GraphCar,
 } from './graphcar';
+
+/**
+ * How busy this hour is, interpolated between the points in the table (#180).
+ *
+ * A table rather than a formula because it is content: two peaks and a long
+ * trough is a decision about what a day in this city is like, and it should be
+ * editable without reading any code.
+ */
+export function hourly(hour: number): number {
+  const at = ((hour % 24) + 24) % 24;
+  for (let i = 1; i < TRAFFIC_BY_HOUR.length; i++) {
+    const [h0, v0] = TRAFFIC_BY_HOUR[i - 1];
+    const [h1, v1] = TRAFFIC_BY_HOUR[i];
+    if (at > h1) continue;
+    return v0 + ((v1 - v0) * (at - h0)) / Math.max(1e-6, h1 - h0);
+  }
+  return TRAFFIC_BY_HOUR[TRAFFIC_BY_HOUR.length - 1][1];
+}
 
 /** One car going about its business on the street network. */
 export interface TrafficCar extends GraphCar {
@@ -62,13 +81,17 @@ export class CityTraffic {
    */
   private district: DistrictKind = 'midtown';
 
+  /** What time the city thinks it is, for the two peaks and the trough (#180). */
+  private hour = TRAFFIC_BY_HOUR[0][0];
+
   /** How many cars this stretch of city should have around the player. */
   private get wanted(): number {
-    return Math.round(TRAFFIC_IN_CITY * TRAFFIC_DENSITY[this.district]);
+    return Math.round(TRAFFIC_IN_CITY * TRAFFIC_DENSITY[this.district] * hourly(this.hour));
   }
 
-  update(dt: number, at: { x: number; z: number; onRoad?: CityRoad | null }): void {
+  update(dt: number, at: { x: number; z: number; onRoad?: CityRoad | null; hour?: number }): void {
     if (at.onRoad) this.district = at.onRoad.district;
+    if (at.hour !== undefined) this.hour = at.hour;
 
     for (const car of this.cars) this.follow(car);
     for (const car of this.cars) this.advance(car, dt);
