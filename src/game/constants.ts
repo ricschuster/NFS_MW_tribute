@@ -340,6 +340,22 @@ export const CITY_EDGE_MARGIN = m(18);
 export const SPAWN_SEARCH = m(180);
 
 /**
+ * Getting unstuck (#179).
+ *
+ * Stuck means "not getting anywhere", not "not moving". A car wedged nose into
+ * a corner rocks back and forth for as long as you hold the throttle, which
+ * reads as moving to any speed test - the reference driver in
+ * `tools/citydriver.mjs` learnt that the hard way and measures ground covered
+ * instead. So does the car: `STUCK_PROGRESS` is how much of the city has to go
+ * by to count as progress, and `STUCK_TIME` is how long it may not.
+ *
+ * Long enough that nudging a wall at a junction never offers a reset, short
+ * enough that a wedged car is not a session over.
+ */
+export const STUCK_TIME = 3;
+export const STUCK_PROGRESS = m(12);
+
+/**
  * Boulevards (#115): the roads that bend. Laid over the finished grid and
  * spliced into it, because a grid on its own has no sweeping line through it.
  */

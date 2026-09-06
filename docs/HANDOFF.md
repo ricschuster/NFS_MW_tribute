@@ -221,7 +221,7 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Twelve issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
+**Eleven issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
 systems) are closed, and #165 closed the rebuild out by deleting the thing it
 replaced. Nearly everything now open came from **one person playing the game for
 ten minutes** on 2026-09-06, which is the single most important fact on this
@@ -264,10 +264,6 @@ purpose - five bolted-on hints would be worse than one decided layer.
 
 ### The rest, roughly by how much they cost a player
 
-- **#179 a stuck car has no way out.** No respawn, no unstick, nothing that
-  notices a car has stopped making progress. It is the one failure the player
-  cannot play their way out of. The reference driver has a three-point-turn
-  escape precisely because this kept happening to it.
 - **#185 a lot of land belongs to neither block nor road.** Surfaced by #176:
   until the ground stopped being asphalt, nobody could see how much. Blocks are
   rectangles, roads bend, and the leftovers are drivable-looking and slow.
@@ -362,6 +358,17 @@ What is left, roughly in the order it would show:
   sight is the mechanism. It is still open because escapable and enjoyable are
   different claims, and because the same probe found only 1 bust in 54 - the
   real problem is #178, not this.
+- **A stuck car has a way out, and it is deliberately narrow** (#179, fixed).
+  Three seconds of asking the car to move without covering twelve metres earns
+  a prompt; taking it puts the car on the *nearest* road, keeping heat, damage
+  and whatever event is running, which is what stops a free reset being a way
+  out of a pursuit. Two things it does not catch, both on purpose. A car
+  scraping along a wall is covering ground, so the clock keeps resetting - it
+  reads as driving because it is. And a car boxed in by traffic at a junction
+  under throttle will be offered the reset, which is generous rather than
+  wrong. What proved the first of those was a screenshot: `--view stuck` first
+  tried to *drive* into a wall and hold the throttle, and the car bounced off
+  and drove away every time, so the shot is a placed wedge instead.
 - **The ladder is unmeasured.** See #166 above. It is the one regression #165
   shipped on purpose, and the reason `RIVAL_DIFF_SPEED_FRAC` carries a comment
   saying where its value came from.
@@ -500,7 +507,7 @@ Then read "Where the work is". The pursuit cluster (#177, #178) is the biggest
 thing and wants a conversation before code, because what a bust costs is an
 economy decision and `rep.ts` is a design document as much as a module. #181 is
 the largest amount of player-visible improvement for the least architectural
-risk. #179 is small and removes the only failure a player cannot recover from.
+risk.
 
 Whatever you pick: keep behaviour in the sim and drawing in the renderer,
 because that split is the only reason this rebuild has been survivable, and keep

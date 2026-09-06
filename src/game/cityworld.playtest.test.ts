@@ -45,6 +45,7 @@ import {
   CITY_COUNTDOWN,
   CITY_EDGE_MARGIN,
   ROUTE_START_RANGE,
+  STUCK_TIME,
   AMBUSH_RANGE,
   AMBUSH_RING,
   DAMAGE_FREE,
@@ -2305,5 +2306,138 @@ describe('the coast road', () => {
     drive(world, 4, press({ up: true }));
 
     expect(world.z).toBeGreaterThan(bounds.minZ - CITY_EDGE_MARGIN * 2);
+  });
+});
+
+/**
+ * Getting unstuck (#179).
+ *
+ * The one failure a player could not play their way out of. Everything else
+ * that goes wrong - busted, wrecked, beaten, shredded - hands back a car that
+ * still drives; a car wedged against a building handed back the menu.
+ */
+describe('a stuck car', () => {
+  /** Wedge the car where it cannot move: inside a building, which is solid. */
+  function wedge(world: CityWorld) {
+    const building = world.city.buildings[0];
+    const f = building.footprint;
+    world.x = (f.minX + f.maxX) / 2;
+    world.z = (f.minZ + f.maxZ) / 2;
+    world.y = 0;
+    world.speed = 0;
+    world.onRoad = null;
+  }
+
+  it('is offered a way out once it has been going nowhere for long enough', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    wedge(world);
+
+    drive(world, STUCK_TIME * 0.5, press({ up: true }));
+    expect(world.canRecover).toBe(false);
+
+    drive(world, STUCK_TIME, press({ up: true }));
+    expect(world.canRecover).toBe(true);
+  });
+
+  // The clock measures ground covered, not the throttle: a car driving down a
+  // street is not stuck however long it is held down. Four seconds, because
+  // the fifth is where a car driven flat out in a straight line meets the
+  // first building that is not in a straight line - which is a real stuck car
+  // and not a false positive.
+  it('is not offered to a car that is getting somewhere', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const start = at(world);
+    drive(world, 4, press({ up: true }));
+
+    expect(moved(start, at(world))).toBeGreaterThan(100 * M);
+    expect(world.canRecover).toBe(false);
+    expect(world.stuckFor).toBeLessThan(STUCK_TIME);
+  });
+
+  // Nor to a car that is simply parked. A prompt that appears whenever you
+  // stop is a prompt nobody reads.
+  it('is not offered to a car that is standing still by choice', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    drive(world, STUCK_TIME * 3, NONE);
+
+    expect(world.canRecover).toBe(false);
+  });
+
+  it('puts the car back on a road when the offer is taken', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    wedge(world);
+    drive(world, STUCK_TIME * 1.5, press({ up: true }));
+    const stuckAt = at(world);
+
+    world.step(STEP, press({ up: true, confirm: true }));
+
+    expect(world.canRecover).toBe(false);
+    expect(world.onRoad).not.toBeNull();
+    // And it can be driven away from, which is the whole point.
+    const freed = at(world);
+    drive(world, 3, press({ up: true }));
+    expect(moved(freed, at(world))).toBeGreaterThan(20 * M);
+    // Onto the *nearest* road: a reset that moved you somewhere useful would
+    // be a way out of a pursuit rather than a way out of a corner.
+    expect(moved(stuckAt, freed)).toBeLessThan(100 * M);
+  });
+
+  it('cannot be used to cancel a pursuit', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    // Long enough for a pursuit to be running and hot.
+    drive(world, 60, press({ up: true }));
+    const heat = world.police.heat;
+    const cops = world.police.cops.length;
+    expect(cops).toBeGreaterThan(0);
+
+    wedge(world);
+    drive(world, STUCK_TIME * 1.5, press({ up: true }));
+    expect(world.canRecover).toBe(true);
+    // Read after the wedge rather than set before it: a car being held against
+    // a wall under throttle is taking damage the whole time it is stuck.
+    const hurt = world.damage;
+    expect(hurt).toBeGreaterThan(0);
+    world.step(STEP, press({ up: true, confirm: true }));
+
+    expect(world.police.heat).toBeCloseTo(heat, 0);
+    expect(world.police.state).not.toBe('clear');
+    expect(world.damage).toBe(hurt);
+  });
+
+  // A car that has been picked up and put somewhere is not stuck any more,
+  // whatever the clock says. Without this the reset eats the ENTER that was
+  // meant to start the race - which is how the scripted screenshots set up
+  // half their shots.
+  it('stops being offered once the car is somewhere else', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    wedge(world);
+    drive(world, STUCK_TIME * 1.5, press({ up: true }));
+    expect(world.canRecover).toBe(true);
+
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.y = 0;
+    expect(world.canRecover).toBe(false);
+
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.state).toBe('countdown');
+  });
+
+  // Reset onto the road you were already pointing along. Being spun round is
+  // disorienting in a city where knowing which way you face is most of knowing
+  // where you are.
+  it('does not turn the car round', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    wedge(world);
+    drive(world, STUCK_TIME * 1.5, press({ up: true }));
+    const was = world.heading;
+
+    world.step(STEP, press({ up: true, confirm: true }));
+
+    // At most a right angle: the road may run across you, but it is never the
+    // way you came.
+    const turn = Math.abs(Math.atan2(Math.sin(world.heading - was), Math.cos(world.heading - was)));
+    expect(turn).toBeLessThanOrEqual(Math.PI / 2 + 1e-9);
   });
 });
