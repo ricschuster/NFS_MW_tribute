@@ -26,13 +26,16 @@ cameras that leave the car. Read that ADR before touching the renderer.
 - `npm run test` — unit tests + playtests
 - `npm run playtest` — just the headless playtests (drive the World, assert outcomes)
 - `npm run feel` — measure driving feel (accel, steering, pursuit, race length);
-  compare against `docs/feel-baseline.json` after touching `constants.ts`
+  compare against `docs/feel-baseline.json` after touching `constants.ts`. There
+  are two baselines and a tuning change moves both: this one for the track sim
+  and `docs/city-baseline.json` for the city (see `npm run citylap`)
 - `npm run city` — draw the generated city from above to `screenshots/citymap.png`;
   `-- --seed N` tries another one
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
   own server, so nothing else needs running
 - `npm run citylap` — drive a reference driver round every generated route and
-  report how far it got; a measurement of whether the city is drivable
+  report what it held; compare against `docs/city-baseline.json` after touching
+  `constants.ts`, and re-record with `-- --out docs/city-baseline.json`
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)
