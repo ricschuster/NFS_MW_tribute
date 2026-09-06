@@ -20,6 +20,7 @@ import {
 } from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import type { CityWorld } from '../cityworld';
+import type { QuickWheel } from '../quickwheel';
 
 /**
  * The HUD over the 3D city (#89).
@@ -42,6 +43,8 @@ const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 export class Hud {
   /** Held while the collection map is open (#93). Set by whoever reads input. */
   showMap = false;
+  /** The Quick Wheel while it is held open (#90), or null. */
+  wheel: QuickWheel | null = null;
 
   constructor(private readonly ctx: CanvasRenderingContext2D) {}
 
@@ -74,6 +77,7 @@ export class Hud {
     this.collection(world);
     this.event(world);
     this.banners(world);
+    this.quickWheel(world);
 
     ctx.restore();
   }
@@ -470,6 +474,8 @@ export class Hud {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    this.marker(world, cx, cy, radius);
   }
 
   /** Roads within the minimap's reach, via the spatial index rather than all of them. */
@@ -891,6 +897,103 @@ export class Hud {
     ctx.fillStyle = gap < ROUTE_START_RANGE * 4 ? '#5adc82' : '#7fe3ff';
     ctx.fill();
     ctx.restore();
+  }
+
+  /**
+   * The Quick Wheel, drawn over the running game (#90).
+   *
+   * Over and not instead of: the world keeps moving underneath, which is the
+   * entire point of it. A panel down one side rather than an actual wheel,
+   * because what is being read is nine lines of text and a wheel is a worse
+   * shape for that than a list.
+   */
+  private quickWheel(world: CityWorld): void {
+    const { ctx } = this;
+    const wheel = this.wheel;
+    if (!wheel) return;
+
+    const entries = wheel.entries(world);
+    const width = 470;
+    const height = 54 + entries.length * 30;
+    const x = WIDTH / 2 - width / 2;
+    const y = HEIGHT / 2 - height / 2;
+
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = 'rgba(127, 227, 255, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#7fe3ff';
+    ctx.font = '700 15px system-ui, sans-serif';
+    ctx.fillText(wheel.title, x + 16, y + 30);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = '500 12px system-ui, sans-serif';
+    ctx.fillText('E to switch  ·  1-9 to pick', x + width - 16, y + 30);
+
+    ctx.textAlign = 'left';
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const line = y + 56 + i * 30;
+      ctx.globalAlpha = entry.available ? 1 : 0.4;
+
+      ctx.fillStyle = '#ffd166';
+      ctx.font = '700 15px ui-monospace, "SF Mono", Menlo, monospace';
+      ctx.fillText(String(i + 1), x + 16, line);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 14px system-ui, sans-serif';
+      ctx.fillText(entry.label, x + 40, line);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.font = '500 12px system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(entry.detail, x + width - 16, line);
+      ctx.textAlign = 'left';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Where you asked to be pointed (#90).
+   *
+   * A chevron on the rim of the minimap and a distance under it, so a
+   * destination two kilometres away is still a direction rather than a dot off
+   * the edge of a 280 m circle.
+   */
+  private marker(world: CityWorld, cx: number, cy: number, radius: number): void {
+    const { ctx } = this;
+    const marker = world.marker;
+    if (!marker) return;
+
+    const dx = marker.x - world.x;
+    const dz = marker.z - world.z;
+    const gap = Math.hypot(dx, dz);
+    const bearing = Math.atan2(dx, dz) - world.heading;
+    const at = Math.min(radius - 12, gap * (radius / MINIMAP_RANGE));
+
+    ctx.save();
+    ctx.translate(cx + Math.sin(bearing) * at, cy - Math.cos(bearing) * at);
+    ctx.rotate(bearing);
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(6, 5);
+    ctx.lineTo(-6, 5);
+    ctx.closePath();
+    ctx.fillStyle = '#7fe3ff';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(127, 227, 255, 0.85)';
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.fillText(
+      `${(Math.round(gap / UNITS_PER_METRE / 100) / 10).toFixed(1)} km  ${marker.label}`,
+      cx,
+      cy + radius + 18,
+    );
   }
 
   /**

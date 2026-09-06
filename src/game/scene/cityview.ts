@@ -4,6 +4,7 @@ import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
 import { CameraDirector } from './cameras';
 import type { Hud } from './hud';
+import { QuickWheel } from '../quickwheel';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
@@ -190,6 +191,10 @@ export class CityView {
   private readonly repairShops: THREE.Group[] = [];
   private readonly helicopter = makeHelicopter();
   private siren = 0;
+  /** The Quick Wheel (#90). Held open with Q while the world runs on. */
+  private readonly wheel = new QuickWheel();
+  /** Keys that were down last frame, so a hold is not nine presses. */
+  private readonly wasDown = new Set<string>();
   private readonly director: CameraDirector;
   private accumulator = 0;
 
@@ -535,6 +540,7 @@ export class CityView {
     // Tab holds the collection map open: what has been found, and where the
     // rest of it is. Held rather than toggled, so it cannot be left up.
     if (this.hud) this.hud.showMap = held('tab');
+    this.quickWheel(world, held);
 
     this.trafficCars.begin();
     for (const car of world.traffic.cars) {
@@ -717,6 +723,36 @@ export class CityView {
       gantry.rotation.y = shop.angle;
       this.repairShops.push(gantry);
       this.scene.add(gantry);
+    }
+  }
+
+  /**
+   * The Quick Wheel (#90): held open with Q, picked from with the number row.
+   *
+   * The numbers are the whole reason it can exist while driving. Navigating a
+   * menu needs a cursor and a cursor needs direction keys, and the direction
+   * keys are busy steering; a number goes straight to the thing.
+   */
+  private quickWheel(world: CityWorld, held: (...keys: string[]) => boolean): void {
+    this.wheel.open = held('q');
+    if (this.hud) this.hud.wheel = this.wheel.open ? this.wheel : null;
+    if (!this.wheel.open) {
+      this.wasDown.clear();
+      return;
+    }
+
+    // Edges, not levels: a key held for a fifth of a second is one choice.
+    const pressed = (key: string) => {
+      const down = held(key);
+      const was = this.wasDown.has(key);
+      if (down) this.wasDown.add(key);
+      else this.wasDown.delete(key);
+      return down && !was;
+    };
+
+    if (pressed('e')) this.wheel.cycle();
+    for (let i = 1; i <= 9; i++) {
+      if (pressed(String(i))) this.wheel.choose(world, i - 1);
     }
   }
 

@@ -236,6 +236,13 @@ you in it: being teleported into a different car mid-pursuit, having just
 wrecked somebody, would be absurd, and #90 is where changing car on purpose
 belongs.
 
+**The Quick Wheel never pauses** (issue #90). It is held open with a key while
+the world keeps running underneath, and entries are picked by *number* rather
+than navigated to - navigating needs a cursor, a cursor needs direction keys,
+and the direction keys are busy driving. Its "go to" branch sets a marker
+rather than teleporting: quick travel that moved the car would make the pursuit
+a formality and the city a menu of places rather than a place.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

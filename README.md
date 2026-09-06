@@ -26,7 +26,8 @@ Everything runs from the one deployment; the query string picks what you get.
 
 **Driving** (`?renderer=drive`): WASD or arrows to drive, **shift** for
 nitrous, **Enter** to start an event you are parked on, **B** to glance behind,
-**Tab** to hold the collection map open.
+**Tab** to hold the collection map open, **Q** to hold the Quick Wheel open
+(**E** switches branch, **1**-**9** picks).
 Speed, nitrous, heat, Rep, takedowns and a heading-up minimap are drawn over
 the world. Rep is earned from everything -
 takedowns, roadblocks gone through, cars threaded at speed, and every second
@@ -40,7 +41,8 @@ stationary and already surrounded, with one job. The car takes damage and
 loses speed and grip with it; six drive-through workshops put it right without
 stopping, and doing that while the police are searching for you ends the
 search. Each of the ten ladder rivals is two fights: beat them in the race,
-then run them down and wreck the car to take it. The
+then run them down and wreck the car to take it. The Quick Wheel changes car
+and sets a destination without ever stopping the world. The
 map on **Tab** shows the events and everything left to find. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck
