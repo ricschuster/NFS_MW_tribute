@@ -96,7 +96,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((hit) => {
       if (hit) return hit;
-      // A navigation with a query string - \`?renderer=drive\`, which is a link
+      // A navigation with a query string - \`?renderer=city\`, which is a link
       // the README hands out - is not the same cache entry as \`./\`, so a
       // bookmarked one would fail offline. Any navigation falls back to the
       // page itself; the query string is read from \`location\` afterwards.

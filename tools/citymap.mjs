@@ -2,8 +2,7 @@
 // by looking at it instead of by reading numbers off a test.
 //
 // The generator is a pure function of a seed, which makes it easy to test and
-// impossible to eyeball. This is the eyeball. `npm run shot` earned its keep
-// the same way during #81.
+// impossible to eyeball. This is the eyeball.
 //
 // Usage:
 //   npm run city                       # the pinned seed -> screenshots/citymap.*

@@ -1,33 +1,16 @@
-import type { ColorSet } from './types';
 import type { BuildingCharacter, DistrictCharacter, DistrictKind } from './city/types';
 
-/** Logical canvas resolution. The canvas is scaled to fit via CSS. */
+/** Logical canvas resolution of the HUD layer. It is scaled to fit via CSS. */
 export const WIDTH = 1024;
 export const HEIGHT = 640;
 
-/** World geometry, in arbitrary world units. */
-export const ROAD_WIDTH = 2000;
-export const SEGMENT_LENGTH = 200;
-export const RUMBLE_LENGTH = 3; // segments per rumble-strip colour band
-export const LANES = 3;
+/** Fixed physics timestep (seconds). */
+export const STEP = 1 / 60;
 
-/** Camera / projection. */
-export const FIELD_OF_VIEW = 100; // degrees
-export const CAMERA_HEIGHT = 1000;
-export const CAMERA_DEPTH = 1 / Math.tan((FIELD_OF_VIEW / 2) * (Math.PI / 180));
+/* ------------------------------------------------------------------ */
+/* The car. How it drives, everywhere it drives.                       */
+/* ------------------------------------------------------------------ */
 
-/** How many segments ahead to draw, and how quickly they fade into fog. */
-export const DRAW_DISTANCE = 300;
-export const FOG_DENSITY = 5;
-export const FOG_COLOR = '#0d2417';
-
-/**
- * How sharply an authored `curve` value bends the road, in radians of heading
- * per world unit travelled. The car's heading is real now, so a bend rotates
- * the road under it rather than shoving it sideways: hold a straight heading
- * through a corner and you run wide on your own.
- */
-export const CURVE_TO_HEADING = 2.42e-5;
 /** Fastest the car can be turned at low speed, in radians per second. */
 export const TURN_RATE = 2.2;
 /**
@@ -36,21 +19,14 @@ export const TURN_RATE = 2.2;
  * This is what makes speed matter in a corner. Turning at yaw rate w while
  * travelling at v needs lateral acceleration v*w, so the fastest the car can be
  * turned is LATERAL_GRIP / v: the quicker you go, the wider you turn. Without
- * it, both the steering and the road's own curvature scale with speed, they
- * cancel, and every bend can be taken flat out however sharp it is.
+ * it the steering scales with speed and every bend can be taken flat out
+ * however sharp it is.
  */
 export const LATERAL_GRIP = 14400;
-/**
- * How far the car may point away from the road direction. The track model can
- * only describe a car going forwards along it, so it cannot turn around; the
- * limit goes away with the track itself in issue #83.
- */
-export const HEADING_LIMIT = 0.9;
 
 /** Top reverse speed as a fraction of forward max speed. */
 export const REVERSE_SPEED_FRAC = 0.18;
 
-/** Nitrous + drift. */
 /**
  * Nitrous (#45, #48, #105).
  *
@@ -80,22 +56,10 @@ export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
 export const NITRO_MIN_ENGAGE = 0.25; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
 
-/** Fixed physics timestep (seconds). */
-export const STEP = 1 / 60;
-
-export const COLORS: Record<'LIGHT' | 'DARK', ColorSet> = {
-  LIGHT: { road: '#6b6b6b', grass: '#12902c', rumble: '#e9e9e9', lane: '#ffffff' },
-  DARK: { road: '#606060', grass: '#0f7f26', rumble: '#c0392b' },
-};
-
-/** Traffic. */
-export const TRAFFIC_COUNT = 24;
-/** Car body width in world units (road half-width is ROAD_WIDTH, so this spans about half a lane). */
+/** Car body width in world units: about half a lane. */
 export const CAR_WIDTH_WORLD = 650;
-/** Car sprite height as a fraction of its drawn width. */
+/** Car body height as a fraction of its width. */
 export const CAR_ASPECT = 0.7;
-/** Car width in offset units (-1..1 across the road), used for collision tests. */
-export const CAR_WIDTH_OFFSET = CAR_WIDTH_WORLD / ROAD_WIDTH;
 export const CAR_COLORS = [
   '#c94b4b',
   '#4b7bc9',
@@ -106,61 +70,35 @@ export const CAR_COLORS = [
   '#6a4bc9',
 ];
 
-/** Distance from the camera to the player car. */
-export const PLAYER_Z = CAMERA_HEIGHT * CAMERA_DEPTH;
+/* ------------------------------------------------------------------ */
+/* The pursuit clock. Distances and levels live in the city block.     */
+/* ------------------------------------------------------------------ */
 
-/** Police pursuit. Cops are tracked by how far they trail the player (world units). */
-export const COP_MAX_SPEED_FRAC = 0.9; // cop top speed vs player max (base)
-export const COP_HEAT_SPEED_FRAC = 0.08; // extra at full heat (<1 total, so always outrunnable)
-export const COP_LANE_KP = 1.4; // how quickly the cop slides into your lane
 export const COP_FIRST_SPAWN = 12; // seconds before the first pursuit
 export const COP_RESPAWN = 20; // delay before a new pursuit after escaping
 export const COP_BUST_COOLDOWN = 15; // delay before a new pursuit after a bust
 export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
-export const COP_SPAWN_DISTANCE = 1600; // how far back a cop enters
-export const COP_OUTRUN_DISTANCE = 5000; // trail farther than this and the cop is lost
-export const COP_PIN_LEAD = 220; // render lead when on your bumper (large / near)
-export const COP_FAR_LEAD = 1400; // render lead when far behind (small / up-screen)
-export const PURSUIT_RANGE = 3000; // a cop trailing within this counts as "engaged"
-export const BUST_DISTANCE = 200; // this close (or closer) builds the bust timer
 export const BUST_TIME = 3.5; // seconds pinned before BUSTED
-export const ESCAPE_TIME = 4; // seconds clear of cops before ESCAPED
-export const MAX_COPS = 3; // spawn-count cap at high heat
-export const MAX_HEAT_LEVEL = 3; // discrete heat levels for the HUD
-export const HEAT_RISE = 0.1; // heat/sec while a cop is close
-export const HEAT_DECAY = 0.12; // heat/sec while clear
-
-/** Seconds the BUSTED overlay holds before the pursuit resets. */
-export const BUST_HOLD = 3;
 /** Seconds the ESCAPED banner lingers. */
 export const ESCAPED_FLASH = 2.5;
 
-/** Ladder races. */
-export const RACE_DISTANCE = 400000; // world units from start to finish
-export const COUNTDOWN_TIME = 3; // seconds of 3-2-1 before GO
+/* ------------------------------------------------------------------ */
+/* The ladder. What a rival is worth chasing at.                       */
+/* ------------------------------------------------------------------ */
+
 export const RIVAL_BASE_SPEED_FRAC = 0.8; // rival speed vs player max at difficulty 0
 /**
  * Extra rival pace at difficulty 1 (#48, #105).
  *
- * Set so the top of the ladder actually needs the boost. A reference lap
- * averages 91% of top speed clean and 96% with nitrous used well, so the boss
- * sits between the two: unwinnable without pressing it, and about a second and
- * a half in hand with it. It was 0.068 while nitrous was worthless, which put
+ * Set so the top of the ladder actually needs the boost: a reference lap
+ * averaged 91% of top speed clean and 96% with nitrous used well, so the boss
+ * sits between the two. It was 0.068 while nitrous was worthless, which put
  * the boss inside a clean lap and made the whole ladder a formality.
+ *
+ * Those figures came from the track sim's race probe, which retired with the
+ * track (#165). Nothing measures the ladder end to end today - see the handoff.
  */
 export const RIVAL_DIFF_SPEED_FRAC = 0.125;
-export const RIVAL_LANE = 0.4; // lane the rival lines up in
-export const RIVAL_NEAR_LEAD = 420; // minimum render lead, so the rival is off the camera at the start line
-
-/** Roadside scenery (purely visual). */
-export const PROP_SPACING = 9; // a roadside prop every N segments
-export const PROP_WORLD = 1150; // base prop size in world units
-export const PROP_OFFSET = 1.55; // lateral offset; >1 places it beyond the road edge
-/** Collision width of a prop in world units: narrower than it is drawn, so grazing the foliage is free. */
-export const PROP_HIT_WIDTH = 700;
-export const PROP_HIT_OFFSET = PROP_HIT_WIDTH / ROAD_WIDTH;
-/** Sideways nudge back toward the road on impact, so a car cannot wedge against a prop. */
-export const PROP_DEFLECT = 0.12;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -206,8 +144,15 @@ export const CITY_ARTERIAL_JITTER = 0.16;
 export const CITY_ARTERIAL_LANES = 4;
 export const CITY_ARTERIAL_SPEED = kmh(90);
 
-/** One lane, matching the road the car already drives on (ROAD_WIDTH over LANES). */
-export const CITY_LANE_WIDTH = ROAD_WIDTH / LANES;
+/**
+ * One lane, in world units - just under five metres of carriageway.
+ *
+ * Written as a literal rather than derived, because every road width, junction
+ * and collision test in the pinned city is measured against this exact value:
+ * it is map geometry, not a knob. It used to be `ROAD_WIDTH / LANES` from the
+ * track sim, which is where the odd number comes from.
+ */
+export const CITY_LANE_WIDTH = 2000 / 3;
 
 /** How far the districts reach from their anchors. */
 export const CITY_DOWNTOWN_RADIUS = m(850);
@@ -439,9 +384,10 @@ export const CITY_PURSUIT_RANGE = m(120);
 /**
  * How far a cop can fall behind before it has lost you.
  *
- * Deliberately its own constant rather than the track's `COP_OUTRUN_DISTANCE`,
- * which is a *trail* distance along one road and works out at about 37 m in
- * world units. Reusing it culled every cop on the step after it spawned.
+ * A distance between two points, which is the only thing that means anything
+ * in a city. The sim before this one measured it as a *trail* along a single
+ * road, and reusing that number here culled every cop on the step after it
+ * spawned - which is the whole reason this is written in metres.
  */
 export const CITY_COP_LOSE = m(500);
 /** Seconds the BUSTED state holds before the pursuit is cleared. */
@@ -484,8 +430,9 @@ export const MINIMAP_SIZE = 190;
  *
  * `speed` is a fraction of the player's top speed and stays under 1 at every
  * level, level six included. That is not a detail: a pursuit you cannot
- * outrun on speed alone is a pursuit with no answer, and `npm run feel` exists
- * partly to keep checking it.
+ * outrun on speed alone is a pursuit with no answer, and it has been broken by
+ * a car change before - a profile is a multiplier on `REFERENCE_TOP_SPEED`
+ * precisely so these fractions keep meaning what they say.
  */
 export type CopKind =
   | 'cruiser'
@@ -558,11 +505,11 @@ export const HEAT_LEVEL_COUNT = HEAT_LEVELS.length;
 /**
  * How fast heat builds and cools in the city.
  *
- * Its own constants rather than the track's, which fill the bar in ten seconds
- * of contact. That is right for a single-track pursuit that is over in a
- * minute and wrong for six levels: escalation has to be something you feel
- * happening to you, not a number that saturates before you have found a corner
- * to lose them on. About a minute and a half of being held to reach level six.
+ * Slow on purpose. Ten seconds of contact filling the bar is right for a
+ * pursuit that is over in a minute and wrong for six levels: escalation has to
+ * be something you feel happening to you, not a number that saturates before
+ * you have found a corner to lose them on. About a minute and a half of being
+ * held to reach level six.
  */
 export const CITY_HEAT_RISE = 0.012;
 export const CITY_HEAT_DECAY = 0.045;
@@ -905,13 +852,16 @@ export const REP_STREET_FIND = 800;
 export const FIND_FLASH = 4;
 
 /**
- * The reference top speed every car profile is written against.
+ * The reference top speed every car profile is written against, in world
+ * units per second. The HUD calls it 320 km/h.
  *
- * The same number the game has always had. `CityWorld.maxSpeed` is per-car
- * now, so anything that wants "how fast is this in km/h" has to divide by the
- * reference rather than by the car, or every car reads 320 km/h flat out.
+ * The same number the game has always had - it was the track sim's one
+ * segment per physics step, which is where the round figure comes from.
+ * `CityWorld.maxSpeed` is per-car now, so anything that wants "how fast is
+ * this in km/h" has to divide by the reference rather than by the car, or
+ * every car reads 320 km/h flat out.
  */
-export const REFERENCE_TOP_SPEED = SEGMENT_LENGTH / STEP;
+export const REFERENCE_TOP_SPEED = 12000;
 
 /**
  * Races in Kestrel Bay (#70).

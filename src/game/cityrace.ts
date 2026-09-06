@@ -21,10 +21,8 @@ import { RIVALS, type Rival } from './rivals';
  * A race in Kestrel Bay (#70).
  *
  * The event type the genre runs most: a circuit, three laps of a loop of real
- * streets, against a rival off the ladder. This is what `?renderer=drive` was
- * missing - somewhere for the Rep to go and something to do between pursuits -
- * and it is the last system that has to come across before `world.ts` can
- * retire.
+ * streets, against a rival off the ladder. It is what the city was missing -
+ * somewhere for the Rep to go and something to do between pursuits.
  *
  * Two things are worth knowing about how it works.
  *
@@ -39,10 +37,10 @@ import { RIVALS, type Rival } from './rivals';
  * race won by driving in circles; a race scored on gates passed in order is a
  * race that has to be driven round the route.
  *
- * The field is tracked by **distance along the line**, exactly as the track
- * rival is. They are not cars navigating the graph, and that is deliberate: a
- * rival that could get lost would be a rival whose difficulty is whatever the
- * junction picker happened to do, and the ladder is tuned against a number.
+ * The field is tracked by **distance along the line**. They are not cars
+ * navigating the graph, and that is deliberate: a rival that could get lost
+ * would be a rival whose difficulty is whatever the junction picker happened
+ * to do, and the ladder is tuned against a number.
  */
 export type CityRaceState = 'idle' | 'countdown' | 'racing' | 'finished';
 

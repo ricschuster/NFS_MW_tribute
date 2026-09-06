@@ -11,7 +11,7 @@ import { GameAudio } from '../audio';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
-import type { CityWorld } from '../cityworld';
+import type { CityWorld, InputState } from '../cityworld';
 import {
   STEP,
   COP_UNITS,
@@ -26,7 +26,6 @@ import {
   BLOOM_THRESHOLD,
   BLOOM_SCALE,
 } from '../constants';
-import type { InputState } from '../world';
 
 const M = UNITS_PER_METRE;
 
@@ -218,10 +217,9 @@ export class CityView {
   /**
    * Sound in the city (#76).
    *
-   * The same synthesized audio the track has had all along - an engine that
-   * pitches with speed, a siren that fades in with the pursuit - which had
-   * simply never been wired to this renderer. WebAudio needs a gesture, so it
-   * starts on the first key or the first touch.
+   * Synthesized, never recorded: an engine that pitches with speed, a siren
+   * that fades in with the pursuit, and the radio's squelch. WebAudio needs a
+   * gesture, so it starts on the first key or the first touch.
    */
   private readonly audio = new GameAudio();
   private readonly director: CameraDirector;
@@ -571,9 +569,9 @@ export class CityView {
   /**
    * Step the sim on its fixed timestep, then follow the car.
    *
-   * The accumulator is not optional: physics has to run at `STEP` regardless of
-   * frame rate or the car behaves differently on different machines, which is
-   * the same reason `game.ts` does it.
+   * The accumulator is not optional: physics has to run at `STEP` regardless
+   * of frame rate, or the car behaves differently on different machines and
+   * every number the playtests assert on is a number about this machine.
    */
   private driveFrame(dt: number, world: CityWorld): void {
     // One reading of "is this control held", whether it came from a key or a

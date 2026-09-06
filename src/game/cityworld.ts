@@ -87,7 +87,25 @@ import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
 import type { City, CityRoad, CityRoute } from './city/types';
-import type { InputState } from './world';
+
+/**
+ * A snapshot of which controls are held this step.
+ *
+ * It lives with the sim rather than with anything that reads a keyboard,
+ * because the sim is the only thing that has an opinion about what a control
+ * means. A key, a thumb on the touch layer and a scripted playtest all arrive
+ * here as the same six booleans (#89).
+ */
+export interface InputState {
+  left: boolean;
+  right: boolean;
+  up: boolean;
+  down: boolean;
+  /** Enter / Space: start an event, or dismiss a result. */
+  confirm: boolean;
+  /** Shift: nitrous boost. */
+  nitro: boolean;
+}
 
 /**
  * A car that has been put out of play, left where it stopped (#94).
@@ -116,23 +134,21 @@ export interface Wreck {
 /**
  * The car, driving in Kestrel Bay (#113).
  *
- * `world.ts` puts the car on a track: a distance along it and an offset across
- * it. That frame cannot describe a city, so this is the same car in the frame
- * the city actually has - a position, a heading and a height.
+ * The car has a position, a heading and a height, which is the frame a city
+ * actually has. The sim that came before it put the car on a single track - a
+ * distance along it and an offset across it - and that frame could not
+ * describe a place with more than one road in it. It is gone (#165); this is
+ * the whole game.
  *
  * The motion model is deliberately the one from #82 and not a new one. Yaw is
- * limited by grip, so corners have to be taken slower; nitrous behaves exactly
- * as it does on the track. What changes is only the frame it resolves into:
- * where the track version split velocity onto along-road and across-road axes,
- * this one splits it onto x and z. The feel work in #14 and #46 carries over
- * because the physics did not move.
+ * limited by grip, so corners have to be taken slower. What changed when the
+ * city arrived was only the frame it resolves into: where the older version
+ * split velocity onto along-road and across-road axes, this one splits it onto
+ * x and z. The feel work in #14 and #46 carries over because the physics did
+ * not move.
  *
- * Headless, like `World`, and for the same reason (ADR-0003): the playtests
- * drive it with scripted input and assert on where it ends up.
- *
- * This runs *alongside* the track `World` rather than replacing it. The
- * deployed game keeps playing while the systems move across in #87, exactly as
- * the two renderers ran side by side during #81.
+ * Headless, and deliberately so (ADR-0003): the playtests drive it with
+ * scripted input and assert on where it ends up, with no renderer in the room.
  */
 export interface CityWorldOptions {
   /** Populate the city with traffic (default true). Turn off for a still world. */
@@ -225,18 +241,18 @@ export class CityWorld {
    * an arrow and a distance is what a five-by-four-kilometre map needs.
    */
   marker: { x: number; z: number; label: string } | null = null;
-  /** How many ladder rivals have been beaten. Shared with the track sim. */
+  /** How many ladder rivals have been beaten. Saved, so it survives a reload. */
   beaten = 0;
 
   /**
    * Top speed, and everything derived from it.
    *
    * Not `readonly` any more (#67): the car can change, and when it does all of
-   * these move together. The reference is still `SEGMENT_LENGTH / STEP`, which
-   * is the number the feel work and the HUD were calibrated against - a
-   * profile is a multiplier on it rather than a figure of its own, which is
-   * what keeps the police (who run at fractions of *your* top speed) and the
-   * feel baseline honest across a change of car.
+   * these move together. The reference is `REFERENCE_TOP_SPEED`, the number
+   * the feel work and the HUD were calibrated against - a profile is a
+   * multiplier on it rather than a figure of its own, which is what keeps the
+   * police (who run at fractions of *your* top speed) and the lap baseline
+   * honest across a change of car.
    */
   maxSpeed = REFERENCE_TOP_SPEED;
 
@@ -277,8 +293,8 @@ export class CityWorld {
     this.collectibles = new Collectibles(city);
     this.finds = new Garage(city);
     this.claim = new CityClaim(city, this.grid);
-    // Carried over from whatever this player has already earned, the same way
-    // the track sim loads its rival count. Safe where there is no storage.
+    // Carried over from whatever this player has already earned. Safe where
+    // there is no storage.
     const saved = loadProgress();
     this.rep.total = saved.rep;
     this.collectibles.load(saved.smashed, saved.clocked);
@@ -454,7 +470,7 @@ export class CityWorld {
 
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car
-    // goes the wider it turns. Unchanged from the track model on purpose.
+    // goes the wider it turns.
     const authority =
       Math.min(
         TURN_RATE,
@@ -569,9 +585,8 @@ export class CityWorld {
   /**
    * Pay for the race that just ended, and move the ladder if it was won.
    *
-   * The same `beaten` count the track sim keeps, in the same save: it is one
-   * ladder, and beating Nyx on the Foundry Mile has to mean the same thing as
-   * beating Nyx on the old track.
+   * `beaten` is saved rather than derived, because the ladder is progress and
+   * a reload must not put a rival back at the bottom of it.
    */
   private settleRace(): void {
     const rival = this.race.challenger;

@@ -1,9 +1,9 @@
 // How far a reference driver gets round each of Kestrel Bay's routes.
 //
-// The city has never had a feel baseline, and this is the first half of one:
-// before you can measure how the car feels in a city you need something that
-// can drive round it, and before that you need a city it is possible to drive
-// round. This measures the second thing.
+// This is the city's feel baseline, and since the track retired with its own
+// probe (#165) it is the only one: before you can measure how the car feels in
+// a city you need something that can drive round it, and before that you need
+// a city it is possible to drive round. This measures the second thing.
 //
 // The driver gets round all six now, so the table is a baseline: the average
 // speed column is how fast a competent driver can hold each route, and that
@@ -87,9 +87,10 @@ for (const row of rows) {
 const done = rows.slice(1).filter((r) => r[3] !== '-').length;
 console.log(`\n${done} of ${city.routes.length} laps completed.`);
 
-// Same shape as the track sim's baseline, and for the same reason: a number
-// here moving is the only warning you get that a change to `constants.ts`
-// made the city harder to drive. Re-record it in the PR that moves one.
+// A number here moving is the only warning you get that a change to
+// `constants.ts` made the city harder to drive, and since the track sim's
+// probe retired with the track (#165) it is the only driving baseline left.
+// Re-record it in the PR that moves a constant.
 const baselinePath = flag('--baseline') ?? 'docs/city-baseline.json';
 let baseline = null;
 try {

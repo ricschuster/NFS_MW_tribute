@@ -11,11 +11,9 @@ import type { City, CityRoad, StreetProp } from './types';
  * Street furniture: lamps down the roads, signs at the junctions, barriers
  * along the bridge parapets (#84).
  *
- * This is the same kind of thing `scenery.ts` puts beside the old track, moved
- * off segment indices and onto the generated street network. Like buildings it
- * is a *description* and not geometry, for the same two reasons: the art can be
- * upgraded by swapping a provider, and the sim can collide with a lamp post
- * without a renderer in the room.
+ * Like buildings, furniture is a *description* and not geometry, for the same
+ * two reasons: the art can be upgraded by swapping a provider, and the sim can
+ * collide with a lamp post without a renderer in the room.
  *
  * Placement is derived from the road graph rather than scattered, so furniture
  * lands where furniture goes - on the kerb, facing the road - instead of in the
