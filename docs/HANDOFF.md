@@ -202,9 +202,13 @@ since the ladder in #91 and the speed-run targets are both tuned against this
 driver.
 
 **#11 replace vector-drawn art with sprites** is art for the *track* renderer,
-which ADR-0004 is retiring. Read it as "the city is still boxes" rather than as
-a sprite task: #75 did what lighting can do for them and the rest is geometry
-and textures, behind the provider seam in `scene/`.
+which ADR-0004 is retiring, so read it as "the city is still boxes" rather than
+as a sprite task. The buildings are no longer among them: `scene/facades.ts`
+gives every kind a generated window grid, sampled in world units so a window is
+the same size on a tower and on a shed. What is still a box, in the order that
+would show: the **cars**, then street furniture, then the buildings themselves
+wanting real geometry rather than a texture on a cuboid. All of it goes behind
+the provider seam in `scene/`; none of it touches `city/`.
 
 ## Known problems, not papered over
 
