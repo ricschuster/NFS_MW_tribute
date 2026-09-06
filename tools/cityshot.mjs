@@ -28,7 +28,7 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+  'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
 ]);
 const VIEWS = flag('--view')
@@ -36,7 +36,7 @@ const VIEWS = flag('--view')
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'billboard', 'collection', 'streetfind', 'race', 'speedrun',
+      'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
     ];
 
@@ -350,6 +350,31 @@ for (const view of VIEWS) {
       await page.keyboard.down('Tab');
       await page.waitForTimeout(900);
     }
+  }
+
+  if (view === 'newcar') {
+    // The moment a parked car becomes yours (#181). Driven into rather than
+    // stood beside: the banner is the thing being photographed, and it is what
+    // a playtest saw as "the colour of my car just changed and I don't know
+    // why".
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const find = world.finds.waiting[3];
+      if (!find) return;
+      world.rep.total = 22600;
+      world.crashFlash = 0;
+      // Straight onto it, then a moment for the banner to come up.
+      world.x = find.at.x;
+      world.z = find.at.z;
+      world.y = find.y;
+      world.speed = 0;
+      for (let t = 0; t < 0.6; t += 1 / 60) world.step(1 / 60, none);
+    });
+    await page.waitForTimeout(900);
   }
 
   if (view === 'streetfind') {
