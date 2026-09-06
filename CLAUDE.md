@@ -339,6 +339,20 @@ This split is what makes the renderer swap survivable: `world.ts` and the
 playtests are meant to come through ADR-0004 largely intact, so keep behaviour
 out of the renderer even while the renderer is in flux.
 
+**A save is a format, not a place** (issue #101). `storage.ts` is a three-method
+`Store`; `progress.ts` encodes and decodes a versioned record through whichever
+one the host installed. `setStore` is the seam a desktop shell uses at startup
+to put a file in the user's app data directory behind it. The version lives
+*in the record* rather than in the key, because a versioned key orphans every
+older save where a versioned record can be read and brought forward - and every
+field is validated rather than trusted, so a save written before Rep existed is
+a save with no `rep` in it and not a corrupt one.
+
+The in-memory fallback keeps a save for as long as the process lives, which is
+right for a browser tab with no storage and wrong for a test runner: `src/test-setup.ts`
+gives every test a fresh one, or the first test's Rep is the second test's
+starting total.
+
 **The service worker is generated, not written** (issue #98). Vite hashes every
 filename it emits, so a hand-written precache list is stale the first time
 anything changes: a small plugin in `vite.config.ts` lists the bundle plus the

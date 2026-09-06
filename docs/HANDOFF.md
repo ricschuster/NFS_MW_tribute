@@ -85,6 +85,8 @@ src/game/
   quickwheel.ts   the menu that never pauses: cars, parts, somewhere to go
   garage.ts       what the player owns: cars, parts earned, parts fitted
   radio.ts        what the police say about you, and when
+  storage.ts      where a save lives: a seam a desktop shell fills in
+  progress.ts     the save format, versioned, validated field by field
   mods.ts         the parts catalogue, as trades rather than upgrades
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
@@ -123,7 +125,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 423 unit tests + playtests
+npm run test       # 441 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -205,9 +207,11 @@ how much they use what already exists:
 - **#64 Rep**, **#91 the ladder of ten**, **#70/#72 event types** - these move
   races into the city and are what let `world.ts` finally retire.
 
-**M6: Beyond the browser - 4 open.** #98 made it installable and offline; a
-desktop shell (#99, #100), a storage adapter (#101) and split asset budgets
-(#102) are what is left. It is what lifts the download-size ceiling on asset
+**M6: Beyond the browser - 3 open.** #98 made it installable and offline and
+#101 opened the storage seam a shell needs. What is left is picking a shell
+(#99), a release pipeline for it (#100) and split asset budgets (#102) - and
+the first of those is a real dependency and a toolchain decision, so it wants
+an ADR and a person. It is what lifts the download-size ceiling on asset
 quality.
 
 Also open: **#14** (tune driving feel) and **#11** (art direction), both from
