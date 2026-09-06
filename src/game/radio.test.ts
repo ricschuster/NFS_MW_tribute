@@ -15,6 +15,7 @@ const quiet = (): PursuitReport => ({
   busted: false,
   takedowns: 0,
   broken: 0,
+  reason: null,
 });
 
 /** Hold a state for a while, so anything queued gets a chance to be said. */

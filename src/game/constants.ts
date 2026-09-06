@@ -74,7 +74,6 @@ export const CAR_COLORS = [
 /* The pursuit clock. Distances and levels live in the city block.     */
 /* ------------------------------------------------------------------ */
 
-export const COP_FIRST_SPAWN = 12; // seconds before the first pursuit
 export const COP_RESPAWN = 20; // delay before a new pursuit after escaping
 export const COP_BUST_COOLDOWN = 15; // delay before a new pursuit after a bust
 export const COP_SPAWN_INTERVAL = 3; // seconds between adding cops within a pursuit
@@ -540,6 +539,43 @@ export const CITY_HEAT_DECAY = 0.045;
  */
 /** How close a cop has to be, with nothing between you, to have you in sight. */
 export const SEEN_RANGE = m(150);
+
+/**
+ * Patrols, and what starts a pursuit (#177).
+ *
+ * There used to be no trigger at all: a clock ran down from twelve seconds and
+ * a pursuit began, whatever you were doing. That removed a whole state of the
+ * game - free roam is what you do *between* pursuits, and #64's economy pays
+ * more under heat precisely because heat is meant to be something you chose to
+ * accept.
+ *
+ * So there are cars out there before there is a pursuit. A patrol drives the
+ * street network like traffic and is scenery until it *sees* you do something,
+ * which is why they are kept around the player the way traffic is: a city-wide
+ * police force would be simulating a hundred cars nobody is looking at.
+ */
+export const PATROL_IN_CITY = 4;
+export const PATROL_RADIUS = m(520);
+/** Never spawn one closer than this, or a patrol appears out of nothing in view. */
+export const PATROL_SPAWN_MIN = m(230);
+/** How briskly a patrol cruises, against the road's own limit. */
+export const PATROL_PACE = 0.85;
+
+/**
+ * Speeding: what counts as provocative, against the limit on the road you are
+ * on.
+ *
+ * Against the road rather than against your own top speed, because that is
+ * what makes the interstate a place you can open it up and a downtown street a
+ * place you cannot. A good driver averages about half of top speed on an empty
+ * road and a quarter in traffic, which on a 50 km/h street is already well
+ * over the limit - the game is arcade and the limits are not - so the
+ * multiplier is high on purpose. What it has to separate is *getting somewhere*
+ * from *showing off in front of a patrol car*.
+ */
+export const SPEEDING_OVER = 2.4;
+/** Seconds over the limit, in view, before they take an interest. */
+export const SPEEDING_TIME = 1.5;
 /** Seconds out of sight before the pursuit drops into a search. */
 export const LOSE_CONTACT_TIME = 4;
 /** How long the search lasts at heat level one, and how much each level adds. */

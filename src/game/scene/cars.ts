@@ -115,10 +115,17 @@ export class CarPool {
       this.pool[i].visible = false;
   }
 
-  /** Flash every visible lightbar in step; `phase` is seconds. */
-  flashLightbars(phase: number): void {
+  /**
+   * Flash lightbars in step; `phase` is seconds.
+   *
+   * `from` skips the cars placed before it, which is how a patrol car keeps
+   * its lights off (#177): a marked car going about its business with the
+   * lightbar running is a pursuit as far as anyone glancing at it is
+   * concerned, and the whole point of a patrol is that it is not one yet.
+   */
+  flashLightbars(phase: number, from = 0): void {
     const blue = Math.floor(phase * 6) % 2 === 0;
-    for (let i = 0; i < this.used; i++) {
+    for (let i = from; i < this.used; i++) {
       const bar = this.pool[i].getObjectByName('lightbar') as
         THREE.Mesh | undefined;
       if (bar)

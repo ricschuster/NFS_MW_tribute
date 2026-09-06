@@ -176,7 +176,9 @@ export class Hud {
   private heat(world: CityWorld): void {
     const { ctx } = this;
     const heat = world.police.heat;
-    if (heat <= 0.01 && world.police.cops.length === 0) return;
+    // Patrols are not heat (#177): the bar has to stay off in free roam, or
+    // the game says you are wanted from the moment it starts.
+    if (heat <= 0.01 && world.police.pursuers === 0) return;
 
     const x = WIDTH - 210;
     const y = HEIGHT - 46 - this.lift;
@@ -511,11 +513,15 @@ export class Hud {
       const dz = -(cop.z - world.z) * scale;
       if (Math.hypot(dx, dz) > radius) continue;
       const enforcer = cop.role === 'enforcer';
+      // A patrol is a car to keep away from, not a car that is after you
+      // (#177). Drawn smaller and dimmer, because the whole point of it is
+      // that you can decide it does not matter yet.
+      const patrol = cop.role === 'patrol';
       ctx.beginPath();
-      ctx.arc(dx, dz, enforcer ? 5 : 3.5, 0, Math.PI * 2);
+      ctx.arc(dx, dz, enforcer ? 5 : patrol ? 2.5 : 3.5, 0, Math.PI * 2);
       // Enforcers in red and bigger: the one coming the other way is the one
       // you need to have seen before you meet it (#61).
-      ctx.fillStyle = enforcer ? '#ff5a45' : '#4d8bff';
+      ctx.fillStyle = enforcer ? '#ff5a45' : patrol ? 'rgba(77, 139, 255, 0.55)' : '#4d8bff';
       ctx.fill();
     }
 

@@ -46,6 +46,10 @@ import {
   CITY_EDGE_MARGIN,
   ROUTE_START_RANGE,
   STUCK_TIME,
+  SPEEDING_TIME,
+  TRAFFIC_LANE,
+  PATROL_RADIUS,
+  BUST_TIME,
   AMBUSH_RANGE,
   AMBUSH_RING,
   DAMAGE_FREE,
@@ -57,6 +61,7 @@ import {
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
 import { RIVALS } from './rivals';
+import { placeOnRoad } from './graphcar';
 import type { InputState } from './cityworld';
 import type { Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
@@ -107,7 +112,14 @@ function onAnArterial(): CityWorld {
   return world;
 }
 
-/** A cop holding station behind the car, so the pursuit has eyes on it. */
+/**
+ * A cop holding station behind the car, so the pursuit has eyes on it.
+ *
+ * It is put *behind the car* rather than at the origin because since #177 a
+ * pursuit has to be opened by something, and what opens this one is the unit
+ * itself: `witness` asks whether anybody can see the car, so a cop parked at
+ * (0, 0) five kilometres away cannot start anything.
+ */
 function tail(world: CityWorld): Cop {
   const cop: Cop = {
     road: world.onRoad!,
@@ -115,15 +127,71 @@ function tail(world: CityWorld): Cop {
     forward: true,
     speed: 0,
     damage: 0,
-    x: 0,
-    z: 0,
-    y: 0,
+    x: world.x - Math.sin(world.heading) * 35 * M,
+    z: world.z - Math.cos(world.heading) * 35 * M,
+    y: world.y,
     heading: world.heading,
     kind: 'cruiser',
     role: 'chase',
   };
   world.police.cops.push(cop);
+  world.police.witness(world, 'crashed');
   return cop;
+}
+
+/**
+ * A patrol car beside you, close enough to see what you do next (#177).
+ *
+ * Placed on the car's own road at the car's own position rather than at a
+ * point in space: the pursuit re-derives every unit's place from the graph
+ * each step, so a cop given coordinates that do not match its `t` is teleported
+ * onto its road the moment anything moves.
+ */
+function patrolBeside(world: CityWorld): Cop {
+  const road = world.onRoad!;
+  const a = world.city.nodes[road.a].pos;
+  const b = world.city.nodes[road.b].pos;
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const lengthSquared = Math.max(1, dx * dx + dz * dz);
+  const here = Math.max(0, Math.min(1, ((world.x - a.x) * dx + (world.z - a.z) * dz) / lengthSquared));
+  // Thirty metres back down the road, not on top of the car: a patrol parked
+  // in the same spot is a patrol you have *hit*, which is a different trigger.
+  const way = Math.sin(world.heading) * dx + Math.cos(world.heading) * dz > 0 ? -1 : 1;
+  const cop: Cop = {
+    road,
+    t: Math.max(0.02, Math.min(0.98, here + (way * 30 * M) / Math.max(1, road.length))),
+    forward: true,
+    speed: 0,
+    damage: 0,
+    x: 0,
+    z: 0,
+    y: 0,
+    heading: 0,
+    kind: 'cruiser',
+    role: 'patrol',
+  };
+  placeOnRoad(world.city, cop, TRAFFIC_LANE);
+  world.police.cops.push(cop);
+  return cop;
+}
+
+/**
+ * Do something in front of a patrol, and hand back the pursuit it started.
+ *
+ * Speeding, because it is the trigger a player meets first and the only one
+ * that needs no other car to hit. The car is put over the limit directly
+ * rather than driven there: a scripted drive in this city wedges against a
+ * building inside five seconds, which is how the old `chase` helper came to be
+ * testing a stationary car that cops drove to.
+ */
+function provoke(world: CityWorld, seconds = SPEEDING_TIME + 0.5): CityWorld {
+  patrolBeside(world);
+  for (let t = 0; t < seconds; t += STEP) {
+    world.speed = world.maxSpeed * 0.75;
+    world.step(STEP, press({ up: true }));
+  }
+  return world;
 }
 
 /**
@@ -413,16 +481,23 @@ describe('the police', () => {
   };
 
   it('leaves you alone at first', () => {
-    expect(chase(5).police.cops.length).toBe(0);
+    const world = chase(5);
+    expect(world.police.pursuers).toBe(0);
+    expect(world.police.state).toBe('clear');
   });
 
-  it('comes after you eventually', () => {
-    const world = chase(30);
-    expect(world.police.cops.length).toBeGreaterThan(0);
+  // Not on a clock any more (#177). This used to pass because a pursuit began
+  // twelve seconds in whatever the car did - and it passed on a car that had
+  // wedged itself against a building five seconds in and never moved again.
+  it('comes after you once a patrol has seen you do something', () => {
+    const world = provoke(new CityWorld(undefined, { traffic: false }));
+    expect(world.police.state).toBe('pursuit');
+    expect(world.police.pursuers).toBeGreaterThan(0);
+    expect(world.police.startedBy).toBe('speeding');
   });
 
   it('keeps its cars on the roads', () => {
-    const world = chase(45);
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 20);
     for (const cop of world.police.cops) {
       const a = world.city.nodes[cop.road.a].pos;
       const b = world.city.nodes[cop.road.b].pos;
@@ -437,21 +512,23 @@ describe('the police', () => {
   });
 
   it('closes on a car that is standing still', () => {
-    const world = chase(20);
+    const world = provoke(new CityWorld(undefined, { traffic: false }));
+    expect(world.police.pursuers).toBeGreaterThan(0);
     const gap = () =>
       world.police.cops.reduce(
-        (best, cop) => Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
+        (best, cop) =>
+          cop.role === 'patrol' ? best : Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
         Infinity,
       );
 
     // Sit still and let them arrive.
     drive(world, 25, NONE);
-    expect(world.police.cops.length).toBeGreaterThan(0);
+    expect(world.police.pursuers).toBeGreaterThan(0);
     expect(gap()).toBeLessThan(CITY_PURSUIT_RANGE * 3);
   });
 
   it('busts a car that never moves, and lets go afterwards', () => {
-    const world = new CityWorld(undefined, { traffic: false });
+    const world = provoke(new CityWorld(undefined, { traffic: false }));
     drive(world, 120, NONE);
     // Either it has you now or it had you and the state has cycled; what must
     // not happen is a pursuit that can never end either way.
@@ -459,13 +536,13 @@ describe('the police', () => {
     // Two budgets since #61: the ones following you and the ones sent to meet
     // you. Neither grows without bound, which is the thing being asserted.
     const top = HEAT_LEVELS[HEAT_LEVEL_COUNT - 1];
-    expect(world.police.cops.length).toBeLessThanOrEqual(top.maxCops + top.enforcers);
+    expect(world.police.pursuers).toBeLessThanOrEqual(top.maxCops + top.enforcers);
   });
 
   it('is deterministic', () => {
-    const a = chase(20);
-    const b = chase(20);
-    expect(a.police.cops.length).toBe(b.police.cops.length);
+    const a = provoke(new CityWorld(undefined, { traffic: false }), 20);
+    const b = provoke(new CityWorld(undefined, { traffic: false }), 20);
+    expect(a.police.pursuers).toBe(b.police.pursuers);
     expect(a.police.heat).toBeCloseTo(b.police.heat, 6);
   });
 });
@@ -543,11 +620,8 @@ describe('cooldown and the search area', () => {
 
   /** Run a pursuit until cops are on you, then break contact by vanishing. */
   const lostThem = () => {
-    const world = new CityWorld(undefined, { traffic: false });
-    for (let t = 0; t < 40; t += STEP) {
-      world.step(STEP, press({ up: true, right: Math.floor(t / 5) % 2 === 0 }));
-    }
-    expect(world.police.cops.length).toBeGreaterThan(0);
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    expect(world.police.pursuers).toBeGreaterThan(0);
 
     // Somewhere they cannot possibly still see, so contact really is broken.
     world.x += CITY_COP_LOSE * 3;
@@ -604,7 +678,7 @@ describe('cooldown and the search area', () => {
       world.z = area.z + area.radius * 5;
     }
     expect(stepUntil(world, () => world.police.state === 'clear', 120)).toBe(true);
-    expect(world.police.cops.length).toBe(0);
+    expect(world.police.pursuers).toBe(0);
   });
 
   it('makes a hotter pursuit harder to shed', () => {
@@ -662,7 +736,7 @@ describe('takedowns', () => {
     world.step(STEP, NONE);
 
     expect(world.takedowns).toBe(1);
-    expect(world.police.cops.length).toBe(0);
+    expect(world.police.pursuers).toBe(0);
     expect(world.wrecks.length).toBe(1);
     expect(world.wrecks[0].police).toBe(true);
     expect(world.takedownFlash).toBeGreaterThan(0);
@@ -946,9 +1020,23 @@ describe('enforcers', () => {
 
   // The whole difference between an Enforcer and a cruiser: one is behind you
   // and one is not.
+  // Judged the moment it arrives rather than forty seconds later. An Enforcer
+  // drives *at* you, so one sent to a car that never moves goes past it and
+  // ends up behind - which is the unit doing its job, not the spawn being
+  // wrong. The old version of this passed only because the Enforcer budget was
+  // being overcounted and the car turned up late.
   it('arrives in front of you, not behind', () => {
     const world = parked();
-    const sent = hunted(world, 0.5, 40);
+    const cop = tail(world);
+    let sent: Cop[] = [];
+    for (let t = 0; t < 60 && sent.length === 0; t += STEP) {
+      cop.x = world.x - Math.sin(world.heading) * 35 * M;
+      cop.z = world.z - Math.cos(world.heading) * 35 * M;
+      cop.y = world.y;
+      world.police.heat = 0.5;
+      world.police.update(STEP, world, world.maxSpeed);
+      sent = world.police.cops.filter((c) => c.role === 'enforcer');
+    }
     expect(sent.length).toBeGreaterThan(0);
     for (const cop of sent) {
       const dx = cop.x - world.x;
@@ -1260,8 +1348,13 @@ describe('the helicopter', () => {
 
     // Take every car away and leave the aircraft. On the ground alone this
     // would be a search inside four seconds.
-    world.police.cops.length = 0;
+    // Cleared every step, not once: since #177 the city keeps patrol cars
+    // around the player, and one of those joining the pursuit is a car with
+    // eyes on you - which is a real mechanic and not what this measures. A
+    // freshly mustered patrol spawns beyond `SEEN_RANGE`, so clearing at the
+    // top of each step leaves the aircraft genuinely alone.
     for (let t = 0; t < LOSE_CONTACT_TIME * 3; t += STEP) {
+      world.police.cops.length = 0;
       world.police.heat = 0.9;
       world.police.update(STEP, world, world.maxSpeed);
     }
@@ -1285,8 +1378,13 @@ describe('the helicopter', () => {
     world.z = (a.z + b.z) / 2;
     world.y = 0;
 
-    world.police.cops.length = 0;
+    // Cleared every step, not once: since #177 the city keeps patrol cars
+    // around the player, and one of those joining the pursuit is a car with
+    // eyes on you - which is a real mechanic and not what this measures. A
+    // freshly mustered patrol spawns beyond `SEEN_RANGE`, so clearing at the
+    // top of each step leaves the aircraft genuinely alone.
     for (let t = 0; t < LOSE_CONTACT_TIME * 3; t += STEP) {
+      world.police.cops.length = 0;
       world.police.heat = 0.9;
       world.police.update(STEP, world, world.maxSpeed);
     }
@@ -1316,11 +1414,11 @@ describe('the helicopter', () => {
     const b = world.city.nodes[deck.b].pos;
     const under = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
 
-    world.police.cops.length = 0;
     world.x = under.x;
     world.z = under.z;
     world.y = 0;
     for (let t = 0; t < LOSE_CONTACT_TIME * 2; t += STEP) {
+      world.police.cops.length = 0; // the aircraft alone, as above
       world.police.heat = 0.9;
       world.police.update(STEP, world, world.maxSpeed);
     }
@@ -1726,7 +1824,7 @@ describe('circuits', () => {
     expect(world.police.heat).toBe(0);
 
     drive(world, 20, press({ up: true }));
-    expect(world.police.cops.length).toBe(0);
+    expect(world.police.pursuers).toBe(0);
   });
 
   it('is abandoned if you are busted out of it', () => {
@@ -1801,8 +1899,9 @@ describe('ambushes', () => {
     expect(world.ambush.state).toBe('running');
     expect(world.speed).toBe(0);
     expect(world.police.level).toBe(spot.level);
-    expect(world.police.cops.length).toBeGreaterThan(1);
-    for (const cop of world.police.cops) {
+    expect(world.police.pursuers).toBeGreaterThan(1);
+    // The ones sprung on you, not the patrols that happen to be out there.
+    for (const cop of world.police.cops.filter((c) => c.role !== 'patrol')) {
       expect(Math.hypot(cop.x - world.x, cop.z - world.z)).toBeLessThan(AMBUSH_RING * 3);
     }
   });
@@ -2310,6 +2409,120 @@ describe('the coast road', () => {
 });
 
 /**
+ * What starts a pursuit (#177).
+ *
+ * There used to be no answer to that. `recruit` counted down twelve seconds
+ * from the start of the game and spawned, whatever the player did or avoided
+ * doing, so free roam - the state you are supposed to be in *between*
+ * pursuits, and the state #64's economy pays less in on purpose - did not
+ * exist at all.
+ */
+describe('free roam, and what ends it', () => {
+  const roaming = () => new CityWorld(undefined, { traffic: false });
+
+  it('leaves you alone indefinitely if you do not do anything', () => {
+    const world = roaming();
+    // Two minutes of the world running, with the car sitting still: ten times
+    // what the old timer took to send the first car.
+    drive(world, 120, NONE);
+
+    expect(world.police.state).toBe('clear');
+    expect(world.police.pursuers).toBe(0);
+    expect(world.police.heat).toBe(0);
+  });
+
+  // There are cars out there the whole time. They are simply not after you.
+  it('keeps patrols in the city with nobody chasing anybody', () => {
+    const world = roaming();
+    drive(world, 20, NONE);
+
+    const patrols = world.police.cops.filter((c) => c.role === 'patrol');
+    expect(patrols.length).toBeGreaterThan(0);
+    expect(world.police.pursuers).toBe(0);
+    for (const cop of patrols) {
+      expect(Math.hypot(cop.x - world.x, cop.z - world.z)).toBeLessThan(PATROL_RADIUS * 1.4);
+    }
+  });
+
+  // A patrol on your bumper at heat zero is a car in the way, not a bust.
+  it('does not let a patrol bust a parked car', () => {
+    const world = roaming();
+    patrolBeside(world);
+    drive(world, BUST_TIME * 3, NONE);
+
+    expect(world.busted).toBe(false);
+    expect(world.police.state).toBe('clear');
+  });
+
+  it('starts one when a patrol sees you speeding, and says so', () => {
+    const world = provoke(roaming());
+
+    expect(world.police.state).toBe('pursuit');
+    expect(world.police.startedBy).toBe('speeding');
+    expect(world.police.pursuers).toBeGreaterThan(0);
+    expect(world.radio.recent.some((line) => /speed|flying|clocked/i.test(line.text))).toBe(true);
+  });
+
+  // The other half of the same rule, and the half that makes free roam a
+  // place rather than a countdown: a provocation nobody saw is free.
+  it('leaves you alone for the same thing out of sight', () => {
+    const world = roaming();
+    for (let t = 0; t < SPEEDING_TIME * 4; t += STEP) {
+      world.speed = world.maxSpeed * 0.75;
+      world.step(STEP, press({ up: true }));
+    }
+
+    expect(world.police.state).toBe('clear');
+    expect(world.police.startedBy).toBeNull();
+  });
+
+  it('needs no witness when the thing you hit is the police', () => {
+    const world = roaming();
+    const cop = patrolBeside(world);
+    // Straight into the back of it, hard enough to be a hit rather than a nudge.
+    world.x = cop.x - Math.sin(world.heading) * CAR_RADIUS;
+    world.z = cop.z - Math.cos(world.heading) * CAR_RADIUS;
+    world.speed = world.maxSpeed * 0.6;
+    world.step(STEP, NONE);
+
+    expect(world.police.state).toBe('pursuit');
+    expect(world.police.startedBy).toBe('rammed');
+  });
+
+  // The car that turns in behind you was already there, which is the point of
+  // having patrols at all: better than one materialising 260 m back.
+  it('turns the patrol that saw it into the car chasing you', () => {
+    const world = roaming();
+    const seer = patrolBeside(world);
+    for (let t = 0; t < SPEEDING_TIME + 0.5; t += STEP) {
+      world.speed = world.maxSpeed * 0.75;
+      world.step(STEP, press({ up: true }));
+    }
+
+    expect(seer.role).toBe('chase');
+  });
+
+  // They have just called the search off. Being picked up again on the next
+  // corner would mean the escape never really happened.
+  it('will not start another one straight after letting you go', () => {
+    const world = provoke(roaming(), 20);
+    // Whatever that left, force the state this is about: clear, and just now.
+    world.police.reset();
+    // Back on a street: twenty seconds held at three quarters of top speed
+    // ends up somewhere off the road, and a patrol needs a road to stand on.
+    world.spawn();
+    expect(world.police.state).toBe('clear');
+
+    patrolBeside(world);
+    for (let t = 0; t < SPEEDING_TIME * 3; t += STEP) {
+      world.speed = world.maxSpeed * 0.75;
+      world.step(STEP, press({ up: true }));
+    }
+    expect(world.police.state).toBe('clear');
+  });
+});
+
+/**
  * Getting unstuck (#179).
  *
  * The one failure a player could not play their way out of. Everything else
@@ -2383,12 +2596,12 @@ describe('a stuck car', () => {
   });
 
   it('cannot be used to cancel a pursuit', () => {
-    const world = new CityWorld(undefined, { traffic: false });
-    // Long enough for a pursuit to be running and hot.
-    drive(world, 60, press({ up: true }));
+    // Provoked rather than waited for: since #177 a pursuit has to be started
+    // by something, and driving in a straight line for a minute wedges the car
+    // long before anything notices it.
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 20);
     const heat = world.police.heat;
-    const cops = world.police.cops.length;
-    expect(cops).toBeGreaterThan(0);
+    expect(world.police.pursuers).toBeGreaterThan(0);
 
     wedge(world);
     drive(world, STUCK_TIME * 1.5, press({ up: true }));

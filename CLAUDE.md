@@ -46,9 +46,10 @@ what the city is shaped like.
   `HEAT_LEVELS` exists to hold; the damaged rows are reported, not asserted,
   because whether they should hold is #170
 - `npm run patrol` — put the reference driver in the city with the police live
-  and read what the game does over twenty minutes. An instrument, not a gate:
-  it asserts nothing, and two of its numbers are skewed by the driver (#171),
-  which the output says on the rows it affects
+  and read what the game does over twenty minutes: what set off each pursuit,
+  how long the first one took to arrive, and how much of the session was free
+  roam. An instrument, not a gate: it asserts nothing, and two of its numbers
+  are skewed by the driver (#171), which the output says on the rows it affects
 - `npm run drivers` — the same routes driven by four people: beginner,
   advanced, expert and perfect. `citylap` measures only the last of those, which
   is a floor nobody stands on; this is what a change does to somebody who is not
@@ -126,6 +127,20 @@ only go on roads at least `ROADBLOCK_MIN_WIDTH` wide, because a cruiser is
 nearly as wide as a lane at this scale and a block across a two-lane street is
 a wall with no decision in it - which also leaves the side streets as the way
 round.
+
+**A pursuit has to be started by something** (issue #177). There is a `patrol`
+role on `Cop`: cars that cruise the network the way traffic does, kept around
+the player, taking no interest in you. `CityPolice.witness` is the whole
+trigger - it asks whether any unit can see you, through the same line of sight
+the pursuit uses, and opens the pursuit if one can. Speeding well over the
+road's own limit, ploughing into somebody, or bringing something down all go
+through it, and hitting the police goes through `rammed`, which needs no
+witness because they were there. A provocation nobody saw is free, which is
+what makes free roam a state rather than a countdown. The patrol that saw it is
+the car that turns in behind you: patrols convert to `chase` and spend the same
+budget `recruit` does, so the pursuit is made of cars that were already in the
+street. `startedBy` carries the reason so the radio can say it, and everything
+a pursuit reads - the bust timer, eyes-on, the budget - skips patrols.
 
 **Not every cop is chasing you** (issue #61). A `Cop` has a `role`: a `chase`
 unit is spawned behind you, navigates to close the distance and keeps right; an

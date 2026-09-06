@@ -1,5 +1,4 @@
 import {
-  COP_FIRST_SPAWN,
   COP_RESPAWN,
   COP_BUST_COOLDOWN,
   COP_SPAWN_INTERVAL,
@@ -55,6 +54,10 @@ import {
   HELI_SPEED_FRAC,
   HELI_LEAD,
   HELI_SEE_RADIUS,
+  PATROL_IN_CITY,
+  PATROL_RADIUS,
+  PATROL_SPAWN_MIN,
+  PATROL_PACE,
   type CopKind,
 } from './constants';
 import { lineBlocked, coveredAt, type CityGrid } from './city/grid';
@@ -72,9 +75,24 @@ export interface Cop extends GraphCar {
    * `enforcer` comes in from in front and holds *your* line, which is a
    * different job rather than a harder version of the same one: it is spawned
    * ahead instead of behind, and it steers toward you rather than alongside.
+   *
+   * A `patrol` is neither (#177). It drives the network the way traffic does,
+   * takes no interest in you, and is scenery right up until it sees you do
+   * something - at which point it becomes a `chase` unit and the pursuit it
+   * starts is one you can point at. Everything a pursuit reads - the bust
+   * timer, the budget, eyes-on - skips them.
    */
-  role: 'chase' | 'enforcer';
+  role: 'chase' | 'enforcer' | 'patrol';
 }
+
+/**
+ * What started a pursuit (#177).
+ *
+ * Carried so the radio can say it. "It is legible that *that* is what did it"
+ * is half the issue: a pursuit that begins for a reason you cannot name is not
+ * meaningfully different from one that begins on a timer.
+ */
+export type Provocation = 'speeding' | 'rammed' | 'crashed' | 'damage';
 
 /**
  * Escaping is two stages, not one (#63).
@@ -218,13 +236,15 @@ export class CityPolice {
   search: SearchArea | null = null;
   /** Seconds of searching left, once you are out of the area. */
   searchLeft = 0;
+  /** What set this pursuit off, for the radio to call in (#177). */
+  startedBy: Provocation | null = null;
 
   private sinceSpawn = 0;
   private sinceBlock = 0;
   private sinceEnforcer = 0;
   private sinceSpike = 0;
   private heliGrounded = 0;
-  private cooldown = COP_FIRST_SPAWN;
+  private cooldown = 0;
   private pinned = 0;
   private unseen = 0;
   private seenNow = false;
@@ -260,6 +280,15 @@ export class CityPolice {
 
     const speed = maxSpeed * this.force.speed;
     for (const cop of this.cops) {
+      // A patrol is not chasing anybody (#177): it cruises the network at the
+      // road's own pace and picks junctions the way traffic does, which is
+      // what makes it read as a car going about its business rather than as a
+      // pursuit that has not started yet.
+      if (cop.role === 'patrol') {
+        cop.speed = cop.road.speed * PATROL_PACE;
+        advanceAlong(this.city, cop, dt, (c, node) => this.wander(c, node), TRAFFIC_LANE);
+        continue;
+      }
       cop.speed = speed * COP_UNITS[cop.kind].pace;
       // An Enforcer aims at the line you are on rather than sitting in the
       // lane beside it. Everything else keeps right, so oncoming traffic and
@@ -268,10 +297,16 @@ export class CityPolice {
       advanceAlong(this.city, cop, dt, (c, node) => this.toward(c, node, player), lane);
     }
 
-    // Anything that has fallen a long way behind has lost you.
+    // Anything that has fallen a long way behind has lost you. A patrol is
+    // kept on the shorter leash traffic is: it was never following you, so the
+    // distance that matters is how far away it can be before nobody would
+    // notice it go.
     for (let i = this.cops.length - 1; i >= 0; i--) {
-      if (this.gapTo(this.cops[i], player) > CITY_COP_LOSE) this.cops.splice(i, 1);
+      const cop = this.cops[i];
+      const reach = cop.role === 'patrol' ? PATROL_RADIUS * 1.35 : CITY_COP_LOSE;
+      if (this.gapTo(cop, player) > reach) this.cops.splice(i, 1);
     }
+    this.muster(player);
 
     this.judge(dt, player);
     this.recruit(dt, player);
@@ -580,8 +615,10 @@ export class CityPolice {
 
   /** Heat, the bust timer, and the three-stage escape. */
   private judge(dt: number, player: Chased): void {
+    // Patrols are not part of this. A car cruising past you at heat zero must
+    // not tick the bust timer, and it is not "close" for the purposes of heat.
     const nearest = this.cops.reduce(
-      (best, cop) => Math.min(best, this.gapTo(cop, player)),
+      (best, cop) => (cop.role === 'patrol' ? best : Math.min(best, this.gapTo(cop, player))),
       Infinity,
     );
     const seen = this.seenBy(player);
@@ -591,7 +628,7 @@ export class CityPolice {
     // them losing you, not you being free: it has to lead into the search like
     // any other broken contact, or outrunning them skips the whole mechanic
     // and cooldown never happens to anyone who is actually fast.
-    if (this.state === 'clear' && this.cops.length === 0) {
+    if (this.state === 'clear' && this.pursuers === 0) {
       this.heat = Math.max(0, this.heat - CITY_HEAT_DECAY * dt);
       this.search = null;
       this.unseen = 0;
@@ -609,8 +646,10 @@ export class CityPolice {
       this.pinned = 0;
     }
 
+    if (this.state === 'clear') return; // free roam: patrols drive, nothing else happens
     if (this.state === 'cooldown') this.searching(dt, player, seen);
     else this.chasing(dt, nearest, seen);
+    this.joinIn(player);
   }
 
   /** Being chased: heat climbs, and losing them for long enough starts a search. */
@@ -667,9 +706,10 @@ export class CityPolice {
     this.searchLeft -= dt;
     if (this.searchLeft > 0) return;
 
-    this.cops.length = 0;
+    this.standDown();
     this.justEscaped = true;
     this.state = 'clear';
+    this.startedBy = null;
     this.search = null;
     this.cooldown = COP_RESPAWN;
   }
@@ -693,6 +733,11 @@ export class CityPolice {
     }
 
     for (const cop of this.cops) {
+      // Patrols do not hold a pursuit open (#177). One that can see you joins
+      // it instead, which spends the chase budget rather than quietly adding a
+      // pair of eyes to it - and eyes that cost nothing would make the escape
+      // harder every time the city happened to put a car on the next street.
+      if (cop.role === 'patrol') continue;
       if (this.gapTo(cop, player) > SEEN_RANGE) continue;
       if (this.blocked(cop, player)) continue;
       this.lastSeen.x = player.x;
@@ -713,7 +758,194 @@ export class CityPolice {
   }
 
   private enforcers(): number {
-    return this.cops.length - this.chasers();
+    return this.cops.reduce((n, cop) => n + (cop.role === 'enforcer' ? 1 : 0), 0);
+  }
+
+  /** How many units are actually after you, patrols excluded (#177). */
+  get pursuers(): number {
+    return this.cops.reduce((n, cop) => n + (cop.role === 'patrol' ? 0 : 1), 0);
+  }
+
+  private patrols(): number {
+    return this.cops.reduce((n, cop) => n + (cop.role === 'patrol' ? 1 : 0), 0);
+  }
+
+  /**
+   * Keep a few patrol cars around the player (#177).
+   *
+   * The same trade traffic makes: a police force spread over two thousand
+   * roads would be simulating a city nobody is looking at, and what the
+   * trigger needs is only that there is sometimes a unit near enough to see
+   * what you did.
+   */
+  private muster(player: Chased): void {
+    let attempts = 0;
+    while (this.patrols() < PATROL_IN_CITY && attempts < 12) {
+      attempts++;
+      const cop = this.spawnPatrol(player);
+      if (cop) this.cops.push(cop);
+    }
+  }
+
+  /** A patrol out on the network, pointed wherever the road it landed on goes. */
+  private spawnPatrol(player: Chased): Cop | null {
+    const angle = this.rng.range(0, Math.PI * 2);
+    const distance = this.rng.range(PATROL_SPAWN_MIN, PATROL_RADIUS);
+    const x = player.x + Math.sin(angle) * distance;
+    const z = player.z + Math.cos(angle) * distance;
+
+    const nearby = this.grid.roadsNear(x, z).filter((road) => road.length > road.width * 2);
+    if (nearby.length === 0) return null;
+
+    const road = nearby[this.rng.int(nearby.length)];
+    const a = this.city.nodes[road.a].pos;
+    const b = this.city.nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const lengthSquared = Math.max(1, dx * dx + dz * dz);
+    const nearest = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / lengthSquared));
+    const forward = this.rng.chance(0.5);
+
+    const cop: Cop = {
+      road,
+      t: forward ? nearest : 1 - nearest,
+      forward,
+      speed: road.speed * PATROL_PACE,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      damage: 0,
+      // Always a marked car. An unmarked unit sitting in traffic that turns
+      // out to be police is a trap rather than a warning, and the point of a
+      // patrol is that you can see it coming and lift off.
+      kind: 'cruiser',
+      role: 'patrol',
+    };
+    placeOnRoad(this.city, cop, TRAFFIC_LANE);
+    if (this.gapTo(cop, player) < PATROL_SPAWN_MIN * 0.5) return null;
+    return cop;
+  }
+
+  /**
+   * Which way a patrol goes at a junction: mostly straight on.
+   *
+   * The same rule traffic uses, and for the same reason - a car that picks at
+   * random turns constantly and reads as lost, which is the one thing a police
+   * patrol must not look like.
+   */
+  private wander(car: GraphCar, node: number): CityRoad | null {
+    const heading = directionOf(this.city, car);
+    const options = exitsFrom(this.city, car, node);
+    if (options.length === 0) return null;
+
+    let best: CityRoad | null = null;
+    let bestScore = -Infinity;
+    for (const road of options) {
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const away = road.a === node ? { x: b.x - a.x, z: b.z - a.z } : { x: a.x - b.x, z: a.z - b.z };
+      const length = Math.max(1, Math.hypot(away.x, away.z));
+      const straightness = (away.x / length) * heading.x + (away.z / length) * heading.z;
+      const score = straightness + this.rng.range(-0.35, 0.35);
+      if (score > bestScore) {
+        bestScore = score;
+        best = road;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Somebody did something, in front of somebody (#177).
+   *
+   * The whole trigger. `reason` is what they saw; the answer is whether
+   * anybody was there to see it. A patrol one street over with a block between
+   * you has not seen anything, which is why this goes through the same line of
+   * sight the pursuit does rather than through a plain distance - being
+   * *witnessed* is the mechanic, and a provocation nobody saw is free.
+   */
+  witness(player: Chased, reason: Provocation, heat = 0): boolean {
+    if (this.state !== 'clear') {
+      // Already running. Doing it again in front of them makes it worse rather
+      // than starting a second pursuit.
+      if (heat > 0) this.provoke(heat);
+      return true;
+    }
+    // They have just let you go. A pursuit that restarts the instant the
+    // search is called off is a pursuit that never ended.
+    if (this.cooldown > 0) return false;
+    if (!this.watchedBy(player)) return false;
+
+    this.open(player, reason);
+    if (heat > 0) this.provoke(heat);
+    return true;
+  }
+
+  /**
+   * They have been hit, which needs no witness (#177).
+   *
+   * The one provocation that does not go through line of sight: the unit that
+   * was struck is the unit that saw it, and a patrol you have just driven into
+   * is not going back to patrolling.
+   */
+  rammed(player: Chased, heat = 0): void {
+    if (this.state === 'clear' && this.cooldown <= 0) this.open(player, 'rammed');
+    if (heat > 0) this.provoke(heat);
+  }
+
+  /** Is any unit at all, patrol included, looking at this? */
+  private watchedBy(player: Chased): boolean {
+    for (const cop of this.cops) {
+      if (this.gapTo(cop, player) > SEEN_RANGE) continue;
+      if (this.blocked(cop, player)) continue;
+      return true;
+    }
+    return false;
+  }
+
+  /** Light it up: the units that saw it are the units that go. */
+  private open(player: Chased, reason: Provocation): void {
+    this.state = 'pursuit';
+    this.startedBy = reason;
+    this.seenNow = true;
+    this.unseen = 0;
+    this.lastSeen.x = player.x;
+    this.lastSeen.z = player.z;
+    // So the first car called in does not have to wait out the interval on top
+    // of everything the player already did to earn it.
+    this.sinceSpawn = COP_SPAWN_INTERVAL;
+    this.joinIn(player);
+  }
+
+  /**
+   * A patrol that can see a running pursuit joins it (#177).
+   *
+   * Better than calling one in from thin air two hundred metres back, and it
+   * is the reason driving past a parked-up unit at speed is a bad idea: the
+   * car that turns in behind you is a car that was already there. It spends
+   * the same budget `recruit` does rather than adding to it.
+   */
+  private joinIn(player: Chased): void {
+    if (this.state !== 'pursuit') return;
+    // Only while the pursuit still has you. A patrol that could pick you up
+    // after contact was broken would mean a city with police cars in it is a
+    // city you can never break contact *in*: the search would never start, and
+    // the escape from #63 would quietly stop existing.
+    if (!this.seenNow) return;
+    for (const cop of this.cops) {
+      if (this.chasers() >= this.force.maxCops) return;
+      if (cop.role !== 'patrol') continue;
+      if (this.gapTo(cop, player) > SEEN_RANGE || this.blocked(cop, player)) continue;
+      cop.role = 'chase';
+    }
+  }
+
+  /** Send the pursuit home, and leave the patrols out there driving. */
+  private standDown(): void {
+    for (let i = this.cops.length - 1; i >= 0; i--) {
+      if (this.cops[i].role !== 'patrol') this.cops.splice(i, 1);
+    }
   }
 
   /**
@@ -741,11 +973,26 @@ export class CityPolice {
     this.cooldown -= dt;
     if (this.cooldown > 0) return;
 
+    // Nobody is called in on a car that has not done anything (#177). This
+    // used to be the whole trigger: the clock ran out twelve seconds into the
+    // game and a pursuit began, whatever you were doing, which meant there was
+    // no free roam to be interrupted. Pursuits open in `witness` now, and this
+    // only tops one up.
+    if (this.state === 'clear') return;
+
     // Nobody joins a pursuit that has lost you. Without this a new car appears
     // 260 m away the moment the last one drops behind, and there is no speed
     // at which you can ever break contact - the escape is not hard, it is
     // absent. They may only call in more while somebody has eyes on you.
-    if (this.cops.length > 0 && !this.seenNow) return;
+    //
+    // That used to read `cops.length > 0 && !seenNow`, which left the hole it
+    // exists to close: shake *every* car and the count is zero, so the guard
+    // stopped applying and a fresh unit was spawned onto the street you had
+    // just got away down. A pursuit could therefore never be broken by
+    // outrunning it, only by outrunning it and then being lucky about where
+    // the replacement landed. Eyes on is the whole condition; `open` sets it,
+    // so the first car of a pursuit still comes.
+    if (!this.seenNow) return;
 
     const wanted = this.force.maxCops;
     this.sinceSpawn += dt;
@@ -941,9 +1188,10 @@ export class CityPolice {
    */
   giveUp(): void {
     if (this.state !== 'cooldown') return;
-    this.cops.length = 0;
+    this.standDown();
     this.justEscaped = true;
     this.state = 'clear';
+    this.startedBy = null;
     this.search = null;
     this.cooldown = COP_RESPAWN;
   }
@@ -962,6 +1210,7 @@ export class CityPolice {
     this.pinned = 0;
     this.unseen = 0;
     this.state = 'clear';
+    this.startedBy = null;
     this.search = null;
     this.cooldown = COP_BUST_COOLDOWN;
   }

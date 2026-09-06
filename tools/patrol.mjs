@@ -94,6 +94,10 @@ let spiked = 0;
 let timeWanted = 0;
 let timeSeen = 0;
 let timeHeli = 0;
+let pursuits = 0;
+let firstPursuit = null;
+let timeFree = 0;
+const startedBy = {};
 let speedSum = 0;
 let samples = 0;
 
@@ -154,6 +158,7 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
     busted: world.busted,
     seen: police.seenNow,
     wanted: police.state !== 'clear',
+    reason: police.startedBy,
     searching: police.state === 'cooldown',
     blocks: police.roadblocks.length,
     heli: !!police.helicopter,
@@ -163,12 +168,22 @@ for (let t = 0; t < MINUTES * 60; t += K.STEP) {
 
   peakHeat = Math.max(peakHeat, now.heat);
   if (now.wanted) timeWanted += K.STEP;
+  else timeFree += K.STEP;
   if (now.seen) timeSeen += K.STEP;
   if (now.heli) timeHeli += K.STEP;
   speedSum += world.speed;
   samples++;
 
   if (prev) {
+    // What set it off, which since #177 is a thing a pursuit has. "Time to
+    // first pursuit" used to be 12 seconds every run, whatever anyone did.
+    if (now.wanted && !prev.wanted) {
+      pursuits++;
+      if (firstPursuit === null) firstPursuit = t;
+      const why = now.reason ?? 'unprompted';
+      startedBy[why] = (startedBy[why] ?? 0) + 1;
+      say(t, `PURSUIT - ${why}`);
+    }
     if (now.heat > prev.heat) say(t, `heat ${prev.heat} -> ${now.heat}`);
     if (now.heat < prev.heat && !now.busted) say(t, `heat falling to ${now.heat}`);
     if (now.blocks > prev.blocks) {
@@ -208,6 +223,13 @@ if (!QUIET) {
 const row = (label, value, note = '') => console.log(`  ${label.padEnd(20)} ${String(value).padStart(10)}   ${note}`);
 console.log('WHAT HAPPENED');
 row('peak heat', `${peakHeat} of ${K.HEAT_LEVEL_COUNT}`);
+row('pursuits', pursuits, Object.entries(startedBy).map(([k, n]) => `${n} ${k}`).join(', '));
+row(
+  'time to the first',
+  firstPursuit === null ? 'never' : at(firstPursuit),
+  'was always 00:12 before #177',
+);
+row('free roam', `${(timeFree / 60).toFixed(1)} min`, `of ${MINUTES}`);
 row('wanted', `${(timeWanted / 60).toFixed(1)} min`, `of ${MINUTES}`);
 row('in their sights', `${(timeSeen / 60).toFixed(1)} min`);
 row('helicopter up', `${(timeHeli / 60).toFixed(1)} min`);
