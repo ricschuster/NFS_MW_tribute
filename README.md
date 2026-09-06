@@ -31,7 +31,9 @@ the world. Rep is earned from everything -
 takedowns, roadblocks gone through, cars threaded at speed, and every second
 you stay at large - and everything is worth more while they are chasing you.
 Ninety billboards are scattered across the city to smash and twenty-five speed
-cameras to be clocked by; the map on **Tab** shows what is left. The camera opens on a pass around
+cameras to be clocked by, and seven more cars are parked around it - drive into
+one and it is yours, no menu and no money. The map on **Tab** shows what is
+left. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck
 it: time slows and the camera swings round the wreck. From heat two the police

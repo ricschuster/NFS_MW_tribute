@@ -181,6 +181,16 @@ player - which are gone, and what you have been clocked at - because that is
 the half that gets saved. Ids are stable within a seed, which is what makes a
 save file mean anything.
 
+**A car is a set of multipliers, not a set of numbers** (issue #67). Every
+figure in `cars.ts` is written against the reference car, and
+`REFERENCE_TOP_SPEED` is the number the feel work was done against. That is
+what keeps three things honest at once across a change of car: the police run
+at fractions of *your* top speed, so they stay outrunnable in a slow car and
+catchable in a fast one; the speedometer divides by the reference, so a
+hypercar reads faster rather than reading 320 km/h like everything else; and
+`CityWorld.drive()` applies the profile once instead of multiplying it into
+eight expressions in the hot loop.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

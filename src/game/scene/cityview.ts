@@ -6,6 +6,7 @@ import { CameraDirector } from './cameras';
 import type { Hud } from './hud';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
+import { carById } from '../cars';
 import type { CityWorld } from '../cityworld';
 import { STEP, COP_UNITS, SPIKE_REACH, HELI_SEE_RADIUS } from '../constants';
 import type { InputState } from '../world';
@@ -116,9 +117,12 @@ export class CityView {
   private world: CityWorld | null = null;
   private hud: Hud | null = null;
   private readonly car = makeCar('#d8442f');
+  /** Which profile the player's mesh is currently painted as (#67). */
+  private wearing = '';
   private readonly trafficCars: CarPool;
   private readonly copCars: CarPool;
   private readonly wreckCars: CarPool;
+  private readonly parkedCars: CarPool;
   /** Spike strips, reused frame to frame: they come and go with the pursuit. */
   private readonly spikePlates: THREE.Mesh[] = [];
   private readonly helicopter = makeHelicopter();
@@ -171,6 +175,9 @@ export class CityView {
     // Wrecks come out of their own pool rather than the one they were in: a
     // wrecked cruiser has stopped being a cop car, lightbar included.
     this.wreckCars = new CarPool(this.scene);
+    // The cars still waiting to be found (#67). Their own pool, because they
+    // are neither traffic nor police and they must not flash a lightbar.
+    this.parkedCars = new CarPool(this.scene);
     this.helicopter.visible = false;
     this.scene.add(this.helicopter);
     // Honour the same preference the Canvas game does: no orbit, no cuts, no
@@ -442,6 +449,14 @@ export class CityView {
 
     this.car.position.set(world.x, world.y, world.z);
     this.car.rotation.y = world.heading;
+    // Repaint and resize only when the car actually changed. A Street Find
+    // swaps the profile mid-drive, and the mesh has to follow it.
+    if (this.wearing !== world.car.id) {
+      this.wearing = world.car.id;
+      const body = this.car.children[0] as THREE.Mesh;
+      (body.material as THREE.MeshLambertMaterial).color.set(world.car.colour);
+      this.car.scale.setScalar(world.car.scale);
+    }
     if (held('b')) this.director.glanceBack();
     // Tab holds the collection map open: what has been found, and where the
     // rest of it is. Held rather than toggled, so it cannot be left up.
@@ -478,6 +493,21 @@ export class CityView {
       car.rotation.set(0, wreck.heading, wreck.roll);
     }
     this.wreckCars.end();
+
+    this.parkedCars.begin();
+    for (const find of world.finds.waiting) {
+      const profile = carById(find.car);
+      const parked = this.parkedCars.place(
+        find.at.x,
+        find.y,
+        find.at.z,
+        profile.colour,
+        profile.scale,
+      );
+      parked.rotation.y = find.angle;
+    }
+    this.parkedCars.end();
+
     this.spikes(world);
     this.chopper(dt, world);
     // The board comes off a smashed billboard; the frame stays standing (#93).

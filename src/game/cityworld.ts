@@ -1,7 +1,6 @@
 import {
   TURN_RATE,
   LATERAL_GRIP,
-  SEGMENT_LENGTH,
   STEP,
   REVERSE_SPEED_FRAC,
   ESCAPED_FLASH,
@@ -39,9 +38,12 @@ import {
   REP_NEAR_MISS_RANGE,
   REP_NEAR_MISS_SPEED,
   REP_SAVE_INTERVAL,
+  REFERENCE_TOP_SPEED,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
+import { StreetFinds } from './streetfinds';
+import { STARTER_CAR, type CarProfile } from './cars';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -155,23 +157,34 @@ export class CityWorld {
 
   /** Rep, the single progression currency (#64). */
   readonly rep = new RepLedger();
+  /** The car being driven. Handling comes from its profile (#67). */
+  car: CarProfile = STARTER_CAR;
   /** Billboards and speed cameras: what is left to find (#93). */
   readonly collectibles: Collectibles;
+  /** The cars parked around the city, and the one being driven (#67). */
+  readonly finds: StreetFinds;
 
   /**
-   * Top speed. The old cap was `SEGMENT_LENGTH / STEP`, which existed only to
-   * stop the car crossing two segments in a step; there are no segments now, so
-   * the number is kept purely because the HUD and every feel measurement are
-   * calibrated to it.
+   * Top speed, and everything derived from it.
+   *
+   * Not `readonly` any more (#67): the car can change, and when it does all of
+   * these move together. The reference is still `SEGMENT_LENGTH / STEP`, which
+   * is the number the feel work and the HUD were calibrated against - a
+   * profile is a multiplier on it rather than a figure of its own, which is
+   * what keeps the police (who run at fractions of *your* top speed) and the
+   * feel baseline honest across a change of car.
    */
-  readonly maxSpeed = SEGMENT_LENGTH / STEP;
+  maxSpeed = REFERENCE_TOP_SPEED;
 
-  private readonly accel = this.maxSpeed / 5;
-  private readonly braking = -this.maxSpeed;
-  private readonly decel = -this.maxSpeed / 5;
-  private readonly offRoadDecel = -this.maxSpeed / 2;
-  private readonly offRoadLimit = this.maxSpeed / 4;
-  private readonly maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
+  private accel = this.maxSpeed / 5;
+  private braking = -this.maxSpeed;
+  private decel = -this.maxSpeed / 5;
+  private offRoadDecel = -this.maxSpeed / 2;
+  private offRoadLimit = this.maxSpeed / 4;
+  private maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
+  private grip = LATERAL_GRIP;
+  private nitroSpeed = NITRO_SPEED_MULT;
+  private nitroAccel = NITRO_ACCEL_MULT;
   private fallSpeed = 0;
 
   /** Everything that moves draws from here, so a scripted drive repeats exactly. */
@@ -195,12 +208,40 @@ export class CityWorld {
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
     this.collectibles = new Collectibles(city);
+    this.finds = new StreetFinds(city);
     // Carried over from whatever this player has already earned, the same way
     // the track sim loads its rival count. Safe where there is no storage.
     const saved = loadProgress();
     this.rep.total = saved.rep;
     this.collectibles.load(saved.smashed, saved.clocked);
+    this.finds.load(saved.cars, saved.car);
+    this.drive(this.finds.car);
     this.spawn();
+  }
+
+  /**
+   * Get into a different car (#67).
+   *
+   * Everything the physics reads is recomputed here rather than looked up per
+   * step, so the profile is applied once instead of multiplied into eight
+   * expressions in the hot loop - and so there is one place to be wrong.
+   */
+  drive(profile: CarProfile): void {
+    this.car = profile;
+    this.maxSpeed = REFERENCE_TOP_SPEED * profile.topSpeed;
+    // Acceleration is written against the reference top speed, not this car's:
+    // otherwise a faster car would also be quicker to it for free, twice over.
+    this.accel = (REFERENCE_TOP_SPEED / 5) * profile.accel;
+    this.braking = -this.maxSpeed;
+    this.decel = -this.maxSpeed / 5;
+    this.offRoadDecel = -this.maxSpeed / 2;
+    this.offRoadLimit = this.maxSpeed / 4;
+    this.maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
+    this.grip = LATERAL_GRIP * profile.grip;
+    // Only the *excess* is scaled. `NITRO_SPEED_MULT` has to stay under 2 or
+    // the car crosses more ground in a step than anything can react to.
+    this.nitroSpeed = 1 + (NITRO_SPEED_MULT - 1) * profile.nitro;
+    this.nitroAccel = 1 + (NITRO_ACCEL_MULT - 1) * profile.nitro;
   }
 
   /** Put the car on a surface street near the middle of the city, pointing along it. */
@@ -264,7 +305,7 @@ export class CityWorld {
     // travelling at v costs v*w of lateral acceleration, so the faster the car
     // goes the wider it turns. Unchanged from the track model on purpose.
     const authority =
-      Math.min(TURN_RATE, LATERAL_GRIP / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed))) *
+      Math.min(TURN_RATE, this.grip / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed))) *
       (this.shredded > 0 ? SHRED_GRIP : 1);
 
     const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
@@ -273,7 +314,7 @@ export class CityWorld {
     this.nitro = boosting
       ? Math.max(0, this.nitro - dt * NITRO_DRAIN)
       : Math.min(1, this.nitro + dt * NITRO_RECHARGE);
-    const throttle = boosting ? this.accel * NITRO_ACCEL_MULT : this.accel;
+    const throttle = boosting ? this.accel * this.nitroAccel : this.accel;
 
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     // Subtracted, not added. Heading rotates the car's forward from +z toward
@@ -299,7 +340,7 @@ export class CityWorld {
     // Shredded tyres cap the top speed under everything, nitrous included:
     // lighting the boost on four ruined tyres does not make them work.
     const topSpeed = Math.min(
-      boosting ? this.maxSpeed * NITRO_SPEED_MULT : this.maxSpeed,
+      boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed,
       this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
     );
     if (this.speed > topSpeed) {
@@ -345,10 +386,14 @@ export class CityWorld {
     this.collectibles.update(
       dt,
       this,
-      Math.abs(this.speed) / this.maxSpeed,
+      // Measured against the reference car, not this one, so a camera reads
+      // the same speed whatever you turned up in.
+      Math.abs(this.speed) / REFERENCE_TOP_SPEED,
       this.rep,
       this.level,
     );
+    const swapped = this.finds.update(dt, this, this.rep, this.level);
+    if (swapped) this.drive(swapped);
 
     if (this.police.state !== 'pursuit') {
       this.pursuitRep = 0;
@@ -406,6 +451,8 @@ export class CityWorld {
       rep: this.rep.total,
       smashed: [...this.collectibles.smashed],
       clocked: [...this.collectibles.clocked],
+      cars: [...this.finds.owned],
+      car: this.car.id,
     });
   }
 

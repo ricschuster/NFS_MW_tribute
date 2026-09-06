@@ -187,6 +187,22 @@ export interface Collectible {
   road: number;
 }
 
+/**
+ * A car parked in the city, waiting to be found (#67).
+ *
+ * City data like everything else here: the sim has to be able to say "you have
+ * driven into the Ardent" without a renderer in the room, and a seed has to
+ * put the same car in the same lot every time.
+ */
+export interface StreetFind {
+  /** Which car is parked here, by `CarProfile.id`. */
+  car: string;
+  at: Vec2;
+  y: number;
+  /** Which way it is parked. */
+  angle: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -223,4 +239,5 @@ export interface City {
   buildings: Building[];
   furniture: StreetProp[];
   collectibles: Collectible[];
+  finds: StreetFind[];
 }

@@ -40,8 +40,11 @@ import {
   REP_WRECK,
   REP_PURSUIT_TICK,
   REP_NEAR_MISS_RANGE,
+  REFERENCE_TOP_SPEED,
+  FIND_RANGE,
   type CopKind,
 } from './constants';
+import { CARS, STARTER_CAR, carById } from './cars';
 import type { InputState } from './world';
 import type { Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
@@ -1518,5 +1521,123 @@ describe('billboards and cameras, driven at', () => {
     expect(world.collectibles.clockedCount).toBe(0);
     expect(world.collectibles.billboards.length).toBeGreaterThan(0);
     expect(world.collectibles.cameras.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Street Finds (#67).
+ *
+ * The thing worth asserting on is not that a car can be picked up. It is that
+ * picking one up actually changes how the car drives, and that everything
+ * measured as a fraction of the player's top speed still means what it meant -
+ * the police run at fractions of it, and a per-car top speed that quietly
+ * detached them from it would be a pursuit you cannot outrun in a slow car and
+ * cannot lose in a fast one.
+ */
+describe('street finds', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** Put the car on top of the nearest parked one. */
+  function atACar(world: CityWorld) {
+    const find = world.finds.waiting[0];
+    world.x = find.at.x;
+    world.z = find.at.z;
+    world.y = find.y;
+    return find;
+  }
+
+  it('starts in the starter, with nothing else found', () => {
+    const world = still();
+    expect(world.car).toBe(STARTER_CAR);
+    expect(world.finds.owned.size).toBe(1);
+    expect(world.finds.waiting.length).toBe(CARS.length - 1);
+  });
+
+  it('hands you the car you drive into, straight away', () => {
+    const world = still();
+    const find = atACar(world);
+    world.step(STEP, NONE);
+
+    expect(world.car.id).toBe(find.car);
+    expect(world.finds.owned.has(find.car)).toBe(true);
+    expect(world.finds.flash?.id).toBe(find.car);
+    expect(world.rep.recent.some((a) => a.reason === 'streetFind')).toBe(true);
+  });
+
+  it('does not hand you one you only drove past', () => {
+    const world = still();
+    const find = world.finds.waiting[0];
+    world.x = find.at.x + FIND_RANGE * 3;
+    world.z = find.at.z;
+    world.y = find.y;
+    world.step(STEP, NONE);
+    expect(world.car).toBe(STARTER_CAR);
+  });
+
+  it('pays once, not once a frame', () => {
+    const world = still();
+    atACar(world);
+    world.step(STEP, NONE);
+    const paid = world.rep.total;
+    for (let i = 0; i < 60; i++) world.step(STEP, NONE);
+    expect(world.rep.total).toBe(paid);
+  });
+
+  it('changes how the car actually drives', () => {
+    const slow = still();
+    slow.drive(carById('kite'));
+    const fast = still();
+    fast.drive(carById('nightjar'));
+
+    expect(fast.maxSpeed).toBeGreaterThan(slow.maxSpeed);
+    // Three seconds, not twelve: a straight line from the spawn reaches a
+    // building, and two cars parked against a wall are the same speed.
+    drive(slow, 3, press({ up: true }));
+    drive(fast, 3, press({ up: true }));
+    expect(fast.speed).toBeGreaterThan(slow.speed);
+  });
+
+  it('lets a grippier car hold a tighter line at the same speed', () => {
+    const turn = (id: string) => {
+      const world = still();
+      world.drive(carById(id));
+      // Turned on the spot at a fixed speed, so the answer is about grip and
+      // not about which of the two reached the corner faster.
+      world.speed = REFERENCE_TOP_SPEED * 0.6;
+      const facing = world.heading;
+      for (let t = 0; t < 0.4; t += STEP) {
+        world.speed = REFERENCE_TOP_SPEED * 0.6;
+        world.step(STEP, press({ left: true }));
+      }
+      return Math.abs(world.heading - facing);
+    };
+    expect(turn('kite')).toBeGreaterThan(turn('ridgeback'));
+  });
+
+  // The police run at fractions of *your* top speed, so this has to keep
+  // holding whatever you are driving.
+  it('leaves the pursuit outrunnable in every car', () => {
+    for (const car of CARS) {
+      const world = new CityWorld(undefined, { traffic: false, police: false });
+      world.drive(car);
+      for (const level of HEAT_LEVELS) {
+        for (const kind of [...level.units, level.enforcerUnit]) {
+          expect(world.maxSpeed * level.speed * COP_UNITS[kind].pace).toBeLessThan(world.maxSpeed);
+        }
+      }
+    }
+  });
+
+  it('remembers the garage it is handed, and refuses one it does not know', () => {
+    const world = still();
+    world.finds.load(['nightjar', 'not-a-car'], 'nightjar');
+    expect(world.finds.owned.has('nightjar')).toBe(true);
+    expect(world.finds.owned.has('not-a-car')).toBe(false);
+    expect(world.finds.car.id).toBe('nightjar');
+
+    // And will not put you in a car you do not have.
+    const other = still();
+    other.finds.load([], 'halcyon');
+    expect(other.finds.car).toBe(STARTER_CAR);
   });
 });

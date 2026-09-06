@@ -29,14 +29,14 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'helicopter', 'billboard', 'collection',
+  'helicopter', 'billboard', 'collection', 'streetfind',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'helicopter', 'billboard', 'collection',
+      'helicopter', 'billboard', 'collection', 'streetfind',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -385,6 +385,30 @@ for (const view of VIEWS) {
       await page.keyboard.down('Tab');
       await page.waitForTimeout(900);
     }
+  }
+
+  if (view === 'streetfind') {
+    // Stand off a parked car, looking at it. Finding one of seven by driving
+    // is the player's job, not the screenshot's.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const find = world.finds.waiting[3];
+      if (!find) return;
+      world.x = find.at.x + 22 * metre;
+      world.z = find.at.z + 22 * metre;
+      world.y = find.y;
+      world.heading = Math.atan2(find.at.x - world.x, find.at.z - world.z);
+      world.speed = 0;
+      world.crashFlash = 0;
+      world.rep.total = 22600;
+    });
+    // Long enough for the chase camera to catch up with the teleport: it eases
+    // rather than cutting, and headless gives it about two frames a second.
+    await page.waitForTimeout(2600);
   }
 
   if (view === 'pursuit') {

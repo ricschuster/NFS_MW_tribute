@@ -8,6 +8,8 @@ import {
   SHRED_TIME,
   REP_POPUP_TIME,
   COLLECTIBLE_HINT_RANGE,
+  REFERENCE_TOP_SPEED,
+  FIND_FLASH,
   HEAT_LEVEL_COUNT,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -52,6 +54,7 @@ export class Hud {
     this.heat(world);
     this.minimap(world);
     this.rep(world);
+    this.streetFind(world);
     this.takedowns(world);
     this.roadblock(world);
     this.shredded(world);
@@ -65,7 +68,13 @@ export class Hud {
 
   private speed(world: CityWorld): void {
     const { ctx } = this;
-    const kmh = Math.max(0, Math.round((Math.abs(world.speed) / world.maxSpeed) * DISPLAY_MAX_KMH));
+    // Against the reference car, not this one (#67). Dividing by the car's own
+    // top speed makes every car read 320 km/h flat out, which is the one thing
+    // a speedometer must not do.
+    const kmh = Math.max(
+      0,
+      Math.round((Math.abs(world.speed) / REFERENCE_TOP_SPEED) * DISPLAY_MAX_KMH),
+    );
 
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffffff';
@@ -167,6 +176,36 @@ export class Hud {
       ctx.font = '600 13px system-ui, sans-serif';
       ctx.fillText(award.label, 34 + width + 14, y);
     }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * The car you are in, and the one you have just found (#67).
+   *
+   * The name is always on screen because the handling changed when you picked
+   * it up, and a car that drives differently with nothing saying why is a bug
+   * report waiting to happen.
+   */
+  private streetFind(world: CityWorld): void {
+    const { ctx } = this;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.font = '600 12px system-ui, sans-serif';
+    // Clear of the speed readout above it: a 62px number has more cap height
+    // than the gap it looks like it has.
+    ctx.fillText(world.car.name.toUpperCase(), 34, HEIGHT - 114);
+
+    const found = world.finds.flash;
+    if (!found) return;
+    ctx.globalAlpha = Math.min(1, world.finds.flashLeft / (FIND_FLASH * 0.4));
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#7fe3ff';
+    ctx.font = '800 44px system-ui, sans-serif';
+    ctx.fillText(found.name.toUpperCase(), WIDTH / 2, HEIGHT / 2 - 70);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '500 15px system-ui, sans-serif';
+    ctx.fillText(found.blurb, WIDTH / 2, HEIGHT / 2 - 42);
     ctx.globalAlpha = 1;
   }
 
@@ -285,6 +324,16 @@ export class Hud {
       if (Math.hypot(ix, iz) > radius) continue;
       ctx.fillStyle = item.kind === 'billboard' ? '#ff9f45' : '#ffd166';
       ctx.fillRect(ix - 2, iz - 2, 4, 4);
+    }
+
+    for (const find of world.finds.waiting) {
+      const fx = (find.at.x - world.x) * scale;
+      const fz = -(find.at.z - world.z) * scale;
+      if (Math.hypot(fx, fz) > radius) continue;
+      ctx.beginPath();
+      ctx.arc(fx, fz, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#7fe3ff';
+      ctx.fill();
     }
 
     for (const strip of world.police.spikes) {
@@ -459,7 +508,8 @@ export class Hud {
     ctx.font = '600 12px system-ui, sans-serif';
     ctx.fillText(
       `BILLBOARDS ${found.smashed.size}/${found.billboards.length}   ` +
-        `CAMERAS ${found.clockedCount}/${found.cameras.length}   TAB MAP`,
+        `CAMERAS ${found.clockedCount}/${found.cameras.length}   ` +
+        `CARS ${world.finds.owned.size}/${world.city.finds.length + 1}   TAB MAP`,
       WIDTH - 26,
       MINIMAP_SIZE + 48,
     );
@@ -544,6 +594,15 @@ export class Hud {
       ctx.fillRect(px(item.at.x) - size / 2, py(item.at.z) - size / 2, size, size);
     }
 
+    // Cars still parked out there. Drawn bigger and brighter than a billboard
+    // because they are worth crossing the map for and a billboard is not.
+    for (const find of world.finds.waiting) {
+      ctx.beginPath();
+      ctx.arc(px(find.at.x), py(find.at.z), 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#7fe3ff';
+      ctx.fill();
+    }
+
     // The car, so the map is a place you are in rather than a diagram.
     ctx.beginPath();
     ctx.arc(px(world.x), py(world.z), 5, 0, Math.PI * 2);
@@ -558,7 +617,8 @@ export class Hud {
     ctx.font = '500 12px system-ui, sans-serif';
     ctx.fillText(
       `${world.collectibles.remaining} billboards left  ·  ` +
-        `${world.collectibles.cameras.length - world.collectibles.clockedCount} cameras unclocked`,
+        `${world.collectibles.cameras.length - world.collectibles.clockedCount} cameras unclocked` +
+        `  ·  ${world.finds.waiting.length} cars still parked`,
       WIDTH / 2,
       HEIGHT - 20,
     );
