@@ -450,7 +450,7 @@ export class CityWorld {
    * beating Nyx on the old track.
    */
   private settleRace(): void {
-    const rival = this.race.rival?.rival;
+    const rival = this.race.challenger;
     if (this.race.won) {
       this.beaten = Math.min(RIVALS.length, this.beaten + 1);
       const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;

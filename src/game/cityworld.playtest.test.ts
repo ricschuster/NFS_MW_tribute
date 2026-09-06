@@ -1680,7 +1680,8 @@ describe('circuits', () => {
 
     expect(world.race.state).toBe('countdown');
     expect(world.race.route).toBe(route);
-    expect(world.race.rival?.rival).toBe(world.currentRival);
+    expect(world.race.challenger).toBe(world.currentRival);
+    expect(world.race.runners).toBeGreaterThan(2);
     expect(world.speed).toBe(0);
   });
 

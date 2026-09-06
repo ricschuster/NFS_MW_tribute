@@ -540,15 +540,11 @@ export class CityView {
     this.parkedCars.end();
 
     this.rivalCars.begin();
-    const racing = world.race.rival;
-    if (racing && world.race.state !== 'idle') {
-      this.rivalCars.place(
-        racing.x,
-        world.y,
-        racing.z,
-        racing.rival.color,
-        1,
-      ).rotation.y = racing.heading;
+    if (world.race.state !== 'idle') {
+      for (const racer of world.race.field) {
+        this.rivalCars.place(racer.x, world.y, racer.z, racer.rival.color, 1).rotation.y =
+          racer.heading;
+      }
     }
     this.rivalCars.end();
 

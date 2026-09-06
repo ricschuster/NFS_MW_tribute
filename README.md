@@ -34,7 +34,7 @@ you stay at large - and everything is worth more while they are chasing you.
 Ninety billboards are scattered across the city to smash and twenty-five speed
 cameras to be clocked by, and seven more cars are parked around it - drive into
 one and it is yours, no menu and no money. Six circuits run through the city -
-three laps of real streets against a rival off the ladder, unlocked by Rep. The
+three laps of real streets against a field of six, unlocked by Rep. The
 map on **Tab** shows the events and everything left to find. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck

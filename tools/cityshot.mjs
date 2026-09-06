@@ -437,8 +437,12 @@ for (const view of VIEWS) {
       );
       world.speed = world.maxSpeed * 0.45;
     });
+    // Long enough to be up among the field rather than last off the line: the
+    // shot is of a race, and a race is cars around you.
     await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(2000);
+    await page.keyboard.down('Shift');
+    await page.waitForTimeout(4000);
+    await page.keyboard.up('Shift');
     await page.keyboard.up('ArrowUp');
     await page.waitForTimeout(400);
   }
