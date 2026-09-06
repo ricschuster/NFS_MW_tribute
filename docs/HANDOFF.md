@@ -189,9 +189,21 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Six issues are open, and nothing else is.** M4 (Kestrel Bay rebuild) and M5
+**Eight issues are open, and nothing else is.** M4 (Kestrel Bay rebuild) and M5
 (open-world systems) are both closed, and #165 closed the rebuild out by
 deleting the thing it replaced.
+
+**Three of them came out of one drive test** - #170, #171 and the ladder probe
+below - which is the argument for doing another one. Put the reference driver in
+the city with the police live for twenty minutes and read what comes out; that
+is how all three were found, and the test suite was green throughout.
+
+**#170: a wrecked car cannot outrun a heat 1 cruiser.** A decision rather than a
+fix, and the sharpest thing on the board: it changes how the game plays. See
+Known problems below for the numbers.
+
+**#171: the reference driver follows the centreline**, so traffic can never be
+in the baseline. Small, and it unblocks measuring the system that is always on.
 
 **#166: the ladder has no probe.** This is the debt #165 took on knowingly and
 it is the first thing to look at. `npm run feel` raced a reference driver
@@ -256,6 +268,18 @@ What is left, roughly in the order it would show:
 
 ## Known problems, not papered over
 
+- **A wrecked car cannot outrun a heat 1 cruiser** (#170). At full damage the
+  player tops out at 72% of reference; the slowest unit in the game runs at 84%,
+  and heat 6 elites at 98%. `cityworld.ts:535` hands the pursuit `this.maxSpeed`,
+  which is the *undamaged* figure, while damage is applied only to the player's
+  own cap at `cityworld.ts:517`. So every fraction in `HEAT_LEVELS` is measured
+  against a car you may not be driving any more, and the invariant those
+  fractions exist to hold - "a pursuit you cannot outrun on speed alone is a
+  pursuit with no answer" - is true for a clean car and inverted from heat 1 for
+  a hurt one. Whether that is the design is a decision, not a fix: repair is
+  drive-through and there are six shops, so "go to the workshop" may well be the
+  intended answer. If it is, two docs need correcting and the HUD needs to say
+  so. Note the clean-car margin at heat 6 is 2 percentage points.
 - **The ladder is unmeasured.** See #166 above. It is the one regression #165
   shipped on purpose, and the reason `RIVAL_DIFF_SPEED_FRAC` carries a comment
   saying where its value came from.
@@ -265,6 +289,36 @@ What is left, roughly in the order it would show:
   separate bugs - one of which culled every cop the step after it spawned. There
   is only one world now, so the prefix is a scar. Leave it: renaming it touches
   every pursuit file for nothing.
+- **Traffic has no end-to-end probe** (#171). `npm run citylap` runs with
+  traffic off, and that is a limitation of the driver rather than a choice:
+  `routeDriver` follows the route *centreline* and traffic sits `TRAFFIC_LANE`
+  (3 m) right of it, so turning traffic on measures a head-on collision every
+  few seconds rather than the game. The system that is on screen every second of
+  every session is therefore the one nothing drives. Give the driver a lane and
+  the baseline can have a traffic column.
+- **Pursuit Rep dominates the economy.** Twenty minutes at heat 6 earns roughly
+  what the whole ten-rival ladder costs (65,000) several times over;
+  `REP_PURSUIT_PER_SECOND` alone is about 28 Rep/s once the heat bonus is in,
+  so about forty minutes of being chased unlocks every rival without racing,
+  smashing or finding anything. #91 wants everything to pay into the ladder and
+  it does, but at high heat one activity pays for all of it. Not filed as an
+  issue: it wants a judgement about the curve rather than a fix, and it belongs
+  with #14.
+- **The helicopter is about four pixels.** #62 flies it low and ahead
+  deliberately, on the grounds that "a thing you can never see is a thing the
+  HUD has to explain" - but in a rendered frame it is an indistinct speck
+  against the buildings and the HUD is still explaining it. Worth either making
+  it read at distance or accepting that the callout is the mechanic.
+- **The minimap is hard to read in daylight.** Its background is
+  `rgba(8, 12, 18, 0.62)`, so a bright or busy scene shows through it and the
+  roads lose contrast. It clips correctly - a building apparently spilling past
+  the circle is the scene behind it, not a masking bug - but 62% is not enough
+  over pale tarmac.
+- **The lighting is flat.** `castShadow` and `receiveShadow` are set throughout
+  `scene/`, and shadows still contribute almost nothing to a frame: everything
+  reads as evenly lit midday. This is the strongest argument for #11's night,
+  weather and wet roads being the biggest remaining visual step. The geometry is
+  carrying the look on its own.
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
   siren and a radio squelch - but there is still no rotor for the helicopter,
   nothing for a takedown or a spike strip, and no music.
@@ -317,11 +371,16 @@ for two minutes until the police escalate - that is most of the project in one
 go. Then `npm run city` for the map, and `?renderer=city&view=overpass` for the
 reason the renderer was rebuilt at all.
 
-Then read "Where the work is" above. The highest-value thing that is neither
-blocked on a person nor a taste call is **#166, giving the ladder a probe
-again**: it is the one measurement the project used to have and lost, the
-pieces are all in `tools/`, and until it exists nobody can tell whether a change
-to the car has quietly made the boss unbeatable.
+Then read "Where the work is" above. Two things are worth doing before anything
+else, and they are cheap: **#170**, because it is a decision about how the game
+plays and everything downstream of the damage model waits on it, and **#171**,
+because it is a small change to the driver that unblocks measuring traffic.
+After those, **#166** gives the ladder back the probe it lost - the pieces are
+all in `tools/`, and until it exists nobody can tell whether a change to the car
+has quietly made the boss unbeatable.
+
+All three exist because somebody drove the game and wrote down what happened.
+That remains the highest-yield thing anyone can do here.
 
 Whatever you pick: keep behaviour in the sim and drawing in the renderer,
 because that split is the only reason this rebuild has been survivable, and keep
