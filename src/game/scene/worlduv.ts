@@ -43,15 +43,25 @@ export interface WorldUvOptions {
   tile: { u: number; v: number };
   /** Distinguishes this patch from others in three.js's program cache. */
   key: string;
+  /**
+   * What to do with the faces the texture does not cover, as a multiplier.
+   *
+   * Defaults to 1: leave them as the instance colour. A building wants its
+   * roof darker than its walls - a roof is tar and gravel and plant, not
+   * painted render - and from the interstate or from the air that is most of
+   * what the city is made of.
+   */
+  otherFaces?: number;
 }
 
 /** Patch a material so its `map` is sampled in world units off the instance. */
 export function worldUvs(material: THREE.Material, options: WorldUvOptions): void {
-  const { faces, tile, key } = options;
+  const { faces, tile, key, otherFaces = 1 } = options;
 
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTileU = { value: tile.u };
     shader.uniforms.uTileV = { value: tile.v };
+    shader.uniforms.uOtherFaces = { value: otherFaces };
 
     // `abs(normal).y` is 1 on the top and bottom of an axis-aligned box and 0
     // on its sides, which is the whole test either mode needs.
@@ -91,6 +101,7 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
       .replace(
         '#include <common>',
         `#include <common>
+        uniform float uOtherFaces;
         varying vec2 vWorldUv;
         varying float vWorldFace;`,
       )
@@ -98,7 +109,8 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
         '#include <map_fragment>',
         `#ifdef USE_MAP
           vec4 worldTexel = texture2D(map, vWorldUv);
-          diffuseColor *= mix(vec4(1.0), worldTexel, vWorldFace);
+          vec4 worldOther = vec4(vec3(uOtherFaces), 1.0);
+          diffuseColor *= mix(worldOther, worldTexel, vWorldFace);
         #endif`,
       );
   };

@@ -5,6 +5,7 @@ import {
   blockTexture,
   disposeSurfaces,
 } from './surfaces';
+import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
@@ -49,6 +50,7 @@ export class Cityscape {
   readonly group = new THREE.Group();
 
   private readonly provider: BuildingProvider;
+  private readonly rooftops: Rooftops;
   private readonly furniture: StreetFurniture;
   /** Billboards and speed cameras (#93). Public: the sim smashes them. */
   readonly collectibles: CityCollectibles;
@@ -68,6 +70,8 @@ export class Cityscape {
     if (bridges) this.group.add(bridges);
     for (const mesh of this.viaduct(city)) this.group.add(mesh);
     for (const mesh of provider.build(city.buildings)) this.group.add(mesh);
+    this.rooftops = new Rooftops(city.buildings);
+    for (const mesh of this.rooftops.meshes) this.group.add(mesh);
 
     this.furniture = new StreetFurniture(city.furniture);
     for (const mesh of this.furniture.meshes) this.group.add(mesh);
@@ -436,6 +440,7 @@ export class Cityscape {
 
   dispose(): void {
     this.provider.dispose();
+    this.rooftops.dispose();
     this.furniture.dispose();
     this.collectibles.dispose();
     this.breakables.dispose();
