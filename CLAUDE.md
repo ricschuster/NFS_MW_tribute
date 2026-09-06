@@ -208,6 +208,14 @@ route. Routes come out of
 `city/routes.ts`: four corner junctions joined by Dijkstra over the surface
 graph, so every metre of a lap is a road that exists.
 
+**An ambush is a scoreboard over the pursuit** (issue #92). `CityAmbush` knows
+nothing about how an escape works: it is told whether the pursuit is clear and
+whether you are busted, and it calls it. That is the whole reason the event
+type is worth having - the pursuit is the best thing the city has, and every
+other event asks you to stop being chased in order to play it. It also updates
+*before* the BUSTED early return in `step`, because being busted is one of the
+two ways it ends and the frozen world still has to notice.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

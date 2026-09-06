@@ -943,3 +943,29 @@ export const SPEEDRUN_TARGET = 0.38;
 export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.14;
 /** The average is meaningless in the first instants; hold it back until then. */
 export const SPEEDRUN_SETTLE = 0.75;
+
+/**
+ * Ambushes (#92).
+ *
+ * You are dropped stationary, already surrounded, with one job: get out. It is
+ * the purest expression of the pursuit system and it needs no route, no rivals
+ * and no finish line - which is exactly why it is worth having, because the
+ * pursuit is the best thing the city has and everything else asks you to stop
+ * being chased in order to do it.
+ *
+ * Five of them, at rising heat, so the one you pick is the difficulty you
+ * chose rather than the one the game decided you were ready for.
+ */
+export const AMBUSH_COUNT = 5;
+export const AMBUSH_SPACING = m(1200);
+/** How close you have to be for one to be offered. */
+export const AMBUSH_RANGE = m(28);
+/** The heat the first one starts at, and what each one after adds. */
+export const AMBUSH_FIRST_LEVEL = 2;
+/** How close the cars are when the trap springs, and how many there are. */
+export const AMBUSH_RING = m(55);
+export const AMBUSH_CARS = 4;
+/** Rep for getting out of one, before the heat multiplier. */
+export const REP_AMBUSH = 900;
+/** How long the result holds before control comes back. */
+export const AMBUSH_RESULT_HOLD = 5;
