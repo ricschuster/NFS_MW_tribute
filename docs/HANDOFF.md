@@ -52,8 +52,9 @@ The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
 229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
 tunnel, 3 river crossings, 90 billboards, 25 speed cameras, 7 parked cars and
 6 events of 2.5 to 4 km - three circuits and three speed runs - and 5 ambushes
-at heat 2 through 6, and 6 drive-through repair shops. Eighteen cars: one you
-start in, seven parked around the city, ten on the ladder.
+at heat 2 through 6, and 6 drive-through repair shops, 40 gates and 43 pallet stacks that come down.
+Eighteen cars: one you start in, seven parked around the city, ten on the
+ladder.
 
 ## The decisions that shape everything
 
@@ -91,7 +92,7 @@ src/game/
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
   city/           the generator: types, rng, water, generate, boulevards,
                   interstate, buildings, furniture, collectibles, streetfinds,
-                  routes, ambushes, repairs, grid
+                  routes, ambushes, repairs, breakables, grid
   scene/          the renderer: cityscape, buildings, furniture, cameras, hud,
                   cityview, plus scene3d/ribbon/cars for the track
   road.ts, render.ts   the projected-segment track   <- retired with world.ts
@@ -121,7 +122,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 396 unit tests + playtests
+npm run test       # 409 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -170,10 +171,10 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70/#71/#72/#92/#95/#66/#90/#68
-from M5.
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70/#71/#72/#92/#95/#66/#90/#68/#57
+from M5, and #89 finished M4's touch controls.
 
-**M5: Open-world systems - 4 open.** The pursuit is built: #58 (six heat
+**M5: Open-world systems - 3 open.** The pursuit is built: #58 (six heat
 levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
 #60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency
 and #91 gives the currency somewhere to go. #93 and #67 give free roam
@@ -183,7 +184,6 @@ how much they use what already exists:
 
 - **#66 claim a rival's car** - beat them, then wreck it. Both halves exist
   now (#70 races, #94 takedowns); this joins them.
-- **#57 pursuit breakers** - the last of the pursuit furniture.
 - **#76 radio chatter** - wants audio in the city, which does not exist at all,
   so it is really two jobs.
 - **#75 the Kestrel Bay look** and **#11 art direction** - everything is still

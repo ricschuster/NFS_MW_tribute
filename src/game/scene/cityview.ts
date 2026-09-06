@@ -632,6 +632,7 @@ export class CityView {
     this.shops(world);
     // The board comes off a smashed billboard; the frame stays standing (#93).
     this.cityscape.collectibles.setSmashed(world.collectibles.smashed);
+    this.cityscape.breakables.setBroken(world.broken);
 
     // The camera is the director's business now (#88), not this loop's.
     const shot = this.director.update(dt, world);

@@ -416,6 +416,16 @@ export class Hud {
       ctx.stroke();
     }
 
+    // Things worth aiming at while being chased (#57).
+    for (const thing of world.city.breakables) {
+      if (world.broken.has(thing.id)) continue;
+      const bx = (thing.at.x - world.x) * scale;
+      const bz = -(thing.at.z - world.z) * scale;
+      if (Math.hypot(bx, bz) > radius) continue;
+      ctx.fillStyle = 'rgba(176, 118, 58, 0.9)';
+      ctx.fillRect(bx - 2, bz - 2, 4, 4);
+    }
+
     for (const shop of world.city.repairs) {
       const rx = (shop.at.x - world.x) * scale;
       const rz = -(shop.at.z - world.z) * scale;

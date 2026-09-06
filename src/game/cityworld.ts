@@ -56,6 +56,14 @@ import {
   REPAIR_RANGE,
   REPAIR_FLASH,
   CLAIM_HEAT,
+  BREAKER_RANGE,
+  BREAKER_MIN_SPEED,
+  BREAKER_SPEED_KEPT,
+  BREAKER_DAMAGE,
+  BREAKER_BLAST,
+  BREAKER_BLAST_DAMAGE,
+  BREAKER_HEAT,
+  BREAKER_DEBRIS,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
@@ -160,6 +168,8 @@ export class CityWorld {
 
   /** Cars taken out of play, still sitting in the street (#94). */
   readonly wrecks: Wreck[] = [];
+  /** Things that have been brought down, by id, so they stay down (#57). */
+  readonly broken = new Set<number>();
   /** How many police cars this drive has wrecked. */
   takedowns = 0;
   /** Seconds left on the TAKEDOWN banner, and where the camera should look. */
@@ -588,6 +598,7 @@ export class CityWorld {
    */
   private earn(dt: number): void {
     this.repairs();
+    this.breakThings();
     this.nearMisses();
     this.collectibles.update(
       dt,
@@ -654,6 +665,77 @@ export class CityWorld {
   /** Take some, and never more than a whole car's worth. */
   private takeDamage(amount: number): void {
     this.damage = Math.max(0, Math.min(1, this.damage + amount));
+  }
+
+  /**
+   * Bring something down, and take whoever is behind you with it (#57).
+   *
+   * This is the counterplay the pursuit was missing. Spike strips, Enforcers
+   * and a helicopter are all things the police do to you; this is the one
+   * thing the *city* does to them, and it turns knowing the map into an
+   * advantage rather than a convenience.
+   *
+   * It gives rather than stops: you come out the far side barely slower, which
+   * is what makes it worth aiming at while being chased instead of a wall with
+   * a different texture.
+   */
+  private breakThings(): void {
+    if (Math.abs(this.speed) < this.maxSpeed * BREAKER_MIN_SPEED) return;
+
+    for (const thing of this.city.breakables) {
+      if (this.broken.has(thing.id)) continue;
+      if (Math.abs(thing.y - this.y) > CAR_RADIUS * 4) continue;
+      if (Math.hypot(thing.at.x - this.x, thing.at.z - this.z) > BREAKER_RANGE + thing.half) {
+        continue;
+      }
+
+      this.broken.add(thing.id);
+      this.speed *= BREAKER_SPEED_KEPT;
+      this.takeDamage(BREAKER_DAMAGE);
+      this.crashFlash = 1;
+      this.rep.award('breaker', this.level);
+      // Property damage is noticed. Using the city against them is not free.
+      this.police.provoke(BREAKER_HEAT);
+      this.bury(thing);
+      return;
+    }
+  }
+
+  /**
+   * Whatever came down lands on whoever was close behind.
+   *
+   * Measured from the thing rather than from the car, because the debris is
+   * where the gate was: driving through one and *then* being caught by a cop
+   * at the same spot is the mechanic working, not a bug.
+   */
+  private bury(thing: { at: { x: number; z: number }; y: number }): void {
+    for (let i = this.police.cops.length - 1; i >= 0; i--) {
+      const cop = this.police.cops[i];
+      if (Math.abs(cop.y - thing.y) > CAR_RADIUS * 4) continue;
+      const gap = Math.hypot(cop.x - thing.at.x, cop.z - thing.at.z);
+      if (gap > BREAKER_BLAST) continue;
+
+      // Scaled by how close they were: right behind you and it is over, at the
+      // edge of it and they come out damaged and still driving.
+      cop.damage = Math.min(1, cop.damage + BREAKER_BLAST_DAMAGE * (1 - gap / BREAKER_BLAST));
+      if (cop.damage < 1) continue;
+      const unit = COP_UNITS[cop.kind];
+      this.police.remove(cop);
+      this.wreck(cop, unit.colour, unit.scale, true);
+    }
+
+    // The wreckage itself, left where it fell and solid like any other.
+    this.wrecks.push({
+      x: thing.at.x,
+      y: thing.y,
+      z: thing.at.z,
+      heading: this.heading,
+      colour: '#6b5a44',
+      scale: 0.9,
+      police: false,
+      roll: this.rng.range(-0.9, 0.9),
+      age: WRECK_LINGER - BREAKER_DEBRIS,
+    });
   }
 
   /**

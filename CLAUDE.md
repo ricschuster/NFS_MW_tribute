@@ -257,6 +257,15 @@ HUD as touch regions - the thing that knows where it drew them is the thing
 that says where they are, and how many there are changes with what is in the
 wheel.
 
+**A pursuit breaker is the one thing the city does to the police** (issue
+#57). Spike strips, Enforcers and a helicopter are all things the police do to
+you; a gate that comes down on the cars behind you is the counterplay, and it
+turns knowing the map into an advantage rather than a convenience. It *gives*
+rather than stopping - something you have to slow down for is not worth aiming
+at while being chased - and what it does to a cop scales with how close they
+were, because a flat number makes it either useless or a button that deletes a
+pursuit.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

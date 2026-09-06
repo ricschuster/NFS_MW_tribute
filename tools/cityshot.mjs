@@ -30,7 +30,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -38,7 +38,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -595,6 +595,46 @@ for (const view of VIEWS) {
       );
     });
     await page.waitForTimeout(900);
+  }
+
+  if (view === 'breaker') {
+    // Line the car up short of a gate with a cruiser on its bumper, so the
+    // shot has the thing about to come down and the thing about to be under it.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const gate = world.city.breakables.find((b) => b.kind === 'gate');
+      if (!gate) return;
+      // `angle` is along the road the gate stands beside, so approach along it.
+      world.x = gate.at.x - Math.sin(gate.angle) * 30 * metre;
+      world.z = gate.at.z - Math.cos(gate.angle) * 30 * metre;
+      world.y = gate.y;
+      world.heading = gate.angle;
+      // Rolling at it rather than through it: the picture is of the thing
+      // about to come down and the thing about to be under it.
+      world.speed = world.maxSpeed * 0.15;
+      world.crashFlash = 0;
+      world.rep.total = 30500;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.5;
+      world.police.cops.push({
+        road: world.onRoad,
+        t: 0.5,
+        forward: true,
+        speed: 0,
+        damage: 0,
+        x: world.x - Math.sin(world.heading) * 8 * metre,
+        z: world.z - Math.cos(world.heading) * 8 * metre,
+        y: world.y,
+        heading: world.heading,
+        kind: 'cruiser',
+        role: 'chase',
+      });
+    });
+    await page.waitForTimeout(700);
   }
 
   if (view === 'pursuit') {

@@ -1046,3 +1046,41 @@ export const REP_CLAIM = 2500;
  * busy driving the car.
  */
 export const WHEEL_ENTRIES = 9;
+
+/**
+ * Pursuit breakers (#57).
+ *
+ * Things in the city that break, and take whoever is behind you with them. A
+ * gate across a yard entrance, a stack of pallets on an industrial kerb: you
+ * go through it, it comes down, and the cars on your bumper are under it.
+ *
+ * That is the counterplay the pursuit was missing. Spike strips, Enforcers and
+ * a helicopter are all things the police do to you; this is the one thing the
+ * *city* does to them, and it turns knowing the map into an advantage rather
+ * than a convenience.
+ */
+export const GATE_COUNT = 40;
+export const STACK_COUNT = 60;
+/** Kept apart, so a corner is not four of them. */
+export const BREAKER_SPACING = m(160);
+/** How close the car has to be, and how fast, for one to come down. */
+export const BREAKER_RANGE = m(7);
+export const BREAKER_MIN_SPEED = 0.18;
+/** Speed kept going through one. It gives, which is the whole difference. */
+export const BREAKER_SPEED_KEPT = 0.86;
+/** How much of the car it costs. Far less than a wall: it is meant to be used. */
+export const BREAKER_DAMAGE = 0.05;
+/**
+ * How far the debris reaches, and what it does to a car caught in it.
+ *
+ * Scaled by how close the car was, so a cruiser on your bumper goes under it
+ * and one at the edge of it comes out damaged and still driving. A flat number
+ * would make the breaker either useless or a button that deletes the pursuit.
+ */
+export const BREAKER_BLAST = m(24);
+export const BREAKER_BLAST_DAMAGE = 1.6;
+/** Rep for property damage, and the heat it brings. */
+export const REP_BREAKER = 120;
+export const BREAKER_HEAT = 0.02;
+/** How long the wreckage lies there. */
+export const BREAKER_DEBRIS = 7;
