@@ -7,6 +7,7 @@ import { CameraDirector } from './cameras';
 import type { Hud } from './hud';
 import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
+import { GameAudio } from '../audio';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
@@ -18,6 +19,8 @@ import {
   HELI_SEE_RADIUS,
   REPAIR_RANGE,
   DAMAGE_FREE,
+  REFERENCE_TOP_SPEED,
+  CITY_COP_LOSE,
   BLOOM_STRENGTH,
   BLOOM_RADIUS,
   BLOOM_THRESHOLD,
@@ -212,6 +215,15 @@ export class CityView {
   private readonly wasDown = new Set<string>();
   /** On-screen controls, so Kestrel Bay can be driven on a phone (#89). */
   private touch: TouchControls | null = null;
+  /**
+   * Sound in the city (#76).
+   *
+   * The same synthesized audio the track has had all along - an engine that
+   * pitches with speed, a siren that fades in with the pursuit - which had
+   * simply never been wired to this renderer. WebAudio needs a gesture, so it
+   * starts on the first key or the first touch.
+   */
+  private readonly audio = new GameAudio();
   private readonly director: CameraDirector;
   private accumulator = 0;
 
@@ -319,7 +331,7 @@ export class CityView {
     // the buttons are drawn on, and hit-testing has to happen in the same
     // coordinates as the drawing or the buttons are not where they look.
     if (overlay && hud) {
-      this.touch = new TouchControls(overlay, () => {}, CITY_BUTTONS());
+      this.touch = new TouchControls(overlay, () => this.audio.start(), CITY_BUTTONS());
       hud.touch = this.touch;
     }
   }
@@ -482,6 +494,10 @@ export class CityView {
 
   private listen(canvas: HTMLCanvasElement): void {
     addEventListener('keydown', (e) => {
+      // WebAudio will not start without a gesture, and this is the first one
+      // most players make. Safe to call repeatedly.
+      this.audio.start();
+      if (e.key.toLowerCase() === 'm') this.audio.toggleMute();
       // Tab holds the collection map open (#93), so it must not also walk the
       // browser's focus off the canvas.
       if (e.key === 'Tab') e.preventDefault();
@@ -685,6 +701,23 @@ export class CityView {
     this.cityscape.breakables.setBroken(world.broken);
 
     // The camera is the director's business now (#88), not this loop's.
+    // The pursuit is most of the sound: how loud the siren is is how close
+    // they are, which is a thing you can hear before you can see it.
+    const nearest = world.police.cops.reduce(
+      (best, cop) => Math.min(best, Math.hypot(cop.x - world.x, cop.z - world.z)),
+      Infinity,
+    );
+    this.audio.update({
+      playing: true,
+      speedFrac: Math.min(1, Math.abs(world.speed) / REFERENCE_TOP_SPEED),
+      boosting: world.boosting,
+      sirenLevel:
+        world.police.cops.length === 0
+          ? 0
+          : Math.max(0, Math.min(1, 1 - nearest / (CITY_COP_LOSE * 0.7))),
+    });
+    if (world.radio.justSpoke) this.audio.squelch();
+
     const shot = this.director.update(dt, world);
     this.camera.position.copy(shot.position);
     this.camera.lookAt(shot.target);

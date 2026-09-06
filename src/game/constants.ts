@@ -1099,3 +1099,21 @@ export const BLOOM_RADIUS = 0.55;
 export const BLOOM_THRESHOLD = 0.86;
 /** Bloom is rendered at a fraction of the frame; it is a blur, not detail. */
 export const BLOOM_SCALE = 0.5;
+
+/**
+ * Police radio chatter (#76).
+ *
+ * Most of why a pursuit feels alive, and not decoration: dispatch calls a
+ * roadblock before you can see it and air support before you can hear it, so
+ * the radio is a tell for hazards rather than atmosphere over the top of them.
+ *
+ * Subtitles and a squelch burst, no recorded speech. Voice assets are a whole
+ * production the project does not have and would not be original if it did.
+ */
+/** Seconds between callouts, so a burst of events is a conversation not a wall. */
+export const RADIO_GAP = 2.2;
+/** How long a line stays on screen, and how many are shown at once. */
+export const RADIO_HOLD = 7;
+export const RADIO_LINES = 3;
+/** Anything still queued after this is stale news and is dropped. */
+export const RADIO_QUEUE = 4;

@@ -24,6 +24,8 @@ export class GameAudio {
   private engineGain: GainNode | null = null;
   private sirenGain: GainNode | null = null;
   private padGain: GainNode | null = null;
+  /** A second of white noise, reused for every radio squelch (#76). */
+  private noise: AudioBuffer | null = null;
 
   start(): void {
     try {
@@ -86,6 +88,13 @@ export class GameAudio {
         osc.start();
       }
       this.padGain = padGain;
+
+      // One buffer of noise, made once and replayed. Generating a second of it
+      // per callout would allocate 44 000 floats in the middle of a pursuit.
+      const noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const samples = noise.getChannelData(0);
+      for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+      this.noise = noise;
     } catch {
       this.ctx = null;
     }
@@ -109,6 +118,44 @@ export class GameAudio {
     }
     if (this.padGain) {
       this.padGain.gain.setTargetAtTime(u.playing ? 0 : 0.03, t, 0.4);
+    }
+  }
+
+  /**
+   * The squelch under a radio callout (#76).
+   *
+   * A short band-passed burst of noise with a hard attack and a quick decay,
+   * which is what a radio keying up sounds like. No speech: the line itself is
+   * on screen, and voice assets are a production this project does not have.
+   */
+  squelch(): void {
+    const ctx = this.ctx;
+    const master = this.master;
+    if (!ctx || !master || !this.noise || this.muted) return;
+
+    try {
+      const source = ctx.createBufferSource();
+      source.buffer = this.noise;
+
+      // Narrow and high: a wide-open burst of noise is a hiss, and a radio is
+      // a voice band with everything either side of it thrown away.
+      const band = ctx.createBiquadFilter();
+      band.type = 'bandpass';
+      band.frequency.value = 1600;
+      band.Q.value = 3.5;
+
+      const gain = ctx.createGain();
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.09, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+
+      source.connect(band).connect(gain).connect(master);
+      source.start(t);
+      source.stop(t + 0.2);
+    } catch {
+      // A squelch that fails is a squelch nobody hears; it must never be a
+      // pursuit that stops.
     }
   }
 

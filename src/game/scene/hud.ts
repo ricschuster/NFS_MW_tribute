@@ -6,6 +6,7 @@ import {
   ROADBLOCK_GAP,
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
+  RADIO_HOLD,
   DAMAGE_FREE,
   CLAIM_LOSE_RANGE,
   UNITS_PER_METRE,
@@ -35,6 +36,14 @@ import type { TouchControls } from '../touch';
  * you were, because there was one road and you were on it. In a 5 x 4 km city
  * a player without a map is lost, and being lost is not the same as exploring.
  */
+/** Who is talking, in a colour, so a glance says which without reading. */
+const VOICES: Record<string, string> = {
+  dispatch: '#7fb0d6',
+  unit: '#9fb4c4',
+  air: '#c887d6',
+  command: '#ffa23a',
+};
+
 /**
  * 1st, 2nd, 3rd. Seven of them: a field is six cars and you are the seventh,
  * so last place is 7th and an array of six prints a bare number for it.
@@ -89,6 +98,7 @@ export class Hud {
     this.overhead(world);
     this.cooldown(world);
     this.collection(world);
+    this.radio(world);
     this.event(world);
     this.banners(world);
     this.quickWheel(world);
@@ -1008,6 +1018,39 @@ export class Hud {
       ctx.textAlign = 'right';
       ctx.fillText(entry.detail, x + width - 16, line);
       ctx.textAlign = 'left';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * What the police are saying (#76).
+   *
+   * Down the left, above the speed, styled as radio traffic. It is a tell and
+   * not decoration: a roadblock is called before it is in sight and air
+   * support before it can be heard, so this is where the player finds out what
+   * is about to happen to them.
+   */
+  private radio(world: CityWorld): void {
+    const { ctx } = this;
+    const lines = world.radio.recent;
+    if (lines.length === 0) return;
+
+    ctx.textAlign = 'left';
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[lines.length - 1 - i];
+      // Newest at the bottom of the stack and brightest; the older ones fade
+      // up and out, which is how a scrolling log reads without a box round it.
+      const y = HEIGHT - 190 - this.lift - i * 20;
+      ctx.globalAlpha = Math.max(0, Math.min(1, (RADIO_HOLD - line.age) / 1.2)) * (1 - i * 0.25);
+
+      ctx.fillStyle = VOICES[line.from] ?? '#9fb4c4';
+      ctx.font = '700 11px ui-monospace, "SF Mono", Menlo, monospace';
+      const tag = line.from.toUpperCase();
+      ctx.fillText(tag, 34, y);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+      ctx.font = '500 13px system-ui, sans-serif';
+      ctx.fillText(line.text, 34 + 72, y);
     }
     ctx.globalAlpha = 1;
   }

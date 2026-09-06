@@ -274,6 +274,14 @@ sky, dark buildings and no obvious cause. That cost an hour and is why the
 comment is there. `three/examples/jsm` ships inside the three.js package, so
 using its passes is not a new dependency; ADR-0004 already bought it.
 
+**The radio watches; it is not told** (issue #76). Every system that could
+raise a callout - the roadblocks, the spikes, the helicopter, the Enforcers -
+already says what it is doing, so `Radio` compares a report of the pursuit
+against the last step and queues what changed. One place that can be wrong
+beats eight places that can forget to speak. The lines are a table because they
+are content: the tone of a pursuit is in them as much as it is in the heat
+curve. Subtitles and a synthesized squelch, never recorded speech.
+
 **There are two sims, and that is deliberate.** `world.ts` is the track model
 that the deployed game still runs on. `cityworld.ts` is the same car in the
 city: a position, a heading and a height, with a height-aware surface lookup

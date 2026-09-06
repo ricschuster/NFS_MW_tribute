@@ -72,6 +72,7 @@ import { STARTER_CAR, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
+import { Radio } from './radio';
 import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
@@ -212,6 +213,8 @@ export class CityWorld {
   readonly ambush = new CityAmbush();
   /** The rival being run down for their car, if any (#66). */
   readonly claim: CityClaim;
+  /** What the police are saying to each other about you (#76). */
+  readonly radio = new Radio();
   /**
    * Somewhere the player has asked to be pointed at (#90).
    *
@@ -399,6 +402,21 @@ export class CityWorld {
     // ways an ambush ends and the frozen world still has to notice it.
     this.ambush.update(dt, this.police.state === 'clear', this.busted);
     if (this.ambush.justEnded) this.settleAmbush();
+    // Watched rather than told (#76): every system that could raise a callout
+    // already says what it is doing, and asking them here is one place that
+    // can be wrong instead of eight places that can forget to speak.
+    this.radio.update(dt, {
+      level: this.police.level,
+      cops: this.police.cops.length,
+      roadblocks: this.police.roadblocks.length,
+      spikes: this.police.spikes.length,
+      enforcers: this.police.cops.reduce((n, c) => n + (c.role === 'enforcer' ? 1 : 0), 0),
+      helicopter: this.police.helicopter !== null,
+      state: this.police.state,
+      busted: this.busted,
+      takedowns: this.takedowns,
+      broken: this.broken.size,
+    });
     this.clearWrecks(dt);
 
     // Lining up: the car is held on the grid while the lights run down.
