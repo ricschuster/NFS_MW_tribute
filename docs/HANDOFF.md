@@ -78,16 +78,15 @@ src/game/
   rep.ts          the award table: what everything you do is worth
   collectibles.ts what has been found: smashed billboards, clocked cameras
   cars.ts         the roster, as handling profiles against a reference car
-  streetfinds.ts  which cars you have found, and which one you are driving
+  garage.ts       what the player owns: cars, parts earned, parts fitted
+  mods.ts         the parts catalogue, as trades rather than upgrades
   cityrace.ts     events: circuits against a field, speed runs against a number
   cityambush.ts   the trap: surrounded, stopped, and a clock
   cityclaim.ts    the second half of a ladder fight: run them down, take the car
   quickwheel.ts   the menu that never pauses: cars, parts, somewhere to go
-  garage.ts       what the player owns: cars, parts earned, parts fitted
   radio.ts        what the police say about you, and when
   storage.ts      where a save lives: a seam a desktop shell fills in
   progress.ts     the save format, versioned, validated field by field
-  mods.ts         the parts catalogue, as trades rather than upgrades
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
                   roadblocks, spike strips, a helicopter, and Enforcers that
@@ -96,10 +95,14 @@ src/game/
   city/           the generator: types, rng, water, generate, boulevards,
                   interstate, buildings, furniture, collectibles, streetfinds,
                   routes, ambushes, repairs, breakables, grid
-  scene/          the renderer: cityscape, buildings, furniture, cameras, hud,
-                  cityview, plus scene3d/ribbon/cars for the track
+  scene/          the renderer. cityscape assembles it; cameras, hud and
+                  cityview drive it; buildings, furniture, collectibles and
+                  breakables build the instanced geometry; worlduv, facades,
+                  surfaces, roofs and carshape are the art pass (#11);
+                  scene3d/ribbon/cars are the track's
   road.ts, render.ts   the projected-segment track   <- retired with world.ts
-tools/            screenshot, feelprobe, citymap, cityshot
+tools/            citylap + citydriver (the reference driver), feelprobe,
+                  citymap, cityshot, screenshot, pwacheck, icons
 ```
 
 **The city is data.** `city/` turns `CITY_SEED` into junctions, roads, blocks,
@@ -125,7 +128,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 445 unit tests + playtests
+npm run test       # 479 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -140,7 +143,7 @@ npm run icons      # redraw the app icons from tools/icons.mjs
 
 The single most useful thing to know about working here.
 
-**Almost every real defect this session was invisible to tests that passed
+**Almost every real defect in the city has been invisible to tests that passed
 throughout, and obvious in a picture** - buildings rendering black, water hidden
 under the ground plane, a sky dome centred on the world origin, road markings
 z-fighting into streaks, a camera sitting inside a wall, districts in a perfect
@@ -151,6 +154,16 @@ number** - traffic driving through itself, a pursuit that could never be
 escaped, elite police cars at 105% of the player's top speed, a whole
 neighbourhood's streets silently deleted. When a screenshot looks fine and
 something still feels wrong, write a probe that prints numbers.
+
+The clearest case of that is `npm run citylap`. Nothing had ever tried to
+*drive* a generated race route end to end - the tests only checked the routes
+existed - and the first thing a reference driver found was that every one of
+them doubled back on itself, because four independent shortest paths between
+four corners share streets and the "circuit" was an out-and-back with U-turns
+in it. The second was that the perimeter arterial stopped the car dead, its
+centreline being the map boundary exactly. Both had been shipped for months and
+both are obvious the moment something drives them. If a system has never been
+exercised end to end, that is where the bugs are.
 
 `npm run feel` has also been *wrong* twice, both times because its reference
 driver was no longer a good driver. If a number looks strange, suspect the probe.
@@ -173,6 +186,11 @@ bypassed found it in one shot, and guessing at it did not.
 - Auto-delete of merged branches is on and works.
 - Architectural decisions get an ADR. New runtime dependencies need one;
   three.js is still the only one.
+- **Do not run Prettier.** There is no `.prettierrc` and no Prettier
+  dependency, but the codebase is consistently single-quoted, so
+  `npx prettier --write` fetches it, formats with its *defaults*, and silently
+  converts whatever it touches to double quotes. That cost a repair PR (#159).
+  Match the surrounding style by hand.
 
 ## Where the work is
 
@@ -194,27 +212,54 @@ Electron and Tauri is a heavyweight runtime dependency plus a CI and signing
 decision. Per the house rule that wants an ADR for a new dependency, that is a
 choice for a person, not something to settle by picking one and shipping it.
 
-**#14 tune driving feel** is now unblocked. The measurement it wanted exists:
-`npm run citylap` gets a reference driver round all six routes and reports what
-it held on each. Start there rather than in `constants.ts` - and re-record both
-`docs/feel-baseline.json` and the lap table in whatever PR moves a constant,
-since the ladder in #91 and the speed-run targets are both tuned against this
-driver.
+**#14 tune driving feel** has the measurement it was missing and still wants a
+person. `npm run citylap` gets a reference driver round all six routes and
+reports what it held on each, so a change can no longer make the city harder to
+drive unnoticed. But two things are true about the issue as written: its
+acceptance criterion is "propose values that feel better", and better is not
+something a probe reports; and the constants it names belong to the wrong sim.
+`CENTRIFUGAL` no longer exists, and `FIELD_OF_VIEW` and `FOG_DENSITY` are both
+read only by the pseudo-3D track renderer that ADR-0004 retires. Worth deciding
+explicitly whether to rescope it to the city or close it for a new one.
+
+Either way: re-record **both** `docs/feel-baseline.json` and
+`docs/city-baseline.json` in whatever PR moves a constant. The ladder and the
+speed-run targets are both tuned against these drivers.
 
 **#11 replace vector-drawn art with sprites** is art for the *track* renderer,
 which ADR-0004 is retiring, so read it as "the city is still boxes" rather than
-as a sprite task. The buildings are no longer among them: `scene/facades.ts`
-gives every kind a generated window grid, sampled in world units so a window is
-the same size on a tower and on a shed. The cars are no longer boxes either:
-`scene/carshape.ts` builds a body, a raked greenhouse and four wheels by
-moving the corners of box geometries, which is a lot of silhouette for no
-extra triangles. The tarmac has aggregate and patches in it
-(`scene/surfaces.ts`), which matters more in motion than in a screenshot: a
-flat-coloured surface gives the eye nothing to measure speed against. What is
-still flat, in the order that would show: the **pavement slabs**, street
-furniture, then the buildings themselves wanting real geometry rather than a
-texture on a cuboid. All of it goes behind
-the provider seam in `scene/`; none of it touches `city/`.
+as a sprite task. Most of it no longer is. Seven PRs did a pass: windows on the
+buildings, cars with an actual silhouette and wheels, aggregate on the tarmac,
+joints on the pavements and grass on the open blocks, plant and masts on the
+roofs, lamps that reach out over the carriageway, and towers that step back
+partway up.
+
+**The one thing to understand before adding to it** is `scene/worlduv.ts`.
+Everything large here is instanced - thousands of buildings in a handful of
+meshes, one slab per block - so one geometry and one material are shared by
+instances that differ only by scale. A UV baked into that geometry therefore
+sizes a window or a paving slab by whatever its instance happens to be
+stretched to, which is the opposite of what a texture is for. `worldUvs`
+computes the UV in the vertex shader from the instance's own scale instead, so
+a three-metre floor is three metres on a tower and on a shed. Use it for
+anything instanced and textured. It is a string patch against three.js's shader
+chunks, so a three.js upgrade can break it silently and leave every test green;
+`worlduv.test.ts` is the alarm.
+
+Nothing in that pass moved `city/` except one field - `StreetProp.reach`,
+because a prop knows where it stands but not what it stands beside, and only
+the generator knows which way the road is. Everything else is derived on the
+renderer's side from `Building.variant`, which is what that field is for. Both
+feel baselines confirm the sim was not touched.
+
+What is left, roughly in the order it would show:
+
+1. Signs and barriers are still plain boxes.
+2. Buildings that are more than one or two boxes: podiums, canopies at street
+   level, varied roof lines. A real modular kit, behind the same provider seam.
+3. Night, weather and wet roads. A lighting problem rather than a geometry one,
+   and probably the biggest single change left.
+4. The HUD and menus, which have had no pass at all.
 
 ## Known problems, not papered over
 
@@ -228,16 +273,16 @@ the provider seam in `scene/`; none of it touches `city/`.
   is `?renderer=drive`. Everything now works in both, and the ladder is one
   ladder across the two, which is the last thing that had to be true before
   the default can move.
-- **Only the city sim has cars.** `world.ts` still drives the one fixed car,
-  because it retires with the track; a Street Find changes nothing about a
-  Ladder race today.
+- **Only the city sim has cars, parts or events.** `world.ts` still drives the
+  one fixed car on the one fixed track, because it retires with the track: a
+  car found in the city changes nothing about a race run on `/`. The Rep total
+  and the ladder *are* shared, which is what makes both halves playable, and
+  is also why `world.ts` awards Rep at all.
 - **The two sims disagree about what a race win means.** In the city, winning
   a race starts the chase for the rival's car and only *that* moves the ladder
   (#66); on the track a win still ranks you up on its own. The track is being
   retired, so this is a difference to close by deleting the track rather than
   by adding a chase to it.
-  That is now the single biggest gap: the pursuit is finished, the currency
-  exists, and there is no ladder to spend it on. #91 is the next move.
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
   siren and a radio squelch - but there is still no rotor for the helicopter,
   nothing for a takedown or a spike strip, and no music.
@@ -300,6 +345,14 @@ for two minutes until the police escalate - that is most of the project in one
 go. Then `npm run city` for the map, and `&view=overpass` for the reason the
 renderer was rebuilt at all.
 
-Then pick from M5. Keep behaviour in the sim and drawing in the renderer,
+Then read "Where the work is" above: five issues are open and none of them is
+a straightforward next task. Three are blocked on a decision only a person can
+make, one needs somebody in the driver's seat, and one is open-ended art. If
+you want the highest-value thing that is neither blocked nor a taste call, it is
+**moving the city out from behind the query string** - everything now works in
+both sims and the ladder already spans them, so what is left is deciding that
+`/` is Kestrel Bay and deleting the track.
+
+Whatever you pick: keep behaviour in the sim and drawing in the renderer,
 because that split is the only reason this rebuild has been survivable, and keep
 the city's *descriptions* in `city/` for the same reason.
