@@ -44,7 +44,12 @@ const scale = W / (city.bounds.maxX - city.bounds.minX);
 const H = Math.round((city.bounds.maxZ - city.bounds.minZ) * scale);
 
 // Screen y runs down and world z runs north, so the shore ends up at the top.
-const sx = (x) => ((x - city.bounds.minX) * scale).toFixed(1);
+// And x runs *right to left*: a map seen from above with +z up the screen has
+// -x on the right, because a driver facing +z has their right hand pointing at
+// -x. This drew +x rightwards, and so did both of the game's own maps, which
+// meant all three agreed with each other and disagreed with the windscreen.
+// `src/game/scene/mapping.ts` has the arithmetic and the test.
+const sx = (x) => ((city.bounds.maxX - x) * scale).toFixed(1);
 const sy = (z) => ((city.bounds.maxZ - z) * scale).toFixed(1);
 
 const parts = [];
@@ -59,7 +64,7 @@ for (const body of city.water) {
 for (const block of city.blocks) {
   const b = block.bounds;
   parts.push(
-    `<rect x="${sx(b.minX)}" y="${sy(b.maxZ)}" width="${((b.maxX - b.minX) * scale).toFixed(1)}" ` +
+    `<rect x="${sx(b.maxX)}" y="${sy(b.maxZ)}" width="${((b.maxX - b.minX) * scale).toFixed(1)}" ` +
       `height="${((b.maxZ - b.minZ) * scale).toFixed(1)}" fill="${DISTRICT_COLOR[block.district]}" opacity="0.55"/>`,
   );
 }

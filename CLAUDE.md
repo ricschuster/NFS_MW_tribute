@@ -242,6 +242,35 @@ decks and the tunnel are geometry again. Nothing in the game watches you from
 above; if cover should mean something, it needs a new thing to mean it
 against.
 
+**Every map goes through `scene/mapping.ts`** (a playtest, after #182). A map
+seen from above with +z up the screen has **-x to the right**, because heading
+0 is +z and a driver facing +z has their right hand pointing at -x - the same
+right-handed cross product the steering uses. Both of the game's maps drew +x
+rightwards and were therefore mirrored east to west, and so did `npm run city`,
+so all three agreed with each other and disagreed with the windscreen. #182
+found the minimap drawing the road ahead of you behind you and fixed it by
+flipping the rotation, which made "ahead is up" true and left the mirror in
+place. `toMap` is the one conversion now, a heading-up map rotates by **plus**
+the heading, and `mapview.test.ts` settles it by projecting a point through an
+actual camera rather than by reasoning about it - which is the only way this
+has ever been got right.
+
+**The maps only show what you have found** (a playtest). `Collectibles.known`
+and `Garage.seen` fill in as you drive past things, and both are saved. A map
+that knows where all ninety billboards are from the first second of a new save
+turns finding one from something you do into something you are told. The
+*counts* stay honest - "57 billboards left" is a goal - and the map says out
+loud that only what you have driven past is marked, or four pins under that
+sentence reads as a broken map.
+
+**The river takes you and gives you back** (a playtest). Water used to revert
+the car and stop it dead, which made the one natural feature in the city behave
+like a level boundary. `CityWorld.dunk` puts the car under for `DUNK_HOLD`,
+costs damage and all of your speed, and then calls the same `recover` a stuck
+car uses (#179): "put this car somewhere it can drive from" is one question,
+and a river and a wedged corner are two ways of asking it. The pursuit carries
+on, because being dredged out of the bay does not mean they have lost you.
+
 **Rep is one currency and its own module** (issue #64). `rep.ts` holds the
 award table, the heat multiplier and the popup feed, and knows nothing about
 the renderer, storage or the pursuit: it is told what happened and at what heat

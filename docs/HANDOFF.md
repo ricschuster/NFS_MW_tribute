@@ -502,6 +502,16 @@ What is left, roughly in the order it would show:
   failed. It was about four pixels in a rendered frame while the HUD explained
   what it was doing, which is exactly what #62's own rationale said not to
   build.
+- **Both maps were mirrored east to west, and #182 is why it survived.** A map
+  seen from above with +z up has -x to the *right*; both maps drew +x
+  rightwards, and so did `npm run city`, so all three agreed with each other
+  and disagreed with the 3D view. #182 found the minimap drawing the road ahead
+  of you behind you, fixed it by flipping the rotation - which makes "ahead is
+  up" true - and left the mirror. It took somebody playing to say "the map
+  seems flipped". `scene/mapping.ts` is the one conversion now and
+  `mapview.test.ts` proves it against a real camera. If you add a map, use
+  `toMap`; if you add a marker to one, check it against the windscreen and not
+  against the other markers.
 - **The minimap is hard to read in daylight.** Its background is
   `rgba(8, 12, 18, 0.62)`, so a bright or busy scene shows through it and the
   roads lose contrast. It clips correctly - a building apparently spilling past
