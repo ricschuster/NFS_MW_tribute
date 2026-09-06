@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { StreetFurniture } from './furniture';
-import { LAMP_REACH } from '../constants';
+import { LAMP_REACH, BARRIER_SPACING, BARRIER_HEIGHT } from '../constants';
 import type { StreetProp } from '../city/types';
 
 /**
@@ -64,5 +64,45 @@ describe('a street lamp', () => {
     const at = firstAt(new StreetFurniture([sign]), 'sign-plates');
     expect(at.x).toBeCloseTo(500, 4);
     expect(at.z).toBeCloseTo(-300, 4);
+  });
+});
+
+/**
+ * A bridge parapet runs *along* the bridge (#11).
+ *
+ * `add` rotates local x to be across the road - that is how a lamp arm reaches
+ * out over the carriageway - and the parapet was passing its six-metre length
+ * as the width. Every bridge in Kestrel Bay had ribs sticking out sideways
+ * from the deck every six metres, which is why the barriers "read as plain
+ * boxes": they were boxes pointing the wrong way. Found by looking at
+ * `--view bridge`, which is the only way it was ever going to be found.
+ */
+describe('a bridge parapet', () => {
+  /** The scale of instance 0 of a named mesh, in the prop's own frame. */
+  function firstScale(furniture: StreetFurniture, name: string): THREE.Vector3 {
+    const mesh = furniture.meshes.find((m) => m.name === name);
+    if (!mesh) throw new Error(`no mesh named ${name}`);
+    const matrix = new THREE.Matrix4();
+    mesh.getMatrixAt(0, matrix);
+    return new THREE.Vector3().setFromMatrixScale(matrix);
+  }
+
+  const parapet = () =>
+    new StreetFurniture([lamp({ kind: 'barrier', reach: 0, angle: 0 })]);
+
+  it('is long along the road and thin across it', () => {
+    const scale = firstScale(parapet(), 'barrier-walls');
+    // Local z is along the road, local x across: the wall is a wall, not a rib.
+    expect(scale.z).toBe(BARRIER_SPACING);
+    expect(scale.x).toBeLessThan(BARRIER_SPACING / 4);
+  });
+
+  it('caps the wall with a coping a little wider than it', () => {
+    const wall = firstScale(parapet(), 'barrier-walls');
+    const coping = firstScale(parapet(), 'barrier-coping');
+    expect(coping.z).toBe(wall.z);
+    expect(coping.x).toBeGreaterThan(wall.x);
+    // Float32 in the instance matrix, so metres rather than microns.
+    expect(wall.y + coping.y).toBeCloseTo(BARRIER_HEIGHT, 3);
   });
 });

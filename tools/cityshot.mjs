@@ -29,7 +29,7 @@ mkdirSync(OUT, { recursive: true });
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
-  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
+  'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -37,7 +37,7 @@ const VIEWS = flag('--view')
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
-      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted',
+      'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -515,6 +515,49 @@ for (const view of VIEWS) {
       }
     });
     await page.waitForTimeout(900);
+  }
+
+  if (view === 'signage') {
+    // Street furniture, close enough to see (#11). Finding a sign to stand at
+    // took four attempts: the first sign in the list is at the far corner of
+    // the map, and 22 m back from one at a junction puts the camera inside a
+    // block. So: the sign nearest the middle of the city, and the first of
+    // eight bearings that leaves the car on a road.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const metre = 135;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const mid = {
+        x: (world.city.bounds.minX + world.city.bounds.maxX) / 2,
+        z: (world.city.bounds.minZ + world.city.bounds.maxZ) / 2,
+      };
+      const signs = world.city.furniture
+        .filter((p) => p.kind === 'sign')
+        .sort(
+          (a, b) =>
+            Math.hypot(a.at.x - mid.x, a.at.z - mid.z) - Math.hypot(b.at.x - mid.x, b.at.z - mid.z),
+        );
+      for (const sign of signs) {
+        let placed = false;
+        for (let k = 0; k < 8 && !placed; k++) {
+          const bearing = (k / 8) * Math.PI * 2;
+          world.x = sign.at.x + Math.sin(bearing) * 16 * metre;
+          world.z = sign.at.z + Math.cos(bearing) * 16 * metre;
+          world.y = sign.y;
+          world.heading = Math.atan2(sign.at.x - world.x, sign.at.z - world.z);
+          world.speed = 0;
+          world.step(1 / 60, none);
+          placed = !!world.onRoad;
+        }
+        if (placed) break;
+      }
+      world.speed = 0;
+      world.crashFlash = 0;
+    });
+    await page.waitForTimeout(1500);
   }
 
   if (view === 'patrol') {

@@ -373,7 +373,16 @@ renderer's side from `Building.variant`, which is what that field is for.
 
 What is left, roughly in the order it would show:
 
-1. Signs and barriers are still plain boxes.
+1. ~~Signs and barriers are still plain boxes.~~ Done, and the barrier turned
+   out to be a bug rather than an art problem: `add` rotates local x to be
+   *across* the road - that is how a lamp arm reaches over the carriageway -
+   and the parapet was passing its six-metre length as its width, so every
+   bridge had ribs sticking out sideways from the deck every six metres. It is
+   a wall with a coping now, running along the deck. Signs get a second, smaller
+   plate and a face texture; note that at the distance a sign is actually seen
+   from it is the *silhouette* that reads, not the face. `--view signage` is
+   the framing, and it took four attempts to find - the first sign in the list
+   is at the far corner of the map.
 2. Buildings that are more than one or two boxes: podiums, canopies at street
    level, varied roof lines. A real modular kit, behind the same provider seam.
 3. Night, weather and wet roads. A lighting problem rather than a geometry one,
