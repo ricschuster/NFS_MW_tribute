@@ -39,6 +39,45 @@ const PALETTE: Record<string, string[]> = {
 };
 
 /**
+ * Where a tower steps back, if it does.
+ *
+ * A tower that goes straight up for forty storeys is an extrusion, and a
+ * skyline of them reads as one because every silhouette is the same shape at
+ * a different size. Real towers step: the upper section is narrower and
+ * starts partway up, which is the cheapest thing that makes two towers of the
+ * same height look like two buildings.
+ *
+ * Towers only, and not all of them - a city where every tower steps is as
+ * uniform as one where none do. Derived from `variant`, like the colour, so
+ * the same seed gets the same skyline.
+ *
+ * The base keeps the full footprint the generator gave it, so nothing about
+ * collision changes: the narrower part is above anything a car can reach.
+ *
+ * Exported so the rule can be tested without a canvas in the room - building
+ * the meshes needs a facade texture, and a texture needs a DOM.
+ */
+export function setbackOf(
+  building: Building,
+  width: number,
+  depth: number,
+): { at: number; inset: number } | null {
+  if (building.kind !== 'tower') return null;
+  const a = building.variant * 11.13;
+  const pick = a - Math.floor(a);
+  if (pick < 0.45) return null;
+
+  const b = building.variant * 5.77;
+  const spread = b - Math.floor(b);
+  return {
+    at: building.height * (0.5 + spread * 0.28),
+    // Inset off the *narrower* side, so a long thin tower does not step back
+    // past its own centreline and vanish.
+    inset: Math.min(width, depth) * (0.09 + pick * 0.11),
+  };
+}
+
+/**
  * The default provider: one box per building, instanced per kind.
  *
  * A box geometry is built with its origin at the centre of its base rather
@@ -74,25 +113,53 @@ export class BoxBuildings implements BuildingProvider {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
+      // The upper half of a stepped tower, in its own instanced mesh sharing
+      // the same material. One extra draw call for the kind, and only the
+      // towers that step have an instance in it.
+      const upper = new THREE.InstancedMesh(geometry, material, Math.max(1, group.length));
+      upper.name = `buildings:${kind}:upper`;
+      upper.castShadow = true;
+      upper.receiveShadow = true;
+      let stepped = 0;
+
       group.forEach((building, i) => {
         const { footprint } = building;
         const width = footprint.maxX - footprint.minX;
         const depth = footprint.maxZ - footprint.minZ;
-        matrix.makeScale(width, building.height, depth);
-        matrix.setPosition(
-          (footprint.minX + footprint.maxX) / 2,
-          0,
-          (footprint.minZ + footprint.maxZ) / 2,
-        );
-        mesh.setMatrixAt(i, matrix);
+        const midX = (footprint.minX + footprint.maxX) / 2;
+        const midZ = (footprint.minZ + footprint.maxZ) / 2;
 
         const palette = PALETTE[building.district] ?? PALETTE.midtown;
         colour.set(palette[Math.floor(building.variant * palette.length)] ?? palette[0]);
         // Nudge each building off its palette entry, so a row of them is not
         // one flat wall of the same grey.
         const shade = 0.88 + building.variant * 0.24;
-        mesh.setColorAt(i, colour.multiplyScalar(shade));
+        colour.multiplyScalar(shade);
+
+        const step = setbackOf(building, width, depth);
+        // Without a step this is the whole building, and with one it is the
+        // base the upper section stands on. Either way it is the piece the
+        // car can hit, and it keeps the full footprint the city gave it, so
+        // collision sees exactly what it saw before.
+        matrix.makeScale(width, step ? step.at : building.height, depth);
+        matrix.setPosition(midX, 0, midZ);
+        mesh.setMatrixAt(i, matrix);
+        mesh.setColorAt(i, colour);
+
+        if (step) {
+          matrix.makeScale(width - step.inset * 2, building.height - step.at, depth - step.inset * 2);
+          matrix.setPosition(midX, step.at, midZ);
+          upper.setMatrixAt(stepped, matrix);
+          upper.setColorAt(stepped, colour);
+          stepped++;
+        }
       });
+
+      upper.count = stepped;
+      upper.instanceMatrix.needsUpdate = true;
+      if (upper.instanceColor) upper.instanceColor.needsUpdate = true;
+      if (stepped > 0) this.meshes.push(upper);
+      else upper.dispose();
 
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
