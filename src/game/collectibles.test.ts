@@ -10,9 +10,11 @@ import {
   BILLBOARD_SPACING,
   CAMERA_SPACING,
   UNITS_PER_METRE,
+  STEP,
 } from './constants';
 
 const city = kestrelBay();
+const M = UNITS_PER_METRE;
 
 describe('what there is to find in Kestrel Bay', () => {
   it('scatters billboards across the map rather than piling them up', () => {
@@ -172,5 +174,45 @@ describe('finding them', () => {
     const rep = new RepLedger();
     found.update(1 / 60, at(board), 0.5, rep, 1);
     expect(rep.total).toBe(0);
+  });
+});
+
+/**
+ * A map you fill in (#93, and a playtest).
+ *
+ * Every billboard and camera used to be on the map from the first second of a
+ * new save, which turns finding one from something you do into something you
+ * are told. They are marked once you have been near enough to see them.
+ */
+describe('what the map knows', () => {
+  it('knows nothing about a city it has not driven', () => {
+    const found = new Collectibles(city);
+    expect(found.known.size).toBe(0);
+  });
+
+  it('learns what it has been near, and keeps it', () => {
+    const found = new Collectibles(city);
+    const item = city.collectibles[0];
+    const rep = new RepLedger();
+    found.update(STEP, { x: item.at.x, z: item.at.z, y: item.y }, 0, rep, 1);
+
+    expect(found.known.has(item.id)).toBe(true);
+
+    // Driven a long way off, and it is still on the map.
+    found.update(STEP, { x: item.at.x + 5000 * M, z: item.at.z, y: item.y }, 0, rep, 1);
+    expect(found.known.has(item.id)).toBe(true);
+  });
+
+  // A save from before the map hid anything comes back with a hundred items it
+  // knows the fate of and none it will draw, unless dealing with one counts as
+  // having seen it.
+  it('counts anything already dealt with as seen', () => {
+    const found = new Collectibles(city);
+    const billboard = city.collectibles.find((c) => c.kind === 'billboard')!;
+    const camera = city.collectibles.find((c) => c.kind === 'camera')!;
+    found.load([billboard.id], [[camera.id, 0.8]]);
+
+    expect(found.known.has(billboard.id)).toBe(true);
+    expect(found.known.has(camera.id)).toBe(true);
   });
 });

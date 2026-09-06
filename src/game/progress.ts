@@ -27,6 +27,8 @@ export interface Progress {
   rep: number;
   /** Ids of the billboards smashed so far (#93). */
   smashed: number[];
+  /** Ids of everything the player has been near enough to see. */
+  known: number[];
   /** Speed camera id to the best fraction of top speed clocked at it. */
   clocked: [number, number][];
   /** Ids of the cars found so far, and the one being driven (#67). */
@@ -44,6 +46,7 @@ export function freshProgress(): Progress {
     beaten: 0,
     rep: 0,
     smashed: [],
+    known: [],
     clocked: [],
     cars: [],
     car: '',
@@ -102,6 +105,7 @@ export function decodeProgress(raw: string | null): Progress {
     beaten: Math.floor(parsed.beaten),
     rep: typeof parsed.rep === 'number' && parsed.rep >= 0 ? Math.floor(parsed.rep) : 0,
     smashed: numbers(parsed.smashed),
+    known: numbers(parsed.known),
     clocked: pairs(parsed.clocked),
     cars: strings(parsed.cars),
     car: typeof parsed.car === 'string' ? parsed.car : '',

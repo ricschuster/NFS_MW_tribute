@@ -4,6 +4,7 @@ import {
   CAMERA_MIN_SPEED,
   CAR_RADIUS,
   CITY_GRID_CELL,
+  COLLECTIBLE_HINT_RANGE,
 } from './constants';
 import type { City, Collectible } from './city/types';
 import type { RepLedger } from './rep';
@@ -26,6 +27,19 @@ export interface CameraFlash {
 }
 
 export class Collectibles {
+  /**
+   * Everything the player has laid eyes on, by id.
+   *
+   * The maps used to show all ninety billboards and all twenty-five cameras
+   * from the first second of a new save, which turns finding one from
+   * something you do into something you are told. A collectible goes on the
+   * map once you have been near enough to see it, and stays there - so the map
+   * fills in as you drive the city rather than arriving complete.
+   *
+   * Saved with the rest, because a city you have explored should still be
+   * explored tomorrow.
+   */
+  readonly known = new Set<number>();
   /** Billboards already smashed, by id. */
   readonly smashed = new Set<number>();
   /** Camera id to the best fraction of top speed clocked there. */
@@ -66,9 +80,15 @@ export class Collectibles {
   }
 
   /** Restore a saved collection. */
-  load(smashed: number[], clocked: [number, number][]): void {
+  load(smashed: number[], clocked: [number, number][], known: number[] = []): void {
     for (const id of smashed) this.smashed.add(id);
     for (const [id, speed] of clocked) this.clocked.set(id, speed);
+    for (const id of known) this.known.add(id);
+    // Anything already dealt with has obviously been seen. Without this, a
+    // save written before the map hid anything would come back with a hundred
+    // items it knows the fate of and none it will draw.
+    for (const id of smashed) this.known.add(id);
+    for (const [id] of clocked) this.known.add(id);
   }
 
   /**
@@ -89,6 +109,10 @@ export class Collectibles {
     if (this.flashAge > 2.5) this.flash = null;
 
     for (const item of this.near(car.x, car.z)) {
+      // Near enough to have seen it, whatever else happens to it.
+      if (Math.hypot(item.at.x - car.x, item.at.z - car.z) < COLLECTIBLE_HINT_RANGE) {
+        this.known.add(item.id);
+      }
       if (Math.abs(item.y - car.y) > CAR_RADIUS * 4) continue;
       const gap = Math.hypot(item.at.x - car.x, item.at.z - car.z);
 

@@ -17,6 +17,7 @@ const filled = (): Progress => ({
   beaten: 4,
   rep: 18400,
   smashed: [3, 7, 11],
+  known: [3, 7, 11, 19, 44],
   clocked: [[2, 0.81]],
   cars: ['kestrel', 'kite'],
   car: 'kite',

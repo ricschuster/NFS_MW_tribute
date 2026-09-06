@@ -373,6 +373,26 @@ export const SURFACE_REACH = m(3);
 export const CITY_EDGE_MARGIN = m(18);
 
 /**
+ * Going in the water.
+ *
+ * It used to be a wall: the car was reverted to where it was and stopped dead,
+ * so the river was an invisible barrier you bumped into. The genre's answer is
+ * better and is what a playtest asked for - you go in with a splash, and you
+ * are lifted out and put back on the road a moment later, poorer for it but
+ * driving.
+ *
+ * `DUNK_HOLD` is how long the car is under before it is fished out: long
+ * enough to be a mistake you feel, short enough that it is not a loading
+ * screen. The cost is the same shape as everything else that goes wrong -
+ * damage and the speed you had - and the pursuit carries on, because being
+ * dredged out of the bay does not mean they have lost you.
+ */
+export const DUNK_HOLD = 2.2;
+export const DUNK_DAMAGE = 0.12;
+/** How far under the surface the car sinks while it is down there. */
+export const DUNK_DEPTH = m(2.4);
+
+/**
  * Parkland on the land the street grid never claimed (#185).
  *
  * A fifth of the map belonged to neither block nor road: blocks are laid on
@@ -428,7 +448,18 @@ export const BOULEVARD_CLEARANCE = m(5);
  * the whole map: two thousand roads of ambient cars would be simulating a city
  * nobody is looking at.
  */
-export const TRAFFIC_IN_CITY = 75;
+/**
+ * How many cars are kept around the player, before the district and the hour
+ * have their say.
+ *
+ * Down from 75. A playtest said there was too much traffic in general, and the
+ * numbers agree with the feeling: a good driver holds a quarter of top speed
+ * in traffic against half on an empty road, so traffic is not a hazard among
+ * others - it is the single biggest thing deciding how fast the game is. It is
+ * also now multiplied twice, by district and by hour, and 75 was set when it
+ * was multiplied by neither.
+ */
+export const TRAFFIC_IN_CITY = 52;
 export const TRAFFIC_RADIUS = m(360);
 /**
  * How much of that each district gets (#180).
@@ -1236,9 +1267,18 @@ export const DAMAGE_FREE = 0.2;
  */
 export const DAMAGE_HIT_GAP = 0.4;
 
-/** Drive-through repair (#95): no menu, no stopping. */
-export const REPAIR_COUNT = 6;
-export const REPAIR_SPACING = m(950);
+/**
+ * Drive-through repair (#95): no menu, no stopping.
+ *
+ * Six over a five-by-four kilometre city is one every couple of kilometres,
+ * and a playtest said repairing was very hard - which it was, for a reason
+ * that had nothing to do with the count: damage was being billed per frame of
+ * contact, so a car arrived at 100% within a minute and stayed there. That is
+ * fixed, and this is the other half. Fourteen is a shop somewhere in most
+ * quarters rather than a pilgrimage, and the spacing keeps them from bunching.
+ */
+export const REPAIR_COUNT = 14;
+export const REPAIR_SPACING = m(620);
 /** How close you have to pass. A drive-through you have to aim at is a menu. */
 export const REPAIR_RANGE = m(14);
 /** Seconds the REPAIRED banner holds. */

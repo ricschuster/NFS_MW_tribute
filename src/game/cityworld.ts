@@ -20,6 +20,9 @@ import {
   GRAVITY,
   SPAWN_SEARCH,
   CITY_EDGE_MARGIN,
+  DUNK_HOLD,
+  DUNK_DAMAGE,
+  DUNK_DEPTH,
   WRECK_LINGER,
   TAKEDOWN_FLASH,
   TAKEDOWN_SPEED_KEPT,
@@ -201,6 +204,14 @@ export class CityWorld {
   escapedFlash = 0;
 
   /**
+   * Seconds left underwater, and the reason the HUD says so.
+   *
+   * Zero everywhere except the couple of seconds between going into the river
+   * and being put back on the road.
+   */
+  dunked = 0;
+
+  /**
    * What the last bust took (#178).
    *
    * On `CityWorld` rather than inside the ledger because it is what the BUSTED
@@ -350,7 +361,7 @@ export class CityWorld {
     // there is no storage.
     const saved = loadProgress();
     this.rep.total = saved.rep;
-    this.collectibles.load(saved.smashed, saved.clocked);
+    this.collectibles.load(saved.smashed, saved.clocked, saved.known);
     this.finds.load(saved.cars, saved.car);
     this.finds.loadParts(saved.parts, saved.fitted);
     this.beaten = saved.beaten;
@@ -625,6 +636,25 @@ export class CityWorld {
       // An ambush asks nothing of the ladder. It is the pursuit, and the
       // pursuit is available to anyone who can drive.
       else if (spot) this.startAmbush(spot.level);
+    }
+
+    // Under the water: everything stops until they get a line on the car.
+    // Before the bust check, because being dunked mid-pursuit is not a bust
+    // and the pursuit is still running when you come back up.
+    if (this.dunked > 0) {
+      this.dunked -= dt;
+      this.speed = 0;
+      this.y = -DUNK_DEPTH;
+      if (this.dunked <= 0) {
+        this.dunked = 0;
+        this.y = 0;
+        this.recover();
+      }
+      if (this.withTraffic) this.traffic.update(dt, this);
+      if (this.withPolice && this.race.state === 'idle') {
+        this.police.update(dt, this, this.maxSpeed);
+      }
+      return;
     }
 
     // BUSTED freezes the world, holds the overlay, then clears the pursuit.
@@ -1068,6 +1098,7 @@ export class CityWorld {
       ...loadProgress(),
       rep: this.rep.total,
       smashed: [...this.collectibles.smashed],
+      known: [...this.collectibles.known],
       clocked: [...this.collectibles.clocked],
       cars: [...this.finds.owned],
       car: this.car.id,
@@ -1320,11 +1351,41 @@ export class CityWorld {
       return;
     }
 
-    if (this.outOfBounds() || this.afloat()) {
+    // The map ends at the coast and the sea is not a place: driving off the
+    // edge is still a wall, because there is nothing out there to fish you
+    // out of.
+    if (this.outOfBounds()) {
       this.x = wasX;
       this.z = wasZ;
       this.speed = 0;
+      return;
     }
+
+    // The river is a place. In you go.
+    if (this.afloat()) this.dunk();
+  }
+
+  /**
+   * In the water, and out of it again.
+   *
+   * The river used to be an invisible wall - the car was reverted and stopped
+   * dead the moment it touched water, which is the one thing in the city that
+   * behaved like a level boundary rather than like a city. Now it takes you:
+   * the car goes under, everything stops for `DUNK_HOLD`, and it is put back
+   * on the nearest road facing the way it was going.
+   *
+   * The same landing as being stuck (#179), and deliberately the same code:
+   * "put this car somewhere it can drive from" is one question, and a river
+   * and a wedged corner are two ways of asking it. What is different is that
+   * this one costs - damage, all of your speed, and a couple of seconds - and
+   * that it is not offered, it just happens.
+   */
+  private dunk(): void {
+    if (this.dunked > 0) return;
+    this.dunked = DUNK_HOLD;
+    this.speed = 0;
+    this.crashFlash = 1;
+    this.takeDamage(DUNK_DAMAGE);
   }
 
   /**

@@ -20,6 +20,7 @@ import {
   SEARCH_TIME_PER_LEVEL,
 } from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
+import { toMap } from './mapping';
 import type { CityWorld } from '../cityworld';
 import type { QuickWheel } from '../quickwheel';
 import type { TouchControls } from '../touch';
@@ -416,15 +417,22 @@ export class Hud {
     //
     // It read as "the minimap is not aligned with what the driver sees", which
     // is exactly what it was.
-    ctx.rotate(-world.heading);
+    // Plus, not minus, and every point below goes through `toMap` (#182 got
+    // half of this). A map seen from above with +z up the screen has -x to the
+    // right, because a driver facing +z has their right hand pointing at -x -
+    // so plotting +x rightwards mirrors the city east to west, and the turn
+    // you can see on your left is drawn on your right. Flipping the rotation
+    // alone made "ahead is up" true and left the mirror; both together are
+    // what make the map agree with the windscreen.
+    ctx.rotate(world.heading);
 
     const near = this.roadsAround(world);
     for (const road of near) {
       const a = world.city.nodes[road.a].pos;
       const b = world.city.nodes[road.b].pos;
       ctx.beginPath();
-      ctx.moveTo((a.x - world.x) * scale, -(a.z - world.z) * scale);
-      ctx.lineTo((b.x - world.x) * scale, -(b.z - world.z) * scale);
+      ctx.moveTo(toMap(a, world).x * scale, toMap(a, world).y * scale);
+      ctx.lineTo(toMap(b, world).x * scale, toMap(b, world).y * scale);
       ctx.lineWidth = road.class === 'street' ? 1.4 : road.class === 'interstate' ? 3.4 : 2.4;
       ctx.strokeStyle =
         road.class === 'interstate' || road.class === 'ramp'
@@ -442,7 +450,7 @@ export class Hud {
     const area = world.police.search;
     if (area) {
       ctx.beginPath();
-      ctx.arc((area.x - world.x) * scale, -(area.z - world.z) * scale, area.radius * scale, 0, Math.PI * 2);
+      ctx.arc(toMap(area, world).x * scale, toMap(area, world).y * scale, area.radius * scale, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 210, 90, 0.13)';
       ctx.fill();
       ctx.strokeStyle = 'rgba(255, 210, 90, 0.75)';
@@ -460,10 +468,12 @@ export class Hud {
     // across the road - a barrier or a strip - which is a different problem
     // with a different answer.
     for (const block of world.police.roadblocks) {
-      const bx = (block.x - world.x) * scale;
-      const bz = -(block.z - world.z) * scale;
+      const bx = toMap(block, world).x * scale;
+      const bz = toMap(block, world).y * scale;
       if (Math.hypot(bx, bz) > radius + block.half * scale) continue;
-      const ax = block.ax * scale;
+      // A direction gets mirrored exactly as a position does: both components
+      // negated, or the barrier is drawn across the wrong diagonal.
+      const ax = -block.ax * scale;
       const az = -block.az * scale;
       ctx.strokeStyle = HAZARD;
       ctx.lineWidth = 3;
@@ -491,8 +501,12 @@ export class Hud {
           ? world.collectibles.smashed.has(item.id)
           : world.collectibles.clocked.has(item.id);
       if (done) continue;
-      const ix = (item.at.x - world.x) * scale;
-      const iz = -(item.at.z - world.z) * scale;
+      // Only what has been seen. A map that knows where all ninety billboards
+      // are from the first second of a new save turns finding one from
+      // something you do into something you are told.
+      if (!world.collectibles.known.has(item.id)) continue;
+      const ix = toMap(item.at, world).x * scale;
+      const iz = toMap(item.at, world).y * scale;
       if (Math.hypot(item.at.x - world.x, item.at.z - world.z) > COLLECTIBLE_HINT_RANGE) continue;
       if (Math.hypot(ix, iz) > radius) continue;
       ctx.fillStyle = item.kind === 'billboard' ? '#ff9f45' : '#ffd166';
@@ -504,9 +518,9 @@ export class Hud {
     const route = world.race.route;
     if (route) {
       ctx.beginPath();
-      ctx.moveTo((route.points[0].x - world.x) * scale, -(route.points[0].z - world.z) * scale);
+      ctx.moveTo(toMap(route.points[0], world).x * scale, toMap(route.points[0], world).y * scale);
       for (const point of route.points.slice(1)) {
-        ctx.lineTo((point.x - world.x) * scale, -(point.z - world.z) * scale);
+        ctx.lineTo(toMap(point, world).x * scale, toMap(point, world).y * scale);
       }
       ctx.closePath();
       ctx.strokeStyle = 'rgba(127, 227, 255, 0.9)';
@@ -517,16 +531,16 @@ export class Hud {
     // Things worth aiming at while being chased (#57).
     for (const thing of world.city.breakables) {
       if (world.broken.has(thing.id)) continue;
-      const bx = (thing.at.x - world.x) * scale;
-      const bz = -(thing.at.z - world.z) * scale;
+      const bx = toMap(thing.at, world).x * scale;
+      const bz = toMap(thing.at, world).y * scale;
       if (Math.hypot(bx, bz) > radius) continue;
       ctx.fillStyle = 'rgba(176, 118, 58, 0.9)';
       ctx.fillRect(bx - 2, bz - 2, 4, 4);
     }
 
     for (const shop of world.city.repairs) {
-      const rx = (shop.at.x - world.x) * scale;
-      const rz = -(shop.at.z - world.z) * scale;
+      const rx = toMap(shop.at, world).x * scale;
+      const rz = toMap(shop.at, world).y * scale;
       if (Math.hypot(rx, rz) > radius) continue;
       ctx.strokeStyle = '#5adc82';
       ctx.lineWidth = 2;
@@ -538,9 +552,9 @@ export class Hud {
       ctx.stroke();
     }
 
-    for (const find of world.finds.waiting) {
-      const fx = (find.at.x - world.x) * scale;
-      const fz = -(find.at.z - world.z) * scale;
+    for (const find of world.finds.spotted) {
+      const fx = toMap(find.at, world).x * scale;
+      const fz = toMap(find.at, world).y * scale;
       if (Math.hypot(fx, fz) > radius) continue;
       ctx.beginPath();
       ctx.arc(fx, fz, 4, 0, Math.PI * 2);
@@ -549,30 +563,30 @@ export class Hud {
     }
 
     for (const strip of world.police.spikes) {
-      const sx = (strip.x - world.x) * scale;
-      const sz = -(strip.z - world.z) * scale;
+      const sx = toMap(strip, world).x * scale;
+      const sz = toMap(strip, world).y * scale;
       if (Math.hypot(sx, sz) > radius + Math.abs(strip.to) * scale) continue;
       // Was the same yellow as a speed camera, which is a thing you drive at
       // on purpose (#181).
       ctx.strokeStyle = HAZARD;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(sx + strip.ax * scale * strip.from, sz - strip.az * scale * strip.from);
-      ctx.lineTo(sx + strip.ax * scale * strip.to, sz - strip.az * scale * strip.to);
+      ctx.moveTo(sx - strip.ax * scale * strip.from, sz - strip.az * scale * strip.from);
+      ctx.lineTo(sx - strip.ax * scale * strip.to, sz - strip.az * scale * strip.to);
       ctx.stroke();
     }
 
     for (const wreck of world.wrecks) {
-      const dx = (wreck.x - world.x) * scale;
-      const dz = -(wreck.z - world.z) * scale;
+      const dx = toMap(wreck, world).x * scale;
+      const dz = toMap(wreck, world).y * scale;
       if (Math.hypot(dx, dz) > radius) continue;
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.fillRect(dx - 2, dz - 2, 4, 4);
     }
 
     for (const cop of world.police.cops) {
-      const dx = (cop.x - world.x) * scale;
-      const dz = -(cop.z - world.z) * scale;
+      const dx = toMap(cop, world).x * scale;
+      const dz = toMap(cop, world).y * scale;
       if (Math.hypot(dx, dz) > radius) continue;
       const enforcer = cop.role === 'enforcer';
       // A patrol is a car to keep away from, not a car that is after you
@@ -1166,9 +1180,12 @@ export class Hud {
     const bearing = Math.atan2(dx, dz) - world.heading;
     const at = Math.min(radius - 12, gap * (radius / MINIMAP_RANGE));
 
+    // Mirrored like everything else on the map, and the arrow's own rotation
+    // with it: the shape points up, and the rotation that takes up to
+    // (-sin, -cos) is minus the bearing.
     ctx.save();
-    ctx.translate(cx + Math.sin(bearing) * at, cy - Math.cos(bearing) * at);
-    ctx.rotate(bearing);
+    ctx.translate(cx - Math.sin(bearing) * at, cy - Math.cos(bearing) * at);
+    ctx.rotate(-bearing);
     ctx.beginPath();
     ctx.moveTo(0, -8);
     ctx.lineTo(6, 5);
@@ -1207,7 +1224,10 @@ export class Hud {
     const originY = HEIGHT / 2 - (depth * scale) / 2;
     // North up, and the same way round as `npm run city` draws it: two maps of
     // one city that disagree about which way is up are worth less than either.
-    const px = (x: number) => originX + (x - bounds.minX) * scale;
+    // North up *and* east left, which is what a map seen from above with +z up
+    // the screen actually is - see `mapping.ts`. This drew +x rightwards and
+    // was mirrored east to west, which is what "the map seems flipped" meant.
+    const px = (x: number) => originX + (bounds.maxX - x) * scale;
     const py = (z: number) => originY + (bounds.maxZ - z) * scale;
 
     ctx.fillStyle = 'rgba(6, 10, 16, 0.88)';
@@ -1242,6 +1262,7 @@ export class Hud {
     }
 
     for (const item of world.city.collectibles) {
+      if (!world.collectibles.known.has(item.id)) continue;
       const done =
         item.kind === 'billboard'
           ? world.collectibles.smashed.has(item.id)
@@ -1304,7 +1325,7 @@ export class Hud {
 
     // Cars still parked out there. Drawn bigger and brighter than a billboard
     // because they are worth crossing the map for and a billboard is not.
-    for (const find of world.finds.waiting) {
+    for (const find of world.finds.spotted) {
       ctx.beginPath();
       ctx.arc(px(find.at.x), py(find.at.z), 5, 0, Math.PI * 2);
       ctx.fillStyle = '#7fe3ff';
@@ -1326,8 +1347,9 @@ export class Hud {
 
     ctx.save();
     ctx.translate(mx, my);
-    // North-up map, so the arrow carries the heading rather than the map.
-    ctx.rotate(world.heading);
+    // North-up map, so the arrow carries the heading rather than the map -
+    // and minus it, for the same mirror as everything else.
+    ctx.rotate(-world.heading);
     ctx.beginPath();
     ctx.moveTo(0, -8);
     ctx.lineTo(6, 7);
@@ -1349,7 +1371,11 @@ export class Hud {
     ctx.fillText(
       `${world.collectibles.remaining} billboards left  ·  ` +
         `${world.collectibles.cameras.length - world.collectibles.clockedCount} cameras unclocked` +
-        `  ·  ${world.finds.waiting.length} cars still parked`,
+        `  ·  ${world.finds.waiting.length} cars still parked` +
+        // The counts are the goal; the pins are what you have found. Said out
+        // loud, or a map with four pins and "57 billboards left" under it
+        // reads as a map that is not working.
+        `   (only what you have driven past is marked)`,
       WIDTH / 2,
       HEIGHT - 20,
     );
@@ -1575,6 +1601,20 @@ export class Hud {
   private banners(world: CityWorld): void {
     const { ctx } = this;
     ctx.textAlign = 'center';
+
+    // In the water. Said plainly, because the car has stopped answering and
+    // the one thing a player must not conclude is that the game has hung.
+    if (world.dunked > 0) {
+      ctx.fillStyle = 'rgba(10, 30, 48, 0.5)';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.fillStyle = '#7fe3ff';
+      ctx.font = '800 54px system-ui, sans-serif';
+      ctx.fillText('IN THE DRINK', WIDTH / 2, HEIGHT / 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '600 16px system-ui, sans-serif';
+      ctx.fillText('fishing you out', WIDTH / 2, HEIGHT / 2 + 34);
+      return;
+    }
 
     if (world.busted) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';

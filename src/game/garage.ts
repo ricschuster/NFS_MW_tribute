@@ -1,4 +1,4 @@
-import { FIND_RANGE, FIND_FLASH, CAR_RADIUS } from './constants';
+import { FIND_RANGE, FIND_FLASH, CAR_RADIUS, COLLECTIBLE_HINT_RANGE } from './constants';
 import { CARS, STARTER_CAR, carById, type CarProfile } from './cars';
 import { MODS, effectOf, modById, type Mod, type ModEffect } from './mods';
 import type { City, StreetFind } from './city/types';
@@ -124,9 +124,23 @@ export class Garage {
     }
   }
 
+  /** Which parked cars the player has driven past, so the map can show them. */
+  readonly seen = new Set<string>();
+
   /** The cars still parked out there. */
   get waiting(): StreetFind[] {
     return this.city.finds.filter((find) => !this.owned.has(find.car));
+  }
+
+  /**
+   * The ones you have driven past and could take, for the maps.
+   *
+   * A parked car is worth crossing the city for, and a map that lists all
+   * seven from the first second of a new save turns finding one into reading a
+   * list. `spotted` fills in as you drive, the same way the collectibles do.
+   */
+  get spotted(): StreetFind[] {
+    return this.waiting.filter((find) => this.seen.has(find.car));
   }
 
   /** Restore a saved garage. Unknown ids are ignored rather than trusted. */
@@ -164,8 +178,12 @@ export class Garage {
 
     for (const find of this.city.finds) {
       if (this.owned.has(find.car)) continue;
+      const gap = Math.hypot(find.at.x - at.x, find.at.z - at.z);
+      // Close enough to have noticed it sitting there, which is what puts it
+      // on the map. The same range the collectibles use, for the same reason.
+      if (gap < COLLECTIBLE_HINT_RANGE) this.seen.add(find.car);
       if (Math.abs(find.y - at.y) > CAR_RADIUS * 4) continue;
-      if (Math.hypot(find.at.x - at.x, find.at.z - at.z) > FIND_RANGE) continue;
+      if (gap > FIND_RANGE) continue;
 
       const car = carById(find.car);
       this.owned.add(car.id);

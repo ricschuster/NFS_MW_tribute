@@ -43,6 +43,7 @@ import {
   SPEEDING_TIME,
   SEARCH_INSIDE_RATE,
   CITY_BUST_HOLD,
+  DUNK_HOLD,
   TRAFFIC_LANE,
   TRAFFIC_DENSITY,
   TRAFFIC_IN_CITY,
@@ -2802,5 +2803,65 @@ describe('a stuck car', () => {
     // way you came.
     const turn = Math.abs(Math.atan2(Math.sin(world.heading - was), Math.cos(world.heading - was)));
     expect(turn).toBeLessThanOrEqual(Math.PI / 2 + 1e-9);
+  });
+});
+
+/**
+ * The river takes you and gives you back.
+ *
+ * It used to be an invisible wall: the car was reverted and stopped dead the
+ * moment it touched water, which made the one natural feature in the city
+ * behave like a level boundary. A playtest asked for the genre's answer - in
+ * with a splash, out a moment later - and this is it.
+ */
+describe('going in the water', () => {
+  /** Point the car at the river and drive. */
+  function intoTheRiver(world: CityWorld) {
+    const body = world.city.water.find((w) => w.outline.length > 3);
+    if (!body) throw new Error('no water: the city changed');
+    const middle = body.outline[Math.floor(body.outline.length / 2)];
+    world.x = middle.x;
+    world.z = middle.z;
+    world.y = 0;
+    world.speed = world.maxSpeed * 0.4;
+  }
+
+  it('takes the car rather than stopping it at the surface', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    intoTheRiver(world);
+    world.step(STEP, press({ up: true }));
+
+    expect(world.dunked).toBeGreaterThan(0);
+    expect(world.speed).toBe(0);
+    expect(world.damage).toBeGreaterThan(0);
+  });
+
+  it('puts it back on a road it can drive away from', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    intoTheRiver(world);
+    world.step(STEP, press({ up: true }));
+    drive(world, DUNK_HOLD * 1.5, NONE);
+
+    expect(world.dunked).toBe(0);
+    expect(world.onRoad).not.toBeNull();
+    expect(world.y).toBe(0);
+
+    const from = at(world);
+    drive(world, 3, press({ up: true }));
+    expect(moved(from, at(world))).toBeGreaterThan(20 * M);
+  });
+
+  // Being dredged out of the bay is not an escape. The pursuit is still
+  // running when you come back up, which is what stops the river being a
+  // button that cancels one.
+  it('does not shake a pursuit', () => {
+    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    expect(world.police.state).toBe('pursuit');
+
+    intoTheRiver(world);
+    world.step(STEP, press({ up: true }));
+    drive(world, DUNK_HOLD * 1.5, NONE);
+
+    expect(world.police.state).not.toBe('clear');
   });
 });
