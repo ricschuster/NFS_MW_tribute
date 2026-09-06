@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { BuildingKind } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
+import { worldUvs } from './worlduv';
 
 /**
  * Windows for the boxes (#11).
@@ -125,62 +126,15 @@ export function disposeFacades(): void {
 /**
  * Patch a material so its map is sampled in world units off the instance.
  *
- * `onBeforeCompile` rather than a `ShaderMaterial`, so the building keeps
- * every bit of three.js's lighting, fog and shadow handling. All this changes
- * is where the UV comes from.
+ * The mechanism is shared with the block slabs now (`worlduv.ts`). All this
+ * layer decides is that a building is textured on its walls, and how big one
+ * bay and one storey are.
  */
 export function facadeUvs(material: THREE.Material, kind: BuildingKind): void {
   const tile = TILE[kind];
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uBay = { value: tile.bay * UNITS_PER_METRE };
-    shader.uniforms.uStorey = { value: tile.storey * UNITS_PER_METRE };
-
-    shader.vertexShader = shader.vertexShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-        uniform float uBay;
-        uniform float uStorey;
-        varying vec2 vFacadeUv;
-        varying float vFacadeWall;`,
-      )
-      .replace(
-        '#include <begin_vertex>',
-        `#include <begin_vertex>
-        // Column lengths of the instance matrix are its scale, which for these
-        // boxes is the building's width, height and depth in world units.
-        vec3 facadeSize = vec3(
-          length(instanceMatrix[0].xyz),
-          length(instanceMatrix[1].xyz),
-          length(instanceMatrix[2].xyz)
-        );
-        vec3 facadePos = position * facadeSize;
-        vec3 facadeN = abs(normal);
-        // Roofs and floors get no windows, and would get a grid stretched
-        // across them if they were textured with the wall's coordinates.
-        vFacadeWall = 1.0 - step(0.5, facadeN.y);
-        vec2 facadeXy = facadeN.x > 0.5
-          ? vec2(facadePos.z, facadePos.y)
-          : vec2(facadePos.x, facadePos.y);
-        vFacadeUv = vec2(facadeXy.x / uBay, facadeXy.y / uStorey);`,
-      );
-
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-        varying vec2 vFacadeUv;
-        varying float vFacadeWall;`,
-      )
-      .replace(
-        '#include <map_fragment>',
-        `#ifdef USE_MAP
-          vec4 facadeTexel = texture2D(map, vFacadeUv);
-          diffuseColor *= mix(vec4(1.0), facadeTexel, vFacadeWall);
-        #endif`,
-      );
-  };
-  // Any change to the patch above has to invalidate the cached program, and
-  // three.js keys that cache partly on this.
-  material.customProgramCacheKey = () => `facade:${kind}`;
+  worldUvs(material, {
+    faces: 'walls',
+    tile: { u: tile.bay * UNITS_PER_METRE, v: tile.storey * UNITS_PER_METRE },
+    key: kind,
+  });
 }

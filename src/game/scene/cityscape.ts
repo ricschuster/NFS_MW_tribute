@@ -1,5 +1,11 @@
 import * as THREE from 'three';
-import { asphaltTexture, disposeSurfaces } from './surfaces';
+import {
+  asphaltTexture,
+  BLOCK_TILE,
+  blockTexture,
+  disposeSurfaces,
+} from './surfaces';
+import { worldUvs } from './worlduv';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
@@ -56,7 +62,7 @@ export class Cityscape {
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
     for (const mesh of this.water(city)) this.group.add(mesh);
-    this.group.add(this.pavements(city));
+    for (const slab of this.pavements(city)) this.group.add(slab);
     this.group.add(this.markings(city));
     const bridges = this.bridges(city);
     if (bridges) this.group.add(bridges);
@@ -155,38 +161,74 @@ export class Cityscape {
     });
   }
 
-  /** One instanced slab per block: the kerb the buildings stand on. */
-  private pavements(city: City): THREE.InstancedMesh {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    geometry.translate(0, -0.5, 0); // hang below y=0, so the top is the pavement
-    const material = new THREE.MeshLambertMaterial();
-    this.owned.push(geometry, material);
-
-    const mesh = new THREE.InstancedMesh(
-      geometry,
-      material,
-      city.blocks.length,
-    );
-    mesh.name = 'pavements';
-    mesh.receiveShadow = true;
-
+  /**
+   * The block slabs: the kerb the buildings stand on, and the open ground.
+   *
+   * Two instanced meshes rather than one, which is the change that lets these
+   * be textured at all. They used to be one mesh coloured per instance, and a
+   * single material cannot have paving slabs on some instances and grass on
+   * others. One extra draw call buys a pavement that reads as a pavement and
+   * a park that reads as a park.
+   */
+  private pavements(city: City): THREE.InstancedMesh[] {
     const matrix = new THREE.Matrix4();
-    const paving = new THREE.Color('#6a6f76');
-    const open = new THREE.Color('#4e6b47'); // a block nobody built on: park, yard, lot
-    city.blocks.forEach((block, i) => {
-      const b = block.bounds;
-      matrix.makeScale(b.maxX - b.minX, PAVEMENT_HEIGHT, b.maxZ - b.minZ);
-      matrix.setPosition(
-        (b.minX + b.maxX) / 2,
-        PAVEMENT_HEIGHT,
-        (b.minZ + b.maxZ) / 2,
+    const slab = (
+      blocks: City['blocks'],
+      name: string,
+      kind: 'paving' | 'grass',
+      tint: string,
+    ): THREE.InstancedMesh => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      geometry.translate(0, -0.5, 0); // hang below y=0, so the top is the pavement
+      // Textured on the top face only, in world units: a slab is scaled to
+      // its own block, so a baked uv would make every block's paving a
+      // different size. The kerb faces keep the flat colour, which is what a
+      // kerb looks like anyway.
+      const material = new THREE.MeshLambertMaterial({
+        color: tint,
+        map: blockTexture(kind),
+      });
+      worldUvs(material, {
+        faces: 'top',
+        tile: { u: BLOCK_TILE, v: BLOCK_TILE },
+        key: kind,
+      });
+      this.owned.push(geometry, material);
+
+      // An InstancedMesh cannot be built with a count of zero, and a seed
+      // that leaves no open blocks is not impossible.
+      const mesh = new THREE.InstancedMesh(
+        geometry,
+        material,
+        Math.max(1, blocks.length),
       );
-      mesh.setMatrixAt(i, matrix);
-      mesh.setColorAt(i, block.open ? open : paving);
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    return mesh;
+      mesh.name = name;
+      mesh.receiveShadow = true;
+      mesh.count = blocks.length;
+
+      blocks.forEach((block, i) => {
+        const bounds = block.bounds;
+        matrix.makeScale(
+          bounds.maxX - bounds.minX,
+          PAVEMENT_HEIGHT,
+          bounds.maxZ - bounds.minZ,
+        );
+        matrix.setPosition(
+          (bounds.minX + bounds.maxX) / 2,
+          PAVEMENT_HEIGHT,
+          (bounds.minZ + bounds.maxZ) / 2,
+        );
+        mesh.setMatrixAt(i, matrix);
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+      return mesh;
+    };
+
+    return [
+      slab(city.blocks.filter((block) => !block.open), 'pavements', 'paving', '#6a6f76'),
+      // A block nobody built on: park, yard, lot.
+      slab(city.blocks.filter((block) => block.open), 'pavements:open', 'grass', '#4e6b47'),
+    ];
   }
 
   /**

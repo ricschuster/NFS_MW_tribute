@@ -391,11 +391,12 @@ cache entry as `./` and that is the case that breaks.
 - Asset *quality* is a separate axis and is not a non-goal. Geometry may be
   upgraded behind the generator's interface - textures on the boxes first,
   then cars, then a modular building kit - as long as everything shipped is
-  original, generated, or CC0. The buildings have their textures now (#11,
-  `scene/facades.ts`): generated to a canvas, and sampled in *world* units via
-  an `onBeforeCompile` patch, because one shared geometry across an
-  `InstancedMesh` means baked UVs would stretch a window to whatever shape its
-  building is. Cars are still boxes.
+  original, generated, or CC0. The buildings, the tarmac, the pavements
+  and the cars have all had a pass (#11). Anything instanced is textured
+  through `scene/worlduv.ts`: one shared geometry across an `InstancedMesh`
+  means baked UVs would size a window or a paving slab by whatever its
+  instance is scaled to, so the UV is computed in the vertex shader from the
+  instance's own scale. Street furniture is still boxes.
 - Not the online social layer. The 2012 game's social layer is out of scope.
 - Not the mid-2000s template. the old city, the Ladder of fifteen, bounty,
   milestones and impound strikes belong to the other game; see ADR-0004.
