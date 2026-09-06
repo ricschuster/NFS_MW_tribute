@@ -130,7 +130,8 @@ npm run test       # 436 unit tests + playtests
 npm run playtest   # just the playtests: drive CityWorld, assert outcomes
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
-npm run citylap    # every route, empty and in traffic; vs. its baseline
+npm run citylap    # every route, empty and in traffic, then every rival on the
+                   # ladder, clean and boosted; all of it vs. its baseline
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run patrol     # twenty minutes with the police live: what started each
                    # pursuit, time to the first, and how much of it was free roam
@@ -314,12 +315,15 @@ and adding a mechanic means deciding where it gets explained.
   360 m of the player, same density downtown and on an industrial back street.
   Density-by-district is the cheap half; time of day belongs with #11's
   lighting work.
-- **#166 the ladder has no probe.** The debt #165 took on knowingly.
-  `npm run feel` raced a reference driver against all ten rivals and that is how
-  `RIVAL_DIFF_SPEED_FRAC` was set to 0.125. It drove `World`, so it could not
-  survive. `npm run citylap` races nobody, so a change to the car can move the
-  whole ladder silently. The pieces are all there: `tools/citydriver.mjs` drives
-  a route, `CityRace` runs the field, `citylap` has the table and the diff.
+- **#192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
+  races all ten rivals now, and the reference driver comes seventh of seven
+  against every one of them - including the rival the game opens with - by most
+  of the race distance. The field runs at 82-93% of your top speed along the
+  route line; a city lap holds 26% in traffic. `RIVAL_BASE_SPEED_FRAC` was
+  calibrated by `npm run feel` against the track sim, where a reference lap
+  averaged 91%, and that sim is deleted. Nothing went red when it happened,
+  which is the whole argument for the probe. The calibration itself wants a
+  person: see #192 for the two decisions.
 - **#14 tune how the car feels.** Rescoped 2026-09-06 - every constant it
   originally named had been deleted. Now it names the ones that exist and
   carries three specific questions. Note it should be tuned against a *named
@@ -408,9 +412,13 @@ What is left, roughly in the order it would show:
   wrong. What proved the first of those was a screenshot: `--view stuck` first
   tried to *drive* into a wall and hold the throttle, and the car bounced off
   and drove away every time, so the shot is a placed wedge instead.
-- **The ladder is unmeasured.** See #166 above. It is the one regression #165
-  shipped on purpose, and the reason `RIVAL_DIFF_SPEED_FRAC` carries a comment
-  saying where its value came from.
+- **The ladder is measured now, and it is unwinnable** (#166 built the probe,
+  #192 is the finding). `npm run citylap`'s second table races every rival
+  twice, clean and with the boost used on the straights, and records the result
+  in the baseline. It reports rather than fails, because whether the ladder is
+  right is a judgement - but it prints the two numbers a calibration has to
+  reconcile side by side: what the field was configured to hold, and what the
+  driver actually held.
 - **Tarmac means drivable, and it did not used to** (#176, fixed). The ground
   was one asphalt plane with the road network showing through the gaps between
   block slabs. The gaps are not the roads - blocks are rectangles, roads bend

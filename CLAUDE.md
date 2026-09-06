@@ -33,7 +33,8 @@ what the city is shaped like.
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
   own server, so nothing else needs running
 - `npm run citylap` — drive a reference driver round every generated route,
-  twice: empty, and with traffic. Compare against `docs/city-baseline.json`
+  twice: empty, and with traffic, and then race it against all ten ladder
+  rivals, clean and with the boost (#166). Compare against `docs/city-baseline.json`
   after touching `constants.ts`, and re-record with
   `-- --out docs/city-baseline.json`. The empty lap says what the road allows;
   the traffic lap says what the drive is like, and traffic roughly halves the
