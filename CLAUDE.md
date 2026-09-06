@@ -31,6 +31,8 @@ cameras that leave the car. Read that ADR before touching the renderer.
   `-- --seed N` tries another one
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
   own server, so nothing else needs running
+- `npm run citylap` — drive a reference driver round every generated route and
+  report how far it got; a measurement of whether the city is drivable
 - `npm run build` — typecheck + production build to `dist/`
 
 ## Architecture (read before touching game code)

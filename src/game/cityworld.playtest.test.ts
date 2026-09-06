@@ -43,6 +43,7 @@ import {
   REFERENCE_TOP_SPEED,
   FIND_RANGE,
   CITY_COUNTDOWN,
+  CITY_EDGE_MARGIN,
   ROUTE_START_RANGE,
   AMBUSH_RANGE,
   AMBUSH_RING,
@@ -2243,5 +2244,66 @@ describe('parts on the car', () => {
     world.drive(carById('nightfall'));
     // The Nightfall is faster, but not because of the Kestrel's engine.
     expect(world.finds.effect('nightfall').accel).toBe(1);
+  });
+});
+
+/**
+ * The edge of the map (#14's groundwork).
+ *
+ * The perimeter arterial's *centreline* is the map boundary, so its
+ * carriageway straddles it and a car driving down it is legitimately outside.
+ * Without a margin on the out-of-bounds check, that car was reverted and
+ * stopped on every step: the coast road was a place you drove onto and could
+ * never leave. A reference driver found it; nothing else had.
+ */
+describe('the coast road', () => {
+  /** Put the car on the road that runs along the map's edge, pointing along it. */
+  function onThePerimeter(world: CityWorld) {
+    const bounds = world.city.bounds;
+    const edge = world.city.roads.find((road) => {
+      const a = world.city.nodes[road.a].pos;
+      const b = world.city.nodes[road.b].pos;
+      return (
+        world.city.nodes[road.a].y === 0 &&
+        road.length > 100 * M &&
+        Math.abs(a.z - bounds.minZ) < 1 &&
+        Math.abs(b.z - bounds.minZ) < 1
+      );
+    });
+    if (!edge) throw new Error('no perimeter road: the city changed');
+
+    const a = world.city.nodes[edge.a].pos;
+    const b = world.city.nodes[edge.b].pos;
+    world.x = a.x + (b.x - a.x) * 0.3;
+    world.z = a.z + (b.z - a.z) * 0.3;
+    world.y = 0;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.onRoad = edge;
+    return edge;
+  }
+
+  it('can be driven down', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    onThePerimeter(world);
+    const start = at(world);
+    drive(world, 3, press({ up: true }));
+
+    expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.4);
+    expect(moved(start, at(world))).toBeGreaterThan(50 * M);
+  });
+
+  // The margin exists for the carriageway, not for the sea. Driving away from
+  // the map still stops you.
+  it('still stops you driving out to sea', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const bounds = world.city.bounds;
+    world.x = (bounds.minX + bounds.maxX) / 2;
+    world.z = bounds.minZ;
+    world.y = 0;
+    // Straight off the edge.
+    world.heading = Math.PI;
+    drive(world, 4, press({ up: true }));
+
+    expect(world.z).toBeGreaterThan(bounds.minZ - CITY_EDGE_MARGIN * 2);
   });
 });

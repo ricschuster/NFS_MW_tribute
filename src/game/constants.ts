@@ -371,6 +371,18 @@ export const GRAVITY = m(22);
  * *on* it - which is the exact distinction #85 exists to draw.
  */
 export const SURFACE_REACH = m(3);
+/**
+ * How far past the map's own bounds the car may be.
+ *
+ * The perimeter arterial's *centreline* is the boundary, so its carriageway
+ * straddles it and a car driving down it is legitimately outside. Without a
+ * margin the out-of-bounds check reverts the car and zeroes its speed on every
+ * step, and the coast road is a place you stop dead and cannot leave. Sized
+ * for the widest carriageway there is, and the sea is kept undrivable by the
+ * water check rather than by this one.
+ */
+export const CITY_EDGE_MARGIN = m(18);
+
 /** Where a new car is put: on the interstate ring is wrong, so a street it is. */
 export const SPAWN_SEARCH = m(180);
 
@@ -914,10 +926,19 @@ export const ROUTE_COUNT = 6;
 export const ROUTE_RADIUS = m(520);
 export const ROUTE_LAPS = 3;
 /** A lap outside this is not a circuit: it is a commute, or a car park. */
-export const ROUTE_MIN_LENGTH = m(2200);
-export const ROUTE_MAX_LENGTH = m(5200);
+export const ROUTE_MIN_LENGTH = m(2000);
+export const ROUTE_MAX_LENGTH = m(5600);
+/**
+ * The sharpest corner a lap may contain, in radians.
+ *
+ * A right angle is a junction and fine; anything approaching a half-turn is
+ * the route doubling back on itself, which is an out-and-back rather than a
+ * circuit. Every route in the city was one of those until a reference driver
+ * tried to lap one and could not.
+ */
+export const ROUTE_MAX_TURN = 2.1;
 /** Kept apart, so six events are six places rather than one crossroads. */
-export const ROUTE_SPACING = m(1100);
+export const ROUTE_SPACING = m(850);
 /** How close you have to be to a start line for the event to be offered. */
 export const ROUTE_START_RANGE = m(28);
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
