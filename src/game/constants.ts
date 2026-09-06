@@ -459,7 +459,7 @@ export const MINIMAP_SIZE = 190;
  * Escalation happens *within* a pursuit rather than being gated behind career
  * progress: the longer they have you, the heavier what arrives. That is the
  * framework the rest of the pursuit work hangs off - roadblocks, spike strips
- * and the helicopter all key off a level rather than off a raw heat number.
+ * and the Enforcers all key off a level rather than off a raw heat number.
  *
  * `speed` is a fraction of the player's top speed and stays under 1 at every
  * level, level six included. That is not a detail: a pursuit you cannot
@@ -796,51 +796,22 @@ export const SHRED_GRIP = 0.55;
  */
 export const SHRED_REINFLATE = 0.18;
 
-/**
- * The police helicopter (#62).
+/*
+ * The police helicopter is gone (#183).
  *
- * It never hits you. What it does is keep you *seen*, which is what gives the
- * cooldown from #63 its teeth: while it is overhead the search never starts,
- * so shaking it is a different problem from outrunning the cars. The answer is
- * cover, not speed.
+ * #62 built it to keep you *seen*, so the search never started while it was up
+ * and shaking it was a different problem from outrunning the cars. Two things
+ * finished it. It is about four pixels in a rendered frame - #62's own
+ * rationale was that "a thing you can never see is a thing the HUD has to
+ * explain", and the HUD was doing all the work - and it was airborne for more
+ * than half of a high-heat session holding `seenBy` unconditionally true,
+ * which made it a large part of why a pursuit never ended.
  *
- * It flies in a straight line at a shade under the car's top speed, so a long
- * straight buys you room and a sequence of corners does not. That is the right
- * way round: the way out is meant to be a decision about where to go rather
- * than about how hard to press the throttle.
+ * Cover went with it: `coveredAt`, `COVER_MIN` and `COVER_MAX` existed only to
+ * answer it, and there is now nothing to hide from. The tunnel and the decks
+ * are geometry again. If cover should mean something, it needs a new thing to
+ * mean it against.
  */
-export const HELI_MIN_LEVEL = 5;
-/** Seconds on station before it goes home, and how long before another comes. */
-export const HELI_TIME = 80;
-export const HELI_RETURN = 45;
-/** How high it hangs, and how far off it starts. */
-export const HELI_HEIGHT = m(28);
-export const HELI_ARRIVES = m(700);
-/** Top speed in the air, as a fraction of the player's on the ground. */
-export const HELI_SPEED_FRAC = 0.82;
-/**
- * How far *ahead* of the car it flies.
- *
- * Ahead and low rather than high and behind, and that is a decision about
- * being able to see the thing. The chase camera looks roughly level, so an
- * aircraft hovering over the roof is permanently above the frame: the player
- * would be told they were being kept in sight by a HUD line and never see what
- * was doing it. Out in front it is in shot, its light is on the road you are
- * driving into, and it swings across the junction when you turn.
- */
-export const HELI_LEAD = m(120);
-/** How far its light reaches across the ground. */
-export const HELI_SEE_RADIUS = m(170);
-
-/**
- * What counts as cover from the air (#62).
- *
- * A deck overhead - an overpass, the elevated interstate - or being below
- * street level, which is the tunnel. Buildings do not count: standing in a
- * street between two towers is not being under anything.
- */
-export const COVER_MIN = m(3);
-export const COVER_MAX = m(22);
 
 /**
  * Rep (#64).
@@ -1168,8 +1139,8 @@ export const WHEEL_ENTRIES = 9;
  * gate across a yard entrance, a stack of pallets on an industrial kerb: you
  * go through it, it comes down, and the cars on your bumper are under it.
  *
- * That is the counterplay the pursuit was missing. Spike strips, Enforcers and
- * a helicopter are all things the police do to you; this is the one thing the
+ * That is the counterplay the pursuit was missing. Spike strips, roadblocks and
+ * Enforcers are all things the police do to you; this is the one thing the
  * *city* does to them, and it turns knowing the map into an advantage rather
  * than a convenience.
  */

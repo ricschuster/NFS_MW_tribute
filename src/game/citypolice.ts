@@ -50,21 +50,13 @@ import {
   SPIKE_SPACING,
   SPIKE_COVER,
   SPIKE_COVER_PER_LEVEL,
-  HELI_MIN_LEVEL,
-  HELI_TIME,
-  HELI_RETURN,
-  HELI_HEIGHT,
-  HELI_ARRIVES,
-  HELI_SPEED_FRAC,
-  HELI_LEAD,
-  HELI_SEE_RADIUS,
   PATROL_IN_CITY,
   PATROL_RADIUS,
   PATROL_SPAWN_MIN,
   PATROL_PACE,
   type CopKind,
 } from './constants';
-import { lineBlocked, coveredAt, type CityGrid } from './city/grid';
+import { lineBlocked, type CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
 import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
@@ -178,26 +170,6 @@ export interface SpikeStrip {
   to: number;
 }
 
-/**
- * The police helicopter (#62).
- *
- * Not a car and deliberately not a `Cop`: it does not navigate the graph, it
- * cannot be rammed, and it never busts anyone. What it does is keep you seen,
- * which is a different job from chasing you and is worth being a different
- * type.
- */
-export interface Helicopter {
-  x: number;
-  z: number;
-  y: number;
-  /** Which way it is pointing, taken from how it is moving. */
-  heading: number;
-  /** Seconds left on station before it goes home. */
-  onStation: number;
-  /** True while it actually has the car, rather than merely being overhead. */
-  spotting: boolean;
-}
-
 export interface Roadblock {
   road: CityRoad;
   /** The middle of the barrier. */
@@ -235,8 +207,6 @@ export class CityPolice {
   readonly roadblocks: Roadblock[] = [];
   /** Strips laid across most of the road ahead of you (#60). */
   readonly spikes: SpikeStrip[] = [];
-  /** Overhead at high heat, keeping you seen (#62). Null when there is none. */
-  helicopter: Helicopter | null = null;
   /** 0..1. Rises while a cop is close, and drives the heat *level*. */
   heat = 0;
   busted = false;
@@ -256,7 +226,6 @@ export class CityPolice {
   private sinceBlock = 0;
   private sinceEnforcer = 0;
   private sinceSpike = 0;
-  private heliGrounded = 0;
   private cooldown = 0;
   private pinned = 0;
   private unseen = 0;
@@ -354,7 +323,6 @@ export class CityPolice {
     this.summon(dt, player);
     this.blockade(dt, player);
     this.lay(dt, player);
-    this.fly(dt, player, maxSpeed);
   }
 
   /**
@@ -441,85 +409,6 @@ export class CityPolice {
       to: Math.max(from, to),
     });
     this.sinceSpike = 0;
-  }
-
-  /**
-   * The helicopter (#62).
-   *
-   * Flown rather than routed: it has no roads to follow, so it eases toward a
-   * point behind and above the car at its own top speed. That speed is a shade
-   * under the car's, which means a long straight buys room and a sequence of
-   * corners does not - the way out is meant to be a decision about where to go
-   * rather than about how hard to press the throttle.
-   */
-  private fly(dt: number, player: Chased, maxSpeed: number): void {
-    if (this.state === 'clear') {
-      this.helicopter = null;
-      return;
-    }
-
-    if (!this.helicopter) {
-      this.heliGrounded -= dt;
-      // Only called in while they still have you. It stays for the search that
-      // follows, though: an aircraft that went home the moment you got under a
-      // bridge would make cover a permanent answer rather than a temporary one.
-      if (this.state !== 'pursuit') return;
-      if (this.level < HELI_MIN_LEVEL || this.heliGrounded > 0 || !this.seenNow) return;
-      // Comes in from off to one side, so it arrives rather than appearing.
-      const bearing = this.rng.range(0, Math.PI * 2);
-      this.helicopter = {
-        x: player.x + Math.sin(bearing) * HELI_ARRIVES,
-        z: player.z + Math.cos(bearing) * HELI_ARRIVES,
-        y: HELI_HEIGHT,
-        heading: bearing + Math.PI,
-        onStation: HELI_TIME,
-        spotting: false,
-      };
-      return;
-    }
-
-    const heli = this.helicopter;
-    heli.onStation -= dt;
-    if (heli.onStation <= 0) {
-      this.helicopter = null;
-      this.heliGrounded = HELI_RETURN;
-      return;
-    }
-
-    // During a search it does not know where you are either, so it sweeps
-    // where they lost you rather than flying straight to the car.
-    const target = this.state === 'cooldown' && this.search ? this.search : null;
-    // Ahead of the car rather than over it: low and in front is where it can
-    // actually be seen from behind the wheel, and where its light lands on the
-    // road you are driving into.
-    const aimX = target ? target.x : player.x + Math.sin(player.heading) * HELI_LEAD;
-    const aimZ = target ? target.z : player.z + Math.cos(player.heading) * HELI_LEAD;
-    const dx = aimX - heli.x;
-    const dz = aimZ - heli.z;
-    const gap = Math.hypot(dx, dz);
-    const step = Math.min(gap, maxSpeed * HELI_SPEED_FRAC * dt);
-    if (gap > 1) {
-      heli.x += (dx / gap) * step;
-      heli.z += (dz / gap) * step;
-      heli.heading = Math.atan2(dx / gap, dz / gap);
-    }
-    heli.y = HELI_HEIGHT + player.y;
-
-    heli.spotting = this.overhead(player);
-  }
-
-  /**
-   * Does the helicopter have you?
-   *
-   * Close enough, and with nothing over your head. Cover is the whole answer
-   * to it, which is why `coveredAt` counts a deck overhead and the tunnel and
-   * refuses to count a street between two towers.
-   */
-  private overhead(player: Chased): boolean {
-    const heli = this.helicopter;
-    if (!heli) return false;
-    if (Math.hypot(heli.x - player.x, heli.z - player.z) > HELI_SEE_RADIUS) return false;
-    return !coveredAt(this.city, this.grid, player.x, player.z, player.y);
   }
 
   /** Take a strip out of play once it has been run over. */
@@ -773,15 +662,6 @@ export class CityPolice {
    * way - which is why buildings are city data rather than renderer state.
    */
   private seenBy(player: Chased): boolean {
-    // The helicopter counts as eyes on, which is the whole point of it: while
-    // it is overhead the search never starts, so shaking it is a different
-    // problem from outrunning the cars.
-    if (this.helicopter?.spotting) {
-      this.lastSeen.x = player.x;
-      this.lastSeen.z = player.z;
-      return true;
-    }
-
     for (const cop of this.cops) {
       // Patrols do not hold a pursuit open (#177). One that can see you joins
       // it instead, which spends the chase budget rather than quietly adding a
@@ -1308,8 +1188,6 @@ export class CityPolice {
     this.cops.length = 0;
     this.roadblocks.length = 0;
     this.spikes.length = 0;
-    this.helicopter = null;
-    this.heliGrounded = 0;
     this.sinceEnforcer = 0;
     this.sinceSpike = 0;
     this.heat = 0;

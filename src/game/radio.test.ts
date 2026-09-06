@@ -10,7 +10,6 @@ const quiet = (): PursuitReport => ({
   roadblocks: 0,
   spikes: 0,
   enforcers: 0,
-  helicopter: false,
   state: 'clear',
   busted: false,
   takedowns: 0,
@@ -49,7 +48,7 @@ describe('the police radio', () => {
   });
 
   // The point of it: the hazards are called before they can be seen.
-  it('calls a roadblock, spikes, an Enforcer and the helicopter', () => {
+  it('calls a roadblock, spikes and an Enforcer', () => {
     const said = (change: Partial<PursuitReport>) => {
       const radio = new Radio();
       const running: PursuitReport = { ...quiet(), state: 'pursuit', cops: 2 };
@@ -61,7 +60,6 @@ describe('the police radio', () => {
     expect(said({ roadblocks: 1 }).toLowerCase()).toMatch(/block/);
     expect(said({ spikes: 1 }).toLowerCase()).toMatch(/spike|strip/);
     expect(said({ enforcers: 1 }).toLowerCase()).toMatch(/enforcer|heavy/);
-    expect(said({ helicopter: true }).toLowerCase()).toMatch(/air|helicopter/);
   });
 
   it('says when they have lost you, and when they give up', () => {
@@ -88,10 +86,10 @@ describe('the police radio', () => {
     const radio = new Radio();
     const running: PursuitReport = { ...quiet(), state: 'pursuit', cops: 1 };
     hold(radio, running, 0.1);
-    // Four things at once.
-    radio.update(STEP, { ...running, roadblocks: 1, spikes: 1, enforcers: 1, helicopter: true });
+    // Four things at once (the helicopter used to be the fourth; #183).
+    radio.update(STEP, { ...running, roadblocks: 1, spikes: 1, enforcers: 1, takedowns: 1 });
     for (let t = 0; t < RADIO_GAP * 0.5; t += STEP) {
-      radio.update(STEP, { ...running, roadblocks: 1, spikes: 1, enforcers: 1, helicopter: true });
+      radio.update(STEP, { ...running, roadblocks: 1, spikes: 1, enforcers: 1, takedowns: 1 });
     }
     expect(radio.recent.length).toBeLessThanOrEqual(1);
   });

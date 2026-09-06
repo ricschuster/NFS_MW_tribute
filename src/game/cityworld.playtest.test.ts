@@ -28,11 +28,6 @@ import {
   SHRED_TIME,
   SHRED_SPEED_FRAC,
   SHRED_GRIP,
-  HELI_MIN_LEVEL,
-  HELI_TIME,
-  HELI_SEE_RADIUS,
-  COVER_MIN,
-  LOSE_CONTACT_TIME,
   REP_TAKEDOWN,
   REP_ROADBLOCK,
   REP_NEAR_MISS,
@@ -1316,134 +1311,15 @@ describe('spike strips', () => {
   });
 });
 
-/**
- * The police helicopter (#62).
+/*
+ * The helicopter is gone (#183).
  *
- * The thing worth asserting on is not that it flies. It is that while it has
- * you the search never starts, and that driving under something makes it stop
- * having you - which is a claim about `seenBy`, `coveredAt` and the cooldown
- * from #63 all agreeing with each other.
+ * Its tests went with it, and they are worth a note because they were the only
+ * ones that asserted on cover: that a deck overhead or the tunnel stopped
+ * something seeing you. Nothing sees you from above any more, `coveredAt` is
+ * deleted, and the decks are geometry. If cover comes back it needs something
+ * new to hide from, and these are the shape the tests should take.
  */
-describe('the helicopter', () => {
-  it('stays away below heat five', () => {
-    const world = onAnArterial();
-    hunt(world, 0.3, 40);
-    expect(world.police.level).toBeLessThan(HELI_MIN_LEVEL);
-    expect(world.police.helicopter).toBeNull();
-  });
-
-  it('comes out once the heat is high enough', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 30);
-    expect(world.police.level).toBeGreaterThanOrEqual(HELI_MIN_LEVEL);
-    expect(world.police.helicopter).not.toBeNull();
-  });
-
-  it('closes on the car and then holds station over it', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 40);
-    const heli = world.police.helicopter;
-    expect(heli).not.toBeNull();
-    expect(Math.hypot(heli!.x - world.x, heli!.z - world.z)).toBeLessThan(HELI_SEE_RADIUS);
-    expect(heli!.y).toBeGreaterThan(world.y);
-    expect(heli!.spotting).toBe(true);
-  });
-
-  // The whole point of it. Without this, cooldown works the same at heat six
-  // as at heat one and the helicopter is scenery.
-  it('stops the pursuit ever dropping into a search', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 30);
-    expect(world.police.helicopter?.spotting).toBe(true);
-
-    // Take every car away and leave the aircraft. On the ground alone this
-    // would be a search inside four seconds.
-    // Cleared every step, not once: since #177 the city keeps patrol cars
-    // around the player, and one of those joining the pursuit is a car with
-    // eyes on you - which is a real mechanic and not what this measures. A
-    // freshly mustered patrol spawns beyond `SEEN_RANGE`, so clearing at the
-    // top of each step leaves the aircraft genuinely alone.
-    for (let t = 0; t < LOSE_CONTACT_TIME * 3; t += STEP) {
-      world.police.cops.length = 0;
-      world.police.heat = 0.9;
-      world.police.update(STEP, world, world.maxSpeed);
-    }
-    expect(world.police.state).toBe('pursuit');
-  });
-
-  it('loses you under a deck, and the search starts', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 30);
-    expect(world.police.helicopter?.spotting).toBe(true);
-
-    // Under the elevated interstate: a real place in this city rather than a
-    // fabricated one, which is what makes the cover test worth anything.
-    const deck = world.city.roads.find(
-      (r) => r.class === 'interstate' && world.city.nodes[r.a].y > COVER_MIN * 2,
-    );
-    expect(deck).toBeDefined();
-    const a = world.city.nodes[deck!.a].pos;
-    const b = world.city.nodes[deck!.b].pos;
-    world.x = (a.x + b.x) / 2;
-    world.z = (a.z + b.z) / 2;
-    world.y = 0;
-
-    // Cleared every step, not once: since #177 the city keeps patrol cars
-    // around the player, and one of those joining the pursuit is a car with
-    // eyes on you - which is a real mechanic and not what this measures. A
-    // freshly mustered patrol spawns beyond `SEEN_RANGE`, so clearing at the
-    // top of each step leaves the aircraft genuinely alone.
-    for (let t = 0; t < LOSE_CONTACT_TIME * 3; t += STEP) {
-      world.police.cops.length = 0;
-      world.police.heat = 0.9;
-      world.police.update(STEP, world, world.maxSpeed);
-    }
-    expect(world.police.helicopter?.spotting).toBe(false);
-    expect(world.police.state).toBe('cooldown');
-  });
-
-  it('goes home eventually rather than circling for ever', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, HELI_TIME + 20);
-    // Either it has gone, or a fresh one came after the grounding delay; what
-    // must not happen is one aircraft on station indefinitely.
-    const heli = world.police.helicopter;
-    expect(heli === null || heli.onStation < HELI_TIME).toBe(true);
-  });
-
-  // Cover has to be a temporary answer, not a permanent one: an aircraft that
-  // went home the moment you got under a bridge would make one overpass the
-  // end of every pursuit at heat five.
-  it('is still up there when you come back out', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 30);
-    const deck = world.city.roads.find(
-      (r) => r.class === 'interstate' && world.city.nodes[r.a].y > COVER_MIN * 2,
-    )!;
-    const a = world.city.nodes[deck.a].pos;
-    const b = world.city.nodes[deck.b].pos;
-    const under = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
-
-    world.x = under.x;
-    world.z = under.z;
-    world.y = 0;
-    for (let t = 0; t < LOSE_CONTACT_TIME * 2; t += STEP) {
-      world.police.cops.length = 0; // the aircraft alone, as above
-      world.police.heat = 0.9;
-      world.police.update(STEP, world, world.maxSpeed);
-    }
-    expect(world.police.state).toBe('cooldown');
-    expect(world.police.helicopter).not.toBeNull();
-  });
-
-  it('goes when the pursuit does', () => {
-    const world = onAnArterial();
-    hunt(world, 0.9, 30);
-    expect(world.police.helicopter).not.toBeNull();
-    world.police.reset();
-    expect(world.police.helicopter).toBeNull();
-  });
-});
 
 /**
  * Rep (#64).

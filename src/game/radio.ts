@@ -4,20 +4,20 @@ import { RADIO_GAP, RADIO_HOLD, RADIO_LINES, RADIO_QUEUE } from './constants';
  * The police radio (#76).
  *
  * Most of why a pursuit feels alive, and deliberately not decoration: dispatch
- * calls a roadblock before you can see it and air support before you can hear
- * it, so the radio is a *tell* for hazards rather than atmosphere over the top
- * of them.
+ * calls a roadblock before you can see it and an Enforcer before it is round
+ * the corner, so the radio is a *tell* for hazards rather than atmosphere over
+ * the top of them.
  *
  * It works by watching the pursuit rather than by being told. Every system
- * that could raise a callout - the roadblocks, the spikes, the helicopter, the
- * Enforcers - already exposes what it is doing, and asking them each step is
+ * that could raise a callout - the roadblocks, the spikes, the Enforcers -
+ * already exposes what it is doing, and asking them each step is
  * one place that can be wrong instead of eight places that can forget to
  * speak.
  *
  * Subtitles, not speech: voice assets are a whole production this project does
  * not have and would not be original if it did.
  */
-export type RadioVoice = 'dispatch' | 'unit' | 'air' | 'command';
+export type RadioVoice = 'dispatch' | 'unit' | 'command';
 
 export interface RadioMessage {
   from: RadioVoice;
@@ -34,7 +34,6 @@ export interface PursuitReport {
   roadblocks: number;
   spikes: number;
   enforcers: number;
-  helicopter: boolean;
   /** 'clear' | 'pursuit' | 'cooldown'. */
   state: string;
   busted: boolean;
@@ -132,14 +131,6 @@ const CALLOUTS: Record<string, Callout> = {
       'Spike strip deploying ahead of the suspect.',
       'Strips are down. Back off the bumper.',
       'Laying strips - watch your own tyres.',
-    ],
-  },
-  air: {
-    from: 'air',
-    lines: [
-      'Air support is up. We have them from here.',
-      'Helicopter on station, eyes on the suspect.',
-      'Air unit overhead. They are not losing us now.',
     ],
   },
   enforcer: {
@@ -242,7 +233,6 @@ export class Radio {
     if (now.roadblocks > was.roadblocks) this.call('roadblock');
     if (now.spikes > was.spikes) this.call('spikes');
     if (now.enforcers > was.enforcers) this.call('enforcer');
-    if (now.helicopter && !was.helicopter) this.call('air');
     if (now.takedowns > was.takedowns) this.call('unitDown');
     if (now.broken > was.broken && now.state === 'pursuit') this.call('debris');
 

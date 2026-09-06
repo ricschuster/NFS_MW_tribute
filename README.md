@@ -51,10 +51,10 @@ front of you, sometimes with a gap and, the hotter it gets, more often without.
 From heat three they also send Enforcers: heavy units that come at you head on
 and steer for the lane you are in rather than the one beside it. From heat four
 they lay spike strips across most of the road, and running over one takes your
-top speed and most of your steering for a few seconds. From five a helicopter
-joins in: it never touches you, it keeps you *seen*, so the search never starts
-while it is up there and the way out is cover rather than speed. All of that is
-off under `prefers-reduced-motion`, which leaves a plain camera behind the car.
+top speed and most of your steering for a few seconds. Stop moving with a unit
+on you and you are busted, and a bust takes back everything that pursuit paid.
+All of that is off under `prefers-reduced-motion`, which leaves a plain camera
+behind the car.
 
 ## Looking at the map
 
@@ -150,7 +150,7 @@ src/
   game/
     cityworld.ts     the sim: position, heading, height, collision, step(dt, input)
     citypolice.ts    the pursuit: six heat levels, cooldown, search, roadblocks,
-                     spike strips, a helicopter, and Enforcers
+                     spike strips, and Enforcers
     citytraffic.ts   ambient traffic, kept around the player
     graphcar.ts      what it is to be a car on the street graph
     impact.ts        what it takes to wreck a car: closing speed, angle, a wall
