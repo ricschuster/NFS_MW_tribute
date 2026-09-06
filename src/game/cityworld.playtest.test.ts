@@ -44,6 +44,8 @@ import {
   SEARCH_INSIDE_RATE,
   CITY_BUST_HOLD,
   TRAFFIC_LANE,
+  TRAFFIC_DENSITY,
+  TRAFFIC_IN_CITY,
   PATROL_RADIUS,
   BUST_TIME,
   AMBUSH_RANGE,
@@ -2291,6 +2293,83 @@ describe('the coast road', () => {
     drive(world, 4, press({ up: true }));
 
     expect(world.z).toBeGreaterThan(bounds.minZ - CITY_EDGE_MARGIN * 2);
+  });
+});
+
+/**
+ * How busy a district is (#180).
+ *
+ * Traffic used to be exactly constant: the same seventy-five cars in a
+ * downtown canyon and on an industrial back street. That is a large thing to
+ * have flat, because traffic roughly halves the pace a good driver can hold.
+ *
+ * A number rather than a picture, and deliberately tested rather than
+ * photographed: ninety-four cars spread through a 360 m bubble put one or two
+ * in a given frame, so a screenshot of a busy district and a screenshot of a
+ * quiet one look the same. What you feel while driving is a count, so a count
+ * is what this asserts.
+ */
+describe('traffic density', () => {
+  /** Park on a street in `district` and let the traffic settle to it. */
+  function parkIn(district: string): CityWorld {
+    const world = new CityWorld(undefined, { police: false });
+    const road = world.city.roads.find(
+      (r) => r.district === district && r.class === 'street' && r.length > 100 * M,
+    );
+    if (!road) throw new Error(`no ${district} street: the city changed`);
+
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = (a.x + b.x) / 2;
+    world.z = (a.z + b.z) / 2;
+    world.y = 0;
+    world.onRoad = road;
+    world.speed = 0;
+    drive(world, 3, NONE);
+    return world;
+  }
+
+  it('gives every district the share it is written down as having', () => {
+    for (const [district, share] of Object.entries(TRAFFIC_DENSITY)) {
+      const world = parkIn(district);
+      expect(world.traffic.cars.length).toBe(Math.round(TRAFFIC_IN_CITY * share));
+    }
+  });
+
+  it('makes downtown busier than the industrial quarter, by a lot', () => {
+    const busy = parkIn('downtown').traffic.cars.length;
+    const quiet = parkIn('industrial').traffic.cars.length;
+    expect(busy).toBeGreaterThan(quiet * 2);
+  });
+
+  // Losing cars matters as much as gaining them: without the trim, the density
+  // is whatever the busiest place you have driven through was.
+  it('thins out when you leave a busy district for a quiet one', () => {
+    const world = parkIn('downtown');
+    const busy = world.traffic.cars.length;
+
+    const quiet = world.city.roads.find(
+      (r) => r.district === 'industrial' && r.class === 'street' && r.length > 100 * M,
+    )!;
+    const a = world.city.nodes[quiet.a].pos;
+    const b = world.city.nodes[quiet.b].pos;
+    world.x = (a.x + b.x) / 2;
+    world.z = (a.z + b.z) / 2;
+    world.onRoad = quiet;
+    drive(world, 3, NONE);
+
+    expect(world.traffic.cars.length).toBeLessThan(busy);
+  });
+
+  // Off the tarmac there is no road to ask, and traffic that thinned out every
+  // time you cut across a car park would read as a bug rather than a district.
+  it('keeps the district it last had a road for', () => {
+    const world = parkIn('downtown');
+    const busy = world.traffic.cars.length;
+    world.onRoad = null;
+    drive(world, 2, NONE);
+
+    expect(world.traffic.cars.length).toBe(busy);
   });
 });
 

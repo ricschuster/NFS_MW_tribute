@@ -116,6 +116,18 @@ rather than spread over the map, and cars look for the one in front in **world
 space**, because roads are split at every junction so the car ahead is almost
 always on a different road object.
 
+**How much traffic depends on where you are** (issue #180). `TRAFFIC_DENSITY`
+scales the population by the district of the road under the car - downtown
+carries two and a half times what the industrial quarter does - and the count
+is trimmed as well as topped up, or the density is whatever the busiest place
+you drove through was. The district is *remembered* when there is no road
+under the car, because traffic that thinned out every time you cut across a car
+park would read as a bug. Spawns also turn down small roads
+(`TRAFFIC_LANE_BIAS`) so arterials carry more than the side streets crossing
+them - by rejection rather than a weighted pick, because a weighted pick
+measurably did nothing: candidates come from one grid cell and the roads in one
+cell are much of a muchness, so the retry has to land somewhere else entirely.
+
 **A hit is one thing, wherever it lands** (issue #94). `impact.ts` is the whole
 damage model: closing speed along the line between the two cars, how square the
 hit is, and whether the car has a wall behind it. It is a pure function of two
