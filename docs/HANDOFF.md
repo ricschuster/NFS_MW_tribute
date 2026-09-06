@@ -231,12 +231,19 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Eight issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world
-systems) are closed, and #165 closed the rebuild out by deleting the thing it
-replaced. Nearly everything now open came from **one person playing the game for
-ten minutes** on 2026-09-06, which is the single most important fact on this
-page. The test suite was green throughout, five probes were green throughout,
-and the playtest still found nine things. Do that before you do anything else.
+**Nine issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world systems)
+are closed, and #165 closed the rebuild out by deleting the thing it replaced.
+
+Most of what was open came from **one person playing the game for ten minutes**
+on 2026-09-06, which is still the single most important fact on this page: the
+test suite was green throughout, five probes were green throughout, and the
+playtest found nine things. Six of those are now fixed - #179, #177, #178, #183,
+#181 and the first half of #180.
+
+The newest issue on the board, **#192**, is the other lesson: it was found by a
+*probe*, on the day the probe was written, and it had been true and invisible
+since #165. Play the game first; then point something at the part of it nothing
+has ever measured.
 
 ### The pursuit works now: the cluster is closed
 
