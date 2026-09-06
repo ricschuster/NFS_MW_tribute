@@ -102,15 +102,16 @@ const alive = await page.evaluate(
 );
 check('loads with the network off', alive);
 
-// The city is a dynamic import behind a query string, which is both the
-// biggest chunk and a URL the README hands out. A navigation with a query on
-// it is not the same cache entry as `./`, so this is the case that breaks.
-await page.goto(`${base}/?renderer=drive`, { waitUntil: 'load' }).catch(() => {});
+// `/` is Kestrel Bay now (#165), so the reload above already asks for the
+// biggest chunk. What is still worth its own check is a navigation with a
+// query string on it - `?renderer=city`, a URL the README hands out - because
+// that is not the same cache entry as `./` and is the case that breaks.
+await page.goto(`${base}/?renderer=city`, { waitUntil: 'load' }).catch(() => {});
 const city = await page
   .waitForSelector('#game3d', { timeout: 30000 })
   .then(() => true)
   .catch(() => false);
-check('drives Kestrel Bay with the network off', city);
+check('draws Kestrel Bay with the network off', city);
 
 await browser.close();
 server.close();

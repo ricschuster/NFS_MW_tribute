@@ -5,8 +5,7 @@
 // right". This answers "does it look like a city", which is a different
 // question and the one #84 is about.
 //
-// Unlike `npm run shot`, this starts its own dev server, so there is nothing to
-// run in another terminal.
+// It starts its own dev server, so there is nothing to run in another terminal.
 //
 // Usage:
 //   npm run cityshot                      # all viewpoints -> screenshots/city-*.png
@@ -87,7 +86,7 @@ page.on('console', (msg) => {
 for (const view of VIEWS) {
   // `drive` is not a viewpoint but a mode: put a car in the city, hold the
   // throttle for a moment, and photograph what the player would be looking at.
-  const url = DRIVING.has(view) ? `${base}/?renderer=drive` : `${base}/?renderer=city&view=${view}`;
+  const url = DRIVING.has(view) ? `${base}/` : `${base}/?renderer=city&view=${view}`;
   await page.goto(url, { waitUntil: 'load' });
   // Generating the city and building its instanced meshes takes a moment, and
   // a screenshot taken before that is a picture of an empty sky.

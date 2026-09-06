@@ -56,7 +56,7 @@ import {
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
 import { RIVALS } from './rivals';
-import type { InputState } from './world';
+import type { InputState } from './cityworld';
 import type { Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
 
@@ -274,7 +274,7 @@ describe('a car in Kestrel Bay', () => {
   });
 });
 
-describe('nitrous, unchanged from the track', () => {
+describe('nitrous', () => {
   // Measured while the boost is still lit. Held to the end of a clear street
   // both cars sit at the cap and the comparison says nothing.
   it('goes faster with it than without', () => {

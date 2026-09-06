@@ -27,12 +27,11 @@ export interface TrafficCar extends GraphCar {
 /**
  * Ambient traffic in Kestrel Bay (#87).
  *
- * The track version keeps a fixed set of cars at fixed offsets on an endless
- * loop, which works because the track is one road and the player can only be
- * on it. A city has two thousand roads and the player can be anywhere, so
- * traffic is kept *around the player* instead: cars are spawned outside what
- * can be seen, driven along the network, and dropped once they are far enough
- * behind that nobody will notice them go.
+ * A city has two thousand roads and the player can be anywhere on any of
+ * them, so there is no fixed set of cars to keep: traffic is kept *around the
+ * player* instead. Cars are spawned outside what can be seen, driven along the
+ * network, and dropped once they are far enough behind that nobody will notice
+ * them go.
  *
  * Headless and seeded, like everything else in the sim, so a playtest that
  * drives into traffic hits the same car twice.

@@ -12,16 +12,15 @@ implement something are not, for now.
 
 ## Why
 
-Crosstown is mid-rebuild and most of it is in flux. [ADR-0004] replaced the
-renderer, [ADR-0005] then replaced the shape of the city under it, and the
-issues in M4 will change the motion model, collision and the camera in turn.
-Coordinating that with anyone else costs more than it returns, and a PR written
-against this week's architecture would very likely be against last week's by the
-time it landed. That changes once the city is drivable and the ground stops
-moving; this file gets rewritten then.
+Crosstown spent most of its life mid-rebuild: [ADR-0004] replaced the renderer,
+[ADR-0005] replaced the shape of the city under it, and [ADR-0006] deleted the
+game they were replacing. The ground has stopped moving now, but this is still
+one person's project with one person's plan, and coordinating a queue costs
+more than it returns.
 
 [ADR-0004]: docs/decisions/0004-webgl-free-roam-city.md
 [ADR-0005]: docs/decisions/0005-the-shape-of-kestrel-bay.md
+[ADR-0006]: docs/decisions/0006-the-city-is-the-game.md
 
 ## How the repo works
 
@@ -39,9 +38,10 @@ where anyone reading the code would look for them.
 
 - Read [`CLAUDE.md`](CLAUDE.md) and the [ADRs](docs/decisions/) before touching
   the renderer, the city generator or the physics. All three have non-obvious
-  constraints, and two of them are being actively replaced.
-- Keep behaviour in `world.ts` and drawing in the renderer. That split is the
-  only reason the renderer can be swapped at all (ADR-0003).
+  constraints.
+- Keep behaviour in `cityworld.ts` and drawing in `scene/`. That split is the
+  only reason the renderer could be swapped, and the old game deleted, without
+  taking the game with it (ADR-0003, ADR-0006).
 - The city generator emits descriptions, never geometry, and never imports
   three.js. That seam is what lets the art be upgraded without a rewrite.
 - Tune game feel via `src/game/constants.ts` first.
@@ -50,37 +50,32 @@ where anyone reading the code would look for them.
 
 ### Looking at things
 
-Three tools exist because three classes of bug turned out to be invisible to
+These tools exist because whole classes of bug turned out to be invisible to
 tests and obvious on sight.
 
 ```bash
 npx playwright install chromium   # one-time, ~180 MB browser
-npm run dev                       # serve the game
-npm run shot                      # screenshots of a few game states
 npm run city                      # the generated city from above
+npm run cityshot                  # the 3D city, and the driving views
 ```
 
-`npm run shot` drives the game with scripted keys and screenshots the canvas at
-the title, driving, pursuit, countdown and race states. Every renderer bug in
-issue #81 was found this way.
-
-`npm run city` draws the generated city from above; `-- --seed N` tries another
-one. Every real defect in the generator so far was found this way, and none by
-its tests, which passed throughout.
+`npm run city` draws the layout from above; `-- --seed N` tries another one.
+`npm run cityshot` answers the different question of whether it looks like a
+city, and starts its own server. Nearly every real defect in the generator so
+far was found by one of these and none by its tests, which passed throughout.
 
 ### Feel checks
 
 How the car *feels* is a judgement call, but most of what goes into it is
-measurable. `npm run feel` drives the headless `World` with scripted inputs and
-prints the numbers behind it: 0-to-top-speed, braking distance, how long a lane
-change takes at each speed, the fastest speed that still holds the sharpest
-bend, nitrous duration and payoff, how quickly a cop busts you at a given pace,
-and how long each Ladder race runs.
+measurable. `npm run citylap` drives a headless reference driver round all six
+generated routes and reports what it held on each: lap completed, time, average
+speed as a fraction of top speed, crashes, and how far off the route it ever
+strayed.
 
 ```bash
-npm run feel                                         # print the table
-npm run feel -- --baseline docs/feel-baseline.json   # show only what moved
-npm run feel -- --out docs/feel-baseline.json        # re-record the baseline
+npm run citylap                                      # print the table
+npm run citylap -- --out docs/city-baseline.json     # re-record the baseline
+TRACE='Old Quarter' npm run citylap                  # watch one drive
 ```
 
 It asserts nothing (the playtests do that) - it exists so a change to
@@ -88,6 +83,10 @@ It asserts nothing (the playtests do that) - it exists so a change to
 seeded, so two runs of the same constants are identical. Re-record the baseline
 in the same PR that changes the tuning, so the diff shows what moved.
 
-It has also been *wrong* twice, both times because its reference driver was no
-longer a good driver. If a number looks strange, suspect the probe before the
-game.
+Read the numbers as a floor, not a target: the driver follows the centreline at
+a margin under the grip limit and never touches nitrous, so a player has
+headroom it does not. And the probe that came before this one was *wrong* three
+times, every time because its reference driver had stopped being a good driver.
+If a number looks strange, suspect the probe before the game.
+
+What no probe covers right now is the ladder - see issue #166.

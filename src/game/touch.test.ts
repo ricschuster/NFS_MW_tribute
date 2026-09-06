@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { TouchControls, CITY_BUTTONS, DRIVING_BUTTONS } from './touch';
+import { TouchControls, CITY_BUTTONS, type TouchButton } from './touch';
 import { WIDTH, HEIGHT } from './constants';
 
 /**
@@ -33,7 +33,7 @@ describe('on-screen controls', () => {
 
   it('presses the button under the finger', () => {
     const { canvas, touch } = fakeCanvas();
-    const controls = new TouchControls(canvas, () => {}, DRIVING_BUTTONS());
+    const controls = new TouchControls(canvas, () => {}, CITY_BUTTONS());
     const up = controls.buttons.find((b) => b.id === 'up')!;
 
     touch({ x: up.x, y: up.y });
@@ -45,7 +45,7 @@ describe('on-screen controls', () => {
   // Steering and accelerating at once is the whole reason it is multi-touch.
   it('takes two fingers at once', () => {
     const { canvas, touch } = fakeCanvas();
-    const controls = new TouchControls(canvas, () => {}, DRIVING_BUTTONS());
+    const controls = new TouchControls(canvas, () => {}, CITY_BUTTONS());
     const up = controls.buttons.find((b) => b.id === 'up')!;
     const left = controls.buttons.find((b) => b.id === 'left')!;
 
@@ -56,22 +56,23 @@ describe('on-screen controls', () => {
 
   it('lets the caller choose the set of buttons', () => {
     const { canvas } = fakeCanvas();
-    const city = new TouchControls(canvas, () => {}, CITY_BUTTONS());
-    const ids = city.buttons.map((b) => b.id);
-    // The city needs a way to open the map and the Quick Wheel without a
-    // keyboard, which the track never had (#89).
+    const chosen: TouchButton[] = [
+      { id: 'up', x: 200, y: 200, r: 40, label: '▲', down: false },
+    ];
+    expect(new TouchControls(canvas, () => {}, chosen).buttons).toHaveLength(1);
+    // The set the game actually ships needs a way to open the map and the
+    // Quick Wheel without a keyboard (#89).
+    const ids = new TouchControls(canvas, () => {}, CITY_BUTTONS()).buttons.map((b) => b.id);
     expect(ids).toContain('wheel');
     expect(ids).toContain('map');
-    expect(new TouchControls(canvas, () => {}, DRIVING_BUTTONS()).buttons.length).toBe(6);
   });
 
   it('keeps every button clear of every other', () => {
-    for (const buttons of [DRIVING_BUTTONS(), CITY_BUTTONS()]) {
-      for (let i = 0; i < buttons.length; i++) {
-        for (let j = i + 1; j < buttons.length; j++) {
-          const gap = Math.hypot(buttons[i].x - buttons[j].x, buttons[i].y - buttons[j].y);
-          expect(gap).toBeGreaterThan(buttons[i].r + buttons[j].r - 1);
-        }
+    const buttons = CITY_BUTTONS();
+    for (let i = 0; i < buttons.length; i++) {
+      for (let j = i + 1; j < buttons.length; j++) {
+        const gap = Math.hypot(buttons[i].x - buttons[j].x, buttons[i].y - buttons[j].y);
+        expect(gap).toBeGreaterThan(buttons[i].r + buttons[j].r - 1);
       }
     }
   });

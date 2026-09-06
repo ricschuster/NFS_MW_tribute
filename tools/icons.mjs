@@ -4,7 +4,7 @@
 // it is smaller than the PNGs, reviewable in a diff, and re-runnable at any
 // size the day a platform wants a new one.
 //
-// It renders through the headless Chromium that `npm run shot` already needs,
+// It renders through the headless Chromium the screenshot tools already need,
 // so this adds no dependency. The output is committed, because a build should
 // not need a browser.
 //

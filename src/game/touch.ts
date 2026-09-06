@@ -42,9 +42,9 @@ export interface TouchRegion {
  * can steer and accelerate at once). Inert until the first touch, so desktop is
  * unaffected. `onGesture` fires on the first touch (to start audio).
  *
- * The set of buttons is chosen by the caller, because the two games have
- * different ones: the track needs six, and Kestrel Bay also needs a way to open
- * the map and the Quick Wheel without a keyboard (#89).
+ * The set of buttons is passed in rather than built here, because the thing
+ * that knows what the game needs on screen is the caller (#89). Kestrel Bay's
+ * set is `CITY_BUTTONS` below.
  */
 export class TouchControls {
   active = false;
@@ -57,7 +57,7 @@ export class TouchControls {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly onGesture: () => void,
-    buttons: TouchButton[] = DRIVING_BUTTONS(),
+    buttons: TouchButton[] = CITY_BUTTONS(),
   ) {
     this.buttons = buttons;
     const opts: AddEventListenerOptions = { passive: false };
@@ -133,22 +133,13 @@ export class TouchControls {
   };
 }
 
-/** The six the track game has always had. */
-export const DRIVING_BUTTONS = (): TouchButton[] => [
-  { id: 'left', x: 100, y: HEIGHT - 84, r: 56, label: '◀', down: false },
-  { id: 'right', x: 232, y: HEIGHT - 84, r: 56, label: '▶', down: false },
-  { id: 'up', x: WIDTH - 236, y: HEIGHT - 84, r: 64, label: '▲', down: false },
-  { id: 'down', x: WIDTH - 96, y: HEIGHT - 84, r: 52, label: '▮', down: false },
-  { id: 'nitro', x: WIDTH - 168, y: HEIGHT - 188, r: 44, label: 'N2O', down: false },
-  { id: 'confirm', x: WIDTH / 2, y: HEIGHT - 150, r: 40, label: '⏎', down: false },
-];
-
 /**
  * Kestrel Bay's set (#89).
  *
- * The six above plus the three the city added: the Quick Wheel, the collection
- * map and a glance behind. They are held rather than tapped, like the keys they
- * stand in for, so nothing needs a second state to remember.
+ * The six a car needs - steering, throttle, brake, nitrous and confirm - plus
+ * the three the city added: the Quick Wheel, the collection map and a glance
+ * behind. They are held rather than tapped, like the keys they stand in for,
+ * so nothing needs a second state to remember.
  *
  * Steering sits low and left, throttle low and right, and everything else runs
  * up the right edge - out of the way of a thumb that is busy.

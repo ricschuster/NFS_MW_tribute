@@ -5,10 +5,9 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`
 - **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/
-- **Drive the city:** [`?renderer=drive`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=drive)
-  · **Fly over it:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
-  · the README lists every URL, its controls, and the named viewpoints
-- **Status:** mid-rebuild, and deliberately so. Read ADR-0004, then ADR-0005.
+- **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
+  · the README lists the named viewpoints
+- **Status:** the rebuild is finished. One game, one sim, one URL.
 
 ## What this is
 
@@ -33,51 +32,46 @@ breaks the Pages URL and every link to it.
 
 ## The state of play
 
-Three things run off one deployment, and the query string picks between them.
-
-| | |
-| --- | --- |
-| `/` | The finished single-track racer: traffic, police, and a ladder of ten unlocked by Rep. Canvas. |
-| `/?renderer=3d` | The same game drawn with three.js. Retired when the track is. |
-| `/?renderer=drive` | **The game, in Kestrel Bay**: free roam, traffic, a six-level pursuit with roadblocks, Enforcers, spike strips and a helicopter, takedowns, Rep, collectibles, cars to find and circuits to race. |
-| `/?renderer=city` | A free camera over the city, for looking at the map rather than driving it. |
-
-**There are two simulations, and that is deliberate.** `world.ts` is the track
-model the shipped game still runs on. `cityworld.ts` is the same car in the
-city. Traffic, police, collision, cameras, Rep, the ladder and circuit racing
-have all moved across. What is left before `world.ts` can retire is deciding
-that the city is the default rather than a query string.
+**`/` is Kestrel Bay.** There used to be two games behind one deployment - the
+finished single-track racer at `/`, and the city at `?renderer=drive` - and
+[ADR-0006](decisions/0006-the-city-is-the-game.md) deleted the track. There is
+one simulation (`cityworld.ts`), one renderer (`scene/`), and one query string
+left: `?renderer=city` flies a free camera over the map with no car in it, for
+judging the generator rather than playing it.
 
 The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
 229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
 tunnel, 3 river crossings, 90 billboards, 25 speed cameras, 7 parked cars and
 6 events of 2.5 to 4 km - three circuits and three speed runs - and 5 ambushes
-at heat 2 through 6, and 6 drive-through repair shops, 40 gates and 43 pallet stacks that come down.
-Eighteen cars: one you start in, seven parked around the city, ten on the
-ladder.
+at heat 2 through 6, and 6 drive-through repair shops, 40 gates and 43 pallet
+stacks that come down. Eighteen cars: one you start in, seven parked around the
+city, ten on the ladder.
 
 ## The decisions that shape everything
 
 - [ADR-0003](decisions/0003-separate-simulation-from-rendering.md) - simulation
-  split from rendering. The reason any of the rest was survivable.
+  split from rendering. The reason any of the rest was survivable, and the
+  reason the track could be deleted without deleting the game. Read it as being
+  about `cityworld.ts` and `scene/`; the modules it names are gone.
 - [ADR-0004](decisions/0004-webgl-free-roam-city.md) - a real 3D WebGL scene.
   Two hard gates forced it: roads over roads, and cameras that leave the car.
-  **Both now exist and can be looked at** (`&view=overpass`, and the crash cut).
+  Both exist and can be looked at (`&view=overpass`, and the crash cut).
 - [ADR-0005](decisions/0005-the-shape-of-kestrel-bay.md) - what the city is
   *shaped* like. Read before touching the generator. Rules 1-5 are built;
   landmarks (6) and terrain relief (7) are not.
+- [ADR-0006](decisions/0006-the-city-is-the-game.md) - the city is the game,
+  and the track sim is deleted. What went, and what it cost.
 
 ## Architecture
 
 ```
 src/game/
-  world.ts        the track sim, still shipping
-  game.ts         the Canvas renderer, HUD and state machine for that sim
-  cityworld.ts    the car in the city: position, heading, height, collision
+  cityworld.ts    the sim: position, heading, height, collision, step(dt, input)
   impact.ts       what it takes to wreck a car: closing speed, angle, a wall
   rep.ts          the award table: what everything you do is worth
   collectibles.ts what has been found: smashed billboards, clocked cameras
   cars.ts         the roster, as handling profiles against a reference car
+  rivals.ts       the ladder of ten, as a price rather than a queue
   garage.ts       what the player owns: cars, parts earned, parts fitted
   mods.ts         the parts catalogue, as trades rather than upgrades
   cityrace.ts     events: circuits against a field, speed runs against a number
@@ -92,22 +86,22 @@ src/game/
                   roadblocks, spike strips, a helicopter, and Enforcers that
                   come at you head on
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
+  audio.ts        synthesized engine / siren / squelch
+  touch.ts        on-screen controls; one reading, not a second control path
   city/           the generator: types, rng, water, generate, boulevards,
                   interstate, buildings, furniture, collectibles, streetfinds,
                   routes, ambushes, repairs, breakables, grid
   scene/          the renderer. cityscape assembles it; cameras, hud and
                   cityview drive it; buildings, furniture, collectibles and
                   breakables build the instanced geometry; worlduv, facades,
-                  surfaces, roofs and carshape are the art pass (#11);
-                  scene3d/ribbon/cars are the track's
-  road.ts, render.ts   the projected-segment track   <- retired with world.ts
-tools/            citylap + citydriver (the reference driver), feelprobe,
-                  citymap, cityshot, screenshot, pwacheck, icons
+                  surfaces, roofs and carshape are the art pass (#11)
+tools/            citylap + citydriver (the reference driver), citymap,
+                  cityshot, pwacheck, icons
 ```
 
 **The city is data.** `city/` turns `CITY_SEED` into junctions, roads, blocks,
 districts, water, buildings and street furniture as plain data - no renderer, no
-`Math.random`. That is what lets `World` collide with it and the playtests build
+`Math.random`. That is what lets the sim collide with it and the playtests build
 one headlessly. The generator must never import three.js.
 
 **Height is real.** Nodes carry a `y`, and node identity includes it, so two
@@ -128,12 +122,11 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 479 unit tests + playtests
-npm run feel       # measure driving feel on the track sim
+npm run test       # 436 unit tests + playtests
+npm run playtest   # just the playtests: drive CityWorld, assert outcomes
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # drive a reference driver round every route; vs. its baseline
-npm run shot       # screenshot the Canvas game
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
 npm run icons      # redraw the app icons from tools/icons.mjs
@@ -165,8 +158,10 @@ centreline being the map boundary exactly. Both had been shipped for months and
 both are obvious the moment something drives them. If a system has never been
 exercised end to end, that is where the bugs are.
 
-`npm run feel` has also been *wrong* twice, both times because its reference
-driver was no longer a good driver. If a number looks strange, suspect the probe.
+The probes themselves have been wrong more often than the code has. The track's
+`npm run feel` was wrong three times, every time because its reference driver
+had stopped being a good driver, or because the world had grown a gate the
+probe did not know to pay for. If a number looks strange, suspect the probe.
 
 And the third case: **a change that is obviously wrong in a picture and has no
 obvious cause.** #75's first attempt went through `EffectComposer` and came out
@@ -194,13 +189,20 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Five issues are open, and nothing else is.** M4 (Kestrel Bay rebuild) and M5
-(open-world systems) are both closed: the generator, the geometry, the elevated
-interstate, traffic, police, six heat levels, cooldown, takedowns, roadblocks,
-Enforcers, spike strips, the helicopter, pursuit breakers, ambushes, radio
-chatter, collectibles, the car roster, mods, claiming a rival's car, Rep, the
-ladder of ten, and the city's own race types all shipped. `world.ts` still
-exists but nothing in the city needs it.
+**Six issues are open, and nothing else is.** M4 (Kestrel Bay rebuild) and M5
+(open-world systems) are both closed, and #165 closed the rebuild out by
+deleting the thing it replaced.
+
+**#166: the ladder has no probe.** This is the debt #165 took on knowingly and
+it is the first thing to look at. `npm run feel` raced a reference driver
+against all ten rivals and reported which it beat clean and which needed
+nitrous; that is how `RIVAL_DIFF_SPEED_FRAC` was set to 0.125, and how "beating
+the boss needs nitrous" was known to be true. It drove `World`, so it could not
+survive the deletion. `npm run citylap` gets a reference driver round all six
+routes and is the only driving baseline left, but it races nobody. Until
+something replaces it, a change to the car can move the whole ladder silently.
+The pieces are all there: `tools/citydriver.mjs` can drive a route, `CityRace`
+runs the field, and `citylap` already has the table and the baseline diff.
 
 **M6: Beyond the browser - 3 open, and deliberately not started.** #98 made the
 game installable and offline and #101 opened the storage seam a shell needs.
@@ -212,27 +214,19 @@ Electron and Tauri is a heavyweight runtime dependency plus a CI and signing
 decision. Per the house rule that wants an ADR for a new dependency, that is a
 choice for a person, not something to settle by picking one and shipping it.
 
-**#14 tune driving feel** has the measurement it was missing and still wants a
-person. `npm run citylap` gets a reference driver round all six routes and
-reports what it held on each, so a change can no longer make the city harder to
-drive unnoticed. But two things are true about the issue as written: its
-acceptance criterion is "propose values that feel better", and better is not
-something a probe reports; and the constants it names belong to the wrong sim.
-`CENTRIFUGAL` no longer exists, and `FIELD_OF_VIEW` and `FOG_DENSITY` are both
-read only by the pseudo-3D track renderer that ADR-0004 retires. Worth deciding
-explicitly whether to rescope it to the city or close it for a new one.
+**#14 tune driving feel** still wants a person. Its acceptance criterion is
+"propose values that feel better", and better is not something a probe reports.
+Two of the constants it named are gone with the track (`CENTRIFUGAL` was
+already gone; `FIELD_OF_VIEW` and `FOG_DENSITY` were the pseudo-3D renderer's),
+so it needs rescoping to the city or closing for a new one. Re-record
+`docs/city-baseline.json` in whatever PR moves a constant.
 
-Either way: re-record **both** `docs/feel-baseline.json` and
-`docs/city-baseline.json` in whatever PR moves a constant. The ladder and the
-speed-run targets are both tuned against these drivers.
-
-**#11 replace vector-drawn art with sprites** is art for the *track* renderer,
-which ADR-0004 is retiring, so read it as "the city is still boxes" rather than
-as a sprite task. Most of it no longer is. Seven PRs did a pass: windows on the
-buildings, cars with an actual silhouette and wheels, aggregate on the tarmac,
-joints on the pavements and grass on the open blocks, plant and masts on the
-roofs, lamps that reach out over the carriageway, and towers that step back
-partway up.
+**#11 replace vector-drawn art with sprites** was written for the track
+renderer, so read it as "the city is still boxes". Seven PRs did a pass:
+windows on the buildings, cars with an actual silhouette and wheels, aggregate
+on the tarmac, joints on the pavements and grass on the open blocks, plant and
+masts on the roofs, lamps that reach out over the carriageway, and towers that
+step back partway up.
 
 **The one thing to understand before adding to it** is `scene/worlduv.ts`.
 Everything large here is instanced - thousands of buildings in a handful of
@@ -249,8 +243,7 @@ chunks, so a three.js upgrade can break it silently and leave every test green;
 Nothing in that pass moved `city/` except one field - `StreetProp.reach`,
 because a prop knows where it stands but not what it stands beside, and only
 the generator knows which way the road is. Everything else is derived on the
-renderer's side from `Building.variant`, which is what that field is for. Both
-feel baselines confirm the sim was not touched.
+renderer's side from `Building.variant`, which is what that field is for.
 
 What is left, roughly in the order it would show:
 
@@ -263,26 +256,15 @@ What is left, roughly in the order it would show:
 
 ## Known problems, not papered over
 
-- **The city and the track have separate tuning, and mixing them causes bugs.**
-  `CITY_HEAT_RISE`, `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` exist because the
-  track's equivalents mean different things - one is a trail distance along a
-  road, the other a distance between two points. Reusing them caused three
-  separate bugs, one of which culled every cop the step after it spawned. Check
-  which world a constant belongs to before reaching for it.
-- **The city is still behind a query string.** `/` is the track game; the city
-  is `?renderer=drive`. Everything now works in both, and the ladder is one
-  ladder across the two, which is the last thing that had to be true before
-  the default can move.
-- **Only the city sim has cars, parts or events.** `world.ts` still drives the
-  one fixed car on the one fixed track, because it retires with the track: a
-  car found in the city changes nothing about a race run on `/`. The Rep total
-  and the ladder *are* shared, which is what makes both halves playable, and
-  is also why `world.ts` awards Rep at all.
-- **The two sims disagree about what a race win means.** In the city, winning
-  a race starts the chase for the rival's car and only *that* moves the ladder
-  (#66); on the track a win still ranks you up on its own. The track is being
-  retired, so this is a difference to close by deleting the track rather than
-  by adding a chase to it.
+- **The ladder is unmeasured.** See #166 above. It is the one regression #165
+  shipped on purpose, and the reason `RIVAL_DIFF_SPEED_FRAC` carries a comment
+  saying where its value came from.
+- **The `CITY_` prefix is history, not a distinction.** `CITY_HEAT_RISE`,
+  `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` are named that way because the track
+  had different constants meaning different things, and reusing one caused three
+  separate bugs - one of which culled every cop the step after it spawned. There
+  is only one world now, so the prefix is a scar. Leave it: renaming it touches
+  every pursuit file for nothing.
 - **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
   siren and a radio squelch - but there is still no rotor for the helicopter,
   nothing for a takedown or a spike strip, and no music.
@@ -304,12 +286,12 @@ What is left, roughly in the order it would show:
   teleported onto its road on the next step, because the pursuit re-derives
   every cop's place from the graph.
 - **The city feel baseline is a driver's, not a player's.** `npm run citylap`
-  now gets a reference driver round all six routes, and the average-speed
-  column is the first real measurement of how fast Kestrel Bay can be driven.
-  Read it as a floor rather than a target: the driver follows the centreline
-  at a margin under the grip limit and never touches nitrous, so a player has
-  headroom it does not. Getting it there found five bugs, two in the city and
-  three in the driver, and the test suite passed through every one of them.
+  gets a reference driver round all six routes, and the average-speed column is
+  the only measurement of how fast Kestrel Bay can be driven. Read it as a floor
+  rather than a target: the driver follows the centreline at a margin under the
+  grip limit and never touches nitrous, so a player has headroom it does not.
+  Getting it there found five bugs, two in the city and three in the driver, and
+  the test suite passed through every one of them.
 - **One speed run may not be winnable at the top difficulty.** The speed-run
   target is `SPEEDRUN_TARGET` 0.38 rising to 0.52 with difficulty, and the
   reference driver holds 39%, 57% and 62% on the three speed runs. Foundry
@@ -327,31 +309,19 @@ What is left, roughly in the order it would show:
   nothing and corner density barely registers. The spread in the lap table is
   the *driver*, not the routes. If the targets should vary per route, the
   number to vary them by has to come from somewhere other than the geometry.
-- **The rival ladder is tuned against the probe's reference driver** and will
-  need retuning whenever the car changes. Expect it rather than treating it as a
-  regression. `npm run feel` has now been wrong a third time, for a third
-  reason: #91 gated races on Rep and the probe did not pay, so every race after
-  the first silently never started and the table read as ten losses by 33
-  seconds. If a number looks strange, suspect the probe.
-- **Beating the boss needs nitrous**, which is the property #105 restored: a
-  reference lap wins nine of the ten clean and loses to rank one, and wins all
-  ten with the boost. If a change to the car moves that, it has moved the
-  ladder.
 
 ## If you are picking this up cold
 
-Read `CLAUDE.md`, then ADR-0004 and ADR-0005. Open `?renderer=drive` and drive
+Read `CLAUDE.md`, then ADR-0004, ADR-0005 and ADR-0006. Open the game and drive
 for two minutes until the police escalate - that is most of the project in one
-go. Then `npm run city` for the map, and `&view=overpass` for the reason the
-renderer was rebuilt at all.
+go. Then `npm run city` for the map, and `?renderer=city&view=overpass` for the
+reason the renderer was rebuilt at all.
 
-Then read "Where the work is" above: five issues are open and none of them is
-a straightforward next task. Three are blocked on a decision only a person can
-make, one needs somebody in the driver's seat, and one is open-ended art. If
-you want the highest-value thing that is neither blocked nor a taste call, it is
-**moving the city out from behind the query string** - everything now works in
-both sims and the ladder already spans them, so what is left is deciding that
-`/` is Kestrel Bay and deleting the track.
+Then read "Where the work is" above. The highest-value thing that is neither
+blocked on a person nor a taste call is **#166, giving the ladder a probe
+again**: it is the one measurement the project used to have and lost, the
+pieces are all in `tools/`, and until it exists nobody can tell whether a change
+to the car has quietly made the boss unbeatable.
 
 Whatever you pick: keep behaviour in the sim and drawing in the renderer,
 because that split is the only reason this rebuild has been survivable, and keep
