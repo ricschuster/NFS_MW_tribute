@@ -8,6 +8,10 @@ import {
   FIELD_SPREAD,
   FIELD_WOBBLE,
   FIELD_LANE,
+  SPEEDRUN_TARGET,
+  SPEEDRUN_TARGET_PER_DIFFICULTY,
+  SPEEDRUN_SETTLE,
+  REFERENCE_TOP_SPEED,
 } from './constants';
 import { pointAt } from './city/routes';
 import type { CityRoute } from './city/types';
@@ -23,6 +27,12 @@ import { RIVALS, type Rival } from './rivals';
  * retire.
  *
  * Two things are worth knowing about how it works.
+ *
+ * There are two kinds of event and they differ only in how they are scored. A
+ * circuit is three laps against a field, won on position. A speed run is one
+ * lap alone, won on the average speed you held over it - which makes every
+ * moment spent slow cost something, where a circuit lets you claw a bad corner
+ * back on the next straight.
  *
  * The player is tracked by **checkpoints**, not by distance. A city has more
  * than one way round a corner, and a race scored on distance travelled is a
@@ -80,8 +90,12 @@ export interface Racer {
 export class CityRace {
   state: CityRaceState = 'idle';
   route: CityRoute | null = null;
-  /** Everyone else on the road. The first is the rival being challenged. */
+  /**
+   * Everyone else on the road. Empty in a speed run, which is driven alone.
+   */
   readonly field: RaceRival[] = [];
+  /** Whose challenge this is. Held separately, because a speed run has no field. */
+  challenge: Rival | null = null;
 
   countdown = 0;
   /** Laps completed. */
@@ -97,8 +111,8 @@ export class CityRace {
   /** True on the step a race finishes, so the world can pay for it once. */
   justFinished = false;
 
-  /** Seconds since the lights went. Drives the field's pace wobble. */
-  private elapsed = 0;
+  /** Seconds since the lights went. The clock a speed run is scored against. */
+  elapsed = 0;
 
   /** Where the next gate is, for the HUD to point at. Null outside a race. */
   get target(): { x: number; z: number } | null {
@@ -108,7 +122,7 @@ export class CityRace {
 
   /** The rival whose defeat moves the ladder: the quickest car in the field. */
   get challenger(): Rival | null {
-    return this.field[0]?.rival ?? null;
+    return this.challenge;
   }
 
   /** Where you are running, 1 for the lead. */
@@ -119,6 +133,28 @@ export class CityRace {
   /** How many cars are in the race, you included. */
   get runners(): number {
     return this.field.length + 1;
+  }
+
+  /** Is this a speed run rather than a circuit? */
+  get isSpeedRun(): boolean {
+    return this.route?.kind === 'speedrun';
+  }
+
+  /**
+   * The average speed held so far, as a fraction of the reference car's top
+   * speed. Held back for the first moment, where dividing by the clock gives
+   * a number that swings from nothing to everything and back.
+   */
+  get average(): number {
+    if (this.elapsed < SPEEDRUN_SETTLE) return 0;
+    return this.playerDist / this.elapsed / REFERENCE_TOP_SPEED;
+  }
+
+  /** The average a speed run has to beat. Zero outside one. */
+  get targetAverage(): number {
+    const challenge = this.challenger;
+    if (!this.isSpeedRun || !challenge) return 0;
+    return SPEEDRUN_TARGET + SPEEDRUN_TARGET_PER_DIFFICULTY * challenge.difficulty;
   }
 
   /** How far round one lap each gate is. */
@@ -140,7 +176,10 @@ export class CityRace {
     this.elapsed = 0;
 
     this.field.length = 0;
-    const grid = fieldFor(rival);
+    this.challenge = rival;
+    // A speed run is driven alone: it is a question about your own lap, and a
+    // field on the road would be answering a different one.
+    const grid = route.kind === 'speedrun' ? [] : fieldFor(rival);
     for (let i = 0; i < grid.length; i++) {
       this.field.push({
         rival: grid[i],
@@ -162,6 +201,7 @@ export class CityRace {
     this.state = 'idle';
     this.route = null;
     this.field.length = 0;
+    this.challenge = null;
     this.justFinished = false;
   }
 
@@ -182,17 +222,21 @@ export class CityRace {
       return;
     }
 
-    if (this.state !== 'racing' || this.field.length === 0) return;
+    if (this.state !== 'racing' || !this.challenge) return;
 
     this.elapsed += dt;
     this.advancePlayer(route, player);
     for (const car of this.field) this.advanceRival(route, car, dt, maxSpeed);
 
-    const target = route.length * route.laps;
-    // Over when you cross the line - your result is where you were standing -
-    // or when the whole field has, which is you finishing last.
-    if (this.playerDist >= target) this.finish(this.position === 1);
-    else if (this.field.every((car) => car.dist >= target)) this.finish(false);
+    const finishLine = route.length * route.laps;
+    if (this.playerDist >= finishLine) {
+      // A circuit is won on where you finished; a speed run on what you held.
+      this.finish(this.isSpeedRun ? this.average >= this.targetAverage : this.position === 1);
+      return;
+    }
+    // A circuit is over once the whole field has finished, which is you last.
+    // A speed run has nobody to lose to, so it runs until you finish it.
+    if (!this.isSpeedRun && this.field.every((car) => car.dist >= finishLine)) this.finish(false);
   }
 
   /** Gates passed, plus how far it is to the next one. */

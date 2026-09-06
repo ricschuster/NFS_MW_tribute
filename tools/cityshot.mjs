@@ -29,14 +29,14 @@ mkdirSync(OUT, { recursive: true });
 
 const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-  'helicopter', 'billboard', 'collection', 'streetfind', 'race',
+  'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
   : [
       'aerial', 'downtown', 'bridge', 'street', 'overpass',
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
-      'helicopter', 'billboard', 'collection', 'streetfind', 'race',
+      'helicopter', 'billboard', 'collection', 'streetfind', 'race', 'speedrun',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -411,15 +411,18 @@ for (const view of VIEWS) {
     await page.waitForTimeout(2600);
   }
 
-  if (view === 'race') {
+  if (view === 'race' || view === 'speedrun') {
     // Start a circuit and run a few seconds of it, so the shot has the lap
     // counter, the position, the arrow, the gate and the rival in it.
     await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
       timeout: 60000,
     });
+    await page.evaluate((which) => { globalThis.__shotView = which; }, view);
     await page.evaluate(() => {
       const { world } = globalThis.crosstown;
-      const route = world.city.routes[0];
+      const kind = globalThis.__shotView === 'speedrun' ? 'speedrun' : 'circuit';
+      const route = world.city.routes.find((r) => r.kind === kind);
+      if (!route) return;
       world.x = route.start.x;
       world.z = route.start.z;
       world.y = 0;
@@ -440,9 +443,12 @@ for (const view of VIEWS) {
     // Long enough to be up among the field rather than last off the line: the
     // shot is of a race, and a race is cars around you.
     await page.keyboard.down('ArrowUp');
-    await page.keyboard.down('Shift');
-    await page.waitForTimeout(4000);
-    await page.keyboard.up('Shift');
+    if (view === 'race') await page.keyboard.down('Shift');
+    // A circuit shot wants the pack around the car, which takes a while to
+    // catch. A speed run has nobody in it, so a short run is enough - and a
+    // long one ends against a building, which is a picture of a wall.
+    await page.waitForTimeout(view === 'race' ? 4000 : 2200);
+    if (view === 'race') await page.keyboard.up('Shift');
     await page.keyboard.up('ArrowUp');
     await page.waitForTimeout(400);
   }

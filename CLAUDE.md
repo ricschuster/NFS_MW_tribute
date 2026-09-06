@@ -191,7 +191,8 @@ hypercar reads faster rather than reading 320 km/h like everything else; and
 `CityWorld.drive()` applies the profile once instead of multiplying it into
 eight expressions in the hot loop.
 
-**A race is checkpoints for you and a distance for the field** (issues #70, #71).
+**A race is checkpoints for you and a distance for the field** (issues #70,
+#71, #72).
 `CityRace` scores the player on gates passed in order, because a city has more
 than one way round a corner and a race scored on distance travelled is a race
 won by driving in circles. The field is six positions along the route
@@ -199,7 +200,11 @@ polyline, exactly as the track rival is - not cars navigating the graph,
 because a rival that could get lost would have whatever difficulty the junction
 picker happened to produce, and the ladder is tuned against a number. The rival
 being challenged is always the quickest car in the field, so winning the race
-and beating them are the same thing. Routes come out of
+and beating them are the same thing. A speed run is the same machinery with a
+different scoring rule and no field: one lap, won on the average speed held
+over it, measured on *route progress* rather than distance travelled - or the
+way to a good average would be to drive in a straight line away from the
+route. Routes come out of
 `city/routes.ts`: four corner junctions joined by Dijkstra over the surface
 graph, so every metre of a lap is a road that exists.
 

@@ -210,9 +210,18 @@ export interface StreetFind {
  * the line to drive; `checkpoints` are the gates you have to pass through in
  * order, which is what stops a lap being a straight line between two corners.
  */
+/**
+ * What kind of event a route hosts (#70, #72).
+ *
+ * A circuit is three laps against a field, won on position. A speed run is one
+ * lap alone, won on the average speed you held over it.
+ */
+export type RouteKind = 'circuit' | 'speedrun';
+
 export interface CityRoute {
   id: number;
   name: string;
+  kind: RouteKind;
   points: Vec2[];
   checkpoints: Vec2[];
   /** Where the lap starts and finishes. */

@@ -569,18 +569,26 @@ export class Hud {
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 22px system-ui, sans-serif';
-      ctx.fillText(route.name.toUpperCase(), WIDTH / 2, HEIGHT - 150);
+      ctx.fillText(
+        `${route.name.toUpperCase()}   ${route.kind === 'speedrun' ? 'SPEED RUN' : 'CIRCUIT'}`,
+        WIDTH / 2,
+        HEIGHT - 150,
+      );
       ctx.font = '600 15px system-ui, sans-serif';
       ctx.fillStyle = !rival
         ? '#5adc82'
         : world.challengeReady
           ? 'rgba(255, 255, 255, 0.8)'
           : '#ffd166';
+      const invite =
+        route.kind === 'speedrun'
+          ? `ENTER  -  one lap, on average speed, for #${rival?.rank} ${rival?.name}`
+          : `ENTER  -  ${route.laps} laps against #${rival?.rank} ${rival?.name}`;
       ctx.fillText(
         !rival
           ? 'RIVALS CLEARED'
           : world.challengeReady
-            ? `ENTER  -  ${route.laps} laps against #${rival.rank} ${rival.name}`
+            ? invite
             : `#${rival.rank} ${rival.name} - ${world.repToNext.toLocaleString('en-US')} REP to go`,
         WIDTH / 2,
         HEIGHT - 126,
@@ -614,12 +622,29 @@ export class Hud {
       ctx.fillStyle = race.won ? '#5adc82' : '#ff5a5a';
       ctx.font = '800 68px system-ui, sans-serif';
       ctx.fillText(race.won ? 'YOU WIN' : 'YOU LOSE', WIDTH / 2, HEIGHT / 2);
+      if (race.isSpeedRun) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = '500 20px system-ui, sans-serif';
+        ctx.fillText(
+          `${Math.round(race.average * DISPLAY_MAX_KMH)} km/h average, ` +
+            `target ${Math.round(race.targetAverage * DISPLAY_MAX_KMH)}`,
+          WIDTH / 2,
+          HEIGHT / 2 + 36,
+        );
+      }
       return;
     }
 
-    // Racing: laps, position, and where the next gate is.
+    // Racing. A speed run is scored on one number, so it gets the whole
+    // middle of the screen: it is the game in that mode, not a readout.
     const route = race.route;
     if (!route) return;
+
+    if (race.isSpeedRun) {
+      this.speedRun(world);
+      this.arrow(world);
+      return;
+    }
 
     ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
@@ -641,6 +666,47 @@ export class Hud {
   }
 
   /**
+   * The running average, and the one it has to beat (#72).
+   *
+   * Big, because it is the whole game in this mode. A speed run scored on a
+   * number the player cannot see is a race with the result hidden until the
+   * end, and the tension of it is watching a bad corner cost you.
+   */
+  private speedRun(world: CityWorld): void {
+    const { ctx } = this;
+    const race = world.race;
+    const average = Math.round(race.average * DISPLAY_MAX_KMH);
+    const target = Math.round(race.targetAverage * DISPLAY_MAX_KMH);
+    const beating = race.average >= race.targetAverage;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('AVERAGE', WIDTH / 2, 34);
+
+    ctx.fillStyle = beating ? '#5adc82' : '#ff9f45';
+    ctx.font = '700 54px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillText(String(average), WIDTH / 2, 82);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '500 14px system-ui, sans-serif';
+    ctx.fillText(`target ${target} km/h`, WIDTH / 2, 104);
+
+    // A bar, so how far off it you are is readable without doing arithmetic
+    // at two hundred kilometres an hour.
+    const width = 260;
+    const x = WIDTH / 2 - width / 2;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillRect(x, 114, width, 6);
+    ctx.fillStyle = beating ? '#5adc82' : '#ff9f45';
+    const filled = Math.max(0, Math.min(1.3, race.average / Math.max(0.01, race.targetAverage)));
+    ctx.fillRect(x, 114, (width * filled) / 1.3, 6);
+    // Where the target sits on it.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x + width / 1.3 - 1, 111, 2, 12);
+  }
+
+  /**
    * An arrow at the top of the screen pointing at the next gate.
    *
    * Relative to where the car is pointing, not to north: the question it
@@ -658,7 +724,7 @@ export class Hud {
     const gap = Math.hypot(dx, dz);
 
     ctx.save();
-    ctx.translate(WIDTH / 2, 100);
+    ctx.translate(WIDTH / 2, world.race.isSpeedRun ? 158 : 100);
     ctx.rotate(-bearing);
     ctx.beginPath();
     ctx.moveTo(0, -22);
@@ -742,7 +808,8 @@ export class Hud {
     // Where the events are. A circuit you have to stumble across is a circuit
     // nobody runs.
     for (const route of world.city.routes) {
-      ctx.strokeStyle = 'rgba(127, 227, 255, 0.35)';
+      ctx.strokeStyle =
+        route.kind === 'speedrun' ? 'rgba(255, 159, 69, 0.4)' : 'rgba(127, 227, 255, 0.35)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(px(route.points[0].x), py(route.points[0].z));
@@ -752,7 +819,7 @@ export class Hud {
 
       ctx.beginPath();
       ctx.arc(px(route.start.x), py(route.start.z), 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#7fe3ff';
+      ctx.fillStyle = route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff';
       ctx.fill();
     }
 

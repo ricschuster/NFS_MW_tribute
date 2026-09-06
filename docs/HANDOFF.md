@@ -45,14 +45,13 @@ Three things run off one deployment, and the query string picks between them.
 **There are two simulations, and that is deliberate.** `world.ts` is the track
 model the shipped game still runs on. `cityworld.ts` is the same car in the
 city. Traffic, police, collision, cameras, Rep, the ladder and circuit racing
-have all moved across. What is left before `world.ts` can retire is the other
-event types (#72 speed runs) and deciding that the city is the default rather
-than a query string.
+have all moved across. What is left before `world.ts` can retire is deciding
+that the city is the default rather than a query string.
 
 The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
 229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
 tunnel, 3 river crossings, 90 billboards, 25 speed cameras, 7 parked cars and
-6 circuits of 2.5 to 4 km.
+6 events of 2.5 to 4 km - three circuits and three speed runs.
 
 ## The decisions that shape everything
 
@@ -77,7 +76,7 @@ src/game/
   collectibles.ts what has been found: smashed billboards, clocked cameras
   cars.ts         the roster, as handling profiles against a reference car
   streetfinds.ts  which cars you have found, and which one you are driving
-  cityrace.ts     circuits: checkpoints, laps, and a field of six on the line
+  cityrace.ts     events: circuits against a field, speed runs against a number
   citytraffic.ts  ambient traffic, kept around the player
   citypolice.ts   the pursuit: six heat levels, cooldown, a search area,
                   roadblocks, spike strips, a helicopter, and Enforcers that
@@ -115,7 +114,7 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 303 unit tests + playtests
+npm run test       # 311 unit tests + playtests
 npm run feel       # measure driving feel on the track sim
 npm run city       # draw the generated city from above; --seed N for another
 npm run cityshot   # screenshot the 3D city and the driving views
@@ -166,10 +165,10 @@ driver was no longer a good driver. If a number looks strange, suspect the probe
 
 Done this session: #83 the generator, #84 geometry, #85 the elevated
 interstate, #113 the car in world space, #115 bends/density/freeways, #87
-traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70/#71
+traffic and police, #88 cameras, most of #89, and #58/#63/#94/#59/#61/#60/#62/#64/#91/#93/#67/#70/#71/#72
 from M5.
 
-**M5: Open-world systems - 10 open.** The pursuit is built: #58 (six heat
+**M5: Open-world systems - 9 open.** The pursuit is built: #58 (six heat
 levels), #63 (cooldown), #94 (takedowns), #59 (roadblocks), #61 (Enforcers),
 #60 (spike strips) and #62 (the helicopter). #64 gives all of it a currency
 and #91 gives the currency somewhere to go. #93 and #67 give free roam
@@ -177,8 +176,10 @@ something to do between pursuits, and #70 puts the ladder's races in the city.
 That is the framework the rest keys off. Natural next ones, in order of
 how much they use what already exists:
 
-- **#72 speed runs** - #70 built the race machinery and #71 filled the grid;
-  a speed run is a different scoring rule over the same routes.
+- **#66 claim a rival's car** - beat them, then wreck it. Both halves exist
+  now (#70 races, #94 takedowns); this joins them.
+- **#57 pursuit breakers** and **#92 ambushes** - both key off the pursuit as
+  it stands.
 - **#68 mods** - earned by placing in a car's events, which needs #70/#72.
 - **#66 claim a rival's car** - the roster from #67 is the thing it claims.
 - **#57 pursuit breakers** - the counterplay to spikes and the helicopter, and
@@ -236,7 +237,10 @@ before the pivot and both still live.
 - **There is no feel baseline for the city.** `npm run feel` only drives the
   track sim, which is a gap worth closing before tuning city driving by feel -
   and more so now that #67 has given the city eight cars whose handling nobody
-  has measured.
+  has measured. A throwaway probe written for #72 got a reference driver round
+  two of the six routes at 57% and 68% of top speed and stalled on the other
+  four; the speed-run targets (38% to 52%) are set under that. A driver that
+  can lap all six is the thing a city feel probe would need first.
 - **The rival ladder is tuned against the probe's reference driver** and will
   need retuning whenever the car changes. Expect it rather than treating it as a
   regression. `npm run feel` has now been wrong a third time, for a third

@@ -127,14 +127,20 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
   // makes both happen: a loop that has to go round the bay is enormous.
   if (length < ROUTE_MIN_LENGTH || length > ROUTE_MAX_LENGTH) return null;
 
+  // Alternating, so the six events are three of each and they are spread
+  // around the map rather than clustered by type.
+  const kind = id % 2 === 0 ? 'circuit' : 'speedrun';
   return {
     id,
     name: NAMES[id % NAMES.length],
+    kind,
     points,
     checkpoints: checkpointsAlong(points, length),
     start: points[0],
     length,
-    laps: ROUTE_LAPS,
+    // A speed run is one lap: it is scored on the average you held over the
+    // route, and three laps of that is the same question asked three times.
+    laps: kind === 'circuit' ? ROUTE_LAPS : 1,
   };
 }
 

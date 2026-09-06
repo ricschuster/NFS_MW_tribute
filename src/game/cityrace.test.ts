@@ -13,6 +13,9 @@ import {
   CITY_COUNTDOWN,
   REFERENCE_TOP_SPEED,
   SURFACE_REACH,
+  SPEEDRUN_TARGET,
+  SPEEDRUN_TARGET_PER_DIFFICULTY,
+  SPEEDRUN_SETTLE,
   FIELD_SIZE,
   FIELD_WOBBLE,
   RIVAL_BASE_SPEED_FRAC,
@@ -34,8 +37,16 @@ describe('the circuits', () => {
     for (const route of city.routes) {
       expect(route.length).toBeGreaterThanOrEqual(ROUTE_MIN_LENGTH);
       expect(route.length).toBeLessThanOrEqual(ROUTE_MAX_LENGTH);
-      expect(route.laps).toBe(ROUTE_LAPS);
+      // Three laps of a circuit; one of a speed run, which asks its question
+      // once (#72).
+      expect(route.laps).toBe(route.kind === 'circuit' ? ROUTE_LAPS : 1);
     }
+  });
+
+  it('hosts both kinds of event, spread around the map', () => {
+    const kinds = city.routes.map((r) => r.kind);
+    expect(kinds).toContain('circuit');
+    expect(kinds).toContain('speedrun');
   });
 
   it('puts the six events in six places', () => {
@@ -242,5 +253,129 @@ describe('racing one', () => {
       return race.field[0].dist;
     };
     expect(covers(RIVALS.length - 1)).toBeGreaterThan(covers(0));
+  });
+});
+
+/**
+ * Speed runs (#72).
+ *
+ * One lap, scored on the average speed held over it. What is worth asserting
+ * on is the scoring rule: that the average is what decides it, that it is
+ * measured on route progress rather than on distance travelled, and that a lap
+ * driven at the target pace passes while one driven slower does not.
+ */
+describe('a speed run', () => {
+  const route = city.routes.find((r) => r.kind === 'speedrun');
+  const rival = RIVALS[0];
+
+  /** Drive the line at a fixed fraction of the reference top speed. */
+  function lap(pace: number, seconds = 400) {
+    const race = new CityRace();
+    race.begin(route!, rival);
+    for (let t = 0; t < CITY_COUNTDOWN + 0.1; t += STEP) {
+      race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+    }
+
+    let along = 0;
+    for (let t = 0; t < seconds && race.state === 'racing'; t += STEP) {
+      along += REFERENCE_TOP_SPEED * pace * STEP;
+      race.update(STEP, pointAt(route!.points, route!.length, along), REFERENCE_TOP_SPEED);
+    }
+    return race;
+  }
+
+  it('exists in the city at all', () => {
+    expect(route).toBeDefined();
+    expect(route!.laps).toBe(1);
+  });
+
+  it('is driven alone', () => {
+    const race = new CityRace();
+    race.begin(route!, rival);
+    expect(race.field.length).toBe(0);
+    expect(race.challenger).toBe(rival);
+    expect(race.isSpeedRun).toBe(true);
+  });
+
+  it('asks for more of a harder rival', () => {
+    const easy = new CityRace();
+    easy.begin(route!, RIVALS[0]);
+    const hard = new CityRace();
+    hard.begin(route!, RIVALS[RIVALS.length - 1]);
+    expect(hard.targetAverage).toBeGreaterThan(easy.targetAverage);
+    expect(easy.targetAverage).toBeCloseTo(
+      SPEEDRUN_TARGET + SPEEDRUN_TARGET_PER_DIFFICULTY * RIVALS[0].difficulty,
+      5,
+    );
+  });
+
+  it('is won by holding the pace and lost by not', () => {
+    const quick = lap(0.7);
+    expect(quick.state).toBe('finished');
+    expect(quick.won).toBe(true);
+    expect(quick.average).toBeGreaterThanOrEqual(quick.targetAverage);
+
+    const slow = lap(0.25);
+    expect(slow.state).toBe('finished');
+    expect(slow.won).toBe(false);
+  });
+
+  // The clock keeps running whatever you are doing, which is the whole tension
+  // of the mode: time lost early cannot be clawed back by the rest of the lap,
+  // because it is an average and not a finishing time.
+  it('cannot be recovered by going fast after going slow', () => {
+    const boss = RIVALS[RIVALS.length - 1];
+    const stopped = (seconds: number) => {
+      const race = new CityRace();
+      race.begin(route!, boss);
+      for (let t = 0; t < CITY_COUNTDOWN + 0.1; t += STEP) {
+        race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+      }
+      for (let t = 0; t < seconds; t += STEP) race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+
+      let along = 0;
+      for (let t = 0; t < 400 && race.state === 'racing'; t += STEP) {
+        along += REFERENCE_TOP_SPEED * STEP;
+        race.update(STEP, pointAt(route!.points, route!.length, along), REFERENCE_TOP_SPEED);
+      }
+      return race;
+    };
+
+    // The same flat-out lap, driven after standing still for a while.
+    const clean = stopped(0);
+    const spoiled = stopped(45);
+    expect(clean.won).toBe(true);
+    expect(spoiled.state).toBe('finished');
+    expect(spoiled.average).toBeLessThan(clean.average);
+    expect(spoiled.won).toBe(false);
+  });
+
+  it('holds the average back until the clock means something', () => {
+    const race = new CityRace();
+    race.begin(route!, rival);
+    for (let t = 0; t < CITY_COUNTDOWN + 0.1; t += STEP) {
+      race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+    }
+    race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+    expect(race.elapsed).toBeLessThan(SPEEDRUN_SETTLE);
+    expect(race.average).toBe(0);
+  });
+
+  // Route progress, not distance travelled: otherwise the way to a good
+  // average is to drive in a straight line away from the route.
+  it('scores the route, not the odometer', () => {
+    const race = new CityRace();
+    race.begin(route!, rival);
+    for (let t = 0; t < CITY_COUNTDOWN + 0.1; t += STEP) {
+      race.update(STEP, route!.start, REFERENCE_TOP_SPEED);
+    }
+    for (let t = 0; t < 30; t += STEP) {
+      race.update(
+        STEP,
+        { x: route!.start.x + 200000 + t * 5000, z: route!.start.z + 200000 },
+        REFERENCE_TOP_SPEED,
+      );
+    }
+    expect(race.average).toBe(0);
   });
 });
