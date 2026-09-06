@@ -31,6 +31,7 @@ import {
   ENFORCER_TOUGHNESS,
   SPIKE_REACH,
   SHRED_TIME,
+  SHRED_REINFLATE,
   SHRED_SPEED_FRAC,
   SHRED_GRIP,
   REP_PURSUIT_PER_SECOND,
@@ -58,7 +59,7 @@ import {
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
-import { StreetFinds } from './streetfinds';
+import { Garage } from './garage';
 import { STARTER_CAR, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
@@ -194,7 +195,7 @@ export class CityWorld {
   /** Billboards and speed cameras: what is left to find (#93). */
   readonly collectibles: Collectibles;
   /** The cars parked around the city, and the one being driven (#67). */
-  readonly finds: StreetFinds;
+  readonly finds: Garage;
   /** The circuit being raced, if any (#70). */
   readonly race = new CityRace();
   /** The ambush being escaped, if any (#92). */
@@ -233,6 +234,8 @@ export class CityWorld {
   private grip = LATERAL_GRIP;
   private nitroSpeed = NITRO_SPEED_MULT;
   private nitroAccel = NITRO_ACCEL_MULT;
+  /** Tyres that come back up: a spike strip is a moment, not the pursuit (#68). */
+  private reinflating = false;
   private fallSpeed = 0;
 
   /** Everything that moves draws from here, so a scripted drive repeats exactly. */
@@ -257,7 +260,7 @@ export class CityWorld {
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
     this.collectibles = new Collectibles(city);
-    this.finds = new StreetFinds(city);
+    this.finds = new Garage(city);
     this.claim = new CityClaim(city, this.grid);
     // Carried over from whatever this player has already earned, the same way
     // the track sim loads its rival count. Safe where there is no storage.
@@ -265,6 +268,7 @@ export class CityWorld {
     this.rep.total = saved.rep;
     this.collectibles.load(saved.smashed, saved.clocked);
     this.finds.load(saved.cars, saved.car);
+    this.finds.loadParts(saved.parts, saved.fitted);
     this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
@@ -279,20 +283,25 @@ export class CityWorld {
    */
   drive(profile: CarProfile): void {
     this.car = profile;
-    this.maxSpeed = REFERENCE_TOP_SPEED * profile.topSpeed;
+    // Parts multiply the profile rather than replacing anything in it (#68),
+    // so a tuned Kestrel is still recognisably a Kestrel and the roster stays
+    // the thing that decides what a car is.
+    const mods = this.finds.effect(profile.id);
+    this.maxSpeed = REFERENCE_TOP_SPEED * profile.topSpeed * mods.topSpeed;
     // Acceleration is written against the reference top speed, not this car's:
     // otherwise a faster car would also be quicker to it for free, twice over.
-    this.accel = (REFERENCE_TOP_SPEED / 5) * profile.accel;
+    this.accel = (REFERENCE_TOP_SPEED / 5) * profile.accel * mods.accel;
     this.braking = -this.maxSpeed;
     this.decel = -this.maxSpeed / 5;
     this.offRoadDecel = -this.maxSpeed / 2;
     this.offRoadLimit = this.maxSpeed / 4;
     this.maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
-    this.grip = LATERAL_GRIP * profile.grip;
+    this.grip = LATERAL_GRIP * profile.grip * mods.grip;
     // Only the *excess* is scaled. `NITRO_SPEED_MULT` has to stay under 2 or
     // the car crosses more ground in a step than anything can react to.
-    this.nitroSpeed = 1 + (NITRO_SPEED_MULT - 1) * profile.nitro;
-    this.nitroAccel = 1 + (NITRO_ACCEL_MULT - 1) * profile.nitro;
+    this.nitroSpeed = 1 + (NITRO_SPEED_MULT - 1) * profile.nitro * mods.nitro;
+    this.nitroAccel = 1 + (NITRO_ACCEL_MULT - 1) * profile.nitro * mods.nitro;
+    this.reinflating = mods.reinflating;
   }
 
   /** Put the car on a surface street near the middle of the city, pointing along it. */
@@ -531,6 +540,9 @@ export class CityWorld {
    */
   private settleRace(): void {
     const rival = this.race.challenger;
+    // A part for a good result, in the car that got it (#68). Second counts:
+    // the point is to reward driving the car, not only winning in it.
+    if (this.race.won || this.race.position <= 2) this.finds.earn(this.car.id);
     if (this.race.won) {
       const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;
       this.rep.award('raceWin', 1, (REP_RACE_WIN + bonus) / REP_RACE_WIN);
@@ -685,6 +697,8 @@ export class CityWorld {
       clocked: [...this.collectibles.clocked],
       cars: [...this.finds.owned],
       car: this.car.id,
+      parts: this.finds.partsSave,
+      fitted: this.finds.fittedSave,
       beaten: this.beaten,
     });
   }
@@ -798,7 +812,7 @@ export class CityWorld {
       if (Math.abs(through) > SPIKE_REACH + Math.abs(this.speed) * STEP) continue;
       if (along < strip.from - CAR_RADIUS || along > strip.to + CAR_RADIUS) continue;
 
-      this.shredded = SHRED_TIME;
+      this.shredded = SHRED_TIME * (this.reinflating ? SHRED_REINFLATE : 1);
       this.police.shred(strip);
       return;
     }

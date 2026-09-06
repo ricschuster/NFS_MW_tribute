@@ -685,6 +685,14 @@ export const SHRED_TIME = 7;
 export const SHRED_SPEED_FRAC = 0.4;
 /** How much of the steering is left. */
 export const SHRED_GRIP = 0.55;
+/**
+ * How long a spike strip lasts on tyres that come back up (#68).
+ *
+ * A moment rather than the rest of the pursuit. That is the one mod that
+ * argues with the police instead of with the stopwatch, and a counter that
+ * only halved the penalty would not change the decision it is meant to.
+ */
+export const SHRED_REINFLATE = 0.18;
 
 /**
  * The police helicopter (#62).

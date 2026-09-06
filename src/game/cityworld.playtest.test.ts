@@ -2159,3 +2159,89 @@ describe('claiming a car', () => {
     expect(world.claim.state).toBe('idle');
   });
 });
+
+/**
+ * Mods (#68).
+ *
+ * The catalogue and the garage are tested next to them. These are about the
+ * wiring: that a part changes the car it is bolted to, that a good result in a
+ * car earns one, and that the tyres really do answer a spike strip.
+ */
+describe('parts on the car', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  it('changes the car it is bolted to', () => {
+    const plain = still();
+    const tuned = still();
+    tuned.finds.earn(tuned.car.id);
+    tuned.finds.toggle(tuned.car.id, 'block');
+    tuned.drive(tuned.car);
+
+    drive(plain, 2, press({ up: true }));
+    drive(tuned, 2, press({ up: true }));
+    expect(tuned.speed).toBeGreaterThan(plain.speed);
+  });
+
+  it('is earned by a good result in that car', () => {
+    const world = still();
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.y = 0;
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+
+    expect(world.finds.unlocked(world.car.id).length).toBe(0);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.finds.unlocked(world.car.id).length).toBe(1);
+  });
+
+  // The one part that argues with the police rather than with the stopwatch.
+  it('gives you tyres a spike strip barely touches', () => {
+    const shredded = (reinflating: boolean) => {
+      const world = still();
+      if (reinflating) {
+        for (let i = 0; i < 6; i++) world.finds.earn(world.car.id);
+        world.finds.toggle(world.car.id, 'reinflatables');
+        world.drive(world.car);
+      }
+      world.police.spikes.push({
+        road: world.onRoad!,
+        x: world.x,
+        z: world.z,
+        y: world.y,
+        ax: Math.cos(world.heading),
+        az: -Math.sin(world.heading),
+        from: -10 * M,
+        to: 10 * M,
+      });
+      world.speed = world.maxSpeed * 0.5;
+      world.step(STEP, NONE);
+      return world.shredded;
+    };
+
+    const ruined = shredded(false);
+    const survived = shredded(true);
+    expect(ruined).toBeGreaterThan(0);
+    expect(survived).toBeGreaterThan(0);
+    expect(survived).toBeLessThan(ruined * 0.4);
+  });
+
+  it('keeps the parts on the car that earned them', () => {
+    const world = still();
+    world.finds.claim('nightfall');
+    world.finds.earn('kestrel');
+    world.finds.toggle('kestrel', 'block');
+
+    expect(world.finds.effect('kestrel').accel).toBeGreaterThan(1);
+    world.drive(carById('nightfall'));
+    // The Nightfall is faster, but not because of the Kestrel's engine.
+    expect(world.finds.effect('nightfall').accel).toBe(1);
+  });
+});

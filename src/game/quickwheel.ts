@@ -13,12 +13,13 @@ import type { CityWorld } from './cityworld';
  * Entries are picked by *number*, not navigated to. Navigating needs a cursor,
  * a cursor needs direction keys, and the direction keys are busy driving.
  *
- * There is no mods branch. Mods are #68 and do not exist; a branch that opens
- * onto an apology is worse than a wheel with two things on it.
+ * The mods branch is per-car on purpose (#68): parts belong to the car that
+ * earned them, so what it lists is what is bolted or bolt-able to the one you
+ * are in right now.
  */
-export type WheelBranch = 'cars' | 'goto';
+export type WheelBranch = 'cars' | 'mods' | 'goto';
 
-const BRANCHES: WheelBranch[] = ['cars', 'goto'];
+const BRANCHES: WheelBranch[] = ['cars', 'mods', 'goto'];
 
 /** One thing you can pick. */
 export interface WheelEntry {
@@ -50,12 +51,15 @@ export class QuickWheel {
 
   /** What the branch is called, for the heading. */
   get title(): string {
-    return this.branch === 'cars' ? 'GARAGE' : 'GO TO';
+    if (this.branch === 'cars') return 'GARAGE';
+    if (this.branch === 'mods') return 'PARTS';
+    return 'GO TO';
   }
 
   /** What is on the current branch, at most `WHEEL_ENTRIES` of it. */
   entries(world: CityWorld): WheelEntry[] {
     if (this.branch === 'cars') return this.garage(world);
+    if (this.branch === 'mods') return this.parts(world);
     return this.places(world);
   }
 
@@ -67,6 +71,16 @@ export class QuickWheel {
 
     if (this.branch === 'cars') {
       world.drive(this.owned(world)[index]);
+      return true;
+    }
+
+    if (this.branch === 'mods') {
+      const mod = world.finds.unlocked(world.car.id)[index];
+      if (!mod) return false;
+      world.finds.toggle(world.car.id, mod.id);
+      // Re-applied straight away: a part you cannot feel until the next time
+      // you get into the car is a menu, not a Quick Wheel.
+      world.drive(world.car);
       return true;
     }
 
@@ -100,6 +114,32 @@ export class QuickWheel {
             : `SPD ${pct(car.topSpeed)}  ACC ${pct(car.accel)}  GRP ${pct(car.grip)}`,
         available: !busy && car.id !== world.car.id,
       }));
+  }
+
+  /**
+   * What is bolted to the car you are in, and what could be.
+   *
+   * Nothing at all until it has earned something, and the empty state says how
+   * to change that rather than just being empty.
+   */
+  private parts(world: CityWorld): WheelEntry[] {
+    const mods = world.finds.unlocked(world.car.id);
+    if (mods.length === 0) {
+      return [
+        {
+          label: 'Nothing yet',
+          detail: `finish top two in the ${world.car.name}`,
+          available: false,
+        },
+      ];
+    }
+
+    const busy = world.race.state !== 'idle' || world.claim.state !== 'idle';
+    return mods.slice(0, WHEEL_ENTRIES).map((mod) => ({
+      label: `${world.finds.isFitted(world.car.id, mod.id) ? '\u25cf' : '\u25cb'} ${mod.name}`,
+      detail: busy ? 'not during an event' : mod.detail,
+      available: !busy,
+    }));
   }
 
   /** Everywhere worth being pointed at, nearest first. */

@@ -41,8 +41,9 @@ stationary and already surrounded, with one job. The car takes damage and
 loses speed and grip with it; six drive-through workshops put it right without
 stopping, and doing that while the police are searching for you ends the
 search. Each of the ten ladder rivals is two fights: beat them in the race,
-then run them down and wreck the car to take it. The Quick Wheel changes car
-and sets a destination without ever stopping the world. The
+then run them down and wreck the car to take it. Finishing first or second in a car earns it a part - engine, tyres, gearing,
+aero, each one a trade - and the Quick Wheel changes car, fits parts and sets a
+destination without ever stopping the world. The
 map on **Tab** shows the events and everything left to find. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck

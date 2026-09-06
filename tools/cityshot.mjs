@@ -542,9 +542,20 @@ for (const view of VIEWS) {
       for (const id of ['kite', 'verso', 'ridgeback', 'hatchling', 'surge', 'nightfall']) {
         world.finds.claim(id);
       }
+      // A few parts earned and a couple bolted on, so the parts branch has
+      // both states in it (#68).
+      for (let i = 0; i < 5; i++) world.finds.earn(world.car.id);
+      world.finds.toggle(world.car.id, 'block');
+      world.finds.toggle(world.car.id, 'track-tyres');
+      world.drive(world.car);
     });
     await page.keyboard.down('q');
-    await page.waitForTimeout(1400);
+    await page.waitForTimeout(1000);
+    // On to the parts branch, which is the new one.
+    await page.keyboard.down('e');
+    await page.waitForTimeout(500);
+    await page.keyboard.up('e');
+    await page.waitForTimeout(900);
   }
 
   if (view === 'pursuit') {

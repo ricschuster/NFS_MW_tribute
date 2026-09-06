@@ -16,6 +16,8 @@ describe('the Quick Wheel', () => {
   it('cycles round its branches', () => {
     const wheel = new QuickWheel();
     wheel.cycle();
+    expect(wheel.branch).toBe('mods');
+    wheel.cycle();
     expect(wheel.branch).toBe('goto');
     wheel.cycle();
     expect(wheel.branch).toBe('cars');
@@ -74,6 +76,7 @@ describe('the Quick Wheel', () => {
     const w = world();
     const wheel = new QuickWheel();
     wheel.cycle();
+    wheel.cycle();
 
     const entries = wheel.entries(w);
     expect(entries.length).toBeGreaterThan(0);
@@ -86,6 +89,7 @@ describe('the Quick Wheel', () => {
   it('points you at a place rather than putting you there', () => {
     const w = world();
     const wheel = new QuickWheel();
+    wheel.cycle();
     wheel.cycle();
     const was = { x: w.x, z: w.z };
 

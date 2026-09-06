@@ -18,6 +18,9 @@ export interface Progress {
   /** Ids of the cars found so far, and the one being driven (#67). */
   cars: string[];
   car: string;
+  /** Parts earned per car, and the ones fitted to each (#68). */
+  parts: [string, string[]][];
+  fitted: [string, string[]][];
 }
 
 /** Load progress from localStorage; returns a fresh start if unavailable. */
@@ -43,13 +46,29 @@ export function loadProgress(): Progress {
           ? parsed.cars.filter((id): id is string => typeof id === 'string')
           : [];
         const car = typeof parsed.car === 'string' ? parsed.car : '';
-        return { beaten: Math.floor(parsed.beaten), rep, smashed, clocked, cars, car };
+        const perCar = (rows: unknown): [string, string[]][] =>
+          Array.isArray(rows)
+            ? rows.filter(
+                (row): row is [string, string[]] =>
+                  Array.isArray(row) && typeof row[0] === 'string' && Array.isArray(row[1]),
+              )
+            : [];
+        return {
+          beaten: Math.floor(parsed.beaten),
+          rep,
+          smashed,
+          clocked,
+          cars,
+          car,
+          parts: perCar(parsed.parts),
+          fitted: perCar(parsed.fitted),
+        };
       }
     }
   } catch {
     // no localStorage (e.g. tests / SSR) or malformed data — start fresh
   }
-  return { beaten: 0, rep: 0, smashed: [], clocked: [], cars: [], car: '' };
+  return { beaten: 0, rep: 0, smashed: [], clocked: [], cars: [], car: '', parts: [], fitted: [] };
 }
 
 /** Persist progress; a no-op where localStorage is unavailable. */

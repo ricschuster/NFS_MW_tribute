@@ -11,6 +11,8 @@ describe('progress persistence', () => {
       clocked: [],
       cars: [],
       car: '',
+      parts: [],
+      fitted: [],
     });
   });
 
@@ -23,6 +25,8 @@ describe('progress persistence', () => {
         clocked: [[4, 0.8]],
         cars: ['kestrel'],
         car: 'kestrel',
+        parts: [['kestrel', ['block']]],
+        fitted: [['kestrel', ['block']]],
       }),
     ).not.toThrow();
   });
