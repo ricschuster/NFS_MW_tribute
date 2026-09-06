@@ -7,6 +7,8 @@ import {
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
   DAMAGE_FREE,
+  CLAIM_LOSE_RANGE,
+  UNITS_PER_METRE,
   REP_POPUP_TIME,
   COLLECTIBLE_HINT_RANGE,
   REFERENCE_TOP_SPEED,
@@ -605,6 +607,11 @@ export class Hud {
     const race = world.race;
     ctx.textAlign = 'center';
 
+    if (world.claim.state !== 'idle') {
+      this.claim(world);
+      return;
+    }
+
     if (race.state === 'idle' && world.ambush.state !== 'idle') {
       this.ambush(world);
       return;
@@ -722,6 +729,64 @@ export class Hud {
     ctx.fillText(`${ORDINALS[place] ?? place}/${race.runners}`, WIDTH / 2 + 70, 42);
 
     this.arrow(world);
+  }
+
+  /**
+   * Running a rival down for their car (#66).
+   *
+   * Two numbers and a bar: how long you have, how far off they are, and how
+   * close the car is to giving up. The bar is the one that matters - the whole
+   * second half is "hit them again", and a fight with no visible progress is a
+   * fight nobody believes is going anywhere.
+   */
+  private claim(world: CityWorld): void {
+    const { ctx } = this;
+    const claim = world.claim;
+    ctx.textAlign = 'center';
+
+    if (claim.state !== 'running') {
+      const took = claim.state === 'won';
+      ctx.fillStyle = took ? '#5adc82' : '#ff5a5a';
+      ctx.font = '800 60px system-ui, sans-serif';
+      ctx.fillText(took ? 'CAR CLAIMED' : 'THEY GOT AWAY', WIDTH / 2, HEIGHT / 2 - 40);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '500 20px system-ui, sans-serif';
+      ctx.fillText(
+        took
+          ? `${claim.rival?.car ?? 'their car'} is yours`
+          : `beat ${claim.rival?.name ?? 'them'} again`,
+        WIDTH / 2,
+        HEIGHT / 2 - 6,
+      );
+      return;
+    }
+
+    const runner = claim.runner;
+    ctx.fillStyle = '#ffd166';
+    ctx.font = '700 20px system-ui, sans-serif';
+    ctx.fillText(
+      `WRECK ${claim.rival?.name.toUpperCase() ?? 'THEM'}`,
+      WIDTH / 2,
+      36,
+    );
+
+    const width = 260;
+    const x = WIDTH / 2 - width / 2;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillRect(x, 48, width, 8);
+    ctx.fillStyle = '#ff5a45';
+    ctx.fillRect(x, 48, width * claim.damage, 8);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '600 13px system-ui, sans-serif';
+    const gap = runner ? Math.hypot(runner.x - world.x, runner.z - world.z) : 0;
+    const losing = gap > CLAIM_LOSE_RANGE;
+    ctx.fillText(
+      `${Math.round(claim.left)}s   ·   ${Math.round(gap / UNITS_PER_METRE)} m` +
+        `${losing ? '   ·   LOSING THEM' : ''}`,
+      WIDTH / 2,
+      74,
+    );
   }
 
   /**

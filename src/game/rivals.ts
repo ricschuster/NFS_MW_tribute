@@ -28,6 +28,14 @@ export interface Rival {
   rep: number;
   /** How they drive, in a line. Shown when the challenge is offered. */
   character: string;
+  /**
+   * The `CarProfile` they drive, and the one you take off them (#66).
+   *
+   * `car` above is the label; this is the thing with numbers in it. Two fields
+   * rather than one because the label is what a rival is *known* for and the
+   * profile is what the car does, and the ladder screen wants the first.
+   */
+  carId: string;
 }
 
 export const RIVALS: Rival[] = [
@@ -39,6 +47,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.15,
     rep: 0,
     character: 'Quick off the line and nowhere near quick enough after it.',
+    carId: 'hatchling',
   },
   {
     rank: 9,
@@ -48,6 +57,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.24,
     rep: 2000,
     character: 'Brakes late, apologises never.',
+    carId: 'emberline',
   },
   {
     rank: 8,
@@ -57,6 +67,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.33,
     rep: 5000,
     character: 'Clean, tidy, and will not put a wheel wrong all night.',
+    carId: 'corona',
   },
   {
     rank: 7,
@@ -66,6 +77,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.42,
     rep: 9000,
     character: 'Drives the whole road, yours included.',
+    carId: 'wideboy',
   },
   {
     rank: 6,
@@ -75,6 +87,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.51,
     rep: 14000,
     character: 'Patient. Sits on your bumper for a mile and then goes.',
+    carId: 'castling',
   },
   {
     rank: 5,
@@ -84,6 +97,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.6,
     rep: 20000,
     character: 'All boost, all the time, and it usually works.',
+    carId: 'surge',
   },
   {
     rank: 4,
@@ -93,6 +107,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.69,
     rep: 28000,
     character: 'Something unfinished with far too much power in it.',
+    carId: 'arcline',
   },
   {
     rank: 3,
@@ -102,6 +117,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.78,
     rep: 38000,
     character: 'No lights, no plates, no interest in talking about it.',
+    carId: 'obsidian',
   },
   {
     rank: 2,
@@ -111,6 +127,7 @@ export const RIVALS: Rival[] = [
     difficulty: 0.89,
     rep: 50000,
     character: 'Never seen twice on the same street. Never once caught.',
+    carId: 'apparition',
   },
   {
     rank: 1,
@@ -120,6 +137,7 @@ export const RIVALS: Rival[] = [
     difficulty: 1.0,
     rep: 65000,
     character: 'Runs Kestrel Bay after dark, and has not been beaten in it.',
+    carId: 'nightfall',
   },
 ];
 

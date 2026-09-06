@@ -54,6 +54,7 @@ import {
   type CopKind,
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
+import { RIVALS } from './rivals';
 import type { InputState } from './world';
 import type { Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
@@ -1559,7 +1560,7 @@ describe('street finds', () => {
     const world = still();
     expect(world.car).toBe(STARTER_CAR);
     expect(world.finds.owned.size).toBe(1);
-    expect(world.finds.waiting.length).toBe(CARS.length - 1);
+    expect(world.finds.waiting.length).toBe(CARS.filter((c) => c.source === 'street').length);
   });
 
   it('hands you the car you drive into, straight away', () => {
@@ -1735,7 +1736,9 @@ describe('circuits', () => {
     expect(world.race.state).toBe('idle');
   });
 
-  it('moves the same ladder the track does when it is won', () => {
+  // Winning the race is the first half (#66): it pays, and it starts the
+  // chase for the car. The ladder does not move until that chase is won.
+  it('pays for a win and sends the rival running', () => {
     const world = still();
     const route = atTheLine(world);
     world.step(STEP, press({ confirm: true }));
@@ -1755,8 +1758,9 @@ describe('circuits', () => {
 
     expect(world.race.state).toBe('finished');
     expect(world.race.won).toBe(true);
-    expect(world.beaten).toBe(before + 1);
     expect(world.rep.recent.some((a) => a.reason === 'raceWin')).toBe(true);
+    expect(world.claim.state).toBe('running');
+    expect(world.beaten).toBe(before);
   });
 });
 
@@ -2046,5 +2050,112 @@ describe('drive-through repair', () => {
 
     expect(world.police.state).toBe('pursuit');
     expect(world.damage).toBe(0);
+  });
+});
+
+/**
+ * Claiming a rival's car (#66).
+ *
+ * The chase itself is tested next to it. These are about what the two halves
+ * do to each other: that winning a race starts one, that the ladder waits for
+ * it, and that taking the car is what moves both.
+ */
+describe('claiming a car', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /** Win a race by teleporting round its gates, and hand back the world. */
+  function afterWinning(): CityWorld {
+    const world = still();
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.y = 0;
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    return world;
+  }
+
+  it('sends them running the moment the race is won', () => {
+    const world = afterWinning();
+    expect(world.claim.state).toBe('running');
+    expect(world.claim.rival).toBe(RIVALS[0]);
+  });
+
+  // Winning the race alone gets you nothing, which is the whole point of the
+  // second half existing.
+  it('does not move the ladder on the race alone', () => {
+    const world = afterWinning();
+    expect(world.beaten).toBe(0);
+    expect(world.finds.owned.has(RIVALS[0].carId)).toBe(false);
+  });
+
+  it('brings the police out for both of you', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.y = 0;
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.police.heat).toBeGreaterThan(0.3);
+  });
+
+  it('moves the ladder and hands over the car when they are wrecked', () => {
+    const world = afterWinning();
+    expect(world.claim.state).toBe('running');
+
+    // Ridden on the bumper at closing speed until the car gives.
+    for (let t = 0; t < 60 && world.claim.state === 'running'; t += STEP) {
+      const runner = world.claim.runner!;
+      world.x = runner.x - Math.sin(runner.heading) * CAR_RADIUS;
+      world.z = runner.z - Math.cos(runner.heading) * CAR_RADIUS;
+      world.y = runner.y;
+      world.heading = runner.heading;
+      world.speed = world.maxSpeed;
+      world.step(STEP, NONE);
+    }
+
+    expect(world.claim.state).toBe('won');
+    expect(world.beaten).toBe(1);
+    expect(world.finds.owned.has(RIVALS[0].carId)).toBe(true);
+    expect(world.rep.recent.some((a) => a.reason === 'claim')).toBe(true);
+  });
+
+  // Added to the garage but not driven away in: being teleported into a
+  // different car mid-pursuit, having just wrecked somebody, would be absurd.
+  it('does not put you in it there and then', () => {
+    const world = afterWinning();
+    for (let t = 0; t < 60 && world.claim.state === 'running'; t += STEP) {
+      const runner = world.claim.runner!;
+      world.x = runner.x - Math.sin(runner.heading) * CAR_RADIUS;
+      world.z = runner.z - Math.cos(runner.heading) * CAR_RADIUS;
+      world.y = runner.y;
+      world.heading = runner.heading;
+      world.speed = world.maxSpeed;
+      world.step(STEP, NONE);
+    }
+    expect(world.claim.state).toBe('won');
+    expect(world.car.id).toBe(STARTER_CAR.id);
+  });
+
+  it('is given up on if you are busted out of it', () => {
+    const world = afterWinning();
+    world.busted = true;
+    drive(world, 5, NONE);
+    expect(world.claim.state).toBe('idle');
   });
 });

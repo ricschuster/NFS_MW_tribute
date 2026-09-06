@@ -39,7 +39,8 @@ the average speed you held over it, unlocked by Rep. Five ambushes drop you
 stationary and already surrounded, with one job. The car takes damage and
 loses speed and grip with it; six drive-through workshops put it right without
 stopping, and doing that while the police are searching for you ends the
-search. The
+search. Each of the ten ladder rivals is two fights: beat them in the race,
+then run them down and wreck the car to take it. The
 map on **Tab** shows the events and everything left to find. The camera opens on a pass around
 the car, chases it with a field of view that widens with speed, and cuts away
 when you hit something. Ram a cop hard enough and squarely enough and you wreck

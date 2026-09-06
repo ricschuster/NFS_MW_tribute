@@ -54,10 +54,16 @@ describe('the roster', () => {
 describe('where they are parked', () => {
   const city = kestrelBay();
 
-  it('parks every car but the one you start in', () => {
-    expect(city.finds.length).toBe(CARS.length - 1);
+  it('parks every car that is meant to be found, and no others', () => {
+    const street = CARS.filter((car) => car.source === 'street');
+    expect(city.finds.length).toBe(street.length);
     expect(city.finds.some((f) => f.car === STARTER_CAR.id)).toBe(false);
     expect(new Set(city.finds.map((f) => f.car)).size).toBe(city.finds.length);
+    // The ladder's cars are taken off the rival driving them (#66); one left
+    // in a lot would be one given away.
+    for (const find of city.finds) {
+      expect(carById(find.car).source).toBe('street');
+    }
   });
 
   it('spreads them out, so finding one is a drive', () => {
