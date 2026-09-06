@@ -243,6 +243,21 @@ export interface AmbushSpot {
   level: number;
 }
 
+/**
+ * A drive-through repair shop (#95).
+ *
+ * A position on a road and nothing else. It has to be something you go
+ * *through* rather than something you stop at: a repair you have to park for
+ * is housekeeping, and a repair you take at a hundred and eighty during a
+ * pursuit is a decision.
+ */
+export interface RepairShop {
+  at: Vec2;
+  /** Facing, along the road it sits beside. */
+  angle: number;
+  y: number;
+}
+
 /** A city block: the land between the roads, for #84 to put buildings on. */
 export interface CityBlock {
   bounds: Rect;
@@ -282,4 +297,5 @@ export interface City {
   finds: StreetFind[];
   routes: CityRoute[];
   ambushes: AmbushSpot[];
+  repairs: RepairShop[];
 }

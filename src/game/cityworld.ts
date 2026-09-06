@@ -45,6 +45,15 @@ import {
   AMBUSH_RANGE,
   AMBUSH_CARS,
   AMBUSH_RING,
+  DAMAGE_PER_WALL,
+  DAMAGE_SHARE,
+  DAMAGE_ROADBLOCK,
+  DAMAGE_FALL,
+  DAMAGE_SPEED_LOSS,
+  DAMAGE_GRIP_LOSS,
+  DAMAGE_FREE,
+  REPAIR_RANGE,
+  REPAIR_FLASH,
 } from './constants';
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
@@ -168,6 +177,18 @@ export class CityWorld {
   readonly rep = new RepLedger();
   /** The car being driven. Handling comes from its profile (#67). */
   car: CarProfile = STARTER_CAR;
+
+  /**
+   * How beaten up the car is, 0..1 (#95).
+   *
+   * It never ends the game: being unable to drive is a bust with extra steps.
+   * What it does is take the top speed and the grip with it, so a long pursuit
+   * gets harder as it goes rather than being the same pursuit for as long as
+   * you can stand it.
+   */
+  damage = 0;
+  /** Seconds left on the REPAIRED banner. */
+  repairFlash = 0;
   /** Billboards and speed cameras: what is left to find (#93). */
   readonly collectibles: Collectibles;
   /** The cars parked around the city, and the one being driven (#67). */
@@ -340,6 +361,7 @@ export class CityWorld {
     this.escapedFlash = Math.max(0, this.escapedFlash - dt);
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
+    this.repairFlash = Math.max(0, this.repairFlash - dt);
     this.rep.step(dt);
     // Before the BUSTED early return, because being busted is one of the two
     // ways an ambush ends and the frozen world still has to notice it.
@@ -380,8 +402,11 @@ export class CityWorld {
     // travelling at v costs v*w of lateral acceleration, so the faster the car
     // goes the wider it turns. Unchanged from the track model on purpose.
     const authority =
-      Math.min(TURN_RATE, this.grip / Math.max(this.maxSpeed * 0.05, Math.abs(this.speed))) *
-      (this.shredded > 0 ? SHRED_GRIP : 1);
+      Math.min(
+        TURN_RATE,
+        (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS)) /
+          Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)),
+      ) * (this.shredded > 0 ? SHRED_GRIP : 1);
 
     const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
     const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15;
@@ -415,7 +440,8 @@ export class CityWorld {
     // Shredded tyres cap the top speed under everything, nitrous included:
     // lighting the boost on four ruined tyres does not make them work.
     const topSpeed = Math.min(
-      boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed,
+      (boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed) *
+        (1 - this.hurt * DAMAGE_SPEED_LOSS),
       this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
     );
     if (this.speed > topSpeed) {
@@ -506,6 +532,7 @@ export class CityWorld {
    * takedown knows it is a takedown and this does not.
    */
   private earn(dt: number): void {
+    this.repairs();
     this.nearMisses();
     this.collectibles.update(
       dt,
@@ -555,6 +582,44 @@ export class CityWorld {
       if (gap > REP_NEAR_MISS_RANGE || gap < CAR_RADIUS * 2.2) continue;
       this.grazed.add(car);
       this.rep.award('nearMiss', this.level);
+    }
+  }
+
+  /**
+   * How much of the damage is actually costing you anything.
+   *
+   * The first fifth is cosmetic: a scraped car should still drive like a car,
+   * and a model where the very first shunt makes the car worse turns every
+   * pursuit into a slow spiral from the opening contact.
+   */
+  private get hurt(): number {
+    return Math.max(0, (this.damage - DAMAGE_FREE) / (1 - DAMAGE_FREE));
+  }
+
+  /** Take some, and never more than a whole car's worth. */
+  private takeDamage(amount: number): void {
+    this.damage = Math.max(0, Math.min(1, this.damage + amount));
+  }
+
+  /**
+   * Drive through a repair shop (#95).
+   *
+   * No menu and no stopping. Doing it during a *search* also ends the search:
+   * a car that goes in beaten up and comes out straight is not the car they
+   * are looking for. It does nothing while they still have eyes on you, which
+   * is what makes it a decision about when to take the run rather than a
+   * button that cancels the pursuit.
+   */
+  private repairs(): void {
+    for (const shop of this.city.repairs) {
+      if (Math.abs(shop.y - this.y) > CAR_RADIUS * 4) continue;
+      if (Math.hypot(shop.at.x - this.x, shop.at.z - this.z) > REPAIR_RANGE) continue;
+      if (this.damage === 0 && this.police.state !== 'cooldown') return;
+
+      this.damage = 0;
+      this.repairFlash = REPAIR_FLASH;
+      if (this.police.state === 'cooldown') this.police.giveUp();
+      return;
     }
   }
 
@@ -659,6 +724,7 @@ export class CityWorld {
       if (block.gap !== null && Math.abs(along - block.gap) < ROADBLOCK_GAP - CAR_RADIUS) continue;
 
       this.speed *= ROADBLOCK_SPEED_KEPT;
+      this.takeDamage(DAMAGE_ROADBLOCK);
       this.crashFlash = 1;
       this.scatter(block, along);
       this.police.breach(block);
@@ -726,6 +792,9 @@ export class CityWorld {
   /** Bleed both cars, shove theirs along its road, and record the damage. */
   private hit(car: GraphCar, damage: number, speedKept: number): void {
     this.speed *= speedKept;
+    // A share of what you dealt comes back. Ramming favours the rammer, which
+    // is what makes a takedown a thing worth doing rather than a trade.
+    this.takeDamage(damage * DAMAGE_SHARE);
     this.crashFlash = 1;
     car.damage = Math.min(1, car.damage + damage);
     car.speed *= 0.4;
@@ -788,6 +857,7 @@ export class CityWorld {
       // against a wall must not be pushed through it by the next step.
       this.x = wasX;
       this.z = wasZ;
+      this.takeDamage((Math.abs(this.speed) / this.maxSpeed) * DAMAGE_PER_WALL);
       this.speed *= -HIT_SPEED_KEPT;
       this.crashFlash = 1;
       return;
@@ -830,6 +900,7 @@ export class CityWorld {
         this.falling = false;
         this.fallSpeed = 0;
         this.speed *= HIT_SPEED_KEPT;
+        this.takeDamage(DAMAGE_FALL);
         this.crashFlash = 1;
       }
       return;

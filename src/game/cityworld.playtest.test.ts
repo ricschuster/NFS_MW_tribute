@@ -46,6 +46,11 @@ import {
   ROUTE_START_RANGE,
   AMBUSH_RANGE,
   AMBUSH_RING,
+  DAMAGE_FREE,
+  DAMAGE_SPEED_LOSS,
+  REPAIR_COUNT,
+  REPAIR_SPACING,
+  REPAIR_RANGE,
   type CopKind,
 } from './constants';
 import { CARS, STARTER_CAR, carById } from './cars';
@@ -1843,5 +1848,203 @@ describe('ambushes', () => {
     world.busted = true;
     world.step(STEP, NONE);
     expect(world.ambush.state).toBe('busted');
+  });
+});
+
+/**
+ * Car damage and drive-through repair (#95).
+ *
+ * Everything in the city could be wrecked except the player, which #94 made
+ * conspicuous. What is worth asserting on is that damage costs something, that
+ * the first scrape does not, and that the repair is a decision about *when*
+ * rather than a button that cancels a pursuit.
+ */
+describe('damage', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  it('starts undamaged', () => {
+    expect(still().damage).toBe(0);
+  });
+
+  it('is taken from driving into a building', () => {
+    const world = still();
+    // Straight into whatever is at the end of this street.
+    drive(world, 12, press({ up: true, right: true }));
+    expect(world.damage).toBeGreaterThan(0);
+  });
+
+  it('is taken from going through a roadblock', () => {
+    const world = onAnArterial();
+    const road = world.onRoad!;
+    world.police.roadblocks.push({
+      road,
+      x: world.x + Math.sin(world.heading) * M,
+      z: world.z + Math.cos(world.heading) * M,
+      y: 0,
+      ax: Math.cos(world.heading),
+      az: -Math.sin(world.heading),
+      half: road.width / 2,
+      gap: null,
+      cars: [],
+    });
+    world.speed = world.maxSpeed * 0.5;
+    world.step(STEP, NONE);
+    expect(world.damage).toBeGreaterThan(0);
+  });
+
+  // Ramming favours the rammer, which is what makes a takedown worth doing
+  // rather than a trade.
+  it('costs you less than it costs the car you rammed', () => {
+    const world = still();
+    const cop: Cop = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: world.x + Math.sin(world.heading) * 3 * M,
+      z: world.z + Math.cos(world.heading) * 3 * M,
+      y: world.y,
+      heading: world.heading,
+      kind: 'cruiser',
+      role: 'chase',
+    };
+    world.police.cops.push(cop);
+    world.speed = world.maxSpeed * 0.3;
+    world.step(STEP, NONE);
+    expect(cop.damage).toBeGreaterThan(world.damage);
+  });
+
+  // A model where the first shunt makes the car worse turns every pursuit into
+  // a slow spiral from the opening contact.
+  it('lets the first scrape cost nothing', () => {
+    const clean = still();
+    const scraped = still();
+    scraped.damage = DAMAGE_FREE;
+    drive(clean, 4, press({ up: true }));
+    drive(scraped, 4, press({ up: true }));
+    expect(scraped.speed).toBeCloseTo(clean.speed, 3);
+  });
+
+  // Given a running start rather than driven up to it: reaching the cap under
+  // acceleration takes four seconds and a straight line from the spawn is a
+  // building, and two cars parked against a wall are the same speed.
+  it('takes the top speed with it', () => {
+    const settle = (damage: number) => {
+      const world = still();
+      world.damage = damage;
+      world.speed = world.maxSpeed;
+      // Held on the spot while the overspeed bleeds off. Settling to the cap
+      // takes a couple of seconds, and two seconds in a straight line from
+      // here is a building - which is a different test failing.
+      const home = { x: world.x, z: world.z };
+      for (let t = 0; t < 2; t += STEP) {
+        world.x = home.x;
+        world.z = home.z;
+        world.step(STEP, press({ up: true }));
+      }
+      return world.speed;
+    };
+
+    const fine = settle(0);
+    const wrecked = settle(1);
+    expect(wrecked).toBeLessThan(fine);
+    expect(wrecked).toBeCloseTo(fine * (1 - DAMAGE_SPEED_LOSS), -2);
+  });
+
+  it('takes the steering with it', () => {
+    const turn = (damage: number) => {
+      const world = still();
+      world.damage = damage;
+      const facing = world.heading;
+      for (let t = 0; t < 0.5; t += STEP) {
+        world.speed = world.maxSpeed * 0.5;
+        world.step(STEP, press({ left: true }));
+      }
+      return Math.abs(world.heading - facing);
+    };
+    expect(turn(1)).toBeLessThan(turn(0));
+  });
+
+  it('never stops the car outright', () => {
+    const world = still();
+    world.damage = 1;
+    drive(world, 6, press({ up: true }));
+    expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.5);
+  });
+});
+
+describe('drive-through repair', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  const atAShop = (world: CityWorld) => {
+    const shop = world.city.repairs[0];
+    world.x = shop.at.x;
+    world.z = shop.at.z;
+    world.y = shop.y;
+    return shop;
+  };
+
+  it('puts shops on the fast roads, spread out', () => {
+    const city = still().city;
+    expect(city.repairs.length).toBe(REPAIR_COUNT);
+    for (let i = 0; i < city.repairs.length; i++) {
+      for (let j = i + 1; j < city.repairs.length; j++) {
+        const gap = Math.hypot(
+          city.repairs[i].at.x - city.repairs[j].at.x,
+          city.repairs[i].at.z - city.repairs[j].at.z,
+        );
+        expect(gap).toBeGreaterThanOrEqual(REPAIR_SPACING - 1);
+      }
+    }
+  });
+
+  it('mends the car at whatever speed you go through at', () => {
+    const world = still();
+    world.damage = 0.9;
+    atAShop(world);
+    world.speed = world.maxSpeed * 0.8;
+    world.step(STEP, NONE);
+
+    expect(world.damage).toBe(0);
+    expect(world.repairFlash).toBeGreaterThan(0);
+    // No stopping: the speed is untouched by it.
+    expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.7);
+  });
+
+  it('does nothing from the next street over', () => {
+    const world = still();
+    world.damage = 0.9;
+    const shop = atAShop(world);
+    world.x = shop.at.x + REPAIR_RANGE * 5;
+    world.step(STEP, NONE);
+    expect(world.damage).toBe(0.9);
+  });
+
+  // The genre's neat trick: a car that goes in beaten up and comes out
+  // straight is not the car they are looking for.
+  it('ends a search you take it during', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    world.police.state = 'cooldown';
+    world.police.search = { x: world.x, z: world.z, radius: 1000 };
+    world.damage = 0.5;
+    atAShop(world);
+    world.step(STEP, NONE);
+
+    expect(world.police.state).toBe('clear');
+    expect(world.damage).toBe(0);
+  });
+
+  // ...but it is not a button that cancels a pursuit. While they still have
+  // eyes on you, driving through a workshop changes nothing about that.
+  it('does not end a pursuit they are still running', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    world.police.state = 'pursuit';
+    world.damage = 0.5;
+    atAShop(world);
+    world.step(STEP, NONE);
+
+    expect(world.police.state).toBe('pursuit');
+    expect(world.damage).toBe(0);
   });
 });

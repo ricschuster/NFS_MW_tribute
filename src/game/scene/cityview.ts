@@ -8,7 +8,14 @@ import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { carById } from '../cars';
 import type { CityWorld } from '../cityworld';
-import { STEP, COP_UNITS, SPIKE_REACH, HELI_SEE_RADIUS } from '../constants';
+import {
+  STEP,
+  COP_UNITS,
+  SPIKE_REACH,
+  HELI_SEE_RADIUS,
+  REPAIR_RANGE,
+  DAMAGE_FREE,
+} from '../constants';
 import type { InputState } from '../world';
 
 const M = UNITS_PER_METRE;
@@ -42,6 +49,31 @@ const HAZE = new THREE.Color('#b9d0e2');
  * a rise from a couple of hundred metres away, because the moment it matters
  * is the moment you are deciding which way to take the next junction.
  */
+/**
+ * A repair gantry: two legs and a lit crossbar over the road (#95).
+ *
+ * Green, and the only green thing in the city, so what it is needs no label.
+ */
+function makeRepairGantry(): THREE.Group {
+  const gantry = new THREE.Group();
+  const M2 = UNITS_PER_METRE;
+  const frame = new THREE.MeshLambertMaterial({ color: '#2f3a34' });
+  const lit = new THREE.MeshBasicMaterial({ color: '#5adc82' });
+
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(1.2 * M2, 9 * M2, 1.2 * M2), frame);
+    leg.position.set(side * REPAIR_RANGE * 0.8, 4.5 * M2, 0);
+    gantry.add(leg);
+  }
+  const beam = new THREE.Mesh(
+    new THREE.BoxGeometry(REPAIR_RANGE * 1.6 + 1.2 * M2, 1.6 * M2, 1.6 * M2),
+    lit,
+  );
+  beam.position.y = 9.8 * M2;
+  gantry.add(beam);
+  return gantry;
+}
+
 function makeGate(): THREE.Group {
   const gate = new THREE.Group();
   const M2 = UNITS_PER_METRE;
@@ -151,8 +183,11 @@ export class CityView {
   private readonly rivalCars: CarPool;
   /** The next gate, as a pair of posts. Reused: there is only ever one. */
   private readonly gate = makeGate();
+  /** How beaten up the mesh is currently painted, so a frame is not a repaint. */
+  private wearingDamage = -1;
   /** Spike strips, reused frame to frame: they come and go with the pursuit. */
   private readonly spikePlates: THREE.Mesh[] = [];
+  private readonly repairShops: THREE.Group[] = [];
   private readonly helicopter = makeHelicopter();
   private siren = 0;
   private readonly director: CameraDirector;
@@ -482,10 +517,18 @@ export class CityView {
     this.car.rotation.y = world.heading;
     // Repaint and resize only when the car actually changed. A Street Find
     // swaps the profile mid-drive, and the mesh has to follow it.
-    if (this.wearing !== world.car.id) {
+    // Repainted when the car changes, and dulled as it gets beaten up (#95):
+    // the damage bar says how bad it is and the paint says it without being
+    // read. Both are rounded, so a steady drive is not a repaint every frame.
+    const wear = Math.round(world.damage * 10) / 10;
+    if (this.wearing !== world.car.id || this.wearingDamage !== wear) {
       this.wearing = world.car.id;
+      this.wearingDamage = wear;
       const body = this.car.children[0] as THREE.Mesh;
-      (body.material as THREE.MeshLambertMaterial).color.set(world.car.colour);
+      const paint = (body.material as THREE.MeshLambertMaterial).color;
+      paint.set(world.car.colour);
+      const hurt = Math.max(0, (wear - DAMAGE_FREE) / (1 - DAMAGE_FREE));
+      paint.lerp(new THREE.Color('#4a4038'), hurt * 0.7);
       this.car.scale.setScalar(world.car.scale);
     }
     if (held('b')) this.director.glanceBack();
@@ -556,6 +599,7 @@ export class CityView {
 
     this.spikes(world);
     this.chopper(dt, world);
+    this.shops(world);
     // The board comes off a smashed billboard; the frame stays standing (#93).
     this.cityscape.collectibles.setSmashed(world.collectibles.smashed);
 
@@ -647,6 +691,25 @@ export class CityView {
     const drop = Math.max(1, heli.y - world.y);
     beam.scale.set(1, drop, 1);
     beam.position.y = -drop / 2;
+  }
+
+  /**
+   * The repair shops, as gantries you drive under (#95).
+   *
+   * Built once and left standing: unlike the spikes and the roadblocks they
+   * are part of the city rather than part of a pursuit. A gantry rather than a
+   * building because it has to be something you go *through* at speed - a
+   * repair you have to park for is housekeeping.
+   */
+  private shops(world: CityWorld): void {
+    if (this.repairShops.length > 0) return;
+    for (const shop of world.city.repairs) {
+      const gantry = makeRepairGantry();
+      gantry.position.set(shop.at.x, shop.y, shop.at.z);
+      gantry.rotation.y = shop.angle;
+      this.repairShops.push(gantry);
+      this.scene.add(gantry);
+    }
   }
 
   start(): void {

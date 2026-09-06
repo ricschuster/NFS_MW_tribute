@@ -931,6 +931,23 @@ export class CityPolice {
     this.heat = Math.min(1, this.heat + amount);
   }
 
+  /**
+   * Call the search off (#95).
+   *
+   * The one thing outside this class that can end a pursuit early: a car that
+   * goes into a repair shop beaten up and comes out straight is not the car
+   * they are looking for. It only applies during a search, which is what makes
+   * it a decision about *when* rather than a button that cancels a pursuit.
+   */
+  giveUp(): void {
+    if (this.state !== 'cooldown') return;
+    this.cops.length = 0;
+    this.justEscaped = true;
+    this.state = 'clear';
+    this.search = null;
+    this.cooldown = COP_RESPAWN;
+  }
+
   /** Clear the pursuit and start the cooldown. Called after a bust is served. */
   reset(): void {
     this.cops.length = 0;

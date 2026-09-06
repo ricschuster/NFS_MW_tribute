@@ -6,6 +6,7 @@ import {
   ROADBLOCK_GAP,
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
+  DAMAGE_FREE,
   REP_POPUP_TIME,
   COLLECTIBLE_HINT_RANGE,
   REFERENCE_TOP_SPEED,
@@ -58,6 +59,7 @@ export class Hud {
 
     this.speed(world);
     this.nitrous(world);
+    this.damage(world);
     this.heat(world);
     this.minimap(world);
     this.rep(world);
@@ -110,6 +112,33 @@ export class Hud {
     // whether the boost is available rather than only how full it is.
     ctx.fillStyle = world.boosting ? '#7fe3ff' : '#3f7f97';
     ctx.fillRect(x, y, width * world.nitro, 9);
+  }
+
+  /**
+   * How beaten up the car is (#95).
+   *
+   * Shown only once it is costing you something. A bar that creeps up from the
+   * first scrape teaches the player to fear a graze, which is not the game:
+   * the first fifth of the damage is cosmetic and the bar says so by not
+   * being there.
+   */
+  private damage(world: CityWorld): void {
+    const { ctx } = this;
+    if (world.damage <= DAMAGE_FREE) return;
+
+    const x = 34;
+    const y = HEIGHT - 24;
+    const width = 190;
+    const hurt = (world.damage - DAMAGE_FREE) / (1 - DAMAGE_FREE);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillRect(x, y, width, 7);
+    ctx.fillStyle = hurt > 0.6 ? '#ff5a45' : '#ffa23a';
+    ctx.fillRect(x, y, width * hurt, 7);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.fillText('DAMAGE', x + width + 10, y + 7);
   }
 
   private heat(world: CityWorld): void {
@@ -346,6 +375,20 @@ export class Hud {
       ctx.closePath();
       ctx.strokeStyle = 'rgba(127, 227, 255, 0.9)';
       ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    for (const shop of world.city.repairs) {
+      const rx = (shop.at.x - world.x) * scale;
+      const rz = -(shop.at.z - world.z) * scale;
+      if (Math.hypot(rx, rz) > radius) continue;
+      ctx.strokeStyle = '#5adc82';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rx - 5, rz);
+      ctx.lineTo(rx + 5, rz);
+      ctx.moveTo(rx, rz - 5);
+      ctx.lineTo(rx, rz + 5);
       ctx.stroke();
     }
 
@@ -881,6 +924,18 @@ export class Hud {
       ctx.fillText(String(spot.level), px(spot.at.x) + 6, py(spot.at.z) + 3);
     }
     ctx.textAlign = 'center';
+    // The repair shops, which is where a pursuit gets taken when the car has
+    // had enough.
+    for (const shop of world.city.repairs) {
+      ctx.strokeStyle = '#5adc82';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px(shop.at.x) - 4, py(shop.at.z));
+      ctx.lineTo(px(shop.at.x) + 4, py(shop.at.z));
+      ctx.moveTo(px(shop.at.x), py(shop.at.z) - 4);
+      ctx.lineTo(px(shop.at.x), py(shop.at.z) + 4);
+      ctx.stroke();
+    }
 
     // Cars still parked out there. Drawn bigger and brighter than a billboard
     // because they are worth crossing the map for and a billboard is not.
@@ -959,6 +1014,14 @@ export class Hud {
       ctx.fillStyle = '#ffd166';
       ctx.font = '800 56px system-ui, sans-serif';
       ctx.fillText('TAKEDOWN', WIDTH / 2, HEIGHT / 2 - 60);
+      ctx.globalAlpha = 1;
+    }
+
+    if (world.repairFlash > 0) {
+      ctx.globalAlpha = Math.min(1, world.repairFlash);
+      ctx.fillStyle = '#5adc82';
+      ctx.font = '800 46px system-ui, sans-serif';
+      ctx.fillText('REPAIRED', WIDTH / 2, HEIGHT / 2 - 110);
       ctx.globalAlpha = 1;
     }
 

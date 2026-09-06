@@ -969,3 +969,35 @@ export const AMBUSH_CARS = 4;
 export const REP_AMBUSH = 900;
 /** How long the result holds before control comes back. */
 export const AMBUSH_RESULT_HOLD = 5;
+
+/**
+ * Car damage and repair (#95).
+ *
+ * Everything else in the city can be wrecked and the player cannot, which #94
+ * made conspicuous. Damage accumulates from every impact and takes the car's
+ * top speed and grip with it, so a long pursuit gets harder as it goes rather
+ * than being the same pursuit for as long as you can stand it.
+ *
+ * It never ends the game. Being unable to drive is a bust with extra steps;
+ * being *slow* is a pursuit you have to think your way out of.
+ */
+/** How much a flat-out hit on a building costs, as a fraction of the car. */
+export const DAMAGE_PER_WALL = 0.35;
+/** How much of a hit you dealt comes back at you. Ramming favours the rammer. */
+export const DAMAGE_SHARE = 0.4;
+/** Going through a roadblock, and dropping off a deck. */
+export const DAMAGE_ROADBLOCK = 0.18;
+export const DAMAGE_FALL = 0.22;
+/** How much of the top speed and the grip a completely wrecked car has lost. */
+export const DAMAGE_SPEED_LOSS = 0.28;
+export const DAMAGE_GRIP_LOSS = 0.32;
+/** Below this it is cosmetic: a scraped car should still drive like a car. */
+export const DAMAGE_FREE = 0.2;
+
+/** Drive-through repair (#95): no menu, no stopping. */
+export const REPAIR_COUNT = 6;
+export const REPAIR_SPACING = m(950);
+/** How close you have to pass. A drive-through you have to aim at is a menu. */
+export const REPAIR_RANGE = m(14);
+/** Seconds the REPAIRED banner holds. */
+export const REPAIR_FLASH = 2.5;
