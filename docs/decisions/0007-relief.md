@@ -214,7 +214,18 @@ after the landscape.
   scale still applies; the geometry under it does not.
 - **`groundAt` is in the hot loop.** The sim asks per step, and so does every
   traffic car and every police unit. A bilinear read of a flat array is the
-  cheapest thing that can answer, which is rule 3's real justification.
+  cheapest thing that can answer, which is rule 4's real justification.
+- **Generation time is a fixable cost, not an inherent one.** Kestrel Bay takes
+  1.44 s to generate and that is the number any decision about a bigger map has
+  to reckon with. Profiled rather than guessed at: `segmentToRect` is 34% of it
+  and `distanceToSegment` another 13%, both called from the block sweeps in
+  `generate.ts` - `onBoulevard`, `underRamp`, `deckOver` - which scan every road
+  of a class for every block. `buildGraph`, the obvious suspect and the one I
+  blamed twice before measuring, is 4%. `CityGrid` is a uniform spatial index
+  that already exists and those three sweeps do not use it. Indexing them is an
+  afternoon and it turns the dominant term from blocks x roads into something
+  close to linear, which is what makes a larger map a decision about design
+  rather than about cost.
 - **Off-road becomes three-dimensional.** #220 let a pursuit cut across open
   ground; with relief, "open ground" has a gradient, and a police unit driving
   up a bank is a thing that has to either work or be prevented.
