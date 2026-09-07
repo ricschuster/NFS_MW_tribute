@@ -39,16 +39,48 @@ one simulation (`cityworld.ts`), one renderer (`scene/`), and one query string
 left: `?renderer=city` flies a free camera over the map with no car in it, for
 judging the generator rather than playing it.
 
-**It has been played, once, properly** (2026-09-06), and that is where most of
-the open board came from. See "Where the work is".
+**It has been played twice, properly** (both 2026-09-06), and that is where
+almost the whole board came from. Between the two playthroughs, twelve issues
+were closed. See "Where the work is" - and read "How this went wrong twice"
+before you trust a number in this file.
 
-The pinned city today: 5 x 4 km, 3084 roads, 2302 junctions, 589 blocks,
-229 km of road, 19 km of boulevard, a 12.7 km elevated loop with 7 ramps and a
-tunnel, 3 river crossings, 90 billboards, 25 speed cameras, 7 parked cars and
-6 events of 2.5 to 4 km - three circuits and three speed runs - and 5 ambushes
-at heat 2 through 6, and 6 drive-through repair shops, 40 gates and 43 pallet
+The pinned city today: 5 x 4 km, 3102 roads, 2314 junctions, 841 blocks of
+which 312 are open ground and 252 of those are the parkland #185 laid over the
+land the street grid never claimed. 231 km of road, 19 km of boulevard, a 13 km
+elevated loop with 13 ramps and a tunnel, 3 river crossings, 3771 buildings,
+5253 pieces of street furniture. 90 billboards, 24 speed cameras, 7 parked
+cars, 6 events of 2.5 to 4 km - three circuits and three speed runs - 5 ambushes
+at heat 2 through 6, 14 drive-through repair shops and 79 gates and pallet
 stacks that come down. Eighteen cars: one you start in, seven parked around the
-city, ten on the ladder.
+city, ten on the ladder. The city runs on a clock: a full day takes half an
+hour of play and starts at 14:00, which is why every screenshot here is in
+daylight.
+
+## How this went wrong twice, and will again
+
+Two failure modes account for most of what a very long session found, and both
+are cheap to repeat.
+
+**Almost every number in this game was calibrated against a world that no
+longer exists.** `RIVAL_BASE_SPEED_FRAC` came from `npm run feel` racing on the
+*track*, where a reference lap averaged 91% of top speed; a lap of Kestrel Bay
+averages a quarter of that in traffic, so the entire ladder was unbeatable and
+nothing went red when it happened. `SPEEDRUN_TARGET` had the same history.
+`ROUTE_LAPS` was sized for "a two-and-a-half minute event at the pace the car
+actually holds" - measured before #171 put traffic in the probes, so a race was
+ten minutes. The helicopter's whole design rested on being visible. When you
+find a constant with a confident comment, check what the comment was measured
+*on*.
+
+**The probe is wrong more often than the code.** In one session: `endings` grew
+a `--skill` flag that changed nothing, because the skill model lives in
+`driveRoute`'s hands and that probe drives the car directly. An impact probe
+reported every crash as a low-speed scrape, because it read the speed *after*
+the collision had reversed it. `citylap`'s ladder summary read the property
+inverted, because `RIVALS` runs rank 10 first and the table is built backwards.
+A weighted road pick was written, measured, found to do nothing, and replaced.
+If a number looks strange, suspect the probe first - and when a probe tells you
+something surprising, make it tell you *twice*, in two ways.
 
 ## The decisions that shape everything
 
@@ -136,7 +168,9 @@ npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run patrol     # twenty minutes with the police live: what started each
                    # pursuit, time to the first, and how much of it was free roam
 npm run endings    # how a pursuit ends - busted, escaped, or neither - at each
-                   # heat level, driving and stopped
+                   # heat level, driving and stopped; --damage 1 for a wreck
+npm run playthrough # the whole game at every level it has one: four driver
+                   # tiers, six heat levels, six events, five ambushes
 npm run drivers    # the same routes driven by beginner / advanced / expert / perfect
 npm run build      # typecheck + static build
 npm run pwa        # serve dist/, cut the network, and check it still plays
@@ -231,207 +265,73 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Eight issues are open.** M4 (Kestrel Bay rebuild) and M5 (open-world systems)
-are closed, and #165 closed the rebuild out by deleting the thing it replaced.
+**Eight issues are open**, and every one of them wants a person. That is the
+state this session ended in and it is worth saying plainly: there is no longer
+a queue of things that can be picked up and finished without a decision.
 
-Most of what was open came from **one person playing the game for ten minutes**
-on 2026-09-06, which is still the single most important fact on this page: the
-test suite was green throughout, five probes were green throughout, and the
-playtest found nine things. Six of those are now fixed - #179, #177, #178, #183,
-#181 and the first half of #180.
+Twelve issues were closed in a day - #179, #177, #178, #183, #181, #166, #180,
+#185, #192, #11's first item, and half each of #170 and #14 - and almost all of
+them came from **two people-hours of actually playing the game**. The test suite
+was green throughout. So were the probes.
 
-The newest issue on the board, **#192**, is the other lesson: it was found by a
-*probe*, on the day the probe was written, and it had been true and invisible
-since #165. Play the game first; then point something at the part of it nothing
-has ever measured.
+### The four live ones
 
-### The pursuit works now: the cluster is closed
+**#201 - a circuit is a six-minute race.** Nobody had seen it because until
+#192 nobody had ever *finished* one: the field was three times faster than any
+drivable pace, so the player was lapped and the race ended without them.
+`ROUTE_LAPS` is 2 as a stopgap; the real fix is shorter routes, which
+regenerates every start line. It carries the question underneath everything
+else on this list: a quarter of top speed is 80 km/h in a game whose
+speedometer reads to 320, and every number downstream is now calibrated around
+a car that cannot get out of second gear in its own city.
 
-It was one problem in three issues - #177, #178 and #183 - and all three are
-done. A pursuit starts because a unit saw you do something, it ends in an
-escape or a bust, and the helicopter that held `seenBy` unconditionally true is
-gone.
+**#204 - nitrous is a net loss on a city circuit**, 25% boosted against 30%
+clean. #105's regression arriving on a road it was never measured on: a corner
+every few hundred metres scrubs the overspeed off. It cost the ladder its
+design property - "the boss is lost clean and won with the boost" is not
+reachable - so the top of the ladder now wants a better *car* instead, which is
+coherent but was arrived at rather than chosen.
 
-**#177 is fixed, and it changed the shape of the other two.** A pursuit now
-starts because a unit *saw* you do something: `CityPolice.witness` runs the
-provocation through the same line of sight the pursuit uses, and patrol cars
-cruise the network before there is any pursuit at all, so the car that turns in
-behind you was already in the street. `npm run patrol` reports 6.8 of 10
-minutes in free roam where the answer used to be zero, and a first pursuit at
-01:18 where it was always 00:12. Two things came out of doing it that matter
-here. `recruit` had a hole its own comment describes - it refused to call cars
-in on a pursuit that had lost you *unless the count was zero*, so shaking every
-car spawned a replacement onto the street you had got away down, which is one
-of the ways #178's pursuits never ended. And the old `chase` playtest helper
-was driving a car that wedged itself against a building five seconds in: every
-pursuit test in the suite was measuring a stationary car that cops drove to.
+**#14 - how the car feels.** Now has numbers under it rather than adjectives: a
+good driver holds 24-31% of top speed in traffic and about half of it on an
+empty road, three flat-out wall impacts wreck a car, and #201 and #204 are both
+really this issue wearing a hat.
 
-**#178 is fixed, and half of what it said was wrong.** `reset()` always set
-`heat = 0`, so "heat carries on from where it was" was never true; and the
-"1 bust in 54" was right for a reason nobody had guessed. Cops *can* reach a
-stopped car - measured, to within **0.0 m** - and then drive straight through
-and away, because a car on the graph has a target speed and no notion of
-having arrived, so the bust timer was reset several times a second by their own
-units sailing past the suspect. The other half was worse: a car that stopped
-inside a search area was wanted indefinitely, because the clock did not run in
-there and nothing was ever sent to look. At heat 6 that was **100% of stopped
-pursuits**.
+**#170 - should a wrecked car be able to pull away from a heat 1 cruiser?** The
+measurable half is done and the docs that oversold speed are fixed; a wrecked
+car escapes about as often as a clean one, because escaping is line of sight.
+What is left is a preference.
 
-Three changes, and none of them works alone. The bust clock runs on how slow
-you are rather than only on how close they are; a unit that has caught a
-stopped car holds station; and a search sends units to sweep the area while its
-clock keeps running, slowly, even with you sitting in the middle of it. The
-stake is the pursuit's own Rep - `RepLedger.forfeit` takes back what that
-pursuit paid and never reaches past where it started, so a bust cannot re-lock
-a rival that was already earned.
+### And the rest
 
-`npm run endings` is the probe that settled it, and it is worth keeping
-pointed at this: stopped under heat now ends in a bust 83 / 67 / 100% of the
-time at heat 1 / 3 / 6, driving ends in an escape 67 / 67 / 83%, and the
-stalemate is down from 100% (stopped, heat 6) to 0%. What is left is 17% of
-heat 3 and 6 pursuits still running at three minutes for a driver who laps -
-which is partly the probe, since a 3 km circuit sits mostly inside a 670 m
-search area.
+**#11 - replace vector-drawn art.** The epic. Signs and bridge parapets are
+done; night, weather and wet roads arrived in part with #180's day cycle. What
+is left, in the order it would show: cars have no headlights, every lit window
+is lit because the facade tile is one bay wide, nothing casts a moving shadow
+as the sun goes round, buildings are still one or two boxes, and the HUD has
+had one pass (#181) and no more.
 
-**#170 sits downstream** and should not be settled first. It asks whether a
-wrecked car can escape, and measured under realistic conditions the answer is
-*damage makes no difference* - see Known problems. But "can I end this" turned
-out to be the more pressing question, and #177/#178 have now answered it.
+**M6: beyond the browser - #99, #100, #102, deliberately not started.** There is
+no Rust toolchain and no display here, so a Tauri build cannot be compiled or
+run, and choosing between Electron and Tauri is a heavyweight dependency plus a
+CI and signing decision. Per the house rule that wants an ADR for a new
+dependency, that is a choice for a person.
 
-### The game explains itself now (#181, done)
-
-Five playtest comments, one missing layer, and the layer went in as one thing
-rather than five hints. The Tab map carries a legend and the key list; a new car
-gets a plate saying you are driving it now; damage points at the nearest
-workshop and says that repairing during a search ends the search; the player is
-a white ringed arrow drawn last. One hint is volunteered, `TAB - map, legend and
-controls`, and it stops the first time the map is opened.
-
-**The rule to keep**: no two things share a colour *and* a shape. Roadblocks
-were the Enforcer's red and spike strips were the speed camera's yellow, so two
-of six colours meant two things each; police barriers are white lines now and
-ambushes are rings rather than dots. Adding a marker means checking that pair,
-and adding a mechanic means deciding where it gets explained.
-
-### The rest, roughly by how much they cost a player
-
-
-
-- **#192 is fixed, and it was the whole event layer.** `npm run playthrough`
-  found an expert losing every one of the six events - seventh of seven against
-  #10, the rival the game opens with, and 19-25% against a 40% speed-run
-  target. Both numbers came from the same place: a reference driver on an empty
-  road, measured before #171 put traffic in the probes. Recalibrated against
-  the traffic column, an expert now wins four of six with both losses narrow,
-  and `citylap`'s ladder reads "as designed" - the bottom won clean, the boss
-  lost clean and won on the boost. Two things worth keeping: the ladder probe
-  races an *expert* now rather than the perfect driver, per this file's own
-  rule; and a race got 4x longer the moment it became finishable, which is
-  #201.
-- **(was) #192 the ladder is unwinnable, and #166 is what found it.** `npm run citylap`
-  races all ten rivals now, and the reference driver comes seventh of seven
-  against every one of them - including the rival the game opens with - by most
-  of the race distance. The field runs at 82-93% of your top speed along the
-  route line; a city lap holds 26% in traffic. `RIVAL_BASE_SPEED_FRAC` was
-  calibrated by `npm run feel` against the track sim, where a reference lap
-  averaged 91%, and that sim is deleted. Nothing went red when it happened,
-  which is the whole argument for the probe. The calibration itself wants a
-  person: see #192 for the two decisions.
-- **#14 tune how the car feels.** Rescoped 2026-09-06 - every constant it
-  originally named had been deleted. Now it names the ones that exist and
-  carries three specific questions. Note it should be tuned against a *named
-  driver tier* and against the *traffic* column, not against the perfect driver
-  on empty roads, which is what `SPEEDRUN_TARGET` was derived from.
-
-**M6: Beyond the browser - 3 open, and deliberately not started.** #98 made the
-game installable and offline and #101 opened the storage seam a shell needs.
-What is left is picking a desktop shell (#99), a release pipeline for it (#100)
-and split asset budgets (#102). These were not attempted, for reasons that are
-about the environment rather than the work: there is no Rust toolchain and no
-display here, so a Tauri build cannot be compiled or run, and picking between
-Electron and Tauri is a heavyweight runtime dependency plus a CI and signing
-decision. Per the house rule that wants an ADR for a new dependency, that is a
-choice for a person, not something to settle by picking one and shipping it.
-
-**#11 replace vector-drawn art with sprites** was written for the track
-renderer, so read it as "the city is still boxes". Seven PRs did a pass:
-windows on the buildings, cars with an actual silhouette and wheels, aggregate
-on the tarmac, joints on the pavements and grass on the open blocks, plant and
-masts on the roofs, lamps that reach out over the carriageway, and towers that
-step back partway up.
-
-**The one thing to understand before adding to it** is `scene/worlduv.ts`.
-Everything large here is instanced - thousands of buildings in a handful of
-meshes, one slab per block - so one geometry and one material are shared by
-instances that differ only by scale. A UV baked into that geometry therefore
-sizes a window or a paving slab by whatever its instance happens to be
-stretched to, which is the opposite of what a texture is for. `worldUvs`
-computes the UV in the vertex shader from the instance's own scale instead, so
-a three-metre floor is three metres on a tower and on a shed. Use it for
-anything instanced and textured. It is a string patch against three.js's shader
-chunks, so a three.js upgrade can break it silently and leave every test green;
-`worlduv.test.ts` is the alarm.
-
-Nothing in that pass moved `city/` except one field - `StreetProp.reach`,
-because a prop knows where it stands but not what it stands beside, and only
-the generator knows which way the road is. Everything else is derived on the
-renderer's side from `Building.variant`, which is what that field is for.
-
-What is left, roughly in the order it would show:
-
-1. ~~Signs and barriers are still plain boxes.~~ Done, and the barrier turned
-   out to be a bug rather than an art problem: `add` rotates local x to be
-   *across* the road - that is how a lamp arm reaches over the carriageway -
-   and the parapet was passing its six-metre length as its width, so every
-   bridge had ribs sticking out sideways from the deck every six metres. It is
-   a wall with a coping now, running along the deck. Signs get a second, smaller
-   plate and a face texture; note that at the distance a sign is actually seen
-   from it is the *silhouette* that reads, not the face. `--view signage` is
-   the framing, and it took four attempts to find - the first sign in the list
-   is at the far corner of the map.
-2. Buildings that are more than one or two boxes: podiums, canopies at street
-   level, varied roof lines. A real modular kit, behind the same provider seam.
-3. Night, weather and wet roads. A lighting problem rather than a geometry one,
-   and probably the biggest single change left.
-4. The HUD and menus, which have had no pass at all.
 
 ## Known problems, not papered over
 
-- **A wrecked car cannot pull away from a heat 1 cruiser** (#170). At full damage the
-  player tops out at 72% of reference; the slowest unit in the game runs at 84%,
-  and heat 6 elites at 98%. `cityworld.ts:535` hands the pursuit `this.maxSpeed`,
-  which is the *undamaged* figure, while damage is applied only to the player's
-  own cap at `cityworld.ts:517`. So every fraction in `HEAT_LEVELS` is measured
-  against a car you may not be driving any more, and the invariant those
-  fractions exist to hold - "a pursuit you cannot outrun on speed alone is a
-  pursuit with no answer" - is true for a clean car and inverted from heat 1 for
-  a hurt one. Whether that is the design is a decision, not a fix: repair is
-  drive-through and there are six shops, so "go to the workshop" may well be the
-  intended answer. Note the clean-car margin at heat 6 is 2 percentage points,
-  and that half damage is already caught from heat 3. `npm run pace` prints the
-  whole table and is the guard on whichever way this is settled.
-
-  **But speed turns out not to be how you escape.** `seenBy` needs a cop within
-  `SEEN_RANGE` *with line of sight*, so turning a corner breaks contact whatever
-  your top speed is. Measured with traffic on and an imperfect driver that runs
-  rather than laps, damage makes no detectable difference: clean gets away 83 /
-  67 / 50% at heat 1 / 3 / 6, wrecked 83 / 50 / 50%. Read that as *no effect*,
-  not as "damage helps" - six runs a cell means one run is 17 points.
-
-  **The docs half of that is now fixed.** The `HEAT_LEVELS` comment and
-  `npm run pace` both said, or implied, that speed is how you get away; they
-  say what the fractions actually buy now, which is a floor under the pursuit
-  rather than the mechanic. And `npm run endings -- --damage 1` runs the whole
-  measurement in a wrecked car, so the claim is checked rather than argued:
-  driving, a wrecked car escapes 67 / 17 / 50% of the time at heat 1 / 3 / 6
-  against a clean car's 50 / 17 / 67% - no consistent difference, and inside
-  the noise at six runs a cell.
-  
-  What is left of #170 is a design question and only a person can answer it:
-  *should* a wrecked car be able to pull away from a heat 1 cruiser on a
-  straight? The mechanics work either way. The other half of the old note here
-  - "the real problem is #178" - is settled: #178 is done, and a bust is now a
-  thing that happens.
+- **A wrecked car cannot pull away from a heat 1 cruiser** (#170). At full
+  damage the player tops out at 72% of reference and the slowest unit runs at
+  84%, so on a straight it cannot be done - the fractions in `HEAT_LEVELS` are
+  measured against the *undamaged* top speed. **That is not how you escape, and
+  the docs used to say it was.** `seenBy` needs a unit within `SEEN_RANGE` with
+  line of sight, so a corner breaks contact at any speed, and
+  `npm run endings -- --damage 1` measures a wrecked car getting away 67 / 17 /
+  50% of the time at heat 1 / 3 / 6 against a clean car's 50 / 17 / 67% - no
+  consistent difference, inside the noise at six runs a cell. What is left is a
+  preference: *should* damage cost you the ability to break away? `npm run pace`
+  guards whichever way it is settled, and its exit status covers the clean car
+  only.
 - **A stuck car has a way out, and it is deliberately narrow** (#179, fixed).
   Three seconds of asking the car to move without covering twelve metres earns
   a prompt; taking it puts the car on the *nearest* road, keeping heat, damage
@@ -443,13 +343,15 @@ What is left, roughly in the order it would show:
   wrong. What proved the first of those was a screenshot: `--view stuck` first
   tried to *drive* into a wall and hold the throttle, and the car bounced off
   and drove away every time, so the shot is a placed wedge instead.
-- **The ladder is measured now, and it is unwinnable** (#166 built the probe,
-  #192 is the finding). `npm run citylap`'s second table races every rival
-  twice, clean and with the boost used on the straights, and records the result
-  in the baseline. It reports rather than fails, because whether the ladder is
-  right is a judgement - but it prints the two numbers a calibration has to
-  reconcile side by side: what the field was configured to hold, and what the
-  driver actually held.
+- **The ladder is measured, and every number in it was re-derived** (#166 built
+  the probe, #192 was the finding). `npm run citylap`'s second table races every
+  rival twice on one circuit, clean and boosted, driven by an *expert* rather
+  than the perfect driver - this file's own rule for tuning - and records the
+  result in the baseline. It reports rather than fails, because whether the
+  ladder is right is a judgement, and it prints the two numbers a calibration
+  has to reconcile: what the field was configured to hold, and what the driver
+  actually held. The property it checks changed with #204 and the reason is in
+  the constant's comment.
 - **Tarmac means drivable, and it did not used to** (#176, fixed). The ground
   was one asphalt plane with the road network showing through the gaps between
   block slabs. The gaps are not the roads - blocks are rectangles, roads bend
@@ -516,12 +418,9 @@ What is left, roughly in the order it would show:
   `rgba(8, 12, 18, 0.62)`, so a bright or busy scene shows through it and the
   roads lose contrast. It clips correctly - a building apparently spilling past
   the circle is the scene behind it, not a masking bug - but 62% is not enough
-  over pale tarmac. Its *rotation* was wrong until #182 and is worth knowing
-  about: it rotated by `+heading` where a heading-up map needs `-heading`, so
-  the road in front of you was drawn behind you at 90 degrees of heading. Found
-  by playing, settled by arithmetic - a screenshot could not, because the
-  coloured line on the map was a boulevard crossing nearby rather than the
-  street the car was on.
+  over pale tarmac. Worse now than it was: the day cycle means the scene behind
+  it is sometimes a white afternoon and sometimes a dark street, and one alpha
+  cannot serve both.
 - **The lighting is no longer flat, and shadows are still doing nothing.** #180
   put a clock in the sim and a palette on it, so the city runs from moonlight
   through sunrise, a long afternoon and a sunset - and the difference between
@@ -610,39 +509,45 @@ What is left, roughly in the order it would show:
 
 ## If you are picking this up cold
 
-Read `CLAUDE.md`, then ADR-0004, ADR-0005 and ADR-0006.
+Read `CLAUDE.md`, then ADR-0004, ADR-0005 and ADR-0006, then "How this went
+wrong twice" above.
 
 **Then play the game for ten minutes.** Not the probes, not the tests - drive
-it. On 2026-09-06 somebody did that for the first time in months and it produced
-nine issues, including two outright bugs, while the test suite and five probes
-stayed green throughout. It is by a wide margin the highest-yield thing anyone
-can do here, and it is the thing that keeps not getting done because there is
-always a number to go and look at instead.
+it. Two people-hours of playing produced twelve closed issues in a day, while
+the test suite and half a dozen probes stayed green throughout. It is by a wide
+margin the highest-yield thing anyone can do here, and it is the thing that
+keeps not getting done because there is always a number to go and look at
+instead. `npm run playthrough` is the closest a machine gets - four driver
+tiers, six heat levels, six events, five ambushes, reported as a session log -
+and it is not close.
 
-Then read "Where the work is". The pursuit cluster (#177, #178) is the biggest
-thing and wants a conversation before code, because what a bust costs is an
-economy decision and `rep.ts` is a design document as much as a module. #181 is
-the largest amount of player-visible improvement for the least architectural
-risk.
+Then read "Where the work is", and expect to have a conversation rather than to
+start typing: everything open now turns on a decision. #201 and #204 are the
+two that block the most, and they are really the same question - **the car
+holds a quarter of its top speed in its own city**, and the routes, the rivals,
+the speed-run targets and the boost have all been calibrated around that rather
+than anyone deciding it should be true.
 
 Whatever you pick: keep behaviour in the sim and drawing in the renderer,
 because that split is the only reason this rebuild has been survivable, and keep
-the city's *descriptions* in `city/` for the same reason.
+the city's *descriptions* in `city/` for the same reason. If you change a
+generator constant, remember it moves every seeded draw downstream of it - the
+routes, the collectibles, the parked cars - so re-record the baseline and
+re-shoot anything that framed a specific place.
 
-## What this session learned, since it keeps recurring
+## The probes, and what each is for
 
-Two failure modes showed up repeatedly on 2026-09-06 and both are cheap to
-repeat.
+| | |
+| --- | --- |
+| `npm run test` | 479 unit tests and playtests |
+| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning |
+| `npm run playthrough` | the whole game at every level it has one, as a session log |
+| `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
+| `npm run pace` | the one *gate*: can an undamaged car outrun every heat level |
+| `npm run patrol` | twenty minutes with the police live, and what came of it |
+| `npm run drivers` | the same routes at four skill levels |
+| `npm run city` · `npm run cityshot` | look at it - the city is far easier to judge as a picture than as a test |
 
-**A mechanism that would explain the symptom is not evidence that it does.**
-#171 was filed saying head-on collisions were the problem; they were 10% of it,
-and the fix implied by that diagnosis made things three times worse in
-isolation. #170 was nearly answered from a probe that had run with traffic off -
-the one condition where the thing being measured could not matter. Measure the
-conditions, not just the number.
-
-**Probes are wrong more often than the code is.** `npm run feel` was wrong three
-times before it retired. This session, a probe reported "in their sights 0.0
-min" because it read a field that did not exist, and reported top speed
-unchanged at full damage because the cap is applied at the use site rather than
-to `maxSpeed`. If a number looks strange, suspect the probe first.
+Every real defect in the *city* has been found by looking at a picture. Every
+real defect in the *balance* has been found by a number. Neither finds what a
+person driving finds.
