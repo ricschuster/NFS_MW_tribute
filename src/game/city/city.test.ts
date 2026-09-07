@@ -636,13 +636,19 @@ describe('street furniture', () => {
     expect(inTheRoad.slice(0, 5)).toEqual([]);
   });
 
-  it('only puts parapets on bridges', () => {
+  /**
+   * Parapets go where there is a drop: along a bridge deck, and across the end
+   * of a road the water cut off (#241). Nowhere else - a rail across a street
+   * that merely stops is a street the player will believe is closed.
+   */
+  it('only puts parapets where there is water to keep out of', () => {
     const bridges = city.roads.filter((r) => r.bridge);
+    const deadEnds = city.nodes.filter((n) => n.y === 0 && n.roads.length === 1);
     const barriers = city.furniture.filter((p) => p.kind === 'barrier');
     expect(barriers.length).toBeGreaterThan(0);
 
     for (const barrier of barriers) {
-      const beside = bridges.some((road) => {
+      const onBridge = bridges.some((road) => {
         const a = city.nodes[road.a].pos;
         const b = city.nodes[road.b].pos;
         return (
@@ -652,8 +658,28 @@ describe('street furniture', () => {
           barrier.at.z <= Math.max(a.z, b.z) + road.width
         );
       });
-      expect(beside).toBe(true);
+      const atAnEnd = deadEnds.some(
+        (node) => Math.hypot(node.pos.x - barrier.at.x, node.pos.z - barrier.at.z) < m(30),
+      );
+      expect(onBridge || atAnEnd).toBe(true);
     }
+  });
+
+  it('rails off the roads the water cut short', () => {
+    const barriers = city.furniture.filter((p) => p.kind === 'barrier');
+    const railed = city.nodes.filter(
+      (node) =>
+        node.y === 0 &&
+        node.roads.length === 1 &&
+        barriers.some(
+          (b) => Math.hypot(node.pos.x - b.at.x, node.pos.z - b.at.z) < m(20),
+        ),
+    );
+    // Nearly every dead end in this city is a road the river cut off - 106 of
+    // 109 when this was written - so most of them should now be finished.
+    const ends = city.nodes.filter((n) => n.y === 0 && n.roads.length === 1);
+    expect(ends.length).toBeGreaterThan(20);
+    expect(railed.length).toBeGreaterThan(ends.length * 0.6);
   });
 
   it('signs only a real junction, not every cut in a road', () => {
