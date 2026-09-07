@@ -528,9 +528,30 @@ export function driveRoute(
   let escape = 0;
   let moved = false;
   let sinceHit = 1;
+  /** Whether confirm went down last step, so the next one is a fresh press. */
+  let pressedConfirm = false;
 
   const trace = process.env.TRACE === route.name;
   for (let t = 0; t < seconds && covered < driver.length; t += K.STEP) {
+    // Take the reset the game is offering (#179), wherever the driver happens
+    // to be in its own logic. Two things about this are easy to get wrong and
+    // both were.
+    //
+    // It is *pressed*, not held: `step` reads confirm as a rising edge, so a
+    // driver holding it down gets one press, and if `canRecover` was false on
+    // that step - which it is for the first three seconds of every wedge - it
+    // gets none.
+    //
+    // And it is armed here rather than inside the unwedging branch below,
+    // because that branch waits for `moved`, which wants 3000 units of route
+    // behind the car. A wedge twenty metres into a lap therefore never armed
+    // it, and the driver sat against the same wall for the full five minutes
+    // taking 229 impacts while the game offered it a reset 6950 times. The
+    // game's own timer is the authority on being stuck; the probe's is only
+    // about when to try a three-point turn.
+    const press = world.canRecover && !pressedConfirm;
+    pressedConfirm = press;
+
     const found = driver.progress(world.x, world.z, along);
     if (trace && Math.abs(t % 2) < K.STEP / 2) {
       console.log(
@@ -587,12 +608,22 @@ export function driveRoute(
       // Unwedging is deliberately *not* put through the driver's hands: a
       // three-point turn is the probe rescuing itself, not the driver driving,
       // and lagging it means a car that never gets out of the corner it is in.
+      // Take the reset the game is offering (#179). A player wedged nose-first
+      // into a corner presses confirm after three seconds and drives on; this
+      // driver used to rock back and forth against the wall until the clock ran
+      // out, so a route with one bad corner in it read as an undrivable route
+      // rather than as a route with one bad corner in it. `canRecover` is the
+      // game's own timer and its own condition, and recovery keeps damage, heat
+      // and any running event - so this is the player's option, not a probe
+      // escape hatch. Guarded on `canRecover` because confirm is also how a
+      // race starts.
       world.step(K.STEP, {
         ...none,
         down: backing,
         up: !backing,
         left: turn > 0,
         right: turn < 0,
+        confirm: press,
         ...hold(world, null, null),
       });
       elapsed += K.STEP;
@@ -621,6 +652,7 @@ export function driveRoute(
       right: error < -0.02,
       up: world.speed < target * 0.98,
       down: world.speed > target * 1.08,
+      confirm: press,
     };
     world.step(K.STEP, { ...throughHands(intent, K.STEP), ...hold(world, intent, target) });
     elapsed += K.STEP;
