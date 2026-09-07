@@ -2697,6 +2697,37 @@ describe('the end of a pursuit', () => {
     return cop;
   }
 
+  /**
+   * Hold a unit on the car's own road, beside the car.
+   *
+   * Setting `x` and `z` alone does not do it: a unit on the graph has its
+   * position re-derived from *which road, how far along* on the next step, so a
+   * cop pushed to a position with a mismatched `t` is teleported back onto its
+   * road (CLAUDE.md says as much). These tests were therefore not measuring a
+   * unit on the bumper at all - they were measuring whether other units
+   * happened to navigate close enough, which depends on where a blind
+   * twenty-second drive ended up, which depends on the shape of the city.
+   *
+   * That made them break twice for reasons that had nothing to do with what
+   * they assert: once when #212 cleared blocks near the ramps, and again when
+   * #241 put a road along the water. What they are *for* is the accounting - a
+   * bust takes back exactly what that pursuit paid - so the unit doing the
+   * busting should be placed rather than hoped for.
+   */
+  function holdBeside(world: CityWorld, cop: Cop): void {
+    const road = world.onRoad;
+    if (!road) return;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const span = Math.max(1, dx * dx + dz * dz);
+    cop.road = road;
+    cop.forward = true;
+    cop.t = Math.max(0, Math.min(1, ((world.x - a.x) * dx + (world.z - a.z) * dz) / span));
+    placeOnRoad(world.city, cop, 0);
+  }
+
   it('busts a car that has stopped with a unit on it', () => {
     const world = wanted(3);
     const cop = onTheBumper(world);
@@ -2738,8 +2769,7 @@ describe('the end of a pursuit', () => {
     // because nothing was won yet.
     const cop = onTheBumper(world);
     for (let t = 0; t < 40; t += STEP) {
-      cop.x = world.x + CAR_RADIUS * 2;
-      cop.z = world.z;
+      holdBeside(world, cop);
       cop.y = world.y;
       // Going along for the first twenty seconds, then stopped.
       if (t < 20) world.speed = world.maxSpeed * 0.8;
@@ -2800,10 +2830,21 @@ describe('the end of a pursuit', () => {
   // The clock has to run wherever you are, or the pursuit has no ending at all
   // for a player who simply parks.
   it('gives up eventually even on a car sitting in the middle of the search', () => {
-    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    // Opened directly rather than by driving into it. `provoke` drives the car
+    // blind for twelve seconds, so where this test starts - and therefore
+    // whether the cops can see it, how long the cooldown takes and whether a
+    // unit ever reaches it - is decided by the shape of the streets wherever
+    // that drive happened to end. It broke twice on map changes that had
+    // nothing to do with what it asserts (#212's block clearing, #241's
+    // embankment), which is two more times than a test about the *pursuit*
+    // should care about the city.
+    //
+    // `npm run endings` is the probe that measures this across many pursuits
+    // and many places; this one asserts the invariant on a fixed setup.
+    const world = wanted(6);
     world.x += CITY_COP_LOSE * 3;
     world.recover();
-    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+    expect(stepUntil(world, () => world.police.state === 'cooldown', 240)).toBe(true);
 
     // Parked on the spot they are searching, and left there - on the road,
     // because the centre of a search area is a point on the map and not

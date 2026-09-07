@@ -383,6 +383,67 @@ describe('water', () => {
   });
 });
 
+// A street cut off by the water used to stop at the bank: 106 of the network's
+// 109 dead ends were one, a median of four metres from the river (#241). The
+// answer was a road *along* the water for them to end onto, so these are the
+// two halves of that - the road exists, and nothing runs past it.
+describe('the embankment', () => {
+  const embankment = city.roads.filter((r) => r.embankment);
+
+  const deadEnds = () => {
+    const degree = new Map<number, number>();
+    for (const road of city.roads) {
+      degree.set(road.a, (degree.get(road.a) ?? 0) + 1);
+      degree.set(road.b, (degree.get(road.b) ?? 0) + 1);
+    }
+    return city.roads.flatMap((road) =>
+      [road.a, road.b].filter((id) => degree.get(id) === 1).map((id) => ({ road, node: city.nodes[id] })),
+    );
+  };
+
+  /** Sampled, because the water is a pair of sines with no closed-form distance. */
+  const nearWater = (x: number, z: number, margin: number) => {
+    if (water.isWater(x, z)) return true;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      if (water.isWater(x + Math.cos(a) * margin, z + Math.sin(a) * margin)) return true;
+    }
+    return false;
+  };
+
+  it('runs a road along the coast and both banks of the river', () => {
+    const length = embankment.reduce((sum, r) => sum + r.length, 0);
+    expect(embankment.length).toBeGreaterThan(50);
+    expect(length / M).toBeGreaterThan(5000);
+  });
+
+  // An embankment that has wandered inland is the bank walk having jumped a
+  // headland, and the road it draws crosses whatever is in between.
+  it('keeps every embankment beside the water it follows', () => {
+    const inland = embankment.filter((r) => {
+      const a = city.nodes[r.a].pos;
+      const b = city.nodes[r.b].pos;
+      return !nearWater((a.x + b.x) / 2, (a.z + b.z) / 2, m(120));
+    });
+    expect(inland.map((r) => r.id)).toEqual([]);
+  });
+
+  // The stub the playtest saw: a street crossing the embankment and carrying on
+  // to stop at the bank. The embankment's own ends are allowed to be there -
+  // a quay stops where the estuary opens out - and so is a bridge.
+  it('leaves no street stopping at the water', () => {
+    const stubs = deadEnds().filter(
+      ({ road, node }) =>
+        !road.embankment && !road.bridge && node.y === 0 && nearWater(node.pos.x, node.pos.z, m(40)),
+    );
+    expect(stubs.map(({ node }) => `${Math.round(node.pos.x / M)},${Math.round(node.pos.z / M)}`)).toEqual([]);
+  });
+
+  it('leaves the network with few dead ends at all', () => {
+    expect(deadEnds().length).toBeLessThan(30);
+  });
+});
+
 // The repair pass (ADR-0005 rule 3) exists because cutting a network against
 // water can strand a district, and no one seed proves it does not. So sweep.
 describe('every seed makes a drivable city', () => {
@@ -675,11 +736,26 @@ describe('street furniture', () => {
           (b) => Math.hypot(node.pos.x - b.at.x, node.pos.z - b.at.z) < m(20),
         ),
     );
-    // Nearly every dead end in this city is a road the river cut off - 106 of
-    // 109 when this was written - so most of them should now be finished.
-    const ends = city.nodes.filter((n) => n.y === 0 && n.roads.length === 1);
-    expect(ends.length).toBeGreaterThan(20);
-    expect(railed.length).toBeGreaterThan(ends.length * 0.6);
+    // This used to be nearly every dead end in the city - 106 of 109 - because
+    // that is what a street network cut against a river leaves behind. The
+    // embankment took the count down to a handful (#241), and what is left is
+    // the quay's own ends where it stops at the estuary. So the claim is no
+    // longer about the share of dead ends: it is that a road still finishing at
+    // the water gets a rail across it.
+    const atTheWater = city.nodes.filter(
+      (node) =>
+        node.y === 0 &&
+        node.roads.length === 1 &&
+        (() => {
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2;
+            if (inWater(city, node.pos.x + Math.cos(a) * m(10), node.pos.z + Math.sin(a) * m(10))) return true;
+          }
+          return false;
+        })(),
+    );
+    expect(atTheWater.length).toBeGreaterThan(0);
+    for (const node of atTheWater) expect(railed).toContain(node);
   });
 
   it('signs only a real junction, not every cut in a road', () => {

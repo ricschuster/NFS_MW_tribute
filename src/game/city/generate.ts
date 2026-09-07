@@ -16,6 +16,7 @@ import {
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
+  EMBANKMENT_SETBACK,
   CAR_RADIUS,
   DECK_HEADROOM,
   DECK_MIN_BUILDING,
@@ -40,7 +41,8 @@ import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
 import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
-import { makeWater, type Water } from './water';
+import { embankmentRoutes } from './embankment';
+import { makeWater, nearWater, type Water } from './water';
 import { segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -157,12 +159,33 @@ export function generateCity(seed: number): City {
     }
   }
 
+  // And the roads that follow the water, in the same way and for the same
+  // reason (#241). A street cut off by the river used to end at the bank; now
+  // it ends onto the embankment, which is what a street meeting a river
+  // actually does.
+  //
+  // A boulevard, because that is what this codebase calls a road that bends:
+  // arterials are asserted to be axis-aligned - they are the grid's spine - and
+  // blocks are already swept clear of boulevards. Classing it as an arterial
+  // broke both of those, which is the tests earning their keep.
+  for (const route of embankmentRoutes(bounds, water)) {
+    for (let i = 1; i < route.length; i++) {
+      laid.push({
+        from: route[i - 1],
+        to: route[i],
+        class: 'boulevard',
+        district: 'waterfront',
+        embankment: true,
+      });
+    }
+  }
+
   // Cut the network against the water, keeping what crosses it as candidates.
   const dry: Span[] = [];
   const gaps: Gap[] = [];
   for (const span of laid) clip(span, water, dry, gaps);
 
-  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps));
+  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps), water);
 
   // Blocks are checked against the water at block resolution, which a river
   // can slip through at building resolution. Buildings are cheap to test
@@ -355,6 +378,7 @@ interface Span {
   class: RoadClass;
   district: DistrictKind;
   bridge?: boolean;
+  embankment?: boolean;
   axis?: Axis;
 }
 
@@ -849,6 +873,7 @@ function buildGraph(spans: Span[]): Graph {
         speed,
         length: piece,
         bridge: span.bridge ?? false,
+        embankment: span.embankment,
       };
       roads.push(road);
       a.roads.push(road.id);
@@ -894,7 +919,12 @@ function components(graph: Graph): { of: number[]; count: number } {
  * a headland - is deleted, because a piece of road nobody can drive to is not
  * content.
  */
-function connect(dry: Span[], gaps: Gap[], initial: number[]): { nodes: CityNode[]; roads: CityRoad[] } {
+function connect(
+  dry: Span[],
+  gaps: Gap[],
+  initial: number[],
+  water: Water,
+): { nodes: CityNode[]; roads: CityRoad[] } {
   const chosen = new Set(initial);
   const rebuild = () => buildGraph([...dry, ...[...chosen].map((i) => bridgeSpan(gaps[i]))]);
   let graph = rebuild();
@@ -920,7 +950,62 @@ function connect(dry: Span[], gaps: Gap[], initial: number[]): { nodes: CityNode
     graph = rebuild();
   }
 
-  return prune(graph);
+  return prune(trimWaterStubs(graph, water));
+}
+
+/**
+ * Drop the scraps of street left between the embankment and the water (#241).
+ *
+ * Streets are cut against the water and the embankment crosses them, so the
+ * graph comes out with a junction on the embankment and then a short spur
+ * running on to the bank and stopping. That spur is the thing a playtest saw:
+ * a road going nowhere, at the water, a hundred and six times over.
+ *
+ * Trimmed here rather than prevented in `clip`, and the difference matters.
+ * Clipping streets short of the embankment was the first attempt: they then
+ * stopped *near* it without touching it, so no junction formed and the stub was
+ * still there, only now disconnected as well. A street has to cross the
+ * embankment to end onto it. What is left over is scrap, and scrap is what this
+ * removes.
+ *
+ * Repeated, because trimming a spur can leave the piece behind it a spur in
+ * turn. Never touches a bridge or the embankment itself: one is how you cross
+ * the water and the other is supposed to be beside it.
+ */
+function trimWaterStubs(graph: Graph, water: Water): Graph {
+  let roads = graph.roads;
+  for (let pass = 0; pass < 4; pass++) {
+    const degree = new Map<number, number>();
+    for (const road of roads) {
+      degree.set(road.a, (degree.get(road.a) ?? 0) + 1);
+      degree.set(road.b, (degree.get(road.b) ?? 0) + 1);
+    }
+    const kept = roads.filter((road) => {
+      if (road.bridge || road.embankment) return true;
+      const ends = [road.a, road.b].filter((id) => (degree.get(id) ?? 0) === 1);
+      if (ends.length === 0) return true;
+      // A dead end within reach of the water is the water's doing.
+      return !ends.some((id) => {
+        const at = graph.nodes[id].pos;
+        return nearWater(water, at.x, at.z, EMBANKMENT_SETBACK * 1.6);
+      });
+    });
+    if (kept.length === roads.length) break;
+    roads = kept;
+  }
+  if (roads.length === graph.roads.length) return graph;
+
+  // Renumbered, and the nodes' road lists rebuilt with them. `node.roads` holds
+  // *ids*, and `components` looks those up by index - so filtering the array
+  // without renumbering leaves every node pointing at the wrong road, or at
+  // nothing. That is a crash rather than a subtle bug, which is the one mercy.
+  const renumbered = roads.map((road, id) => ({ ...road, id }));
+  const nodes = graph.nodes.map((node) => ({ ...node, roads: [] as number[] }));
+  for (const road of renumbered) {
+    nodes[road.a].roads.push(road.id);
+    nodes[road.b].roads.push(road.id);
+  }
+  return { ...graph, nodes, roads: renumbered };
 }
 
 /** Keep the largest connected piece and renumber it, dropping the orphans. */
