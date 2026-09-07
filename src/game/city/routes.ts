@@ -63,23 +63,57 @@ export function routesFor(city: City): CityRoute[] {
   // candidates fail that the old 8 x 24 grid ran out before it found six.
   const rings = [0.12, 0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82, 0.92];
   const spokes = 36;
+
+  const tryAt = (angle: number, scale: number): boolean => {
+    const at = {
+      x: centre.x + Math.sin(angle) * halfX * scale,
+      z: centre.z + Math.cos(angle) * halfZ * scale,
+    };
+    const route = circuitAround(city, graph, at, routes.length);
+    if (!route) return false;
+    // Judged on where the start line actually came out, not on where the
+    // candidate centre was: the start is the nearest junction to a corner of
+    // the box, which can be a long way from the centre it was measured from.
+    const start = route.start;
+    if (routes.some((r) => Math.hypot(r.start.x - start.x, r.start.z - start.z) < ROUTE_SPACING)) {
+      return false;
+    }
+    routes.push(route);
+    return true;
+  };
+
+  // One event per sector, and that is the whole point of this loop.
+  //
+  // Sweeping rings innermost-first and stopping at `ROUTE_COUNT` filled the
+  // middle of the map and never reached the outer rings at all: six events
+  // inside a kilometre and a half of the centre, three of them in one quarter,
+  // and whole districts with nothing to do in them. The outer rings were not
+  // unsuitable - they were never tried, because the search had already found
+  // six by the time it got to them. That arrived with #209, where the rings
+  // stopped being multiples of the route and started being fractions of the
+  // map: the extra reach was there and went unused.
+  //
+  // So the map is cut into as many wedges as there are events and each wedge
+  // gets one. The ring order is offset per sector as well, so neighbouring
+  // events are not all the same distance out: spread in two directions rather
+  // than one.
+  const perSector = Math.max(1, Math.round(spokes / ROUTE_COUNT));
+  const wedge = (Math.PI * 2) / ROUTE_COUNT;
+  for (let sector = 0; sector < ROUTE_COUNT && routes.length < ROUTE_COUNT; sector++) {
+    let placed = false;
+    for (let r = 0; r < rings.length && !placed; r++) {
+      const scale = rings[(r + sector * 2) % rings.length];
+      for (let i = 0; i < perSector && !placed; i++) {
+        placed = tryAt(sector * wedge + ((i + 0.5) / perSector) * wedge, scale);
+      }
+    }
+  }
+
+  // Whatever the sectors could not fill - a wedge that is mostly water has
+  // nowhere to put a lap - taken wherever it can be found.
   for (const scale of rings) {
     for (let i = 0; i < spokes && routes.length < ROUTE_COUNT; i++) {
-      const angle = (i / spokes) * Math.PI * 2;
-      const at = {
-        x: centre.x + Math.sin(angle) * halfX * scale,
-        z: centre.z + Math.cos(angle) * halfZ * scale,
-      };
-      const route = circuitAround(city, graph, at, routes.length);
-      if (!route) continue;
-      // Judged on where the start line actually came out, not on where the
-      // candidate centre was: the start is the nearest junction to a corner of
-      // the box, which can be a long way from the centre it was measured from.
-      const start = route.start;
-      if (routes.some((r) => Math.hypot(r.start.x - start.x, r.start.z - start.z) < ROUTE_SPACING)) {
-        continue;
-      }
-      routes.push(route);
+      tryAt((i / spokes) * Math.PI * 2, scale);
     }
   }
   return routes;
