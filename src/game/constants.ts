@@ -327,6 +327,15 @@ export const LAMP_GLOW = 10 * UNITS_PER_METRE;
 export const LAMP_KERB_GAP = m(1.2);
 export const SIGN_KERB_GAP = m(1.6);
 export const BARRIER_SPACING = m(6);
+/**
+ * How far past the end of a road to look for water before railing it off.
+ *
+ * A road clipped by the river ends a few metres from the bank - measured, a
+ * median of 4 m - so this only has to reach far enough to tell "the water
+ * stopped this road" from "this street just ends" (#241). Too far and every
+ * cul-de-sac within sight of the bay grows a parapet it has no reason for.
+ */
+export const WATER_END_REACH = m(40);
 export const LAMP_HEIGHT = m(8);
 export const SIGN_HEIGHT = m(2.6);
 export const BARRIER_HEIGHT = m(1.1);

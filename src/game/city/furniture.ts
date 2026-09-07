@@ -3,7 +3,10 @@ import {
   LAMP_KERB_GAP,
   SIGN_KERB_GAP,
   BARRIER_SPACING,
+  UNITS_PER_METRE,
+  WATER_END_REACH,
 } from '../constants';
+import { inWater } from './grid';
 import type { Rng } from './rng';
 import type { City, CityRoad, StreetProp } from './types';
 
@@ -31,6 +34,7 @@ export function furnitureFor(rng: Rng, city: City): StreetProp[] {
   }
 
   signs(rng, city, props);
+  waterEnds(city, props);
 
   // Furniture on the perimeter road is offset outwards onto ground that does
   // not exist, so it would stand in the sea. Drop it rather than clamp it: a
@@ -182,6 +186,62 @@ function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
           z: a.z + along.z * at + across.z * offset * side,
         },
         y,
+        angle,
+        reach: 0,
+        kind: 'barrier',
+        variant: 0,
+      });
+    }
+  }
+}
+
+/**
+ * A parapet across a road that the water cut off (#241).
+ *
+ * Water is generated first and the streets are clipped against it (ADR-0005),
+ * so a street that crossed the river ends wherever the bank is. Measured, that
+ * is **106 of the 109 dead ends in the whole network**, a median of 4 m from
+ * the water, and every one of them was a carriageway that simply stopped.
+ *
+ * Not a gameplay hole - `CityWorld.dunk` handles driving in, so the river is
+ * not a level boundary and does not want to be one. It is a *finish* problem:
+ * a road that stops dead reads as the map having run out rather than as the
+ * city meeting the water, and it was the most repeated unfinished edge in
+ * Kestrel Bay.
+ *
+ * The same parapet the bridges carry, laid *across* the end rather than along
+ * the sides, which is what the two arguments to `frame` already give: `across`
+ * is the direction over the carriageway.
+ */
+function waterEnds(city: City, props: StreetProp[]): void {
+  for (const node of city.nodes) {
+    // A dead end is a node with one road on it, at street level.
+    if (node.y !== 0 || node.roads.length !== 1) continue;
+    const road = city.roads[node.roads[0]];
+    if (road.bridge || road.class === 'ramp' || road.class === 'interstate') continue;
+
+    // Only the ones the water made. A cul-de-sac that ends in dry land is a
+    // street that stops, which is a normal thing for a street to do.
+    const other = city.nodes[road.a === node.id ? road.b : road.a].pos;
+    const dx = node.pos.x - other.x;
+    const dz = node.pos.z - other.z;
+    const run = Math.max(1, Math.hypot(dx, dz));
+    let wet = false;
+    for (let d = 0; d <= WATER_END_REACH && !wet; d += UNITS_PER_METRE * 4) {
+      wet = inWater(city, node.pos.x + (dx / run) * d, node.pos.z + (dz / run) * d);
+    }
+    if (!wet) continue;
+
+    // Across the mouth, a little short of the end so the rail sits on tarmac
+    // rather than over the edge of it.
+    const angle = Math.atan2(dz, dx);
+    const backX = node.pos.x - (dx / run) * (UNITS_PER_METRE * 2);
+    const backZ = node.pos.z - (dz / run) * (UNITS_PER_METRE * 2);
+    const half = road.width / 2;
+    for (let at = -half; at <= half; at += BARRIER_SPACING) {
+      props.push({
+        at: { x: backX + (-dz / run) * at, z: backZ + (dx / run) * at },
+        y: 0,
         angle,
         reach: 0,
         kind: 'barrier',
