@@ -120,16 +120,25 @@ export const ESCAPED_FLASH = 2.5;
  * to a lap nobody can drive. Against the expert the header always claimed, the
  * same table put that driver behind eight of the ten rivals.
  *
- * Re-derived a second time, against the driver actually racing. Measured on
- * Harbour Loop in traffic, in the car you start in with no parts on it, an
- * expert holds 26% of top speed and an advanced driver 22%. The ladder is laid
- * across both: the opening race is winnable by the weaker of the two, and the
- * top of it is out of reach for the stronger until the car is better, which is
- * what the roster and the parts are for (#67, #68).
+ * Re-derived against the driver actually racing. Measured on Harbour Loop in
+ * traffic, in the car you start in with no parts on it, an expert holds 28% of
+ * top speed. These two put the field at 23% for #10 and 29.5% for the boss, so
+ * the bottom of the ladder is won in the car the game opens with and the top
+ * two are not.
  *
- * Both tiers matter and fitting only one is how this went wrong before. Set
- * against the expert alone, the bottom of the ladder is a race an advanced
- * driver loses - which is #192's defect exactly, one tier down.
+ * **Both figures move whenever `ROUTE_RADIUS` does.** A longer lap has fewer
+ * corners per kilometre, so the same driver holds more of its top speed round
+ * it: the expert went from 26% to 28% when #218 lengthened the routes, and the
+ * ladder had to be re-derived with them. This is not a constant that survives a
+ * change to the shape of a route.
+ *
+ * A caution about the tier below. An advanced driver is about four points off
+ * an expert, and fitting the ladder to one tier alone put an unwinnable race at
+ * whichever end the other one stood - which is #192's defect, one tier down.
+ * But the advanced figure is currently unreliable: `citydriver` has no recovery
+ * from a wide line and grinds along buildings (see #210), which costs that tier
+ * far more than it costs an expert and moves route to route. Check it when the
+ * driver is fixed; do not fit to it until then.
  *
  * It used to say "and won with the boost". That is not reachable and the
  * reason is not the one that was assumed: `npm run nitro` measures the share
@@ -140,7 +149,7 @@ export const ESCAPED_FLASH = 2.5;
  * empty road the same policy is worth eight points. Nitrous is a free-roam
  * mechanic that a race cannot use, which is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.197;
+export const RIVAL_BASE_SPEED_FRAC = 0.219;
 /**
  * Extra rival pace at difficulty 1 (#48, #105, #204).
  *
@@ -161,7 +170,7 @@ export const RIVAL_BASE_SPEED_FRAC = 0.197;
  * takes the opening race, 28% at the boss so an expert does not take the last
  * one.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.078;
+export const RIVAL_DIFF_SPEED_FRAC = 0.076;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -1221,30 +1230,28 @@ export const ROUTE_COUNT = 6;
  * The first version used a 900 m radius and produced a twelve-kilometre lap
  * round the harbour, which is a seven-minute race.
  *
- * It was 520 m, and "the pace the car actually holds" behind that number had
- * been measured on an empty road before #171 put traffic in the probes. In
- * traffic a good driver holds about a quarter of top speed, so three laps of
- * three and a half kilometres is a *ten* minute race - `npm run playthrough`
- * measured 575 to 611 seconds the moment the events became winnable at all.
- * #200 set the laps to 2 as a stopgap, which is still five.
+ * It was 520 m, and the pace behind that number had been measured on an empty
+ * road before #171 put traffic in the probes - so three laps of three and a
+ * half kilometres was a *ten* minute race. #200 cut the laps to 2, which was
+ * five, and #209 took the radius to 195 m, which was two and a half minutes
+ * and which a playtest called "too short and corners very tight".
  *
- * 195 m gives laps of 1.2 to 1.8 km, which an expert covers in 46 to 68
- * seconds in traffic, so three of them is the event the comment always claimed
- * (#201). Speed runs are one lap and are therefore now a minute rather than
- * two: that is the intended shape of a sprint, but it is the largest
- * player-visible consequence of this number and worth knowing before it moves
- * again.
+ * 310 m and two laps is the answer to both halves of that. Laps of 1.8-2.4 km
+ * and races of 145-191 seconds, which is the event this was always supposed to
+ * be - and *fewer corners per kilometre*, which is the half that a shorter lap
+ * made worse rather than better: at 195 m an advanced driver took 46.4 impacts
+ * per kilometre against 31.9 here. A shorter lap in the same city is not a
+ * scaled-down lap, it is the same junction spacing with less road between the
+ * corners.
  *
  * Below about 250 m the *generator* becomes the constraint rather than the
  * geometry, because a smaller lap is a smaller target: four corners have to
  * land on four distinct junctions and four legs have to join them without
- * retracing. `routesFor` searches a denser grid for that reason, and its rings
- * are fractions of the map rather than multiples of this - which they were not,
- * and which meant shrinking the lap also shrank the area searched for one.
- * Check `ROUTE_COUNT` routes still come out before trusting a new value.
+ * retracing. Check `ROUTE_COUNT` routes still come out before trusting a new
+ * value, and read `routesFor` on why the search is shaped the way it is.
  */
-export const ROUTE_RADIUS = m(195);
-export const ROUTE_LAPS = 3;
+export const ROUTE_RADIUS = m(310);
+export const ROUTE_LAPS = 2;
 /**
  * A lap outside this is not a circuit: it is a commute, or a car park.
  *
@@ -1252,8 +1259,8 @@ export const ROUTE_LAPS = 3;
  * the longest circuit is not twice the shortest, and wide enough that the
  * generator can still find six. Tightening it to 1800 m cost two routes.
  */
-export const ROUTE_MIN_LENGTH = m(1150);
-export const ROUTE_MAX_LENGTH = m(1900);
+export const ROUTE_MIN_LENGTH = m(1800);
+export const ROUTE_MAX_LENGTH = m(2900);
 /**
  * The sharpest corner a lap may contain, in radians.
  *
