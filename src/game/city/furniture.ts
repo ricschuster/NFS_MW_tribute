@@ -216,7 +216,7 @@ function barriers(city: City, road: CityRoad, props: StreetProp[]): void {
 function waterEnds(city: City, props: StreetProp[]): void {
   for (const node of city.nodes) {
     // A dead end is a node with one road on it, at street level.
-    if (node.y !== 0 || node.roads.length !== 1) continue;
+    if (node.level !== 'surface' || node.roads.length !== 1) continue;
     const road = city.roads[node.roads[0]];
     if (road.bridge || road.class === 'ramp' || road.class === 'interstate') continue;
 
@@ -261,7 +261,7 @@ function signs(rng: Rng, city: City, props: StreetProp[]): void {
   for (const node of city.nodes) {
     // Street signs belong on streets. The interstate has no junctions to name,
     // and a signpost on a viaduct deck is a signpost hanging in the air.
-    if (node.y !== 0) continue;
+    if (node.level !== 'surface') continue;
 
     // Only the roads at street level count, in both senses: a ramp arriving
     // here does not make a crossroads out of a bend, and measuring against one

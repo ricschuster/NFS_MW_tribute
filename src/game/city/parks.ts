@@ -183,7 +183,7 @@ function vacant(city: City, grid: CityGrid, water: Water, cell: Rect): boolean {
     for (const road of grid.roadsNear(p.x, p.z)) {
       // Surface roads only. A park under the elevated interstate is a park, and
       // a deck twelve metres up is not something the grass is in the way of.
-      if (city.nodes[road.a].y !== 0 || city.nodes[road.b].y !== 0) continue;
+      if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
       if (onRoad(city, { ...road, width: road.width + PARK_ROAD_CLEAR * 2 }, p.x, p.z)) return false;
     }
   }

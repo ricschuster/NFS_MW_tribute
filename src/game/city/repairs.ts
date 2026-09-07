@@ -20,7 +20,7 @@ export function repairsFor(city: City): RepairShop[] {
       (road) =>
         (road.class === 'arterial' || road.class === 'boulevard') &&
         !road.bridge &&
-        city.nodes[road.a].y === 0 &&
+        city.nodes[road.a].level === 'surface' &&
         road.length > road.width * 3,
     )
     // Longest first, so the shops land on the roads a pursuit actually uses.

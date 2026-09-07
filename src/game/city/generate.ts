@@ -870,7 +870,7 @@ function buildGraph(spans: Span[]): Graph {
     const k = key(x, z);
     let node = at.get(k);
     if (!node) {
-      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, y: 0, roads: [] };
+      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, y: 0, level: 'surface', roads: [] };
       at.set(k, node);
       nodes.push(node);
     }
@@ -1067,7 +1067,7 @@ function prune(graph: Graph): { nodes: CityNode[]; roads: CityRoad[] } {
   for (const node of graph.nodes) {
     if (parts.of[node.id] !== keep) continue;
     remap.set(node.id, nodes.length);
-    nodes.push({ id: nodes.length, pos: node.pos, y: node.y, roads: [] });
+    nodes.push({ id: nodes.length, pos: node.pos, y: node.y, level: node.level, roads: [] });
   }
 
   const roads: CityRoad[] = [];

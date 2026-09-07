@@ -713,6 +713,47 @@ describe('the elevated interstate', () => {
   });
 });
 
+// `y === 0` was standing in for "on the street network" in ten places across
+// nine modules - where a park may go, where a lamp goes, where the police may
+// spawn, which junctions a race or an ambush may use. That holds only while the
+// ground is flat, and ADR-0007 is about to stop it being flat (#250).
+describe('a node knows which network it is on', () => {
+  it('gives every node a level', () => {
+    const missing = city.nodes.filter((n) => !['surface', 'elevated', 'tunnel'].includes(n.level));
+    expect(missing.length).toBe(0);
+  });
+
+  // The whole claim of the refactor: today the level and the height say the
+  // same thing, so nothing about the city changed. The field earns its keep on
+  // the day a street sits at 40 m on a hill and the deck still sits at 12.
+  it('agrees with the height it replaced, which is what makes it a no-op today', () => {
+    const disagreeing = city.nodes.filter(
+      (n) => n.level !== (n.y > 0 ? 'elevated' : n.y < 0 ? 'tunnel' : 'surface'),
+    );
+    expect(disagreeing.map((n) => `${n.id} at ${n.y}`)).toEqual([]);
+  });
+
+  it('has all three, so none of them is a theory', () => {
+    const levels = new Set(city.nodes.map((n) => n.level));
+    expect([...levels].sort()).toEqual(['elevated', 'surface', 'tunnel']);
+  });
+
+  // A ramp's foot joins the street and is a surface junction; its top is not.
+  // That distinction is what everything asking "is this a street" depends on.
+  it('puts a ramp foot on the surface and its head on the deck', () => {
+    const ramps = city.roads.filter((r) => r.class === 'ramp');
+    expect(ramps.length).toBeGreaterThan(0);
+    const climbing = ramps.filter(
+      (r) => city.nodes[r.a].level !== city.nodes[r.b].level,
+    );
+    expect(climbing.length).toBeGreaterThan(0);
+    for (const road of climbing) {
+      const levels = [city.nodes[road.a], city.nodes[road.b]].map((n) => n.level).sort();
+      expect(levels).toEqual(['elevated', 'surface']);
+    }
+  });
+});
+
 describe('street furniture', () => {
   // A lamp reaches over the carriageway, and only the generator knows which
   // way that is: by the time a prop reaches the renderer it is a point with a

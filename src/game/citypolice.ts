@@ -812,7 +812,7 @@ export class CityPolice {
     let best = cop.road;
     let bestGap = Infinity;
     for (const road of this.city.roads) {
-      if (this.city.nodes[road.a].y !== 0) continue;
+      if (this.city.nodes[road.a].level !== 'surface') continue;
       const a = this.city.nodes[road.a].pos;
       const b = this.city.nodes[road.b].pos;
       const mx = (a.x + b.x) / 2;
