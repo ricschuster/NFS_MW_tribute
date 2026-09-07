@@ -24,6 +24,20 @@ import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
+
+/**
+ * Where the map's panels sit, shared with the map itself.
+ *
+ * They used to be drawn *over* a full-width map, on the reasoning that the bay
+ * is the one part with nothing worth covering. That held while the six events
+ * sat within a kilometre and a half of the middle; spreading them across the
+ * city (#218) put two of them under the panels, and a map that hides an event
+ * is worse than a small one. So the map is drawn in what is left between them.
+ */
+const MAP_LEGEND_W = 208;
+const MAP_KEYS_W = 286;
+const MAP_EDGE = 16;
+const MAP_GAP = 14;
 import type { QuickWheel } from '../quickwheel';
 import type { TouchControls } from '../touch';
 
@@ -1264,8 +1278,12 @@ export class Hud {
     const depth = bounds.maxZ - bounds.minZ;
 
     const inset = 40;
-    const scale = Math.min((WIDTH - inset * 2) / width, (HEIGHT - inset * 2) / depth);
-    const originX = WIDTH / 2 - (width * scale) / 2;
+    // Between the panels, not under them. See `MAP_LEGEND_W`.
+    const left = MAP_EDGE + MAP_LEGEND_W + MAP_GAP;
+    const right = MAP_EDGE + MAP_KEYS_W + MAP_GAP;
+    const room = WIDTH - left - right;
+    const scale = Math.min(room / width, (HEIGHT - inset * 2) / depth);
+    const originX = left + (room - width * scale) / 2;
     const originY = HEIGHT / 2 - (depth * scale) / 2;
     // North up, and the same way round as `npm run city` draws it: two maps of
     // one city that disagree about which way is up are worth less than either.
@@ -1364,10 +1382,17 @@ export class Hud {
       // Named, because "drive to the cyan ring" is a worse instruction than
       // "drive to Harbour Loop" - and the Quick Wheel lists them by name, so
       // the map and the wheel say the same word.
+      //
+      // On whichever side of the marker the name fits: an event near the right
+      // edge had its label run off the map, which is how "Ironworks Loop" read
+      // as "IRONW".
       ctx.font = '600 10px system-ui, sans-serif';
-      ctx.textAlign = 'left';
+      const label = route.name.toUpperCase();
+      const room = originX + width * scale;
+      const flip = sx + 11 + ctx.measureText(label).width > room;
+      ctx.textAlign = flip ? 'right' : 'left';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(route.name.toUpperCase(), sx + 11, sy + 3.5);
+      ctx.fillText(label, sx + (flip ? -11 : 11), sy + 3.5);
       ctx.textAlign = 'center';
     }
 
@@ -1496,26 +1521,26 @@ export class Hud {
     const rows: [string, string, 'dot' | 'line' | 'cross' | 'ring' | 'target'][] = [
       ['you', '#ffffff', 'ring'],
       ['police', '#4d8bff', 'dot'],
-      ['Enforcer - comes at you head on', '#ff5a45', 'dot'],
+      ['Enforcer - comes head on', '#ff5a45', 'dot'],
       ['roadblock or spikes', HAZARD, 'line'],
       ['they are searching here', 'rgba(255, 210, 90, 0.85)', 'ring'],
-      ['repair shop - drive through it', '#5adc82', 'cross'],
-      ['car parked, yours if you reach it', '#7fe3ff', 'dot'],
+      ['repair shop - drive through', '#5adc82', 'cross'],
+      ['car parked - go and take it', '#7fe3ff', 'dot'],
       ['billboard', '#ff9f45', 'dot'],
       ['speed camera', '#ffd166', 'dot'],
-      ['ambush - the number is the heat', '#ff5a45', 'ring'],
-      ['race route - orange for a speed run', '#7fe3ff', 'line'],
-      ['event start - park on it and press ENTER', '#7fe3ff', 'target'],
+      ['ambush - number is the heat', '#ff5a45', 'ring'],
+      ['race route; orange = sprint', '#7fe3ff', 'line'],
+      ['event start - press ENTER', '#7fe3ff', 'target'],
       ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
-      ['on and off ramp - the only way up', '#e6b3ff', 'line'],
-      ['where you said to go, and the way there', '#7fe3ff', 'ring'],
+      ['ramp - the only way up', '#e6b3ff', 'line'],
+      ['where you said to go', '#7fe3ff', 'ring'],
     ];
 
     const keys: [string, string][] = [
       ['ARROWS / WASD', 'drive'],
       ['SHIFT', 'nitrous'],
       ['ENTER', 'start what you are parked on'],
-      ['HOLD Q', 'Quick Wheel: E branch, 1-9 picks'],
+      ['HOLD Q', 'Quick Wheel (E, then 1-9)'],
       ['TAB', 'this map'],
       ['B', 'look back'],
       ['F', 'fullscreen'],
@@ -1535,9 +1560,9 @@ export class Hud {
 
     // Down the left, where the bay is: the water is the one part of the map
     // with nothing on it worth covering.
-    const lx = 16;
+    const lx = MAP_EDGE;
     const ly = 44;
-    const lw = 250;
+    const lw = MAP_LEGEND_W;
     panel(lx, ly, lw, 30 + rows.length * 19, 'WHAT THINGS ARE');
 
     rows.forEach(([label, colour, shape], i) => {
@@ -1583,8 +1608,8 @@ export class Hud {
       ctx.fillText(label, lx + 34, y + 4);
     });
 
-    const kw = 330;
-    const kx = WIDTH - 16 - kw;
+    const kw = MAP_KEYS_W;
+    const kx = WIDTH - MAP_EDGE - kw;
     const ky = 44;
     // Tall enough to hold the note under the keys: a line of text hanging off
     // the bottom of a panel reads as an overflow rather than as a footnote.
@@ -1612,8 +1637,8 @@ export class Hud {
     ctx.lineTo(kx + kw - 12, foot + 4);
     ctx.stroke();
     ctx.fillStyle = 'rgba(90, 220, 130, 0.9)';
-    ctx.fillText('Driving through a repair shop while they', kx + 12, foot + 24);
-    ctx.fillText('are searching ends the search.', kx + 12, foot + 40);
+    ctx.fillText('Driving through a repair shop while', kx + 12, foot + 24);
+    ctx.fillText('they are searching ends the search.', kx + 12, foot + 40);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.fillText(
       `${world.city.repairs.length} workshops, marked in green.`,
@@ -1646,17 +1671,17 @@ export class Hud {
       // not know that reads a locked rival as a broken button.
       ctx.fillStyle = '#ffd166';
       ctx.fillText(
-        `${world.repToNext.toLocaleString('en-US')} more Rep before they take the call.`,
+        `${world.repToNext.toLocaleString('en-US')} more Rep before they answer.`,
         kx + 12,
         ry + 60,
       );
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.fillText('Rep comes from everything: races, billboards,', kx + 12, ry + 78);
-      ctx.fillText('speed cameras, and outrunning the police.', kx + 12, ry + 94);
+      ctx.fillText('Rep comes from everything: races,', kx + 12, ry + 78);
+      ctx.fillText('billboards, cameras, outrunning police.', kx + 12, ry + 94);
     } else if (rival) {
       ctx.fillStyle = 'rgba(90, 220, 130, 0.9)';
-      ctx.fillText('Ready. Drive to any event start - the ringed', kx + 12, ry + 60);
-      ctx.fillText('markers - and press ENTER to race them.', kx + 12, ry + 78);
+      ctx.fillText('Ready. Drive to any ringed event', kx + 12, ry + 60);
+      ctx.fillText('start and press ENTER to race them.', kx + 12, ry + 78);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.fillText(`${world.beaten} of ${RIVALS.length} beaten.`, kx + 12, ry + 94);
     }
