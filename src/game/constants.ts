@@ -1286,6 +1286,22 @@ export const FIELD_WOBBLE = 0.06;
  * pack look like a pack from behind.
  */
 export const FIELD_LANE = m(3.2);
+/**
+ * How far back each row of the field sits from the one in front (#217).
+ *
+ * The field used to be six cars *abreast*, `FIELD_LANE` apart, which is 19 m
+ * of car across a road that is usually 10 m wide - so they overlapped, sat half
+ * on the pavement, and moved as one object. A playtest called them "glued
+ * together" and that is exactly what a row of six on a two-lane street is.
+ *
+ * Two columns and three rows is a starting grid: it fits the road, and the
+ * staggering is what makes six cars read as six.
+ *
+ * Purely where they are *drawn*. Their scoring position is `dist` along the
+ * route line and this does not touch it, so the ladder's calibration is
+ * unaffected.
+ */
+export const FIELD_GRID = m(7);
 
 /**
  * Speed Runs (#72).

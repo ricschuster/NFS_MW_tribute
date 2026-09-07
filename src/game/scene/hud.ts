@@ -594,6 +594,18 @@ export class Hud {
       ctx.fill();
     }
 
+    // The cars you are racing, which is the single most useful thing to know
+    // while racing them and appeared on neither map (#217).
+    for (const car of world.race.field) {
+      const rx = toMap(car, world).x * scale;
+      const rz = toMap(car, world).y * scale;
+      if (Math.hypot(rx, rz) > radius) continue;
+      ctx.beginPath();
+      ctx.arc(rx, rz, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+
     for (const strip of world.police.spikes) {
       const sx = toMap(strip, world).x * scale;
       const sz = toMap(strip, world).y * scale;
@@ -1439,6 +1451,16 @@ export class Hud {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.fillText(label, sx + (flip ? -11 : 11), sy + 3.5);
       ctx.textAlign = 'center';
+    }
+
+    // The field, while there is one (#217). Only during a race, which is why it
+    // can share white with the things that are always there: for the two
+    // minutes these exist, a white dot on the map is a car you are racing.
+    for (const car of world.race.field) {
+      ctx.beginPath();
+      ctx.arc(px(car.x), py(car.z), 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
     }
 
     // Where the traps are, with the heat they spring at. A ring rather than a
