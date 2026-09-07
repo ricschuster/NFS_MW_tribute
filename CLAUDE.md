@@ -30,6 +30,13 @@ what the city is shaped like.
   outcomes)
 - `npm run city` — draw the generated city from above to `screenshots/citymap.png`;
   `-- --seed N` tries another one
+- `npm run city -- --terrain` — the land alone, hill-shaded, with no city drawn
+  on it. Judging a landscape under three thousand roads is judging the roads
+- `npm run sketch` — a *drawing* of what the map could be, not the map: it
+  generates a candidate landmass, terrain and road network from scratch and
+  renders it, touching nothing in `src/`. It is where ADR-0008's two rules were
+  found, and the cheapest place to answer the next question about the shape of
+  the city
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
   own server, so nothing else needs running
 - `npm run citylap` — drive a reference driver round every generated route,
@@ -133,6 +140,23 @@ right, both of which it got wrong first: a pavement slab is *raised*, so a park
 laid over a carriageway is a kerb across the road, and the water *field* is not
 the water *outline* - everything upstream fits blocks against the field, and
 parks that agreed with the polygon went into the river.
+
+**The ground has height, and the water still comes first** (ADR-0007,
+issue #251). `city/terrain.ts` bakes a height field with the city: a grid at
+`TERRAIN_CELL`, sampled by `groundAt(terrain, x, z)`, carried on `City` as data
+that the sim and the renderer both read. Baked rather than a formula in the
+style of `water.ts`, because the next thing that happens to it is that roads are
+cut and filled *into* it, and a formula cannot be displaced without becoming a
+formula plus a road lookup in a function the sim calls every step for every car.
+Three things to know. The land is shaped to agree with the water rather than the
+other way round - carving terrain and letting water pool would invalidate
+ADR-0005 rules 1-3 and everything built on them. The **shore ramp** is the
+biggest lever on how steep the map is, because it is a slope the length of the
+whole coast: it scales with `TERRAIN_RELIEF`, and at a quarter of its current
+width the maximum grade on the map was 47%. And `groundAt` is a free function
+over the data rather than a method on it, because the city is data before it is
+anything else - the test that found that is the one asserting the generator is
+pure, since two runs make two closures and two closures are never equal.
 
 **The water gets a road, not a hundred dead ends** (issue #241). The streets
 are cut against the water, and that left 106 of the network's 109 dead ends as

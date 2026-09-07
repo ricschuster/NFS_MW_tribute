@@ -22,6 +22,9 @@ const flag = (name) => {
 
 const OUT = 'screenshots';
 const name = flag('--out') ?? 'citymap';
+// `--terrain` draws the land alone: relief, water, and no city on top of it.
+// Judging a landscape under three thousand roads is judging the roads.
+const bare = args.includes('--terrain');
 
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { generateCity } = await server.ssrLoadModule('/src/game/city/generate.ts');
@@ -55,13 +58,52 @@ const sy = (z) => ((city.bounds.maxZ - z) * scale).toFixed(1);
 const parts = [];
 parts.push(`<rect width="${W}" height="${H}" fill="#111820"/>`);
 
-// The bay and the river. Drawn first: everything else sits on the land.
+// The land, shaded by height (ADR-0007). Hill-shading rather than a colour
+// ramp, because what a map has to answer about relief is "which way does this
+// slope and how steeply", and a ramp answers "how high is it" - which nobody
+// standing in a street can see. The light comes from the north-west, which is
+// the convention every paper map uses and the one an eye reads as raised rather
+// than as a hole.
+{
+  const t = city.terrain;
+  const step = Math.max(1, Math.round(t.cell * scale < 2 ? 2 / (t.cell * scale) : 1));
+  // A shade wider than the step, so the cells overlap instead of leaving a
+  // grid of hairline gaps that reads as hatching.
+  const px = (t.cell * scale * step * 1.25).toFixed(2);
+  const relief = [];
+  for (let row = 0; row + step < t.rows; row += step) {
+    for (let col = 0; col + step < t.cols; col += step) {
+      const h = t.cells[row * t.cols + col];
+      if (h <= 0) continue; // the water draws itself
+      // Slope towards the light, from the two neighbours.
+      const dx = t.cells[row * t.cols + col + step] - h;
+      const dz = t.cells[(row + step) * t.cols + col] - h;
+      const run = t.cell * step;
+      const lit = Math.max(0, Math.min(1, 0.5 + (dx / run) * 6 + (dz / run) * 6));
+      const high = Math.min(1, h / (90 * UNITS_PER_METRE));
+      // A green that browns as it climbs, darkened or lifted by the slope. The
+      // shade carries the shape and the hue carries the height, so a flat high
+      // plateau and a steep low hill do not read as the same thing.
+      const shade = 0.6 + 0.7 * lit;
+      const r = Math.round(Math.min(255, (62 + 120 * high) * shade));
+      const g = Math.round(Math.min(255, (92 + 62 * high) * shade));
+      const b = Math.round(Math.min(255, (56 + 44 * high) * shade));
+      const x = ((city.bounds.maxX - (t.bounds.minX + (col + step) * t.cell)) * scale).toFixed(1);
+      const y = ((city.bounds.maxZ - (t.bounds.minZ + (row + step) * t.cell)) * scale).toFixed(1);
+      relief.push(`<rect x="${x}" y="${y}" width="${px}" height="${px}" fill="rgb(${r},${g},${b})"/>`);
+    }
+  }
+  parts.push(relief.join(''));
+}
+
+// The bay and the river. Drawn over the land, because the land is drawn
+// everywhere and the water is a lid on the low parts of it.
 for (const body of city.water) {
   const points = body.outline.map((p) => `${sx(p.x)},${sy(p.z)}`).join(' ');
   parts.push(`<polygon points="${points}" fill="#22566b"/>`);
 }
 
-for (const block of city.blocks) {
+if (!bare) for (const block of city.blocks) {
   const b = block.bounds;
   parts.push(
     `<rect x="${sx(b.maxX)}" y="${sy(b.maxZ)}" width="${((b.maxX - b.minX) * scale).toFixed(1)}" ` +
@@ -80,7 +122,7 @@ const STROKE = {
 // order they sit in the world.
 const order = (road) =>
   road.class === 'interstate' || road.class === 'ramp' ? 2 : road.class === 'boulevard' ? 1 : 0;
-for (const road of [...city.roads].sort((p, q) => order(p) - order(q))) {
+if (!bare) for (const road of [...city.roads].sort((p, q) => order(p) - order(q))) {
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   const w = Math.max(0.6, road.width * scale);
@@ -95,7 +137,7 @@ for (const road of [...city.roads].sort((p, q) => order(p) - order(q))) {
 }
 
 // District labels, one per superblock, so the layout reads at a glance.
-for (const cell of city.superblocks) {
+if (!bare) for (const cell of city.superblocks) {
   const b = cell.bounds;
   parts.push(
     `<text x="${sx((b.minX + b.maxX) / 2)}" y="${sy((b.minZ + b.maxZ) / 2)}" fill="#fff" fill-opacity="0.45" ` +

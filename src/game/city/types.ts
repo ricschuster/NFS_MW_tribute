@@ -5,8 +5,9 @@
  * and routing, the renderer needs it for geometry, and the playtests need to
  * build one without a canvas. Nothing in here knows about three.js.
  */
+import type { Terrain } from './terrain';
 
-/** A point on the ground plane. The city is flat in y; the elevated road is #85. */
+/** A point on the ground plane: a map position, with no height in it. */
 export interface Vec2 {
   x: number;
   z: number;
@@ -350,6 +351,8 @@ export interface City {
   bounds: Rect;
   /** The bay and the river, as outlines. Everything else is land. */
   water: WaterBody[];
+  /** The height of the ground, as data both the sim and the renderer read (ADR-0007). */
+  terrain: Terrain;
   nodes: CityNode[];
   roads: CityRoad[];
   blocks: CityBlock[];

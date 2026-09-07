@@ -274,6 +274,72 @@ export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its
  */
 export const EMBANKMENT_SETBACK = m(30);
 export const EMBANKMENT_STEP = m(90);
+/**
+ * Relief (ADR-0007). The ground stops being a plane at zero.
+ *
+ * `TERRAIN_RELIEF` is how tall a hill gets, and it is measured off the thing
+ * this city is shaped after rather than picked. The reference city's stated
+ * influences are Boston and Pittsburgh; in Pittsburgh the Duquesne Incline
+ * climbs the Mount Washington bluff 122 m at thirty degrees, over a downtown
+ * sitting on the river. Thirty degrees is 58%, which is why it is a funicular
+ * and not a street - and what that city does instead is drive *through* the
+ * hill. So: 120 m, and the grade caps do not move to accommodate it. Taller
+ * hills against the same caps mean more of the map is too steep for a street,
+ * which is the point - that is where the tunnels and the cuttings come from.
+ *
+ * It read 60 m first, chosen so that a hill was exactly climbable at an
+ * arterial's 6% over a kilometre. That is a defensible number and it made a
+ * landscape nobody would drive to look at (ADR-0008).
+ *
+ * `TERRAIN_CELL` is how finely the height field is stored. Ten metres is a
+ * quarter of a block and half a carriageway: fine enough that a cutting has an
+ * edge, coarse enough that the whole map is 500 x 400 floats.
+ *
+ * `TERRAIN_SHORE` is how far inland the land takes to reach its full height,
+ * and it **scales with the relief**: it is the single biggest lever on how steep
+ * the map is, because the shore ramp is a slope the whole length of the coast.
+ * At 260 m against 60 m of relief the maximum grade on the map was 47%; at
+ * 700 m it was 21%. Doubling the relief to 120 m (ADR-0008) doubled it again,
+ * or the coast would be steeper than a street is allowed to be - which is the
+ * opposite of the gentle coast it exists to make. Without it entirely, the coast
+ * is a cliff wherever the noise happens to be high and #241's quay is a shelf a
+ * hundred metres above the water it is beside.
+ *
+ * `TERRAIN_CORE_FLAT` and `TERRAIN_CORE_RADIUS` keep the middle of the map
+ * flat: the dense grid is there, every metre of relief under it is cut and fill
+ * somebody has to pay for, and a city in a bowl with hills round the rim is the
+ * shape the genre uses.
+ *
+ * `TERRAIN_SEABED` is how far below the surface the bed of the water sits, so
+ * the water has something under it rather than a hole in the mesh.
+ *
+ * `TERRAIN_STREAM` makes the landscape its own random stream. Drawing the hills
+ * from the city's `Rng` would shift every number after them and reshuffle
+ * streets that have nothing to do with the terrain, which would make "change
+ * the hills" and "change the city" the same act.
+ */
+export const TERRAIN_RELIEF = m(120);
+export const TERRAIN_CELL = m(10);
+export const TERRAIN_SHORE = m(1400);
+export const TERRAIN_CORE_FLAT = 0.8;
+/** As a fraction of the map's half-diagonal, so the basin scales with the map. */
+export const TERRAIN_CORE_RADIUS = 0.55;
+/** How much taller the rim is than the noise alone would make it. */
+export const TERRAIN_RIM_LIFT = 0.9;
+export const TERRAIN_SEABED = m(6);
+export const TERRAIN_STREAM = 0x7e44a1;
+/**
+ * The height field's noise: how big the largest feature is, how many octaves
+ * sit on top of it, and how big the lattice each is drawn from is.
+ *
+ * `TERRAIN_FEATURE` is the wavelength of the first octave and therefore the
+ * size of a hill: 1200 m across the base is a hill you drive over the shoulder
+ * of rather than one you drive round, at a map scale of five kilometres.
+ */
+export const TERRAIN_FEATURE = m(2000);
+export const TERRAIN_LATTICE = 64;
+export const TERRAIN_OCTAVES = 4;
+
 /** How finely water outlines are sampled. */
 export const CITY_WATER_STEP = m(40);
 /** How far the sea is drawn beyond the map edge, so the bay reaches the horizon. */

@@ -43,6 +43,7 @@ import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
+import { makeTerrain } from './terrain';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -104,6 +105,9 @@ export function generateCity(seed: number): City {
   };
 
   const water = makeWater(rng, bounds);
+  // The land the city stands on (ADR-0007). Water first, and the height field
+  // shaped to agree with it - which is why this is here and not earlier.
+  const terrain = makeTerrain(seed, bounds, water);
 
   const xLines = arterialLines(rng, bounds.minX, bounds.maxX, CITY_ARTERIAL_COLS);
   const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, CITY_ARTERIAL_ROWS);
@@ -343,6 +347,7 @@ export function generateCity(seed: number): City {
     seed,
     bounds,
     water: water.bodies,
+    terrain,
     nodes,
     roads,
     blocks,
