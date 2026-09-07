@@ -139,15 +139,30 @@ describe('Rng', () => {
 });
 
 describe('generateCity', () => {
-  it('is a pure function of its seed', () => {
-    expect(generateCity(CITY_SEED)).toEqual(generateCity(CITY_SEED));
-  });
+  // Generating Kestrel Bay takes about a second and a quarter, and these two
+  // build a whole city each on top of the shared one before deep-comparing it -
+  // so they need more than vitest's five, on a CI runner more than here. The
+  // cost is `buildGraph` asking every span about every other span, which grew
+  // with the embankment (#241) the way it grew with the boulevards.
+  const SLOW = 30_000;
 
-  it('generates a different city from a different seed', () => {
-    const other = generateCity(CITY_SEED + 1);
-    expect(other.roads.length).not.toBe(0);
-    expect(other).not.toEqual(city);
-  });
+  it(
+    'is a pure function of its seed',
+    () => {
+      expect(generateCity(CITY_SEED)).toEqual(generateCity(CITY_SEED));
+    },
+    SLOW,
+  );
+
+  it(
+    'generates a different city from a different seed',
+    () => {
+      const other = generateCity(CITY_SEED + 1);
+      expect(other.roads.length).not.toBe(0);
+      expect(other).not.toEqual(city);
+    },
+    SLOW,
+  );
 
   it('never calls Math.random', () => {
     const real = Math.random;
@@ -449,7 +464,9 @@ describe('the embankment', () => {
 describe('every seed makes a drivable city', () => {
   const seeds = [1, 2, 7, 42, 777, 5150, 123456, 0x4b657374];
   for (const seed of seeds) {
-    it(`seed ${seed} is connected, complete and on land`, () => {
+    // A whole city each, which is over a second of work before the first
+    // assertion - see the note in `generateCity` above.
+    it(`seed ${seed} is connected, complete and on land`, { timeout: 30_000 }, () => {
       const c = generateCity(seed);
 
       const seen = new Set<number>([0]);
