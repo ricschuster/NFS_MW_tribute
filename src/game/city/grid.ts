@@ -25,6 +25,33 @@ export class CityGrid {
   buildingsNear(x: number, z: number): Building[] {
     return (this.buildingCells.get(cellKey(x, z)) ?? []).map((id) => this.city.buildings[id]);
   }
+
+  /**
+   * Every road touching a rectangle, each one once.
+   *
+   * `roadsNear` answers about a *point*, and anything wanting an area was
+   * sampling points across it and hoping to land in every cell. The minimap
+   * did exactly that, at a spacing wider than the cells themselves, so cells
+   * were skipped - and which ones were skipped changed as the car moved, which
+   * is what "roads on the minimap flicker in and out" was (#216).
+   *
+   * Walking the cell range instead cannot miss one, because `insert` puts a
+   * road in every cell its carriageway touches.
+   */
+  roadsIn(r: Rect): CityRoad[] {
+    const found = new Set<number>();
+    const roads: CityRoad[] = [];
+    for (let gx = Math.floor(r.minX / CITY_GRID_CELL); gx <= Math.floor(r.maxX / CITY_GRID_CELL); gx++) {
+      for (let gz = Math.floor(r.minZ / CITY_GRID_CELL); gz <= Math.floor(r.maxZ / CITY_GRID_CELL); gz++) {
+        for (const id of this.roadCells.get(`${gx}|${gz}`) ?? []) {
+          if (found.has(id)) continue;
+          found.add(id);
+          roads.push(this.city.roads[id]);
+        }
+      }
+    }
+    return roads;
+  }
 }
 
 const cellKey = (x: number, z: number) =>

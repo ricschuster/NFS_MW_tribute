@@ -23,6 +23,8 @@ const touchesWater = (r: Rect) => {
 
 const city = kestrelBay();
 const cityGrid = new CityGrid(city);
+/** Metres, in world units. */
+const m = (metres: number) => metres * UNITS_PER_METRE;
 const M = UNITS_PER_METRE;
 
 /**
@@ -852,5 +854,76 @@ describe('blocks', () => {
       }
     }
     expect(clashes).toEqual([]);
+  });
+});
+
+/**
+ * Asking the index about an *area* (#216).
+ *
+ * `roadsNear` answers about a point, so anything wanting an area sampled points
+ * across it. The minimap sampled them 140 m apart on a 120 m cell, so cells
+ * fell between the samples and their roads were never drawn - and because the
+ * samples move with the car, which cells were missed changed as you drove.
+ * That is what "the roads flicker in and out" was.
+ */
+describe('every road in an area', () => {
+  const grid = new CityGrid(city);
+
+  /** The rectangle a minimap-sized view covers. */
+  const around = (x: number, z: number, reach: number) => ({
+    minX: x - reach,
+    maxX: x + reach,
+    minZ: z - reach,
+    maxZ: z + reach,
+  });
+
+  // The file's own `carriageway` above, which is the box a road occupies.
+  const overlaps = (a: ReturnType<typeof around>, b: Rect) =>
+    a.minX <= b.maxX && a.maxX >= b.minX && a.minZ <= b.maxZ && a.maxZ >= b.minZ;
+
+  it('misses none of them, wherever the view happens to sit', () => {
+    const reach = m(430);
+    // Deliberately not on cell boundaries: the bug was about where the samples
+    // fell relative to the cells, so the offsets have to be untidy.
+    for (const [x, z] of [
+      [0, 0],
+      [m(137), m(41)],
+      [m(-2013), m(880)],
+      [m(1499), m(-1201)],
+    ]) {
+      const rect = around(x, z, reach);
+      const got = new Set(grid.roadsIn(rect).map((r) => r.id));
+      const want = city.roads.filter((road) => overlaps(rect, carriageway(city, road)));
+      for (const road of want) {
+        expect(got.has(road.id), `road ${road.id} overlaps the view and was not returned`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it('returns each road once, however many cells it crosses', () => {
+    const found = grid.roadsIn(around(0, 0, m(430)));
+    expect(new Set(found.map((r) => r.id)).size).toBe(found.length);
+  });
+
+  it('does not gain or lose roads as the view creeps across a cell edge', () => {
+    // The symptom, stated directly: nudge the view a few metres at a time and
+    // nothing that stays inside it may disappear.
+    const reach = m(430);
+    let previous: Set<number> | null = null;
+    for (let step = 0; step < 24; step++) {
+      const x = m(-500) + step * m(11);
+      const rect = around(x, m(220), reach);
+      const now = new Set(grid.roadsIn(rect).map((r) => r.id));
+      if (previous) {
+        for (const id of previous) {
+          // Still overlapping after the nudge? Then it must still be found.
+          if (!overlaps(rect, carriageway(city, city.roads[id]))) continue;
+          expect(now.has(id), `road ${id} vanished between steps`).toBe(true);
+        }
+      }
+      previous = now;
+    }
   });
 });
