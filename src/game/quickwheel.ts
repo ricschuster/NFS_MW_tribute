@@ -1,5 +1,6 @@
 import { WHEEL_ENTRIES } from './constants';
 import { CARS, carById, type CarProfile } from './cars';
+import { MODS } from './mods';
 import type { CityWorld } from './cityworld';
 
 /**
@@ -81,7 +82,7 @@ export class QuickWheel {
   /** Everything on the current branch, before paging. */
   private all(world: CityWorld): unknown[] {
     if (this.branch === 'cars') return this.owned(world);
-    if (this.branch === 'mods') return world.finds.unlocked(world.car.id);
+    if (this.branch === 'mods') return MODS;
     return this.destinations(world);
   }
 
@@ -118,7 +119,10 @@ export class QuickWheel {
     }
 
     if (this.branch === 'mods') {
-      const mod = world.finds.unlocked(world.car.id)[at];
+      // The catalogue is what is on screen, so this indexes the catalogue -
+      // and a part not earned yet is not `available`, so `choose` has already
+      // turned it away above.
+      const mod = MODS[at];
       if (!mod) return false;
       world.finds.toggle(world.car.id, mod.id);
       // Re-applied straight away: a part you cannot feel until the next time
@@ -169,23 +173,39 @@ export class QuickWheel {
    * to change that rather than just being empty.
    */
   private parts(world: CityWorld): WheelEntry[] {
-    const mods = world.finds.unlocked(world.car.id);
-    if (mods.length === 0) {
-      return [
-        {
-          label: 'Nothing yet',
-          detail: `finish top two in the ${world.car.name}`,
-          available: false,
-        },
-      ];
-    }
-
+    const owned = new Set(world.finds.unlocked(world.car.id).map((mod) => mod.id));
     const busy = world.race.state !== 'idle' || world.claim.state !== 'idle';
-    return mods.slice(this.offset(world), this.offset(world) + WHEEL_ENTRIES).map((mod) => ({
-      label: `${world.finds.isFitted(world.car.id, mod.id) ? '\u25cf' : '\u25cb'} ${mod.name}`,
-      detail: busy ? 'not during an event' : mod.detail,
-      available: !busy,
-    }));
+
+    // The *whole* catalogue, with what you have not earned greyed out rather
+    // than absent (#222). Showing only what you own meant a player with two
+    // parts saw two parts and had no way to learn that there were ten, what the
+    // rest were, or how any of them are had - and every mod is a *trade* (#68),
+    // which is the interesting half of the design and was invisible until you
+    // happened to own one.
+    let toGo = 0;
+    return MODS.slice(this.offset(world), this.offset(world) + WHEEL_ENTRIES).map((mod) => {
+      const have = owned.has(mod.id);
+      // Parts are earned in catalogue order (`Garage.earn`), so how far off one
+      // is, is exactly how many unearned ones come before it. That makes "how
+      // do I get this" answerable precisely rather than vaguely.
+      if (!have) toGo++;
+      const fitted = world.finds.isFitted(world.car.id, mod.id);
+      return {
+        label: `${have ? (fitted ? '\u25cf' : '\u25cb') : '\u00b7'} ${mod.name}`,
+        // A locked row says how to get it and nothing else. Carrying the trade
+        // as well ran the two texts into each other on the wider names, and a
+        // line you cannot read is worse than a line that is not there - the
+        // trade shows up the moment the part does.
+        detail: have
+          ? busy
+            ? 'not during an event'
+            : mod.detail
+          : toGo === 1
+            ? 'next: finish top two in this car'
+            : `${toGo} more top-two finishes`,
+        available: have && !busy,
+      };
+    });
   }
 
   /** Everywhere worth being pointed at, nearest first. */
