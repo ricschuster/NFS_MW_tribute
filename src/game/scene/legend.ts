@@ -16,7 +16,9 @@
  * - **green** is help - the workshops.
  * - **cyan** is navigation: where the events are and where you said you were
  *   going. Orange stands in for cyan on a route that is a sprint.
- * - **amber** is worth points - billboards and speed cameras.
+ * - **amber** is worth points - billboards and speed cameras - and rings the
+ *   car you have been sent to run down, which is the one thing on the map you
+ *   are actively hunting.
  * - **violet** is the interstate and the ramps that are the only way onto it.
  * - **pink** is a car waiting to be taken.
  *
@@ -46,7 +48,8 @@ export const MAP_LEGEND: [string, string, LegendShape][] = [
   ['ambush - number is the heat', '#ff5a45', 'ring'],
   ['race route; orange = sprint', '#7fe3ff', 'line'],
   ['event start - press ENTER', '#7fe3ff', 'target'],
-  ['a rival, during a race', '#ffffff', 'dot'],
+  ['a rival, racing or running', '#ffffff', 'dot'],
+  ['the one you are chasing down', '#ffd166', 'ring'],
   ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
   ['ramp - the only way up', '#e6b3ff', 'line'],
   ['where you said to go', '#7fe3ff', 'ring'],

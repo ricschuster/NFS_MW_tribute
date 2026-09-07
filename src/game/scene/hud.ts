@@ -594,6 +594,35 @@ export class Hud {
       ctx.fill();
     }
 
+    // The one running from you (#66), and the reason it is here: the HUD says
+    // "WRECK VEX" and "340 m" and nothing said *which way*. A distance with no
+    // bearing is not a direction, and a playtest went looking for a car it
+    // could not find on either map.
+    //
+    // Clamped to the rim like the go-to marker rather than dropped when it goes
+    // out of range, because a car that has got away from you is exactly when
+    // you need to know where it went.
+    const runner = world.claim.runner;
+    if (runner) {
+      const rdx = runner.x - world.x;
+      const rdz = runner.z - world.z;
+      const away = Math.hypot(rdx, rdz);
+      const rb = Math.atan2(rdx, rdz) - world.heading;
+      const at = Math.min(radius - 10, away * scale);
+      ctx.save();
+      ctx.translate(-Math.sin(rb) * at, -Math.cos(rb) * at);
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      // Ringed, so the car you are hunting is not one more white dot in a
+      // field of them during the race that precedes it.
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // The cars you are racing, which is the single most useful thing to know
     // while racing them and appeared on neither map (#217).
     for (const car of world.race.field) {
@@ -1451,6 +1480,19 @@ export class Hud {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.fillText(label, sx + (flip ? -11 : 11), sy + 3.5);
       ctx.textAlign = 'center';
+    }
+
+    // The one running from you, on the full map as well: a claim can take you
+    // across the city and the minimap only reaches so far (#66).
+    const running = world.claim.runner;
+    if (running) {
+      ctx.beginPath();
+      ctx.arc(px(running.x), py(running.z), 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
     // The field, while there is one (#217). Only during a race, which is why it
