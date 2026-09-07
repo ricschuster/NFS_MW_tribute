@@ -121,24 +121,32 @@ export const ESCAPED_FLASH = 2.5;
  * same table put that driver behind eight of the ten rivals.
  *
  * Re-derived against the driver actually racing. Measured on Harbour Loop in
- * traffic, in the car you start in with no parts on it, an expert holds 28% of
- * top speed. These two put the field at 23% for #10 and 29.5% for the boss, so
- * the bottom of the ladder is won in the car the game opens with and the top
- * two are not.
+ * traffic, in the car you start in with no parts on it, an expert holds 31.5%
+ * of top speed. These two put the field at 27.5% for #10 and 34% for the boss:
+ * that driver takes #10 through #5 in the car the game opens with, and #4
+ * through the boss want a better one.
  *
- * **Both figures move whenever `ROUTE_RADIUS` does.** A longer lap has fewer
- * corners per kilometre, so the same driver holds more of its top speed round
- * it: the expert went from 26% to 28% when #218 lengthened the routes, and the
- * ladder had to be re-derived with them. This is not a constant that survives a
- * change to the shape of a route.
+ * One rank is about 83 m of gap over a lap, so whichever rival the line falls
+ * between is close: #5 is won by 63 m and #4 lost by 20. That is the boundary
+ * being a boundary rather than a number needing another decimal place - moving
+ * it only moves which pair is the coin-flip.
  *
- * A caution about the tier below. An advanced driver is about four points off
- * an expert, and fitting the ladder to one tier alone put an unwinnable race at
- * whichever end the other one stood - which is #192's defect, one tier down.
- * But the advanced figure is currently unreliable: `citydriver` has no recovery
- * from a wide line and grinds along buildings (see #210), which costs that tier
- * far more than it costs an expert and moves route to route. Check it when the
- * driver is fixed; do not fit to it until then.
+ * **Both figures move whenever the routes do**, and not only when
+ * `ROUTE_RADIUS` changes. A route is four corner junctions joined over the
+ * street graph, so *any* change to the network redraws it: the expert went from
+ * 26% to 28% when #218 lengthened the routes, and from 28% to 32% when #241 put
+ * a road along the water - a road nobody added for the racing, which the routes
+ * then used. This is not a constant that survives a change to the map.
+ *
+ * A caution about the tier below. An advanced driver is nominally about four
+ * points off an expert, and fitting the ladder to one tier alone put an
+ * unwinnable race at whichever end the other one stood - which is #192's
+ * defect, one tier down. But the advanced figure is not usable: `citydriver`
+ * has no recovery from a wide line and grinds along buildings (see #210), and
+ * on these routes that tier measured 9-10% against the expert's 32% - a third
+ * of the pace, which is a broken driver rather than a slower one. Fitted to the
+ * expert alone until #210 is fixed, and that is a known compromise, not an
+ * oversight.
  *
  * It used to say "and won with the boost". That is not reachable and the
  * reason is not the one that was assumed: `npm run nitro` measures the share
@@ -149,15 +157,15 @@ export const ESCAPED_FLASH = 2.5;
  * empty road the same policy is worth eight points. Nitrous is a free-roam
  * mechanic that a race cannot use, which is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.219;
+export const RIVAL_BASE_SPEED_FRAC = 0.2635;
 /**
  * Extra rival pace at difficulty 1 (#48, #105, #204).
  *
  * The spread of the ladder, and the thing that decides how much of it the
  * starting car can have. With `difficulty` running 0.15 at #10 to 1.0 at the
- * boss, these two put the field at 22% and 28% of your top speed against an
- * expert's measured 26%: #10 through #4 are won in the car the game opens
- * with, and #3, #2 and #1 are not.
+ * boss, these two put the field at 27.5% and 34% of your top speed against an
+ * expert's measured 31.5%: #10 through #5 are won in the car the game opens
+ * with, and #4 up to the boss are not.
  *
  * Wider than this and the bottom of the ladder is a walkover; narrower and the
  * whole thing sits inside one lap, which is what the old 0.068 did - the boss
@@ -165,12 +173,12 @@ export const RIVAL_BASE_SPEED_FRAC = 0.219;
  * boss "needs the boost" any more, because the boost buys nothing in traffic
  * (#204); the boss needs a car.
  *
- * The spread has to cover two drivers four points apart, which is why it is
- * wider than the ladder's own range suggests: 21% at #10 so an advanced driver
- * takes the opening race, 28% at the boss so an expert does not take the last
- * one.
+ * The spread is kept wide enough that the ladder does not sit inside a single
+ * driver's spread of lap times: six and a half points from #10 to the boss,
+ * against an expert whose own laps move by two or three depending on what the
+ * traffic does.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.076;
+export const RIVAL_DIFF_SPEED_FRAC = 0.0765;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -246,6 +254,22 @@ export const CITY_BAY_WAVE = m(380); // how far the coastline wanders either sid
 export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
 export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
 export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth
+
+/**
+ * The roads that follow the water (#241).
+ *
+ * `EMBANKMENT_SETBACK` is how far inland the carriageway sits from the edge:
+ * far enough that there is a strip of ground between the road and the drop -
+ * a quay, which #185's parkland then fills - and near enough that the road
+ * still reads as belonging to the water rather than as one more street that
+ * happens to run parallel to it.
+ *
+ * `EMBANKMENT_STEP` is how often the curve is sampled. The bank is a pair of
+ * sines, so this is the same trade the boulevards make: short enough to read
+ * as a sweep, long enough that a 5 km coast is not ten thousand road segments.
+ */
+export const EMBANKMENT_SETBACK = m(30);
+export const EMBANKMENT_STEP = m(90);
 /** How finely water outlines are sampled. */
 export const CITY_WATER_STEP = m(40);
 /** How far the sea is drawn beyond the map edge, so the bay reaches the horizon. */

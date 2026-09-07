@@ -28,6 +28,24 @@ export interface Water {
 }
 
 /**
+ * Is this point in the water, or close enough to it to be on the bank (#241)?
+ *
+ * Sampled around the point rather than measured, because the water is a pair
+ * of sines and the distance to it has no closed form. Eight directions is
+ * enough at this scale - the coast wanders over hundreds of metres and the
+ * margins asked about here are tens.
+ */
+export function nearWater(water: Water, x: number, z: number, margin: number): boolean {
+  if (water.isWater(x, z)) return true;
+  if (margin <= 0) return false;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU;
+    if (water.isWater(x + Math.cos(a) * margin, z + Math.sin(a) * margin)) return true;
+  }
+  return false;
+}
+
+/**
  * Two sines at unrelated frequencies, in [-1, 1]. Enough wander that a
  * coastline does not read as drawn with a ruler, still smooth enough that a
  * road meets it at a sane angle.

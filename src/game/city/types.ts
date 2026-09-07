@@ -103,6 +103,14 @@ export interface CityRoad {
   length: number;
   /** True where the road crosses water. Bridges are the chokepoints (ADR-0005). */
   bridge: boolean;
+  /**
+   * True on the roads that run *along* the water rather than across it (#241).
+   * Marked rather than inferred: an embankment is a boulevard in the waterfront
+   * district and so is many an ordinary street there, and the two are told
+   * apart when the scraps of street left between the road and the bank are
+   * trimmed away.
+   */
+  embankment?: boolean;
 }
 
 /** A bay or a river, as a closed outline in world space for #84 to build from. */

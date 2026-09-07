@@ -119,6 +119,27 @@ laid over a carriageway is a kerb across the road, and the water *field* is not
 the water *outline* - everything upstream fits blocks against the field, and
 parks that agreed with the polygon went into the river.
 
+**The water gets a road, not a hundred dead ends** (issue #241). The streets
+are cut against the water, and that left 106 of the network's 109 dead ends as
+a street running to the bank and stopping - a median of four metres from the
+river. Railing those off was the first answer and it was the wrong one: a city
+does not have a hundred streets ending at a barrier by the water, it has a road
+*along* the water that the streets end onto. `city/embankment.ts` walks the
+coast and both banks - the water is a formula rather than a traced outline, so
+walking it is cheap - and the result goes in as ordinary spans *before* the
+graph is built, exactly as `boulevards.ts` does, so it is clipped against the
+water, split at every street it crosses and repaired by the same code as
+everything else. Two things it has to get right. The bank is walked in **runs**:
+a row with no bank in it is not the end of the road, and near the mouth two
+consecutive samples can land on opposite sides of a headland - so a run breaks
+where the ground *between* two samples is not by the water, which is a question
+about what the road would run over rather than about how far apart they are.
+And a street has to **cross** the embankment to end onto it, so the scrap left
+between the carriageway and the bank is trimmed after the graph exists
+(`trimWaterStubs`) rather than clipped short before it: clipping short was
+tried, and it left the same stub with no junction on it, disconnected as well.
+The rail from the first attempt stayed, for the ends the quay itself has.
+
 **The city is drawn through a provider seam** (issue #84). `city/` emits
 descriptions - blocks, buildings, water - and never constructs geometry or
 imports three.js; `scene/buildings.ts` turns those into one `InstancedMesh` per
