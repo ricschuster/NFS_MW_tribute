@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "playtest": "vitest run src/game/cityworld.playtest.test.ts",
     "city": "node tools/citymap.mjs",
+    "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
     "icons": "node tools/icons.mjs",
     "pwa": "node tools/pwacheck.mjs",

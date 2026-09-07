@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateCity } from './generate';
 import { kestrelBay } from './index';
 import { Rng } from './rng';
-import { CITY_BRIDGE_SPACING, CITY_SEED, DISTRICTS, UNITS_PER_METRE } from '../constants';
+import { CITY_BRIDGE_SPACING, CITY_SEED, DISTRICTS, TERRAIN_RELIEF, UNITS_PER_METRE } from '../constants';
 import { makeWater } from './water';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
@@ -710,6 +710,88 @@ describe('the elevated interstate', () => {
     const onRamp = new Set(ramps().flatMap((r) => [r.a, r.b]));
     const touchesSurface = [...onRamp].some((id) => city.nodes[id].y === 0);
     expect(touchesSurface).toBe(true);
+  });
+});
+
+// The ground stops being a plane at zero (ADR-0007). Nothing reads it yet: it
+// is data on `City` and the city around it is unchanged, which is deliberate -
+// a landscape is much easier to judge as a picture than as a test, and this is
+// the half of it that can be asserted.
+describe('the ground has height', () => {
+  const t = city.terrain;
+  const heights = [...t.cells];
+  const land = heights.filter((h) => h > 0).sort((a, b) => a - b);
+
+  it('covers the map at the resolution it claims', () => {
+    expect(t.cols).toBeGreaterThan((city.bounds.maxX - city.bounds.minX) / t.cell - 2);
+    expect(t.rows).toBeGreaterThan((city.bounds.maxZ - city.bounds.minZ) / t.cell - 2);
+    expect(t.cells.length).toBe(t.cols * t.rows);
+  });
+
+  // Water first, and the land shaped to agree with it (ADR-0007 rule 1). If
+  // these disagree the river runs along a hillside.
+  it('puts the ground below sea level exactly where the water is', () => {
+    const wrong: string[] = [];
+    for (let row = 0; row < t.rows; row += 7) {
+      for (let col = 0; col < t.cols; col += 7) {
+        const x = t.bounds.minX + col * t.cell;
+        const z = t.bounds.minZ + row * t.cell;
+        const h = t.cells[row * t.cols + col];
+        if (water.isWater(x, z) !== h < 0) wrong.push(`${Math.round(x / M)},${Math.round(z / M)}`);
+      }
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+  });
+
+  it('rises to something worth calling a hill', () => {
+    const tallest = land[land.length - 1] / M;
+    expect(tallest).toBeGreaterThan(90);
+    expect(tallest).toBeLessThan(TERRAIN_RELIEF / M + 40);
+  });
+
+  // The city sits in a bowl and the land climbs away from it: every metre of
+  // relief under the dense grid is cut and fill somebody has to pay for.
+  it('keeps the middle flatter than the rim', () => {
+    const cx = (city.bounds.minX + city.bounds.maxX) / 2;
+    const cz = (city.bounds.minZ + city.bounds.maxZ) / 2;
+    const mean = (from: number, to: number) => {
+      let sum = 0;
+      let n = 0;
+      for (let row = 0; row < t.rows; row += 3) {
+        for (let col = 0; col < t.cols; col += 3) {
+          const h = t.cells[row * t.cols + col];
+          if (h <= 0) continue;
+          const x = t.bounds.minX + col * t.cell;
+          const z = t.bounds.minZ + row * t.cell;
+          const d = Math.hypot(x - cx, z - cz);
+          if (d >= from && d < to) {
+            sum += h;
+            n++;
+          }
+        }
+      }
+      return n ? sum / n : 0;
+    };
+    expect(mean(0, m(750))).toBeLessThan(mean(m(1500), m(3000)) / 2);
+  });
+
+  // The shore ramp is the biggest lever on how steep the map is, because it is
+  // a slope running the whole length of the coast. Without it the coast is a
+  // cliff and #241's quay is a shelf a hundred metres above its river.
+  it('lets the land rise from the water rather than starting at the top', () => {
+    const steep: string[] = [];
+    for (let row = 1; row < t.rows - 1; row++) {
+      for (let col = 1; col < t.cols - 1; col++) {
+        const h = t.cells[row * t.cols + col];
+        if (h <= 0) continue;
+        const dx = t.cells[row * t.cols + col + 1];
+        const dz = t.cells[(row + 1) * t.cols + col];
+        if (dx <= 0 || dz <= 0) continue;
+        const grade = Math.max(Math.abs(dx - h), Math.abs(dz - h)) / t.cell;
+        if (grade > 0.45) steep.push(`${col},${row} at ${(grade * 100).toFixed(0)}%`);
+      }
+    }
+    expect(steep.slice(0, 5)).toEqual([]);
   });
 });
 
