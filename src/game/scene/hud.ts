@@ -22,6 +22,7 @@ import {
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
+import { FIND_COLOUR, HAZARD, MAP_LEGEND } from './legend';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
 
@@ -67,7 +68,6 @@ const VOICES: Record<string, string> = {
  * camera's yellow, so two of the six colours on the minimap meant two things
  * each. A barrier is not a car and it is not a collectible; it gets its own.
  */
-const HAZARD = '#ffffff';
 
 /**
  * 1st, 2nd, 3rd. Seven of them: a field is six cars and you are the seventh,
@@ -590,7 +590,7 @@ export class Hud {
       if (Math.hypot(fx, fz) > radius) continue;
       ctx.beginPath();
       ctx.arc(fx, fz, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#7fe3ff';
+      ctx.fillStyle = FIND_COLOUR;
       ctx.fill();
     }
 
@@ -1430,7 +1430,7 @@ export class Hud {
     for (const find of world.finds.spotted) {
       ctx.beginPath();
       ctx.arc(px(find.at.x), py(find.at.z), 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#7fe3ff';
+      ctx.fillStyle = FIND_COLOUR;
       ctx.fill();
     }
 
@@ -1518,23 +1518,7 @@ export class Hud {
   private legend(world: CityWorld): void {
     const { ctx } = this;
 
-    const rows: [string, string, 'dot' | 'line' | 'cross' | 'ring' | 'target'][] = [
-      ['you', '#ffffff', 'ring'],
-      ['police', '#4d8bff', 'dot'],
-      ['Enforcer - comes head on', '#ff5a45', 'dot'],
-      ['roadblock or spikes', HAZARD, 'line'],
-      ['they are searching here', 'rgba(255, 210, 90, 0.85)', 'ring'],
-      ['repair shop - drive through', '#5adc82', 'cross'],
-      ['car parked - go and take it', '#7fe3ff', 'dot'],
-      ['billboard', '#ff9f45', 'dot'],
-      ['speed camera', '#ffd166', 'dot'],
-      ['ambush - number is the heat', '#ff5a45', 'ring'],
-      ['race route; orange = sprint', '#7fe3ff', 'line'],
-      ['event start - press ENTER', '#7fe3ff', 'target'],
-      ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
-      ['ramp - the only way up', '#e6b3ff', 'line'],
-      ['where you said to go', '#7fe3ff', 'ring'],
-    ];
+    const rows = MAP_LEGEND;
 
     const keys: [string, string][] = [
       ['ARROWS / WASD', 'drive'],
