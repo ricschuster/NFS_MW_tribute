@@ -336,6 +336,22 @@ export const BARRIER_SPACING = m(6);
  * cul-de-sac within sight of the bay grows a parapet it has no reason for.
  */
 export const WATER_END_REACH = m(40);
+/**
+ * Headroom under the interstate: how far below the deck a building must stop.
+ *
+ * The deck sits at 12 m and the *median* building in Kestrel Bay is 21 m, so
+ * without this the freeway runs straight through them - measured, 197 of the
+ * 255 places it crosses a footprint had the building standing above the road
+ * surface, the worst by 105 m.
+ *
+ * A building under a viaduct is a low one, so they are held under it rather
+ * than swept out of the way: an elevated road over a city ought to have
+ * something beneath it. Anything with too little room to fit is dropped, and
+ * the ground it leaves becomes parkland like any other empty land (#185).
+ */
+export const DECK_HEADROOM = m(3);
+/** Below this a capped building is a slab, not a building. Drop it instead. */
+export const DECK_MIN_BUILDING = m(5);
 export const LAMP_HEIGHT = m(8);
 export const SIGN_HEIGHT = m(2.6);
 export const BARRIER_HEIGHT = m(1.1);

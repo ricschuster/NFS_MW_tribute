@@ -17,6 +17,8 @@ import {
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
   CAR_RADIUS,
+  DECK_HEADROOM,
+  DECK_MIN_BUILDING,
   RAMP_CLEARANCE,
   BOULEVARD_LANES,
   BOULEVARD_SPEED,
@@ -238,12 +240,57 @@ export function generateCity(seed: number): City {
     return cell?.density ?? 1;
   };
 
+  // How high the elevated road is over a point, or null where it does not pass.
+  //
+  // The interstate is 12 m up and the median building here is 21 m, so it went
+  // straight through them: 197 of the 255 places it crosses a footprint had the
+  // building standing above the road surface, the worst by 105 m. A deck that
+  // is drawn *through* a tower is the most conspicuous thing in an aerial shot
+  // of the city and it had been there since the interstate was built.
+  //
+  // Held under rather than swept away, because an elevated road over a city
+  // ought to have something beneath it.
+  const overhead = roads.filter((r) => r.class === 'interstate' || r.class === 'ramp');
+  const deckOver = (r: Rect): number | null => {
+    let lowest: number | null = null;
+    for (const road of overhead) {
+      const a = nodes[road.a];
+      const b = nodes[road.b];
+      if (segmentToRect(a.pos, b.pos, r) > road.width / 2 + RAMP_CLEARANCE) continue;
+      // The deck's height where it passes this footprint, at its lowest over
+      // the whole rectangle - a ramp is a slope, so which end matters.
+      const dx = b.pos.x - a.pos.x;
+      const dz = b.pos.z - a.pos.z;
+      const span = dx * dx + dz * dz;
+      for (const [px, pz] of [
+        [r.minX, r.minZ],
+        [r.maxX, r.minZ],
+        [r.minX, r.maxZ],
+        [r.maxX, r.maxZ],
+      ]) {
+        const t =
+          span < 1 ? 0 : Math.max(0, Math.min(1, ((px - a.pos.x) * dx + (pz - a.pos.z) * dz) / span));
+        const y = a.y + (b.y - a.y) * t;
+        if (lowest === null || y < lowest) lowest = y;
+      }
+    }
+    return lowest;
+  };
+
   const buildings: Building[] = [];
   for (const block of blocks) {
     if (block.open) continue;
     let built = 0;
     for (const building of buildingsOn(rng, block, densityAt(block))) {
       if (anyWater(building.footprint, water)) continue;
+      const deck = deckOver(building.footprint);
+      if (deck !== null) {
+        const room = deck - DECK_HEADROOM;
+        // Too little headroom to put anything under: leave the ground open,
+        // which #185's parkland then covers like any other empty land.
+        if (room < DECK_MIN_BUILDING) continue;
+        if (building.height > room) building.height = room;
+      }
       buildings.push(building);
       built++;
     }

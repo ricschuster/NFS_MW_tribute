@@ -150,6 +150,18 @@ where a ramp is still low, the same way it already makes way for a boulevard -
 and #185's parkland fills what that leaves, so a cleared corridor reads as
 somewhere rather than as a scar.
 
+**The deck is 12 m up and the city is taller than that.** The interstate ran
+straight through buildings - measured, 197 of the 255 places it crossed a
+footprint had the building standing above the road surface, the worst by 105 m -
+because the deck sits at 12 m and the *median* building in Kestrel Bay is 21 m.
+`generate.ts` holds a building under the deck rather than sweeping the corridor
+clear, because an elevated road over a city ought to have something beneath it:
+`DECK_HEADROOM` is the gap it has to leave, and anything with too little room to
+fit is dropped and becomes parkland like any other empty ground. Note this is
+the *opposite* trade from the ramps, which do clear their corridor (#212) - a
+ramp is low enough that a building beside it is in the road, and the deck is
+high enough that one under it is scenery.
+
 **Height is a real property of the network** (issue #85). Nodes have a `y`, so
 two roads at the same map position and different heights are two different
 places: the interstate crossing a street overhead shares no node with it, and
