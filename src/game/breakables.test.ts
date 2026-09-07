@@ -82,6 +82,7 @@ describe('breaking one', () => {
       heading: 0,
       kind: 'cruiser',
       role: 'patrol',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     return cop;
@@ -144,6 +145,7 @@ describe('breaking one', () => {
       heading: 0,
       kind: 'cruiser',
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     world.speed = world.maxSpeed * 0.5;
@@ -170,6 +172,7 @@ describe('breaking one', () => {
       heading: 0,
       kind: 'cruiser',
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     world.speed = world.maxSpeed * 0.5;
@@ -195,6 +198,7 @@ describe('breaking one', () => {
       heading: 0,
       kind: 'cruiser',
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     world.speed = world.maxSpeed * 0.5;

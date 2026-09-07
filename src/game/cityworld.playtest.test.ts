@@ -3,6 +3,7 @@ import { CityWorld } from './cityworld';
 import {
   STEP,
   CAR_RADIUS,
+  COP_LEASH,
   TRAFFIC_RADIUS,
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
@@ -134,6 +135,7 @@ function tail(world: CityWorld): Cop {
     heading: world.heading,
     kind: 'cruiser',
     role: 'chase',
+    offRoad: 0,
   };
   world.police.cops.push(cop);
   world.police.witness(world, 'crashed');
@@ -171,6 +173,7 @@ function patrolBeside(world: CityWorld): Cop {
     heading: 0,
     kind: 'cruiser',
     role: 'patrol',
+    offRoad: 0,
   };
   placeOnRoad(world.city, cop, TRAFFIC_LANE);
   world.police.cops.push(cop);
@@ -738,6 +741,7 @@ describe('takedowns', () => {
       heading: world.heading,
       kind,
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     return cop;
@@ -1096,6 +1100,7 @@ describe('enforcers', () => {
         heading: world.heading + Math.PI,
         kind,
         role,
+        offRoad: 0,
       };
       world.police.cops.push(cop);
       world.speed = world.maxSpeed * 0.3;
@@ -1145,6 +1150,7 @@ describe('enforcers', () => {
         heading: 0,
         kind: role === 'enforcer' ? 'enforcer' : 'cruiser',
         role,
+        offRoad: 0,
       };
       world.police.cops.push(cop);
       return cop;
@@ -1169,6 +1175,123 @@ describe('enforcers', () => {
     // The Enforcer moved across with the car; the chaser did not move at all.
     expect(Math.abs(lateral(enforcer) - enforcerLeft)).toBeGreaterThan(M);
     expect(Math.abs(lateral(chaser) - chaserLeft)).toBeLessThan(M * 0.5);
+  });
+});
+
+/**
+ * Following a car off the road (#220).
+ *
+ * Police are `GraphCar`s and the player deliberately is not, so a pursuit used
+ * to end at a kerb: drive across a plaza, a car park or the parkland #185 laid
+ * down and the cars behind you had to go round. A playtest called it out, and
+ * it reads as a limitation rather than as a decision.
+ *
+ * `COP_LEASH` is a step off the road and back on, not a second way of
+ * navigating, so what is worth asserting is the shape of it: that a unit does
+ * follow, that it is worse at it than you are, and that it comes back.
+ */
+describe('a pursuit over open ground', () => {
+  const parked = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  /**
+   * Just off the kerb, which is what cutting a corner looks like.
+   *
+   * Not the middle of a park: a unit only steps off the road when it is close
+   * enough that the leash can actually reach, so a car standing two hundred
+   * metres into open ground is a car nobody sets off across a field for. That
+   * is the design, and the first version of this test measured it by mistake.
+   */
+  const offTheRoad = (world: CityWorld) => {
+    world.step(STEP, NONE);
+    const road = world.onRoad!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    const length = Math.max(1, Math.hypot(b.x - a.x, b.z - a.z));
+    // Across the road and over the far kerb, by more than half its width.
+    const off = road.width * 0.9;
+    world.x = (a.x + b.x) / 2 - ((b.z - a.z) / length) * off;
+    world.z = (a.z + b.z) / 2 + ((b.x - a.x) / length) * off;
+    world.y = 0;
+    world.speed = 0;
+    // Let the sim work out what is under the car, which is what the police
+    // read: `onRoad` is the same answer that caps the player's speed here.
+    world.step(STEP, NONE);
+    return world;
+  };
+
+  /**
+   * A chase unit on the road nearest the car.
+   *
+   * On a road it is genuinely on, with a `t` that matches where it is: a cop
+   * pushed in with a position and a mismatched `t` is teleported onto its road
+   * on the next step, which is how the first version of this test put its
+   * cruiser a kilometre away and then measured it driving further off.
+   */
+  const chaserNear = (world: CityWorld): Cop => {
+    let road = world.city.roads[0];
+    let best = Infinity;
+    for (const candidate of world.city.roads) {
+      if (world.city.nodes[candidate.a].y !== 0) continue;
+      const a = world.city.nodes[candidate.a].pos;
+      const b = world.city.nodes[candidate.b].pos;
+      const gap = Math.hypot((a.x + b.x) / 2 - world.x, (a.z + b.z) / 2 - world.z);
+      if (gap < best) {
+        best = gap;
+        road = candidate;
+      }
+    }
+    const cop: Cop = {
+      road,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      kind: 'cruiser',
+      role: 'chase',
+      offRoad: 0,
+    };
+    // Let the graph say where that is, rather than asserting it.
+    placeOnRoad(world.city, cop, 0);
+    world.police.cops.push(cop);
+    return cop;
+  };
+
+  it('leaves the road to follow a car that has left it', () => {
+    const world = offTheRoad(parked());
+    expect(world.onRoad).toBe(null);
+    const cop = chaserNear(world);
+    world.police.heat = 0.9;
+
+    const before = Math.hypot(cop.x - world.x, cop.z - world.z);
+    for (let t = 0; t < 1.5; t += STEP) world.police.update(STEP, world, world.maxSpeed);
+    const after = Math.hypot(cop.x - world.x, cop.z - world.z);
+
+    expect(after).toBeLessThan(before);
+  });
+
+  it('stays on the road when the car is on it', () => {
+    const world = parked();
+    world.step(STEP, NONE);
+    expect(world.onRoad).not.toBe(null);
+    const cop = chaserNear(world);
+    world.police.heat = 0.9;
+    for (let t = 0; t < 1.5; t += STEP) world.police.update(STEP, world, world.maxSpeed);
+    // Never stepped off: the whole mechanism is for a car that has actually
+    // left the network, and clipping a kerb is not that.
+    expect(cop.offRoad).toBe(0);
+  });
+
+  it('comes back to the network rather than roaming', () => {
+    const world = offTheRoad(parked());
+    const cop = chaserNear(world);
+    world.police.heat = 0.9;
+    // Long enough that the leash has to have run out and been reeled in.
+    for (let t = 0; t < 20; t += STEP) world.police.update(STEP, world, world.maxSpeed);
+    expect(cop.offRoad).toBeLessThanOrEqual(COP_LEASH);
   });
 });
 
@@ -1357,6 +1480,7 @@ describe('Rep', () => {
       heading: world.heading,
       kind: 'cruiser',
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     world.speed = world.maxSpeed * 0.6;
@@ -1911,6 +2035,7 @@ describe('damage', () => {
       heading: world.heading,
       kind: 'cruiser',
       role: 'chase',
+      offRoad: 0,
     };
     world.police.cops.push(cop);
     world.speed = world.maxSpeed * 0.3;

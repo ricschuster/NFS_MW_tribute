@@ -240,6 +240,21 @@ a pursuit always reaches an ending. The stake is the pursuit's own Rep:
 where it started, because a bust that can re-lock a rival you already earned is
 progress going backwards. `npm run endings` is the probe for all of it.
 
+**A pursuit can step off the road, and only just** (issue #220). Police are
+`GraphCar`s and the player deliberately is not, so a pursuit used to end at a
+kerb: cut across a plaza, a car park or #185's parkland and the cars behind you
+had to go round. `CityPolice.cutsCorner` lets a chasing unit leave the road when
+the car it is after is off it and within `COP_LEASH`, drive straight at it, and
+rejoin the network at the nearest road - a step off the kerb and back, not a
+second way of navigating. Two things keep it honest. Open ground costs a unit
+`COP_OFF_ROAD` of its pace, which is worse than the quarter of top speed the
+player is held to, so cutting across still gains you something and no longer
+gains you everything. And "is the car off the road" is the sim's own `onRoad` -
+the same answer that caps the player's speed - rather than a second surface test
+in the pursuit, because asking the grid directly counted a car five metres from
+the centre of a ten-metre street as off-road and sent the whole pursuit over the
+pavement after it.
+
 **Not every cop is chasing you** (issue #61). A `Cop` has a `role`: a `chase`
 unit is spawned behind you, navigates to close the distance and keeps right; an
 Enforcer is spawned *ahead* of you and steers to the lane you are actually in,

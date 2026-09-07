@@ -53,6 +53,8 @@ import {
   PATROL_IN_CITY,
   PATROL_RADIUS,
   PATROL_SPAWN_MIN,
+  COP_LEASH,
+  COP_OFF_ROAD,
   PATROL_PACE,
   type CopKind,
 } from './constants';
@@ -60,6 +62,7 @@ import { lineBlocked, type CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
 import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
+import { surfaceAt } from './city/grid';
 
 export interface Cop extends GraphCar {
   /** What kind of unit this is: decides its pace, and how it is drawn. */
@@ -79,6 +82,16 @@ export interface Cop extends GraphCar {
    * timer, the budget, eyes-on - skips them.
    */
   role: 'chase' | 'enforcer' | 'patrol';
+  /**
+   * How far this unit has come off the road to follow you (#220).
+   *
+   * Zero for a car on the network, which is nearly all of them nearly all of
+   * the time. Above zero the car is driving over open ground on a bearing
+   * rather than along a road, and `COP_LEASH` is as far as it may get before
+   * it has to be back on the graph - so this is a step off the kerb and back,
+   * not a second navigation model.
+   */
+  offRoad: number;
   /**
    * The spot this unit is checking, while the pursuit is cooling (#178).
    *
@@ -130,6 +143,15 @@ export interface Chased {
    * are *going*, and a position on its own does not say that.
    */
   heading: number;
+  /**
+   * The road under the car, or null over open ground (#220).
+   *
+   * Optional because the probes and the tests hand this interface a bare
+   * position, and a pursuit has to work against one of those. Absent reads as
+   * "on the road", which is the conservative answer: the police stay on the
+   * network unless something tells them the car has genuinely left it.
+   */
+  onRoad?: unknown | null;
 }
 
 /** One parked cruiser in a roadblock, for the renderer to put a car on. */
@@ -293,6 +315,9 @@ export class CityPolice {
       // An Enforcer aims at the line you are on rather than sitting in the
       // lane beside it. Everything else keeps right, so oncoming traffic and
       // oncoming police pass on the correct side.
+      // Off the road after you, if that is where you went (#220).
+      if (this.cutsCorner(cop, player, dt)) continue;
+
       const lane = cop.role === 'enforcer' ? this.aimingLane(cop, player) : TRAFFIC_LANE;
       advanceAlong(this.city, cop, dt, (c, node) => this.toward(c, node, player), lane);
     }
@@ -708,6 +733,109 @@ export class CityPolice {
    * trigger needs is only that there is sometimes a unit near enough to see
    * what you did.
    */
+  /**
+   * Follow the car over open ground, or come back to the road (#220).
+   *
+   * Police live on the graph and the player deliberately does not, so a pursuit
+   * used to end at a kerb: cut across a plaza, a car park or the parkland #185
+   * laid down and the cars behind you had to go round. That reads as a
+   * limitation rather than as a decision, which is what a playtest said about
+   * it.
+   *
+   * This is a step off the road and back on, not a second way of navigating.
+   * A unit leaves the road only when the car it is chasing is itself off-road
+   * and close, drives straight at it while it is out there, and is pulled back
+   * to the network at `COP_LEASH`. Nothing about junction-picking changes; the
+   * moment it is on tarmac again it is a graph car with the road under it.
+   *
+   * Open ground costs it more than it costs you - `COP_OFF_ROAD` against the
+   * quarter of top speed you are held to - and that is the whole design.
+   * Cutting across a car park still gains you something. It stops gaining you
+   * *everything*, which is what a pursuit that cannot leave the road was
+   * handing over.
+   *
+   * Returns true when it has moved the car itself, so the caller leaves it
+   * alone this step.
+   */
+  private cutsCorner(cop: Cop, player: Chased, dt: number): boolean {
+    /** Is there road under this point? Used to decide when a unit is back. */
+    const onRoad = (x: number, z: number) =>
+      surfaceAt(this.city, this.grid, x, z, 0).road !== null;
+
+    // Already out there: keep going, or come back.
+    if (cop.offRoad > 0) {
+      const dx = player.x - cop.x;
+      const dz = player.z - cop.z;
+      const gap = Math.max(1, Math.hypot(dx, dz));
+      const step = cop.speed * COP_OFF_ROAD * dt;
+      cop.x += (dx / gap) * step;
+      cop.z += (dz / gap) * step;
+      cop.y = 0;
+      cop.heading = Math.atan2(dx, dz);
+      cop.offRoad += step;
+
+      // Back on the network the moment there is road underneath, or when the
+      // leash runs out - whichever comes first. Either way it rejoins at the
+      // nearest road rather than teleporting: `nearestRoad` is the same
+      // question the player's own stuck reset asks (#179).
+      if (onRoad(cop.x, cop.z) || cop.offRoad > COP_LEASH) {
+        cop.offRoad = 0;
+        this.rejoin(cop);
+      }
+      return true;
+    }
+
+    // Worth leaving the road for? Only if the car is off it, only if it is
+    // close enough that this is following rather than wandering, and only for
+    // a unit that is actually chasing.
+    //
+    // "Off it" is the sim's own answer - the same `onRoad` that caps the
+    // player's speed over open ground - rather than a second surface test
+    // here. Asking the grid directly made a car five metres from the centre of
+    // a ten-metre street count as off-road, so clipping a kerb sent the whole
+    // pursuit across the pavement after it.
+    if (cop.role === 'patrol') return false;
+    if (this.gapTo(cop, player) > COP_LEASH) return false;
+    if (player.onRoad !== null || player.onRoad === undefined) return false;
+    cop.offRoad = 1;
+    return false;
+  }
+
+  /**
+   * Put a unit back on the road nearest to where it has ended up (#220).
+   *
+   * A car that has been driving over open ground has a position and no place
+   * on the graph, and the graph is the truth for everything else it does. This
+   * is the same question `CityWorld.recover` answers for the player.
+   */
+  private rejoin(cop: Cop): void {
+    let best = cop.road;
+    let bestGap = Infinity;
+    for (const road of this.city.roads) {
+      if (this.city.nodes[road.a].y !== 0) continue;
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const mx = (a.x + b.x) / 2;
+      const mz = (a.z + b.z) / 2;
+      const gap = Math.hypot(mx - cop.x, mz - cop.z);
+      if (gap < bestGap) {
+        bestGap = gap;
+        best = road;
+      }
+    }
+    cop.road = best;
+    // Where along it the car actually is, so it rejoins beside itself rather
+    // than at one end of the street it happens to be standing on.
+    const a = this.city.nodes[best.a].pos;
+    const b = this.city.nodes[best.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const span = Math.max(1, dx * dx + dz * dz);
+    const along = ((cop.x - a.x) * dx + (cop.z - a.z) * dz) / span;
+    cop.t = Math.max(0, Math.min(1, along));
+    placeOnRoad(this.city, cop, TRAFFIC_LANE);
+  }
+
   private muster(player: Chased): void {
     let attempts = 0;
     while (this.patrols() < PATROL_IN_CITY && attempts < 12) {
@@ -751,6 +879,7 @@ export class CityPolice {
       // patrol is that you can see it coming and lift off.
       kind: 'cruiser',
       role: 'patrol',
+      offRoad: 0,
     };
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
     if (this.gapTo(cop, player) < PATROL_SPAWN_MIN * 0.5) return null;
@@ -1100,6 +1229,7 @@ export class CityPolice {
       damage: 0,
       kind: role === 'enforcer' ? this.force.enforcerUnit : this.rng.pick(this.force.units),
       role,
+      offRoad: 0,
     };
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
     const facing = directionOf(this.city, cop);
