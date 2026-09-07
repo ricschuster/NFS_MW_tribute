@@ -20,7 +20,7 @@ import {
 } from '../constants';
 import type { Rng } from './rng';
 import { nearWater, type Water } from './water';
-import type { Axis, CityNode, CityRoad, Rect, Vec2 } from './types';
+import type { Axis, CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
 
 
 /**
@@ -85,7 +85,7 @@ export function addInterstate(
 
   // Surface nodes a ramp could land on, indexed so the search per side is not
   // a scan of the whole city.
-  const surface = nodes.filter((node) => node.y === 0 && node.roads.length >= 3);
+  const surface = nodes.filter((node) => node.level === 'surface' && node.roads.length >= 3);
 
   let travelled = 0;
   let previous: CityNode | null = null;
@@ -109,7 +109,7 @@ export function addInterstate(
       built.push({ node, side });
 
       // A ramp only makes sense where the deck is actually above the street.
-      if (station.ramp && node.y > 0) {
+      if (station.ramp && node.level === 'elevated') {
         link(roads, nodes, node, footFor(nodes, roads, node, station.ramp), 'ramp');
       }
     }
@@ -147,7 +147,7 @@ function addSpurs(
 
   // Only stations up on the deck, and only ones with room to run to an edge.
   const candidates = stations.filter(({ node, side }) => {
-    if (node.y <= 0) return false; // leaving from inside the tunnel is not a junction
+    if (node.level !== 'elevated') return false; // leaving from inside the tunnel is not a junction
     const run =
       side.axis === 'x'
         ? Math.abs((side.at > middleZ ? bounds.maxZ : bounds.minZ) - node.pos.z)
@@ -426,7 +426,11 @@ function footFor(
 }
 
 function make(nodes: CityNode[], at: { x: number; z: number }, y: number): CityNode {
-  const node: CityNode = { id: nodes.length, pos: { x: at.x, z: at.z }, y, roads: [] };
+  // Derived from the height, because on flat ground they are the same question
+  // and this has to stay a no-op (#250). When the ground stops being flat, this
+  // is the line that stops being a derivation.
+  const level: NodeLevel = y > 0 ? 'elevated' : y < 0 ? 'tunnel' : 'surface';
+  const node: CityNode = { id: nodes.length, pos: { x: at.x, z: at.z }, y, level, roads: [] };
   nodes.push(node);
   return node;
 }

@@ -69,11 +69,29 @@ export interface DistrictCharacter {
  * turn from one onto the other. That is the thing a projected ribbon or a
  * ground plane cannot represent at all.
  */
+/**
+ * Which network a node belongs to, which is *not* the same question as how high
+ * it is (#250).
+ *
+ * `y === 0` has been standing in for "on the street network" in a dozen places -
+ * where a park may go, where a lamp goes, where the police may spawn, which
+ * junctions an ambush or a race may use. That works only while the ground is
+ * flat. Relief (ADR-0007) puts streets at 40 m on a hill and leaves the
+ * interstate deck at 12 m, and every one of those tests then reads a hillside
+ * street as an overpass.
+ *
+ * Today the level is derived from the height and the two agree exactly, so this
+ * changes nothing. The point of the field is the day they stop agreeing.
+ */
+export type NodeLevel = 'surface' | 'elevated' | 'tunnel';
+
 export interface CityNode {
   id: number;
   pos: Vec2;
   /** Height above the surface. 0 on the street, positive elevated, negative in a tunnel. */
   y: number;
+  /** Which network this belongs to. Ask this, not `y`, when you mean "a street". */
+  level: NodeLevel;
   /** Ids of the roads meeting at this node. */
   roads: number[];
 }

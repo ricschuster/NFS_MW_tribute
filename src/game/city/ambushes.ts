@@ -28,7 +28,7 @@ export function ambushesFor(city: City): AmbushSpot[] {
     z: (city.bounds.minZ + city.bounds.maxZ) / 2,
   };
   const junctions = city.nodes
-    .filter((node) => node.y === 0 && node.roads.length >= 3)
+    .filter((node) => node.level === 'surface' && node.roads.length >= 3)
     .filter((node) =>
       node.roads.every((id) => {
         const road = city.roads[id];

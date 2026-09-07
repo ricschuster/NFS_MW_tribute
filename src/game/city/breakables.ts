@@ -86,7 +86,7 @@ export function breakablesFor(rng: Rng, city: City): Breakable[] {
           road.class !== 'ramp' &&
           road.class !== 'interstate' &&
           !road.bridge &&
-          city.nodes[road.a].y === 0 &&
+          city.nodes[road.a].level === 'surface' &&
           road.length > road.width * 2,
       ),
     );
@@ -151,7 +151,7 @@ function nearestRoad(city: City, at: Vec2): CityRoad | null {
   let bestGap = Infinity;
   for (const road of city.roads) {
     if (road.class === 'interstate' || road.class === 'ramp' || road.bridge) continue;
-    if (city.nodes[road.a].y !== 0) continue;
+    if (city.nodes[road.a].level !== 'surface') continue;
     const a = city.nodes[road.a].pos;
     const b = city.nodes[road.b].pos;
     const gap = Math.hypot((a.x + b.x) / 2 - at.x, (a.z + b.z) / 2 - at.z);

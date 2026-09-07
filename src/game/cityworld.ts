@@ -424,7 +424,7 @@ export class CityWorld {
     for (const road of this.city.roads) {
       // A street, at street level, long enough to be somewhere rather than a stub.
       if (road.class !== 'street' && road.class !== 'arterial') continue;
-      if (this.city.nodes[road.a].y !== 0 || road.length < SPAWN_SEARCH) continue;
+      if (this.city.nodes[road.a].level !== 'surface' || road.length < SPAWN_SEARCH) continue;
       // Measured from the road's middle, not from one of its ends. A long
       // arterial can pass through the centre of the city while both its ends
       // are out at the coast, which is how the car came to start beside the

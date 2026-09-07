@@ -137,7 +137,7 @@ function surfaceGraph(city: City): Graph {
 
   for (const road of city.roads) {
     if (road.class === 'interstate' || road.class === 'ramp') continue;
-    if (city.nodes[road.a].y !== 0 || city.nodes[road.b].y !== 0) continue;
+    if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
     add(road.a, road.b, road.length);
     add(road.b, road.a, road.length);
   }
