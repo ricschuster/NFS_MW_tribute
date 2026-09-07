@@ -153,6 +153,48 @@ describe('racing one', () => {
     }
   }
 
+  /**
+   * Seeing the finish coming (#219).
+   *
+   * Every gate looked the same, so the last one arrived without warning and the
+   * race ended over a car still doing two hundred. The renderer paints the
+   * final gate white; this is the flag it reads.
+   */
+  it('knows which gate is the last one', () => {
+    const race = new CityRace();
+    race.begin(route, rival);
+    run(race, 0, CITY_COUNTDOWN + 0.2, 'racing');
+
+    // Not on the grid, and not on the first gate of a three-lap circuit.
+    expect(race.onFinalGate).toBe(false);
+
+    // Round to the last gate of the last lap.
+    const gates = route.checkpoints.length;
+    let saw = false;
+    let along = 0;
+    for (let t = 0; t < 600; t += STEP) {
+      along += REFERENCE_TOP_SPEED * 0.5 * STEP;
+      race.update(STEP, pointAt(route.points, route.length, along), REFERENCE_TOP_SPEED);
+      if (race.state !== 'racing') break;
+      if (race.onFinalGate) {
+        saw = true;
+        expect(race.lap).toBe(route.laps - 1);
+        expect(race.checkpoint).toBe(gates - 1);
+      }
+    }
+    expect(saw, 'the last gate is never flagged as the last gate').toBe(true);
+  });
+
+  it('does not flag a final gate once the race is over', () => {
+    const race = new CityRace();
+    race.begin(route, rival);
+    run(race, REFERENCE_TOP_SPEED * 0.6, 600);
+    expect(race.state).toBe('finished');
+    // The gate is gone at this point and a white one left standing over the
+    // result screen would be a gate you cannot drive through.
+    expect(race.onFinalGate).toBe(false);
+  });
+
   it('holds the car on the grid until the lights go', () => {
     const race = new CityRace();
     race.begin(route, rival);

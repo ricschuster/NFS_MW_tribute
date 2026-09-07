@@ -134,6 +134,20 @@ export class CityRace {
   }
 
   /** Is this a speed run rather than a circuit? */
+  /**
+   * Is the gate you are driving at the last one (#219)?
+   *
+   * Every gate looks the same, so the finish arrived without warning and the
+   * race ended with a banner over a car still doing 200 - "wasn't clear that
+   * it's over", as the playtest put it. Knowing which gate is the last one is
+   * what lets the renderer say so before you reach it.
+   */
+  get onFinalGate(): boolean {
+    const route = this.route;
+    if (!route || this.state !== 'racing') return false;
+    return this.lap === route.laps - 1 && this.checkpoint === route.checkpoints.length - 1;
+  }
+
   get isSpeedRun(): boolean {
     return this.route?.kind === 'speedrun';
   }
