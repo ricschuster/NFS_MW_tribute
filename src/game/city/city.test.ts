@@ -4,7 +4,7 @@ import { kestrelBay } from './index';
 import { Rng } from './rng';
 import { CITY_SEED, DISTRICTS, UNITS_PER_METRE } from '../constants';
 import { makeWater } from './water';
-import { CityGrid, carriageway, lineBlocked, inWater, surfaceAt } from './grid';
+import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import type { City, CityRoad, Rect } from './types';
 
@@ -877,7 +877,8 @@ describe('every road in an area', () => {
     maxZ: z + reach,
   });
 
-  const overlaps = (a: ReturnType<typeof around>, b: ReturnType<typeof carriageway>) =>
+  // The file's own `carriageway` above, which is the box a road occupies.
+  const overlaps = (a: ReturnType<typeof around>, b: Rect) =>
     a.minX <= b.maxX && a.maxX >= b.minX && a.minZ <= b.maxZ && a.maxZ >= b.minZ;
 
   it('misses none of them, wherever the view happens to sit', () => {
