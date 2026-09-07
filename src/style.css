@@ -19,9 +19,17 @@ body {
 main {
   text-align: center;
   padding: 1rem;
+  /* A column that owns the viewport, so the stage can take whatever height the
+     title and the hint do not. Without this the stage was capped at 1024px and
+     the game sat in a small window on any real monitor. */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
 }
 
 h1 {
+  flex: 0 0 auto;
   margin: 0 0 0.6rem;
   font-size: clamp(1.5rem, 5vw, 2.75rem);
   letter-spacing: 0.35em;
@@ -34,8 +42,16 @@ h1 {
    canvas behind it carrying the world while the 2D one carries the HUD. */
 .stage {
   position: relative;
-  width: min(100%, 1024px);
+  /* Grow to fill what the column has left, and derive the width from the
+     aspect ratio - so the stage is the largest 1024x640 box that fits, and the
+     HUD never has to be drawn to a shape it was not designed for. `min-height`
+     is the flexbox escape hatch: without it a flex item refuses to shrink
+     below its content and the stage overflows the window instead of fitting
+     inside it. */
+  flex: 1 1 auto;
+  min-height: 0;
   aspect-ratio: 1024 / 640;
+  max-width: 100%;
   margin: 0 auto;
   border-radius: 10px;
   overflow: hidden;
@@ -62,7 +78,21 @@ h1 {
 }
 
 .hint {
+  flex: 0 0 auto;
   color: #8a8a95;
   font-size: 0.85rem;
   margin-top: 0.85rem;
+}
+
+/* Fullscreen: the game and nothing else. The title and the hint go, so the
+   stage is the only child left and takes the whole screen - still at 1024x640,
+   so it is letterboxed on a monitor that is not 16:10 rather than stretched. */
+main:fullscreen h1,
+main:fullscreen .hint {
+  display: none;
+}
+
+main:fullscreen .stage {
+  border-radius: 0;
+  box-shadow: none;
 }

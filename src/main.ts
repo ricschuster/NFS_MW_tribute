@@ -70,9 +70,50 @@ async function boot(): Promise<void> {
   const picked = views.find((v) => v === named);
   if (picked) view.look(picked);
 
-  const fit = () => view.resize(stage.clientWidth || WIDTH, stage.clientHeight || HEIGHT);
+  /**
+   * Match both canvases to whatever size the stage came out.
+   *
+   * The 3D renderer takes the size directly. The HUD is drawn in a fixed
+   * 1024x640 space - every position in `hud.ts` and every touch region in
+   * `touch.ts` is written in it - so rather than teach all of that about a
+   * variable size, the *backing store* grows and a transform maps the fixed
+   * space onto it. The drawing code does not know anything happened and the
+   * HUD is crisp instead of a 1024-wide image stretched over a 2560-wide
+   * monitor.
+   *
+   * `.stage` holds the aspect ratio at 1024/640, so the two scales are equal
+   * and nothing is distorted. Setting `width` or `height` on a canvas resets
+   * its 2D state, transform included, which is why the transform is applied
+   * after and on every resize rather than once at boot.
+   */
+  const fit = () => {
+    const width = stage.clientWidth || WIDTH;
+    const height = stage.clientHeight || HEIGHT;
+    view.resize(width, height);
+    if (free) return;
+    const dpr = Math.min(devicePixelRatio, 2);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
+  };
   fit();
   addEventListener('resize', fit);
+
+  // F for fullscreen. Not routed through the game's own input handling: this
+  // is the page, not the car, and `requestFullscreen` has to be called from a
+  // user gesture or the browser refuses it.
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'f' && e.key !== 'F') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    const host = stage.parentElement ?? stage;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void host.requestFullscreen?.().catch(() => {});
+  });
+  // Leaving fullscreen does not always fire `resize` on its own.
+  document.addEventListener('fullscreenchange', fit);
+
   view.start();
 }
 
