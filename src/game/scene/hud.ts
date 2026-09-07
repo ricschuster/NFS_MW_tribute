@@ -659,19 +659,18 @@ export class Hud {
 
   /** Roads within the minimap's reach, via the spatial index rather than all of them. */
   private roadsAround(world: CityWorld) {
-    const found = new Set<number>();
-    const roads = [];
-    const step = MINIMAP_RANGE / 2;
-    for (let dx = -MINIMAP_RANGE; dx <= MINIMAP_RANGE; dx += step) {
-      for (let dz = -MINIMAP_RANGE; dz <= MINIMAP_RANGE; dz += step) {
-        for (const road of world.grid.roadsNear(world.x + dx, world.z + dz)) {
-          if (found.has(road.id)) continue;
-          found.add(road.id);
-          roads.push(road);
-        }
-      }
-    }
-    return roads;
+    // The square the circle is inscribed in, asked of the grid as an area.
+    // This used to sample a lattice of points `MINIMAP_RANGE / 2` apart, which
+    // is 140 m against a 120 m cell - so cells fell between the samples, the
+    // roads in them were never drawn, and which cells were missed changed as
+    // the car moved. That is the whole of "the roads flicker in and out"
+    // (#216).
+    return world.grid.roadsIn({
+      minX: world.x - MINIMAP_RANGE,
+      maxX: world.x + MINIMAP_RANGE,
+      minZ: world.z - MINIMAP_RANGE,
+      maxZ: world.z + MINIMAP_RANGE,
+    });
   }
 
   /**

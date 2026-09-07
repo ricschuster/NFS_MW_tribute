@@ -658,8 +658,20 @@ export const LOOK_BACK_HOLD = 0.9;
 export const SHAKE_STRENGTH = 0.5;
 export const SHAKE_DECAY = 2.2;
 
-/** The minimap (#89): how far it reaches, and how big it is drawn. */
-export const MINIMAP_RANGE = m(280);
+/**
+ * The minimap (#89): how far it reaches, and how big it is drawn.
+ *
+ * The reach went up with #216. At 280 m it showed the street you were on and
+ * little else - "not much to see", as a playtest put it - which cannot answer
+ * the question a minimap exists for: which way is the thing I am heading for.
+ * The circle is the same size on screen; it just holds more city.
+ *
+ * There is a limit the other way. Far enough out and the streets converge into
+ * a grey hatch, and the marker line to where you said you were going stops
+ * being a direction and becomes a scribble. This is about as far as the drawn
+ * width of a street survives.
+ */
+export const MINIMAP_RANGE = m(430);
 export const MINIMAP_SIZE = 190;
 
 /**
