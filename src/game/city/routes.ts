@@ -43,14 +43,32 @@ export function routesFor(city: City): CityRoute[] {
   // many angles because most candidates are rejected: by the water, by a lap
   // that came out too long or too short, by one that doubles back on itself,
   // or by being too close to one already placed.
-  const rings = [1.2, 1.7, 2.2, 2.7, 3.2, 3.7, 4.2, 4.7];
+  //
+  // The rings are fractions of the *map*, not multiples of `ROUTE_RADIUS`, and
+  // that distinction cost six routes once (#201). Sized off the route, making
+  // the laps shorter also shrinks the area searched for them: at a 260 m radius
+  // every candidate centre fell within about a kilometre of the middle, so the
+  // only streets ever considered were downtown and `ROUTE_SPACING` could not
+  // fit six start lines into them. How big a lap is and where to look for one
+  // are separate questions.
+  //
+  // Elliptical rather than circular because the map is not square: a circle
+  // sized to the short side never reaches the ends of the long one.
+  const halfX = (city.bounds.maxX - city.bounds.minX) / 2;
+  const halfZ = (city.bounds.maxZ - city.bounds.minZ) / 2;
+  //
+  // Denser than it was, in both rings and angles. A shorter lap is a smaller
+  // target: the corners have to land on four distinct junctions and four legs
+  // have to join them without retracing, and below about a 250 m radius enough
+  // candidates fail that the old 8 x 24 grid ran out before it found six.
+  const rings = [0.12, 0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82, 0.92];
+  const spokes = 36;
   for (const scale of rings) {
-    const reach = ROUTE_RADIUS * scale;
-    for (let i = 0; i < 24 && routes.length < ROUTE_COUNT; i++) {
-      const angle = (i / 24) * Math.PI * 2;
+    for (let i = 0; i < spokes && routes.length < ROUTE_COUNT; i++) {
+      const angle = (i / spokes) * Math.PI * 2;
       const at = {
-        x: centre.x + Math.sin(angle) * reach,
-        z: centre.z + Math.cos(angle) * reach,
+        x: centre.x + Math.sin(angle) * halfX * scale,
+        z: centre.z + Math.cos(angle) * halfZ * scale,
       };
       const route = circuitAround(city, graph, at, routes.length);
       if (!route) continue;

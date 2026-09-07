@@ -1153,24 +1153,43 @@ export const ROUTE_COUNT = 6;
  * How far across the city a lap reaches, and how many laps of it are run.
  *
  * Sized from how long a race should take rather than from how big the map is:
- * a two-and-a-half minute event at the pace the car actually holds. The first
- * version used a 900 m radius and produced a twelve-kilometre lap round the
- * harbour, which is a seven-minute race.
+ * a two-and-a-half to three minute event at the pace the car actually holds.
+ * The first version used a 900 m radius and produced a twelve-kilometre lap
+ * round the harbour, which is a seven-minute race.
  *
- * "The pace the car actually holds" was measured on an empty road, and a race
- * happens in traffic. At the pace it really holds - a quarter of top speed -
- * three laps of three and a half kilometres is a *ten* minute race, which
- * `npm run playthrough` measured at 575 to 611 seconds as soon as the events
- * became winnable at all and a player could finish one. Two laps is five, and
- * still over the intent: the honest fix is shorter routes, and that means
- * regenerating every event's start line, so it is #201 rather than a
- * number changed at the end of an afternoon.
+ * It was 520 m, and "the pace the car actually holds" behind that number had
+ * been measured on an empty road before #171 put traffic in the probes. In
+ * traffic a good driver holds about a quarter of top speed, so three laps of
+ * three and a half kilometres is a *ten* minute race - `npm run playthrough`
+ * measured 575 to 611 seconds the moment the events became winnable at all.
+ * #200 set the laps to 2 as a stopgap, which is still five.
+ *
+ * 195 m gives laps of 1.2 to 1.8 km, which an expert covers in 46 to 68
+ * seconds in traffic, so three of them is the event the comment always claimed
+ * (#201). Speed runs are one lap and are therefore now a minute rather than
+ * two: that is the intended shape of a sprint, but it is the largest
+ * player-visible consequence of this number and worth knowing before it moves
+ * again.
+ *
+ * Below about 250 m the *generator* becomes the constraint rather than the
+ * geometry, because a smaller lap is a smaller target: four corners have to
+ * land on four distinct junctions and four legs have to join them without
+ * retracing. `routesFor` searches a denser grid for that reason, and its rings
+ * are fractions of the map rather than multiples of this - which they were not,
+ * and which meant shrinking the lap also shrank the area searched for one.
+ * Check `ROUTE_COUNT` routes still come out before trusting a new value.
  */
-export const ROUTE_RADIUS = m(520);
-export const ROUTE_LAPS = 2;
-/** A lap outside this is not a circuit: it is a commute, or a car park. */
-export const ROUTE_MIN_LENGTH = m(2000);
-export const ROUTE_MAX_LENGTH = m(5600);
+export const ROUTE_RADIUS = m(195);
+export const ROUTE_LAPS = 3;
+/**
+ * A lap outside this is not a circuit: it is a commute, or a car park.
+ *
+ * The band is also what keeps six events comparable: it is narrow enough that
+ * the longest circuit is not twice the shortest, and wide enough that the
+ * generator can still find six. Tightening it to 1800 m cost two routes.
+ */
+export const ROUTE_MIN_LENGTH = m(1150);
+export const ROUTE_MAX_LENGTH = m(1900);
 /**
  * The sharpest corner a lap may contain, in radians.
  *
