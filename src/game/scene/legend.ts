@@ -19,6 +19,11 @@
  * - **amber** is worth points - billboards and speed cameras.
  * - **violet** is the interstate and the ramps that are the only way onto it.
  * - **pink** is a car waiting to be taken.
+ *
+ * White carries three: you, what the police laid in the road, and the cars you
+ * are racing. That is the cap, and it is only tolerable because the last of
+ * them exists for the two minutes an event lasts and the first is a ring rather
+ * than a dot.
  */
 export type LegendShape = 'dot' | 'line' | 'cross' | 'ring' | 'target';
 
@@ -41,6 +46,7 @@ export const MAP_LEGEND: [string, string, LegendShape][] = [
   ['ambush - number is the heat', '#ff5a45', 'ring'],
   ['race route; orange = sprint', '#7fe3ff', 'line'],
   ['event start - press ENTER', '#7fe3ff', 'target'],
+  ['a rival, during a race', '#ffffff', 'dot'],
   ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
   ['ramp - the only way up', '#e6b3ff', 'line'],
   ['where you said to go', '#7fe3ff', 'ring'],

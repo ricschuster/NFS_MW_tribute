@@ -6,6 +6,7 @@ import {
   RIVAL_DIFF_SPEED_FRAC,
   FIELD_SIZE,
   FIELD_SPREAD,
+  FIELD_GRID,
   FIELD_WOBBLE,
   FIELD_LANE,
   SPEEDRUN_TARGET,
@@ -58,6 +59,8 @@ export interface RaceRival {
   rate: number;
   /** How far off the route line it runs, so a pack reads as a pack. */
   lane: number;
+  /** How far back its row of the grid sits. Drawing only (#217). */
+  back: number;
 }
 
 /**
@@ -203,7 +206,10 @@ export class CityRace {
         // drifts against itself instead of surging as one car.
         phase: (i / grid.length) * Math.PI * 2,
         rate: 0.35 + i * 0.07,
-        lane: (i - (grid.length - 1) / 2) * FIELD_LANE,
+        // Two abreast, in rows: a grid rather than a wall. Six across is wider
+        // than the road (#217).
+        lane: (i % 2 === 0 ? -1 : 1) * FIELD_LANE,
+        back: Math.floor(i / 2) * FIELD_GRID,
       });
     }
   }
@@ -289,8 +295,11 @@ export class CityRace {
     const dirX = ahead.x - at.x;
     const dirZ = ahead.z - at.z;
     const length = Math.max(1, Math.hypot(dirX, dirZ));
-    car.x = at.x - (dirZ / length) * car.lane;
-    car.z = at.z + (dirX / length) * car.lane;
+    // Across for the lane, and back along the road for the row it is in. The
+    // row is drawing only: `dist` is what the race is scored on and it is not
+    // touched here, so a car three rows back is not three rows behind.
+    car.x = at.x - (dirZ / length) * car.lane - (dirX / length) * car.back;
+    car.z = at.z + (dirX / length) * car.lane - (dirZ / length) * car.back;
 
     // Pointed the way it is actually going, taken from where it just was: the
     // route is a polyline and its direction is whatever the last step did.
