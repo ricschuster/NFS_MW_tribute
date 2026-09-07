@@ -808,6 +808,30 @@ export const PATROL_RADIUS = m(520);
 /** Never spawn one closer than this, or a patrol appears out of nothing in view. */
 export const PATROL_SPAWN_MIN = m(230);
 /** How briskly a patrol cruises, against the road's own limit. */
+/**
+ * How far a pursuing unit may leave the road to cut a corner you cut (#220).
+ *
+ * Police are `GraphCar`s - which road, how far along, which way - and the
+ * player deliberately is not, because "a player pinned to the graph could not
+ * cut across a car park, and cutting across a car park is the point of free
+ * roam". The other side of that decision is that a pursuit gave up at a kerb:
+ * drive over a plaza, a car park or the parkland #185 laid down, and the cars
+ * behind you had to go round.
+ *
+ * Bounded, and small. This is a unit stepping off the road to follow you over
+ * open ground and back on again, not a unit that navigates open ground: past
+ * this it has to be back on the network. Roughly a block.
+ */
+export const COP_LEASH = m(70);
+/**
+ * What open ground costs a police car, as a fraction of its pace.
+ *
+ * Harsher than the quarter of top speed the player is held to off-road, and
+ * that is the point: following you across a car park has to be possible and
+ * has to be *worse* than the road, or there is no reason to know the map. You
+ * lose less by cutting than they do by following.
+ */
+export const COP_OFF_ROAD = 0.55;
 export const PATROL_PACE = 0.85;
 
 /**
