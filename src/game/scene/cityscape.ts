@@ -8,7 +8,11 @@ import {
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
 import type { City } from '../city/types';
-import { UNITS_PER_METRE, INTERSTATE_PILLAR_SPACING } from '../constants';
+import {
+  UNITS_PER_METRE,
+  INTERSTATE_PILLAR_SPACING,
+  ROADBLOCK_MIN_WIDTH,
+} from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
 import { CityCollectibles } from './collectibles';
@@ -368,19 +372,33 @@ export class Cityscape {
   }
 
   /**
-   * Centre-line dashes down every road.
+   * A centre line down the roads that have two sides to keep apart.
    *
-   * These are not decoration. Because the road surface is the ground plane,
-   * asphalt is what you see wherever there is no block - including the open
-   * ground the generator leaves along the riverbanks, which without markings
-   * reads exactly like a road. The dashes are what say which asphalt is a road.
+   * The comment here used to say the dashes were what told asphalt from road,
+   * and that stopped being true at #176 - which says so itself: "lane markings
+   * were the previous answer to this and they cannot carry it: junctions have
+   * no markings either". `carriageways` paints the roads now and the rule is
+   * that dark tarmac is drivable. So the markings were left saying nothing, on
+   * every road from a 10 m street to the 30 m interstate, identically.
+   *
+   * A playtest called them "often confusing", and that is what carrying no
+   * information looks like from the driver's seat: a centre line on a street
+   * you take the middle of anyway, on a road narrow enough that two cars
+   * cannot pass without one of them crossing it.
+   *
+   * So a centre line means what a centre line means: this road has a side for
+   * each direction. `ROADBLOCK_MIN_WIDTH` is the threshold because it is
+   * already the game's definition of a road wide enough to have two halves -
+   * it is what decides where a roadblock can stand, for the same reason.
    */
   private markings(city: City): THREE.InstancedMesh {
     const DASH = 3.2 * UNITS_PER_METRE;
     const GAP = 9 * UNITS_PER_METRE;
 
     const runs = city.roads
-      .filter((road) => !road.bridge && road.length > GAP * 3)
+      .filter(
+        (road) => !road.bridge && road.length > GAP * 3 && road.width >= ROADBLOCK_MIN_WIDTH,
+      )
       .map((road) => {
         const a = city.nodes[road.a].pos;
         const b = city.nodes[road.b].pos;
