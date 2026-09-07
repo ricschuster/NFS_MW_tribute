@@ -819,6 +819,10 @@ export class CityView {
     };
 
     if (edge('e', held(null, 'e'))) this.wheel.cycle();
+    // R pages a branch that has more than nine things on it (#214). A separate
+    // key rather than a cursor, for #90's reason: navigating needs direction
+    // keys and the direction keys are driving.
+    if (edge('r', held(null, 'r'))) this.wheel.more(world);
     for (let i = 1; i <= 9; i++) {
       if (edge(String(i), held(null, String(i)))) this.wheel.choose(world, i - 1);
     }
@@ -828,6 +832,7 @@ export class CityView {
     // drew them - the wheel's length changes with what is in it.
     if (!this.touch) return;
     if (edge('touch-branch', this.touch.on('wheel:branch'))) this.wheel.cycle();
+    if (edge('touch-more', this.touch.on('wheel:more'))) this.wheel.more(world);
     for (let i = 0; i < 9; i++) {
       if (edge(`touch-row-${i}`, this.touch.on(`wheel:${i}`))) this.wheel.choose(world, i);
     }

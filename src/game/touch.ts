@@ -8,6 +8,7 @@ export type ControlId =
   | 'nitro'
   | 'confirm'
   | 'wheel'
+  | 'wheel:more'
   | 'map'
   | 'look';
 

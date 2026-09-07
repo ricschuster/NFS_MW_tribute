@@ -114,4 +114,71 @@ describe('the Quick Wheel', () => {
     expect(CARS.length).toBeGreaterThan(WHEEL_ENTRIES);
     expect(wheel.entries(w).length).toBe(WHEEL_ENTRIES);
   });
+
+  /**
+   * Paging (#214).
+   *
+   * Nine on screen because there are nine number keys, but the list behind it
+   * is longer than nine and used to be cut off silently - which is how an event
+   * a kilometre away stopped being reachable from the wheel.
+   */
+  describe('a branch with more than nine things on it', () => {
+    it('says how many there are, and pages rather than truncating', () => {
+      const w = world();
+      const wheel = new QuickWheel();
+      wheel.cycle();
+      wheel.cycle();
+      expect(wheel.branch).toBe('goto');
+
+      // Routes, ambushes, parked cars and workshops: comfortably over a page.
+      expect(wheel.count(w)).toBeGreaterThan(WHEEL_ENTRIES);
+      expect(wheel.pages(w)).toBeGreaterThan(1);
+      expect(wheel.entries(w).length).toBe(WHEEL_ENTRIES);
+
+      const first = wheel.entries(w).map((e) => e.label);
+      wheel.more(w);
+      expect(wheel.page).toBe(1);
+      const second = wheel.entries(w).map((e) => e.label);
+      // A different nine, not the same nine again.
+      expect(second).not.toEqual(first);
+    });
+
+    it('picks what the number is next to, not what it would have been on page one', () => {
+      const w = world();
+      const wheel = new QuickWheel();
+      wheel.cycle();
+      wheel.cycle();
+      wheel.more(w);
+
+      // The trap this exists for: slicing the list for display but indexing the
+      // unsliced list on the way in, so "1" on page two takes the first thing
+      // on page one. Aim at the top row of page two and the marker has to end
+      // up where that row says it is.
+      const shown = wheel.entries(w)[0];
+      expect(wheel.choose(w, 0)).toBe(true);
+      expect(w.marker).not.toBe(null);
+      expect(w.marker?.label).toBe(shown.label);
+    });
+
+    it('wraps back to the first page', () => {
+      const w = world();
+      const wheel = new QuickWheel();
+      wheel.cycle();
+      wheel.cycle();
+      const pages = wheel.pages(w);
+      for (let i = 0; i < pages; i++) wheel.more(w);
+      expect(wheel.page).toBe(0);
+    });
+
+    it('starts a fresh branch at its first page', () => {
+      const w = world();
+      const wheel = new QuickWheel();
+      wheel.cycle();
+      wheel.cycle();
+      wheel.more(w);
+      expect(wheel.page).toBe(1);
+      wheel.cycle();
+      expect(wheel.page).toBe(0);
+    });
+  });
 });
