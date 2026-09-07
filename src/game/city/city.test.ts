@@ -571,6 +571,39 @@ describe('the elevated interstate', () => {
     expect(below.length).toBeGreaterThan(0);
   });
 
+  // The interstate is built after the network has been cut against the water
+  // and was never given the water at all, so nothing stopped it coming down to
+  // street level over the bay (#244). Over water at 12 m is a viaduct and at
+  // -9 m is a tunnel; it is the stretch in between that is a road going into
+  // the sea, and the two places the deck reaches it are a ramp and a mouth.
+  const overWater = (road: CityRoad) => {
+    const a = city.nodes[road.a];
+    const b = city.nodes[road.b];
+    const wet: number[] = [];
+    for (let i = 0; i <= 8; i++) {
+      const t = i / 8;
+      const x = a.pos.x + (b.pos.x - a.pos.x) * t;
+      const z = a.pos.z + (b.pos.z - a.pos.z) * t;
+      if (water.isWater(x, z)) wet.push(a.y + (b.y - a.y) * t);
+    }
+    return wet;
+  };
+
+  it('never runs a ramp out over the water', () => {
+    const wet = ramps().filter((r) => overWater(r).length > 0);
+    expect(wet.map((r) => r.id)).toEqual([]);
+  });
+
+  it('crosses the water high or deep, never at street level', () => {
+    const shallow: string[] = [];
+    for (const road of interstate()) {
+      for (const y of overWater(road)) {
+        if (Math.abs(y) < m(6)) shallow.push(`road ${road.id} at ${Math.round(y / M)} m`);
+      }
+    }
+    expect(shallow.slice(0, 5)).toEqual([]);
+  });
+
   // The point. Where the interstate passes over a street they occupy the same
   // map position, and they must not have become the same junction: you cannot
   // turn off an overpass onto the road beneath it.

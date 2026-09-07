@@ -193,7 +193,7 @@ export function generateCity(seed: number): City {
   // The interstate goes on after the surface network is whole, and joins it
   // only through its ramps. It is deliberately not part of the connectivity
   // repair above: the surface city has to stand up without it.
-  addInterstate(rng, bounds, nodes, roads);
+  addInterstate(rng, bounds, nodes, roads, water);
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.
