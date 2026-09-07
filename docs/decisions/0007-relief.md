@@ -1,6 +1,6 @@
 # 7. Relief: the ground has height
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-07
 - Builds on: [0005](0005-the-shape-of-kestrel-bay.md)
 
