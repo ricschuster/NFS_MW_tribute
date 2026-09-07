@@ -41,6 +41,14 @@ what the city is shaped like.
   pace, so tuning against the empty number alone is tuning against a game
   nobody plays. This is the only driving baseline; the track's `npm run feel`
   retired with the track.
+- `npm run ramps` — can every ramp be driven up? A guard, not an instrument: it
+  exits non-zero if any ramp cannot be climbed, because the ramps are the only
+  way onto the interstate and an interstate you cannot reach is scenery. Eleven
+  of thirteen were unclimbable when it was written (#212), for two reasons that
+  were both geometry - a ramp laid straight at its junction runs *down* an
+  existing street, and two roads sharing a footprint is a place the car cannot
+  choose between; and a ramp is solid against blocks below `CAR_RADIUS * 2`, so
+  anything it passed over while low walled the car in
 - `npm run pace` — can the police be outrun? Compares your real top speed
   against the quickest unit at every heat level, in every condition. Exits
   non-zero if an *undamaged* car cannot outrun a level, which is an invariant
@@ -119,6 +127,19 @@ it. Boulevards go through the same pipeline as everything else rather than
 being spliced into a finished graph: that was tried first and meant
 reimplementing water-clipping, junction-splitting and the connectivity repair,
 badly.
+
+**A ramp is two roads, and its foot is set aside on purpose** (issue #212).
+The climb, and a short flat mouth joining its foot back to the junction it
+serves. Laid straight at that junction the climb runs down an existing street -
+the interstate is axis-aligned, so is the grid, so the perpendicular between
+them *is* a street - and `surfaceAt` picks whichever road is nearest the height
+the car is at, so the flat one wins every step and the car drives the length of
+its own on-ramp at ground level. `RAMP_OFFSET` puts the two carriageways side
+by side instead of on top of each other. The other half is that blocks are
+solid below `CAR_RADIUS * 2`, so `generate.ts` clears them along the stretch
+where a ramp is still low, the same way it already makes way for a boulevard -
+and #185's parkland fills what that leaves, so a cleared corridor reads as
+somewhere rather than as a scar.
 
 **Height is a real property of the network** (issue #85). Nodes have a `y`, so
 two roads at the same map position and different heights are two different

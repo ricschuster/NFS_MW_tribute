@@ -9,6 +9,7 @@ import {
   RAMP_MIN_RUN,
   RAMP_MAX_RUN,
   RAMP_LANES,
+  RAMP_OFFSET,
   RAMP_SPEED,
   TUNNEL_DEPTH,
   TUNNEL_LENGTH,
@@ -94,7 +95,7 @@ export function addInterstate(
 
       // A ramp only makes sense where the deck is actually above the street.
       if (station.ramp && node.y > 0) {
-        link(roads, nodes, node, station.ramp, 'ramp');
+        link(roads, nodes, node, footFor(nodes, roads, node, station.ramp), 'ramp');
       }
     }
 
@@ -272,6 +273,47 @@ function stationsAlong(side: Side, ramps: { at: number; node: CityNode }[]): Sta
   const ordered = [...points.entries()].sort((a, b) => (forward ? a[0] - b[0] : b[0] - a[0]));
   // The far end is the next side's first station, so drop it to avoid a doubled node.
   return ordered.slice(0, -1).map(([at, ramp]) => ({ at, ramp }));
+}
+
+/**
+ * Where a ramp actually comes down: beside the junction it serves, not on it.
+ *
+ * A ramp laid straight at its junction runs down the street on that line for
+ * its whole length, and the car can then never get onto it - the street beneath
+ * is flat, the ramp is rising, and `surfaceAt` takes whichever is nearest the
+ * height the car is at, so the flat one wins on every step (#212). Setting the
+ * foot aside by `RAMP_OFFSET` puts the two carriageways side by side instead of
+ * on top of each other.
+ *
+ * The offset is *across* the ramp's own line, so the foot lands beside the
+ * street rather than further along it, and a short spur joins it back to the
+ * junction so the thing is still reachable. That spur is a ramp too, which
+ * keeps it out of `routes.ts`'s surface graph - a lap should no more be routed
+ * up an on-ramp mouth than up the ramp itself.
+ */
+function footFor(
+  nodes: CityNode[],
+  roads: CityRoad[],
+  deck: CityNode,
+  junction: CityNode,
+): CityNode {
+  const dx = junction.pos.x - deck.pos.x;
+  const dz = junction.pos.z - deck.pos.z;
+  const length = Math.hypot(dx, dz);
+  if (length < 1) return junction;
+
+  // Across the descent, either side. Which side is decided by where the deck
+  // is, so the foot is always on the inside of the turn off the street.
+  const foot = make(
+    nodes,
+    {
+      x: junction.pos.x - (dz / length) * RAMP_OFFSET,
+      z: junction.pos.z + (dx / length) * RAMP_OFFSET,
+    },
+    0,
+  );
+  link(roads, nodes, foot, junction, 'ramp');
+  return foot;
 }
 
 function make(nodes: CityNode[], at: { x: number; z: number }, y: number): CityNode {

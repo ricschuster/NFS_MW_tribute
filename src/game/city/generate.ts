@@ -16,6 +16,8 @@ import {
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
+  CAR_RADIUS,
+  RAMP_CLEARANCE,
   BOULEVARD_LANES,
   BOULEVARD_SPEED,
   DENSITY_RANGE,
@@ -178,12 +180,48 @@ export function generateCity(seed: number): City {
       return segmentToRect(a, b, r) < road.width / 2 + BOULEVARD_CLEARANCE;
     });
 
+  // A ramp comes down through ground the grid had already parcelled up, and
+  // unlike a boulevard it only needs the room where it is *low*: the sim treats
+  // blocks as solid below `CAR_RADIUS * 2`, so a ramp above that flies over
+  // rooftops and a ramp below it walls the car in against whatever it passes.
+  // Clearing only the low stretch is what keeps the interstate looking like it
+  // was threaded through the city rather than bulldozed across it (#212).
+  // A margin over the height blocks stop mattering at, because the car has to
+  // be *clear* of a block rather than level with its roofline as it goes by.
+  const solidTo = CAR_RADIUS * 3;
+  const climbing = roads.filter((road) => road.class === 'ramp');
+  const underRamp = (r: Rect) =>
+    climbing.some((road) => {
+      const a = nodes[road.a];
+      const b = nodes[road.b];
+      if (segmentToRect(a.pos, b.pos, r) > road.width / 2 + RAMP_CLEARANCE) return false;
+      // How high the ramp is where it passes this block - at its *lowest*, over
+      // the block's whole extent. Projecting only the middle reads a long block
+      // as higher than its near end, which left five ramps walled in at 3-4 m
+      // by the corner of a block the test had cleared on its centre.
+      const dx = b.pos.x - a.pos.x;
+      const dz = b.pos.z - a.pos.z;
+      const span = dx * dx + dz * dz;
+      let lowest = Infinity;
+      for (const [px, pz] of [
+        [r.minX, r.minZ],
+        [r.maxX, r.minZ],
+        [r.minX, r.maxZ],
+        [r.maxX, r.maxZ],
+      ]) {
+        const t =
+          span < 1 ? 0 : Math.max(0, Math.min(1, ((px - a.pos.x) * dx + (pz - a.pos.z) * dz) / span));
+        lowest = Math.min(lowest, a.y + (b.y - a.y) * t);
+      }
+      return lowest < solidTo;
+    });
+
   const standing: CityBlock[] = [];
   for (const block of blocks) {
     // Trim against the water as well as the boulevard: pulling a block back
     // moves its corners, and the water test samples corners, so a block that
     // was clear can stop being clear once it has been trimmed.
-    const fitted = pullClear(block.bounds, (r) => onBoulevard(r) || anyWater(r, water));
+    const fitted = pullClear(block.bounds, (r) => onBoulevard(r) || underRamp(r) || anyWater(r, water));
     if (fitted) standing.push({ ...block, bounds: fitted });
   }
   blocks.length = 0;

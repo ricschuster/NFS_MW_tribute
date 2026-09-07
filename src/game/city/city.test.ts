@@ -529,9 +529,21 @@ describe('the elevated interstate', () => {
   });
 
   it('changes level only where it means to', () => {
-    // A ramp exists to change level, so one that does not is not a ramp.
-    for (const ramp of ramps()) {
-      expect(Math.abs(city.nodes[ramp.a].y - city.nodes[ramp.b].y)).toBeGreaterThan(0);
+    // A ramp is two roads since #212: the climb, and the flat mouth that joins
+    // its foot back to the junction it serves. The foot is set aside from that
+    // junction so the climb does not run down an existing street - two roads in
+    // one place is a choice the car cannot make, and it always made the wrong
+    // one. So the assertion is about the climbs: there have to be some, and
+    // every one of them has to actually climb.
+    const climbs = ramps().filter(
+      (r) => Math.abs(city.nodes[r.a].y - city.nodes[r.b].y) > 0,
+    );
+    expect(climbs.length).toBeGreaterThan(0);
+    // And every flat piece of ramp is a mouth at street level, not a ramp that
+    // forgot to rise: both ends on the ground.
+    for (const flat of ramps().filter((r) => !climbs.includes(r))) {
+      expect(city.nodes[flat.a].y).toBe(0);
+      expect(city.nodes[flat.b].y).toBe(0);
     }
     // The deck changes level too, on the run into and out of the tunnel. What
     // must not happen is a step: every change is spread over enough road to
