@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CAR_WIDTH_WORLD, CAR_ASPECT } from '../constants';
 import { carParts } from './carshape';
+import { lampGlowTexture } from './signage';
 
 const BODY_W = CAR_WIDTH_WORLD;
 const BODY_H = CAR_WIDTH_WORLD * CAR_ASPECT * 0.62;
@@ -53,10 +54,59 @@ export function makeCar(color: string, cop = false): THREE.Group {
     );
     light.position.set(side * BODY_W * 0.33, BODY_H * 0.75, -BODY_L * 0.49);
     car.add(light);
+
+    // And the other end (#221). There were tail lights and no headlights, so
+    // an oncoming car at night was a dark shape with nothing at the front of
+    // it. Unlit material, like the tail lights: a lens reads as lit because it
+    // is brighter than the paint, not because the sun is on it.
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(BODY_W * 0.2, BODY_H * 0.18, BODY_L * 0.04),
+      new THREE.MeshBasicMaterial({ color: HEADLIGHT_OFF }),
+    );
+    lamp.name = 'headlight';
+    lamp.position.set(side * BODY_W * 0.32, BODY_H * 0.7, BODY_L * 0.49);
+    car.add(lamp);
   }
+
+  // The light the headlights actually throw, which is the half that makes a
+  // night street drivable rather than merely occupied.
+  //
+  // A quad on the road rather than a spotlight, for `lamp-glow`'s reason
+  // (#180): a real light per car is a slideshow and a quad is nothing. It uses
+  // the same radial texture the lamps do, stretched down the road ahead, so
+  // the two kinds of light on the tarmac are made of the same thing.
+  // Built whether or not the texture is: `lampGlowTexture` needs a canvas and
+  // returns null without one, and a beam that exists only in a browser is a
+  // beam nothing can test. Without the map this is a flat quad, which is
+  // exactly what a headless run never draws.
+  const beam = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({
+      map: lampGlowTexture(),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      fog: true,
+    }),
+  );
+  beam.name = 'beam';
+  // Just off the deck, ahead of the nose. Any higher and it floats over a
+  // kerb; any lower and it z-fights the road it is lighting.
+  beam.position.set(0, 6, BODY_L * 1.9);
+  beam.scale.set(BODY_W * 3.6, 1, BODY_L * 5.5);
+  beam.castShadow = false;
+  beam.receiveShadow = false;
+  beam.visible = false;
+  car.add(beam);
 
   return car;
 }
+
+/** A headlight lens with nothing behind it: pale, but not a lamp. */
+const HEADLIGHT_OFF = '#6f7481';
+/** Lit. Warm rather than white, or it reads as another police light. */
+const HEADLIGHT_ON = '#fff2cf';
 
 /**
  * A pool of car meshes reused frame to frame. Traffic comes and goes as the
@@ -113,6 +163,38 @@ export class CarPool {
   end(): void {
     for (let i = this.used; i < this.pool.length; i++)
       this.pool[i].visible = false;
+  }
+
+  /**
+   * Turn the lights on as the city's do (#221).
+   *
+   * Driven by the same `lamps` figure `Cityscape.setNight` takes, so the cars
+   * and the street agree about what time it is - the whole reason #180 put one
+   * number behind both.
+   *
+   * Only over cars placed this frame: the pool holds meshes for the busiest
+   * moment of the session and most of them are hidden most of the time.
+   */
+  setNight(amount: number): void {
+    const lit = Math.max(0, Math.min(1, amount));
+    for (let i = 0; i < this.used; i++) {
+      const car = this.pool[i];
+      const beam = car.getObjectByName('beam') as THREE.Mesh | undefined;
+      if (beam) {
+        const material = beam.material as THREE.MeshBasicMaterial;
+        // Well under 1, for `lamp-glow`'s reason, and under the lamps' own
+        // strength as well: a beam brighter than the street lighting reads as a
+        // spotlight sheet laid on the tarmac rather than as headlights.
+        material.opacity = lit * 0.30;
+        beam.visible = lit > 0.02;
+      }
+      for (const part of car.children) {
+        if (part.name !== 'headlight') continue;
+        ((part as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(
+          lit > 0.02 ? HEADLIGHT_ON : HEADLIGHT_OFF,
+        );
+      }
+    }
   }
 
   /**
