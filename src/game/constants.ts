@@ -117,10 +117,18 @@ export const ESCAPED_FLASH = 2.5;
  *
  * Re-derived against an expert driver in traffic, which is what
  * `npm run citylap`'s ladder table now races: the bottom of the ladder is won
- * clean, and the boss is lost clean and won with the boost. That property is
- * what `RIVAL_DIFF_SPEED_FRAC` exists for and what #105 bought.
+ * comfortably and the boss is lost, by a little, in the car you start in.
+ *
+ * It used to say "and won with the boost", and that is no longer reachable:
+ * measured, a boosted lap of a city circuit is *slower* than a clean one - 25%
+ * against 30% - because a tight loop scrubs the overspeed off in the next bend
+ * whatever #105 did to the taper. So the top of the ladder wants a better
+ * *car* instead, which is what the roster and the parts are for (#67, #68) and
+ * what `CityRace.average` being measured against `REFERENCE_TOP_SPEED` rather
+ * than against your own makes possible. Whether nitrous should be worth
+ * pressing on a city circuit at all is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.19;
+export const RIVAL_BASE_SPEED_FRAC = 0.24;
 /**
  * Extra rival pace at difficulty 1 (#48, #105).
  *
@@ -132,7 +140,7 @@ export const RIVAL_BASE_SPEED_FRAC = 0.19;
  * Those figures came from the track sim's race probe, which retired with the
  * track (#165). Nothing measures the ladder end to end today - see the handoff.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.075;
+export const RIVAL_DIFF_SPEED_FRAC = 0.07;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -321,8 +329,20 @@ export const FREEWAY_SPURS = 3;
 /** A spur leaves the loop at a corner-ish point and heads for the nearest edge. */
 export const FREEWAY_SPUR_MIN = m(700);
 
-/** Ramps: the only way between the levels. */
-export const RAMP_COUNT_PER_SIDE = 2;
+/**
+ * Ramps: the only way between the levels.
+ *
+ * Two a side gave seven over a 12.7 km loop - one roughly every two
+ * kilometres, which is sparse enough that a playtest never found one. Four a
+ * side is one about every kilometre, which is what a ring road actually has
+ * and few enough that the interstate is still a decision rather than a
+ * shortcut you fall onto.
+ *
+ * The other half of "I never saw a ramp" was the map: the full map skipped
+ * them entirely, so the interstate was drawn as a purple loop with no visible
+ * way onto it.
+ */
+export const RAMP_COUNT_PER_SIDE = 4;
 export const RAMP_MIN_RUN = m(190);
 export const RAMP_MAX_RUN = m(320);
 export const RAMP_LANES = 2;
@@ -1059,6 +1079,17 @@ export const REP_CAMERA = 220;
 export const CAMERA_MIN_SPEED = 0.3;
 /** How far the minimap hints at what has not been found yet. */
 export const COLLECTIBLE_HINT_RANGE = m(300);
+
+/**
+ * How far off the line to a marker you can stray before it is redrawn (#90).
+ *
+ * A route is a suggestion, not a rail: wandering a street off it should not
+ * make it flicker, and taking a different road entirely should get you a new
+ * one. `MARKER_REDRAW` throttles the recompute, which is a Dijkstra over two
+ * thousand nodes and not something to run every frame.
+ */
+export const MARKER_STRAY = m(220);
+export const MARKER_REDRAW = 2;
 
 /**
  * Street Finds (#67).

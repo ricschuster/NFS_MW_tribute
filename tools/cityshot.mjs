@@ -321,6 +321,31 @@ for (const view of VIEWS) {
     await page.waitForTimeout(1200);
   }
 
+  if (view === 'collection') {
+    // With somewhere to go, so the map shows the route as well as the pins
+    // (#90). The furthest Quick Wheel destination, which is the case the line
+    // exists for: an arrow across a city with a river in it points at plenty
+    // of places you cannot reach from where you stand.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      let far = null;
+      let gap = 0;
+      for (const route of world.city.routes) {
+        const away = Math.hypot(route.start.x - world.x, route.start.z - world.z);
+        if (away > gap) {
+          gap = away;
+          far = { x: route.start.x, z: route.start.z, label: route.name };
+        }
+      }
+      if (far) world.aimAt(far);
+      world.step(1 / 60, none);
+    });
+  }
+
   if (view === 'billboard' || view === 'collection') {
     // Stand the car in front of a billboard it has not had yet. Waiting for a
     // scripted drive to find one of ninety is waiting a long time.

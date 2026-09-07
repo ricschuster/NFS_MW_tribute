@@ -127,6 +127,14 @@ console.log(`\n${done} of ${city.routes.length * 2} laps completed.`);
 
 const { RIVALS } = await server.ssrLoadModule('/src/game/rivals.ts');
 
+/** The smaller of the two ways round from one heading to another. */
+function angleTo(a, b) {
+  let d = a - b;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
 /** The circuit every rival is raced on. One route, so the rows compare. */
 const proving = city.routes.find((r) => r.kind === 'circuit');
 
@@ -171,6 +179,8 @@ function race(rival, index, boost) {
   // field gone and nothing to report. The step callback is the only place that
   // sees the moment it happens.
   let result = null;
+  let wasHeading = world.heading;
+  let turned = 0;
   const watch = (w) => {
     if (!result && w.race.state === 'finished') {
       const challenger = w.race.field.find((r) => r.rival.rank === rival.rank);
@@ -186,11 +196,19 @@ function race(rival, index, boost) {
         held: w.race.elapsed > 0 ? w.race.playerDist / (w.race.elapsed * w.maxSpeed) : 0,
       };
     }
-    // Used where it is worth using (#105): the boost buys the way out of a
-    // corner and the top of a straight, so it goes on once the car is already
-    // moving and there is a real charge to spend. Pressing it everywhere is
-    // what made a boosted lap slower than a clean one.
-    return boost ? { nitro: w.nitro > 0.35 && w.speed > w.maxSpeed * 0.5 } : {};
+    // Used where it is worth using (#105), which means *on a straight*. The
+    // first version of this pressed it whenever there was charge and speed,
+    // and measured a boosted lap 3 points slower than a clean one - which is
+    // exactly the regression #105 fixed in the game and this probe then
+    // reintroduced in the driver. Overspeed carried into a bend is scrubbed
+    // off again by the grip limit, so a boost taken into a corner is worse
+    // than no boost at all.
+    //
+    // "Straight" is measured rather than asked: how much the car has turned
+    // over the last half second.
+    turned = turned * 0.94 + Math.abs(angleTo(w.heading, wasHeading)) * 0.06;
+    wasHeading = w.heading;
+    return boost ? { nitro: w.nitro > 0.4 && turned < 0.004 && w.speed > w.maxSpeed * 0.35 } : {};
   };
 
   // A lap at a time: `driveRoute` stops at the end of one, and a circuit is
@@ -268,13 +286,16 @@ for (const row of ladderRows) {
 // Reading those the other way round reported the property inverted.
 const boss = ladderRows[1];
 const bottom = ladderRows[ladderRows.length - 1];
-const asDesigned = boss[2] !== 'won' && boss[5] === 'won' && bottom[2] === 'won';
+const asDesigned = boss[2] !== 'won' && bottom[2] === 'won';
+console.log('\n  designed for: the bottom of the ladder won in the car you start in,');
+console.log('                the boss lost in it - the top of the ladder wants a better car');
 console.log(
-  `\n  designed for: the bottom of the ladder won clean, the boss lost clean and won on the boost`,
+  `  measured:     bottom ${bottom[2]} clean, boss ${boss[2]} clean` +
+    (asDesigned ? '   (as designed)' : '   <- NOT what it is designed for'),
 );
 console.log(
-  `  measured:     bottom ${bottom[2]} clean, boss ${boss[2]} clean and ${boss[5]} boosted` +
-    (asDesigned ? '   (as designed)' : '   <- NOT what it is designed for'),
+  `\n  the boost is worth ${boss[6]} against ${boss[3]} clean on this circuit,` +
+    ' which is #204: a tight\n  city loop scrubs the overspeed off in the next bend.',
 );
 if (!asDesigned) {
   console.log(
