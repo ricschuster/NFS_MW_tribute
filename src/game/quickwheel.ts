@@ -44,9 +44,51 @@ export class QuickWheel {
   open = false;
   branch: WheelBranch = 'cars';
 
+  /**
+   * Which nine of a longer list are on screen (#214).
+   *
+   * Entries are picked by *number* (#90), and there are nine of those, so a
+   * branch with more than nine things on it has to page. It used to truncate
+   * instead: `destinations` gathers about thirty places and handed back the
+   * nearest nine, so an event a kilometre away was not on the wheel and nothing
+   * said a list had been cut. That is how a playtester came to be unable to
+   * reach the route they had been asked to drive.
+   */
+  page = 0;
+
   /** Flip to the next branch. */
   cycle(): void {
     this.branch = BRANCHES[(BRANCHES.indexOf(this.branch) + 1) % BRANCHES.length];
+    this.page = 0;
+  }
+
+  /** Show the next nine, wrapping. */
+  more(world: CityWorld): void {
+    const pages = this.pages(world);
+    this.page = pages > 0 ? (this.page + 1) % pages : 0;
+  }
+
+  /** How many pages the current branch needs. */
+  pages(world: CityWorld): number {
+    return Math.max(1, Math.ceil(this.all(world).length / WHEEL_ENTRIES));
+  }
+
+  /** How many things are on this branch in total, paged or not. */
+  count(world: CityWorld): number {
+    return this.all(world).length;
+  }
+
+  /** Everything on the current branch, before paging. */
+  private all(world: CityWorld): unknown[] {
+    if (this.branch === 'cars') return this.owned(world);
+    if (this.branch === 'mods') return world.finds.unlocked(world.car.id);
+    return this.destinations(world);
+  }
+
+  /** Where the current page starts in the full list. */
+  private offset(world: CityWorld): number {
+    const pages = this.pages(world);
+    return (this.page % pages) * WHEEL_ENTRIES;
   }
 
   /** What the branch is called, for the heading. */
@@ -69,13 +111,14 @@ export class QuickWheel {
     const entry = entries[index];
     if (!entry || !entry.available) return false;
 
+    const at = this.offset(world) + index;
     if (this.branch === 'cars') {
-      world.drive(this.owned(world)[index]);
+      world.drive(this.owned(world)[at]);
       return true;
     }
 
     if (this.branch === 'mods') {
-      const mod = world.finds.unlocked(world.car.id)[index];
+      const mod = world.finds.unlocked(world.car.id)[at];
       if (!mod) return false;
       world.finds.toggle(world.car.id, mod.id);
       // Re-applied straight away: a part you cannot feel until the next time
@@ -84,7 +127,7 @@ export class QuickWheel {
       return true;
     }
 
-    const place = this.destinations(world)[index];
+    const place = this.destinations(world)[at];
     if (!place) return false;
     // Through `aimAt`, which also works out the way there: an arrow across a
     // city with a river in it points at plenty of places you cannot reach
@@ -103,7 +146,7 @@ export class QuickWheel {
     // which is not a menu decision, it is a cheat.
     const busy = world.race.state !== 'idle' || world.claim.state !== 'idle';
     return this.owned(world)
-      .slice(0, WHEEL_ENTRIES)
+      .slice(this.offset(world), this.offset(world) + WHEEL_ENTRIES)
       .map((car) => ({
         label: car.name,
         // Numbers rather than the blurb. The blurb is what you read when you
@@ -138,7 +181,7 @@ export class QuickWheel {
     }
 
     const busy = world.race.state !== 'idle' || world.claim.state !== 'idle';
-    return mods.slice(0, WHEEL_ENTRIES).map((mod) => ({
+    return mods.slice(this.offset(world), this.offset(world) + WHEEL_ENTRIES).map((mod) => ({
       label: `${world.finds.isFitted(world.car.id, mod.id) ? '\u25cf' : '\u25cb'} ${mod.name}`,
       detail: busy ? 'not during an event' : mod.detail,
       available: !busy,
@@ -171,16 +214,17 @@ export class QuickWheel {
       .sort(
         (a, b) =>
           Math.hypot(a.x - world.x, a.z - world.z) - Math.hypot(b.x - world.x, b.z - world.z),
-      )
-      .slice(0, WHEEL_ENTRIES);
+      );
   }
 
   private places(world: CityWorld): WheelEntry[] {
     const metre = 135;
-    return this.destinations(world).map((place) => ({
-      label: place.label,
-      detail: `${Math.round(Math.hypot(place.x - world.x, place.z - world.z) / metre / 100) / 10} km`,
-      available: true,
-    }));
+    return this.destinations(world)
+      .slice(this.offset(world), this.offset(world) + WHEEL_ENTRIES)
+      .map((place) => ({
+        label: place.label,
+        detail: `${Math.round(Math.hypot(place.x - world.x, place.z - world.z) / metre / 100) / 10} km`,
+        available: true,
+      }));
   }
 }

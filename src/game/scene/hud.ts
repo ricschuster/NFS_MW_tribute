@@ -1115,8 +1115,13 @@ export class Hud {
     // rows there are and where they ended up, and the wheel's length changes
     // with what is in it.
     if (this.touch) {
+      // The header is two targets when the branch pages: the left half switches
+      // branch, the right half shows the next nine.
       this.touch.regions = [
-        { id: 'wheel:branch', x, y, w: width, h: 44 },
+        { id: 'wheel:branch', x, y, w: wheel.pages(world) > 1 ? width / 2 : width, h: 44 },
+        ...(wheel.pages(world) > 1
+          ? [{ id: 'wheel:more', x: x + width / 2, y, w: width / 2, h: 44 }]
+          : []),
         ...entries.map((_, i) => ({ id: `wheel:${i}`, x, y: y + 42 + i * 30, w: width, h: 30 })),
       ];
     }
@@ -1130,11 +1135,24 @@ export class Hud {
     ctx.textAlign = 'left';
     ctx.fillStyle = '#7fe3ff';
     ctx.font = '700 15px system-ui, sans-serif';
-    ctx.fillText(wheel.title, x + 16, y + 30);
+    const total = wheel.count(world);
+    const pages = wheel.pages(world);
+    const from = wheel.page * 9 + 1;
+    ctx.fillText(
+      pages > 1 ? `${wheel.title}   ${from}-${from + entries.length - 1} of ${total}` : wheel.title,
+      x + 16,
+      y + 30,
+    );
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
     ctx.font = '500 12px system-ui, sans-serif';
-    ctx.fillText('E to switch  ·  1-9 to pick', x + width - 16, y + 30);
+    // Only offered when there is a page to go to. A list that says nothing
+    // about being cut is how an event a kilometre away stopped existing (#214).
+    ctx.fillText(
+      pages > 1 ? 'E switch · R more · 1-9 pick' : 'E to switch  ·  1-9 to pick',
+      x + width - 16,
+      y + 30,
+    );
 
     ctx.textAlign = 'left';
     for (let i = 0; i < entries.length; i++) {
@@ -1524,7 +1542,7 @@ export class Hud {
       ['ARROWS / WASD', 'drive'],
       ['SHIFT', 'nitrous'],
       ['ENTER', 'start what you are parked on'],
-      ['HOLD Q', 'Quick Wheel (E, then 1-9)'],
+      ['HOLD Q', 'Quick Wheel: E, R, 1-9'],
       ['TAB', 'this map'],
       ['B', 'look back'],
       ['F', 'fullscreen'],
