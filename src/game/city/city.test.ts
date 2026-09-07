@@ -139,11 +139,17 @@ describe('Rng', () => {
 });
 
 describe('generateCity', () => {
-  // Generating Kestrel Bay takes about a second and a quarter, and these two
-  // build a whole city each on top of the shared one before deep-comparing it -
-  // so they need more than vitest's five, on a CI runner more than here. The
-  // cost is `buildGraph` asking every span about every other span, which grew
-  // with the embankment (#241) the way it grew with the boulevards.
+  // Generating Kestrel Bay takes about half a second, and these two build a
+  // whole city each on top of the shared one before deep-comparing it. That fits
+  // inside vitest's five here and did not on a CI runner when it was three times
+  // slower, so the headroom stays.
+  //
+  // It was 1.44 s until #262, and the profile is worth remembering because the
+  // obvious suspect was innocent: `buildGraph` asking every span about every
+  // other span was **4%** of it, while `segmentToRect` and `distanceToSegment` -
+  // called from three block sweeps that each scanned every road of a class for
+  // every block - were 47%. Indexing those left the city byte-identical and the
+  // generator three times faster. Nothing dominates the profile now.
   const SLOW = 30_000;
 
   it(

@@ -1,5 +1,5 @@
 import { CITY_GRID_CELL, SURFACE_REACH } from '../constants';
-import type { Building, City, CityRoad, Rect, Vec2 } from './types';
+import type { Building, City, CityNode, CityRoad, Rect, Vec2 } from './types';
 
 /**
  * A uniform grid over the city, so "what is near the car" is a lookup rather
@@ -47,6 +47,65 @@ export class CityGrid {
           if (found.has(id)) continue;
           found.add(id);
           roads.push(this.city.roads[id]);
+        }
+      }
+    }
+    return roads;
+  }
+}
+
+/**
+ * The same idea as `CityGrid`, for a set of roads that is not a city yet.
+ *
+ * `CityGrid` needs a finished `City`, and the generator's own sweeps run in the
+ * middle of building one: "does a boulevard cross this block", "is a ramp low
+ * over it", "how high is the deck above this footprint". All three scanned
+ * every road of a class for every block, and between them
+ * `segmentToRect` and `distanceToSegment` were **47% of the time it takes to
+ * generate Kestrel Bay** - against `buildGraph`'s 4%, which is the answer
+ * everybody guesses.
+ *
+ * Each road is filed under every cell its segment touches *widened by its own
+ * margin*, so a query with a rectangle can return every road that could be
+ * within that margin of it and nothing that is further. That makes it a
+ * superset of the exact test, which is what lets the caller keep the exact test
+ * and get the same answer it always got.
+ */
+export class SegmentIndex {
+  private readonly cells = new Map<string, number[]>();
+
+  constructor(
+    private readonly roads: CityRoad[],
+    nodes: CityNode[],
+    margin: (road: CityRoad) => number,
+  ) {
+    roads.forEach((road, id) => {
+      const a = nodes[road.a].pos;
+      const b = nodes[road.b].pos;
+      const m = margin(road);
+      insert(
+        this.cells,
+        {
+          minX: Math.min(a.x, b.x) - m,
+          maxX: Math.max(a.x, b.x) + m,
+          minZ: Math.min(a.z, b.z) - m,
+          maxZ: Math.max(a.z, b.z) + m,
+        },
+        id,
+      );
+    });
+  }
+
+  /** Every road whose margin could reach this rectangle, each one once. */
+  near(r: Rect): CityRoad[] {
+    const found = new Set<number>();
+    const roads: CityRoad[] = [];
+    for (let gx = Math.floor(r.minX / CITY_GRID_CELL); gx <= Math.floor(r.maxX / CITY_GRID_CELL); gx++) {
+      for (let gz = Math.floor(r.minZ / CITY_GRID_CELL); gz <= Math.floor(r.maxZ / CITY_GRID_CELL); gz++) {
+        for (const id of this.cells.get(`${gx}|${gz}`) ?? []) {
+          if (found.has(id)) continue;
+          found.add(id);
+          roads.push(this.roads[id]);
         }
       }
     }

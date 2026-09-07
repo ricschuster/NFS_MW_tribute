@@ -43,7 +43,7 @@ import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
-import { segmentIntersection, segmentToRect } from './grid';
+import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
   Building,
@@ -197,9 +197,18 @@ export function generateCity(seed: number): City {
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.
-  const swept = roads.filter((road) => road.class === 'boulevard');
+  //
+  // Asked through a `SegmentIndex` rather than by scanning every boulevard for
+  // every block: this sweep and the two below it were half the cost of
+  // generating the city (#262). The index returns a superset of what could be
+  // in range, so the test below is the same test it always was.
+  const swept = new SegmentIndex(
+    roads.filter((road) => road.class === 'boulevard'),
+    nodes,
+    (road) => road.width / 2 + BOULEVARD_CLEARANCE,
+  );
   const onBoulevard = (r: Rect) =>
-    swept.some((road) => {
+    swept.near(r).some((road) => {
       const a = nodes[road.a].pos;
       const b = nodes[road.b].pos;
       return segmentToRect(a, b, r) < road.width / 2 + BOULEVARD_CLEARANCE;
@@ -214,9 +223,13 @@ export function generateCity(seed: number): City {
   // A margin over the height blocks stop mattering at, because the car has to
   // be *clear* of a block rather than level with its roofline as it goes by.
   const solidTo = CAR_RADIUS * 3;
-  const climbing = roads.filter((road) => road.class === 'ramp');
+  const climbing = new SegmentIndex(
+    roads.filter((road) => road.class === 'ramp'),
+    nodes,
+    (road) => road.width / 2 + RAMP_CLEARANCE,
+  );
   const underRamp = (r: Rect) =>
-    climbing.some((road) => {
+    climbing.near(r).some((road) => {
       const a = nodes[road.a];
       const b = nodes[road.b];
       if (segmentToRect(a.pos, b.pos, r) > road.width / 2 + RAMP_CLEARANCE) return false;
@@ -273,10 +286,14 @@ export function generateCity(seed: number): City {
   //
   // Held under rather than swept away, because an elevated road over a city
   // ought to have something beneath it.
-  const overhead = roads.filter((r) => r.class === 'interstate' || r.class === 'ramp');
+  const overhead = new SegmentIndex(
+    roads.filter((r) => r.class === 'interstate' || r.class === 'ramp'),
+    nodes,
+    (road) => road.width / 2 + RAMP_CLEARANCE,
+  );
   const deckOver = (r: Rect): number | null => {
     let lowest: number | null = null;
-    for (const road of overhead) {
+    for (const road of overhead.near(r)) {
       const a = nodes[road.a];
       const b = nodes[road.b];
       if (segmentToRect(a.pos, b.pos, r) > road.width / 2 + RAMP_CLEARANCE) continue;
