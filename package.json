@@ -22,7 +22,8 @@
     "endings": "node tools/endings.mjs",
     "playthrough": "node tools/playtest.mjs",
     "drivers": "node tools/drivers.mjs",
-    "nitro": "node tools/nitro.mjs"
+    "nitro": "node tools/nitro.mjs",
+    "ramps": "node tools/ramps.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",

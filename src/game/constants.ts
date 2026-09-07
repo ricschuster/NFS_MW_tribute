@@ -366,6 +366,34 @@ export const FREEWAY_SPUR_MIN = m(700);
 export const RAMP_COUNT_PER_SIDE = 4;
 export const RAMP_MIN_RUN = m(190);
 export const RAMP_MAX_RUN = m(320);
+/**
+ * How far a ramp's foot is set aside from the junction it serves (#212).
+ *
+ * Zero was the old behaviour and it was the bug. A ramp descends to a surface
+ * junction, and with no offset that descent runs *down an existing street* -
+ * the interstate is axis-aligned, so is the grid, so the perpendicular between
+ * them is a street. Two roads sharing one footprint is a place the car cannot
+ * choose between: `surfaceAt` takes whichever road is nearest the height the
+ * car is at, the street underneath is always flat and the ramp is always
+ * rising, so the flat one won every step. The car drove the full length of its
+ * own on-ramp at ground level - 11 of 13 ramps could not be climbed at all.
+ *
+ * Set aside by more than half a street plus half a ramp, the two carriageways
+ * are adjacent instead of coincident and the question stops being ambiguous.
+ * A short spur joins the foot back to the junction, which is what an on-ramp
+ * looks like anyway: you turn off the street onto it.
+ */
+export const RAMP_OFFSET = m(14);
+/**
+ * How much room a ramp needs cleared of blocks where it is still low enough to
+ * hit (#212).
+ *
+ * `hitsBuilding` treats blocks as solid below `CAR_RADIUS * 2`, which is right
+ * for a 12 m deck flying over rooftops and wrong for the first stretch of a
+ * ramp: a car climbing at 2 m is walled in by anything the ramp passes over.
+ * Blocks make way, the way they already do for a boulevard.
+ */
+export const RAMP_CLEARANCE = m(6);
 export const RAMP_LANES = 2;
 export const RAMP_SPEED = kmh(70);
 

@@ -2620,6 +2620,14 @@ describe('the end of a pursuit', () => {
       if (t < 20) world.speed = world.maxSpeed * 0.8;
       world.step(STEP, t < 20 ? press({ up: true }) : NONE);
       if (world.busted) break;
+      // Twenty seconds of blind throttle ends wherever the map puts it, and a
+      // car that ends up off the road cannot be busted at all: units are on the
+      // graph and cannot leave it (#220), so they sit 35 m away while the bust
+      // needs 11. Put it back on a road at the moment it stops, which is where
+      // a player being busted actually is. Without this the test is measuring
+      // the shape of the city rather than the end of a pursuit, and it moved
+      // the first time the city did (#212).
+      if (t >= 20 && world.onRoad === null) world.recover();
     }
 
     expect(world.busted).toBe(true);
@@ -2669,12 +2677,16 @@ describe('the end of a pursuit', () => {
   it('gives up eventually even on a car sitting in the middle of the search', () => {
     const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
     world.x += CITY_COP_LOSE * 3;
+    world.recover();
     expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
 
-    // Parked on the spot they are searching, and left there.
+    // Parked on the spot they are searching, and left there - on the road,
+    // because the centre of a search area is a point on the map and not
+    // necessarily a place a car can be. See the note above.
     const area = world.police.search!;
     world.x = area.x;
     world.z = area.z;
+    world.recover();
     const ended = stepUntil(world, () => world.police.state === 'clear' || world.busted, 240);
     expect(ended).toBe(true);
   });
