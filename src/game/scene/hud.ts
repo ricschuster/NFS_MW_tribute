@@ -883,14 +883,42 @@ export class Hud {
       ctx.fillStyle = race.won ? '#5adc82' : '#ff5a5a';
       ctx.font = '800 68px system-ui, sans-serif';
       ctx.fillText(race.won ? 'YOU WIN' : 'YOU LOSE', WIDTH / 2, HEIGHT / 2);
-      if (race.isSpeedRun) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.font = '500 20px system-ui, sans-serif';
+
+      // What just happened, in the terms the event was scored in.
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '500 20px system-ui, sans-serif';
+      ctx.fillText(
+        race.isSpeedRun
+          ? `${Math.round(race.average * DISPLAY_MAX_KMH)} km/h average, ` +
+              `target ${Math.round(race.targetAverage * DISPLAY_MAX_KMH)}`
+          : `${ORDINALS[race.position] ?? race.position} of ${race.runners}`,
+        WIDTH / 2,
+        HEIGHT / 2 + 36,
+      );
+
+      // And what happens next, which is the half the playtest was missing
+      // (#219). Winning a circuit does not move the ladder: the rival runs and
+      // has to be caught (#66), so the banner comes down onto a pursuit that
+      // has already started. Saying nothing about that made a win read as the
+      // game doing something inexplicable.
+      const beaten = race.challenger;
+      if (race.won && beaten && world.claim.state !== 'idle') {
+        ctx.fillStyle = '#ffd166';
+        ctx.font = '700 22px system-ui, sans-serif';
         ctx.fillText(
-          `${Math.round(race.average * DISPLAY_MAX_KMH)} km/h average, ` +
-            `target ${Math.round(race.targetAverage * DISPLAY_MAX_KMH)}`,
+          `#${beaten.rank} ${beaten.name.toUpperCase()} IS RUNNING - RUN THEM DOWN`,
           WIDTH / 2,
-          HEIGHT / 2 + 36,
+          HEIGHT / 2 + 78,
+        );
+      } else if (!race.won) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.font = '500 17px system-ui, sans-serif';
+        ctx.fillText(
+          race.position <= 2
+            ? 'A part earned anyway - top two counts'
+            : 'Drive back to the start line to try again',
+          WIDTH / 2,
+          HEIGHT / 2 + 76,
         );
       }
       return;

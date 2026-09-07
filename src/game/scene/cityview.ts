@@ -644,7 +644,19 @@ export class CityView {
     // drive at rather than something you read off the minimap (#70).
     const gate = world.race.target;
     this.gate.visible = gate !== null;
-    if (gate) this.gate.position.set(gate.x, world.y, gate.z);
+    if (gate) {
+      this.gate.position.set(gate.x, world.y, gate.z);
+      // The last one is a different colour, so the finish is something you can
+      // see coming rather than something that has happened (#219). White, and
+      // it is the only white gate: the chequered flag without the chequers,
+      // which at this geometry budget would be a grey smear at the distance a
+      // gate is actually read from.
+      for (const post of this.gate.children) {
+        ((post as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(
+          world.race.onFinalGate ? '#ffffff' : '#7fe3ff',
+        );
+      }
+    }
 
     this.spikes(world);
     this.shops(world);
