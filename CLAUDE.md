@@ -106,6 +106,21 @@ chokepoints, and generation ends by proving the city is drivable and bridging
 until it is. Rules 4-7 of that ADR (curved residential streets, the interstate
 loop, landmarks, relief) are partly built: landmarks and relief are not.
 
+**A crossing is chosen for where it is, not for how cheap it is** (issue
+#247). Bridges are few because they are the pursuit chokepoints, but "few" is
+about the count and what a player feels is the *distance to one*. Picking them
+shortest-first put them all where the channel is narrow, which is one stretch of
+river: three crossings on a 3.3 km river, and a 2.7 km round trip at the worst
+point of some seeds. `chooseBridges` takes the shortest gap first - with nothing
+to spread away from, the cheapest crossing is the one to build - and then
+repeatedly the candidate **furthest from every crossing already chosen**. Two
+things to know before touching the constants. `CITY_BRIDGE_SPACING` is what
+decides how many crossings a city gets, not `CITY_BRIDGES`, which was 4 while
+every seed built two or three and eight of eleven candidates were being rejected
+for crowding. And `CITY_MAX_BRIDGE` is not a lever: raised from 700 m to a
+kilometre it changed nothing on any seed, because no candidate gap falls in
+between - what limits the crossings is which arterials happen to meet the river.
+
 **Land belongs to something** (issue #185). Blocks are laid on lines and then
 pulled clear of the water, and one that will not fit is dropped, so a riverbank
 loses whole blocks at a time - a fifth of the map used to belong to neither

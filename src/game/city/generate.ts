@@ -731,23 +731,53 @@ const bridgeSpan = (gap: Gap): Span => ({
 });
 
 /**
- * Pick the crossings the city is designed around (ADR-0005 rule 2): the
- * shortest ones, held apart from each other so each is a separate decision to
- * make during a pursuit. The repair pass adds more only if it has to.
+ * Pick the crossings the city is designed around (ADR-0005 rule 2).
+ *
+ * The first is the shortest gap on the map: with nothing to spread away from,
+ * the cheapest crossing is the one to build. Every one after it is the
+ * candidate **furthest from every crossing already chosen**, until they would
+ * be closer together than `CITY_BRIDGE_SPACING` or there are `CITY_BRIDGES` of
+ * them. The repair pass adds more only if it has to.
+ *
+ * Furthest-first rather than shortest-first, which is what this did and is why
+ * a 4 km river got three bridges with a 2.7 km round trip between two of them.
+ * Shortest-first picks where the channel is narrow, and where the channel is
+ * narrow is one place; the spacing rule then rejected eight of eleven
+ * candidates for being near what it had already taken, so the *number* of
+ * crossings was never the constraint the tuning constant said it was. What the
+ * player feels is not how many bridges exist but how far they are from one, and
+ * that is the quantity this maximises.
  */
 function chooseBridges(gaps: Gap[]): number[] {
+  if (gaps.length === 0) return [];
   const midpoint = (gap: Gap) => pointAt(gap.span, (gap.from + gap.to) / 2);
-  const order = gaps.map((_, i) => i).sort((a, b) => gaps[a].length - gaps[b].length);
-  const chosen: number[] = [];
-  for (const i of order) {
-    if (chosen.length >= CITY_BRIDGES) break;
-    const here = midpoint(gaps[i]);
-    const crowded = chosen.some((j) => {
-      const there = midpoint(gaps[j]);
-      return Math.hypot(there.x - here.x, there.z - here.z) < CITY_BRIDGE_SPACING;
-    });
-    if (!crowded) chosen.push(i);
+  const between = (a: number, b: number) => {
+    const p = midpoint(gaps[a]);
+    const q = midpoint(gaps[b]);
+    return Math.hypot(p.x - q.x, p.z - q.z);
+  };
+
+  let shortest = 0;
+  for (let i = 1; i < gaps.length; i++) if (gaps[i].length < gaps[shortest].length) shortest = i;
+  const chosen = [shortest];
+
+  while (chosen.length < CITY_BRIDGES) {
+    let best = -1;
+    let bestReach = 0;
+    for (let i = 0; i < gaps.length; i++) {
+      if (chosen.includes(i)) continue;
+      const reach = Math.min(...chosen.map((j) => between(i, j)));
+      // Ties go to the cheaper crossing; two candidates equally far from
+      // everything else are the same decision, and one of them is less bridge.
+      if (reach > bestReach || (reach === bestReach && best !== -1 && gaps[i].length < gaps[best].length)) {
+        best = i;
+        bestReach = reach;
+      }
+    }
+    if (best === -1 || bestReach < CITY_BRIDGE_SPACING) break;
+    chosen.push(best);
   }
+
   return chosen;
 }
 

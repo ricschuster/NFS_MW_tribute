@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateCity } from './generate';
 import { kestrelBay } from './index';
 import { Rng } from './rng';
-import { CITY_SEED, DISTRICTS, UNITS_PER_METRE } from '../constants';
+import { CITY_BRIDGE_SPACING, CITY_SEED, DISTRICTS, UNITS_PER_METRE } from '../constants';
 import { makeWater } from './water';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
@@ -388,8 +388,38 @@ describe('water', () => {
 
   it('keeps the crossings few, so they are chokepoints', () => {
     const crossings = city.roads.filter((r) => r.bridge).length;
-    expect(crossings).toBeGreaterThan(0);
-    expect(crossings).toBeLessThan(12);
+    expect(crossings).toBeGreaterThan(3);
+    expect(crossings).toBeLessThan(10);
+  });
+
+  // The number of bridges is not what a player feels; the distance to one is.
+  // Shortest-first picked them where the channel was narrow, which is one place,
+  // and left a 2.7 km round trip at the worst point of some seeds (#247).
+  it('keeps a crossing within reach of every stretch of the river', () => {
+    const bounds = city.bounds;
+    const crossings = city.roads
+      .filter((r) => r.bridge)
+      .map((r) => (city.nodes[r.a].pos.z + city.nodes[r.b].pos.z) / 2);
+    const stranded: string[] = [];
+
+    for (let z = bounds.minZ; z <= bounds.maxZ; z += m(50)) {
+      // Only where the river actually divides the city: north of the coast is
+      // bay, and the far bank of a bay is the horizon.
+      let divided = false;
+      for (let x = bounds.minX; x <= bounds.maxX && !divided; x += m(20)) {
+        if (z <= water.shoreAt(x) && water.isWater(x, z)) divided = true;
+      }
+      if (!divided) continue;
+
+      const nearest = Math.min(...crossings.map((at) => Math.abs(at - z)));
+      // Never further from a crossing than two crossings are allowed to be from
+      // each other: if the spacing is the shape of the river, this is the claim
+      // that the shape actually reaches the whole of it. Measured 664 m here.
+      if (nearest > CITY_BRIDGE_SPACING) {
+        stranded.push(`z=${Math.round(z / M)} is ${Math.round(nearest / M)} m from one`);
+      }
+    }
+    expect(stranded.slice(0, 5)).toEqual([]);
   });
 
   it('never puts a block in the water', () => {

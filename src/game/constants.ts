@@ -283,12 +283,42 @@ export const CITY_SEA_MARGIN = m(2500);
  * Crossings (ADR-0005, rule 2). Few, and deliberate: a city where half the
  * roads bridge the river has no chokepoints in it. Generation adds more only
  * if the network would otherwise come apart.
+ *
+ * `CITY_BRIDGES` is a cap and not a target, and for a long time it was not even
+ * that: it read 4, every seed built two or three, and the constant that was
+ * actually deciding was the spacing - eleven candidate gaps, eight of them
+ * rejected for being near one already taken. Read the spacing as the number
+ * that shapes the river and this as the ceiling over it.
+ *
+ * The quantity that matters is not how many crossings there are but how far you
+ * are from one, and three across a 3.3 km river left a 2.7 km round trip at the
+ * worst point of some seeds. Measured over fourteen seeds after #247, the
+ * furthest any stretch of river sits from a bridge is 480-1010 m, median 200-360
+ * m, on 3-5 bridges. The cap has not bound in any seed tried; it is there so a
+ * map with a hundred narrow candidates cannot quietly become a city with a
+ * hundred crossings.
  */
-export const CITY_BRIDGES = 4;
-/** The longest gap a bridge will span. Wider than this and the road dead-ends. */
+export const CITY_BRIDGES = 6;
+/**
+ * The longest gap a bridge will span. Wider than this and the road dead-ends.
+ *
+ * Not a lever worth pulling: raised to 1000 m as an experiment and *nothing
+ * changed on any seed*, because no candidate gap falls between 654 m and a
+ * kilometre. What limits the crossings is which arterials happen to meet the
+ * river, not how wide it is where they do.
+ */
 export const CITY_MAX_BRIDGE = m(700);
-/** Bridges are kept this far apart, so they are separate decisions to make. */
-export const CITY_BRIDGE_SPACING = m(1200);
+/**
+ * Bridges are kept this far apart, so they are separate decisions to make.
+ *
+ * This is the constant that decides how many crossings a city gets. At 1200 m
+ * it allowed three on a river four kilometres long; at 800 m it allows four or
+ * five, which is enough that being on the wrong bank is a detour rather than a
+ * journey, and still far enough that each one is a place a pursuit can be
+ * waiting for you. Below about 600 m they stop being chokepoints and start
+ * being a choice of chokepoints, which is not the same thing.
+ */
+export const CITY_BRIDGE_SPACING = m(800);
 /** Sampling resolution when clipping a road against water. */
 export const CITY_CLIP_STEP = m(15);
 /** A stretch of road shorter than this is a stub, not a street. */
