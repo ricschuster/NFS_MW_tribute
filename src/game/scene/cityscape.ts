@@ -431,22 +431,36 @@ export class Cityscape {
     mesh.name = 'markings';
 
     const matrix = new THREE.Matrix4();
+    const size = new THREE.Vector3(0.4 * UNITS_PER_METRE, 1, DASH);
     let i = 0;
     for (const run of runs) {
-      const alongX = Math.abs(run.b.x - run.a.x) > Math.abs(run.b.z - run.a.z);
+      // Along the road, whichever way the road actually goes.
+      //
+      // This used to pick the dominant axis and then step purely along x or
+      // purely along z from one end - which is `CityRoad.axis` in all but name,
+      // and #115 deleted that precisely because it is a lie: boulevards bend,
+      // and anything not square to the grid gets dashes that march off in a
+      // straight line while the road curves away underneath them. On a
+      // boulevard they walked clean across the carriageway and out the far
+      // side, which is what "markings on the road are off" looked like from the
+      // driver's seat.
+      //
+      // The street grid is still generated axis-aligned - that is what keeps
+      // blocks rectangular - but nothing may assume it, and this did.
+      const dx = run.b.x - run.a.x;
+      const dz = run.b.z - run.a.z;
+      const length = Math.max(1, Math.hypot(dx, dz));
+      const ux = dx / length;
+      const uz = dz / length;
       const count = Math.floor((run.to - run.from) / (DASH + GAP));
       for (let d = 0; d < count; d++) {
         const at = run.from + d * (DASH + GAP);
-        matrix.makeScale(
-          alongX ? DASH : 0.4 * UNITS_PER_METRE,
-          1,
-          alongX ? 0.4 * UNITS_PER_METRE : DASH,
-        );
-        matrix.setPosition(
-          alongX ? run.a.x + at : run.a.x,
-          MARKING_LEVEL,
-          alongX ? run.a.z : run.a.z + at,
-        );
+        // Turned to face down the road, then stretched along its own length:
+        // the dash is `DASH` long on its local z, which the rotation puts along
+        // the carriageway.
+        matrix.makeRotationY(Math.atan2(dx, dz));
+        matrix.scale(size);
+        matrix.setPosition(run.a.x + ux * at, MARKING_LEVEL, run.a.z + uz * at);
         mesh.setMatrixAt(i++, matrix);
       }
     }
