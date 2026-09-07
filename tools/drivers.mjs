@@ -22,6 +22,15 @@
 // of ten minutes. Narrowing it is usually what you want: `--route` across all
 // four drivers is under a minute and answers most questions.
 //
+// It is also the gate on route *quality* (#210), and exits non-zero. A route
+// that costs an advanced driver more than twice what it costs an expert has
+// something in it that skill cannot get round, and four attempts at #218 each
+// produced one: the same driver in the same car took 29 impacts on one draw of
+// Harbour Loop and 176 on another. Which route it lands on moves with the draw,
+// and when it lands on the circuit the ladder is raced on, the ladder stops
+// being winnable by anyone but an expert. Nothing reported that until somebody
+// went looking, so it reports itself now.
+//
 // Usage:
 //   npm run drivers                        # all four, traffic on
 //   npm run drivers -- --empty             # empty roads too, for comparison
@@ -71,6 +80,22 @@ console.log('the same routes, driven by four different people\n');
 const head = ['route', 'traffic', 'driver', 'lap', 'time', 'avg', 'crashes', 'damage', 'worst off line'];
 const rows = [head];
 const totals = new Map(drivers.map((d) => [d.name, { avg: 0, crashes: 0, km: 0, damage: 0, done: 0 }]));
+/** Per route and driver, for the quality gate below. Traffic on only. */
+const perRoute = new Map();
+/**
+ * How much of an expert's pace an advanced driver has to be able to hold.
+ *
+ * There is no clean gap to put this in, and pretending otherwise would be the
+ * easy mistake. The shipped city measures 105, 95, 71, 55, 53 and 33 per cent -
+ * a spread, not two clusters. So the floor is set to catch what is *broken*
+ * rather than what is merely hard: at 33% an advanced driver takes seven times
+ * an expert's impacts and cannot finish a race, and at 53-55% they are having a
+ * bad time on a route that still works.
+ *
+ * Read the table as well as the pass. Two routes sitting just over the line is
+ * a finding, not a clean bill of health.
+ */
+const QUALITY_FLOOR = 0.5;
 
 for (const route of routes) {
   for (const traffic of conditions) {
@@ -95,6 +120,12 @@ for (const route of routes) {
         },
       });
       const t = totals.get(driver.name);
+      if (traffic) {
+        perRoute.set(`${route.name}|${driver.name}`, {
+          avg: run.average / K.REFERENCE_TOP_SPEED,
+          crashes: run.crashes,
+        });
+      }
       if (run.finished) t.done++;
       t.avg += run.average / K.REFERENCE_TOP_SPEED;
       t.crashes += run.crashes;
@@ -126,6 +157,10 @@ for (const row of rows) {
   );
 }
 
+// Per route, what the step down from expert to advanced costs. This is the
+// quality signal: on a route that is merely hard, an advanced driver holds
+// most of an expert's pace, and on a route with a bad corner in it they hold a
+// quarter of it.
 const laps = routes.length * conditions.length;
 console.log('\nOVER ALL ROUTES');
 const sum = [['driver', 'finished', 'avg speed', 'crashes/km', 'damage', 'vs perfect']];
@@ -146,9 +181,54 @@ const sw = sum[0].map((_, i) => Math.max(...sum.map((r) => r[i].length)));
 for (const row of sum) {
   console.log('  ' + row.map((c, i) => (i === 0 ? c.padEnd(sw[i]) : c.padStart(sw[i]))).join('   '));
 }
+// The gate. Reported as a table so a route that is merely hard can be told
+// apart from one that is broken, and asserted so that no seed or constant can
+// ship a broken one unnoticed.
+const expert = drivers.find((d) => d.name === 'expert');
+const advanced = drivers.find((d) => d.name === 'advanced');
+const bad = [];
+if (expert && advanced && conditions.includes(true)) {
+  const qual = [['route', 'expert', 'advanced', 'advanced holds', 'impacts']];
+  for (const route of routes) {
+    const e = perRoute.get(`${route.name}|expert`);
+    const a = perRoute.get(`${route.name}|advanced`);
+    if (!e || !a) continue;
+    const held = e.avg > 0 ? a.avg / e.avg : 1;
+    if (held < QUALITY_FLOOR) bad.push({ route, held, e, a });
+    qual.push([
+      `${held < QUALITY_FLOOR ? 'BAD ' : 'ok  '} ${route.name}`,
+      `${Math.round(e.avg * 100)}%`,
+      `${Math.round(a.avg * 100)}%`,
+      `${Math.round(held * 100)}%`,
+      `${a.crashes} vs ${e.crashes}`,
+    ]);
+  }
+  console.log('\nWHAT SKILL IS WORTH, PER ROUTE');
+  const qw = qual[0].map((_, i) => Math.max(...qual.map((r) => r[i].length)));
+  for (const row of qual) {
+    console.log('  ' + row.map((c, i) => (i === 0 ? c.padEnd(qw[i]) : c.padStart(qw[i]))).join('   '));
+  }
+  console.log(
+    `\n  A route an advanced driver cannot hold ${Math.round(QUALITY_FLOOR * 100)}% of an expert's pace on` +
+      '\n  has something in it that skill does not get round - see #210. The floor catches' +
+      '\n  what is broken, not what is merely hard: read the column, not just the verdict.',
+  );
+}
+
 console.log('\n  "vs perfect" is average speed as a fraction of the reference driver\'s.');
 console.log('  Nobody reaches it. The gap is the part of the difficulty that is the player.');
 console.log('  Crashes are per kilometre of route covered, not per lap: a lap that was');
 console.log('  never finished otherwise counts the time spent wedged against a wall.');
 
+if (bad.length) {
+  console.log('');
+  for (const { route, held } of bad) {
+    console.log(
+      `  ${route.name}: an advanced driver holds ${Math.round(held * 100)}% of an expert's pace.`,
+    );
+  }
+  console.log('  That is a route defect, not a difficulty setting. See #210.');
+}
+
 await server.close();
+if (bad.length) process.exit(1);

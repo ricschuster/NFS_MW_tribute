@@ -69,7 +69,17 @@ what the city is shaped like.
   `driveRoute`, which is the only driver that applies the skill model - the
   reaction lag, the lapses and the wander live in its hands, so `patrol` and
   `endings` are always the perfect driver however they are asked
-- `npm run drivers` — the same routes driven by four people: beginner,
+- `npm run drivers` — the same routes driven by four people, and the gate on
+  route *quality* (#210): it exits non-zero when a route costs an advanced
+  driver more than half an expert's pace, because that gap is a defect in the
+  route rather than a difficulty setting. It is **red on the shipped city**, and
+  that is the point - Bayside Run sits at 33%. Read the per-route column rather
+  than the verdict: two more routes sit just over the line at 53% and 55%.
+  Nothing cheap predicts this, which was measured rather than assumed - road
+  width, corner density, sharpest turn and clearance from buildings were all
+  tried and none separates a route that holds 95% from one that holds 33%, so
+  the generator cannot currently reject a bad draw and the probe is the only
+  thing that knows. Also: beginner,
   advanced, expert and perfect. `citylap` measures only the last of those, which
   is a floor nobody stands on; this is what a change does to somebody who is not
   perfect. Seeded, so a driver's mistakes land in the same places each run
