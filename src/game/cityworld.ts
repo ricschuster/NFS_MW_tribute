@@ -72,6 +72,8 @@ import {
   BREAKER_DEBRIS,
   STUCK_TIME,
   STUCK_PROGRESS,
+  MARKER_STRAY,
+  MARKER_REDRAW,
   DAY_START,
   DAY_MINUTES,
   SPEEDING_OVER,
@@ -101,6 +103,7 @@ import {
   inWater,
   distanceToRoad,
 } from './city/grid';
+import { routeTo, offRoute } from './city/navigate';
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -296,6 +299,16 @@ export class CityWorld {
    * an arrow and a distance is what a five-by-four-kilometre map needs.
    */
   marker: { x: number; z: number; label: string } | null = null;
+  /**
+   * The way there, as a line to draw on the maps.
+   *
+   * An arrow and a distance is not enough in a city with a river through it:
+   * the marker can be four hundred metres away and two bridges' drive. Empty
+   * when there is no marker, or when there is genuinely no way - the river
+   * severs the map and a marker on an unbridged bank is unreachable.
+   */
+  markerPath: { x: number; z: number }[] = [];
+  private sinceAim = 0;
   /** How many ladder rivals have been beaten. Saved, so it survives a reload. */
   beaten = 0;
 
@@ -545,6 +558,43 @@ export class CityWorld {
     if (input.up || input.down) this.stuckFor += dt;
   }
 
+  /**
+   * Point at somewhere, and work out the way there (#90).
+   *
+   * The path is computed here rather than by whoever set the marker, because
+   * it has to be recomputed as you drive: a line from where you *were* is a
+   * line to nowhere as soon as you take a different road.
+   */
+  aimAt(place: { x: number; z: number; label: string } | null): void {
+    this.marker = place;
+    this.markerPath = place ? routeTo(this.city, this, place) : [];
+    this.sinceAim = 0;
+  }
+
+  /**
+   * Keep the line honest while the car moves.
+   *
+   * Only when the driver has actually left it, and at most every
+   * `MARKER_REDRAW` seconds: this is a Dijkstra over a couple of thousand
+   * nodes, which is nothing once and far too much sixty times a second.
+   */
+  private aim(dt: number): void {
+    if (!this.marker) return;
+    this.sinceAim += dt;
+    if (this.sinceAim < MARKER_REDRAW) return;
+    this.sinceAim = 0;
+
+    // Arrived: the marker has done its job and an arrow pointing at your own
+    // bonnet is noise.
+    if (Math.hypot(this.marker.x - this.x, this.marker.z - this.z) < MARKER_STRAY) {
+      this.aimAt(null);
+      return;
+    }
+    if (offRoute(this.markerPath, this) > MARKER_STRAY) {
+      this.markerPath = routeTo(this.city, this, this.marker);
+    }
+  }
+
   /** The rival you would face next, or null once the ladder is cleared (#91). */
   get currentRival(): Rival | null {
     return nextRival(this.beaten);
@@ -770,6 +820,7 @@ export class CityWorld {
     this.claim.update(dt, this, this.maxSpeed);
     if (this.claim.justEnded) this.settleClaim();
     this.earn(dt);
+    this.aim(dt);
     this.persist(dt);
   }
 

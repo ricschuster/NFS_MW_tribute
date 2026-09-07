@@ -667,7 +667,14 @@ describe('cooldown and the search area', () => {
     }
 
     const before = world.police.searchLeft;
-    stepUntil(world, () => false, 6);
+    // Nobody in the area, every step. #178 sends units to sweep it, and one of
+    // them finding a car parked on the spot they are looking at is the
+    // mechanic working - it is just not the mechanic this test is about, which
+    // is how fast the clock runs while you are inside.
+    for (let t = 0; t < 6; t += STEP) {
+      world.police.cops.length = 0;
+      world.step(STEP, NONE);
+    }
     // Slowly, not never (#178). It used to stop dead in here, and since
     // nothing was ever sent to look, a car parked inside the net stayed wanted
     // for ever - measured at heat 6, 100% of stopped pursuits never ended.

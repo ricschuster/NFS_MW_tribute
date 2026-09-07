@@ -513,6 +513,22 @@ export class Hud {
       ctx.fillRect(ix - 2, iz - 2, 4, 4);
     }
 
+    // The way to wherever you told it to point (#90). Drawn before the race
+    // line, so a lap you are actually running covers it rather than the other
+    // way round.
+    if (world.markerPath.length > 1) {
+      ctx.beginPath();
+      const first = toMap(world.markerPath[0], world);
+      ctx.moveTo(first.x * scale, first.y * scale);
+      for (const point of world.markerPath.slice(1)) {
+        const local = toMap(point, world);
+        ctx.lineTo(local.x * scale, local.y * scale);
+      }
+      ctx.strokeStyle = 'rgba(127, 227, 255, 0.55)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
     // The lap you are on, so the next few corners are visible before they are
     // the corner you are in.
     const route = world.race.route;
@@ -1250,11 +1266,20 @@ export class Hud {
     // at this scale is a grey rectangle.
     ctx.lineWidth = 1;
     for (const road of world.city.roads) {
-      if (road.class === 'street' || road.class === 'ramp') continue;
+      // Ramps included, and they are the reason: they are the only way between
+      // the street and the interstate, and skipping them drew the loop as a
+      // ring nobody can get onto. Streets stay out - three thousand of them at
+      // this scale is a grey rectangle.
+      if (road.class === 'street') continue;
       const a = world.city.nodes[road.a].pos;
       const b = world.city.nodes[road.b].pos;
       ctx.strokeStyle =
-        road.class === 'interstate' ? 'rgba(200, 135, 214, 0.75)' : 'rgba(150, 160, 170, 0.5)';
+        road.class === 'interstate'
+          ? 'rgba(200, 135, 214, 0.75)'
+          : road.class === 'ramp'
+            ? '#e6b3ff'
+            : 'rgba(150, 160, 170, 0.5)';
+      ctx.lineWidth = road.class === 'ramp' ? 2 : 1;
       ctx.beginPath();
       ctx.moveTo(px(a.x), py(a.z));
       ctx.lineTo(px(b.x), py(b.z));
@@ -1330,6 +1355,24 @@ export class Hud {
       ctx.arc(px(find.at.x), py(find.at.z), 5, 0, Math.PI * 2);
       ctx.fillStyle = '#7fe3ff';
       ctx.fill();
+    }
+
+    // The way to the marker, across the whole city - which is where it is
+    // worth seeing, because that is the screen you open to decide where to go.
+    if (world.markerPath.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(px(world.markerPath[0].x), py(world.markerPath[0].z));
+      for (const point of world.markerPath.slice(1)) ctx.lineTo(px(point.x), py(point.z));
+      ctx.strokeStyle = 'rgba(127, 227, 255, 0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+    if (world.marker) {
+      ctx.beginPath();
+      ctx.arc(px(world.marker.x), py(world.marker.z), 7, 0, Math.PI * 2);
+      ctx.strokeStyle = '#7fe3ff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
     // You, and unmistakably (#181). It used to be a cyan dot the size of a
@@ -1411,6 +1454,8 @@ export class Hud {
       ['ambush - the number is the heat', '#ff5a45', 'ring'],
       ['race route - orange for a speed run', '#7fe3ff', 'line'],
       ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
+      ['on and off ramp - the only way up', '#e6b3ff', 'line'],
+      ['where you said to go, and the way there', '#7fe3ff', 'ring'],
     ];
 
     const keys: [string, string][] = [

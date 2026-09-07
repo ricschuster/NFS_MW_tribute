@@ -86,7 +86,10 @@ export class QuickWheel {
 
     const place = this.destinations(world)[index];
     if (!place) return false;
-    world.marker = place;
+    // Through `aimAt`, which also works out the way there: an arrow across a
+    // city with a river in it points at plenty of places you cannot reach
+    // from where you are standing.
+    world.aimAt(place);
     return true;
   }
 
