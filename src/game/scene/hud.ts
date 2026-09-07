@@ -21,7 +21,9 @@ import {
 } from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
+import { RIVALS } from '../rivals';
 import type { CityWorld } from '../cityworld';
+import type { CityRoute } from '../city/types';
 import type { QuickWheel } from '../quickwheel';
 import type { TouchControls } from '../touch';
 
@@ -782,7 +784,34 @@ export class Hud {
       }
 
       const route = world.atStartLine;
-      if (!route) return;
+      if (!route) {
+        // Near one, but not on it. The invite below only shows inside
+        // `ROUTE_START_RANGE`, which is 28 m - no help at all when the problem
+        // is finding a start line rather than reading one (#213). This is the
+        // approach: near enough to steer for, quiet enough not to be a nag.
+        let near: CityRoute | null = null;
+        // Four times the range you can start from, not more: the six starts
+        // sit within about 1.5 km of the middle of the map, so a wider cue
+        // would be on screen most of the time downtown - and a prompt that is
+        // always there is a prompt nobody reads.
+        let gap = ROUTE_START_RANGE * 4;
+        for (const candidate of world.city.routes) {
+          const away = Math.hypot(candidate.start.x - world.x, candidate.start.z - world.z);
+          if (away < gap) {
+            gap = away;
+            near = candidate;
+          }
+        }
+        if (!near) return;
+        ctx.fillStyle = near.kind === 'speedrun' ? 'rgba(255, 159, 69, 0.75)' : 'rgba(127, 227, 255, 0.75)';
+        ctx.font = '600 14px system-ui, sans-serif';
+        ctx.fillText(
+          `${near.name.toUpperCase()}  ${Math.round(gap / UNITS_PER_METRE)} m  -  drive onto the marker`,
+          WIDTH / 2,
+          HEIGHT - 132,
+        );
+        return;
+      }
       const rival = world.currentRival;
 
       ctx.fillStyle = '#ffffff';
@@ -1313,10 +1342,33 @@ export class Hud {
       ctx.closePath();
       ctx.stroke();
 
+      // The start, and it has to be unmistakable. A 4 px dot in the route's own
+      // colour was already here and the playtest still reported the starts as
+      // missing from this map, for two reasons worth keeping: a cyan dot is
+      // what a parked car looks like, and nothing said the dot meant anything.
+      // So it is a ring with a filled centre - a shape nothing else on either
+      // map uses - and it carries the route's name.
+      const sx = px(route.start.x);
+      const sy = py(route.start.z);
+      const colour = route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff';
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(px(route.start.x), py(route.start.z), 4, 0, Math.PI * 2);
-      ctx.fillStyle = route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff';
+      ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = colour;
       ctx.fill();
+
+      // Named, because "drive to the cyan ring" is a worse instruction than
+      // "drive to Harbour Loop" - and the Quick Wheel lists them by name, so
+      // the map and the wheel say the same word.
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText(route.name.toUpperCase(), sx + 11, sy + 3.5);
+      ctx.textAlign = 'center';
     }
 
     // Where the traps are, with the heat they spring at. A ring rather than a
@@ -1441,7 +1493,7 @@ export class Hud {
   private legend(world: CityWorld): void {
     const { ctx } = this;
 
-    const rows: [string, string, 'dot' | 'line' | 'cross' | 'ring'][] = [
+    const rows: [string, string, 'dot' | 'line' | 'cross' | 'ring' | 'target'][] = [
       ['you', '#ffffff', 'ring'],
       ['police', '#4d8bff', 'dot'],
       ['Enforcer - comes at you head on', '#ff5a45', 'dot'],
@@ -1453,6 +1505,7 @@ export class Hud {
       ['speed camera', '#ffd166', 'dot'],
       ['ambush - the number is the heat', '#ff5a45', 'ring'],
       ['race route - orange for a speed run', '#7fe3ff', 'line'],
+      ['event start - park on it and press ENTER', '#7fe3ff', 'target'],
       ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
       ['on and off ramp - the only way up', '#e6b3ff', 'line'],
       ['where you said to go, and the way there', '#7fe3ff', 'ring'],
@@ -1501,6 +1554,17 @@ export class Hud {
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.stroke();
+      } else if (shape === 'target') {
+        // A ring with a centre: cyan already means a parked car as a dot, a
+        // route as a line and a go-to marker as a ring, so an event start needs
+        // a shape of its own rather than a fourth use of one that is taken.
+        // That cyan carries four meanings at all is #215.
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
       } else if (shape === 'line') {
         ctx.beginPath();
         ctx.moveTo(x - 7, y);
@@ -1556,6 +1620,46 @@ export class Hud {
       kx + 12,
       foot + 60,
     );
+
+    // Who you are racing towards, and how a race is started at all.
+    //
+    // The playtest that produced #213 could not begin an event: "I don't think
+    // the racing works. How would that start?" Every part of the answer already
+    // existed and none of it was anywhere a player would meet it - the invite
+    // is drawn only once you are parked on a start line, which is no help when
+    // the problem is finding one. So the ladder gets said on the screen a lost
+    // player already opens.
+    const rival = world.currentRival;
+    const ry = ky + 30 + keys.length * 19 + 82;
+    panel(kx, ry, kw, 110, 'THE LADDER');
+    ctx.textAlign = 'left';
+    ctx.font = '700 15px system-ui, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(
+      rival ? `NEXT  ·  #${rival.rank} ${rival.name.toUpperCase()}` : 'RIVALS CLEARED',
+      kx + 12,
+      ry + 40,
+    );
+    ctx.font = '500 12px system-ui, sans-serif';
+    if (rival && !world.challengeReady) {
+      // Rep rather than wins is the whole shape of #91, and a player who does
+      // not know that reads a locked rival as a broken button.
+      ctx.fillStyle = '#ffd166';
+      ctx.fillText(
+        `${world.repToNext.toLocaleString('en-US')} more Rep before they take the call.`,
+        kx + 12,
+        ry + 60,
+      );
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.fillText('Rep comes from everything: races, billboards,', kx + 12, ry + 78);
+      ctx.fillText('speed cameras, and outrunning the police.', kx + 12, ry + 94);
+    } else if (rival) {
+      ctx.fillStyle = 'rgba(90, 220, 130, 0.9)';
+      ctx.fillText('Ready. Drive to any event start - the ringed', kx + 12, ry + 60);
+      ctx.fillText('markers - and press ENTER to race them.', kx + 12, ry + 78);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.fillText(`${world.beaten} of ${RIVALS.length} beaten.`, kx + 12, ry + 94);
+    }
   }
 
   /** The cooldown clock, and what it is waiting for. */
