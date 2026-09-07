@@ -121,6 +121,8 @@ export class CityView {
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
   private litAt = -1;
+  /** How lit the streets are, so the cars can be told every frame (#221). */
+  private lamps = 0;
 
   /** Where the camera is looking, in yaw/pitch, so flying feels like flying. */
   private yaw = 0;
@@ -640,6 +642,18 @@ export class CityView {
     }
     this.rivalCars.end();
 
+    // Headlights on, at the same hour the street lamps come on (#221).
+    for (const pool of [
+      this.trafficCars,
+      this.copCars,
+      this.wreckCars,
+      this.parkedCars,
+      this.rivalCars,
+    ]) {
+      pool.setNight(this.lamps);
+    }
+    this.setCarNight(this.car, this.lamps);
+
     // The gate stands at the next checkpoint, so the route is something you
     // drive at rather than something you read off the minimap (#70).
     const gate = world.race.target;
@@ -742,6 +756,33 @@ export class CityView {
     dome.uniforms.bottom.value.copy(haze);
 
     this.cityscape.setNight(light.lamps);
+    // Kept, because the car pools have to be told every frame rather than only
+    // when the hour moves: `CarPool.setNight` reaches the cars *placed this
+    // frame*, and which cars those are changes constantly as traffic comes and
+    // goes around the player.
+    this.lamps = light.lamps;
+  }
+
+  /**
+   * Headlights on one car (#221).
+   *
+   * The player's car is a `Group` of its own rather than one out of a pool, so
+   * it does not get `CarPool.setNight` and would otherwise be the only car in
+   * Kestrel Bay driving at night with its lights off.
+   */
+  private setCarNight(car: THREE.Object3D, amount: number): void {
+    const lit = Math.max(0, Math.min(1, amount));
+    const beam = car.getObjectByName('beam') as THREE.Mesh | undefined;
+    if (beam) {
+      (beam.material as THREE.MeshBasicMaterial).opacity = lit * 0.30;
+      beam.visible = lit > 0.02;
+    }
+    for (const part of car.children) {
+      if (part.name !== 'headlight') continue;
+      ((part as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(
+        lit > 0.02 ? '#fff2cf' : '#6f7481',
+      );
+    }
   }
 
   /**
