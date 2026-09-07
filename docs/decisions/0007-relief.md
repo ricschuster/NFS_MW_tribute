@@ -63,16 +63,53 @@ as much as the content is.
    in theory and would invalidate rules 1-3, the connectivity repair, the bridge
    selection and the embankment, all of which are built and tested. Water first.
 
-2. **The land is an island, not a slab.** The water field generalises from "a
-   bay along the north edge plus one river" to something that may eat any edge:
-   headlands, inlets, a second channel, a detached island. This is a change to
-   `makeWater` and to the two places that assume the bay is north
-   (`embankment.ts`'s `bankAt` and `midChannel`). Everything downstream already
-   copes with arbitrary water, because everything downstream goes through the
-   clip. The straight cliff edge stops existing: the land meets the sea at a
-   shore on all four sides.
+2. **The land is an island, not a slab, and it becomes one in the same sweep as
+   the terrain.** The water field generalises from "a bay along the north edge
+   plus one river" to something that may eat any edge: headlands, inlets, a
+   second channel, a detached island. This is a change to `makeWater` and to the
+   two places that assume the bay is north (`embankment.ts`'s `bankAt` and
+   `midChannel`). Everything downstream already copes with arbitrary water,
+   because everything downstream goes through the clip. The straight cliff edge
+   stops existing: the land meets the sea at a shore on all four sides.
 
-3. **The height field is baked, not a formula.** `groundAt(x, z)` reads a
+   Shipped *with* the terrain rather than before it, deliberately. Alone it is a
+   small satisfying change; but it redraws the whole city, and so does the
+   terrain, and a pinned city that changes twice means two rounds of
+   re-recording the baseline and re-deriving the ladder for one result. One
+   sweep, one re-tune.
+
+   The coastline is also the thing that decides how much city there is left,
+   and the answer came from finally running ADR-0005's own check. That ADR sized
+   the map from a behaviour rather than a number - *"a pursuit should be able to
+   cross the map in two to four minutes"* - explicitly because no verified
+   published figure for any specific game's map exists to calibrate against.
+   Nothing had ever measured it. Measured now, over the streets alone at the
+   32% of top speed an expert actually holds in traffic:
+
+   | crossing | by road | time |
+   | --- | --- | --- |
+   | corner to corner | 7.3 km | 4m 15s |
+   | west to east | 5.0 km | 2m 55s |
+   | south to north | 4.7 km | 2m 45s |
+
+   The diagonal is *over* the band the rule asks for. So the coast taking land
+   away is not a loss to be compensated for: it moves the diagonal back inside
+   the rule. The rectangle stays 5 x 4 km - growing it would push the diagonal
+   past five minutes and cost generation time the CI already timed out on today -
+   and the coast may take what it takes, with a floor: **no less than about 60%
+   land, roughly 12 km²**, below which the city stops being big enough to get
+   lost in. The floor is a test, and the crossing time joins the numbers
+   `npm run city` prints, so the rule is checked rather than remembered.
+
+3. **Hills are about 60 m.** Tall enough to read as landscape against a
+   19 m median building, short enough that downtown's towers still own the
+   skyline, and - the reason for this number rather than a rounder one - 60 m
+   over a kilometre of slope is 6%, which is exactly the grade cap rule 5 puts
+   on an arterial. The terrain and the road rules are calibrated to each other
+   rather than fighting: hills at this size are climbable by construction, and
+   the ones that are not are the ones worth tunnelling through.
+
+4. **The height field is baked, not a formula.** `groundAt(x, z)` reads a
    heightmap generated with the city - a regular grid at roughly 10 m,
    bilinearly sampled. A formula in the style of `water.ts` was the obvious
    choice and is the wrong one: cut and fill *displaces* terrain, and a pure
@@ -82,13 +119,13 @@ as much as the content is.
    It is city *data*, like building footprints, and both the sim and the
    renderer read the same array.
 
-4. **`y` stops carrying two meanings.** `CityNode` gains an explicit level -
+5. **`y` stops carrying two meanings.** `CityNode` gains an explicit level -
    surface, elevated, tunnel - and the four modules that test `y === 0` ask for
    that instead. This lands *before* any terrain exists, on its own, with no
    visible change: it is a prerequisite and it makes those modules honest either
    way.
 
-5. **Roads are cut and filled.** A road's height is the terrain smoothed along
+6. **Roads are cut and filled.** A road's height is the terrain smoothed along
    its length, subject to a grade cap, and the terrain is then displaced to meet
    the road. Junctions are levelled to one height so that turning is not a step.
    The caps: arterials and boulevards no steeper than 6%, streets no steeper
@@ -96,20 +133,20 @@ as much as the content is.
    an instrument - because a street the car cannot climb is a street that does
    not exist.
 
-6. **Blocks are pads.** Each block is flattened to a single height and the drop
+7. **Blocks are pads.** Each block is flattened to a single height and the drop
    at its edge is drawn as a retaining wall or a bank. Buildings stand on the
    pad, so a footprint stays flat and instancing survives untouched. A block
    whose corners differ by more than a storey is dropped and becomes parkland,
    the way #243 drops a building with no headroom under the deck.
 
-7. **Slope changes the drive.** This is the point of doing it at all: a climb
+8. **Slope changes the drive.** This is the point of doing it at all: a climb
    costs speed, a descent gives it back, and a crest unweights the car. Gravity
    resolves along the direction of travel in `CityWorld.drive()`, alongside the
    engine and drag terms. This is a change to the model tuned in #14, #46 and
    #82 and it is accepted knowingly: the alternative, terrain as scenery the car
    does not feel, is a hill you can see and not a hill you can drive.
 
-8. **Tunnels and cuttings are what a hill is for.** Once there is relief, a
+9. **Tunnels and cuttings are what a hill is for.** Once there is relief, a
    street that meets one either climbs it, cuts through it, or goes under it,
    and the third is a tunnel. The mechanism already exists - height is a real
    property of the network (#85) and the interstate already tunnels - so this is
@@ -119,22 +156,38 @@ as much as the content is.
    something it needs a new thing to mean it against. A tunnel is that thing,
    and unlike a helicopter it is visible on the map.
 
+10. **The interstate holds its height and lets the hills tunnel through it.**
+    The deck stays 12 m above sea level rather than 12 m above whatever is
+    underneath, which is what an elevated freeway does and what keeps #243's
+    building-headroom rule and #244's water rule meaning what they say. Where a
+    hill rises past the deck the freeway is in a tunnel, which is a tunnel
+    nobody had to write: rule 9 gets some of its content for free from rule 3.
+    Ramp feet land on terrain, so a ramp's grade is no longer a constant and
+    `npm run ramps` becomes load-bearing rather than reassuring.
+
 The generator stays a pure function of its seed, headless, outside the renderer.
 The heightmap is data on `City` like everything else.
 
 ### The issues this becomes
 
-Milestone **M7: Relief**. Rules 1-2 are #249, rule 4 is #250, rule 3 is #251,
-rule 5 is #252, rule 6 is #253, the renderer is #254, rule 7 is #255, rule 8 is
-#256, and the half of rule 8 that depends on none of the rest is #257.
+Milestone **M7: Relief**. Rules 1-3 are #249 and #251, which ship together;
+rule 5 is #250; rule 6 is #252; rule 7 is #253; the renderer is #254; rule 8 is
+#255; rule 9 is #256; and the half of rule 9 that depends on none of the rest -
+a tunnel breaking the pursuit's line of sight - is #257.
+
+#259 is not in the ADR and is not blocked by it: buildings you can drive into.
+It is height in a *building* rather than in the ground, it needs nothing here
+except rule 5's explicit node level, and it can be built before, during or
+after the landscape.
 
 ## Consequences
 
-- **The pinned city changes twice**: once when the coast becomes irregular, and
-  again when the ground gains height. Every figure in `docs/city-baseline.json`
-  moves, the ladder has to be re-derived against the new routes, and every
-  screenshot in the repo is of a different place. Both should be clean sweeps
-  rather than work interleaved with tuning, and `CITY_SEED` stays content.
+- **The pinned city changes once, and completely.** Every figure in
+  `docs/city-baseline.json` moves, the ladder has to be re-derived against the
+  new routes, and every screenshot in the repo is of a different place. That is
+  why the coastline and the terrain land together rather than one after the
+  other. It should be a clean sweep rather than work interleaved with tuning,
+  and `CITY_SEED` stays content.
 - **The feel work is reopened.** Rule 7 puts a new term in the longitudinal
   model. `RIVAL_BASE_SPEED_FRAC`, `RIVAL_DIFF_SPEED_FRAC` and every constant
   derived from a lap time have to be re-derived afterwards, not before.
@@ -153,7 +206,7 @@ rule 5 is #252, rule 6 is #253, the renderer is #254, rule 7 is #255, rule 8 is
 - **Tests that assume flatness change.** Every test asserting `y === 0` for a
   surface road, and `city.test.ts`'s blocks-and-roads geometry checks, are
   written against a plane.
-- **This ADR can be stopped after any numbered rule.** 1-4 leave a better city
-  with no terrain in it at all; 5-6 leave a landscape you drive over; 7-8 are
+- **This ADR can be stopped after any numbered rule.** 1-5 leave a better city
+  with no terrain in it at all; 6-7 leave a landscape you drive over; 8-10 are
   what make it a landscape you drive *in*. If the work has to stop, it should
   stop on a numbered boundary and the ADR should be amended to say where.
