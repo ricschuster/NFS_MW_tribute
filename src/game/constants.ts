@@ -105,42 +105,63 @@ export const ESCAPED_FLASH = 2.5;
 
 /**
  * How fast a rival runs, as a fraction of *your top speed*, held along the
- * route line (#192).
+ * route line (#192, #204).
  *
  * These were 0.8 and 0.125, set by `npm run feel` against the track sim, where
  * a reference lap averaged 91% of top speed. That sim was deleted in #165 and
  * a lap of Kestrel Bay averages a quarter of top speed in traffic, because the
  * car has to corner and the road has other cars on it - so the same numbers
  * described a field three times faster than anything that could be driven, and
- * every rival on the ladder was unbeatable. `npm run playthrough` put an
- * expert seventh of seven against #10, the rival the game opens with.
+ * every rival on the ladder was unbeatable.
  *
- * Re-derived against an expert driver in traffic, which is what
- * `npm run citylap`'s ladder table now races: the bottom of the ladder is won
- * comfortably and the boss is lost, by a little, in the car you start in.
+ * #192 re-derived them and said it had done so against an expert. It had not:
+ * `citylap`'s ladder table never passed `skill`, so it raced the *perfect*
+ * driver while printing "driven by an expert", and these numbers were fitted
+ * to a lap nobody can drive. Against the expert the header always claimed, the
+ * same table put that driver behind eight of the ten rivals.
  *
- * It used to say "and won with the boost", and that is no longer reachable:
- * measured, a boosted lap of a city circuit is *slower* than a clean one - 25%
- * against 30% - because a tight loop scrubs the overspeed off in the next bend
- * whatever #105 did to the taper. So the top of the ladder wants a better
- * *car* instead, which is what the roster and the parts are for (#67, #68) and
- * what `CityRace.average` being measured against `REFERENCE_TOP_SPEED` rather
- * than against your own makes possible. Whether nitrous should be worth
- * pressing on a city circuit at all is #204.
+ * Re-derived a second time, against the driver actually racing. Measured on
+ * Harbour Loop in traffic, in the car you start in with no parts on it, an
+ * expert holds 26% of top speed and an advanced driver 22%. The ladder is laid
+ * across both: the opening race is winnable by the weaker of the two, and the
+ * top of it is out of reach for the stronger until the car is better, which is
+ * what the roster and the parts are for (#67, #68).
+ *
+ * Both tiers matter and fitting only one is how this went wrong before. Set
+ * against the expert alone, the bottom of the ladder is a race an advanced
+ * driver loses - which is #192's defect exactly, one tier down.
+ *
+ * It used to say "and won with the boost". That is not reachable and the
+ * reason is not the one that was assumed: `npm run nitro` measures the share
+ * of a lap spent above the speed the next bend allows at a flat 5-6% whether
+ * the boost is pressed or not, so nothing is being scrubbed off in corners.
+ * The boost buys a faster exit, and in traffic that is spent arriving at the
+ * car in front sooner - it comes back as damage rather than as pace. On an
+ * empty road the same policy is worth eight points. Nitrous is a free-roam
+ * mechanic that a race cannot use, which is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.24;
+export const RIVAL_BASE_SPEED_FRAC = 0.197;
 /**
- * Extra rival pace at difficulty 1 (#48, #105).
+ * Extra rival pace at difficulty 1 (#48, #105, #204).
  *
- * Set so the top of the ladder actually needs the boost: a reference lap
- * averaged 91% of top speed clean and 96% with nitrous used well, so the boss
- * sits between the two. It was 0.068 while nitrous was worthless, which put
- * the boss inside a clean lap and made the whole ladder a formality.
+ * The spread of the ladder, and the thing that decides how much of it the
+ * starting car can have. With `difficulty` running 0.15 at #10 to 1.0 at the
+ * boss, these two put the field at 22% and 28% of your top speed against an
+ * expert's measured 26%: #10 through #4 are won in the car the game opens
+ * with, and #3, #2 and #1 are not.
  *
- * Those figures came from the track sim's race probe, which retired with the
- * track (#165). Nothing measures the ladder end to end today - see the handoff.
+ * Wider than this and the bottom of the ladder is a walkover; narrower and the
+ * whole thing sits inside one lap, which is what the old 0.068 did - the boss
+ * was beatable clean and the ladder was a formality. It is not set so the
+ * boss "needs the boost" any more, because the boost buys nothing in traffic
+ * (#204); the boss needs a car.
+ *
+ * The spread has to cover two drivers four points apart, which is why it is
+ * wider than the ladder's own range suggests: 21% at #10 so an advanced driver
+ * takes the opening race, 28% at the boss so an expert does not take the last
+ * one.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.07;
+export const RIVAL_DIFF_SPEED_FRAC = 0.078;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */

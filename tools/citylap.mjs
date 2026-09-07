@@ -362,9 +362,10 @@ if (!asDesigned) {
   console.log(
     '\n  The field runs at a configured fraction of your top speed along the route\n' +
       '  line; you hold whatever the corners and the traffic leave you. Those two\n' +
-      '  columns are what a calibration has to reconcile - `RIVAL_BASE_SPEED_FRAC`\n' +
-      '  was set against the track sim that #165 deleted, where a reference lap\n' +
-      '  averaged 91% of top speed rather than the 25-50% a city lap does.',
+      '  columns are what a calibration has to reconcile.\n' +
+      '\n  Check the other tier before moving either constant. `--driver advanced`\n' +
+      '  holds four points less than an expert, and a ladder fitted to one of them\n' +
+      '  puts an unwinnable race at whichever end the other one is standing.',
   );
 }
 
