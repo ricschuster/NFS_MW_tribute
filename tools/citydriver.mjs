@@ -400,6 +400,14 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
  *
  * `input` is the world's own input shape; the caller passes it in so this file
  * does not need to know what a `CityWorld` is.
+ *
+ * `hold(world, intent, target)` runs every step and its return is merged over
+ * the driver's own input, so it is both the way to watch a drive and the way
+ * to add an input the driver has no opinion about - nitrous, most of all.
+ * `intent` is what the driver decided before its hands got to it and `target`
+ * is the speed it is aiming for, so a boost policy can ask "am I accelerating
+ * out of this corner?" rather than inferring it from the heading. Both are
+ * null on the unwedging path.
  */
 
 /**
@@ -585,7 +593,7 @@ export function driveRoute(
         up: !backing,
         left: turn > 0,
         right: turn < 0,
-        ...hold(world),
+        ...hold(world, null, null),
       });
       elapsed += K.STEP;
       if (stuck > 2.4) {
@@ -614,7 +622,7 @@ export function driveRoute(
       up: world.speed < target * 0.98,
       down: world.speed > target * 1.08,
     };
-    world.step(K.STEP, { ...throughHands(intent, K.STEP), ...hold(world) });
+    world.step(K.STEP, { ...throughHands(intent, K.STEP), ...hold(world, intent, target) });
     elapsed += K.STEP;
   }
 

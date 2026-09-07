@@ -21,7 +21,8 @@
     "patrol": "node tools/patrol.mjs",
     "endings": "node tools/endings.mjs",
     "playthrough": "node tools/playtest.mjs",
-    "drivers": "node tools/drivers.mjs"
+    "drivers": "node tools/drivers.mjs",
+    "nitro": "node tools/nitro.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
