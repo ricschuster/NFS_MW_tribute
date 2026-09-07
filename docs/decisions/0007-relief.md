@@ -101,6 +101,23 @@ as much as the content is.
    lost in. The floor is a test, and the crossing time joins the numbers
    `npm run city` prints, so the rule is checked rather than remembered.
 
+   ADR-0005's claim that no verified figure exists to calibrate against was
+   checked rather than assumed, so that nobody has to check it again. The only
+   area figure findable for the 2012 game's city is 72 km², and it comes from
+   the description of a *fan-made port of the map into another engine* rather
+   than from its publisher. A port's terrain is a square heightmap that extends
+   well past the drivable city - 72 km² is an 8.5 km square - so it is almost
+   certainly the extent of the ground, not the extent of the city. The only
+   first-party statement in the neighbourhood is that the 2013 game's map is
+   16 x 16 km and "bigger than Most Wanted", which is an upper bound and nothing
+   more. Contemporary reviews put the city at or below the size of the
+   developer's previous open world and give no number at all.
+
+   Square kilometres are the wrong unit to port anyway: what transfers between
+   two games is how long it takes to get somewhere, which depends on the car and
+   the street layout as much as on area. The table above is the measurement that
+   matters, and it is one anybody can repeat in the other game with a stopwatch.
+
 3. **Hills are about 60 m.** Tall enough to read as landscape against a
    19 m median building, short enough that downtown's towers still own the
    skyline, and - the reason for this number rather than a rounder one - 60 m
