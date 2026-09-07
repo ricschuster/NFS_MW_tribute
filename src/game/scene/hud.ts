@@ -1465,6 +1465,7 @@ export class Hud {
       ['HOLD Q', 'Quick Wheel: E branch, 1-9 picks'],
       ['TAB', 'this map'],
       ['B', 'look back'],
+      ['F', 'fullscreen'],
     ];
 
     const panel = (x: number, y: number, w: number, h: number, title: string) => {
