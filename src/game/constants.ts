@@ -121,13 +121,13 @@ export const ESCAPED_FLASH = 2.5;
  * same table put that driver behind eight of the ten rivals.
  *
  * Re-derived against the driver actually racing. Measured on Harbour Loop in
- * traffic, in the car you start in with no parts on it, an expert holds 31.5%
- * of top speed. These two put the field at 27.5% for #10 and 34% for the boss:
- * that driver takes #10 through #5 in the car the game opens with, and #4
- * through the boss want a better one.
+ * traffic, in the car you start in with no parts on it, an expert holds 32% of
+ * top speed. These two put the field at 27.5% for #10 and 34% for the boss:
+ * that driver takes #10 through #4 in the car the game opens with, and #3, #2
+ * and the boss want a better one.
  *
- * One rank is about 83 m of gap over a lap, so whichever rival the line falls
- * between is close: #5 is won by 63 m and #4 lost by 20. That is the boundary
+ * One rank is about 82 m of gap over a lap, so whichever rival the line falls
+ * between is close: #4 is won by 32 m and #3 lost by 50. That is the boundary
  * being a boundary rather than a number needing another decimal place - moving
  * it only moves which pair is the coin-flip.
  *
@@ -136,7 +136,11 @@ export const ESCAPED_FLASH = 2.5;
  * street graph, so *any* change to the network redraws it: the expert went from
  * 26% to 28% when #218 lengthened the routes, and from 28% to 32% when #241 put
  * a road along the water - a road nobody added for the racing, which the routes
- * then used. This is not a constant that survives a change to the map.
+ * then used. This is not a constant that survives a change to the map. It does
+ * not follow that every map change needs new numbers: #244 moved the freeway's
+ * ramps and its tunnel, which shifted Harbour Loop's traffic lap by ten
+ * seconds and left the ladder reading as designed, so it was left alone.
+ * Measure, then decide.
  *
  * A caution about the tier below. An advanced driver is nominally about four
  * points off an expert, and fitting the ladder to one tier alone put an
@@ -164,8 +168,8 @@ export const RIVAL_BASE_SPEED_FRAC = 0.2635;
  * The spread of the ladder, and the thing that decides how much of it the
  * starting car can have. With `difficulty` running 0.15 at #10 to 1.0 at the
  * boss, these two put the field at 27.5% and 34% of your top speed against an
- * expert's measured 31.5%: #10 through #5 are won in the car the game opens
- * with, and #4 up to the boss are not.
+ * expert's measured 32%: #10 through #4 are won in the car the game opens
+ * with, and #3, #2 and #1 are not.
  *
  * Wider than this and the bottom of the ladder is a walkover; narrower and the
  * whole thing sits inside one lap, which is what the old 0.068 did - the boss
@@ -459,6 +463,15 @@ export const RAMP_SPEED = kmh(70);
 export const TUNNEL_DEPTH = m(9);
 /** How much of the loop is tunnel, as a fraction of its perimeter. */
 export const TUNNEL_LENGTH = 0.12;
+/**
+ * How many places to try before settling for the driest (#244).
+ *
+ * The tunnel's mouths have to be on land, and where they land is a roll of the
+ * dice against a coastline nobody drew on purpose. Enough tries that a seed
+ * with one awkward quarter still finds a clean stretch; few enough that
+ * generation is not measurably slower for it.
+ */
+export const TUNNEL_TRIES = 24;
 /**
  * Run needed to get between the two levels, so the grade stays drivable.
  *

@@ -13,12 +13,14 @@ import {
   RAMP_SPEED,
   TUNNEL_DEPTH,
   TUNNEL_LENGTH,
+  TUNNEL_TRIES,
   GRADE_RUN,
   FREEWAY_SPURS,
   FREEWAY_SPUR_MIN,
 } from '../constants';
 import type { Rng } from './rng';
-import type { Axis, CityNode, CityRoad, Rect } from './types';
+import { nearWater, type Water } from './water';
+import type { Axis, CityNode, CityRoad, Rect, Vec2 } from './types';
 
 
 /**
@@ -40,12 +42,20 @@ import type { Axis, CityNode, CityRoad, Rect } from './types';
  * Tunnels are the same mechanism with the sign flipped. One stretch of the
  * loop dives below the streets instead of climbing over them, which needs no
  * new concept at all - only a negative `y`.
+ *
+ * The water is passed in because this runs *after* the network has been cut
+ * against it and is therefore the one pass that could put a road in the bay
+ * without anything noticing (#244). Being over water is fine at 12 m and fine
+ * at -9 m; what is not fine is the stretch in between, so the two places the
+ * deck comes down to street level - a ramp, and a tunnel mouth - are the two
+ * places that ask.
  */
 export function addInterstate(
   rng: Rng,
   bounds: Rect,
   nodes: CityNode[],
   roads: CityRoad[],
+  water: Water,
 ): void {
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
@@ -66,7 +76,12 @@ export function addInterstate(
   ];
 
   const perimeter = sides.reduce((sum, side) => sum + Math.abs(side.to - side.from), 0);
-  const profile = heightProfile(rng, perimeter);
+  const profile = heightProfile(
+    rng,
+    perimeter,
+    (along) => point(...whereAlong(sides, along)),
+    water,
+  );
 
   // Surface nodes a ramp could land on, indexed so the search per side is not
   // a scan of the whole city.
@@ -81,7 +96,7 @@ export function addInterstate(
   const built: { node: CityNode; side: Side }[] = [];
 
   for (const side of sides) {
-    const ramps = rampsFor(rng, side, surface);
+    const ramps = rampsFor(rng, side, surface, water);
     const stations = stationsAlong(side, ramps);
 
     for (const station of stations) {
@@ -196,12 +211,36 @@ const point = (side: Side, at: number) =>
   side.axis === 'x' ? { x: at, z: side.at } : { x: side.at, z: at };
 
 /**
+ * Which side of the loop a distance around it lands on, and where along that
+ * side. The height profile is a function of one number and the water is a
+ * function of a position, so something has to turn the first into the second.
+ */
+function whereAlong(sides: Side[], along: number): [Side, number] {
+  const perimeter = sides.reduce((sum, side) => sum + Math.abs(side.to - side.from), 0);
+  // Wrapped, because a tunnel near the end of the circuit has its far mouth
+  // round the corner past the start.
+  let left = ((along % perimeter) + perimeter) % perimeter;
+  for (const side of sides) {
+    const span = Math.abs(side.to - side.from);
+    if (left <= span) return [side, side.from + Math.sign(side.to - side.from) * left];
+    left -= span;
+  }
+  const last = sides[sides.length - 1];
+  return [last, last.to];
+}
+
+/**
  * Height as a function of distance around the circuit: elevated nearly all the
  * way, with one stretch that dives into a tunnel instead. The transitions take
  * a fixed run so the grade stays something a car can climb.
  */
-function heightProfile(rng: Rng, perimeter: number): (along: number) => number {
-  const start = rng.range(0.05, 0.85) * perimeter;
+function heightProfile(
+  rng: Rng,
+  perimeter: number,
+  at: (along: number) => Vec2,
+  water: Water,
+): (along: number) => number {
+  const start = tunnelStart(rng, perimeter, at, water);
   const end = start + TUNNEL_LENGTH * perimeter;
 
   return (along: number) => {
@@ -217,6 +256,45 @@ function heightProfile(rng: Rng, perimeter: number): (along: number) => number {
 }
 
 /**
+ * Where the tunnel starts: anywhere on the loop whose *mouths* are on land.
+ *
+ * The deck at 12 m over the bay is a viaduct and the tunnel at -9 m under the
+ * river is a tunnel; both are fine. The transition between them is neither -
+ * it passes through street level, and over water that is a freeway driving
+ * into the sea, which is what it was doing (#244).
+ *
+ * Rolled and checked rather than solved, because "is this over water" is a
+ * sampled question either way. If the map leaves nowhere clean - a loop whose
+ * every quarter meets the bay - the driest roll wins, so this can only improve
+ * a city and never fail to build one.
+ */
+function tunnelStart(rng: Rng, perimeter: number, at: (along: number) => Vec2, water: Water): number {
+  let best = 0;
+  let bestWet = Infinity;
+  for (let attempt = 0; attempt < TUNNEL_TRIES; attempt++) {
+    const start = rng.range(0.05, 0.85) * perimeter;
+    const end = start + TUNNEL_LENGTH * perimeter;
+    let wet = 0;
+    // Both grade runs: down into the tunnel, and back up out of it.
+    for (const from of [start - GRADE_RUN, end]) {
+      const steps = Math.max(2, Math.round(GRADE_RUN / INTERSTATE_SEGMENT));
+      for (let i = 0; i <= steps; i++) {
+        const p = at(from + (GRADE_RUN * i) / steps);
+        // A margin, because a mouth on the very edge of the bank is a mouth
+        // with the water lapping at it.
+        if (nearWater(water, p.x, p.z, RAMP_OFFSET)) wet++;
+      }
+    }
+    if (wet === 0) return start;
+    if (wet < bestWet) {
+      bestWet = wet;
+      best = start;
+    }
+  }
+  return best;
+}
+
+/**
  * Pick where this side's ramps come down.
  *
  * A ramp descends *along* a surface street's alignment, which keeps it
@@ -224,7 +302,12 @@ function heightProfile(rng: Rng, perimeter: number): (along: number) => number {
  * exists. That means the choice is really "which surface junction", and the
  * ramp is then the line from the deck above it to the street.
  */
-function rampsFor(rng: Rng, side: Side, surface: CityNode[]): { at: number; node: CityNode }[] {
+function rampsFor(
+  rng: Rng,
+  side: Side,
+  surface: CityNode[],
+  water: Water,
+): { at: number; node: CityNode }[] {
   const across = (node: CityNode) => (side.axis === 'x' ? node.pos.z : node.pos.x);
   const along = (node: CityNode) => (side.axis === 'x' ? node.pos.x : node.pos.z);
 
@@ -234,7 +317,14 @@ function rampsFor(rng: Rng, side: Side, surface: CityNode[]): { at: number; node
   const reachable = surface.filter((node) => {
     const run = Math.abs(across(node) - side.at);
     const at = along(node);
-    return run >= RAMP_MIN_RUN && run <= RAMP_MAX_RUN && at > lo + GRADE_RUN && at < hi - GRADE_RUN;
+    if (run < RAMP_MIN_RUN || run > RAMP_MAX_RUN) return false;
+    if (at <= lo + GRADE_RUN || at >= hi - GRADE_RUN) return false;
+    // And the descent itself has to be over land (#244). A ramp is only a few
+    // metres up for most of its run, so one crossing the river is a road going
+    // into the water rather than a viaduct over it - and it is rejected here,
+    // among the other reasons a junction cannot take a ramp, so the side picks
+    // a different junction instead of losing the ramp.
+    return dryRun(water, point(side, at), node.pos);
   });
   if (reachable.length === 0) return [];
 
@@ -273,6 +363,25 @@ function stationsAlong(side: Side, ramps: { at: number; node: CityNode }[]): Sta
   const ordered = [...points.entries()].sort((a, b) => (forward ? a[0] - b[0] : b[0] - a[0]));
   // The far end is the next side's first station, so drop it to avoid a doubled node.
   return ordered.slice(0, -1).map(([at, ramp]) => ({ at, ramp }));
+}
+
+/**
+ * Is the line between these two clear of the water for its whole length?
+ *
+ * Sampled at the same interval the deck is built from, with a margin the width
+ * of the offset between a ramp's two carriageways so that neither of them ends
+ * up over the bank.
+ */
+function dryRun(water: Water, from: Vec2, to: Vec2): boolean {
+  const run = Math.hypot(to.x - from.x, to.z - from.z);
+  const steps = Math.max(2, Math.round(run / INTERSTATE_SEGMENT));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = from.x + (to.x - from.x) * t;
+    const z = from.z + (to.z - from.z) * t;
+    if (nearWater(water, x, z, RAMP_OFFSET)) return false;
+  }
+  return true;
 }
 
 /**

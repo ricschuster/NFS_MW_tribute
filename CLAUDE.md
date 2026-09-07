@@ -183,6 +183,19 @@ the *opposite* trade from the ramps, which do clear their corridor (#212) - a
 ramp is low enough that a building beside it is in the road, and the deck is
 high enough that one under it is scenery.
 
+**The freeway is built last, so it is the one thing that can end up in the
+bay** (issue #244). `addInterstate` runs after the network has been cut against
+the water, and for a long time it was never given the water at all: a ramp came
+down across the river and the tunnel's mouth was in the estuary. The rule is
+not "keep the freeway off the water" - the deck over the bay is a viaduct and
+the tunnel under the river is a tunnel, and both are wanted. It is that the
+*transition* between them may not be: the two places the freeway reaches street
+level are a ramp and a tunnel mouth, so a ramp whose descent crosses water is
+rejected while its junction is being picked (the side then chooses another
+junction rather than losing the ramp), and the tunnel's position is rolled
+until both mouths are on land - keeping the driest roll if a seed offers
+nothing clean, so this can only improve a city and never fail to build one.
+
 **Height is a real property of the network** (issue #85). Nodes have a `y`, so
 two roads at the same map position and different heights are two different
 places: the interstate crossing a street overhead shares no node with it, and
