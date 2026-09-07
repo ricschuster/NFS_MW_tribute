@@ -34,9 +34,12 @@ hill to go through.
 Not the height field. Three things:
 
 1. **`y === 0` currently means two different things.** It means "at ground
-   level" and it means "on the surface street network". `interstate.ts` picks
-   its ramp targets with it, and so do `ambushes.ts`, `breakables.ts` and
-   `repairs.ts`. A street at 40 m on a hill makes all four wrong.
+   level" and it means "on the surface street network". Counted rather than
+   guessed at: **ten places across nine modules** ask it the second way - where
+   a park may go, where a lamp and a street sign go, where the police may spawn,
+   which junctions an ambush may use and which a race may be routed over, where
+   a workshop goes, where a breakable stands, and which junction can take a
+   ramp. A street at 40 m on a hill makes all ten wrong.
 2. **Terrain gradient is not road gradient.** A height field sampled along a
    street gives grades no car can climb. Real cities cut and fill; so must the
    generator. `npm run ramps` exists because unclimbable slopes are invisible
@@ -153,10 +156,14 @@ as much as the content is.
    renderer read the same array.
 
 6. **`y` stops carrying two meanings.** `CityNode` gains an explicit level -
-   surface, elevated, tunnel - and the four modules that test `y === 0` ask for
+   surface, elevated, tunnel - and the ten sites that test `y === 0` ask for
    that instead. This lands *before* any terrain exists, on its own, with no
    visible change: it is a prerequisite and it makes those modules honest either
-   way.
+   way. **Done** (#250): the level is derived from the height for now, so the
+   two agree and the serialised city is byte-identical apart from the field
+   itself - 2238 surface nodes, 203 elevated, 28 in the tunnel. The day they
+   stop agreeing is the point of it, and `make()` in `interstate.ts` is the one
+   line that stops being a derivation.
 
 7. **Roads are cut and filled.** A road's height is the terrain smoothed along
    its length, subject to a grade cap, and the terrain is then displaced to meet
