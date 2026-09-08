@@ -271,7 +271,7 @@
         const i = ((height.rows - 1 - r) * height.cols + c) * 4;
         const h = at(c, r);
         if (isWater(h)) {
-          img.data[i] = 26; img.data[i + 1] = 85; img.data[i + 2] = 104; img.data[i + 3] = 255;
+          img.data[i] = 20; img.data[i + 1] = 65; img.data[i + 2] = 79; img.data[i + 3] = 255;
           continue;
         }
         const t = Math.min(1, h / 120);
@@ -375,7 +375,9 @@
       ctx.fill();
     }
 
-    const wide = Math.max(1.1, 2.6 * view.scale * 40);
+    // 26 m of carriageway, so a road thickens as you zoom in the way the ground
+    // does, with a floor that keeps it visible when the whole map is in view.
+    const wide = Math.max(1.4, 26 * view.scale);
     for (const r of live()) {
       const hot = selected && selected.road === r;
       ctx.beginPath();
@@ -478,7 +480,7 @@
     } else {
       // By the number in the id, not the string: r9 comes before r10.
       const num = (id) => Number(id.replace(/\D+/g, ''));
-      order.sort((a, b) => (a.id[0] === b.id[0] ? num(a) - num(b) : a.id[0] < b.id[0] ? -1 : 1));
+      order.sort((a, b) => (a.id[0] === b.id[0] ? num(a.id) - num(b.id) : a.id[0] < b.id[0] ? -1 : 1));
       if (!sort.ascending) order.reverse();
     }
     for (const r of order) {
