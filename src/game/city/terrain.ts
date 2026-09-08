@@ -10,6 +10,7 @@ import {
   TERRAIN_RIM_LIFT,
   TERRAIN_SEABED,
   TERRAIN_SHORE,
+  TERRAIN_SOFTEN,
   TERRAIN_STREAM,
 } from '../constants';
 import { Rng } from './rng';
@@ -91,8 +92,14 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
     }
   }
 
-  const toWater = distanceToWet(wet, cols, rows);
-  const toBank = distanceToWet(inland, cols, rows);
+  // Blurred, and this is the important one. A chamfer transform has a ridge
+  // down the middle of every strip of land, where the fields from two stretches
+  // of coast meet, and the shore ramp turns that ridge into a straight crease
+  // hundreds of metres long. Smoothing the *height* afterwards barely touches
+  // it - the crease is bigger than any blur worth doing to a landscape.
+  // Smoothing the distance before it becomes height removes it at the source.
+  const toWater = blur(distanceToWet(wet, cols, rows), cols, rows, TERRAIN_SOFTEN);
+  const toBank = blur(distanceToWet(inland, cols, rows), cols, rows, TERRAIN_SOFTEN);
 
   // The bowl is the *city's*, not the rectangle's. Centred on the map it landed
   // exactly on the island's interior - the only ground far enough from the sea
@@ -151,7 +158,77 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
     }
   }
 
+  soften(cells, wet, cols, rows);
+
   return { cells, cols, rows, cell: TERRAIN_CELL, bounds };
+}
+
+/**
+ * Take the creases out.
+ *
+ * The shore ramp is a function of the distance to the water, and that distance
+ * comes from a two-pass chamfer transform - which has a **medial axis**: a
+ * ridge running down the middle of every strip of land, where the fields from
+ * two stretches of coast meet. The ramp turns that ridge into a visible crease,
+ * and on a small body of land it is the dominant feature: straight-edged facets
+ * meeting at a sharp line, which is what "some topography seems quite abrupt"
+ * was looking at.
+ *
+ * A few passes of a box blur is the cheap fix and the right one. It is only the
+ * artefact that is sharp; the hills underneath are smooth already, and blurring
+ * a height field by tens of metres at a ten-metre grid moves nothing that
+ * matters. Water is held at its own depth so the coastline does not soften with
+ * it - a blurred shoreline is a beach the collision does not agree with.
+ */
+function blur(field: Float32Array, cols: number, rows: number, passes: number): Float32Array {
+  let from: Float32Array = field;
+  let to: Float32Array = new Float32Array(field.length);
+  for (let pass = 0; pass < passes; pass++) {
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        let sum = 0;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const r = row + dr;
+            const c = col + dc;
+            if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+            sum += from[r * cols + c];
+            n++;
+          }
+        }
+        to[row * cols + col] = sum / n;
+      }
+    }
+    const swap: Float32Array = from;
+    from = to;
+    to = swap;
+  }
+  return from;
+}
+
+function soften(cells: Float32Array, wet: Uint8Array, cols: number, rows: number): void {
+  const scratch = new Float32Array(cells.length);
+  for (let pass = 0; pass < TERRAIN_SOFTEN; pass++) {
+    scratch.set(cells);
+    for (let row = 1; row < rows - 1; row++) {
+      for (let col = 1; col < cols - 1; col++) {
+        const i = row * cols + col;
+        if (wet[i]) continue;
+        let sum = 0;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const j = i + dr * cols + dc;
+            if (wet[j]) continue;
+            sum += scratch[j];
+            n++;
+          }
+        }
+        if (n > 0) cells[i] = sum / n;
+      }
+    }
+  }
 }
 
 /**

@@ -447,6 +447,14 @@ export const TERRAIN_RIM_LIFT = 0.9;
 export const TERRAIN_SEABED = m(6);
 export const TERRAIN_STREAM = 0x7e44a1;
 /**
+ * How many box-blur passes take the creases out of the height field. The shore
+ * ramp is a function of a chamfer distance transform, and a chamfer transform
+ * has a ridge down the middle of every strip of land where the fields from two
+ * coasts meet; the ramp turns that into a straight crease. Only the artefact is
+ * sharp, so blurring costs nothing real.
+ */
+export const TERRAIN_SOFTEN = 14;
+/**
  * The height field's noise: how big the largest feature is, how many octaves
  * sit on top of it, and how big the lattice each is drawn from is.
  *

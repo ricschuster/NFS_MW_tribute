@@ -665,11 +665,14 @@ function reachBack(line: Vec2[], at: number, step: number): number {
 /**
  * Is this point in the built-up part of the city, or out in the country?
  *
- * Measured from the middle of whichever body of land it is on, as a fraction of
- * that body's own size - so the big lobe carries a big city and a small one
- * carries a town, and neither is decided by where the map's rectangle happens
- * to be. `CITY_BUILT_UP` is the fraction, and it is the single number that says
- * how much of Kestrel Bay is streets.
+ * Measured from **the town**, as a fraction of the body of land it stands on.
+ * There is one gridded place in Kestrel Bay and it is downtown; every other
+ * body of land gets the roads that reach it and the roads that follow its own
+ * ground, and no grid at all. Laying a grid on each lobe was the first version
+ * and it put a town on every island, which is five towns and no country.
+ *
+ * `CITY_BUILT_UP` is the fraction, and it is the single number that says how
+ * much of Kestrel Bay is streets.
  */
 function builtRuns(from: Vec2, to: Vec2, water: Water): { from: Vec2; to: Vec2 }[] {
   const runs: { from: Vec2; to: Vec2 }[] = [];
@@ -691,10 +694,7 @@ function builtRuns(from: Vec2, to: Vec2, water: Water): { from: Vec2; to: Vec2 }
 }
 
 function builtUp(at: Vec2, water: Water): boolean {
-  for (const lobe of water.lobes) {
-    if (Math.hypot(at.x - lobe.at.x, at.z - lobe.at.z) < lobe.radius * CITY_BUILT_UP) return true;
-  }
-  return false;
+  return Math.hypot(at.x - water.town.x, at.z - water.town.z) < water.lobes[0].radius * CITY_BUILT_UP;
 }
 
 /**
@@ -711,15 +711,22 @@ function assignDistricts(rng: Rng, cells: Rect[], bounds: Rect, water: Water): D
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
 
-  const downtown = {
-    x: rng.range(-0.12, 0.12) * width,
-    z: bounds.minZ + depth * rng.range(0.55, 0.78),
+  // Downtown is **where the town is** (`water.town`), not a point in the
+  // rectangle. These used to disagree by two and a half kilometres: the terrain
+  // put its bowl on the town's coast and the district grid put downtown
+  // wherever a fraction of the map's depth landed, so the flat part of the map
+  // and the dense part of the city were in different places.
+  const downtown = water.town;
+  // The port, along the shore from downtown rather than anywhere on the map.
+  const harbour = {
+    x: downtown.x + rng.range(-0.1, 0.1) * width,
+    z: downtown.z + rng.range(-0.08, 0.08) * depth,
   };
-  // The port, somewhere along the shore. The docks grow around it.
-  const harbour = { x: rng.range(-0.32, 0.32) * width, z: bounds.maxZ };
+  // The industrial edge, out the other side of the town from the water.
+  const away = Math.atan2(downtown.z - bounds.minZ - depth / 2, downtown.x - bounds.minX - width / 2);
   const industrial = {
-    x: (downtown.x > 0 ? -1 : 1) * width * rng.range(0.3, 0.42),
-    z: bounds.minZ + depth * rng.range(0.1, 0.22),
+    x: downtown.x + Math.cos(away) * width * rng.range(0.18, 0.26),
+    z: downtown.z + Math.sin(away) * depth * rng.range(0.18, 0.26),
   };
 
   const kinds = cells.map((cell): DistrictKind => {
