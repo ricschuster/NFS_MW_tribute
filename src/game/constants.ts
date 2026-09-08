@@ -324,6 +324,22 @@ export const PLACE_BLEND = m(160);
 export const CITY_BODY_CELL = m(40);
 
 /**
+ * Whether the street grid is laid at all.
+ *
+ * Off. The arterials were ruled straight across the map and the streets were a
+ * grid inside each superblock, and between them they were everything that read
+ * as drawn on a map rather than grown on the ground (#269). Routing the
+ * arterials was tried; the blocks cannot follow a curved one, which is #268.
+ *
+ * So the map is being rebuilt from the roads that already work - the routed
+ * boulevards, the quay, the embankment and the roads between the places - and
+ * the grid comes back when there is something to lay that is not a ruler. A
+ * switch rather than a deletion because `fillSuperblock` is the only thing that
+ * knows how a district turns into blocks, and that will be wanted again.
+ */
+export const CITY_STREET_GRID = false;
+
+/**
  * How far a piece of leftover parkland (#185) will reach for a quarter to belong
  * to before it settles for being parkland.
  *
@@ -707,7 +723,16 @@ export const BARRIER_HEIGHT = m(1.1);
  * crosses the surface streets instead of shadowing them. Every one of those
  * crossings is an overpass, which is the case ADR-0004 exists to make possible.
  */
-export const INTERSTATE_INSET = 0.23; // of the map, in from each edge
+/**
+ * How far in from the map's edges the loop sits.
+ *
+ * Wider, so the freeway is a ring round the city rather than a rectangle drawn
+ * across the middle of it. It is still a rectangle, which is the thing actually
+ * wrong with it: ADR-0008 rule 6 wants a ring round the whole city and a beltway
+ * round downtown, and both of those are shapes that follow the land (#261,
+ * #265). Stripping it back is not the same as fixing it.
+ */
+export const INTERSTATE_INSET = 0.16; // of the map, in from each edge
 export const INTERSTATE_HEIGHT = m(12);
 export const INTERSTATE_LANES = 6;
 export const INTERSTATE_SPEED = kmh(140);
@@ -739,7 +764,16 @@ export const FREEWAY_SPUR_MIN = m(700);
  * them entirely, so the interstate was drawn as a purple loop with no visible
  * way onto it.
  */
-export const RAMP_COUNT_PER_SIDE = 4;
+/**
+ * Ramps per side of the loop.
+ *
+ * Two rather than four, with the street grid off: sixteen exits onto a road
+ * network of a few dozen routed roads is a junction every few hundred metres of
+ * freeway, which is what made the loop read as a piece of infrastructure laid
+ * over the map rather than through it. An exit is worth something when there is
+ * a reason to take it.
+ */
+export const RAMP_COUNT_PER_SIDE = 2;
 export const RAMP_MIN_RUN = m(190);
 export const RAMP_MAX_RUN = m(320);
 /**

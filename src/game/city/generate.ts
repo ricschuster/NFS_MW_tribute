@@ -2,6 +2,7 @@ import {
   CITY_WIDTH,
   CITY_DEPTH,
   CITY_ARTERIAL_SPACING,
+  CITY_STREET_GRID,
   CITY_BODY_CELL,
   CITY_ARTERIAL_JITTER,
   CITY_ARTERIAL_LANES,
@@ -16,6 +17,7 @@ import {
   BOULEVARD_CLEARANCE,
   CITY_MIN_BODY,
   ROUTE_ARTERIAL,
+  ROUTE_COUNTRY,
   EMBANKMENT_SETBACK,
   CAR_RADIUS,
   DECK_HEADROOM,
@@ -162,40 +164,27 @@ export function generateCity(seed: number): City {
 
   const router = makeRouter(bounds, terrain, water);
 
-  // The arterials are the grid's spine and they stop where the grid does. Run
-  // to the map edge and they are six lanes of nothing crossing open country to
-  // a coast with no town on it.
-  //
-  // **These are still ruled straight, and they should not be** (#269: "still
-  // very much lines drawn on a map"). Routing them was tried and reverted, and
-  // the reason is worth keeping because it will be tried again.
-  //
-  // Routing works - the roads come out bending round the hills, and the picture
-  // is better. What breaks is everything that leans on an arterial being where
-  // the grid said it would be. The superblocks stop being bounded by roads, so
-  // the blocks inside them are measured off a rectangle whose edges the road no
-  // longer follows; and the network fragments, so `prune` starts deleting whole
-  // bodies of land - measured, the waterfront, the quarry and the docks went at
-  // once, and the map went from seven water crossings to one with all three
-  // candidate gaps chosen and built.
-  //
-  // The order is the lesson: the blocks have to be able to follow a curved
-  // arterial *before* the arterials can curve. That is #268's job, not a
-  // parameter on this loop.
-  for (const x of xLines) {
-    for (const run of builtRuns({ x, z: bounds.minZ }, { x, z: bounds.maxZ })) {
-      laid.push({ from: run.from, to: run.to, axis: 'z', class: 'arterial', district: 'midtown' });
-    }
-  }
-  for (const z of zLines) {
-    for (const run of builtRuns({ x: bounds.minX, z }, { x: bounds.maxX, z })) {
-      laid.push({ from: run.from, to: run.to, axis: 'x', class: 'arterial', district: 'midtown' });
-    }
-  }
-
+  // The street grid, when there is one. Superblocks are assigned either way,
+  // because they carry the district a piece of ground belongs to and everything
+  // downstream reads that; with the grid off they simply have nothing in them.
   const arterialHalf = roadWidth(CITY_ARTERIAL_LANES) / 2;
-  for (const cell of superblocks) {
-    fillSuperblock(rng, cell, arterialHalf, water, land, laid, blocks);
+  if (CITY_STREET_GRID) {
+    // The arterials are the grid's spine and they stop where the grid does. Run
+    // to the map edge and they are six lanes of nothing crossing open country to
+    // a coast with no town on it.
+    for (const x of xLines) {
+      for (const run of builtRuns({ x, z: bounds.minZ }, { x, z: bounds.maxZ })) {
+        laid.push({ from: run.from, to: run.to, axis: 'z', class: 'arterial', district: 'midtown' });
+      }
+    }
+    for (const z of zLines) {
+      for (const run of builtRuns({ x: bounds.minX, z }, { x: bounds.maxX, z })) {
+        laid.push({ from: run.from, to: run.to, axis: 'x', class: 'arterial', district: 'midtown' });
+      }
+    }
+    for (const cell of superblocks) {
+      fillSuperblock(rng, cell, arterialHalf, water, land, laid, blocks);
+    }
   }
 
   // Boulevards go in as ordinary spans, so they are cut against the water and
@@ -275,7 +264,24 @@ export function generateCity(seed: number): City {
     const link = links.find((l) => l.body === body);
     const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
     if (!from) continue;
-    layRoute(router.route(from, place.at, ROUTE_ARTERIAL), water, laid);
+    layRoute(router.route(from, place.at, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+  }
+
+  // Kestrel Head to Halloway Quarry: the lookout on the main body's summit to
+  // the quarry on the eastern one.
+  //
+  // The two ends are what make it worth having. It starts at 116 m on the
+  // steepest ground on the map, so the router has to switchback down off the
+  // massif; it crosses to another body of land, so it brings a bridge; and it
+  // ends 60 m up in an excavation. `ROUTE_COUNTRY` rather than the arterial
+  // profile: this is a road between two places and not a city street, so it
+  // tolerates a steeper grade and minds the shore more.
+  {
+    const head = PLAN_PLACES.find((p) => p.kind === 'lookout');
+    const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+    if (head && pit) {
+      layRoute(router.route(head.at, pit.at, ROUTE_COUNTRY), water, laid, 'boulevard', 'midtown', true);
+    }
   }
 
   // Cut the network against the water, keeping what crosses it as candidates.
@@ -1054,7 +1060,16 @@ function clip(span: Span, water: Water, dry: Span[], gaps: Gap[]): void {
   // absolute terms. A curve arrives as a chain of 55 m pieces, and a flat
   // minimum of 70 m silently deleted every one of them - which is not a stub
   // being tidied away but a whole neighbourhood's streets going missing.
-  const minRun = Math.min(CITY_MIN_STREET, length * 0.85);
+  //
+  // And a **required** span keeps every run it has, however short. This is the
+  // one road onto a body of land, and the run on the far bank is whatever is
+  // left between the water and the place the road was going to - often a few
+  // metres, because the place's own roads take over from there. Discarding it
+  // discards the bank the bridge lands on, so the bridge joins nothing, the
+  // island stays its own component and `prune` deletes the lot: measured, four
+  // crossings picked and built and two surviving, with the airfield and the
+  // waterfront left with no roads at all.
+  const minRun = span.required ? 0 : Math.min(CITY_MIN_STREET, length * 0.85);
   const kept = runs.filter((r) => (r.to - r.from) * length >= minRun);
   for (const run of kept) {
     dry.push({ ...span, from: pointAt(span, run.from), to: pointAt(span, run.to) });
