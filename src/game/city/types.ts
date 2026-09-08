@@ -24,7 +24,15 @@ export interface Rect {
 /** Which axis a road runs along: 'x' varies in x at a fixed z, and vice versa. */
 export type Axis = 'x' | 'z';
 
-export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial';
+/**
+ * What a piece of the city is like to drive through.
+ *
+ * `park` joins the four with the authored plan (ADR-0009 rule 5): parkland
+ * that is *chosen* - the hill park is on the highest ground on the map, a third
+ * of it too steep for any street - which is a different thing from #185's
+ * parks, the land the street grid failed to claim. Both should exist.
+ */
+export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial' | 'park';
 
 /**
  * Arterials cross the whole city and carry the traffic; streets fill a

@@ -24,8 +24,9 @@ const server = await createServer({ appType: 'custom', server: { middlewareMode:
 const { makeWater } = await server.ssrLoadModule('/src/game/city/water.ts');
 const { makeTerrain, groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
+const plan = await server.ssrLoadModule('/src/game/city/plan.ts');
 const constants = await server.ssrLoadModule('/src/game/constants.ts');
-const { CITY_SEED, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE } = constants;
+const { CITY_LAND_STREAM, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE } = constants;
 
 const bounds = {
   minX: -CITY_WIDTH / 2,
@@ -33,42 +34,23 @@ const bounds = {
   maxX: CITY_WIDTH / 2,
   maxZ: CITY_DEPTH / 2,
 };
-const water = makeWater(new Rng(CITY_SEED), bounds);
-const terrain = makeTerrain(CITY_SEED, bounds, water);
+// The same stream the generator uses: the landmass is authored and does not
+// vary with `CITY_SEED` any more (ADR-0009 rule 2).
+const water = makeWater(new Rng(CITY_LAND_STREAM), bounds);
+const terrain = makeTerrain(CITY_LAND_STREAM, bounds, water);
 await server.close();
 
-// The plan, verbatim from #272. World metres.
-const PLAN = {
-  downtown: [
-    [[125,-2500],[-124,-1899],[-1100,-1525],[-1125,-2025],[-1825,-2875],[-1100,-2725],[-550,-2775],[-124,-3101]],
-  ],
-  midtown: [
-    [[1250,-2100],[1089,-1711],[700,-1550],[311,-1711],[-75,-1875],[125,-2450],[700,-2650],[1150,-2700]],
-    [[-275,-1775],[-1175,-1500],[-1450,-875],[-1225,50],[-1200,750],[-975,775],[-825,125],[-775,-750],[-200,-1525]],
-    [[1150,3150],[575,3350],[0,3325],[-375,2975],[-675,2200],[-875,1475],[-675,1375],[-350,1950],[50,2650],[400,2700],[950,2625],[1325,2550]],
-  ],
-  waterfront: [
-    [[-2325,1575],[-1900,2675],[-3250,2675],[-4050,2250],[-4475,1650],[-4275,600],[-3225,525],[-2000,825]],
-  ],
-  industrial: [
-    [[2525,-2500],[2800,-1750],[1875,-1750],[1400,-1900],[1225,-2500],[1150,-2825],[1875,-3150],[2335,-2960]],
-  ],
-  park: [
-    [[-1600,-1050],[-1325,-1900],[-1375,-2250],[-1800,-2750],[-2050,-2900],[-2175,-2675],[-1950,-1550]],
-    [[1700,-3225],[1250,-3325],[625,-3225],[150,-3125],[-75,-3050],[150,-2500],[1000,-2800]],
-    [[1275,475],[1600,-275],[1100,-725],[450,-225],[950,550]],
-  ],
-};
-
-// The places, from #272's table. A point and what it is; the geometry is #271's
-// to build.
-const PLACES = {
-  docks: [-1634, -1955],
-  airfield: [-1269, 2012],
-  quarry: [-2704, -812],
-  lookout: [1250, -250],
-};
-const RUNWAY = [[-1571, 971], [-719, 3080]];
+// The shipped plan, in metres, so this checks the data the game builds from
+// rather than a copy of it that can drift away from it.
+const toMetres = (v) => v / UNITS_PER_METRE;
+const PLAN = {};
+for (const region of plan.PLAN_DISTRICTS) {
+  (PLAN[region.kind] ??= []).push(region.poly.map((p) => [toMetres(p.x), toMetres(p.z)]));
+}
+const PLACES = Object.fromEntries(
+  plan.PLAN_PLACES.map((p) => [p.kind, [toMetres(p.at.x), toMetres(p.at.z)]]),
+);
+const RUNWAY = plan.PLAN_RUNWAY.map((p) => [toMetres(p.x), toMetres(p.z)]);
 
 const m = (v) => v * UNITS_PER_METRE;
 const toM = (v) => v / UNITS_PER_METRE;
@@ -180,7 +162,7 @@ const byArea = bodySize.map((area, id) => ({ id, area })).sort((a, b) => b.area 
 const bodyName = new Map(byArea.map((b, i) => [b.id, ['main', 'B', 'C', 'D', 'E', 'F', 'G'][i] ?? `#${b.id}`]));
 
 const pct = (v) => `${Math.round(v * 100)}%`;
-console.log(`plan vs. ground  ·  seed 0x${CITY_SEED.toString(16)}  ·  ${toM(CITY_WIDTH) / 1000} x ${toM(CITY_DEPTH) / 1000} km\n`);
+console.log(`plan vs. ground  ·  land 0x${CITY_LAND_STREAM.toString(16)}  ·  ${toM(CITY_WIDTH) / 1000} x ${toM(CITY_DEPTH) / 1000} km\n`);
 console.log(`  ${bodySize.length} bodies of land: ${byArea.map((b) => `${bodyName.get(b.id)} ${b.area.toFixed(1)} km²`).join(', ')}\n`);
 console.log('  area                 km²   land   mean    peak   steep   on');
 for (const [kind, polys] of Object.entries(PLAN)) {
@@ -243,8 +225,13 @@ for (const [name, [px, pz]] of Object.entries(PLACES)) {
       if (shared > 0) clashes.push(`${flat[a][0]} and ${flat[b][0]} share ${pct(shared / n)} of the first`);
     }
   }
+  // A place inside *parkland* is the design - the lookout is the top of the hill
+  // park, and #272 puts it there on purpose. A place inside a built district is
+  // two things claiming the same ground, which is how the docks and a coastal
+  // park were found sharing an island.
   for (const [name, [px, pz]] of Object.entries(PLACES)) {
     for (const [label, poly] of flat) {
+      if (label.startsWith('park')) continue;
       if (inside(poly, px, pz)) clashes.push(`the ${name} sit inside ${label}`);
     }
   }
@@ -253,6 +240,7 @@ for (const [name, [px, pz]] of Object.entries(PLACES)) {
   const cz = m(downtown.reduce((s, p) => s + p[1], 0) / downtown.length);
   const away = toM(Math.hypot(water.town.x - cx, water.town.z - cz));
   console.log('\n  where the plan and the generator disagree');
+  if (clashes.length === 0) console.log('  · nothing overlaps');
   for (const c of clashes) console.log(`  · ${c}`);
   console.log(
     `  · water.town is ${Math.round(away)} m from the middle of the plan's downtown, ` +
@@ -314,7 +302,7 @@ if (draw) {
   const COLOR = {
     downtown: '#5c6bc0',
     midtown: '#66897a',
-    waterfront: '#d08770',
+    waterfront: '#3f8fa8',
     industrial: '#8d6e63',
     park: '#4caf50',
   };

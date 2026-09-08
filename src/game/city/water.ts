@@ -14,7 +14,7 @@ import {
   CITY_RIVER_MOUTH,
   CITY_SEA_EDGE,
   CITY_SEA_MARGIN,
-  CITY_TOWN_OFFSET,
+  CITY_TOWN_INLAND,
   CITY_TOWN_SPREAD,
   CITY_WATER_STEP,
 } from '../constants';
@@ -61,8 +61,15 @@ export interface Water {
   /** The bodies of land, so a district can be put on one rather than on a grid cell. */
   lobes: Lobe[];
   /**
-   * Where the city is: a point on the main body of land, out towards its
-   * seaward side rather than in the middle of it.
+   * Where the terrain's basin is centred: a point on the main body of land, out
+   * towards its seaward side rather than in the middle of it.
+   *
+   * **It is not where the city is** (ADR-0009 rule 4). It had four jobs - the
+   * basin, bounding the street grid, naming the home body of land, and starting
+   * the roads that reach the other shores - and the plan does the last three
+   * better. The name is what let it drift: measured, it sits 2566 m from the
+   * middle of the plan's downtown, inside the *industrial* area, and nothing
+   * noticed until `npm run plan` asked.
    *
    * Downtown belongs on the waterfront - it is where every city of this shape
    * put its downtown, and it is what the reference city does. It also frees the
@@ -259,15 +266,26 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
   // from the city instead of the city sitting in the middle of the rise. It is
   // what the sketch did and what the reference city does.
   const facing = -Math.PI / 2 + rng.range(-CITY_TOWN_SPREAD, CITY_TOWN_SPREAD);
-  let town = lobes[0].at;
-  for (let d = 0; d <= lobes[0].radius * CITY_TOWN_OFFSET; d += lobes[0].radius / 40) {
+  const step = lobes[0].radius / 60;
+  // Walk **until the water**, then come back off the beach by
+  // `CITY_TOWN_INLAND`. The cap used to be the point of this loop rather than a
+  // guard on it - it stopped after 0.55 of the lobe's radius whether or not it
+  // had got anywhere, and the lobe is bigger than that, so the town sat 1.65 km
+  // inland while every comment here claimed it was on the coast.
+  let reached = 0;
+  for (let d = 0; d <= lobes[0].radius * 2; d += step) {
     const at = {
       x: lobes[0].at.x + Math.cos(facing) * d,
       z: lobes[0].at.z + Math.sin(facing) * d,
     };
     if (isWater(at.x, at.z)) break;
-    town = at;
+    reached = d;
   }
+  const back = Math.max(0, reached - CITY_TOWN_INLAND);
+  const town = {
+    x: lobes[0].at.x + Math.cos(facing) * back,
+    z: lobes[0].at.z + Math.sin(facing) * back,
+  };
 
   return {
     isWater: wetOrSpeck,

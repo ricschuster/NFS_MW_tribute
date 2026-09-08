@@ -40,6 +40,7 @@ const DISTRICT_COLOR = {
   midtown: '#66897a',
   waterfront: '#3f8fa8',
   industrial: '#8a6d43',
+  park: '#4f8a4a',
 };
 
 const W = 1400;

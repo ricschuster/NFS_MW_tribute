@@ -258,16 +258,6 @@ export const CITY_ARTERIAL_SPEED = kmh(90);
  */
 export const CITY_LANE_WIDTH = 2000 / 3;
 
-/** How far the districts reach from their anchors. */
-export const CITY_DOWNTOWN_RADIUS = m(850);
-export const CITY_INDUSTRIAL_RADIUS = m(1250);
-/**
- * How far the docks reach from the harbour. The waterfront is a port, not
- * every square metre that happens to touch water: a city whose whole coast and
- * both riverbanks are wharves has no city behind them.
- */
-export const CITY_WATERFRONT_RADIUS = m(1350);
-
 /**
  * The water (ADR-0005, rule 1). The bay eats into the north edge and the river
  * runs inland from it and severs the city, which is what makes bridges worth
@@ -289,29 +279,42 @@ export const CITY_WATERFRONT_RADIUS = m(1350);
  * corners.
  */
 /**
- * How much of a body of land is city, as a fraction of its own radius
- * (ADR-0007 rule 3).
+ * The landmass is **authored, and therefore fixed** (ADR-0009 rule 2).
  *
- * The street grid used to cover every cell of the map's rectangle, which is
- * what made Kestrel Bay one even sprawl from coast to coast: as dense at the
- * water as it was downtown, and nowhere that was not city. Measured from each
- * lobe's own middle, so a big body of land carries a city and a small one
- * carries a town.
+ * `makeWater` draws from this stream rather than from `CITY_SEED`, the way
+ * `makeTerrain` already draws from `TERRAIN_STREAM`. The map is a plan in world
+ * metres (`city/plan.ts`) and a polygon pinned in metres over a coastline that
+ * moves with the seed is two answers to where the coast is.
  *
- * This is the number that decides how much of the map is streets, and therefore
- * how much of it is left for the roads that are not city (#260).
+ * The terrain is frozen by the same constant, because the plan was audited
+ * against the *ground* as well as the coastline - the hill park is 87 m mean and
+ * 122 m peak, and those numbers are the reason it is a park.
+ *
+ * The value is `CITY_SEED`'s own, because the land this plan was drawn on is the
+ * land that seed produced. It is written out rather than referring to
+ * `CITY_SEED` on purpose: the whole point is that changing the seed no longer
+ * moves the coast.
+ *
+ * The seed still varies the *city* - which streets are inside a district, which
+ * blocks are skipped, what stands on them, where the content lands. It no longer
+ * varies where downtown is. Kestrel Bay is one place.
  */
-export const CITY_BUILT_UP = 0.62;
+export const CITY_LAND_STREAM = 0x4b657374;
 
 export const CITY_LOBES = 5;
 export const CITY_CHANNELS = 2;
 export const CITY_LAND_LEVEL = 0.46;
 export const CITY_LOBE_SPREAD = 0.8;
 /**
- * How far the city sits from the middle of its body of land, towards the water,
- * as a fraction of that body's radius. Downtown belongs on the waterfront.
+ * How far back from the water the middle of downtown sits.
+ *
+ * The walk goes all the way to the shore and then steps back by this, so the
+ * city is *on* the coast with a few hundred metres of quay and waterfront in
+ * front of it rather than in the surf. This used to be a fraction of the lobe's
+ * radius and a cap on the walk, which stopped it before it ever reached the sea
+ * - the town came out 1.65 km inland.
  */
-export const CITY_TOWN_OFFSET = 0.55;
+export const CITY_TOWN_INLAND = m(400);
 /** How far off due south the town may sit, in radians. */
 export const CITY_TOWN_SPREAD = 0.7;
 /**
@@ -523,15 +526,35 @@ export const CITY_CLIP_STEP = m(15);
 export const CITY_MIN_STREET = m(70);
 
 /**
- * What each district is like to drive through. Block size and its variation do
- * most of the work: a tight regular grid downtown, long shallow blocks facing
- * the water, and sprawling lots with few streets out on the industrial edge.
+ * What each district is like to drive through, and a design document as much as
+ * it is code. Block size and its variation do most of the work.
+ *
+ * **What three of the five mean changed with the authored plan** (#271,
+ * ADR-0009). The old table described a city that was downtown in the middle,
+ * docks on the water and sheds at the edge, at whatever size the radii happened
+ * to produce.
+ *
+ * - **Downtown is small.** 1.5 km² of the map, and the only place with a tight
+ *   regular grid on it. It was a third of the city.
+ * - **Midtown is suburban** and is most of the built-up extent: bigger blocks,
+ *   curving streets, low buildings. Three separate areas of it.
+ * - **The waterfront is affluent**, not the port. Few roads, well spaced, large
+ *   lots, deep setbacks and a lot of open ground. This is a reassignment rather
+ *   than a tweak: it used to be 170 x 190 m blocks of sheds growing round a
+ *   harbour, and the port is a *place* on island E now rather than a street
+ *   pattern.
+ * - **Industrial is unchanged**, and is the only one of the five that is.
+ * - **Park is new.** It has no streets of its own worth the name - what it has
+ *   is the road through it - so the blocks are enormous and almost everything is
+ *   skipped. The hill park is 41% too steep for a street to climb, and what is
+ *   left is the road up.
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
   downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 0 },
-  midtown: { blockX: m(150), blockZ: m(130), jitter: 0.26, skip: 0.2, lanes: 2, speed: kmh(60), winding: 0.45 },
-  waterfront: { blockX: m(170), blockZ: m(190), jitter: 0.2, skip: 0.24, lanes: 2, speed: kmh(70), winding: 0.35 },
+  midtown: { blockX: m(165), blockZ: m(145), jitter: 0.3, skip: 0.22, lanes: 2, speed: kmh(60), winding: 0.65 },
+  waterfront: { blockX: m(230), blockZ: m(250), jitter: 0.3, skip: 0.42, lanes: 2, speed: kmh(60), winding: 0.6 },
   industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 0.2 },
+  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 1, speed: kmh(50), winding: 0.9 },
 };
 
 /**
@@ -560,8 +583,9 @@ export const WINDING_STEP = m(55);
 export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
   downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.07, landmark: 0.07, kind: 'tower' },
   midtown: { lot: m(38), setback: m(5), minHeight: m(10), maxHeight: m(34), empty: 0.2, landmark: 0.03, kind: 'block' },
-  waterfront: { lot: m(58), setback: m(7), minHeight: m(7), maxHeight: m(20), empty: 0.3, landmark: 0.02, kind: 'shed' },
+  waterfront: { lot: m(76), setback: m(14), minHeight: m(7), maxHeight: m(17), empty: 0.42, landmark: 0.02, kind: 'block' },
   industrial: { lot: m(72), setback: m(10), minHeight: m(6), maxHeight: m(18), empty: 0.36, landmark: 0.02, kind: 'shed' },
+  park: { lot: m(90), setback: m(20), minHeight: m(4), maxHeight: m(9), empty: 0.93, landmark: 0, kind: 'shed' },
 };
 /** How much taller a landmark stands than the district's ordinary ceiling. */
 export const BUILDING_LANDMARK_MULT = 1.9;
@@ -847,8 +871,9 @@ export const TRAFFIC_RADIUS = m(360);
 export const TRAFFIC_DENSITY: Record<DistrictKind, number> = {
   downtown: 1.25,
   midtown: 1,
-  waterfront: 0.75,
+  waterfront: 0.6,
   industrial: 0.5,
+  park: 0.3,
 };
 /**
  * The number of lanes a road needs before traffic will certainly spawn on it.
