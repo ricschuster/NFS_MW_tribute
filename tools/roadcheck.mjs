@@ -37,7 +37,7 @@ const { makeTerrain, groundAt } = await server.ssrLoadModule('/src/game/city/ter
 const { shapeForPlaces } = await server.ssrLoadModule('/src/game/city/places.ts');
 const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
 const C = await server.ssrLoadModule('/src/game/constants.ts');
-const { CITY_LAND_STREAM, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE, CITY_MAX_BRIDGE, ROUTE_ARTERIAL, ROUTE_COUNTRY } = C;
+const { CITY_LAND_STREAM, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE, CITY_MAX_BRIDGE, ROUTE_ARTERIAL, ROUTE_COUNTRY, TERRAIN_CELL } = C;
 
 const bounds = {
   minX: -CITY_WIDTH / 2,
@@ -60,6 +60,31 @@ const JOIN = 45; // metres: how close an end has to be to count as joined
 
 const wet = (x, z) => water.isWater(m(x), m(z));
 const ground = (x, z) => toM(groundAt(terrain, m(x), m(z)));
+
+/**
+ * Is this point far enough from the water for its height to mean anything?
+ *
+ * The height field puts the **seabed** under water - `TERRAIN_SEABED`, 6 m down
+ * - and `groundAt` interpolates bilinearly, so within one `TERRAIN_CELL` of a
+ * shoreline the ground plunges from the bank to -6 m. Sampling a road there
+ * reads that plunge as a gradient, and it is not one: it is the bed of the
+ * water the bridge goes over.
+ *
+ * This was worth an hour. The first version of this check reported 44% on a
+ * hand-drawn crossing, 29% after it was re-routed, and 110% on a generated road,
+ * and concluded the map's grade cap was unmet by ten roads. Then the banks were
+ * measured directly - every dry point within 30 m of water, stepping 60 m
+ * inland - and **100% of them came out under 13%**. The banks were never steep.
+ * Every one of those readings was a road touching the waterline.
+ */
+const clearOfWater = (x, z) => {
+  const margin = toM(TERRAIN_CELL) * 1.6;
+  if (wet(x, z)) return false;
+  for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+    if (wet(x + Math.cos(a) * margin, z + Math.sin(a) * margin)) return false;
+  }
+  return true;
+};
 
 /** Walk a road at a fixed step, so long segments are not skipped over. */
 function* along(points) {
@@ -95,8 +120,11 @@ function survey(points) {
       crossings.push(run);
       run = null;
     }
-    // Grade is meaningless across water - there is no ground under a bridge.
-    if (!isWet && previous && !previous.wet && step > 0) {
+    // Grade is meaningless across water and meaningless *beside* it, for two
+    // different reasons: there is no ground under a bridge, and within a
+    // terrain cell of the bank the height field is running down to the seabed.
+    const solid = clearOfWater(x, z);
+    if (solid && previous && previous.solid && step > 0) {
       const rise = Math.abs(ground(x, z) - previous.h);
       const grade = rise / Math.max(1, previous.step);
       if (grade > steepest) {
@@ -104,7 +132,7 @@ function survey(points) {
         steepAt = [Math.round(x), Math.round(z)];
       }
     }
-    previous = { h: isWet ? 0 : ground(x, z), wet: isWet, step };
+    previous = { h: solid ? ground(x, z) : 0, solid, step };
   }
   if (run) crossings.push(run);
   return { length, overWater, crossings, steepest, steepAt };
@@ -174,9 +202,16 @@ for (const r of drawn) {
   } else if (loose === 1) {
     const which = ends[0].d > JOIN ? 'start' : 'end';
     const gap = Math.round(Math.max(...ends.map((e) => e.d)));
-    notes.push(`! its ${which} is a dead end - ${gap} m of open ground to the nearest road`);
-    const at = ends[0].d > JOIN ? r.points[0] : r.points[r.points.length - 1];
-    marks.push({ at: [Math.round(at[0]), Math.round(at[1])], kind: 'warn', text: `${r.id}: ${gap} m dead end` });
+    if (r.deadEnd) {
+      // Marked deliberate. A road is allowed to stop where it means to - the
+      // piers do, and so does a road that ends at a place rather than at a
+      // junction. Reported so it stays visible, not flagged.
+      notes.push(`· its ${which} is a dead end, on purpose`);
+    } else {
+      notes.push(`! its ${which} is a dead end - ${gap} m of open ground to the nearest road`);
+      const at = ends[0].d > JOIN ? r.points[0] : r.points[r.points.length - 1];
+      marks.push({ at: [Math.round(at[0]), Math.round(at[1])], kind: 'warn', text: `${r.id}: ${gap} m dead end` });
+    }
   }
 
   console.log(
