@@ -212,7 +212,18 @@ for (const id of toTrim) {
   let cut = road.points.length - 1;
   while (cut > 1 && inside(road.points[cut - 1])) cut--;
   const dropped = road.points.length - cut;
-  road.points = road.points.slice(0, cut);
+  const kept = road.points.slice(0, cut);
+  // A road that is *entirely* inside the place has nothing to trim back to, and
+  // leaving one point behind is worse than deleting it: a single point is a road
+  // of zero length that draws as nothing and sorts to the top of every list. The
+  // place's own roads already cover that ground - that is what makes it a place.
+  if (kept.length < 2) {
+    saved.roads = saved.roads.filter((r) => r.id !== id);
+    byId.delete(id);
+    log.push(`trim ${id}: the whole road was inside ${place.name} - deleted`);
+    continue;
+  }
+  road.points = kept;
   road.deadEnd = true;
   log.push(
     `trim ${id}: dropped ${dropped} points inside ${place.name}, ending at ` +

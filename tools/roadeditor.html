@@ -83,6 +83,20 @@
   .facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
   .facts dt { color: var(--dim); }
   .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .listhead {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+  .listhead .sort {
+    flex: 1;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+  }
   .list { flex: 1; overflow-y: auto; min-height: 0; }
   .list ol { margin: 0; padding: 6px 0; list-style: none; }
   .list li {
@@ -99,6 +113,8 @@
   .list li .len { color: var(--dim); font-variant-numeric: tabular-nums; }
   .list li[aria-current="true"] .len { color: #201005; }
   .list li.gone { text-decoration: line-through; opacity: 0.45; }
+  .list li.stub .len { color: var(--warn); font-weight: 600; }
+  .list li[aria-current="true"].stub .len { color: #4a0f0c; }
   main { position: relative; min-width: 0; }
   canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
   .status {
@@ -171,6 +187,10 @@
     <dl class="facts" id="facts"><dt>—</dt><dd>nothing selected</dd></dl>
   </div>
 
+  <div class="listhead">
+    <button id="sort-id" class="sort" aria-pressed="true">Road</button>
+    <button id="sort-len" class="sort" aria-pressed="false">Length <span id="sort-arrow"></span></button>
+  </div>
   <div class="list"><ol id="roadlist"></ol></div>
 </aside>
 
@@ -179,6 +199,7 @@
   <div class="status">
     <span>roads <b id="s-roads">0</b></span>
     <span>edited <b id="s-edited">0</b></span>
+    <span>under 30 m <b id="s-stubs">0</b></span>
     <span>x <b id="s-x">—</b></span>
     <span>z <b id="s-z">—</b></span>
     <span>ground <b id="s-h">—</b></span>
@@ -201,6 +222,10 @@
   let selected = null;
   let mode = 'select';
   let drawing = null;
+  // How the list is ordered. Shortest-first is the one that earns its keep: a
+  // road of a few metres is almost always a fragment rather than a decision, and
+  // there is no way to find one by eye on a ten-kilometre map.
+  let sort = { by: 'id', ascending: true };
   const undoStack = [];
 
   const $ = (id) => document.getElementById(id);
@@ -284,6 +309,9 @@
     return d;
   };
   const live = () => roads.filter((r) => !removed.has(r.id));
+  // Below this a road is a fragment: shorter than a single city block, too short
+  // to be somewhere you drive, and usually left behind by a clip or a trim.
+  const STUB = 30;
 
   function fit() {
     const rect = canvas.getBoundingClientRect();
@@ -408,26 +436,71 @@
     $('s-zoom').textContent = perPixel >= 10 ? `${Math.round(perPixel)} m/px` : `${perPixel.toFixed(1)} m/px`;
   }
 
+  /**
+   * Put a road in the middle of the view, at a scale that shows all of it.
+   *
+   * Picking one out of a list is only useful if you then end up looking at it:
+   * the roads worth hunting for are the short ones, and a 1 m road on a 10 km
+   * map is a pixel somebody would never find by panning.
+   */
+  function goTo(road) {
+    const rect = canvas.getBoundingClientRect();
+    const xs = road.points.map((p) => p[0]);
+    const zs = road.points.map((p) => p[1]);
+    const pad = 180;
+    const w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+    const h = Math.max(...zs) - Math.min(...zs) + pad * 2;
+    view.scale = Math.max(0.012, Math.min(4, Math.min(rect.width / w, (rect.height - 30) / h)));
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+    const cz = (Math.max(...zs) + Math.min(...zs)) / 2;
+    view.x = 0;
+    view.y = 0;
+    view.x = rect.width / 2 - sx(cx);
+    view.y = (rect.height - 30) / 2 - sy(cz);
+  }
+
   function refresh() {
     const list = live();
     $('s-roads').textContent = list.length;
+    const stubs = list.filter((r) => length(r) < STUB).length;
+    $('s-stubs').textContent = stubs;
+    $('s-stubs').style.color = stubs > 0 ? '#e9615a' : '';
     const edited = JSON.stringify(roads.filter((r) => !removed.has(r.id)).map((r) => ({ id: r.id, kind: r.kind, bridge: r.bridge, district: r.district, points: r.points })));
     $('s-edited').textContent = removed.size + (edited === origin ? 0 : 1) === 0 ? '0' : String(countEdits());
     $('undo').disabled = undoStack.length === 0;
 
     const ol = $('roadlist');
     ol.textContent = '';
-    for (const r of roads) {
+    const order = [...roads];
+    if (sort.by === 'length') {
+      order.sort((a, b) => length(a) - length(b));
+      if (!sort.ascending) order.reverse();
+    } else {
+      // By the number in the id, not the string: r9 comes before r10.
+      const num = (id) => Number(id.replace(/\D+/g, ''));
+      order.sort((a, b) => (a.id[0] === b.id[0] ? num(a) - num(b) : a.id[0] < b.id[0] ? -1 : 1));
+      if (!sort.ascending) order.reverse();
+    }
+    for (const r of order) {
       const li = document.createElement('li');
-      li.textContent = r.id + (r.bridge ? ' ⌁' : '');
+      li.textContent = r.id + (r.bridge ? ' ⌁' : '') + (r.deadEnd ? ' ·' : '');
       const len = document.createElement('span');
       len.className = 'len';
-      len.textContent = `${Math.round(length(r))} m`;
+      const metres = Math.round(length(r));
+      len.textContent = `${metres} m`;
       li.appendChild(len);
-      if (removed.has(r.id)) li.className = 'gone';
+      const classes = [];
+      if (removed.has(r.id)) classes.push('gone');
+      if (metres < STUB) classes.push('stub');
+      li.className = classes.join(' ');
       if (selected && selected.road === r) li.setAttribute('aria-current', 'true');
       li.onclick = () => {
-        selected = removed.has(r.id) ? null : { road: r, point: null };
+        if (removed.has(r.id)) {
+          selected = null;
+        } else {
+          selected = { road: r, point: null };
+          goTo(r);
+        }
         refresh();
         draw();
       };
@@ -725,6 +798,16 @@
     canvas.style.cursor = next === 'draw' ? 'copy' : 'crosshair';
     if (next !== 'draw') drawing = null;
   }
+  function setSort(by) {
+    sort = { by, ascending: sort.by === by ? !sort.ascending : by === 'id' };
+    $('sort-id').setAttribute('aria-pressed', String(by === 'id'));
+    $('sort-len').setAttribute('aria-pressed', String(by === 'length'));
+    $('sort-arrow').textContent = by === 'length' ? (sort.ascending ? '↑' : '↓') : '';
+    refresh();
+  }
+  $('sort-id').onclick = () => setSort('id');
+  $('sort-len').onclick = () => setSort('length');
+
   $('tool-select').onclick = () => { setMode('select'); draw(); };
   $('tool-draw').onclick = () => { setMode('draw'); selected = null; refresh(); draw(); };
   $('undo').onclick = () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }));
