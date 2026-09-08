@@ -163,12 +163,18 @@ export function generateCity(seed: number): City {
   }
 
   // Boulevards go in as ordinary spans, so they are cut against the water and
-  // split at every crossing by the same code as everything else. Each curve is
-  // a chain of short straight pieces; the bend is in where the pieces point.
+  // split at every crossing by the same code as everything else.
+  //
+  // **Routed, not swept** (ADR-0008 rule 2). `boulevardRoutes` still picks where
+  // one starts and ends - across the map, spread out, alternating sides - and
+  // the router decides how it gets there. A swept curve is a quadratic bowed by
+  // a random number, and a random number knows nothing about the ground: it
+  // reads as a line drawn on a map because that is what it is. A routed one
+  // bends because the hill is there.
+  const router = makeRouter(bounds, terrain, water);
   for (const route of boulevardRoutes(rng, bounds)) {
-    for (let i = 1; i < route.length; i++) {
-      laid.push({ from: route[i - 1], to: route[i], class: 'boulevard', district: 'midtown' });
-    }
+    const line = router.route(route[0], route[route.length - 1], ROUTE_ARTERIAL);
+    layRoute(line.length > 1 ? line : route, water, laid);
   }
 
   // And the roads that follow the water, in the same way and for the same
@@ -208,7 +214,6 @@ export function generateCity(seed: number): City {
   // narrows on its own and the crossing chooses itself; and it prices the
   // square of the gradient, so it arrives at the water along the ground rather
   // than over a ridge.
-  const router = makeRouter(bounds, terrain, water);
   for (const target of otherShores(bounds, water)) {
     layRoute(router.route(water.town, target, ROUTE_ARTERIAL), water, laid);
   }

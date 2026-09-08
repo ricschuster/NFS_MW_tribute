@@ -297,7 +297,7 @@ export const CITY_WATERFRONT_RADIUS = m(1350);
  */
 export const CITY_BUILT_UP = 0.62;
 
-export const CITY_LOBES = 4;
+export const CITY_LOBES = 5;
 export const CITY_CHANNELS = 2;
 export const CITY_LAND_LEVEL = 0.46;
 export const CITY_LOBE_SPREAD = 0.8;
@@ -306,6 +306,8 @@ export const CITY_LOBE_SPREAD = 0.8;
  * as a fraction of that body's radius. Downtown belongs on the waterfront.
  */
 export const CITY_TOWN_OFFSET = 0.55;
+/** How far off due south the town may sit, in radians. */
+export const CITY_TOWN_SPREAD = 0.7;
 /**
  * How wide a band of sea is kept at the map's edge, as a fraction of its width.
  * Land reaching the border has a coastline that never closes, and it puts the

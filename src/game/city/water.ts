@@ -8,12 +8,14 @@ import {
   CITY_LAND_LEVEL,
   CITY_LOBE_SPREAD,
   CITY_LOBES,
+  CITY_MIN_BODY,
   CITY_RIVER_WIDTH,
   CITY_RIVER_WANDER,
   CITY_RIVER_MOUTH,
   CITY_SEA_EDGE,
   CITY_SEA_MARGIN,
   CITY_TOWN_OFFSET,
+  CITY_TOWN_SPREAD,
   CITY_WATER_STEP,
 } from '../constants';
 import type { Rng } from './rng';
@@ -146,13 +148,13 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
   const first = rng.range(0, TAU);
   for (let i = 0; i < CITY_LOBES; i++) {
     const t = first + (i / CITY_LOBES) * TAU + rng.range(-0.25, 0.25);
-    const out = i === 0 ? rng.range(0.03, 0.09) : rng.range(0.3, 0.4);
+    const out = i === 0 ? rng.range(0.02, 0.07) : rng.range(0.27, 0.38);
     lobes.push({
       at: {
         x: cx + Math.cos(t) * width * out,
         z: cz + Math.sin(t) * depth * out * CITY_LOBE_SPREAD,
       },
-      radius: (i === 0 ? rng.range(0.26, 0.3) : rng.range(0.19, 0.23)) * width,
+      radius: (i === 0 ? rng.range(0.2, 0.24) : rng.range(0.16, 0.2)) * width,
       weight: i === 0 ? 1 : rng.range(0.8, 0.96),
     });
   }
@@ -239,12 +241,24 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
   const isSea = (x: number, z: number) => land(x, z) < CITY_LAND_LEVEL;
   const isChannel = (x: number, z: number) => isWater(x, z) && !isSea(x, z);
 
-  const coast = trace(bounds, (x, z) => !isWater(x, z));
+  // Specks are not land. A body too small to carry a road reads as a rock with
+  // grass on it, and the map had two of them sitting in the channel doing
+  // nothing. Found by flood fill over the trace grid and turned back into sea,
+  // before the coastline is traced - so nothing downstream ever hears about
+  // them.
+  const dropped = specks(bounds, isWater);
+  const isLand = (x: number, z: number) => !isWater(x, z) && !dropped(x, z);
+  const wetOrSpeck = (x: number, z: number) => !isLand(x, z);
+  const coast = trace(bounds, isLand);
 
   // Out from the main lobe's middle towards the water, and stopped before it
   // gets there: far enough that the city has a shore, near enough that it has a
   // hinterland behind it.
-  const facing = rng.range(0, TAU);
+  // Southward, towards the water. Downtown belongs on the coast, and putting it
+  // on the *south* coast puts the land behind it - so the ground rises away
+  // from the city instead of the city sitting in the middle of the rise. It is
+  // what the sketch did and what the reference city does.
+  const facing = -Math.PI / 2 + rng.range(-CITY_TOWN_SPREAD, CITY_TOWN_SPREAD);
   let town = lobes[0].at;
   for (let d = 0; d <= lobes[0].radius * CITY_TOWN_OFFSET; d += lobes[0].radius / 40) {
     const at = {
@@ -255,7 +269,72 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
     town = at;
   }
 
-  return { isWater, isSea, isChannel, coast, lobes, town, bodies: outlines(bounds, coast) };
+  return {
+    isWater: wetOrSpeck,
+    isSea,
+    isChannel,
+    coast,
+    lobes,
+    town,
+    bodies: outlines(bounds, coast),
+  };
+}
+
+/**
+ * Which land is too small to keep.
+ *
+ * Flood-filled over the same grid the coastline is traced on, so a body either
+ * survives whole or is sea. Anything under `CITY_MIN_BODY` goes: it is a rock,
+ * the generator will not put a road on it, and a piece of land with no road on
+ * it is a place the player can look at and never reach.
+ */
+function specks(bounds: Rect, isWater: (x: number, z: number) => boolean): (x: number, z: number) => boolean {
+  const step = CITY_WATER_STEP;
+  const cols = Math.ceil((bounds.maxX - bounds.minX) / step) + 1;
+  const rows = Math.ceil((bounds.maxZ - bounds.minZ) / step) + 1;
+  const dry = new Uint8Array(cols * rows);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      dry[r * cols + c] = isWater(bounds.minX + c * step, bounds.minZ + r * step) ? 0 : 1;
+    }
+  }
+
+  const drop = new Uint8Array(cols * rows);
+  const seen = new Uint8Array(cols * rows);
+  for (let start = 0; start < dry.length; start++) {
+    if (!dry[start] || seen[start]) continue;
+    const body: number[] = [];
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length > 0) {
+      const i = stack.pop() as number;
+      body.push(i);
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      for (const [dc, dr] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nc = c + dc;
+        const nr = r + dr;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const j = nr * cols + nc;
+        if (dry[j] && !seen[j]) {
+          seen[j] = 1;
+          stack.push(j);
+        }
+      }
+    }
+    if (body.length * step * step < CITY_MIN_BODY) for (const i of body) drop[i] = 1;
+  }
+
+  return (x, z) => {
+    const c = Math.min(cols - 1, Math.max(0, Math.round((x - bounds.minX) / step)));
+    const r = Math.min(rows - 1, Math.max(0, Math.round((z - bounds.minZ) / step)));
+    return drop[r * cols + c] === 1;
+  };
 }
 
 /**
