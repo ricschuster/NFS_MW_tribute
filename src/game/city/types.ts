@@ -132,10 +132,18 @@ export interface CityRoad {
   embankment?: boolean;
 }
 
-/** A bay or a river, as a closed outline in world space for #84 to build from. */
+/**
+ * Water as a polygon for #84 to build from.
+ *
+ * With a lobed landmass (ADR-0008) there is no longer "a bay" to draw: there is
+ * everywhere the land is not. So the sea is one polygon reaching past the map,
+ * and each body of land is a **hole** in it.
+ */
 export interface WaterBody {
   kind: 'bay' | 'river';
   outline: Vec2[];
+  /** Land inside the polygon. Closed loops, each one a body of land. */
+  holes?: Vec2[][];
 }
 
 /**

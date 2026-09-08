@@ -209,12 +209,26 @@ const m = (metres: number) => metres * UNITS_PER_METRE;
 const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
 
 /**
- * Overall extent (ADR-0005). Sized from what the game needs rather than from a
- * remembered figure: a pursuit should be able to cross the map in two to four
- * minutes at the pace the car actually holds, which is a city about this big.
+ * Overall extent (ADR-0005, sized by ADR-0007 rule 3).
+ *
+ * It was 5 x 4 km, from a behaviour rather than a number: a pursuit should
+ * cross the map in two to four minutes at the pace the car actually holds.
+ * Measured, that rule was already being missed - corner to corner took 4m 15s
+ * on the streets - and ADR-0007 rescoped it to the *core*, which is where a
+ * pursuit is fought, leaving the periphery for free roam and being chased along
+ * at top speed. 10 x 8 km is the reference city's own crossing measured back
+ * into an area, and it is four times this map with the same amount of city in
+ * it: the grid is bounded by `CITY_BUILT_UP` now, so a bigger map is more
+ * country and not more blocks.
+ *
+ * It is also what makes the relief possible. A gentle coast is a shore ramp
+ * `TERRAIN_SHORE` wide, and on a small island that ramp covers everything -
+ * measured, the hills fell from 139 m to 40 m the moment the landmass became
+ * lobes inside a 5 x 4 km rectangle, because nowhere was far enough from the
+ * water to reach full height. Hills need an interior to stand in.
  */
-export const CITY_WIDTH = m(5000);
-export const CITY_DEPTH = m(4000);
+export const CITY_WIDTH = m(10000);
+export const CITY_DEPTH = m(8000);
 
 /**
  * Arterials are laid first and cross the whole city, so every local street
@@ -253,8 +267,45 @@ export const CITY_WATERFRONT_RADIUS = m(1350);
  * runs inland from it and severs the city, which is what makes bridges worth
  * having.
  */
-export const CITY_BAY_DEPTH = m(750); // how far inland the bay reaches on average
-export const CITY_BAY_WAVE = m(380); // how far the coastline wanders either side of that
+/**
+ * The landmass (ADR-0008 rule 1). Land is a field summed from `CITY_LOBES`
+ * overlapping blobs and cut at `CITY_LAND_LEVEL`, with `CITY_CHANNELS` straits
+ * subtracted across the necks between them.
+ *
+ * The lobes are why the coast is irregular in every direction instead of being
+ * a wavy line along one edge, and the channels are why there are bodies of land
+ * facing each other rather than one blob with headlands. `CITY_CHANNEL_CUT` has
+ * to be deep enough to sever: a channel that only dents the coast is an inlet,
+ * and an inlet does not need a bridge, which is the whole point of having one.
+ *
+ * `CITY_LOBE_SPREAD` squashes the ring of lobes onto the map's own aspect, so a
+ * wide map gets a wide landmass rather than a circular one with sea in the
+ * corners.
+ */
+/**
+ * How much of a body of land is city, as a fraction of its own radius
+ * (ADR-0007 rule 3).
+ *
+ * The street grid used to cover every cell of the map's rectangle, which is
+ * what made Kestrel Bay one even sprawl from coast to coast: as dense at the
+ * water as it was downtown, and nowhere that was not city. Measured from each
+ * lobe's own middle, so a big body of land carries a city and a small one
+ * carries a town.
+ *
+ * This is the number that decides how much of the map is streets, and therefore
+ * how much of it is left for the roads that are not city (#260).
+ */
+export const CITY_BUILT_UP = 0.62;
+
+export const CITY_LOBES = 4;
+export const CITY_CHANNELS = 2;
+export const CITY_LAND_LEVEL = 0.46;
+export const CITY_LOBE_SPREAD = 0.8;
+export const CITY_COAST_RIPPLE = 0.17;
+export const CITY_CHANNEL_CUT = 0.9;
+export const CITY_CHANNEL_WIDTH = m(150);
+export const CITY_CHANNEL_BOW = m(350);
+
 export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
 export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
 export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth

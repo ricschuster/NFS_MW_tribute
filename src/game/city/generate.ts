@@ -16,6 +16,7 @@ import {
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
+  CITY_BUILT_UP,
   EMBANKMENT_SETBACK,
   CAR_RADIUS,
   DECK_HEADROOM,
@@ -113,7 +114,15 @@ export function generateCity(seed: number): City {
   const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, CITY_ARTERIAL_ROWS);
 
   // A cell with no land in it is open water: no streets, no blocks, no district.
-  const cells = cellsBetween(xLines, zLines).filter((cell) => !allWater(cell, water));
+  //
+  // And a cell that is not near a body of land's middle is **country**: the
+  // grid stops there (ADR-0007 rule 3). It used to run over every cell of the
+  // rectangle, which is what made the whole map read as one even sprawl - the
+  // city was as dense at the coast as it was downtown, and there was nowhere
+  // that was not city. `builtUp` is the line between the two, and everything
+  // outside it is what #260 will fill with roads that are not city.
+  const onLand = cellsBetween(xLines, zLines).filter((cell) => !allWater(cell, water));
+  const cells = onLand.filter((cell) => builtUp(centre(cell), water));
   const districts = assignDistricts(rng, cells, bounds, water);
   // Each superblock gets its own density, so the city has thin quarters and
   // dense ones rather than one even spread of buildings.
@@ -130,23 +139,18 @@ export function generateCity(seed: number): City {
   const laid: Span[] = [];
   const blocks: CityBlock[] = [];
 
+  // The arterials are the grid's spine and they stop where the grid does. Run
+  // to the map edge and they are six lanes of nothing crossing open country to
+  // a coast with no town on it.
   for (const x of xLines) {
-    laid.push({
-      from: { x, z: bounds.minZ },
-      to: { x, z: bounds.maxZ },
-      axis: 'z',
-      class: 'arterial',
-      district: 'midtown',
-    });
+    for (const run of builtRuns({ x, z: bounds.minZ }, { x, z: bounds.maxZ }, water)) {
+      laid.push({ from: run.from, to: run.to, axis: 'z', class: 'arterial', district: 'midtown' });
+    }
   }
   for (const z of zLines) {
-    laid.push({
-      from: { x: bounds.minX, z },
-      to: { x: bounds.maxX, z },
-      axis: 'x',
-      class: 'arterial',
-      district: 'midtown',
-    });
+    for (const run of builtRuns({ x: bounds.minX, z }, { x: bounds.maxX, z }, water)) {
+      laid.push({ from: run.from, to: run.to, axis: 'x', class: 'arterial', district: 'midtown' });
+    }
   }
 
   const arterialHalf = roadWidth(CITY_ARTERIAL_LANES) / 2;
@@ -172,7 +176,7 @@ export function generateCity(seed: number): City {
   // arterials are asserted to be axis-aligned - they are the grid's spine - and
   // blocks are already swept clear of boulevards. Classing it as an arterial
   // broke both of those, which is the tests earning their keep.
-  for (const route of embankmentRoutes(bounds, water)) {
+  for (const route of embankmentRoutes(water)) {
     for (let i = 1; i < route.length; i++) {
       laid.push({
         from: route[i - 1],
@@ -490,6 +494,41 @@ function probes(r: Rect): { x: number; z: number }[] {
 
 const allWater = (r: Rect, water: Water) => probes(r).every((p) => water.isWater(p.x, p.z));
 const anyWater = (r: Rect, water: Water) => probes(r).some((p) => water.isWater(p.x, p.z));
+
+/**
+ * Is this point in the built-up part of the city, or out in the country?
+ *
+ * Measured from the middle of whichever body of land it is on, as a fraction of
+ * that body's own size - so the big lobe carries a big city and a small one
+ * carries a town, and neither is decided by where the map's rectangle happens
+ * to be. `CITY_BUILT_UP` is the fraction, and it is the single number that says
+ * how much of Kestrel Bay is streets.
+ */
+function builtRuns(from: Vec2, to: Vec2, water: Water): { from: Vec2; to: Vec2 }[] {
+  const runs: { from: Vec2; to: Vec2 }[] = [];
+  const length = Math.hypot(to.x - from.x, to.z - from.z);
+  const steps = Math.max(1, Math.ceil(length / CITY_CLIP_STEP));
+  let start: Vec2 | null = null;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const at = { x: from.x + (to.x - from.x) * t, z: from.z + (to.z - from.z) * t };
+    if (builtUp(at, water)) {
+      if (!start) start = at;
+    } else if (start) {
+      runs.push({ from: start, to: at });
+      start = null;
+    }
+  }
+  if (start) runs.push({ from: start, to });
+  return runs.filter((r) => Math.hypot(r.to.x - r.from.x, r.to.z - r.from.z) > CITY_MIN_STREET);
+}
+
+function builtUp(at: Vec2, water: Water): boolean {
+  for (const lobe of water.lobes) {
+    if (Math.hypot(at.x - lobe.at.x, at.z - lobe.at.z) < lobe.radius * CITY_BUILT_UP) return true;
+  }
+  return false;
+}
 
 /**
  * Give every land cell a district.

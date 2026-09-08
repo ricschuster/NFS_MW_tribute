@@ -57,13 +57,20 @@ export function addInterstate(
   roads: CityRoad[],
   water: Water,
 ): void {
-  const width = bounds.maxX - bounds.minX;
-  const depth = bounds.maxZ - bounds.minZ;
+  // Inset from the **land**, not from the map's rectangle. ADR-0008 made the
+  // land a lobed island inside the bounds, so a loop inset from the corners of
+  // the rectangle runs out over open sea on two sides - which is what it did
+  // the first time the island was generated. Fitting it to the land keeps it a
+  // rectangle for now; making it a circuit that leaves the city and comes back
+  // is #261.
+  const on = landBounds(bounds, water);
+  const width = on.maxX - on.minX;
+  const depth = on.maxZ - on.minZ;
 
-  const west = bounds.minX + width * INTERSTATE_INSET;
-  const east = bounds.maxX - width * INTERSTATE_INSET;
-  const south = bounds.minZ + depth * INTERSTATE_INSET;
-  const north = bounds.maxZ - depth * INTERSTATE_INSET;
+  const west = on.minX + width * INTERSTATE_INSET;
+  const east = on.maxX - width * INTERSTATE_INSET;
+  const south = on.minZ + depth * INTERSTATE_INSET;
+  const north = on.maxZ - depth * INTERSTATE_INSET;
 
   // The loop, as four sides walked in order. Each carries the distance already
   // travelled around the circuit, so the height profile is a function of one
@@ -120,7 +127,7 @@ export function addInterstate(
   // Close the circuit.
   if (previous && first) link(roads, nodes, previous, first, 'interstate');
 
-  addSpurs(rng, bounds, built, nodes, roads);
+  addSpurs(rng, bounds, built, nodes, roads, water);
 }
 
 /**
@@ -141,6 +148,7 @@ function addSpurs(
   stations: { node: CityNode; side: Side }[],
   nodes: CityNode[],
   roads: CityRoad[],
+  water: Water,
 ): void {
   const middleX = (bounds.minX + bounds.maxX) / 2;
   const middleZ = (bounds.minZ + bounds.maxZ) / 2;
@@ -170,10 +178,17 @@ function addSpurs(
       side.axis === 'x'
         ? { x: 0, z: side.at > middleZ ? 1 : -1 }
         : { x: side.at > middleX ? 1 : -1, z: 0 };
-    const run =
+    // As far as the land goes, not as far as the map does. A spur is a freeway
+    // out of town and it should end at the coast, not two kilometres past it
+    // over open water (ADR-0008 made the map bigger than the island).
+    const toEdge =
       outward.x !== 0
         ? Math.abs((outward.x > 0 ? bounds.maxX : bounds.minX) - node.pos.x)
         : Math.abs((outward.z > 0 ? bounds.maxZ : bounds.minZ) - node.pos.z);
+    let run = 0;
+    for (let d = 0; d <= toEdge; d += INTERSTATE_SEGMENT / 2) {
+      if (!water.isWater(node.pos.x + outward.x * d, node.pos.z + outward.z * d)) run = d;
+    }
 
     // Elevated the whole way out, for the same reason the loop is: it crosses
     // every street on the way and joins none of them.
@@ -209,6 +224,33 @@ interface Station {
 
 const point = (side: Side, at: number) =>
   side.axis === 'x' ? { x: at, z: side.at } : { x: side.at, z: at };
+
+/**
+ * The box the land actually occupies, which is not the box the map does.
+ *
+ * Sampled rather than derived from the coastline, because the coast is loops
+ * and this wants one rectangle - and because a stray islet should not stretch
+ * the box out to reach it, which is why a row or column has to have a decent
+ * run of land in it before it counts.
+ */
+function landBounds(bounds: Rect, water: Water): Rect {
+  const step = (bounds.maxX - bounds.minX) / 120;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (let x = bounds.minX; x <= bounds.maxX; x += step) {
+    for (let z = bounds.minZ; z <= bounds.maxZ; z += step) {
+      if (water.isWater(x, z)) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+    }
+  }
+  if (minX > maxX) return bounds;
+  return { minX, maxX, minZ, maxZ };
+}
 
 /**
  * Which side of the loop a distance around it lands on, and where along that

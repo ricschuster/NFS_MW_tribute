@@ -99,8 +99,12 @@ parts.push(`<rect width="${W}" height="${H}" fill="#111820"/>`);
 // The bay and the river. Drawn over the land, because the land is drawn
 // everywhere and the water is a lid on the low parts of it.
 for (const body of city.water) {
-  const points = body.outline.map((p) => `${sx(p.x)},${sy(p.z)}`).join(' ');
-  parts.push(`<polygon points="${points}" fill="#22566b"/>`);
+  // A path with sub-paths and even-odd filling, not a polygon: since ADR-0008
+  // the sea is everywhere the land is not, so it is one outline with a hole in
+  // it per body of land.
+  const ring = (pts) => `M ${pts.map((p) => `${sx(p.x)},${sy(p.z)}`).join(' L ')} Z`;
+  const d = [ring(body.outline), ...(body.holes ?? []).map(ring)].join(' ');
+  parts.push(`<path d="${d}" fill="#22566b" fill-rule="evenodd"/>`);
 }
 
 if (!bare) for (const block of city.blocks) {

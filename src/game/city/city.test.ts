@@ -411,9 +411,12 @@ describe('water', () => {
     for (let z = bounds.minZ; z <= bounds.maxZ; z += m(50)) {
       // Only where the river actually divides the city: north of the coast is
       // bay, and the far bank of a bay is the horizon.
+      // Only where inland water actually divides the city: the open sea has no
+      // far side to reach, and a crossing to the horizon is not a crossing
+      // (ADR-0008 gave the water field `isChannel` to tell the two apart).
       let divided = false;
       for (let x = bounds.minX; x <= bounds.maxX && !divided; x += m(20)) {
-        if (z <= water.shoreAt(x) && water.isWater(x, z)) divided = true;
+        if (water.isChannel(x, z)) divided = true;
       }
       if (!divided) continue;
 
