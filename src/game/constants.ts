@@ -231,12 +231,18 @@ export const CITY_WIDTH = m(10000);
 export const CITY_DEPTH = m(8000);
 
 /**
- * Arterials are laid first and cross the whole city, so every local street
- * meets one at both ends and the network cannot come out in pieces. Counts
- * include both edges, which is what gives the city a perimeter road.
+ * Arterials are laid first and cross the city, so every local street meets one
+ * at both ends and the network cannot come out in pieces.
+ *
+ * A **spacing**, not a count. It was nine columns and seven rows, which was
+ * 555 m apart on a 5 x 4 km map and 1.25 km apart once ADR-0007 doubled it -
+ * and since the grid is now bounded to the town (rule 3), a 2.7 km wide
+ * built-up area contained about four superblocks. Each district was therefore
+ * one enormous rectangle, which is what "all the named areas are smooshed
+ * together" was looking at. A distance survives a change of map size; a count
+ * does not.
  */
-export const CITY_ARTERIAL_COLS = 9;
-export const CITY_ARTERIAL_ROWS = 7;
+export const CITY_ARTERIAL_SPACING = m(560);
 /** How far an interior arterial may wander, as a fraction of the even spacing. */
 export const CITY_ARTERIAL_JITTER = 0.16;
 export const CITY_ARTERIAL_LANES = 4;

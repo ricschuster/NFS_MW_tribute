@@ -1,8 +1,7 @@
 import {
   CITY_WIDTH,
   CITY_DEPTH,
-  CITY_ARTERIAL_COLS,
-  CITY_ARTERIAL_ROWS,
+  CITY_ARTERIAL_SPACING,
   CITY_ARTERIAL_JITTER,
   CITY_ARTERIAL_LANES,
   CITY_ARTERIAL_SPEED,
@@ -114,8 +113,10 @@ export function generateCity(seed: number): City {
   // shaped to agree with it - which is why this is here and not earlier.
   const terrain = makeTerrain(seed, bounds, water);
 
-  const xLines = arterialLines(rng, bounds.minX, bounds.maxX, CITY_ARTERIAL_COLS);
-  const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, CITY_ARTERIAL_ROWS);
+  const cols = Math.round((bounds.maxX - bounds.minX) / CITY_ARTERIAL_SPACING) + 1;
+  const rows = Math.round((bounds.maxZ - bounds.minZ) / CITY_ARTERIAL_SPACING) + 1;
+  const xLines = arterialLines(rng, bounds.minX, bounds.maxX, cols);
+  const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, rows);
 
   // A cell with no land in it is open water: no streets, no blocks, no district.
   //
@@ -186,7 +187,7 @@ export function generateCity(seed: number): City {
   // arterials are asserted to be axis-aligned - they are the grid's spine - and
   // blocks are already swept clear of boulevards. Classing it as an arterial
   // broke both of those, which is the tests earning their keep.
-  for (const route of embankmentRoutes(water)) {
+  for (const route of embankmentRoutes(water, (at) => builtUp(at, water))) {
     for (let i = 1; i < route.length; i++) {
       laid.push({
         from: route[i - 1],

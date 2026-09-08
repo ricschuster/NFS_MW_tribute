@@ -30,10 +30,10 @@ import type { Vec2 } from './types';
  * code as everything else. That is why an embankment turns a stub into a
  * T-junction without anything here knowing what a junction is.
  */
-export function embankmentRoutes(water: Water): Vec2[][] {
+export function embankmentRoutes(water: Water, wanted: (at: Vec2) => boolean): Vec2[][] {
   const routes: Vec2[][] = [];
   for (const loop of water.coast) {
-    for (const run of runsAlong(loop, water)) routes.push(run);
+    for (const run of runsAlong(loop, water, wanted)) routes.push(run);
   }
   return routes;
 }
@@ -49,7 +49,7 @@ export function embankmentRoutes(water: Water): Vec2[][] {
  * couple of samples are dropped, since three points round a headland is not a
  * quayside.
  */
-function runsAlong(loop: Vec2[], water: Water): Vec2[][] {
+function runsAlong(loop: Vec2[], water: Water, wanted: (at: Vec2) => boolean): Vec2[][] {
   const runs: Vec2[][] = [];
   let run: Vec2[] = [];
   const end = () => {
@@ -66,7 +66,12 @@ function runsAlong(loop: Vec2[], water: Water): Vec2[][] {
     since = 0;
 
     const at = inland(loop[i], previous, next, water);
-    if (at === null) {
+    // Only where there is a city behind it. The embankment exists so a street
+    // cut off by the water has something to end onto (#241), and a coastline
+    // with no streets behind it has nothing to end: laying one anyway put a
+    // road right round the perimeter of every body of land, which is a ring
+    // road round an empty island.
+    if (at === null || !wanted(at)) {
       end();
       continue;
     }
