@@ -6,10 +6,9 @@
 // generator, and editing them by hand needs them somewhere a person can push
 // them about.
 //
-// Writes a single JSON file: the terrain as a hill-shaded PNG, the coastline,
-// and every road as a chain of points in world metres. Small enough to embed in
-// a page, because an editor that has to fetch its own data is an editor with a
-// server.
+// Writes a single JSON file: the relief as a byte raster, the plan, and every
+// road as a chain of points in world metres. Small enough to embed in a page,
+// because an editor that has to fetch its own data is an editor with a server.
 //
 // Usage:
 //   npm run roadexport            # -> screenshots/roads.json
@@ -91,22 +90,33 @@ const roads = chains.map((chain, i) => ({
   points: chain.nodes.map((n) => [round(toM(city.nodes[n].pos.x)), round(toM(city.nodes[n].pos.z))]),
 }));
 
-// The land, as a coarse mask the page can draw as a hill-shaded background.
-// A raster rather than the traced coastline, because the editor wants to show
-// the *ground* - a road that reads as wrong usually reads as wrong against a
-// slope.
-const STEP = 40 * UNITS_PER_METRE;
+// The land, as a raster the page draws as a hill-shaded background. A raster
+// rather than the traced coastline, because the editor wants to show the
+// *ground*: a road that reads as wrong usually reads as wrong against a slope,
+// and a coastline drawn as an outline says nothing about what is behind it.
+//
+// **12 m a cell**, which is finer than the terrain's own `TERRAIN_CELL` and
+// therefore interpolates it rather than sampling it - the point is a background
+// somebody can place a road against at full zoom, not a faithful copy of the
+// height field. At 40 m it was mush as soon as you zoomed in.
+//
+// One byte a cell, base64'd, because at this resolution the same grid written
+// as JSON numbers is several megabytes of decimal digits. 255 is water; every
+// other value is metres above the sea, which covers the 120 m of relief with
+// room to spare.
+const STEP = 12 * UNITS_PER_METRE;
 const cols = Math.ceil((bounds.maxX - bounds.minX) / STEP);
 const rows = Math.ceil((bounds.maxZ - bounds.minZ) / STEP);
-const height = [];
+const WATER = 255;
+const cells = new Uint8Array(cols * rows);
 for (let row = 0; row < rows; row++) {
-  const line = [];
   for (let col = 0; col < cols; col++) {
     const x = bounds.minX + col * STEP;
     const z = bounds.minZ + row * STEP;
-    line.push(water.isWater(x, z) ? -1 : Math.max(0, Math.round(toM(groundAt(city.terrain, x, z)))));
+    cells[row * cols + col] = water.isWater(x, z)
+      ? WATER
+      : Math.max(0, Math.min(254, Math.round(toM(groundAt(city.terrain, x, z)))));
   }
-  height.push(line);
 }
 
 const out = {
@@ -117,8 +127,8 @@ const out = {
     maxX: round(toM(bounds.maxX)),
     maxZ: round(toM(bounds.maxZ)),
   },
-  // Rows run from minZ up. -1 is water, otherwise metres above the sea.
-  height: { step: 40, cols, rows, cells: height },
+  // Rows run from minZ up. 255 is water, otherwise metres above the sea.
+  height: { step: 12, cols, rows, water: WATER, cells: Buffer.from(cells).toString('base64') },
   places: plan.PLAN_PLACES.map((p) => ({
     kind: p.kind,
     name: p.name,
