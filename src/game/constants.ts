@@ -340,6 +340,22 @@ export const CITY_BODY_CELL = m(40);
 export const CITY_STREET_GRID = false;
 
 /**
+ * Whether the elevated freeway is built.
+ *
+ * Off, with the grid. It is a rectangle inset from the map bounds - a shape
+ * chosen by two numbers and no landscape - and at 21 km it was the largest and
+ * straightest thing in every picture of the city. ADR-0008 rule 6 wants a ring
+ * round the whole city and a beltway round downtown, both following the ground
+ * (#261, #265); neither of those is what this is, and shrinking its inset and
+ * halving its ramps did not make it one.
+ *
+ * A switch rather than a deletion for the same reason as the grid: `interstate.ts`
+ * knows how a deck, its ramps, its pillars and its tunnel are built, and all of
+ * that is wanted. What is not wanted is a rectangle.
+ */
+export const CITY_FREEWAY = false;
+
+/**
  * How far a piece of leftover parkland (#185) will reach for a quarter to belong
  * to before it settles for being parkland.
  *

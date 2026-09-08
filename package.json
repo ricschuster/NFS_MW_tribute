@@ -14,6 +14,7 @@
     "playtest": "vitest run src/game/cityworld.playtest.test.ts",
     "city": "node tools/citymap.mjs",
     "plan": "node tools/plan.mjs",
+    "roadexport": "node tools/roadexport.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
     "icons": "node tools/icons.mjs",
