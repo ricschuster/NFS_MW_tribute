@@ -160,9 +160,28 @@ export function generateCity(seed: number): City {
   const laid: Span[] = [];
   const blocks: CityBlock[] = [];
 
+  const router = makeRouter(bounds, terrain, water);
+
   // The arterials are the grid's spine and they stop where the grid does. Run
   // to the map edge and they are six lanes of nothing crossing open country to
   // a coast with no town on it.
+  //
+  // **These are still ruled straight, and they should not be** (#269: "still
+  // very much lines drawn on a map"). Routing them was tried and reverted, and
+  // the reason is worth keeping because it will be tried again.
+  //
+  // Routing works - the roads come out bending round the hills, and the picture
+  // is better. What breaks is everything that leans on an arterial being where
+  // the grid said it would be. The superblocks stop being bounded by roads, so
+  // the blocks inside them are measured off a rectangle whose edges the road no
+  // longer follows; and the network fragments, so `prune` starts deleting whole
+  // bodies of land - measured, the waterfront, the quarry and the docks went at
+  // once, and the map went from seven water crossings to one with all three
+  // candidate gaps chosen and built.
+  //
+  // The order is the lesson: the blocks have to be able to follow a curved
+  // arterial *before* the arterials can curve. That is #268's job, not a
+  // parameter on this loop.
   for (const x of xLines) {
     for (const run of builtRuns({ x, z: bounds.minZ }, { x, z: bounds.maxZ })) {
       laid.push({ from: run.from, to: run.to, axis: 'z', class: 'arterial', district: 'midtown' });
@@ -188,7 +207,6 @@ export function generateCity(seed: number): City {
   // a random number, and a random number knows nothing about the ground: it
   // reads as a line drawn on a map because that is what it is. A routed one
   // bends because the hill is there.
-  const router = makeRouter(bounds, terrain, water);
   for (const route of boulevardRoutes(rng, bounds)) {
     const line = router.route(route[0], route[route.length - 1], ROUTE_ARTERIAL);
     layRoute(line.length > 1 ? line : route, water, laid);
@@ -234,7 +252,7 @@ export function generateCity(seed: number): City {
   // than over a ridge.
   const links = linkRoutes(water, land);
   for (const link of links) {
-    layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid);
+    layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
   }
 
   // The places, and the road in to each (#271). Their own roads go in as
@@ -282,8 +300,12 @@ export function generateCity(seed: number): City {
   // every block: this sweep and the two below it were half the cost of
   // generating the city (#262). The index returns a superset of what could be
   // in range, so the test below is the same test it always was.
+  // Arterials are in here with the boulevards now that they bend. Blocks are
+  // measured off the superblock's rectangle and inset by half an arterial, which
+  // was exact while an arterial ran dead straight along the cell's edge; a
+  // routed one wanders in and out of the block it used to bound.
   const swept = new SegmentIndex(
-    roads.filter((road) => road.class === 'boulevard'),
+    roads.filter((road) => road.class === 'boulevard' || road.class === 'arterial'),
     nodes,
     (road) => road.width / 2 + BOULEVARD_CLEARANCE,
   );
@@ -476,6 +498,18 @@ interface Span {
   class: RoadClass;
   district: DistrictKind;
   bridge?: boolean;
+  /**
+   * This span's crossing is not optional.
+   *
+   * `chooseBridges` picks crossings for where they are (#247), which is right
+   * for the ones inside the city and wrong for the one road that reaches a body
+   * of land. A link route is the *only* way onto its island, so a spacing rule
+   * that declines it does not thin the crossings out - it deletes a district,
+   * and `prune` then deletes every road on it. Measured: the waterfront, the
+   * quarry and the docks all vanished at once when the routed arterials stopped
+   * leaving spare gaps for the chooser to find.
+   */
+  required?: boolean;
   embankment?: boolean;
   axis?: Axis;
 }
@@ -583,14 +617,21 @@ const anyWater = (r: Rect, water: Water) => probes(r).some((p) => water.isWater(
  * how to turn into a gap - and from there the crossing goes through the same
  * selection (#247) and the same repair pass as every other one.
  */
-function layRoute(line: Vec2[], water: Water, laid: Span[]): void {
+function layRoute(
+  line: Vec2[],
+  water: Water,
+  laid: Span[],
+  kind: RoadClass = 'boulevard',
+  district: DistrictKind = 'midtown',
+  required = false,
+): void {
   if (line.length < 2) return;
   const wet = (a: Vec2, b: Vec2) => water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2);
 
   let i = 0;
   while (i < line.length - 1) {
     if (!wet(line[i], line[i + 1])) {
-      laid.push({ from: line[i], to: line[i + 1], class: 'boulevard', district: 'midtown' });
+      laid.push({ from: line[i], to: line[i + 1], class: kind, district });
       i++;
       continue;
     }
@@ -604,7 +645,7 @@ function layRoute(line: Vec2[], water: Water, laid: Span[]): void {
     while (j < line.length - 1 && wet(line[j], line[j + 1])) j++;
     const back = reachBack(line, i, -1);
     const on = reachBack(line, Math.min(j + 1, line.length - 1), 1);
-    laid.push({ from: line[back], to: line[on], class: 'boulevard', district: 'midtown' });
+    laid.push({ from: line[back], to: line[on], class: kind, district, required });
     // Resume where the crossing ended, not where the water did. Resuming at the
     // far bank leaves the span's far end joined to nothing, so the bridge is its
     // own two-node island and `prune` deletes it - a chosen crossing that never
@@ -1063,9 +1104,24 @@ function chooseBridges(gaps: Gap[]): number[] {
     return Math.hypot(p.x - q.x, p.z - q.z);
   };
 
-  let shortest = 0;
-  for (let i = 1; i < gaps.length; i++) if (gaps[i].length < gaps[shortest].length) shortest = i;
-  const chosen = [shortest];
+  // Whatever else is chosen, the roads that reach a body of land keep their
+  // crossings: they are the only way onto it, and a declined one is a deleted
+  // district rather than a longer drive.
+  const chosen: number[] = [];
+  for (let i = 0; i < gaps.length; i++) if (gaps[i].span.required) chosen.push(i);
+
+  // The shortest crossing is still taken as well, as it always was: with
+  // nothing to spread away from, the cheapest crossing is the one to build
+  // (#247). Seeding the spread with the required ones *instead* is what took the
+  // map from seven crossings to two - they are clustered where the link roads
+  // happen to reach, so the furthest-first that follows had less to push away
+  // from and stopped early.
+  let shortest = -1;
+  for (let i = 0; i < gaps.length; i++) {
+    if (chosen.includes(i)) continue;
+    if (shortest === -1 || gaps[i].length < gaps[shortest].length) shortest = i;
+  }
+  if (shortest !== -1) chosen.push(shortest);
 
   while (chosen.length < CITY_BRIDGES) {
     let best = -1;

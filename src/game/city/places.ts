@@ -107,6 +107,28 @@ export function shapeForPlaces(terrain: Terrain, water: Water): void {
 }
 
 /**
+ * A closed loop round a point, pushed in and out so it is not a circle.
+ *
+ * The first version of the quay and the quarry rim were regular polygons of
+ * fourteen and sixteen sides, which drew as perfect circles at map scale and
+ * were the most artificial thing on the map - a wharf is built out to the water
+ * it has and a quarry rim is wherever the digging stopped, and neither of them
+ * is round. The radius is pushed by two waves of different frequency rather than
+ * by an independent roll per vertex, because independent rolls give a *ragged*
+ * ring and what is wanted is a lumpy one.
+ */
+function lumpyLoop(at: Vec2, radius: number, sides: number, phase: number, rough: number): Vec2[] {
+  const loop: Vec2[] = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (i / sides) * Math.PI * 2;
+    const push = Math.sin(angle * 2 + phase) * 0.62 + Math.sin(angle * 3 + phase * 1.7) * 0.38;
+    const r = radius * (1 + push * rough);
+    loop.push({ x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r });
+  }
+  return loop;
+}
+
+/**
  * Level the strip under the runway, and grade out from it.
  *
  * The target is the **mean** ground along the centreline rather than its lowest
@@ -242,20 +264,18 @@ function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const angle = start + t * turns * Math.PI * 2;
-    // From just inside the rim to the middle of the floor.
-    const r = radius * lerp(0.92, 0.16, t);
+    // From just inside the rim to the middle of the floor, and not on a circle:
+    // a haul road follows the face it was cut into, which is not round either.
+    const push = Math.sin(angle * 2 + 2.1) * 0.62 + Math.sin(angle * 3 + 3.57) * 0.38;
+    const r = radius * lerp(0.92, 0.16, t) * (1 + push * 0.15);
     line.push({ x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r });
   }
   // The rim road, so the descent has something to leave from and the workings
   // can be looked at from above without driving into them.
-  const rim: Vec2[] = [];
-  for (let i = 0; i < 16; i++) {
-    const angle = (i / 16) * Math.PI * 2;
-    const r = radius + PLACE_BLEND * 0.5;
-    const p = { x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r };
-    // A rim road only where there is rim: the bowl can sit against a coast.
-    if (groundAt(terrain, p.x, p.z) > QUARRY_FLOOR) rim.push(p);
-  }
+  // A rim road only where there is rim: the bowl can sit against a coast.
+  const rim = lumpyLoop(at, radius + PLACE_BLEND * 0.5, 18, 2.1, 0.17).filter(
+    (p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR,
+  );
   const roads: PlaceRoad[] = [{ line, loop: false }];
   if (rim.length > 8) roads.push({ line: rim, loop: true });
   return roads;
@@ -270,21 +290,14 @@ function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
  */
 function dockRoads(water: Water, at: Vec2, radius: number): PlaceRoad[] {
   const roads: PlaceRoad[] = [];
-  const apron: Vec2[] = [];
-  const sides = 14;
-  for (let i = 0; i < sides; i++) {
-    const angle = (i / sides) * Math.PI * 2;
-    apron.push({ x: at.x + Math.cos(angle) * DOCK_APRON, z: at.z + Math.sin(angle) * DOCK_APRON });
-  }
-  roads.push({ line: apron, loop: true });
+  roads.push({ line: lumpyLoop(at, DOCK_APRON, 15, 0.6, 0.26), loop: true });
 
   // Piers go where there is water to put them in, found by looking outward.
   for (let i = 0; i < DOCK_PIERS; i++) {
     const angle = ((i + 0.5) / DOCK_PIERS) * Math.PI * 2;
-    const from = {
-      x: at.x + Math.cos(angle) * DOCK_APRON,
-      z: at.z + Math.sin(angle) * DOCK_APRON,
-    };
+    const push = Math.sin(angle * 2 + 0.6) * 0.62 + Math.sin(angle * 3 + 1.02) * 0.38;
+    const reach = DOCK_APRON * (1 + push * 0.26);
+    const from = { x: at.x + Math.cos(angle) * reach, z: at.z + Math.sin(angle) * reach };
     const to = {
       x: from.x + Math.cos(angle) * DOCK_PIER_LENGTH,
       z: from.z + Math.sin(angle) * DOCK_PIER_LENGTH,

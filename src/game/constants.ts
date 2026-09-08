@@ -612,11 +612,11 @@ export const CITY_MIN_STREET = m(70);
  *   left is the road up.
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
-  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 0 },
-  midtown: { blockX: m(165), blockZ: m(145), jitter: 0.3, skip: 0.22, lanes: 2, speed: kmh(60), winding: 0.65 },
-  waterfront: { blockX: m(230), blockZ: m(250), jitter: 0.3, skip: 0.42, lanes: 2, speed: kmh(60), winding: 0.6 },
-  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 0.2 },
-  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 1, speed: kmh(50), winding: 0.9 },
+  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 1 },
+  midtown: { blockX: m(165), blockZ: m(145), jitter: 0.3, skip: 0.22, lanes: 2, speed: kmh(60), winding: 1 },
+  waterfront: { blockX: m(280), blockZ: m(300), jitter: 0.34, skip: 0.5, lanes: 2, speed: kmh(60), winding: 1 },
+  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 1 },
+  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 1, speed: kmh(50), winding: 1 },
 };
 
 /**

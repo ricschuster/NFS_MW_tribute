@@ -59,6 +59,8 @@ export type PlaceKind = 'docks' | 'airfield' | 'quarry' | 'lookout';
 
 export interface PlanPlace {
   kind: PlaceKind;
+  /** What it is called. Places are the map's landmarks and a landmark has a name. */
+  name: string;
   at: Vec2;
   /**
    * How far its own ground reaches, where that is a radius. The airfield's
@@ -142,10 +144,15 @@ export const PLAN_DISTRICTS: PlanArea[] = [
   // The waterfront, on its own body of land across the channel: 4.2 km², the
   // largest area on the plan, and the loosest. Few roads, well spaced, large
   // lots and a lot of open ground.
+  //
+  // Half density on top of that. It is the biggest area on the map and it came
+  // out with the densest street grid on it, which is the opposite of affluent -
+  // 4.2 km² at midtown's grain is more city than downtown, laid where the plan
+  // asks for the fewest roads anywhere.
   area('waterfront', [
     [-2325, 1575], [-1900, 2675], [-3250, 2675], [-4050, 2250],
     [-4475, 1650], [-4275, 600], [-3225, 525], [-2000, 825],
-  ]),
+  ], 0.7),
 ];
 
 /**
@@ -158,14 +165,14 @@ export const PLAN_PLACES: PlanPlace[] = [
   // The port, on the 0.7 km² south-east island: flat, a kilometre off downtown,
   // one bridge in. Somewhere you can be trapped is worth more than somewhere you
   // drive through, which is the best pursuit geography the map can offer.
-  { kind: 'docks', at: { x: m(-1634), z: m(-1955) }, radius: m(450) },
+  { kind: 'docks', name: 'Sablet Wharf', at: { x: m(-1634), z: m(-1955) }, radius: m(450) },
   // The airfield's island. Its shape is the runway, not a radius.
-  { kind: 'airfield', at: { x: m(-1269), z: m(2012) }, radius: m(700) },
+  { kind: 'airfield', name: 'Marrow Field', at: { x: m(-1269), z: m(2012) }, radius: m(700) },
   // The quarry, on the eastern body: hill country rather than canyon country,
   // and a quarry cuts its own walls, so it does not need pre-existing drama.
-  { kind: 'quarry', at: { x: m(-2704), z: m(-812) }, radius: m(600) },
+  { kind: 'quarry', name: 'Halloway Quarry', at: { x: m(-2704), z: m(-812) }, radius: m(600) },
   // The top of the canyon run, on the hill park's high ground.
-  { kind: 'lookout', at: { x: m(1250), z: m(-250) }, radius: m(150) },
+  { kind: 'lookout', name: 'Kestrel Head', at: { x: m(1250), z: m(-250) }, radius: m(150) },
 ];
 
 /**

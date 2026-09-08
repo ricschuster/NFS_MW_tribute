@@ -29,6 +29,7 @@ const bare = args.includes('--terrain');
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { generateCity } = await server.ssrLoadModule('/src/game/city/generate.ts');
 const { CITY_SEED, UNITS_PER_METRE } = await server.ssrLoadModule('/src/game/constants.ts');
+const { PLAN_PLACES } = await server.ssrLoadModule('/src/game/city/plan.ts');
 
 const seed = flag('--seed') === null ? CITY_SEED : Number(flag('--seed'));
 const city = generateCity(seed);
@@ -147,6 +148,22 @@ if (!bare) for (const cell of city.superblocks) {
   parts.push(
     `<text x="${sx((b.minX + b.maxX) / 2)}" y="${sy((b.minZ + b.maxZ) / 2)}" fill="#fff" fill-opacity="0.45" ` +
       `font-family="system-ui, sans-serif" font-size="13" text-anchor="middle">${cell.district}</text>`,
+  );
+}
+
+// The places are named, and a landmark with no name on the map is scenery.
+// Drawn over the district labels, brighter, because they are what a person
+// navigates by: "past the quarry" is a direction, "in midtown" is not.
+if (!bare) for (const place of PLAN_PLACES) {
+  const x = Number(sx(place.at.x));
+  const y = Number(sy(place.at.z));
+  parts.push(
+    `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#ffd54f" stroke="#2b2b2b" stroke-width="1.5"/>`,
+  );
+  parts.push(
+    `<text x="${x.toFixed(1)}" y="${(y - 11).toFixed(1)}" fill="#ffd54f" stroke="#1b1b1b" stroke-width="3" ` +
+      `paint-order="stroke" font-family="system-ui, sans-serif" font-size="14" font-weight="600" ` +
+      `text-anchor="middle">${place.name}</text>`,
   );
 }
 
