@@ -38,7 +38,7 @@ import {
   RUNWAY_WIDTH,
   TAXIWAY_OFFSET,
 } from '../constants';
-import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
 import { groundAt, type Terrain } from './terrain';
 import type { Vec2 } from './types';
 import type { Water } from './water';
@@ -256,6 +256,38 @@ function airfieldRoads(): PlaceRoad[] {
  * road cut into the wall the whole way round, which is a tunnel with the roof
  * off. It steps in as it descends, so each leg sits on the bench below the last.
  */
+/**
+ * Where a road *to* a place should stop.
+ *
+ * For most places that is the place itself: the docks and the airfield are
+ * level ground, so a road can drive onto them. A quarry is a hole, and its
+ * middle is the floor of it - measured, the access road ran from (-2323, -873)
+ * to (-2590, -850), straight over the benches and down the workings at **110%**,
+ * because it was routed to `place.at` like everything else. The road in stops at
+ * the rim; getting to the bottom is the haul road's job, which is why it
+ * switchbacks.
+ */
+export function placeApproach(place: PlanPlace, from: Vec2, terrain: Terrain): Vec2 {
+  if (place.kind !== 'quarry') return place.at;
+  const rim = quarryRim(place.at, place.radius).filter((p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR);
+  if (rim.length === 0) return place.at;
+  let best = rim[0];
+  let bestD = Infinity;
+  for (const p of rim) {
+    const d = Math.hypot(p.x - from.x, p.z - from.z);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best;
+}
+
+/** The lip of the bowl, as a loop. */
+function quarryRim(at: Vec2, radius: number): Vec2[] {
+  return lumpyLoop(at, radius + PLACE_BLEND * 0.5, 18, 2.1, 0.17);
+}
+
 function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
   const line: Vec2[] = [];
   const turns = QUARRY_RAMP_TURNS;
@@ -273,9 +305,7 @@ function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
   // The rim road, so the descent has something to leave from and the workings
   // can be looked at from above without driving into them.
   // A rim road only where there is rim: the bowl can sit against a coast.
-  const rim = lumpyLoop(at, radius + PLACE_BLEND * 0.5, 18, 2.1, 0.17).filter(
-    (p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR,
-  );
+  const rim = quarryRim(at, radius).filter((p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR);
   const roads: PlaceRoad[] = [{ line, loop: false }];
   if (rim.length > 8) roads.push({ line: rim, loop: true });
   return roads;

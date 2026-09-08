@@ -49,7 +49,7 @@ import { makeWater, nearWater, type Water } from './water';
 import { makeTerrain } from './terrain';
 import { makeRouter } from './routing';
 import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
-import { placeRoads, shapeForPlaces } from './places';
+import { placeApproach, placeRoads, shapeForPlaces } from './places';
 import { landBodies, type LandBodies } from './bodies';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
@@ -265,7 +265,10 @@ export function generateCity(seed: number): City {
     const link = links.find((l) => l.body === body);
     const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
     if (!from) continue;
-    layRoute(router.route(from, place.at, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+    // Stopping where the place begins, which is not always the middle of it: a
+    // quarry's middle is the floor of the pit, and a road routed to it drives
+    // down the workings.
+    layRoute(router.route(from, placeApproach(place, from, terrain), ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
   }
 
   // Kestrel Head to Halloway Quarry: the lookout on the main body's summit to

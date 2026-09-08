@@ -113,6 +113,46 @@ on every bank, which hid the bug for as long as it existed. And a number that
 swings by a factor of four on an unrelated constant is not a designed number; it
 is whatever the draw gave.
 
+## Hand-edited roads, and what checking them taught
+
+The first round of editing: 10 roads deleted, 8 drawn, 56.5 -> 69.6 km. Read
+back out of the artifact's store with `roaddiff` and checked against the ground
+with `roadcheck`, then corrected with `roadfix`, which applies named operations
+(`--join`, `--reland`, `--reroute`, `--trim`, `--deadend`) rather than
+hand-edited JSON, so a correction is repeatable and the ids stay stable.
+
+**Two of the three defects that round were in the probe, not the map**, which is
+this repo's oldest lesson arriving again.
+
+The first: a road with one loose end was reported as "joins nothing and would be
+pruned". `prune` drops disconnected *components*, and a road that touches the
+network anywhere along its length is connected. A loose end is a dead end, which
+is a different thing and sometimes deliberate - a pier is a dead end on purpose.
+Three good roads were about to be called broken.
+
+The second was worse and nearly became an instruction. The check reported 44% on
+a hand-drawn crossing and said **ten** generated roads broke the 13% grade cap,
+and the conclusion drawn from that was that the cap was an aspiration nothing
+met and cut and fill (#252) had to come before any more drawing. Measuring the
+banks directly said the opposite: every dry point within 30 m of water, stepping
+60 m inland, over the whole map - **100% under 13%**, channels and coast alike.
+
+The height field puts the seabed 6 m below the water and `groundAt` interpolates
+bilinearly, so within one `TERRAIN_CELL` of any shoreline the ground runs down to
+-6 m. Every one of those readings was a road touching the waterline and the
+check reading the bed of the channel as a hill.
+
+What survived the correction was real and was ours: the road to Halloway Quarry
+was routed to `place.at`, which for a quarry is the *floor of the pit*, so it
+drove down the workings at 110%. A road to a place stops where the place's own
+roads begin - `placeApproach` sends it to the rim now, and the haul road does
+the descending, which is what it is for.
+
+Still open from that: the haul road itself reads at 110%, because it crosses the
+11 m bench edges `QUARRY_BENCH` cuts. A benched wall is a flight of small cliffs
+and a road over one is a cliff. That wants either a road that follows the bench
+surfaces or the cut and fill of #252.
+
 ## The standing question: procedural, authored, or both
 
 The thing this rebuild keeps running into is not "procedural versus authored".

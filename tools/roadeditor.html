@@ -150,7 +150,7 @@
     </div>
     <div class="row">
       <button id="undo" disabled>Undo</button>
-      <button id="reset">Revert all</button>
+      <button id="reset" title="Back to the roads the generator made">Revert all</button>
     </div>
     <div class="row">
       <button id="save" class="save">Save edits</button>
@@ -750,11 +750,34 @@
   // into the generator. Without the store the page still works - it is an
   // editor either way, it just cannot hand anything over.
   let db = null;
-  claude.use('db').then((it) => {
+  claude.use('db').then(async (it) => {
     db = it;
     if (!db) {
       $('save').disabled = true;
       $('save').textContent = 'Saving unavailable';
+      return;
+    }
+    // Open on the last saved network rather than on the generated one.
+    //
+    // The page ships with what the generator made, which is the right thing to
+    // fall back to and the wrong thing to greet somebody with once they have
+    // spent an evening editing. Revert all still goes back to the generated
+    // network, so nothing is lost by adopting the save - it is the more recent
+    // of two things the page already holds.
+    try {
+      const snap = await db.doc('edits/roads').get();
+      const saved = snap && snap.exists ? snap.data() : null;
+      if (!saved || !Array.isArray(saved.roads) || saved.seed !== DATA.seed) return;
+      roads = saved.roads.map((r) => ({ ...r, points: r.points.map((p) => [...p]) }));
+      removed = new Set(saved.removed ?? []);
+      selected = null;
+      undoStack.length = 0;
+      refresh();
+      draw();
+      toast(`Opened your last save · ${roads.length} roads`);
+    } catch {
+      // An unreadable save is not a reason to show nothing: the generated
+      // network is still there and still editable.
     }
   });
   $('save').onclick = async () => {

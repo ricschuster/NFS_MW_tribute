@@ -9,6 +9,8 @@
 //
 //   --join <id>      extend a road's loose end until it reaches another road
 //   --reland <id>    re-route a crossing so it lands where the ground allows
+//   --reroute <id>   re-route a road between its own ends, over the ground
+//   --trim <id>      cut a road back to where the place it runs into begins
 //   --deadend <ids>  mark an end as deliberate, so the check stops asking
 //
 // Usage:
@@ -22,6 +24,8 @@ const savedPath = argv.find((a) => !a.startsWith('--') && a.endsWith('.json'));
 const outPath = flagAll('--out')[0] ?? savedPath;
 const toJoin = flagAll('--join');
 const toReland = flagAll('--reland');
+const toReroute = flagAll('--reroute');
+const toTrim = flagAll('--trim');
 const deadEnds = flagAll('--deadend').flatMap((v) => v.split(','));
 if (!savedPath) {
   console.error('usage: npm run roadfix <saved.json> -- --join <id> --reland <id> --deadend <ids>');
@@ -78,6 +82,13 @@ function nearest(at, roads, skipId) {
   }
   return best;
 }
+
+// The places, from the export this network was edited from: a trim needs to
+// know where a place's own ground begins.
+const places = JSON.parse(readFileSync('screenshots/roads.json', 'utf8')).places.map((p) => ({
+  ...p,
+  radius: { docks: 450, airfield: 700, quarry: 600, lookout: 150 }[p.kind] ?? 300,
+}));
 
 const byId = new Map(saved.roads.map((r) => [r.id, r]));
 const log = [];
@@ -149,6 +160,63 @@ for (const id of toReland) {
   log.push(
     `reland ${id}: re-routed ${Math.round(bestD)} m of straight line into ` +
       `${road.points.length} points, landing on ${target.who} at (${target.point[0]}, ${target.point[1]})`,
+  );
+}
+
+// --- reroute: keep both ends, let the router find the middle again.
+//
+// For a road that goes where it should and gets there badly. The router prices
+// the **square** of the gradient, so an 11 m bench edge is enormously expensive
+// and it will go round rather than over - which is the whole trick, and the
+// reason a hand-drawn line and a routed one differ most exactly where the ground
+// is worst.
+for (const id of toReroute) {
+  const road = byId.get(id);
+  if (!road) {
+    log.push(`reroute ${id}: no such road`);
+    continue;
+  }
+  const line = router.route(world(road.points[0]), world(road.points[road.points.length - 1]), ROUTE_COUNTRY);
+  if (line.length < 2) {
+    log.push(`reroute ${id}: the router found no way`);
+    continue;
+  }
+  const before = road.points.length;
+  road.points = line.map(flat);
+  log.push(`reroute ${id}: ${before} points -> ${road.points.length}, ends unchanged`);
+}
+
+// --- trim: stop at the edge of the place, not in the middle of it.
+//
+// `--reroute` cannot help a road whose *end* is the problem. r67 finished 120 m
+// from the middle of Halloway Quarry, which is the floor of the pit, so every
+// path between its two ends had to descend the workings - the router obliged at
+// 110% because it was asked for something impossible.
+//
+// A place has its own roads (the haul road switchbacks down; the rim road runs
+// round the top). A road *to* a place stops where those begin.
+for (const id of toTrim) {
+  const road = byId.get(id);
+  if (!road) {
+    log.push(`trim ${id}: no such road`);
+    continue;
+  }
+  const inside = (p) =>
+    places.find((place) => Math.hypot(p[0] - place.at[0], p[1] - place.at[1]) < place.radius);
+  const place = inside(road.points[road.points.length - 1]);
+  if (!place) {
+    log.push(`trim ${id}: its end is not inside a place`);
+    continue;
+  }
+  // Walk back from the end until the road is outside the place, and stop there.
+  let cut = road.points.length - 1;
+  while (cut > 1 && inside(road.points[cut - 1])) cut--;
+  const dropped = road.points.length - cut;
+  road.points = road.points.slice(0, cut);
+  road.deadEnd = true;
+  log.push(
+    `trim ${id}: dropped ${dropped} points inside ${place.name}, ending at ` +
+      `(${road.points[road.points.length - 1][0]}, ${road.points[road.points.length - 1][1]})`,
   );
 }
 
