@@ -17,6 +17,9 @@ import {
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
   CITY_BUILT_UP,
+  CITY_GRID_CELL,
+  CITY_MIN_BODY,
+  ROUTE_ARTERIAL,
   EMBANKMENT_SETBACK,
   CAR_RADIUS,
   DECK_HEADROOM,
@@ -45,6 +48,7 @@ import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
 import { makeTerrain } from './terrain';
+import { makeRouter } from './routing';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -186,6 +190,27 @@ export function generateCity(seed: number): City {
         embankment: true,
       });
     }
+  }
+
+  // A road from the town to each of the other bodies of land, **routed** over
+  // the ground rather than drawn across it (ADR-0008 rule 2).
+  //
+  // Two things make these necessary at all. `clip` only offers a gap as a
+  // bridge candidate where an arterial or a boulevard crosses water, and
+  // bounding the grid to the built-up area (rule 3) stopped the arterials well
+  // short of the coast - so the roads that used to cross the channels by
+  // accident stopped existing, no gap was ever a candidate, and `prune` deleted
+  // every district across the water. Measured: three bodies of land and *zero*
+  // bridges.
+  //
+  // Routed rather than laid, because a straight line between two lobes crosses
+  // whatever is in the way. The router prices water per metre, so it finds the
+  // narrows on its own and the crossing chooses itself; and it prices the
+  // square of the gradient, so it arrives at the water along the ground rather
+  // than over a ridge.
+  const router = makeRouter(bounds, terrain, water);
+  for (const target of otherShores(bounds, water)) {
+    layRoute(router.route(water.town, target, ROUTE_ARTERIAL), water, laid);
   }
 
   // Cut the network against the water, keeping what crosses it as candidates.
@@ -494,6 +519,143 @@ function probes(r: Rect): { x: number; z: number }[] {
 
 const allWater = (r: Rect, water: Water) => probes(r).every((p) => water.isWater(p.x, p.z));
 const anyWater = (r: Rect, water: Water) => probes(r).some((p) => water.isWater(p.x, p.z));
+
+/**
+ * Put a routed road into the generator as spans.
+ *
+ * Not simply one span per pair of points, which is what a boulevard does. A
+ * routed road bends, so it arrives as a chain of thirty-metre pieces - and
+ * `clip` looks for a gap *inside* a span, so a crossing that falls between two
+ * pieces is never offered as a bridge candidate. Measured: the router found the
+ * narrows at 243 m and 183 m, comfortably inside `CITY_MAX_BRIDGE`, and the
+ * city came out with **zero** bridges and the districts pruned away.
+ *
+ * So where the line crosses water, the crossing is laid as **one straight
+ * span** from the last dry point to the first dry point on the far side. That
+ * span contains land, water and land, which is exactly the shape `clip` knows
+ * how to turn into a gap - and from there the crossing goes through the same
+ * selection (#247) and the same repair pass as every other one.
+ */
+function layRoute(line: Vec2[], water: Water, laid: Span[]): void {
+  if (line.length < 2) return;
+  const wet = (a: Vec2, b: Vec2) => water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2);
+
+  let i = 0;
+  while (i < line.length - 1) {
+    if (!wet(line[i], line[i + 1])) {
+      laid.push({ from: line[i], to: line[i + 1], class: 'boulevard', district: 'midtown' });
+      i++;
+      continue;
+    }
+    // A crossing. Laid as one piece from well back on this bank to well past
+    // the far one, because `clip` throws away a dry run shorter than
+    // `CITY_MIN_STREET` - and a span that reaches only one point onto land has
+    // a twelve-metre stub at each end, so both runs are discarded and the gap
+    // between them is never recorded. Measured: crossings of 243 m and 183 m,
+    // both inside the bridge limit, and no bridge built.
+    let j = i + 1;
+    while (j < line.length - 1 && wet(line[j], line[j + 1])) j++;
+    const back = reachBack(line, i, -1);
+    const on = reachBack(line, Math.min(j + 1, line.length - 1), 1);
+    laid.push({ from: line[back], to: line[on], class: 'boulevard', district: 'midtown' });
+    // Resume where the crossing ended, not where the water did. Resuming at the
+    // far bank leaves the span's far end joined to nothing, so the bridge is its
+    // own two-node island and `prune` deletes it - a chosen crossing that never
+    // appears in the city.
+    i = on;
+  }
+}
+
+/**
+ * A point on each body of land the town is not on.
+ *
+ * Aiming at a lobe's centre is not the same thing and it does not work: the
+ * channel that severed the lobe often runs through its middle, so the centre is
+ * in the water, and snapping it to the nearest land puts the target back on the
+ * bank the road started from. The road then crosses a narrow inlet twice, is
+ * bridged once, connects nothing, and the far body is pruned away - which is
+ * exactly what happened.
+ *
+ * So the bodies are found rather than assumed: flood-fill the land at a coarse
+ * grid, take the middle of each piece, and aim at that. It is also the honest
+ * statement of the requirement, which is a road to every body of land and not a
+ * road to every lobe.
+ */
+function otherShores(bounds: Rect, water: Water): Vec2[] {
+  const step = CITY_GRID_CELL;
+  const cols = Math.ceil((bounds.maxX - bounds.minX) / step) + 1;
+  const rows = Math.ceil((bounds.maxZ - bounds.minZ) / step) + 1;
+  const at = (i: number): Vec2 => ({
+    x: bounds.minX + (i % cols) * step,
+    z: bounds.minZ + Math.floor(i / cols) * step,
+  });
+  const dryCell = new Uint8Array(cols * rows);
+  for (let i = 0; i < dryCell.length; i++) {
+    const p = at(i);
+    dryCell[i] = water.isWater(p.x, p.z) ? 0 : 1;
+  }
+
+  const seen = new Uint8Array(cols * rows);
+  const bodies: { size: number; sx: number; sz: number; home: boolean }[] = [];
+  const townCell =
+    Math.round((water.town.z - bounds.minZ) / step) * cols +
+    Math.round((water.town.x - bounds.minX) / step);
+  for (let start = 0; start < dryCell.length; start++) {
+    if (!dryCell[start] || seen[start]) continue;
+    const stack = [start];
+    seen[start] = 1;
+    let size = 0;
+    let sx = 0;
+    let sz = 0;
+    let home = false;
+    while (stack.length > 0) {
+      const i = stack.pop() as number;
+      const p = at(i);
+      size++;
+      sx += p.x;
+      sz += p.z;
+      if (i === townCell) home = true;
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      for (const [dc, dr] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nc = c + dc;
+        const nr = r + dr;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const j = nr * cols + nc;
+        if (dryCell[j] && !seen[j]) {
+          seen[j] = 1;
+          stack.push(j);
+        }
+      }
+    }
+    bodies.push({ size, sx, sz, home });
+  }
+
+  // A road to a rock is not a road. Anything smaller than a superblock is left
+  // to be scenery.
+  const worth = (b: { size: number }) => b.size * step * step > CITY_MIN_BODY;
+  return bodies.filter((b) => !b.home && worth(b)).map((b) => ({ x: b.sx / b.size, z: b.sz / b.size }));
+}
+
+/**
+ * Walk along the line from `at` in `step` until `CITY_MIN_STREET` of it is
+ * behind you, so a crossing lands on a piece of road long enough to survive the
+ * clip rather than on a stub it will discard.
+ */
+function reachBack(line: Vec2[], at: number, step: number): number {
+  let run = 0;
+  let i = at;
+  while (i + step >= 0 && i + step < line.length && run < CITY_MIN_STREET * 1.5) {
+    run += Math.hypot(line[i + step].x - line[i].x, line[i + step].z - line[i].z);
+    i += step;
+  }
+  return i;
+}
 
 /**
  * Is this point in the built-up part of the city, or out in the country?

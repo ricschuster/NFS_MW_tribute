@@ -4,19 +4,28 @@ import {
   CITY_CHANNEL_CUT,
   CITY_CHANNEL_WIDTH,
   CITY_COAST_RIPPLE,
+  CITY_COAST_SCALE,
   CITY_LAND_LEVEL,
   CITY_LOBE_SPREAD,
   CITY_LOBES,
   CITY_RIVER_WIDTH,
   CITY_RIVER_WANDER,
   CITY_RIVER_MOUTH,
+  CITY_SEA_EDGE,
   CITY_SEA_MARGIN,
+  CITY_TOWN_OFFSET,
   CITY_WATER_STEP,
 } from '../constants';
 import type { Rng } from './rng';
 import type { Rect, Vec2, WaterBody } from './types';
 
 const TAU = Math.PI * 2;
+
+/** 0 below 0, 1 above 1, eased in between. */
+const smoothstep = (t: number) => {
+  const c = Math.max(0, Math.min(1, t));
+  return c * c * (3 - 2 * c);
+};
 
 /**
  * Water comes before land (ADR-0005 rule 1), and the land is not a rectangle
@@ -49,6 +58,17 @@ export interface Water {
   coast: Vec2[][];
   /** The bodies of land, so a district can be put on one rather than on a grid cell. */
   lobes: Lobe[];
+  /**
+   * Where the city is: a point on the main body of land, out towards its
+   * seaward side rather than in the middle of it.
+   *
+   * Downtown belongs on the waterfront - it is where every city of this shape
+   * put its downtown, and it is what the reference city does. It also frees the
+   * interior: with the town in the middle of the island, the flat part of the
+   * map sat exactly on the only ground far enough from the sea for the shore
+   * ramp to let it rise, and the hills came out at two thirds of their budget.
+   */
+  town: Vec2;
   /** The outlines, for the renderer and the map tool. */
   bodies: WaterBody[];
 }
@@ -97,7 +117,7 @@ function wobble(rng: Rng): (t: number) => number {
  * than to a radius, so the coast is irregular everywhere - including in the
  * necks between lobes, which is where it matters most.
  */
-function ripple(rng: Rng): (x: number, z: number) => number {
+function ripple(rng: Rng, scale: number): (x: number, z: number) => number {
   const terms: { fx: number; fz: number; p: number; a: number }[] = [];
   for (let i = 0; i < 5; i++) {
     terms.push({
@@ -109,7 +129,7 @@ function ripple(rng: Rng): (x: number, z: number) => number {
   }
   const total = terms.reduce((s, t) => s + t.a, 0);
   return (x, z) =>
-    terms.reduce((s, t) => s + t.a * Math.sin((x / 2600) * t.fx + (z / 2600) * t.fz + t.p), 0) / total;
+    terms.reduce((s, t) => s + t.a * Math.sin((x / scale) * t.fx + (z / scale) * t.fz + t.p), 0) / total;
 }
 
 export function makeWater(rng: Rng, bounds: Rect): Water {
@@ -126,25 +146,41 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
   const first = rng.range(0, TAU);
   for (let i = 0; i < CITY_LOBES; i++) {
     const t = first + (i / CITY_LOBES) * TAU + rng.range(-0.25, 0.25);
-    const out = i === 0 ? rng.range(0.03, 0.1) : rng.range(0.17, 0.27);
+    const out = i === 0 ? rng.range(0.03, 0.09) : rng.range(0.3, 0.4);
     lobes.push({
       at: {
         x: cx + Math.cos(t) * width * out,
         z: cz + Math.sin(t) * depth * out * CITY_LOBE_SPREAD,
       },
-      radius: (i === 0 ? rng.range(0.3, 0.34) : rng.range(0.22, 0.27)) * width,
+      radius: (i === 0 ? rng.range(0.26, 0.3) : rng.range(0.19, 0.23)) * width,
       weight: i === 0 ? 1 : rng.range(0.8, 0.96),
     });
   }
 
-  const rough = ripple(rng);
+  const rough = ripple(rng, width * CITY_COAST_SCALE);
+
+  // Sea all the way round, always. Land that reaches the map's edge has a
+  // boundary that never closes, and an unclosed loop drawn as a filled path is
+  // a chord straight across the island - which is what the first render of this
+  // was, a set of triangular bites out of the coast. It is also just true: an
+  // island has water on every side, and the alternative is a cliff at the
+  // border again.
+  const margin = width * CITY_SEA_EDGE;
+  const inside = (x: number, z: number) =>
+    smoothstep(
+      Math.min(
+        Math.min(x - bounds.minX, bounds.maxX - x),
+        Math.min(z - bounds.minZ, bounds.maxZ - z),
+      ) / margin,
+    );
+
   const land = (x: number, z: number) => {
     let v = 0;
     for (const lobe of lobes) {
       const d = Math.hypot(x - lobe.at.x, z - lobe.at.z) / lobe.radius;
       v += lobe.weight * Math.exp(-d * d * 1.35);
     }
-    return v * (1 + CITY_COAST_RIPPLE * rough(x, z));
+    return v * (1 + CITY_COAST_RIPPLE * rough(x, z)) * inside(x, z);
   };
 
   // The channels, laid across the necks between the first lobe and the others.
@@ -163,7 +199,7 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
     channels.push({
       from: { x: mid.x - (dz / len) * width, z: mid.z + (dx / len) * width },
       to: { x: mid.x + (dz / len) * width, z: mid.z - (dx / len) * width },
-      bow: rng.range(-CITY_CHANNEL_BOW, CITY_CHANNEL_BOW),
+      bow: rng.range(-1, 1) * width * CITY_CHANNEL_BOW,
     });
   }
 
@@ -179,7 +215,7 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
       const bow = Math.sin(t * Math.PI) * c.bow;
       const px = c.from.x + dx * t - (dz / len) * bow;
       const pz = c.from.z + dz * t + (dx / len) * bow;
-      const d = Math.hypot(x - px, z - pz) / CITY_CHANNEL_WIDTH;
+      const d = Math.hypot(x - px, z - pz) / (width * CITY_CHANNEL_WIDTH);
       most = Math.max(most, Math.exp(-d * d * 1.6));
     }
     return most;
@@ -205,7 +241,21 @@ export function makeWater(rng: Rng, bounds: Rect): Water {
 
   const coast = trace(bounds, (x, z) => !isWater(x, z));
 
-  return { isWater, isSea, isChannel, coast, lobes, bodies: outlines(bounds, coast) };
+  // Out from the main lobe's middle towards the water, and stopped before it
+  // gets there: far enough that the city has a shore, near enough that it has a
+  // hinterland behind it.
+  const facing = rng.range(0, TAU);
+  let town = lobes[0].at;
+  for (let d = 0; d <= lobes[0].radius * CITY_TOWN_OFFSET; d += lobes[0].radius / 40) {
+    const at = {
+      x: lobes[0].at.x + Math.cos(facing) * d,
+      z: lobes[0].at.z + Math.sin(facing) * d,
+    };
+    if (isWater(at.x, at.z)) break;
+    town = at;
+  }
+
+  return { isWater, isSea, isChannel, coast, lobes, town, bodies: outlines(bounds, coast) };
 }
 
 /**

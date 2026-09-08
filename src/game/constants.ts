@@ -301,10 +301,68 @@ export const CITY_LOBES = 4;
 export const CITY_CHANNELS = 2;
 export const CITY_LAND_LEVEL = 0.46;
 export const CITY_LOBE_SPREAD = 0.8;
+/**
+ * How far the city sits from the middle of its body of land, towards the water,
+ * as a fraction of that body's radius. Downtown belongs on the waterfront.
+ */
+export const CITY_TOWN_OFFSET = 0.55;
+/**
+ * How wide a band of sea is kept at the map's edge, as a fraction of its width.
+ * Land reaching the border has a coastline that never closes, and it puts the
+ * cliff back that ADR-0008 removed.
+ */
+export const CITY_SEA_EDGE = 0.05;
+/** Smaller than this and a body of land is scenery, not somewhere to build a road to. */
+export const CITY_MIN_BODY = m(700) * m(700);
+
+/**
+ * How finely a routed road searches, and how hard its staircase is smoothed
+ * (ADR-0008 rule 2).
+ *
+ * Fifty metres is a third of a block: fine enough that a road can find a way
+ * round a hill, coarse enough that the whole map is thirty thousand nodes and a
+ * search over it costs about as much as one more pass of the block sweeps.
+ */
+export const ROUTE_CELL = m(50);
+export const ROUTE_SMOOTHING = 3;
+
+/**
+ * What each class of road will put up with (ADR-0008 rule 2).
+ *
+ * `cap` is the steepest grade it takes, `climb` how hard it prices gradient
+ * against that cap, `water` what a metre of water costs as a multiple of a
+ * metre of road, and `shore`/`shyness` how close to the waterline it is willing
+ * to run and how much it minds.
+ *
+ * The shore terms are the ones nobody expects to need. The coast is the
+ * flattest ground on the map, because the land ramps up out of the water, so a
+ * router that prices only gradient pins every road to the beach - the first
+ * freeway routed this way ran round the whole island at the waterline. Being
+ * shy of the shore is what pushes it inland into the hills, where the corners
+ * are.
+ *
+ * `water` prices a crossing rather than choosing one. High enough that going
+ * round is usually cheaper, low enough that a short crossing beats a long
+ * detour: the path then finds the narrows on its own.
+ */
+export const ROUTE_FREEWAY = { cap: 0.06, water: 30, climb: 26, shore: m(700), shyness: 2.2 };
+export const ROUTE_ARTERIAL = { cap: 0.1, water: 55, climb: 16, shore: m(250), shyness: 0.8 };
+export const ROUTE_COUNTRY = { cap: 0.13, water: 120, climb: 9, shore: m(900), shyness: 3 };
 export const CITY_COAST_RIPPLE = 0.17;
+/**
+ * The last three are **fractions of the map's width**, not metres, because they
+ * are shape and shape does not have a size.
+ *
+ * They were metres, tuned when the map was 5 x 4 km, and doubling the map to
+ * 10 x 8 (ADR-0007 rule 3) quietly changed the shape rather than the scale: the
+ * coast rippled twice as often across the island, and a 150 m strait stopped
+ * severing a landmass twice as big, so three bodies of land became one blob
+ * with an inlet. A ratio survives a change of size; a measurement does not.
+ */
+export const CITY_COAST_SCALE = 0.52;
 export const CITY_CHANNEL_CUT = 0.9;
-export const CITY_CHANNEL_WIDTH = m(150);
-export const CITY_CHANNEL_BOW = m(350);
+export const CITY_CHANNEL_WIDTH = 0.02;
+export const CITY_CHANNEL_BOW = 0.07;
 
 export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
 export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
@@ -372,9 +430,16 @@ export const EMBANKMENT_STEP = m(90);
 export const TERRAIN_RELIEF = m(120);
 export const TERRAIN_CELL = m(10);
 export const TERRAIN_SHORE = m(1400);
+/**
+ * How far the land takes to climb out of *inland* water - a channel or the
+ * river - as against the sea. A tenth of the shore ramp, because a strait cut
+ * through a landmass has sides and a coast has beaches, and because a river
+ * ramping as gently as the sea flattens the whole interior of an island.
+ */
+export const TERRAIN_BANK = m(140);
 export const TERRAIN_CORE_FLAT = 0.8;
-/** As a fraction of the map's half-diagonal, so the basin scales with the map. */
-export const TERRAIN_CORE_RADIUS = 0.55;
+/** As a fraction of the town's own radius, so the basin is the city's and not the map's. */
+export const TERRAIN_CORE_RADIUS = 0.85;
 /** How much taller the rim is than the noise alone would make it. */
 export const TERRAIN_RIM_LIFT = 0.9;
 export const TERRAIN_SEABED = m(6);
