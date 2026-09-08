@@ -2,6 +2,7 @@ import {
   CITY_WIDTH,
   CITY_DEPTH,
   CITY_ARTERIAL_SPACING,
+  CITY_BODY_CELL,
   CITY_ARTERIAL_JITTER,
   CITY_ARTERIAL_LANES,
   CITY_ARTERIAL_SPEED,
@@ -13,7 +14,6 @@ import {
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
-  CITY_GRID_CELL,
   CITY_MIN_BODY,
   ROUTE_ARTERIAL,
   EMBANKMENT_SETBACK,
@@ -45,7 +45,9 @@ import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
 import { makeTerrain } from './terrain';
 import { makeRouter } from './routing';
-import { inArea, PLAN_DISTRICTS, planDistrictAt } from './plan';
+import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
+import { placeRoads, shapeForPlaces } from './places';
+import { landBodies, type LandBodies } from './bodies';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -113,6 +115,16 @@ export function generateCity(seed: number): City {
   // The land the city stands on (ADR-0007). Water first, and the height field
   // shaped to agree with it - which is why this is here and not earlier.
   const terrain = makeTerrain(CITY_LAND_STREAM, bounds, water);
+  // The places are dug into the ground **before** anything is laid on it
+  // (ADR-0009 rule 5): a runway is flat or it is not a runway, and a quarry is a
+  // hole. Everything downstream - the router's grades, the block fitting, the
+  // sim's own `groundAt` - then sees the ground as it will be rather than the
+  // hillside it replaced.
+  shapeForPlaces(terrain, water);
+
+  // Which body of land each point is on. Wanted in three places now - the roads
+  // between the bodies, the blocks that must not cross a channel, and the places.
+  const land = landBodies(bounds, water);
 
   const cols = Math.round((bounds.maxX - bounds.minX) / CITY_ARTERIAL_SPACING) + 1;
   const rows = Math.round((bounds.maxZ - bounds.minZ) / CITY_ARTERIAL_SPACING) + 1;
@@ -135,7 +147,10 @@ export function generateCity(seed: number): City {
   const superblocks: Superblock[] = cells.map((c, i) => ({
     bounds: c,
     district: districts[i],
-    density: 1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE),
+    // The plan's own density for this area multiplies the roll, so two areas of
+    // the same kind can be different places: the northern midtown is the edge of
+    // the city and the one behind downtown is an inner suburb.
+    density: (1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE)) * planDensityAt(centre(c)),
     // Whether the streets here bend. Decided per quarter for the same reason
     // density is: a city where every street bends a little is a wobbly grid,
     // where a winding quarter beside a gridded one is two neighbourhoods.
@@ -161,7 +176,7 @@ export function generateCity(seed: number): City {
 
   const arterialHalf = roadWidth(CITY_ARTERIAL_LANES) / 2;
   for (const cell of superblocks) {
-    fillSuperblock(rng, cell, arterialHalf, water, laid, blocks);
+    fillSuperblock(rng, cell, arterialHalf, water, land, laid, blocks);
   }
 
   // Boulevards go in as ordinary spans, so they are cut against the water and
@@ -217,8 +232,32 @@ export function generateCity(seed: number): City {
   // narrows on its own and the crossing chooses itself; and it prices the
   // square of the gradient, so it arrives at the water along the ground rather
   // than over a ridge.
-  for (const link of linkRoutes(bounds, water)) {
+  const links = linkRoutes(water, land);
+  for (const link of links) {
     layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid);
+  }
+
+  // The places, and the road in to each (#271). Their own roads go in as
+  // ordinary spans for the same reason the boulevards and the embankment do -
+  // the clip, the junction splitting and the connectivity repair are all one
+  // piece of code and nothing here should have a second copy of them.
+  for (const road of placeRoads(terrain, water)) {
+    const line = road.loop ? [...road.line, road.line[0]] : road.line;
+    for (let i = 1; i < line.length; i++) {
+      laid.push({ from: line[i - 1], to: line[i], class: 'boulevard', district: 'industrial' });
+    }
+  }
+  // And a road *to* each place, routed over the ground. A place with no way in
+  // is scenery, and `prune` deletes it: the docks, the airfield and the quarry
+  // are each on a different body of land, so the road in is the thing that makes
+  // four of the five crossings earn themselves.
+  for (const place of PLAN_PLACES) {
+    if (place.kind === 'lookout') continue;
+    const body = land.at(place.at.x, place.at.z);
+    const link = links.find((l) => l.body === body);
+    const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
+    if (!from) continue;
+    layRoute(router.route(from, place.at, ROUTE_ARTERIAL), water, laid);
   }
 
   // Cut the network against the water, keeping what crosses it as candidates.
@@ -401,7 +440,7 @@ export function generateCity(seed: number): City {
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
   // particular: a lamp belongs on a kerb, and the leftovers have no kerbs.
-  city.blocks.push(...parksFor(city, water));
+  city.blocks.push(...parksFor(city, water, land));
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
   city.furniture = furnitureFor(rng, city);
@@ -585,65 +624,9 @@ function layRoute(line: Vec2[], water: Water, laid: Span[]): void {
  * get four nearly identical answers, and they arrive as a bundle of parallel
  * lines that reads worse than a single road would. And a body's *middle* is not
  * where anybody wants to go: the district on it is.
- *
- * The bodies are still found rather than assumed, by flood fill. A lobe's centre
- * is not a body of land - the channel that severs a lobe usually runs through
- * its middle, so the centre is in the water, and snapping it to the nearest land
- * puts the target back on the bank the road started from.
  */
-function linkRoutes(bounds: Rect, water: Water): { from: Vec2; to: Vec2 }[] {
-  const step = CITY_GRID_CELL;
-  const cols = Math.ceil((bounds.maxX - bounds.minX) / step) + 1;
-  const rows = Math.ceil((bounds.maxZ - bounds.minZ) / step) + 1;
-  const at = (i: number): Vec2 => ({
-    x: bounds.minX + (i % cols) * step,
-    z: bounds.minZ + Math.floor(i / cols) * step,
-  });
-  const cellOf = (p: Vec2) =>
-    Math.round((p.z - bounds.minZ) / step) * cols + Math.round((p.x - bounds.minX) / step);
-  const dryCell = new Uint8Array(cols * rows);
-  for (let i = 0; i < dryCell.length; i++) {
-    const p = at(i);
-    dryCell[i] = water.isWater(p.x, p.z) ? 0 : 1;
-  }
-
-  const body = new Int32Array(cols * rows).fill(-1);
-  const bodies: { size: number; sx: number; sz: number }[] = [];
-  for (let start = 0; start < dryCell.length; start++) {
-    if (!dryCell[start] || body[start] >= 0) continue;
-    const id = bodies.length;
-    const stack = [start];
-    body[start] = id;
-    let size = 0;
-    let sx = 0;
-    let sz = 0;
-    while (stack.length > 0) {
-      const i = stack.pop() as number;
-      const p = at(i);
-      size++;
-      sx += p.x;
-      sz += p.z;
-      const c = i % cols;
-      const r = Math.floor(i / cols);
-      for (const [dc, dr] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ]) {
-        const nc = c + dc;
-        const nr = r + dr;
-        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
-        const j = nr * cols + nc;
-        if (dryCell[j] && body[j] < 0) {
-          body[j] = id;
-          stack.push(j);
-        }
-      }
-    }
-    bodies.push({ size, sx, sz });
-  }
-
+function linkRoutes(water: Water, land: LandBodies): { from: Vec2; to: Vec2; body: number }[] {
+  const step = CITY_BODY_CELL;
   // Every district's middle, on land and with a body under it. A traced polygon
   // is 75 to 100% land, so its centroid can fall in the water - and a target in
   // the water makes the router bridge out to sea to reach it, which is the one
@@ -658,7 +641,7 @@ function linkRoutes(bounds: Rect, water: Water): { from: Vec2; to: Vec2 }[] {
     }
     const middle = onLandNear({ x: x / region.poly.length, z: z / region.poly.length }, water, step);
     if (!middle) continue;
-    const id = body[cellOf(middle)];
+    const id = land.at(middle.x, middle.z);
     if (id >= 0) anchors.push({ at: middle, body: id });
   }
 
@@ -667,21 +650,41 @@ function linkRoutes(bounds: Rect, water: Water): { from: Vec2; to: Vec2 }[] {
   const downtownAt = anchors.find((a) => inArea(PLAN_DISTRICTS[0].poly, a.at));
   const home = downtownAt ? downtownAt.body : -1;
 
-  const routes: { from: Vec2; to: Vec2 }[] = [];
-  for (let id = 0; id < bodies.length; id++) {
+  const routes: { from: Vec2; to: Vec2; body: number }[] = [];
+  for (let id = 0; id < land.size.length; id++) {
     if (id === home) continue;
     // A road to a rock is not a road. Anything smaller than a superblock is
     // left to be scenery.
-    if (bodies[id].size * step * step <= CITY_MIN_BODY) continue;
+    if (land.size[id] <= CITY_MIN_BODY) continue;
     const onIt = anchors.filter((a) => a.body === id);
-    const middle = { x: bodies[id].sx / bodies[id].size, z: bodies[id].sz / bodies[id].size };
-    const to = onIt.length > 0 ? nearest(onIt.map((a) => a.at), middle) : onLandNear(middle, water, step);
+    const to =
+      onIt.length > 0 ? nearest(onIt.map((a) => a.at), land.middle[id]) : onLandNear(land.middle[id], water, step);
     if (!to) continue;
     const fromHome = anchors.filter((a) => a.body === home).map((a) => a.at);
-    const from = fromHome.length > 0 ? nearest(fromHome, to) : null;
-    if (from) routes.push({ from, to });
+    if (fromHome.length > 0) routes.push({ from: nearest(fromHome, to), to, body: id });
   }
   return routes;
+}
+
+/**
+ * The middle of the nearest district on a given body of land.
+ *
+ * The fallback for a place whose body has no link route - the home body, where
+ * `linkRoutes` has nothing to return because there is nothing to cross to.
+ */
+function nearestDistrictAnchor(to: Vec2, water: Water, land: LandBodies, body: number): Vec2 | null {
+  const on: Vec2[] = [];
+  for (const region of PLAN_DISTRICTS) {
+    let x = 0;
+    let z = 0;
+    for (const p of region.poly) {
+      x += p.x;
+      z += p.z;
+    }
+    const middle = onLandNear({ x: x / region.poly.length, z: z / region.poly.length }, water, CITY_BODY_CELL);
+    if (middle && land.at(middle.x, middle.z) === body) on.push(middle);
+  }
+  return on.length > 0 ? nearest(on, to) : null;
 }
 
 /** Whichever of these is closest to `to`. */
@@ -875,6 +878,7 @@ function fillSuperblock(
   cell: Superblock,
   arterialHalf: number,
   water: Water,
+  land: LandBodies,
   spans: Span[],
   blocks: CityBlock[],
 ): void {
@@ -889,8 +893,11 @@ function fillSuperblock(
   // What a park has is the road *through* it, which the arterials and the routed
   // roads already bring - and, in time, the climb that is the reason it is here.
   if (district === 'park') {
+    const home = land.at(centre(bounds).x, centre(bounds).z);
     const whole = pullClear(bounds, (r) => anyWater(r, water));
-    if (whole) blocks.push({ district, bounds: whole, open: true });
+    if (whole && land.at((whole.minX + whole.maxX) / 2, (whole.minZ + whole.maxZ) / 2) === home) {
+      blocks.push({ district, bounds: whole, open: true });
+    }
     return;
   }
 
@@ -905,8 +912,15 @@ function fillSuperblock(
   // that it is a full grid with gaps in it rather than somewhere emptier.
   const skip = Math.min(0.6, character.skip / Math.max(0.35, cell.density));
   const keep = () => !rng.chance(skip);
-  const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX, character.jitter).filter(keep);
-  const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ, character.jitter).filter(keep);
+  // Density sizes the blocks as well as thinning them. Skipping streets alone
+  // has almost no purchase where the district skips hardly any - downtown is at
+  // 0.03 - so "denser than the rest of its kind" has to mean smaller blocks or
+  // it means nothing. Square-rooted, because block size is an area of city per
+  // block and a linear one turns a 35% denser quarter into 35% closer streets,
+  // which is a different kind of place rather than a busier one.
+  const grain = 1 / Math.sqrt(Math.max(0.35, cell.density));
+  const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX * grain, character.jitter).filter(keep);
+  const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ * grain, character.jitter).filter(keep);
 
   // Collected separately so the blocks below can be trimmed off them. In a
   // winding quarter the streets no longer sit on the lines the blocks were
@@ -924,6 +938,15 @@ function fillSuperblock(
     !cell.winding ||
     !local.some((street) => segmentToRect(street.from, street.to, r) < streetHalf);
 
+  // A block belongs to the body of land its superblock is on. A 560 m cell on a
+  // coast reaches across a channel, and the land on the far side is dry, so the
+  // grid happily built on it: measured, 22 downtown blocks on the island the
+  // docks are meant to have to themselves, and midtown blocks on three bodies of
+  // land the plan gives no midtown at all. The water test cannot catch this -
+  // the far bank is not water.
+  const home = land.at(centre(cell.bounds).x, centre(cell.bounds).z);
+  const onHomeBody = (r: Rect) => land.at((r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2) === home;
+
   const xEdges = [inner.minX, ...xCuts, inner.maxX];
   const zEdges = [inner.minZ, ...zCuts, inner.maxZ];
   for (let i = 0; i < xEdges.length - 1; i++) {
@@ -935,7 +958,7 @@ function fillSuperblock(
         maxZ: zEdges[j + 1] - (j + 2 === zEdges.length ? 0 : streetHalf),
       };
       const fitted = pullClear(block, (r) => anyWater(r, water) || !clearsStreets(r));
-      if (!fitted) continue;
+      if (!fitted || !onHomeBody(fitted)) continue;
       // Some of a city is gaps: a park, a yard, a car park, a lot nobody built on.
       const open = rng.chance(Math.min(0.5, OPEN_BLOCK_CHANCE / Math.max(0.35, cell.density)));
       blocks.push({ district, bounds: fitted, open });

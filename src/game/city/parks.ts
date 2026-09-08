@@ -1,6 +1,7 @@
-import { PARK_CELL, PARK_MIN_SIDE, PARK_ROAD_CLEAR } from '../constants';
+import { PARK_CELL, PARK_DISTRICT_REACH, PARK_MIN_SIDE, PARK_ROAD_CLEAR } from '../constants';
 import { CityGrid, onRoad } from './grid';
 import type { Water } from './water';
+import type { LandBodies } from './bodies';
 import type { City, CityBlock, DistrictKind, Rect } from './types';
 
 /**
@@ -26,7 +27,7 @@ import type { City, CityBlock, DistrictKind, Rect } from './types';
  * resolution and the free cells are merged greedily, so a park is as big as
  * the land allows and anything too small to notice is left alone.
  */
-export function parksFor(city: City, water: Water): CityBlock[] {
+export function parksFor(city: City, water: Water, land: LandBodies): CityBlock[] {
   const grid = new CityGrid(city);
   const { bounds } = city;
 
@@ -83,7 +84,7 @@ export function parksFor(city: City, water: Water): CityBlock[] {
       const to = cellRect(i + width - 1, j + height - 1, bounds);
       parks.push({
         bounds: { minX: from.minX, minZ: from.minZ, maxX: to.maxX, maxZ: to.maxZ },
-        district: districtAt(city, (from.minX + to.maxX) / 2, (from.minZ + to.maxZ) / 2),
+        district: districtAt(city, land, (from.minX + to.maxX) / 2, (from.minZ + to.maxZ) / 2),
         open: true,
         // Not a lot inside the street grid, and the difference is content:
         // street finds and breakable gates go on lots, because a car parked in
@@ -190,18 +191,50 @@ function vacant(city: City, grid: CityGrid, water: Water, cell: Rect): boolean {
   return true;
 }
 
-/** Whichever quarter this land sits in, so a park belongs somewhere. */
-function districtAt(city: City, x: number, z: number): DistrictKind {
-  let best: DistrictKind = 'midtown';
-  let bestGap = Infinity;
+/**
+ * Whichever quarter this land sits in, so a park belongs somewhere - or `park`
+ * where it belongs to nothing.
+ *
+ * The nearest superblock used to win at any distance, which was harmless while
+ * the city covered the map and became nonsense the moment it stopped: with the
+ * districts on five bodies of land (ADR-0009), open country on the far side of a
+ * channel took the district of whatever quarter happened to be nearest across
+ * the water. Measured, that put a square kilometre of *downtown* on the eastern
+ * body, two and a half kilometres from downtown and with a strait in between.
+ *
+ * Beyond `PARK_DISTRICT_REACH` the answer is `park`, which is also the honest
+ * one: land that is not near any quarter is not part of a quarter. It is a
+ * different thing from the parks the plan chose - those are ground somebody
+ * wanted, this is ground nobody claimed - and the two share a kind rather than a
+ * meaning.
+ */
+function districtAt(city: City, land: LandBodies, x: number, z: number): DistrictKind {
+  let best: DistrictKind = 'park';
+  let bestGap = PARK_DISTRICT_REACH;
   for (const cell of city.superblocks) {
-    const dx = Math.max(cell.bounds.minX - x, 0, x - cell.bounds.maxX);
-    const dz = Math.max(cell.bounds.minZ - z, 0, z - cell.bounds.maxZ);
-    const gap = Math.hypot(dx, dz);
-    if (gap < bestGap) {
-      bestGap = gap;
-      best = cell.district;
+    const near = {
+      x: Math.min(Math.max(x, cell.bounds.minX), cell.bounds.maxX),
+      z: Math.min(Math.max(z, cell.bounds.minZ), cell.bounds.maxZ),
+    };
+    const gap = Math.hypot(near.x - x, near.z - z);
+    if (gap >= bestGap) continue;
+    // And on the same body of land. Distance alone made country on the far side
+    // of a channel take the district of whatever quarter was nearest in a
+    // straight line, which is a quarter you cannot drive to: the strait between
+    // the main body and the docks' island is under 850 m, so the island came out
+    // as downtown. Sampling the water along the line between them was tried
+    // first and let a third of them through - a channel sixty metres across
+    // falls between five samples spread over two hundred - which is the usual
+    // lesson that a question about connectedness wants the flood fill and not a
+    // ray. And the *superblock's* body is its middle's, the same rule its own
+    // blocks follow: asking about the nearest point of the cell instead let the
+    // island answer for itself, because a 560 m cell against a strait has its
+    // near edge on the far bank.
+    if (land.at(x, z) !== land.at((cell.bounds.minX + cell.bounds.maxX) / 2, (cell.bounds.minZ + cell.bounds.maxZ) / 2)) {
+      continue;
     }
+    bestGap = gap;
+    best = cell.district;
     if (gap === 0) break;
   }
   return best;

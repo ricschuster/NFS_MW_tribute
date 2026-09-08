@@ -34,6 +34,17 @@ export interface PlanArea {
   kind: DistrictKind;
   /** Closed, in world units, wound either way. */
   poly: Vec2[];
+  /**
+   * How built up this area is against others of its kind, multiplying the
+   * superblock's own roll.
+   *
+   * Three areas can be midtown and not be the same place. The northern one is
+   * the far side of the map from downtown and should read as the edge of the
+   * city rather than more of it; the one behind downtown should read as the
+   * inner suburb it is. Without this the only lever is `DISTRICTS`, which moves
+   * all three at once.
+   */
+  density?: number;
 }
 
 /**
@@ -57,9 +68,10 @@ export interface PlanPlace {
 }
 
 /** Metres in, world units out, so the plan reads as it was drawn. */
-const area = (kind: DistrictKind, poly: [number, number][]): PlanArea => ({
+const area = (kind: DistrictKind, poly: [number, number][], density?: number): PlanArea => ({
   kind,
   poly: poly.map(([x, z]) => ({ x: m(x), z: m(z) })),
+  ...(density === undefined ? {} : { density }),
 });
 
 /**
@@ -78,10 +90,11 @@ const area = (kind: DistrictKind, poly: [number, number][]): PlanArea => ({
 export const PLAN_DISTRICTS: PlanArea[] = [
   // Downtown: 1.5 km², 75% land, 3 m above the sea. Small on purpose - a dense
   // core, not a third of the city.
+
   area('downtown', [
     [125, -2500], [-124, -1899], [-1100, -1525], [-1125, -2025],
     [-1825, -2875], [-1100, -2725], [-550, -2775], [-124, -3101],
-  ]),
+  ], 1.35),
 
   // The industrial edge, inland of downtown. Unchanged in character.
   area('industrial', [
@@ -93,21 +106,28 @@ export const PLAN_DISTRICTS: PlanArea[] = [
   // Deliberate, and the one area chosen for its ground rather than in spite of
   // it - it is a hill with a road up it, and nothing else on the map rewards
   // climbing. The lookout sits on its high ground.
+  //
+  // Pulled in about a tenth from where it was traced: it still covers the same
+  // three superblocks - 113 m, 91 m and the 122 m summit with the lookout on it -
+  // and stops running out into ground the plan does not mean to claim.
   area('park', [
-    [1275, 475], [1600, -275], [1100, -725], [450, -225], [950, 550],
+    [1245, 423], [1547, -256], [1098, -664], [513, -207], [963, 491],
   ]),
   // The coastal park behind downtown. Its twin on island E was dropped: the
-  // island is the docks (ADR-0009 rule 6).
+  // island is the docks (ADR-0009 rule 6). It reaches up to take the row of the
+  // southern midtown that sat between it and the hill - half and half of the
+  // ground the two were sharing - so the parkland behind downtown is continuous
+  // instead of being a strip under a row of suburb.
   area('park', [
     [1700, -3225], [1250, -3325], [625, -3225], [150, -3125],
-    [-75, -3050], [150, -2500], [1000, -2800],
+    [-75, -3050], [150, -2500], [1000, -2500], [1050, -2800],
   ]),
 
   // Three midtowns, which are most of the built-up extent: suburban, bigger
   // blocks, curving streets, low buildings.
   area('midtown', [
     [1250, -2100], [1089, -1711], [700, -1550], [311, -1711],
-    [-75, -1875], [125, -2450], [700, -2650], [1150, -2700],
+    [-75, -1875], [125, -2350], [700, -2400], [1150, -2480],
   ]),
   area('midtown', [
     [-275, -1775], [-1175, -1500], [-1450, -875], [-1225, 50],
@@ -117,7 +137,7 @@ export const PLAN_DISTRICTS: PlanArea[] = [
     [1150, 3150], [575, 3350], [0, 3325], [-375, 2975], [-675, 2200],
     [-875, 1475], [-675, 1375], [-350, 1950], [50, 2650], [400, 2700],
     [950, 2625], [1325, 2550],
-  ]),
+  ], 0.55),
 
   // The waterfront, on its own body of land across the channel: 4.2 km², the
   // largest area on the plan, and the loosest. Few roads, well spaced, large
@@ -201,4 +221,15 @@ export function planCentre(kind: DistrictKind): Vec2 {
     z += p.z;
   }
   return { x: x / region.poly.length, z: z / region.poly.length };
+}
+
+/**
+ * How built up the plan wants this point to be, as a multiplier on the
+ * superblock's own roll. One for anywhere the plan says nothing about.
+ */
+export function planDensityAt(at: Vec2): number {
+  for (const region of PLAN_DISTRICTS) {
+    if (inArea(region.poly, at)) return region.density ?? 1;
+  }
+  return 1;
 }

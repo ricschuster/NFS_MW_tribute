@@ -301,6 +301,68 @@ export const CITY_LANE_WIDTH = 2000 / 3;
  */
 export const CITY_LAND_STREAM = 0x4b657374;
 
+/**
+ * The named places (#271, ADR-0009 rule 5), which are shaped into the ground
+ * before any road is laid.
+ *
+ * `PLACE_BLEND` is how far a place grades back into the hillside around it. Too
+ * short and every place has a retaining wall round it; too long and levelling a
+ * runway flattens the island it is on.
+ */
+export const PLACE_BLEND = m(160);
+/**
+ * How finely the land is flood-filled into bodies.
+ *
+ * Its own number rather than `CITY_GRID_CELL`, which is 120 m and was too coarse
+ * to see the straits: a channel narrower than one cell is never sampled as
+ * water, so the fill walks straight across it and two bodies of land come back
+ * as one. Measured, that merged the docks' island into the main body, which cost
+ * it its link road, its bridge and its separateness - and let the downtown grid
+ * lay 29 blocks on it, because a block may only cross onto another body if the
+ * generator thinks there is no other body.
+ */
+export const CITY_BODY_CELL = m(40);
+
+/**
+ * How far a piece of leftover parkland (#185) will reach for a quarter to belong
+ * to before it settles for being parkland.
+ *
+ * About a superblock and a half. It had no limit at all, which was harmless
+ * while the city covered the whole map and became nonsense once the districts
+ * were on five bodies of land: country on the far side of a channel took the
+ * district of whatever quarter was nearest *across the water*, which put a
+ * square kilometre of downtown on the eastern body.
+ */
+export const PARK_DISTRICT_REACH = m(850);
+/** The strip itself. Wide, because a runway is - and because it is the one road in the city that is a straight 2.3 km. */
+export const RUNWAY_WIDTH = m(46);
+/** How far the taxiway sits off the runway's edge, making the pair a circuit rather than a dead end. */
+export const TAXIWAY_OFFSET = m(64);
+/** Level ground held either side of the pair, before the blend starts. */
+export const RUNWAY_APRON = m(70);
+/**
+ * How deep the quarry cuts below the ground it is in, and the height of one
+ * bench.
+ *
+ * Benched rather than smooth: the floor is quantised to `QUARRY_BENCH`, so the
+ * walls come out as terraces. That is what makes it read as worked ground rather
+ * than as a crater, and it is where the road down gets its switchbacks.
+ *
+ * `QUARRY_FLOOR` is the hard bottom. Below sea level the pit would be a dry hole
+ * under the sea - the water is a field and knows nothing about height - which
+ * reads as a bug in the terrain rather than as a quarry.
+ */
+export const QUARRY_DEPTH = m(52);
+export const QUARRY_BENCH = m(11);
+export const QUARRY_FLOOR = m(6);
+/** How many times the road down turns before it reaches the floor. */
+export const QUARRY_RAMP_TURNS = 1.75;
+/** The wharf apron: level ground beside deep water, and the piers off it. */
+export const DOCK_LEVEL = m(5);
+export const DOCK_APRON = m(300);
+export const DOCK_PIERS = 6;
+export const DOCK_PIER_LENGTH = m(190);
+
 export const CITY_LOBES = 5;
 export const CITY_CHANNELS = 2;
 export const CITY_LAND_LEVEL = 0.46;
