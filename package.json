@@ -15,6 +15,8 @@
     "city": "node tools/citymap.mjs",
     "plan": "node tools/plan.mjs",
     "roadexport": "node tools/roadexport.mjs",
+    "roaddiff": "node tools/roaddiff.mjs",
+    "roadcheck": "node tools/roadcheck.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
     "icons": "node tools/icons.mjs",
