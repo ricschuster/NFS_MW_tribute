@@ -401,6 +401,7 @@ console.log(`\n${problems === 0 ? 'no blocking problems' : `${problems} blocking
   // something somebody can go and look at.
   for (const r of steep.sort((a, b) => b.grade - a.grade)) {
     console.log(`    ${r.id.padEnd(5)} ${Math.round(r.grade * 100)}% at (${r.at[0]}, ${r.at[1]})`);
+    marks.push({ at: r.at, kind: 'bad', text: `${r.id}: ${Math.round(r.grade * 100)}%`, id: r.id });
   }
 }
 
@@ -451,11 +452,13 @@ if (draw) {
     for (const r of gone) {
       parts.push(`<path d="${path(r.points)}" fill="none" stroke="#e9615a" stroke-opacity="0.5" stroke-width="${wide}" stroke-dasharray="${wide * 2} ${wide * 1.6}"/>`);
     }
+    const flagged = new Set(marks.filter((mk) => mk.kind === 'bad' && mk.id).map((mk) => mk.id));
     for (const r of saved.roads) {
       const isNew = !wasThere.has(r.id);
+      const bad = flagged.has(r.id);
       parts.push(
-        `<path d="${path(r.points)}" fill="none" stroke="${isNew ? '#7fd6a2' : '#e07a3f'}" ` +
-          `stroke-width="${isNew ? wide * 1.15 : wide}" stroke-linejoin="round" stroke-linecap="round"/>`,
+        `<path d="${path(r.points)}" fill="none" stroke="${bad ? '#ff4d4d' : isNew ? '#7fd6a2' : '#e07a3f'}" ` +
+          `stroke-width="${bad || isNew ? wide * 1.15 : wide}" stroke-linejoin="round" stroke-linecap="round"/>`,
       );
     }
     for (const place of base.places) {
@@ -493,13 +496,26 @@ if (draw) {
   // road fails is always local.
   const worst = marks.find((mk) => mk.kind === 'bad');
   if (worst) {
-    const reach = 700;
+    // Wide enough to hold the whole of whatever is flagged, so a road that is
+    // steep in one place is still shown as the road it is.
+    const flaggedRoads = saved.roads.filter((r) => marks.some((mk) => mk.id === r.id));
+    const xs = flaggedRoads.flatMap((r) => r.points.map((p) => p[0]));
+    const zs = flaggedRoads.flatMap((r) => r.points.map((p) => p[1]));
+    const reach = Math.max(
+      700,
+      Math.max(...xs) - Math.min(...xs),
+      Math.max(...zs) - Math.min(...zs),
+    ) / 2 + 250;
     shots.push({
       name: 'roadcheck-detail',
       ...render(
-        { minX: worst.at[0] - reach, maxX: worst.at[0] + reach, minZ: worst.at[1] - reach, maxZ: worst.at[1] + reach },
+        (() => {
+        const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+        const cz = (Math.max(...zs) + Math.min(...zs)) / 2;
+        return { minX: cx - reach, maxX: cx + reach, minZ: cz - reach, maxZ: cz + reach };
+      })(),
         900,
-        `${worst.text} — 1.4 km across`,
+        `${flaggedRoads.map((r) => r.id).join(', ')} — ${((reach * 2) / 1000).toFixed(1)} km across`,
       ),
     });
   }

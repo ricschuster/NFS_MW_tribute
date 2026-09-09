@@ -332,6 +332,11 @@ export function quarryHaul(at: Vec2, radius: number): { at: Vec2; down: number }
     // Not on a circle: a haul road follows the face it was cut into, which is
     // not round either.
     const push = Math.sin(angle * 2 + 2.1) * 0.62 + Math.sin(angle * 3 + 3.57) * 0.38;
+    // Starts just inside the lip. Starting it *outside*, at the rim road's own
+    // radius, was tried so the two would meet on the flat - and it cut a trench
+    // through the rim instead: the carve follows the road, and outside the bowl
+    // the road is on natural ground that has to be dug away to reach it. q1 went
+    // to 56% and the rim road to 93%. The ramp belongs inside the hole.
     const r = radius * lerp(0.94, 0.2, t) * (1 + push * 0.12);
     path.push({ at: { x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r }, down: t });
   }
