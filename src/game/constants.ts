@@ -387,6 +387,16 @@ export const ROAD_CUT_RELAX = 400;
  */
 export const ROAD_CUT_MARGIN = 0.88;
 
+/**
+ * How finely the renderer draws the landscape (#254).
+ *
+ * Coarser than `TERRAIN_CELL`, which is 10 m and would put eight hundred
+ * thousand vertices in one mesh. A landscape is read at hundreds of metres and
+ * the roads carry their own geometry at their own resolution, so this has to
+ * get the *shape* of the ground right rather than every shelf cut into it.
+ */
+export const TERRAIN_RENDER_STEP = m(40);
+
 
 /**
  * Whether the elevated freeway is built.

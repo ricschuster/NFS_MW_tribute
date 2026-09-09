@@ -8,10 +8,12 @@ import {
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
 import type { City } from '../city/types';
+import { groundAt } from '../city/terrain';
 import {
   UNITS_PER_METRE,
   INTERSTATE_PILLAR_SPACING,
   ROADBLOCK_MIN_WIDTH,
+  TERRAIN_RENDER_STEP,
 } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
@@ -22,6 +24,18 @@ const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
  * test at range, far below the pavement kerb. */
 const ROAD_LIFT = 0.02 * UNITS_PER_METRE;
+/**
+ * How far a block's kerb reaches below its own top.
+ *
+ * It used to be exactly the pavement height, which was enough while the ground
+ * was a plane at zero. On a slope the ground under one corner of a block is
+ * metres below the middle, and a slab that stops at its own thickness leaves a
+ * gap you can see the sky through. Deep enough to bury the worst corner of a
+ * block on the steepest ground a block is allowed on.
+ */
+const BLOCK_FOOTING = 14 * UNITS_PER_METRE;
+/** How far open ground floats over the land it is draped on. */
+const GRASS_LIFT = 0.06 * UNITS_PER_METRE;
 /** Metres of aggregate per texture tile. */
 const ROAD_TILE = 6 * UNITS_PER_METRE;
 /**
@@ -79,7 +93,9 @@ export class Cityscape {
     const bridges = this.bridges(city);
     if (bridges) this.group.add(bridges);
     for (const mesh of this.viaduct(city)) this.group.add(mesh);
-    for (const mesh of provider.build(city.buildings)) this.group.add(mesh);
+    for (const mesh of provider.build(city.buildings, (x, z) => this.groundUnder(city, x, z))) {
+      this.group.add(mesh);
+    }
     this.rooftops = new Rooftops(city.buildings);
     for (const mesh of this.rooftops.meshes) this.group.add(mesh);
 
@@ -150,10 +166,31 @@ export class Cityscape {
   private ground(city: City): THREE.Mesh {
     const width = city.bounds.maxX - city.bounds.minX;
     const depth = city.bounds.maxZ - city.bounds.minZ;
-    const geometry = new THREE.PlaneGeometry(width, depth);
-    // One plane covers the whole city, so the texture repeat is set from the
-    // ground's real size: one tile is the same number of metres whatever the
-    // seed makes the map.
+    // Coarser than the height field, which is 10 m and would be eight hundred
+    // thousand vertices for one mesh. A landscape seen from a car or from the
+    // air is read at hundreds of metres, and the roads carry their own geometry
+    // at their own resolution, so what this has to get right is the *shape* of
+    // the ground rather than every shelf cut into it.
+    const cols = Math.max(2, Math.round(width / TERRAIN_RENDER_STEP));
+    const rows = Math.max(2, Math.round(depth / TERRAIN_RENDER_STEP));
+    const geometry = new THREE.PlaneGeometry(width, depth, cols, rows);
+    geometry.rotateX(-Math.PI / 2);
+
+    // Displace each vertex to the ground under it. `PlaneGeometry` rotated flat
+    // has its vertices in world x and z already, so this only has to write y -
+    // and then recompute the normals, without which the whole landscape is lit
+    // as though it were still a plane and the hills are invisible.
+    const position = geometry.attributes.position;
+    const midX = (city.bounds.minX + city.bounds.maxX) / 2;
+    const midZ = (city.bounds.minZ + city.bounds.maxZ) / 2;
+    for (let i = 0; i < position.count; i++) {
+      const x = position.getX(i) + midX;
+      const z = position.getZ(i) + midZ;
+      position.setY(i, groundAt(city.terrain, x, z));
+    }
+    position.needsUpdate = true;
+    geometry.computeVertexNormals();
+
     const material = new THREE.MeshLambertMaterial({
       color: '#61656b',
       map: blockTexture('paving'),
@@ -161,15 +198,22 @@ export class Cityscape {
     this.owned.push(geometry, material);
 
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(
-      (city.bounds.minX + city.bounds.maxX) / 2,
-      0,
-      (city.bounds.minZ + city.bounds.maxZ) / 2,
-    );
+    mesh.position.set(midX, 0, midZ);
     mesh.receiveShadow = true;
     mesh.name = 'ground';
     return mesh;
+  }
+
+  /**
+   * How high the ground is under a point, for everything that has to sit on it.
+   *
+   * The height field is city *data* (ADR-0007) and this is the renderer reading
+   * it, which until now nothing outside the generator did: the terrain has been
+   * generated, measured, cut and filled for a whole session while every picture
+   * of it was of a flat plane.
+   */
+  private groundUnder(city: City, x: number, z: number): number {
+    return groundAt(city.terrain, x, z);
   }
 
   /** The bay and the river, as flat polygons sunk below the road surface. */
@@ -282,16 +326,19 @@ export class Cityscape {
 
       blocks.forEach((block, i) => {
         const bounds = block.bounds;
+        const x = (bounds.minX + bounds.maxX) / 2;
+        const z = (bounds.minZ + bounds.maxZ) / 2;
+        // A slab stays a box - a block is flat ground by definition, which is
+        // what #253 is about - but it stands on the height under its middle
+        // rather than at zero. It hangs below its own top, so the kerb face
+        // grows into whatever the hillside does at its edges instead of
+        // floating clear of it.
         matrix.makeScale(
           bounds.maxX - bounds.minX,
-          PAVEMENT_HEIGHT,
+          PAVEMENT_HEIGHT + BLOCK_FOOTING,
           bounds.maxZ - bounds.minZ,
         );
-        matrix.setPosition(
-          (bounds.minX + bounds.maxX) / 2,
-          PAVEMENT_HEIGHT,
-          (bounds.minZ + bounds.maxZ) / 2,
-        );
+        matrix.setPosition(x, this.groundUnder(city, x, z) + PAVEMENT_HEIGHT, z);
         mesh.setMatrixAt(i, matrix);
       });
       mesh.instanceMatrix.needsUpdate = true;
@@ -300,9 +347,86 @@ export class Cityscape {
 
     return [
       slab(city.blocks.filter((block) => !block.open), 'pavements', 'paving', '#6a6f76'),
-      // A block nobody built on: park, yard, lot.
-      slab(city.blocks.filter((block) => block.open), 'pavements:open', 'grass', '#4e6b47'),
+      // Open ground is draped rather than slabbed: see `openGround`.
+      this.openGround(city),
     ];
+  }
+
+  /**
+   * The ground nobody built on, following the land (#254).
+   *
+   * Open blocks were slabs like the built ones, which was invisible while the
+   * world was flat and is the most conspicuous thing in an aerial shot the
+   * moment it is not: a park is up to 560 m across, and a 560 m box on a
+   * hillside is a table standing on a hill. With the street grid off, most of
+   * Kestrel Bay is open ground, so the whole map came out as plates.
+   *
+   * A built block stays a box, and that is not an oversight: a block *is* flat
+   * ground - somebody levelled it to build on - and giving it a pad rather than
+   * a box is #253. Open ground was never levelled by anybody, so it has no
+   * business being flat.
+   *
+   * One geometry for all of them rather than one mesh each, because five
+   * hundred meshes is five hundred draw calls and this is scenery.
+   */
+  private openGround(city: City): THREE.InstancedMesh {
+    const blocks = city.blocks.filter((block) => block.open);
+    const positions: number[] = [];
+    const uvs: number[] = [];
+
+    for (const block of blocks) {
+      const { minX, maxX, minZ, maxZ } = block.bounds;
+      const cols = Math.max(1, Math.round((maxX - minX) / TERRAIN_RENDER_STEP));
+      const rows = Math.max(1, Math.round((maxZ - minZ) / TERRAIN_RENDER_STEP));
+      const dx = (maxX - minX) / cols;
+      const dz = (maxZ - minZ) / rows;
+      for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows; r++) {
+          const x0 = minX + c * dx;
+          const x1 = x0 + dx;
+          const z0 = minZ + r * dz;
+          const z1 = z0 + dz;
+          // Just clear of the land, so the grass wins the depth test against
+          // the ground it is lying on without floating off it.
+          const y = (x: number, z: number) => this.groundUnder(city, x, z) + GRASS_LIFT;
+          const corners: [number, number][] = [
+            [x0, z0],
+            [x1, z0],
+            [x1, z1],
+            [x0, z1],
+          ];
+          for (const [a, b, c2] of [
+            [0, 2, 1],
+            [0, 3, 2],
+          ]) {
+            for (const k of [a, b, c2]) {
+              const [x, z] = corners[k];
+              positions.push(x, y(x, z), z);
+              uvs.push(x / BLOCK_TILE, z / BLOCK_TILE);
+            }
+          }
+        }
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.computeVertexNormals();
+    const material = new THREE.MeshLambertMaterial({
+      color: '#4e6b47',
+      map: blockTexture('grass'),
+    });
+    this.owned.push(geometry, material);
+
+    // An InstancedMesh of one, so this returns the same type as the slabs and
+    // the scene's accounting does not need a special case.
+    const mesh = new THREE.InstancedMesh(geometry, material, 1);
+    mesh.setMatrixAt(0, new THREE.Matrix4());
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.receiveShadow = true;
+    mesh.name = 'pavements:open';
+    return mesh;
   }
 
   /**
@@ -350,21 +474,37 @@ export class Cityscape {
     mesh.receiveShadow = true;
 
     const matrix = new THREE.Matrix4();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-    const position = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3();
+    const forward = new THREE.Vector3();
+    const normal = new THREE.Vector3();
 
     roads.forEach((road, i) => {
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
-      const angle = Math.atan2(b.x - a.x, b.z - a.z);
-      quaternion.setFromAxisAngle(up, angle);
+      // **Pitched to the ground, not laid on a plane.** A carriageway is a quad
+      // scaled to its road, and on a hillside a quad at one height is a shelf
+      // with the hill going through it. Its basis is built from the road's own
+      // direction *in three dimensions* - so the tarmac climbs with the road,
+      // and two roads meeting on a slope meet along the same line.
+      const ay = this.groundUnder(city, a.x, a.z);
+      const by = this.groundUnder(city, b.x, b.z);
+      forward.set(b.x - a.x, by - ay, b.z - a.z).normalize();
+      right.crossVectors(up, forward).normalize();
+      normal.crossVectors(forward, right).normalize();
+
       // Half a width past each end, so junctions are covered and the capsule
       // ends are approximated without drawing them.
-      scale.set(road.width, 1, road.length + road.width);
-      position.set((a.x + b.x) / 2, ROAD_LIFT, (a.z + b.z) / 2);
-      matrix.compose(position, quaternion, scale);
+      matrix.makeBasis(
+        right.multiplyScalar(road.width),
+        normal.multiplyScalar(1),
+        forward.multiplyScalar(road.length + road.width),
+      );
+      matrix.setPosition(
+        (a.x + b.x) / 2 + normal.x * ROAD_LIFT,
+        (ay + by) / 2 + ROAD_LIFT,
+        (a.z + b.z) / 2 + normal.z * ROAD_LIFT,
+      );
       mesh.setMatrixAt(i, matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;
@@ -460,7 +600,14 @@ export class Cityscape {
         // the carriageway.
         matrix.makeRotationY(Math.atan2(dx, dz));
         matrix.scale(size);
-        matrix.setPosition(run.a.x + ux * at, MARKING_LEVEL, run.a.z + uz * at);
+        const x = run.a.x + ux * at;
+        const z = run.a.z + uz * at;
+        // On the road rather than at a fixed height. A dash is small enough
+        // that it can stay flat and still sit on the carriageway - the pitch
+        // that matters over a 3 m mark is none - but it has to be at the height
+        // of the road it is painted on, or a hill leaves the centre line
+        // running through the tarmac and out the other side.
+        matrix.setPosition(x, this.groundUnder(city, x, z) + MARKING_LEVEL, z);
         mesh.setMatrixAt(i++, matrix);
       }
     }
