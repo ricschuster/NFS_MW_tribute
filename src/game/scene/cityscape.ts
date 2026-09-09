@@ -34,8 +34,6 @@ const ROAD_LIFT = 0.02 * UNITS_PER_METRE;
  * block on the steepest ground a block is allowed on.
  */
 const BLOCK_FOOTING = 14 * UNITS_PER_METRE;
-/** How far open ground floats over the land it is draped on. */
-const GRASS_LIFT = 0.06 * UNITS_PER_METRE;
 /** Metres of aggregate per texture tile. */
 const ROAD_TILE = 6 * UNITS_PER_METRE;
 /**
@@ -191,9 +189,19 @@ export class Cityscape {
     position.needsUpdate = true;
     geometry.computeVertexNormals();
 
+    // **Land, not paving.** This was grey `#61656b` with a paving texture, and
+    // that was right when the whole map was city: #176's rule is that dark
+    // tarmac is drivable and anything lighter is not, and inside a city the
+    // lighter thing is a forecourt. On a map that is mostly country the same
+    // material makes the countryside a car park - ten kilometres of grey with
+    // green patches lying on it.
+    //
+    // The rule survives intact and reads better: the land is green, the roads
+    // are dark tarmac, and paving is what a *block* is made of. Grey now means
+    // somebody built there.
     const material = new THREE.MeshLambertMaterial({
-      color: '#61656b',
-      map: blockTexture('paving'),
+      color: '#54703f',
+      map: blockTexture('grass'),
     });
     this.owned.push(geometry, material);
 
@@ -345,88 +353,17 @@ export class Cityscape {
       return mesh;
     };
 
-    return [
-      slab(city.blocks.filter((block) => !block.open), 'pavements', 'paving', '#6a6f76'),
-      // Open ground is draped rather than slabbed: see `openGround`.
-      this.openGround(city),
-    ];
-  }
-
-  /**
-   * The ground nobody built on, following the land (#254).
-   *
-   * Open blocks were slabs like the built ones, which was invisible while the
-   * world was flat and is the most conspicuous thing in an aerial shot the
-   * moment it is not: a park is up to 560 m across, and a 560 m box on a
-   * hillside is a table standing on a hill. With the street grid off, most of
-   * Kestrel Bay is open ground, so the whole map came out as plates.
-   *
-   * A built block stays a box, and that is not an oversight: a block *is* flat
-   * ground - somebody levelled it to build on - and giving it a pad rather than
-   * a box is #253. Open ground was never levelled by anybody, so it has no
-   * business being flat.
-   *
-   * One geometry for all of them rather than one mesh each, because five
-   * hundred meshes is five hundred draw calls and this is scenery.
-   */
-  private openGround(city: City): THREE.InstancedMesh {
-    const blocks = city.blocks.filter((block) => block.open);
-    const positions: number[] = [];
-    const uvs: number[] = [];
-
-    for (const block of blocks) {
-      const { minX, maxX, minZ, maxZ } = block.bounds;
-      const cols = Math.max(1, Math.round((maxX - minX) / TERRAIN_RENDER_STEP));
-      const rows = Math.max(1, Math.round((maxZ - minZ) / TERRAIN_RENDER_STEP));
-      const dx = (maxX - minX) / cols;
-      const dz = (maxZ - minZ) / rows;
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          const x0 = minX + c * dx;
-          const x1 = x0 + dx;
-          const z0 = minZ + r * dz;
-          const z1 = z0 + dz;
-          // Just clear of the land, so the grass wins the depth test against
-          // the ground it is lying on without floating off it.
-          const y = (x: number, z: number) => this.groundUnder(city, x, z) + GRASS_LIFT;
-          const corners: [number, number][] = [
-            [x0, z0],
-            [x1, z0],
-            [x1, z1],
-            [x0, z1],
-          ];
-          for (const [a, b, c2] of [
-            [0, 2, 1],
-            [0, 3, 2],
-          ]) {
-            for (const k of [a, b, c2]) {
-              const [x, z] = corners[k];
-              positions.push(x, y(x, z), z);
-              uvs.push(x / BLOCK_TILE, z / BLOCK_TILE);
-            }
-          }
-        }
-      }
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geometry.computeVertexNormals();
-    const material = new THREE.MeshLambertMaterial({
-      color: '#4e6b47',
-      map: blockTexture('grass'),
-    });
-    this.owned.push(geometry, material);
-
-    // An InstancedMesh of one, so this returns the same type as the slabs and
-    // the scene's accounting does not need a special case.
-    const mesh = new THREE.InstancedMesh(geometry, material, 1);
-    mesh.setMatrixAt(0, new THREE.Matrix4());
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.receiveShadow = true;
-    mesh.name = 'pavements:open';
-    return mesh;
+    // Only the built blocks. **Open ground is not drawn at all now**: it is the
+    // land, and the land is already there. It used to be a slab, which was a
+    // table standing on a hill once the ground had relief; draping it was
+    // better and still wrong, because a second surface a few centimetres over
+    // the first is two surfaces fighting for the same pixels - visible as
+    // triangles cutting through the ground from any distance.
+    //
+    // What made it drawable at all was the ground being *paving*. Now that the
+    // ground is land, parkland and unclaimed ground are the same thing and the
+    // honest way to draw the same thing twice is once.
+    return [slab(city.blocks.filter((block) => !block.open), 'pavements', 'paving', '#6a6f76')];
   }
 
   /**
