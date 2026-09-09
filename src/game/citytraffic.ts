@@ -1,5 +1,6 @@
 import {
   TRAFFIC_IN_CITY,
+  TRAFFIC_ROAD_FULL,
   TRAFFIC_RADIUS,
   TRAFFIC_DENSITY,
   TRAFFIC_LANE_BIAS,
@@ -81,16 +82,63 @@ export class CityTraffic {
    */
   private district: DistrictKind = 'midtown';
 
+  /** Recomputed each update from the road actually around the player. */
+  private wanted = 0;
+
   /** What time the city thinks it is, for the two peaks and the trough (#180). */
   private hour = TRAFFIC_BY_HOUR[0][0];
 
-  /** How many cars this stretch of city should have around the player. */
-  private get wanted(): number {
-    return Math.round(TRAFFIC_IN_CITY * TRAFFIC_DENSITY[this.district] * hourly(this.hour));
+  /**
+   * How much road there is around the player right now, in world units.
+   *
+   * Remeasured as the car moves, and cheaply: the spatial index hands back the
+   * roads in range and their lengths are already on them.
+   */
+  private nearbyRoad(at: { x: number; z: number }): number {
+    let total = 0;
+    // `roadsIn`, not `roadsNear`: the latter answers about a *point* and hands
+    // back one 120 m cell, so measuring a 360 m circle with it undercounts the
+    // road ninefold - and the traffic then thins to nothing (#216 is the same
+    // mistake, made by the minimap).
+    for (const road of this.grid.roadsIn({
+      minX: at.x - TRAFFIC_RADIUS,
+      maxX: at.x + TRAFFIC_RADIUS,
+      minZ: at.z - TRAFFIC_RADIUS,
+      maxZ: at.z + TRAFFIC_RADIUS,
+    })) {
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const mx = (a.x + b.x) / 2;
+      const mz = (a.z + b.z) / 2;
+      if (Math.hypot(mx - at.x, mz - at.z) > TRAFFIC_RADIUS) continue;
+      total += road.length;
+    }
+    return total;
+  }
+
+  /**
+   * How many cars this stretch of city should have around the player.
+   *
+   * **Per kilometre of road, not per player.** It was a flat count within
+   * `TRAFFIC_RADIUS`, which is the same thing only while every part of the city
+   * has about the same amount of road in it. That stopped being true when the
+   * map was rebuilt around drawn roads: the same fifty-two cars that filled a
+   * dense grid were poured onto the four or five roads that now pass within
+   * 360 m, and the result was bumper to bumper everywhere.
+   *
+   * `TRAFFIC_IN_CITY` keeps its meaning - the cars a *full* neighbourhood gets -
+   * and `TRAFFIC_ROAD_FULL` says how much road that is. A quarter with half the
+   * road gets half the cars, and the number stops needing to be retuned every
+   * time the network changes.
+   */
+  private wantedNear(at: { x: number; z: number }): number {
+    const road = Math.min(1, this.nearbyRoad(at) / TRAFFIC_ROAD_FULL);
+    return Math.round(TRAFFIC_IN_CITY * road * TRAFFIC_DENSITY[this.district] * hourly(this.hour));
   }
 
   update(dt: number, at: { x: number; z: number; onRoad?: CityRoad | null; hour?: number }): void {
     if (at.onRoad) this.district = at.onRoad.district;
+    this.wanted = this.wantedNear(at);
     if (at.hour !== undefined) this.hour = at.hour;
 
     for (const car of this.cars) this.follow(car);

@@ -1093,6 +1093,19 @@ export const BOULEVARD_CLEARANCE = m(5);
 export const TRAFFIC_IN_CITY = 52;
 export const TRAFFIC_RADIUS = m(360);
 /**
+ * How much road within `TRAFFIC_RADIUS` counts as a full neighbourhood, so
+ * `TRAFFIC_IN_CITY` is cars per that much road rather than cars per player.
+ *
+ * A flat count is the same thing only while every part of the city has about
+ * the same amount of road in it, and that stopped being true when the map was
+ * rebuilt around drawn roads: fifty-two cars sized for a dense grid were poured
+ * onto the four or five roads now passing within 360 m.
+ *
+ * Six kilometres is about what a 360 m circle of gridded downtown holds, so the
+ * old number still means what it meant where it was measured.
+ */
+export const TRAFFIC_ROAD_FULL = m(6000);
+/**
  * How much of that each district gets (#180).
  *
  * It used to be exactly constant: the same seventy-five cars in a downtown
