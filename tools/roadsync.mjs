@@ -27,6 +27,92 @@ const length = (points) => {
   return d;
 };
 
+// Stitch the network before writing it.
+//
+// The generator makes a junction where two spans **meet** - they cross, or they
+// share a point exactly. It does not make one where they merely come close, and
+// nothing in the editor was making them meet: a road dragged by its handle stops
+// sharing its old endpoint, and a road drawn towards another one stops a few
+// metres short of it. Everything still *looked* connected.
+//
+// Measured, that left the city in six pieces - 3331 nodes, 640, 45, 23, 23, 4 -
+// and `prune` kept the largest and deleted 22 km of drawn road, including every
+// road on the quarry's body. Not one crossing was missing and every body of land
+// was reachable; the roads simply did not touch.
+//
+// So each loose end is pulled onto the road it was reaching for, and **the same
+// point is inserted into that road**, so the two share a vertex exactly rather
+// than nearly. Done here rather than in the generator because it is a property
+// of the drawing: a network whose roads do not meet is wrong in the editor too,
+// and this way the file says where every junction is.
+const STITCH = 70; // metres: how far a loose end will reach for a road
+
+function stitch(roads) {
+  let made = 0;
+  const project = (at, road) => {
+    let best = null;
+    for (let i = 1; i < road.points.length; i++) {
+      const [ax, az] = road.points[i - 1];
+      const [bx, bz] = road.points[i];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const span = dx * dx + dz * dz;
+      const t = span < 1e-9 ? 0 : Math.max(0, Math.min(1, ((at[0] - ax) * dx + (at[1] - az) * dz) / span));
+      const p = [Math.round(ax + dx * t), Math.round(az + dz * t)];
+      const d = Math.hypot(p[0] - at[0], p[1] - at[1]);
+      if (!best || d < best.d) best = { d, p, index: i, t };
+    }
+    return best;
+  };
+
+  for (const road of roads) {
+    for (const end of [0, road.points.length - 1]) {
+      const at = road.points[end === 0 ? 0 : road.points.length - 1];
+      let best = null;
+      for (const other of roads) {
+        if (other === road) continue;
+        const hit = project(at, other);
+        if (hit && hit.d <= STITCH && (!best || hit.d < best.d)) best = { ...hit, other };
+      }
+      // Not `best.d === 0`. A road whose end lies exactly *on* another road is
+      // the case that needs this most and the one the first version skipped:
+      // `buildGraph` makes a junction where two spans cross or share a vertex,
+      // and an endpoint sitting on a segment's interior does neither. Measured,
+      // n103's start was 0 m from r89 and 5.3 km of drawn road was pruned for it.
+      // The only thing worth skipping is a vertex the other road already has.
+      if (!best) continue;
+      // Never insert a point on top of one that is already there. The
+      // projection lands on an existing vertex often - that is what a road
+      // meeting another road at its corner looks like - and splicing a duplicate
+      // in makes a zero-length segment, which the clip drops and which can sever
+      // the road it was meant to join. Measured: doing it without this guard took
+      // the city from 61.0 km to 49.8.
+      const before = best.other.points[best.index - 1];
+      const after = best.other.points[best.index];
+      const apart = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (apart(best.p, before) < 2 || apart(best.p, after) < 2) {
+        // Close enough to an existing vertex to *be* it: move the end onto that
+        // vertex exactly instead, which is the junction we wanted anyway.
+        const vertex = apart(best.p, before) < apart(best.p, after) ? before : after;
+        if (end === 0) road.points[0] = [...vertex];
+        else road.points[road.points.length - 1] = [...vertex];
+        made++;
+        continue;
+      }
+      // The end moves onto the road...
+      if (end === 0) road.points[0] = best.p;
+      else road.points[road.points.length - 1] = best.p;
+      // ...and the road gains that point, so the two share a vertex and
+      // `buildGraph` makes a junction out of it.
+      best.other.points.splice(best.index, 0, best.p);
+      made++;
+    }
+  }
+  return made;
+}
+
+const stitched = stitch(roads);
+
 // Sorted by id so a re-sync produces a readable diff rather than a reshuffle.
 const num = (id) => Number(id.replace(/\D+/g, ''));
 roads.sort((a, b) => (a.id[0] === b.id[0] ? num(a.id) - num(b.id) : a.id[0] < b.id[0] ? -1 : 1));
@@ -121,7 +207,8 @@ ${body}
 
 writeFileSync(out, file);
 console.log(
-  `wrote ${out}  ·  ${roads.length} roads  ·  ` +
+  `stitched ${stitched} loose ends onto the roads they were reaching for\n` +
+    `wrote ${out}  ·  ${roads.length} roads  ·  ` +
     `${(roads.reduce((s, r) => s + length(r.points), 0) / 1000).toFixed(1)} km  ·  ` +
     `${(file.length / 1024).toFixed(0)} KB`,
 );
