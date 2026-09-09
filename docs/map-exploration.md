@@ -153,6 +153,26 @@ Still open from that: the haul road itself reads at 110%, because it crosses the
 and a road over one is a cliff. That wants either a road that follows the bench
 surfaces or the cut and fill of #252.
 
+### The second round: the stubs
+
+30 roads deleted, 8 drawn, 12 moved. 98 generated -> 76, and **nothing under
+30 m left** - the eight fragments the first round had were all clipped or split
+leftovers rather than decisions, and none of them was load-bearing. The network
+is one piece and all four places are on it. `docs/roads-edited.json` is the
+network as it stands.
+
+Two things this round is worth remembering for:
+
+- **A stub is invisible on a map and obvious in a sorted list.** They were
+  1 m to 29 m long on a 10 km map. What found them was sorting the editor's list
+  by length and flying the view to whatever was picked; what let them be deleted
+  with confidence was the check saying afterwards that the network was still one
+  piece.
+- **A save that lists its fields by hand loses one.** The editor wrote
+  `{id, kind, bridge, district, isNew, points}` and quietly dropped `deadEnd`,
+  so two roads marked as deliberate came back flagged as mistakes on the next
+  check. It saves everything the road carries now.
+
 ## The standing question: procedural, authored, or both
 
 The thing this rebuild keeps running into is not "procedural versus authored".

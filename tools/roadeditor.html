@@ -873,14 +873,12 @@
         seed: DATA.seed,
         savedAt: new Date().toISOString(),
         removed: [...removed],
-        roads: live().map((r) => ({
-          id: r.id,
-          kind: r.kind,
-          bridge: !!r.bridge,
-          district: r.district,
-          isNew: !!r.isNew,
-          points: r.points,
-        })),
+        // Everything the road carries, not a chosen subset. The first version
+        // listed the fields by hand and quietly dropped `deadEnd` - the flag
+        // that says a road stops where it means to - so two roads marked
+        // deliberate came back flagged as mistakes on the next check. A save
+        // that loses a field is worse than one that saves a field too many.
+        roads: live().map(({ isNew, ...rest }) => ({ ...rest, isNew: !!isNew })),
       });
       toast(`Saved ${live().length} roads, ${countEdits()} edited`);
     } catch (err) {
