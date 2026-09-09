@@ -83,6 +83,18 @@
   .facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
   .facts dt { color: var(--dim); }
   .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .goto input {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 7px 9px;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .goto input:focus-visible { outline: 2px solid var(--road-hot); outline-offset: 1px; }
   .listhead {
     display: flex;
     gap: 6px;
@@ -165,6 +177,12 @@
       <button id="zoom-fit" title="Fit the whole map (0)">Fit</button>
     </div>
     <div class="row">
+      <button id="slope" aria-pressed="false" title="Shade ground too steep for a road">Show grade</button>
+    </div>
+    <div class="row goto">
+      <input id="goto" type="text" placeholder="go to x, z" aria-label="Go to coordinates" />
+    </div>
+    <div class="row">
       <button id="undo" disabled>Undo</button>
       <button id="reset" title="Back to the roads the generator made">Revert all</button>
     </div>
@@ -179,6 +197,7 @@
     <kbd>Alt</kbd>+click a handle deletes that point<br>
     <b>Drag</b> empty ground to pan · <b>wheel</b> or <kbd>+</kbd> <kbd>-</kbd> <kbd>0</kbd> to zoom<br>
     <b><kbd>Shift</kbd>+drag anywhere to draw freehand</b><br>
+    <b>Show grade</b>: amber over 10%, red over 13% - no road crosses red<br>
     Draw road: click points, <kbd>Enter</kbd> to finish, <kbd>Esc</kbd> to cancel
   </div>
 
@@ -293,6 +312,49 @@
     rc.putImageData(img, 0, 0);
   }
 
+  /**
+   * Where the ground is too steep for a road, as its own layer.
+   *
+   * The relief shows *height*, and height is not the thing that stops a road:
+   * a bench edge in the quarry is 11 m over one cell and looks like a faint line
+   * on a hill-shade, while being the one place a road cannot go. This shades
+   * anything over the country cap, so the obstacles are visible rather than
+   * inferred - which is what the last three failed attempts at one road were
+   * short of.
+   */
+  const STREET_CAP = 0.1;
+  const COUNTRY_CAP = 0.13;
+  const grade = document.createElement('canvas');
+  grade.width = height.cols;
+  grade.height = height.rows;
+  {
+    const gc = grade.getContext('2d');
+    const img = gc.createImageData(height.cols, height.rows);
+    const at = (c, r) => {
+      if (r < 0 || r >= height.rows || c < 0 || c >= height.cols) return height.water;
+      return HEIGHTS[r * height.cols + c];
+    };
+    for (let r = 0; r < height.rows; r++) {
+      for (let c = 0; c < height.cols; c++) {
+        const i = ((height.rows - 1 - r) * height.cols + c) * 4;
+        const h = at(c, r);
+        if (isWater(h)) continue;
+        const dx = (isWater(at(c + 1, r)) ? h : at(c + 1, r)) - (isWater(at(c - 1, r)) ? h : at(c - 1, r));
+        const dz = (isWater(at(c, r + 1)) ? h : at(c, r + 1)) - (isWater(at(c, r - 1)) ? h : at(c, r - 1));
+        const slope = Math.hypot(dx, dz) / (height.step * 2);
+        if (slope <= STREET_CAP) continue;
+        // Amber where only a country road could climb it, red where nothing can.
+        const bad = slope > COUNTRY_CAP;
+        img.data[i] = bad ? 235 : 232;
+        img.data[i + 1] = bad ? 70 : 160;
+        img.data[i + 2] = bad ? 70 : 60;
+        img.data[i + 3] = bad ? 200 : 130;
+      }
+    }
+    gc.putImageData(img, 0, 0);
+  }
+  let showGrade = false;
+
   const DISTRICT_TINT = {
     downtown: 'rgba(92,107,192,0.20)',
     midtown: 'rgba(102,137,122,0.16)',
@@ -366,6 +428,20 @@
       (bounds.maxZ - bounds.minZ) * view.scale,
     );
     ctx.restore();
+
+    if (showGrade) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(sx(bounds.minX), sy(bounds.maxZ));
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        grade,
+        0, 0,
+        (bounds.maxX - bounds.minX) * view.scale,
+        (bounds.maxZ - bounds.minZ) * view.scale,
+      );
+      ctx.restore();
+    }
 
     for (const area of districts) {
       ctx.beginPath();
@@ -524,6 +600,9 @@
       add('kind', selected.road.bridge ? `${selected.road.kind} · bridge` : selected.road.kind);
       add('points', String(selected.road.points.length));
       add('length', `${Math.round(length(selected.road))} m`);
+      const ends = selected.road.points;
+      add('from', `${ends[0][0]}, ${ends[0][1]}`);
+      add('to', `${ends[ends.length - 1][0]}, ${ends[ends.length - 1][1]}`);
     }
   }
 
@@ -754,6 +833,9 @@
   $('zoom-fit').onclick = () => { home(); draw(); };
 
   window.addEventListener('keydown', (e) => {
+    // Typing in the go-to box is typing, not a shortcut: without this, "-2682"
+    // zooms out four times and puts nothing in the field.
+    if (e.target instanceof HTMLInputElement) return;
     if (e.key === '+' || e.key === '=') { zoomBy(1.35); return; }
     if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.35); return; }
     if (e.key === '0') { home(); draw(); return; }
@@ -807,6 +889,30 @@
     $('sort-arrow').textContent = by === 'length' ? (sort.ascending ? '↑' : '↓') : '';
     refresh();
   }
+  $('slope').onclick = () => {
+    showGrade = !showGrade;
+    $('slope').setAttribute('aria-pressed', String(showGrade));
+    $('slope').textContent = showGrade ? 'Hide grade' : 'Show grade';
+    draw();
+  };
+
+  // "go to x, z" - the coordinates the checks report, so a finding can be looked
+  // at rather than hunted for.
+  $('goto').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const parts = $('goto').value.split(/[ ,]+/).map(Number).filter((v) => !Number.isNaN(v));
+    if (parts.length < 2) return;
+    const rect = canvas.getBoundingClientRect();
+    view.scale = Math.max(view.scale, 0.35);
+    view.x = 0;
+    view.y = 0;
+    view.x = rect.width / 2 - sx(parts[0]);
+    view.y = (rect.height - 30) / 2 - sy(parts[1]);
+    draw();
+    toast(`at ${parts[0]}, ${parts[1]}`);
+  });
+  $('goto').addEventListener('keyup', (e) => e.stopPropagation());
+
   $('sort-id').onclick = () => setSort('id');
   $('sort-len').onclick = () => setSort('length');
 
