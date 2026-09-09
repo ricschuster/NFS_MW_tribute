@@ -33,6 +33,7 @@ function graphOf(points: Vec2[], edges: [number, number][]): City {
     length: Math.hypot(points[b].x - points[a].x, points[b].z - points[a].z),
     speed: 10,
     lanes: 2,
+    bridge: false,
   }));
   for (const road of roads) {
     nodes[road.a].roads.push(road.id);
@@ -103,7 +104,7 @@ describe('the faces of a road network', () => {
       [2, 3],
       [3, 0],
     ]);
-    city.nodes[2].level = 'deck';
+    city.nodes[2].level = 'elevated';
     expect(facesOf(city)).toHaveLength(0);
   });
 });

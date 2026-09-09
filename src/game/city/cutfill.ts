@@ -184,8 +184,35 @@ export function cutAndFill(terrain: Terrain, roads: Gradeable[], cap = ROUTE_COU
   for (let i = 0; i < samples.length; i++) moved = Math.max(moved, Math.abs(samples[i].h - natural[i]));
   if (moved < cell * 0.05) return;
 
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
+  // **Only the cells near a road.** This used to walk the whole height field -
+  // a thousand by eight hundred, every one of them checking nine buckets - for
+  // a network that touches a few per cent of it. Generation went from eleven
+  // seconds to minutes and the driving probe timed out before it reached the
+  // first corner.
+  //
+  // The candidates come from the samples instead: each one claims the cells
+  // within `reach` of it, deduped, which is the same set of cells and a
+  // fraction of the work.
+  const candidates = new Set<number>();
+  const span = Math.ceil(reach / cell);
+  for (const sample of samples) {
+    const c0 = Math.round((sample.x - bounds.minX) / cell);
+    const r0 = Math.round((sample.z - bounds.minZ) / cell);
+    for (let dr = -span; dr <= span; dr++) {
+      const row = r0 + dr;
+      if (row < 0 || row >= rows) continue;
+      for (let dc = -span; dc <= span; dc++) {
+        const col = c0 + dc;
+        if (col < 0 || col >= cols) continue;
+        candidates.add(row * cols + col);
+      }
+    }
+  }
+
+  for (const at of candidates) {
+    {
+      const row = Math.floor(at / cols);
+      const col = at % cols;
       const x = bounds.minX + col * cell;
       const z = bounds.minZ + row * cell;
       const bx = Math.floor(x / reach);
@@ -219,7 +246,6 @@ export function cutAndFill(terrain: Terrain, roads: Gradeable[], cap = ROUTE_COU
       }
       if (best > reach || weight === 0) continue;
       const want = sum / weight;
-      const at = row * cols + col;
       cells[at] = best <= half ? want : lerp(want, cells[at], (best - half) / ROAD_CUT_BLEND);
     }
   }
