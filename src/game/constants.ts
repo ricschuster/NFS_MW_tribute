@@ -387,15 +387,7 @@ export const ROAD_CUT_RELAX = 400;
  */
 export const ROAD_CUT_MARGIN = 0.88;
 
-/**
- * How finely the renderer draws the landscape (#254).
- *
- * Coarser than `TERRAIN_CELL`, which is 10 m and would put eight hundred
- * thousand vertices in one mesh. A landscape is read at hundreds of metres and
- * the roads carry their own geometry at their own resolution, so this has to
- * get the *shape* of the ground right rather than every shelf cut into it.
- */
-export const TERRAIN_RENDER_STEP = m(40);
+
 
 
 /**
@@ -610,6 +602,27 @@ export const EMBANKMENT_STEP = m(90);
  */
 export const TERRAIN_RELIEF = m(120);
 export const TERRAIN_CELL = m(10);
+
+/**
+ * How finely the renderer draws the landscape (#254).
+ *
+ * Half a road's shelf, so the shelf exists in the drawn ground.
+ *
+ * It was 40 m, on the reasoning that a landscape is read at hundreds of metres.
+ * That is true of a landscape and false of the things cut into it: a road's
+ * shelf is `ROAD_CUT_WIDTH` wide, 24 m, so a 40 m mesh cannot see it at all.
+ * Measured across nine thousand off-road points, the mean disagreement was 9 cm
+ * and the worst was **15 m** - and the worst is what a player feels, because it
+ * is exactly where the road is. Driving off a carriageway dropped the car into
+ * the unshelved hillside the shelf had been cut out of.
+ *
+ * `TERRAIN_CELL` itself - 10 m, which would make the drawn ground and the ground
+ * the car stands on the same surface rather than two approximations of one - is
+ * eight hundred thousand vertices in one mesh, and the headless renderer times
+ * out building it. 20 m is two hundred thousand, resolves a 24 m shelf, and
+ * takes the worst disagreement from 15 m to something a car does not fall into.
+ */
+export const TERRAIN_RENDER_STEP = m(20);
 export const TERRAIN_SHORE = m(1400);
 /**
  * How far the land takes to climb out of *inland* water - a channel or the
