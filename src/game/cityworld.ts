@@ -105,6 +105,7 @@ import {
 } from './city/grid';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
+import { planCentre } from './city/plan';
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -413,12 +414,16 @@ export class CityWorld {
     this.reinflating = mods.reinflating;
   }
 
-  /** Put the car on a surface street near the middle of the city, pointing along it. */
+  /** Put the car on a surface street in **downtown**, pointing along it. */
   spawn(): void {
-    const middle = {
-      x: (this.city.bounds.minX + this.city.bounds.maxX) / 2,
-      z: (this.city.bounds.minZ + this.city.bounds.maxZ) / 2,
-    };
+    // The middle of the map is not the middle of the city and never was: it is
+    // a point in a rectangle, and Kestrel Bay is five bodies of land with the
+    // town on one corner of the biggest. Starting there put the car in open
+    // country, two and a half kilometres from anything, which is a poor first
+    // ten seconds of a game about a city.
+    //
+    // The plan knows where downtown is (ADR-0009), so ask it.
+    const middle = planCentre('downtown');
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;
