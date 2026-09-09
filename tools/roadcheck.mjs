@@ -36,6 +36,7 @@ const { makeWater } = await server.ssrLoadModule('/src/game/city/water.ts');
 const { makeTerrain, groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { shapeForPlaces } = await server.ssrLoadModule('/src/game/city/places.ts');
 const { landBodies } = await server.ssrLoadModule('/src/game/city/bodies.ts');
+const { cutAndFill } = await server.ssrLoadModule('/src/game/city/cutfill.ts');
 const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
 const C = await server.ssrLoadModule('/src/game/constants.ts');
 const { CITY_LAND_STREAM, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE, CITY_MAX_BRIDGE, ROUTE_ARTERIAL, ROUTE_COUNTRY, TERRAIN_CELL } = C;
@@ -51,6 +52,13 @@ const terrain = makeTerrain(CITY_LAND_STREAM, bounds, water);
 // The places dig into the ground before any road is laid, so a road to the
 // quarry has to be measured against the quarry rather than the hill it replaced.
 shapeForPlaces(terrain, water);
+// Cut and fill the network in before measuring it (#252). Without this the
+// check reports the hillside a road was drawn over rather than the shelf it will
+// be built on, which is the difference between "32%" and "a road".
+cutAndFill(
+  terrain,
+  saved.roads.map((r) => ({ points: r.points.map(([x, z]) => ({ x: x * UNITS_PER_METRE, z: z * UNITS_PER_METRE })) })),
+);
 const land = landBodies(bounds, water);
 await server.close();
 

@@ -53,6 +53,7 @@ import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } fr
 import { placeApproach, placeRoads, shapeForPlaces } from './places';
 import { landBodies, type LandBodies } from './bodies';
 import { AUTHORED_ROADS } from './roads';
+import { cutAndFill } from './cutfill';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -126,6 +127,11 @@ export function generateCity(seed: number): City {
   // sim's own `groundAt` - then sees the ground as it will be rather than the
   // hillside it replaced.
   shapeForPlaces(terrain, water);
+  // And cut and fill the roads into it (#252). After the places, because a road
+  // to the quarry is graded against the quarry and not the hill it replaced;
+  // before anything is laid, so the network, the blocks and the sim's own
+  // `groundAt` all see the shelf rather than the hillside.
+  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, AUTHORED_ROADS);
 
   // Which body of land each point is on. Wanted in three places now - the roads
   // between the bodies, the blocks that must not cross a channel, and the places.

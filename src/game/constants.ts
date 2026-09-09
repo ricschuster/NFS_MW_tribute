@@ -359,6 +359,36 @@ export const CITY_STREET_GRID = false;
 export const CITY_AUTHORED_ROADS = true;
 
 /**
+ * Cut and fill (#252): how wide a shelf a road cuts, and how far that shelf
+ * grades back into the ground either side.
+ *
+ * The width is the carriageway and its shoulders and no more - this displaces
+ * terrain, and terrain displaced further than a road needs is a scar. The blend
+ * is what turns the edge of the shelf into a bank rather than a wall; too short
+ * and every road in hill country has a kerb of rock beside it.
+ *
+ * `ROAD_CUT_STEP` is how finely the road is sampled before its profile is
+ * computed. Finer than `TERRAIN_CELL`, because the profile is a filter over
+ * distance and a filter fed uneven samples has a wobble in it.
+ */
+export const ROAD_CUT_WIDTH = m(24);
+export const ROAD_CUT_BLEND = m(26);
+export const ROAD_CUT_STEP = m(8);
+/** How many times the grade constraints are relaxed before giving up on them. */
+export const ROAD_CUT_RELAX = 400;
+/**
+ * How far inside the grade cap the earthworks aim.
+ *
+ * Grading exactly to the limit lands exactly on it, and a surface written to a
+ * 10 m grid and read back through bilinear interpolation is not exact: the road
+ * that forced cut and fill came out at precisely 13.0% against a 13% cap and
+ * failed by a rounding error. Design to a margin, like anything else that has to
+ * hold a tolerance after being built.
+ */
+export const ROAD_CUT_MARGIN = 0.88;
+
+
+/**
  * Whether the elevated freeway is built.
  *
  * Off, with the grid. It is a rectangle inset from the map bounds - a shape
