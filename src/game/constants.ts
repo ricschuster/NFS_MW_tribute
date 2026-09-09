@@ -601,6 +601,27 @@ export const EMBANKMENT_STEP = m(90);
  * the hills" and "change the city" the same act.
  */
 export const TERRAIN_RELIEF = m(120);
+/**
+ * The smallest piece of ground the road network can enclose and have it mean
+ * something (#268).
+ *
+ * Below this a face is the sliver between two roads that nearly touch rather
+ * than a block: the network is a chain of thirty-metre pieces and any two of
+ * them that cross at a shallow angle leave a triangle. About a tenth of the
+ * smallest block the city has ever had.
+ */
+export const FACE_MIN_AREA = m(60) * m(60);
+/**
+ * How far a local street may lean off the axis the face's own shape chose, in
+ * radians.
+ *
+ * Small on purpose. The split is chosen by the shape of the ground being split,
+ * which is what makes the result read as grown; the jitter only stops the
+ * splits stacking into a perfect binary tree. More than this and the streets
+ * read as noise rather than as streets.
+ */
+export const FACE_SPLIT_JITTER = 0.14;
+
 export const TERRAIN_CELL = m(10);
 
 /**
