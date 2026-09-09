@@ -222,13 +222,28 @@ function waterEnds(city: City, props: StreetProp[]): void {
 
     // Only the ones the water made. A cul-de-sac that ends in dry land is a
     // street that stops, which is a normal thing for a street to do.
+    //
+    // Checked over a fan of directions round the road's own heading, not just
+    // straight along it: an authored road can meet the coast at an angle
+    // instead of the perpendicular a gridded dead end always used to, and a
+    // street that stops with the water just off to one side is still a street
+    // the water made stop. Measured on the pinned city: two dead ends the
+    // straight-ahead check missed, both with the bank a few degrees to the
+    // side rather than dead ahead.
     const other = city.nodes[road.a === node.id ? road.b : road.a].pos;
     const dx = node.pos.x - other.x;
     const dz = node.pos.z - other.z;
     const run = Math.max(1, Math.hypot(dx, dz));
+    const heading = Math.atan2(dz, dx);
     let wet = false;
-    for (let d = 0; d <= WATER_END_REACH && !wet; d += UNITS_PER_METRE * 4) {
-      wet = inWater(city, node.pos.x + (dx / run) * d, node.pos.z + (dz / run) * d);
+    for (const spread of [0, -0.7, 0.7, -1.4, 1.4]) {
+      const dir = heading + spread;
+      const fx = Math.cos(dir);
+      const fz = Math.sin(dir);
+      for (let d = 0; d <= WATER_END_REACH && !wet; d += UNITS_PER_METRE * 4) {
+        wet = inWater(city, node.pos.x + fx * d, node.pos.z + fz * d);
+      }
+      if (wet) break;
     }
     if (!wet) continue;
 
@@ -266,6 +281,14 @@ function signs(rng: Rng, city: City, props: StreetProp[]): void {
     // Only the roads at street level count, in both senses: a ramp arriving
     // here does not make a crossroads out of a bend, and measuring against one
     // would measure against a road that climbs away out of the junction.
+    //
+    // Boulevards are deliberately excluded even though the grid is off and
+    // they are the whole surface network today (ADR-0009): the corner offset
+    // below clears the *widest* road at the junction and steps back along the
+    // *host* one, which is exact for a rectangular grid crossing and not for
+    // an organic one - tried, and it landed a sign in a live lane at a couple
+    // of the sharper boulevard junctions. Streets and arterials return with
+    // the grid; boulevards want their own placement first.
     const streets = node.roads
       .map((id) => city.roads[id])
       .filter((r) => r.class === 'street' || r.class === 'arterial');
