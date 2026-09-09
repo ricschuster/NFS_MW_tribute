@@ -340,6 +340,25 @@ export const CITY_BODY_CELL = m(40);
 export const CITY_STREET_GRID = false;
 
 /**
+ * Whether the roads come from `city/roads.ts` rather than from the generator.
+ *
+ * On. The generator still makes a perfectly good *draft* - routed boulevards, a
+ * quay, an embankment, a road to each body of land - and that draft is where
+ * these came from. What it cannot do is decide which of them the city wants,
+ * and that turned out to be most of the work: seventy-four roads survived out of
+ * ninety-eight, thirty were deleted as fragments or duplicates, eight were drawn
+ * and twelve moved.
+ *
+ * Generated-then-edited is the shape that fits here, and it fits because of the
+ * *number*. Seventy-four is too many to draw from nothing and few enough to fix
+ * by eye. The districts went the same way at ADR-0009 for the same reason.
+ *
+ * With this off, the generator lays its own roads again and `city/roads.ts` is
+ * ignored - which is how a new draft gets made when the plan or the land moves.
+ */
+export const CITY_AUTHORED_ROADS = true;
+
+/**
  * Whether the elevated freeway is built.
  *
  * Off, with the grid. It is a rectangle inset from the map bounds - a shape

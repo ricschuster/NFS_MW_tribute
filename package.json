@@ -18,6 +18,7 @@
     "roaddiff": "node tools/roaddiff.mjs",
     "roadcheck": "node tools/roadcheck.mjs",
     "roadfix": "node tools/roadfix.mjs",
+    "roadsync": "node tools/roadsync.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
     "icons": "node tools/icons.mjs",

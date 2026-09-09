@@ -35,6 +35,7 @@ const server = await createServer({ appType: 'custom', server: { middlewareMode:
 const { makeWater } = await server.ssrLoadModule('/src/game/city/water.ts');
 const { makeTerrain, groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { shapeForPlaces } = await server.ssrLoadModule('/src/game/city/places.ts');
+const { landBodies } = await server.ssrLoadModule('/src/game/city/bodies.ts');
 const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
 const C = await server.ssrLoadModule('/src/game/constants.ts');
 const { CITY_LAND_STREAM, CITY_WIDTH, CITY_DEPTH, UNITS_PER_METRE, CITY_MAX_BRIDGE, ROUTE_ARTERIAL, ROUTE_COUNTRY, TERRAIN_CELL } = C;
@@ -50,6 +51,7 @@ const terrain = makeTerrain(CITY_LAND_STREAM, bounds, water);
 // The places dig into the ground before any road is laid, so a road to the
 // quarry has to be measured against the quarry rather than the hill it replaced.
 shapeForPlaces(terrain, water);
+const land = landBodies(bounds, water);
 await server.close();
 
 const m = (v) => v * UNITS_PER_METRE;
@@ -136,6 +138,27 @@ function survey(points) {
   }
   if (run) crossings.push(run);
   return { length, overWater, crossings, steepest, steepAt };
+}
+
+/** The closest point on a road to `at`. */
+function nearestPoint(at, road) {
+  let best = road.points[0];
+  let bestD = Infinity;
+  for (let i = 1; i < road.points.length; i++) {
+    const [ax, az] = road.points[i - 1];
+    const [bx, bz] = road.points[i];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const span = dx * dx + dz * dz;
+    const t = span < 1e-9 ? 0 : Math.max(0, Math.min(1, ((at[0] - ax) * dx + (at[1] - az) * dz) / span));
+    const p = [ax + dx * t, az + dz * t];
+    const d = Math.hypot(p[0] - at[0], p[1] - at[1]);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best;
 }
 
 /** Closest approach from a point to any of these roads, in metres. */
@@ -235,7 +258,21 @@ for (let i = 0; i < saved.roads.length; i++) {
     const a = saved.roads[i];
     const b = saved.roads[j];
     if (find(a.id) === find(b.id)) continue;
-    const near = a.points.some((p) => nearestRoad(p, [b]).d <= JOIN);
+    // Two roads join where they pass close **and there is ground between them**.
+    // Proximity alone said this network was one piece when it was three: a road
+    // on one bank and a road on the other are 45 m apart across a channel, and
+    // no car has ever driven that. It is the whole reason bridges are chosen
+    // rather than assumed, and the check had no idea water existed.
+    const near = a.points.some((p) => {
+      const hit = nearestRoad(p, [b]);
+      if (hit.d > JOIN) return false;
+      const to = nearestPoint(p, b);
+      for (let s = 1; s < 5; s++) {
+        const t = s / 5;
+        if (wet(p[0] + (to[0] - p[0]) * t, p[1] + (to[1] - p[1]) * t)) return false;
+      }
+      return true;
+    });
     if (near) union(a.id, b.id);
   }
 }
@@ -265,6 +302,68 @@ for (const place of base.places) {
   );
 }
 console.log(`\n${problems === 0 ? 'no blocking problems' : `${problems} blocking problem${problems === 1 ? '' : 's'}`}`);
+
+// Every water crossing on the whole network, not just the hand-drawn ones.
+//
+// A crossing longer than `CITY_MAX_BRIDGE` is not a bridge and never becomes
+// one: `clip` does not even record it as a candidate, so the two banks stay
+// separate components and `prune` deletes the smaller. This check was only ever
+// applied to the roads somebody had just drawn, which is exactly backwards - a
+// *deletion* is what takes a crossing away, and deletions are made on the roads
+// that were already there.
+{
+  const overlong = [];
+  let total = 0;
+  for (const r of saved.roads) {
+    for (const crossing of survey(r.points).crossings) {
+      total++;
+      if (crossing.length > maxBridge) {
+        overlong.push({ id: r.id, ...crossing });
+      }
+    }
+  }
+  console.log(`\ncrossings: ${total} on the whole network, ${overlong.length} too long to bridge`);
+  for (const c of overlong) {
+    console.log(`  ✗ ${c.id} crosses ${Math.round(c.length)} m at (${c.at[0]}, ${c.at[1]})`);
+  }
+
+  // Which bodies of land each crossing actually joins, and therefore which
+  // bodies have no way onto them at all.
+  //
+  // This is the check that was missing. Connectivity was being asked of the
+  // *roads* - do they touch - and a road that runs from one bank to the other
+  // touches both, so a network could look like one piece and still be three
+  // islands once the generator asked for a bridge and could not build one. The
+  // question a map has to answer is whether every body of land is reachable, and
+  // nothing was asking it.
+  const size = new Map();
+  for (let i = 0; i < land.size.length; i++) size.set(i, land.size[i] / (UNITS_PER_METRE * UNITS_PER_METRE) / 1e6);
+  const worth = [...size.entries()].filter(([, km2]) => km2 > 0.3).sort((a, b) => b[1] - a[1]);
+  const name = new Map(worth.map(([id], i) => [id, ['main', 'B', 'C', 'D', 'E', 'F'][i] ?? `#${id}`]));
+  const bodyOf = (p) => land.at(m(p[0]), m(p[1]));
+
+  const joined = new Map(worth.map(([id]) => [id, id]));
+  const find = (a) => (joined.get(a) === a ? a : (joined.set(a, find(joined.get(a))), joined.get(a)));
+  const links = [];
+  for (const r of saved.roads) {
+    const on = [...new Set(r.points.map(bodyOf).filter((b) => b >= 0 && name.has(b)))];
+    for (let i = 1; i < on.length; i++) {
+      if (find(on[0]) !== find(on[i])) {
+        joined.set(find(on[0]), find(on[i]));
+        links.push(`${name.get(on[0])}-${name.get(on[i])} by ${r.id}`);
+      }
+    }
+  }
+  console.log(`\nbodies of land: ${worth.map(([id, km2]) => `${name.get(id)} ${km2.toFixed(1)} km²`).join(', ')}`);
+  console.log(`  joined: ${links.join(', ') || 'nothing'}`);
+  const home = worth[0][0];
+  const cut = worth.filter(([id]) => find(id) !== find(home)).map(([id]) => name.get(id));
+  if (cut.length) {
+    console.log(`  ✗ NO ROAD REACHES: ${cut.join(', ')} - the generator will prune ${cut.length === 1 ? 'it' : 'them'}`);
+  } else {
+    console.log('  ✓ every body of land is reachable');
+  }
+}
 
 // And the same question of the roads the *generator* made, because a cap
 // nothing already obeys is not a standard a hand-drawn road should be held to.

@@ -2,6 +2,7 @@ import {
   CITY_WIDTH,
   CITY_DEPTH,
   CITY_ARTERIAL_SPACING,
+  CITY_AUTHORED_ROADS,
   CITY_FREEWAY,
   CITY_STREET_GRID,
   CITY_BODY_CELL,
@@ -51,6 +52,7 @@ import { makeRouter } from './routing';
 import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
 import { placeApproach, placeRoads, shapeForPlaces } from './places';
 import { landBodies, type LandBodies } from './bodies';
+import { AUTHORED_ROADS } from './roads';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -188,103 +190,120 @@ export function generateCity(seed: number): City {
     }
   }
 
+  if (CITY_AUTHORED_ROADS) {
+    // **The roads are drawn** (`city/roads.ts`).
+    //
+    // Laid through `layRoute` like every other routed road, and for the reason
+    // that function exists: a drawn road arrives as a chain of short pieces, and
+    // `clip` looks for a gap *inside* a span, so a crossing that falls between
+    // two pieces is never offered as a bridge candidate. `layRoute` lays each
+    // crossing as one span from bank to bank, which is the shape `clip` knows.
+    //
+    // Every one of them is `required`. The author decided where this city
+    // crosses its water; the spacing rule in `chooseBridges` is for picking
+    // among crossings nobody chose.
+    for (const road of AUTHORED_ROADS) {
+      layRoute(road.points, water, laid, road.kind, road.district, true);
+    }
+  } else {
   // Boulevards go in as ordinary spans, so they are cut against the water and
-  // split at every crossing by the same code as everything else.
-  //
-  // **Routed, not swept** (ADR-0008 rule 2). `boulevardRoutes` still picks where
-  // one starts and ends - across the map, spread out, alternating sides - and
-  // the router decides how it gets there. A swept curve is a quadratic bowed by
-  // a random number, and a random number knows nothing about the ground: it
-  // reads as a line drawn on a map because that is what it is. A routed one
-  // bends because the hill is there.
-  for (const route of boulevardRoutes(rng, bounds)) {
-    const line = router.route(route[0], route[route.length - 1], ROUTE_ARTERIAL);
-    layRoute(line.length > 1 ? line : route, water, laid);
-  }
-
-  // And the roads that follow the water, in the same way and for the same
-  // reason (#241). A street cut off by the river used to end at the bank; now
-  // it ends onto the embankment, which is what a street meeting a river
-  // actually does.
-  //
-  // A boulevard, because that is what this codebase calls a road that bends:
-  // arterials are asserted to be axis-aligned - they are the grid's spine - and
-  // blocks are already swept clear of boulevards. Classing it as an arterial
-  // broke both of those, which is the tests earning their keep.
-  for (const route of embankmentRoutes(water, builtUp)) {
-    for (let i = 1; i < route.length; i++) {
-      laid.push({
-        from: route[i - 1],
-        to: route[i],
-        class: 'boulevard',
-        district: 'waterfront',
-        embankment: true,
-      });
+    // split at every crossing by the same code as everything else.
+    //
+    // **Routed, not swept** (ADR-0008 rule 2). `boulevardRoutes` still picks where
+    // one starts and ends - across the map, spread out, alternating sides - and
+    // the router decides how it gets there. A swept curve is a quadratic bowed by
+    // a random number, and a random number knows nothing about the ground: it
+    // reads as a line drawn on a map because that is what it is. A routed one
+    // bends because the hill is there.
+    for (const route of boulevardRoutes(rng, bounds)) {
+      const line = router.route(route[0], route[route.length - 1], ROUTE_ARTERIAL);
+      layRoute(line.length > 1 ? line : route, water, laid);
     }
-  }
 
-  // A road to each of the other bodies of land, from a district on this side to
-  // a district on that one, **routed** over the ground rather than drawn across
-  // it (ADR-0008 rule 2).
-  //
-  // Two things make these necessary at all. `clip` only offers a gap as a
-  // bridge candidate where an arterial or a boulevard crosses water, and
-  // bounding the grid to the built-up area (rule 3) stopped the arterials well
-  // short of the coast - so the roads that used to cross the channels by
-  // accident stopped existing, no gap was ever a candidate, and `prune` deleted
-  // every district across the water. Measured: three bodies of land and *zero*
-  // bridges.
-  //
-  // Routed rather than laid, because a straight line between two lobes crosses
-  // whatever is in the way. The router prices water per metre, so it finds the
-  // narrows on its own and the crossing chooses itself; and it prices the
-  // square of the gradient, so it arrives at the water along the ground rather
-  // than over a ridge.
-  const links = linkRoutes(water, land);
-  for (const link of links) {
-    layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
-  }
-
-  // The places, and the road in to each (#271). Their own roads go in as
-  // ordinary spans for the same reason the boulevards and the embankment do -
-  // the clip, the junction splitting and the connectivity repair are all one
-  // piece of code and nothing here should have a second copy of them.
-  for (const road of placeRoads(terrain, water)) {
-    const line = road.loop ? [...road.line, road.line[0]] : road.line;
-    for (let i = 1; i < line.length; i++) {
-      laid.push({ from: line[i - 1], to: line[i], class: 'boulevard', district: 'industrial' });
+    // And the roads that follow the water, in the same way and for the same
+    // reason (#241). A street cut off by the river used to end at the bank; now
+    // it ends onto the embankment, which is what a street meeting a river
+    // actually does.
+    //
+    // A boulevard, because that is what this codebase calls a road that bends:
+    // arterials are asserted to be axis-aligned - they are the grid's spine - and
+    // blocks are already swept clear of boulevards. Classing it as an arterial
+    // broke both of those, which is the tests earning their keep.
+    for (const route of embankmentRoutes(water, builtUp)) {
+      for (let i = 1; i < route.length; i++) {
+        laid.push({
+          from: route[i - 1],
+          to: route[i],
+          class: 'boulevard',
+          district: 'waterfront',
+          embankment: true,
+        });
+      }
     }
-  }
-  // And a road *to* each place, routed over the ground. A place with no way in
-  // is scenery, and `prune` deletes it: the docks, the airfield and the quarry
-  // are each on a different body of land, so the road in is the thing that makes
-  // four of the five crossings earn themselves.
-  for (const place of PLAN_PLACES) {
-    if (place.kind === 'lookout') continue;
-    const body = land.at(place.at.x, place.at.z);
-    const link = links.find((l) => l.body === body);
-    const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
-    if (!from) continue;
-    // Stopping where the place begins, which is not always the middle of it: a
-    // quarry's middle is the floor of the pit, and a road routed to it drives
-    // down the workings.
-    layRoute(router.route(from, placeApproach(place, from, terrain), ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
-  }
 
-  // Kestrel Head to Halloway Quarry: the lookout on the main body's summit to
-  // the quarry on the eastern one.
-  //
-  // The two ends are what make it worth having. It starts at 116 m on the
-  // steepest ground on the map, so the router has to switchback down off the
-  // massif; it crosses to another body of land, so it brings a bridge; and it
-  // ends 60 m up in an excavation. `ROUTE_COUNTRY` rather than the arterial
-  // profile: this is a road between two places and not a city street, so it
-  // tolerates a steeper grade and minds the shore more.
-  {
-    const head = PLAN_PLACES.find((p) => p.kind === 'lookout');
-    const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
-    if (head && pit) {
-      layRoute(router.route(head.at, pit.at, ROUTE_COUNTRY), water, laid, 'boulevard', 'midtown', true);
+    // A road to each of the other bodies of land, from a district on this side to
+    // a district on that one, **routed** over the ground rather than drawn across
+    // it (ADR-0008 rule 2).
+    //
+    // Two things make these necessary at all. `clip` only offers a gap as a
+    // bridge candidate where an arterial or a boulevard crosses water, and
+    // bounding the grid to the built-up area (rule 3) stopped the arterials well
+    // short of the coast - so the roads that used to cross the channels by
+    // accident stopped existing, no gap was ever a candidate, and `prune` deleted
+    // every district across the water. Measured: three bodies of land and *zero*
+    // bridges.
+    //
+    // Routed rather than laid, because a straight line between two lobes crosses
+    // whatever is in the way. The router prices water per metre, so it finds the
+    // narrows on its own and the crossing chooses itself; and it prices the
+    // square of the gradient, so it arrives at the water along the ground rather
+    // than over a ridge.
+    const links = linkRoutes(water, land);
+    for (const link of links) {
+      layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+    }
+
+    // The places, and the road in to each (#271). Their own roads go in as
+    // ordinary spans for the same reason the boulevards and the embankment do -
+    // the clip, the junction splitting and the connectivity repair are all one
+    // piece of code and nothing here should have a second copy of them.
+    for (const road of placeRoads(terrain, water)) {
+      const line = road.loop ? [...road.line, road.line[0]] : road.line;
+      for (let i = 1; i < line.length; i++) {
+        laid.push({ from: line[i - 1], to: line[i], class: 'boulevard', district: 'industrial' });
+      }
+    }
+    // And a road *to* each place, routed over the ground. A place with no way in
+    // is scenery, and `prune` deletes it: the docks, the airfield and the quarry
+    // are each on a different body of land, so the road in is the thing that makes
+    // four of the five crossings earn themselves.
+    for (const place of PLAN_PLACES) {
+      if (place.kind === 'lookout') continue;
+      const body = land.at(place.at.x, place.at.z);
+      const link = links.find((l) => l.body === body);
+      const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
+      if (!from) continue;
+      // Stopping where the place begins, which is not always the middle of it: a
+      // quarry's middle is the floor of the pit, and a road routed to it drives
+      // down the workings.
+      layRoute(router.route(from, placeApproach(place, from, terrain), ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+    }
+
+    // Kestrel Head to Halloway Quarry: the lookout on the main body's summit to
+    // the quarry on the eastern one.
+    //
+    // The two ends are what make it worth having. It starts at 116 m on the
+    // steepest ground on the map, so the router has to switchback down off the
+    // massif; it crosses to another body of land, so it brings a bridge; and it
+    // ends 60 m up in an excavation. `ROUTE_COUNTRY` rather than the arterial
+    // profile: this is a road between two places and not a city street, so it
+    // tolerates a steeper grade and minds the shore more.
+    {
+      const head = PLAN_PLACES.find((p) => p.kind === 'lookout');
+      const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+      if (head && pit) {
+        layRoute(router.route(head.at, pit.at, ROUTE_COUNTRY), water, laid, 'boulevard', 'midtown', true);
+      }
     }
   }
 
@@ -509,7 +528,7 @@ interface Span {
   district: DistrictKind;
   bridge?: boolean;
   /**
-   * This span's crossing is not optional.
+   * This span is not optional: neither its crossing nor the runs either side.
    *
    * `chooseBridges` picks crossings for where they are (#247), which is right
    * for the ones inside the city and wrong for the one road that reaches a body
@@ -641,7 +660,7 @@ function layRoute(
   let i = 0;
   while (i < line.length - 1) {
     if (!wet(line[i], line[i + 1])) {
-      laid.push({ from: line[i], to: line[i + 1], class: kind, district });
+      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required });
       i++;
       continue;
     }
