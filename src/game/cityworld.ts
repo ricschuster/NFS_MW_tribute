@@ -23,6 +23,7 @@ import {
   DUNK_HOLD,
   DUNK_DAMAGE,
   DUNK_DEPTH,
+  FALL_CLEARANCE,
   WRECK_LINGER,
   TAKEDOWN_FLASH,
   TAKEDOWN_SPEED_KEPT,
@@ -1487,7 +1488,10 @@ export class CityWorld {
     // and one driving over ground above sea level was never considered supported
     // at all.
     const land = groundAt(this.city.terrain, this.x, this.z);
-    const supported = surface.road !== null || this.y <= land;
+    // Driving down a slope is not falling. The ground under the car is lower
+    // every step than the car was the step before, and testing `y <= land`
+    // exactly makes every downhill metre a fall - see `FALL_CLEARANCE`.
+    const supported = surface.road !== null || this.y <= land + FALL_CLEARANCE;
     if (!supported) {
       this.falling = true;
       this.fallSpeed += GRAVITY * dt;

@@ -1007,6 +1007,23 @@ export const DUNK_DAMAGE = 0.12;
 export const DUNK_DEPTH = m(2.4);
 
 /**
+ * How far the car may be above the ground before it is *falling* rather than
+ * driving down a slope.
+ *
+ * `settle` decided this by asking whether the car was at or below the ground,
+ * which is exact and wrong: drive downhill off-road and the ground under the
+ * car is lower every step than the car was the step before, so the car was
+ * falling continuously. It landed sixty times a second, took `DAMAGE_FALL`
+ * each time and kept `HIT_SPEED_KEPT` of its speed each time - full damage in
+ * two seconds and a car crawling at 0.4 km/h that read, from the driver's seat,
+ * as being stuck on nothing.
+ *
+ * A metre and a half is more than any slope drops under a car in one step and
+ * far less than the twelve-metre deck a fall is meant to be about.
+ */
+export const FALL_CLEARANCE = m(1.5);
+
+/**
  * Parkland on the land the street grid never claimed (#185).
  *
  * A fifth of the map belonged to neither block nor road: blocks are laid on
