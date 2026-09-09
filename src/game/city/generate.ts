@@ -47,7 +47,7 @@ import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
-import { makeTerrain } from './terrain';
+import { groundAt, makeTerrain, type Terrain } from './terrain';
 import { makeRouter } from './routing';
 import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
 import { placeApproach, placeRoads, shapeForPlaces } from './places';
@@ -318,7 +318,7 @@ export function generateCity(seed: number): City {
   const gaps: Gap[] = [];
   for (const span of laid) clip(span, water, dry, gaps);
 
-  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps), water);
+  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps), water, terrain);
 
   // Blocks are checked against the water at block resolution, which a river
   // can slip through at building resolution. Buildings are cheap to test
@@ -1249,7 +1249,7 @@ interface Graph {
  * Turn overlapping centrelines into a graph: cut every span at each span that
  * crosses it, and share a node wherever two roads meet.
  */
-function buildGraph(spans: Span[]): Graph {
+function buildGraph(spans: Span[], terrain: Terrain): Graph {
   const nodes: CityNode[] = [];
   const at = new Map<string, CityNode>();
   const roads: CityRoad[] = [];
@@ -1259,7 +1259,16 @@ function buildGraph(spans: Span[]): Graph {
     const k = key(x, z);
     let node = at.get(k);
     if (!node) {
-      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, y: 0, level: 'surface', roads: [] };
+      // **On the ground, not at zero** (#255). A surface node's height is the
+      // land under it, which is what makes a street climb a hill: everything
+      // downstream reads `y` - the sim rides it, the renderer draws it, the
+      // pursuit and the routing ask about it - and until now every one of them
+      // was told the city was flat.
+      //
+      // `level` is what says which network a node is on (#250), so this does
+      // not muddle the two the way `y === 0` used to.
+      const pos = { x: snap(x), z: snap(z) };
+      node = { id: nodes.length, pos, y: groundAt(terrain, pos.x, pos.z), level: 'surface', roads: [] };
       at.set(k, node);
       nodes.push(node);
     }
@@ -1360,9 +1369,10 @@ function connect(
   gaps: Gap[],
   initial: number[],
   water: Water,
+  terrain: Terrain,
 ): { nodes: CityNode[]; roads: CityRoad[] } {
   const chosen = new Set(initial);
-  const rebuild = () => buildGraph([...dry, ...[...chosen].map((i) => bridgeSpan(gaps[i]))]);
+  const rebuild = () => buildGraph([...dry, ...[...chosen].map((i) => bridgeSpan(gaps[i]))], terrain);
   let graph = rebuild();
 
   for (let attempt = 0; attempt < gaps.length; attempt++) {

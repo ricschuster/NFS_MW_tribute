@@ -1,4 +1,5 @@
 import { CITY_GRID_CELL, SURFACE_REACH } from '../constants';
+import { groundAt } from './terrain';
 import type { Building, City, CityNode, CityRoad, Rect, Vec2 } from './types';
 
 /**
@@ -300,7 +301,7 @@ export function roadHeightAt(city: City, road: CityRoad, x: number, z: number): 
 export interface Surface {
   /** The road under this point, or null for open ground. */
   road: CityRoad | null;
-  /** Ground height here: the deck if on a road, otherwise street level. */
+  /** Height here: the deck if on a road, otherwise the land itself. */
   y: number;
 }
 
@@ -332,5 +333,8 @@ export function surfaceAt(city: City, grid: CityGrid, x: number, z: number, near
     }
   }
 
-  return best ? { road: best, y: bestY } : { road: null, y: 0 };
+  // Open ground is **the land**, not zero (#255). Cutting across a block used to
+  // put the car at sea level whatever hill the block was on, so the same step
+  // that let you leave the road also teleported you into or above the ground.
+  return best ? { road: best, y: bestY } : { road: null, y: groundAt(city.terrain, x, z) };
 }

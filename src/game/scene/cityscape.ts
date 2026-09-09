@@ -24,6 +24,8 @@ const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
  * test at range, far below the pavement kerb. */
 const ROAD_LIFT = 0.02 * UNITS_PER_METRE;
+/** How far under the water the drawn ground is allowed to go. */
+const SHORE_FLOOR = -0.8 * UNITS_PER_METRE;
 /**
  * How far a block's kerb reaches below its own top.
  *
@@ -184,7 +186,13 @@ export class Cityscape {
     for (let i = 0; i < position.count; i++) {
       const x = position.getX(i) + midX;
       const z = position.getZ(i) + midZ;
-      position.setY(i, groundAt(city.terrain, x, z));
+      // Clamped at the waterline rather than following the bed down. The
+      // height field puts the seabed `TERRAIN_SEABED` under the water, which is
+      // right for the data and wrong to draw: at a 40 m mesh the shore fell off
+      // the six metres in one step and the whole coast came out as stairs.
+      // Nothing can see the bed - the water is drawn over it - so the mesh stops
+      // just under the surface and the land meets the water where it should.
+      position.setY(i, Math.max(groundAt(city.terrain, x, z), SHORE_FLOOR));
     }
     position.needsUpdate = true;
     geometry.computeVertexNormals();
