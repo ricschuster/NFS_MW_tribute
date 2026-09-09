@@ -33,6 +33,8 @@ import {
   QUARRY_BENCH,
   QUARRY_DEPTH,
   QUARRY_FLOOR,
+  QUARRY_HAUL_BLEND,
+  QUARRY_HAUL_WIDTH,
   QUARRY_RAMP_TURNS,
   RUNWAY_APRON,
   RUNWAY_WIDTH,
@@ -188,6 +190,33 @@ function digQuarry(terrain: Terrain, at: Vec2, radius: number): void {
     const benched = floor + Math.round((smooth - floor) / QUARRY_BENCH) * QUARRY_BENCH;
     return Math.min(was, benched);
   });
+
+  // Then cut the haul road into the benches.
+  //
+  // This is the piece that was missing, and the reason the road down read at
+  // 110%: the benches are a flight of 11 m cliffs and the road crossed them.
+  // Displacing the ground to meet the road turns each crossing into a graded
+  // shelf, which is what a haul road actually is - cut on the outside, filled on
+  // the inside, all the way round.
+  //
+  // Both cut *and* fill, unlike the bowl above, which only ever lowers: on the
+  // inner turns the pit is already deeper than the ramp and the shelf has to be
+  // built up to meet it.
+  const path = quarryHaul(at, radius);
+  const half = QUARRY_HAUL_WIDTH / 2;
+  reshape(terrain, at, radius + QUARRY_HAUL_BLEND, (p, was) => {
+    let best = Infinity;
+    let want = 0;
+    for (let i = 1; i < path.length; i++) {
+      const { away, along } = toSegment(path[i - 1].at, path[i].at, p);
+      if (away >= best) continue;
+      best = away;
+      want = lerp(rim, floor, lerp(path[i - 1].down, path[i].down, along));
+    }
+    if (best > half + QUARRY_HAUL_BLEND) return null;
+    if (best <= half) return want;
+    return lerp(want, was, (best - half) / QUARRY_HAUL_BLEND);
+  });
 }
 
 /** Flatten the wharf apron. A dock is level ground beside deep water. */
@@ -283,25 +312,39 @@ export function placeApproach(place: PlanPlace, from: Vec2, terrain: Terrain): V
   return best;
 }
 
+/**
+ * The haul road's path down the pit, as points with how far down each one is.
+ *
+ * A pure function of where the quarry is and how big it is, so the terrain carve
+ * and the road itself are the same line rather than two lines that agree.
+ *
+ * It spirals **inward** as it descends, which is what an open pit does and also
+ * what a height field requires: a helix at constant radius would stack road over
+ * road, and a height field has one height per point.
+ */
+export function quarryHaul(at: Vec2, radius: number): { at: Vec2; down: number }[] {
+  const path: { at: Vec2; down: number }[] = [];
+  const steps = Math.round(QUARRY_RAMP_TURNS * 48);
+  const start = Math.atan2(1, 0);
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const angle = start + t * QUARRY_RAMP_TURNS * Math.PI * 2;
+    // Not on a circle: a haul road follows the face it was cut into, which is
+    // not round either.
+    const push = Math.sin(angle * 2 + 2.1) * 0.62 + Math.sin(angle * 3 + 3.57) * 0.38;
+    const r = radius * lerp(0.94, 0.2, t) * (1 + push * 0.12);
+    path.push({ at: { x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r }, down: t });
+  }
+  return path;
+}
+
 /** The lip of the bowl, as a loop. */
 function quarryRim(at: Vec2, radius: number): Vec2[] {
   return lumpyLoop(at, radius + PLACE_BLEND * 0.5, 18, 2.1, 0.17);
 }
 
 function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
-  const line: Vec2[] = [];
-  const turns = QUARRY_RAMP_TURNS;
-  const steps = Math.round(turns * 16);
-  const start = Math.atan2(1, 0);
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const angle = start + t * turns * Math.PI * 2;
-    // From just inside the rim to the middle of the floor, and not on a circle:
-    // a haul road follows the face it was cut into, which is not round either.
-    const push = Math.sin(angle * 2 + 2.1) * 0.62 + Math.sin(angle * 3 + 3.57) * 0.38;
-    const r = radius * lerp(0.92, 0.16, t) * (1 + push * 0.15);
-    line.push({ x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r });
-  }
+  const line = quarryHaul(at, radius).map((step) => step.at);
   // The rim road, so the descent has something to leave from and the workings
   // can be looked at from above without driving into them.
   // A rim road only where there is rim: the bowl can sit against a coast.

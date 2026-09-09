@@ -376,10 +376,15 @@ console.log(`\n${problems === 0 ? 'no blocking problems' : `${problems} blocking
   let worstGrade = 0;
   let worstId = null;
   const grades = [];
+  const steep = [];
   for (const r of generated) {
-    const g = survey(r.points).steepest;
+    const s = survey(r.points);
+    const g = s.steepest;
     grades.push(g);
-    if (g > ROUTE_COUNTRY.cap) over++;
+    if (g > ROUTE_COUNTRY.cap) {
+      over++;
+      steep.push({ id: r.id, grade: g, at: s.steepAt ?? [0, 0] });
+    }
     if (g > worstGrade) {
       worstGrade = g;
       worstId = r.id;
@@ -392,6 +397,11 @@ console.log(`\n${problems === 0 ? 'no blocking problems' : `${problems} blocking
       `worst ${Math.round(worstGrade * 100)}% (${worstId}), ` +
       `${over} over the ${Math.round(ROUTE_COUNTRY.cap * 100)}% cap`,
   );
+  // Naming them, because "three over the cap" is a number and "r64 at 59%" is
+  // something somebody can go and look at.
+  for (const r of steep.sort((a, b) => b.grade - a.grade)) {
+    console.log(`    ${r.id.padEnd(5)} ${Math.round(r.grade * 100)}% at (${r.at[0]}, ${r.at[1]})`);
+  }
 }
 
 // ---------------------------------------------------------------------------

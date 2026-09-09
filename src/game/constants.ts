@@ -406,8 +406,25 @@ export const RUNWAY_APRON = m(70);
 export const QUARRY_DEPTH = m(52);
 export const QUARRY_BENCH = m(11);
 export const QUARRY_FLOOR = m(6);
-/** How many times the road down turns before it reaches the floor. */
-export const QUARRY_RAMP_TURNS = 1.75;
+/**
+ * The haul road down into the pit.
+ *
+ * `QUARRY_RAMP_TURNS` is what makes it drivable at all. The depth is fixed, so
+ * the grade is the drop per turn over the length of that turn: 52 m in 1.75
+ * turns of a bowl this size is already gentle on paper, and three turns puts it
+ * near 1%. The road was never steep because of its *plan* - it was steep because
+ * it crossed the benches, and an 11 m bench edge is a cliff whatever route you
+ * take over it.
+ *
+ * So the ramp is **cut into the wall**: the terrain is displaced along the
+ * spiral to meet the road, which is what a haul road is and the first piece of
+ * cut and fill in the generator (#252 in miniature). `QUARRY_HAUL_WIDTH` is the
+ * shelf it runs on and `QUARRY_HAUL_BLEND` is how far that shelf grades back
+ * into the benches either side.
+ */
+export const QUARRY_RAMP_TURNS = 3;
+export const QUARRY_HAUL_WIDTH = m(26);
+export const QUARRY_HAUL_BLEND = m(34);
 /** The wharf apron: level ground beside deep water, and the piers off it. */
 export const DOCK_LEVEL = m(5);
 export const DOCK_APRON = m(300);
