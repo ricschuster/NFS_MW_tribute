@@ -3,11 +3,23 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`
-- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/
+- **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`, with
+  `feat/landmass` (37 commits) open against it as a pull request
+- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ (this is
+  `main`, which still ships the *old* gridded city - the branch has not merged)
 - **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
   · the README lists the named viewpoints
-- **Status:** the rebuild is finished. One game, one sim, one URL.
+- **Status:** mid-rebuild, and this is the second one. The first rebuild
+  (ADR-0004 through ADR-0006) replaced a closed-track racer with a flat,
+  densely gridded free-roam city and finished cleanly - that is the "finished"
+  this file used to describe. This rebuild (ADR-0007 through ADR-0009) is
+  replacing *that* city's ground with real terrain and its street grid with an
+  authored map, and it is not finished: the grid and the elevated interstate
+  are switched off on purpose while the map is rebuilt from routed roads
+  outward, which means today's pinned city has no blocks, no buildings and no
+  interstate. Read `docs/map-exploration.md` for the day-by-day log and
+  [ADR-0009](decisions/0009-kestrel-bay-is-an-authored-map.md) for the rule
+  that is currently in force.
 
 ## What this is
 
@@ -32,55 +44,82 @@ breaks the Pages URL and every link to it.
 
 ## The state of play
 
-**`/` is Kestrel Bay.** There used to be two games behind one deployment - the
-finished single-track racer at `/`, and the city at `?renderer=drive` - and
-[ADR-0006](decisions/0006-the-city-is-the-game.md) deleted the track. There is
-one simulation (`cityworld.ts`), one renderer (`scene/`), and one query string
-left: `?renderer=city` flies a free camera over the map with no car in it, for
-judging the generator rather than playing it.
+**`/` is Kestrel Bay.** One simulation (`cityworld.ts`), one renderer
+(`scene/`), one query string: `?renderer=city` flies a free camera over the map
+with no car in it, for judging the generator rather than playing it.
+[ADR-0006](decisions/0006-the-city-is-the-game.md) is why there is only one of
+each.
 
-**It has been played twice, properly** (both 2026-09-06), and that is where
-almost the whole board came from. Between the two playthroughs, twelve issues
-were closed. See "Where the work is" - and read "How this went wrong twice"
-before you trust a number in this file.
+**What `main` still plays:** the city ADR-0004 through ADR-0006 built - flat
+ground, a seeded street grid, 3102 roads, 841 blocks, 3771 buildings. That
+snapshot is real but it describes a deleted city: nothing about it is true of
+`feat/landmass` any more, and it will stop being true of `main` too the day
+that branch merges.
 
-The pinned city today: 5 x 4 km, 3102 roads, 2314 junctions, 841 blocks of
-which 312 are open ground and 252 of those are the parkland #185 laid over the
-land the street grid never claimed. 231 km of road, 19 km of boulevard, a 13 km
-elevated loop with 13 ramps and a tunnel, 3 river crossings, 3771 buildings,
-5253 pieces of street furniture. 90 billboards, 24 speed cameras, 7 parked
-cars, 6 events of 2.5 to 4 km - three circuits and three speed runs - 5 ambushes
-at heat 2 through 6, 14 drive-through repair shops and 79 gates and pallet
-stacks that come down. Eighteen cars: one you start in, seven parked around the
-city, ten on the ladder. The city runs on a clock: a full day takes half an
-hour of play and starts at 14:00, which is why every screenshot here is in
-daylight.
+**What `feat/landmass` generates today**, measured with `npm run city` against
+the pinned seed: **4181 roads, 4162 junctions, 71.3 km of road**, all of it
+`boulevard`-class because `CITY_STREET_GRID` is off - there is no arterial
+grid, so there are no arterial-only roads either. **7 water crossings, 1.24 km
+of bridge.** **926 blocks, and every one of them is open ground** - `parksFor`
+still covers whatever the road network does not claim, but nothing claims
+anything right now, so the entire pinned city is parkland. **0 buildings, 0
+interstate, 0 ramps**, because the two flags that build them
+(`CITY_STREET_GRID`, `CITY_FREEWAY` in `constants.ts`) are both `false`. Their
+own comments say why: they are a switch, not a deletion, and `fillSuperblock`
+and `interstate.ts` are the only code that knows how a district becomes blocks
+and how a deck is built - both are wanted back, just not laid with a ruler
+(ADR-0009).
+
+Underneath that, three things are real and new since the last time this file
+was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
+terrain field, roads are cut and filled into it (`cutfill.ts`, #252), and the
+car's own physics read real grade now - a slope changes drive and grip rather
+than being invisible tarmac. The **water is one sea with the land as holes in
+it** (ADR-0008) rather than a bay-and-river pair drawn over a slab, which is
+what let the coastline stop being an edge-to-edge wall and become six separate
+bodies of land joined by routed river crossings. And **downtown, the harbour,
+the industrial edge and the four places (docks, airfield, quarry, lookout) are
+authored polygons** in `city/plan.ts` (ADR-0009) rather than a seeded radius
+pick - `npm run plan` checks the polygons still agree with whatever ground the
+generator draws for the pinned seed, and today they do (`nothing overlaps`),
+though the water model's own idea of where downtown is sits 2.6 km from the
+plan's downtown and inside the plan's industrial district, which is one of the
+"where the work is" items below.
 
 ## How this went wrong twice, and will again
 
-Two failure modes account for most of what a very long session found, and both
-are cheap to repeat.
+Two failure modes accounted for most of what the first rebuild's very long
+session found, and a third showed up finishing this one. All three are cheap
+to repeat.
 
 **Almost every number in this game was calibrated against a world that no
-longer exists.** `RIVAL_BASE_SPEED_FRAC` came from `npm run feel` racing on the
-*track*, where a reference lap averaged 91% of top speed; a lap of Kestrel Bay
-averages a quarter of that in traffic, so the entire ladder was unbeatable and
-nothing went red when it happened. `SPEEDRUN_TARGET` had the same history.
-`ROUTE_LAPS` was sized for "a two-and-a-half minute event at the pace the car
-actually holds" - measured before #171 put traffic in the probes, so a race was
-ten minutes. The helicopter's whole design rested on being visible. When you
+longer exists.** `RIVAL_BASE_SPEED_FRAC` came from `npm run feel` racing on a
+track that was later deleted; `SPEEDRUN_TARGET` had the same history. When you
 find a constant with a confident comment, check what the comment was measured
-*on*.
+*on* - and now check whether the ground that comment was measured on still has
+a street grid, because a second thing has since started going stale the same
+way: `docs/HANDOFF.md`'s own numbers, if nobody updates them when the city
+changes shape again.
 
-**The probe is wrong more often than the code.** In one session: `endings` grew
-a `--skill` flag that changed nothing, because the skill model lives in
+**The probe is wrong more often than the code.** In one session: `endings`
+grew a `--skill` flag that changed nothing, because the skill model lives in
 `driveRoute`'s hands and that probe drives the car directly. An impact probe
 reported every crash as a low-speed scrape, because it read the speed *after*
-the collision had reversed it. `citylap`'s ladder summary read the property
-inverted, because `RIVALS` runs rank 10 first and the table is built backwards.
-A weighted road pick was written, measured, found to do nothing, and replaced.
-If a number looks strange, suspect the probe first - and when a probe tells you
-something surprising, make it tell you *twice*, in two ways.
+the collision had reversed it. If a number looks strange, suspect the probe
+first - and when a probe tells you something surprising, make it tell you
+*twice*, in two ways. This rebuild's own instance is under "known problems"
+below: `npm run pace` currently fails hard, and it has not yet been decided
+whether that is the car or the probe.
+
+**A long branch drifts red without anyone noticing, because nobody runs the
+whole suite against a moving world.** `feat/landmass` reached 37 commits and
+128 failing tests before anything counted them, and none of that was a fresh
+regression from the commits doing the counting: a disposable worktree at a
+commit five back showed the same 38 failures in `city.test.ts` that a run at
+HEAD showed. Watching only the files you are touching, on a branch that is
+reshaping the ground everything else stands on, means the rest of the suite
+can go red under you silently. Run `npm run test` in full every so often on a
+branch like this, not just the file you last edited.
 
 ## The decisions that shape everything
 
@@ -90,12 +129,24 @@ something surprising, make it tell you *twice*, in two ways.
   about `cityworld.ts` and `scene/`; the modules it names are gone.
 - [ADR-0004](decisions/0004-webgl-free-roam-city.md) - a real 3D WebGL scene.
   Two hard gates forced it: roads over roads, and cameras that leave the car.
-  Both exist and can be looked at (`&view=overpass`, and the crash cut).
 - [ADR-0005](decisions/0005-the-shape-of-kestrel-bay.md) - what the city is
-  *shaped* like. Read before touching the generator. Rules 1-5 are built;
-  landmarks (6) and terrain relief (7) are not.
+  *shaped* like. Rules 1-5 were built as a flat grid; rule 7 (relief) is now
+  built differently than this ADR expected it (see ADR-0007) and rule 6
+  (landmarks) is still not built.
 - [ADR-0006](decisions/0006-the-city-is-the-game.md) - the city is the game,
-  and the track sim is deleted. What went, and what it cost.
+  and the track sim is deleted.
+- [ADR-0007](decisions/0007-relief.md) - the ground gets height. Accepted, then
+  sketched (`npm run sketch`), and the sketch found rule 2 wrong before any of
+  it was built on real code - see ADR-0008 for what changed as a result.
+- [ADR-0008](decisions/0008-a-landmass-and-routed-roads.md) - a landmass
+  instead of a slab, and roads that are routed over the ground rather than
+  swept across it as curves. Supersedes ADR-0007 rule 2 and amends its rules 4
+  and 10.
+- [ADR-0009](decisions/0009-kestrel-bay-is-an-authored-map.md) - the districts
+  and the four named places are authored data (`city/plan.ts`), not a seeded
+  radius pick, and the street grid and elevated interstate are switched off
+  while the map is rebuilt from the routed roads outward. This is the decision
+  in force right now; read it before touching `generate.ts`.
 
 ## Architecture
 
@@ -123,29 +174,41 @@ src/game/
   graphcar.ts     what it is to be a car on the street graph (traffic + police)
   audio.ts        synthesized engine / siren / squelch
   touch.ts        on-screen controls; one reading, not a second control path
-  city/           the generator: types, rng, water, generate, boulevards,
+  city/           the generator: water, terrain, bodies (which lobe of land a
+                  point is on), plan (authored districts and places), roads
+                  (the authored network itself), routing (a router that prices
+                  water and grade), places, cutfill, embankment, boulevards,
                   interstate, buildings, furniture, collectibles, streetfinds,
-                  routes, ambushes, repairs, breakables, grid
+                  routes, ambushes, repairs, breakables, grid, navigate, faces
   scene/          the renderer. cityscape assembles it - ground, carriageways,
                   water, pavements, markings, bridges, viaduct - while cameras,
                   hud and cityview drive it; buildings, furniture, collectibles
                   and breakables build the instanced geometry; worlduv, facades,
-                  surfaces, roofs and carshape are the art pass (#11)
+                  surfaces, roofs, carshape and daylight are the art pass (#11)
 tools/            citylap + citydriver (the reference driver), citymap,
-                  cityshot, pwacheck, icons
+                  cityshot, pwacheck, icons, plan, sketch, and the road-editor
+                  chain: roadexport, roaddiff, roadcheck, roadfix, roadsync
 ```
 
-**The city is data.** `city/` turns `CITY_SEED` into junctions, roads, blocks,
+**The city is data.** `city/` turns a seed into junctions, roads, blocks,
 districts, water, buildings and street furniture as plain data - no renderer, no
 `Math.random`. That is what lets the sim collide with it and the playtests build
-one headlessly. The generator must never import three.js.
+one headlessly. The generator must never import three.js. Right now that data
+has no blocks and no buildings in it, by the same rule: `CITY_STREET_GRID` and
+`CITY_FREEWAY` are read inside `generate.ts` and nowhere else, so turning either
+back on is a one-line change whose consequences are everywhere else in the
+file.
 
-**Height is real.** Nodes carry a `y`, and node identity includes it, so two
-roads at the same map position at different heights are two different places.
-Anything asking "what is at this position" has to ask about a height too.
+**Height is real, everywhere, not just on the interstate.** ADR-0004 already
+meant two roads at the same map position and different heights were two
+different places; ADR-0007 means the *ground* itself has a height at every
+point, sampled from a baked field rather than computed as a formula, because
+roads get cut and filled into it before anything else is laid. Anything asking
+"what is at this position" has to ask about a height, and anything driving on
+it now feels the grade.
 
 **Roads are segments, not axis-aligned lines.** `CityRoad.axis` used to exist
-and every geometric test leant on it; boulevards and winding streets made it a
+and every geometric test leant on it; boulevards and routed roads made it a
 lie. Direction comes from the endpoints, and "is this point on this road" is a
 distance to a segment.
 
@@ -158,13 +221,23 @@ one of these - a player pinned to the graph could not cut across a car park.
 ```bash
 npm run dev        # http://localhost:5173
 npm run typecheck  # run before considering anything done
-npm run test       # 436 unit tests + playtests
+npm run test       # unit tests + playtests
 npm run playtest   # just the playtests: drive CityWorld, assert outcomes
-npm run city       # draw the generated city from above; --seed N for another
+npm run city       # draw the generated city from above; --seed N for another;
+                   # --terrain for the land alone, hill-shaded, with no city on it
+npm run sketch     # a candidate landmass/terrain/road network from scratch,
+                   # touching nothing in src/ - the cheapest place to answer
+                   # the next question about the city's shape
+npm run plan       # does the authored plan still fit the ground the generator
+                   # makes? a guard: a polygon that leaves the land is a failure
+npm run roadexport # write the road network + relief + plan for the road editor
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic, then every rival on the
                    # ladder, clean and boosted; all of it vs. its baseline
-npm run pace       # can the police be outrun? yours vs theirs, every heat level
+npm run pace       # can the police be outrun? yours vs theirs, every heat level.
+                   # currently FAILING - see known problems
+npm run ramps      # can every ramp be climbed? currently vacuous (0 of 0),
+                   # because CITY_FREEWAY is off and there are no ramps to check
 npm run patrol     # twenty minutes with the police live: what started each
                    # pursuit, time to the first, and how much of it was free roam
 npm run endings    # how a pursuit ends - busted, escaped, or neither - at each
@@ -179,78 +252,55 @@ npm run icons      # redraw the app icons from tools/icons.mjs
 
 ### Playing, looking, and measuring
 
-The single most useful thing to know about working here. There are three ways to
-find out something is wrong, and they find different things.
+The single most useful thing to know about working here. There are three ways
+to find out something is wrong, and they find different things.
 
-**Playing it beats both of the others and is the one that gets skipped.** On
-2026-09-06 somebody drove the game for ten minutes and came back with twelve
-comments; nine became issues and two were outright bugs. The test suite was
-green, and so were five probes. It found things no probe can even be pointed at:
-that you cannot tell where the road is, that a pursuit starts for no reason and
-never ends, that the minimap points the wrong way, that nothing in the game
-explains the Quick Wheel or the repair shops or why your car changed colour.
-Do it first, do it often, and write down what you felt rather than what you
-think caused it.
+**Playing it beats both of the others and is the one that gets skipped.**
+Nine of twelve issues from the first rebuild's one long playtest session were
+outright bugs the test suite and five green probes had missed entirely: you
+could not tell where the road was, a pursuit started for no reason and never
+ended, the minimap pointed the wrong way, nothing in the game explained the
+Quick Wheel or the repair shops. Do it first, do it often, and write down what
+you felt rather than what you think caused it.
 
 **Almost every real defect in the city has been invisible to tests that passed
-throughout, and obvious in a picture** - buildings rendering black, water hidden
-under the ground plane, a sky dome centred on the world origin, road markings
-z-fighting into streaks, a camera sitting inside a wall, districts in a perfect
-checkerboard, a waterfront that had swallowed a third of the map.
+throughout, and obvious in a picture** - buildings rendering black, water
+hidden under the ground plane, districts in a perfect checkerboard, a
+waterfront that had swallowed a third of the map. `npm run city` and
+`npm run cityshot` are cheap; use them after any change to the generator.
 
 **And the converse: some defects are invisible in a picture and obvious in a
-number** - traffic driving through itself, a pursuit that could never be
-escaped, elite police cars at 105% of the player's top speed, a whole
-neighbourhood's streets silently deleted. When a screenshot looks fine and
-something still feels wrong, write a probe that prints numbers.
+number.** Two live examples from finishing this rebuild's test suite, neither
+visible in a screenshot: `npm run pace` says a clean, undamaged car tops out at
+78% of reference speed on the pinned city today, against 100% on `main` and
+every heat level's cop being faster - which either means the car cannot be
+outrun any more or means the probe's "hold the throttle on an empty straight"
+assumption stopped being true the day the network stopped being a grid full of
+long straights. And a stationary car under a live pursuit gets a cop to a
+stable 50-52 m and no closer, for as long as the simulation was allowed to run
+- checked to 180 s - which reads as a navigation stall rather than a design
+choice, because nothing about *choosing* to hold station should look the same
+at every distance from 11 m to 70 m. Neither is diagnosed. Both are in "known
+problems" below rather than fixed under pressure, because both sit on a
+mechanism ("you can always be outrun" and "a pursuit can always end") the rest
+of the game depends on.
 
-The clearest case of that is `npm run citylap`. Nothing had ever tried to
-*drive* a generated race route end to end - the tests only checked the routes
-existed - and the first thing a reference driver found was that every one of
-them doubled back on itself, because four independent shortest paths between
-four corners share streets and the "circuit" was an out-and-back with U-turns
-in it. The second was that the perimeter arterial stopped the car dead, its
-centreline being the map boundary exactly. Both had been shipped for months and
-both are obvious the moment something drives them. If a system has never been
-exercised end to end, that is where the bugs are.
-
-`npm run endings` came later and answers the one nobody had asked: *how does a
-pursuit finish?* It found that cops reach a stopped car to within 0.0 m and
-drive through it, and that a search had nobody in it - two things that were
-invisible to every test and every screenshot, and that between them meant a
-pursuit had one ending, the one that pays you.
-
-Three tools came out of that, and they answer different questions.
-`npm run drivers` runs the same routes at four skill levels, because `citylap`
-measures a *perfect* driver - one that holds its lane exactly, looks the whole
-braking window ahead and never stops paying attention - which is the right
-control and the wrong target.
-`npm run pace` is a *guard*: it compares your real top speed against the
-quickest unit at every heat level and fails if an undamaged car cannot outrun
-one, which is an invariant `HEAT_LEVELS` exists to hold and which has been
-broken twice by accident without a test going red. `npm run patrol` is an
-*instrument*: twenty minutes in the city with the police live, reporting what
-the game did rather than asserting anything. It found #170, #171 and the shape
-of the Rep curve on its first run - though note that the *playtest* found more,
-faster, and none of it overlapped.
-
-The probes themselves have been wrong more often than the code has. The track's
-`npm run feel` was wrong three times, every time because its reference driver
-had stopped being a good driver, or because the world had grown a gate the
-probe did not know to pay for. If a number looks strange, suspect the probe.
-
-And the third case: **a change that is obviously wrong in a picture and has no
-obvious cause.** #75's first attempt went through `EffectComposer` and came out
-with a pale sky and dark buildings; the answer was that three.js r185 applies
-tone mapping in its own compositing step, so the composer's `OutputPass` was
-mapping an already-mapped frame. An A/B of the same scene with the composer
-bypassed found it in one shot, and guessing at it did not.
+The clearest historical case of "obvious in a number" is `npm run citylap`:
+the first time anything *drove* a generated race route end to end, every one
+of them turned out to double back on itself, because four independent
+shortest paths between four corners shared streets. If a system has never been
+exercised end to end, that is where the bugs are - and `routesFor` finding
+zero routes on today's pinned city (see "known problems") means the race,
+speed-run and claim events have not been exercised end to end on this branch
+at all yet.
 
 ## Repo mechanics
 
 - Branch, PR, `gh pr merge <n> --auto --squash`. **Auto-merge is a per-PR flag,
   not a repo default** - `allow_auto_merge` only permits it. Enable it in the
   same step as `gh pr create`, or the PR sits with green CI looking broken.
+  A branch the size of `feat/landmass` (37 commits, a generator rewrite) is the
+  exception: open it for review rather than auto-merging, even with green CI.
 - `main` is protected and requires branches to be **up to date**, so a PR that
   falls behind reports `BEHIND` and stalls. Rebase onto `origin/main` and
   force-push with lease.
@@ -265,285 +315,151 @@ bypassed found it in one shot, and guessing at it did not.
 
 ## Where the work is
 
-**Eight issues are open**, and every one of them wants a person. That is the
-state this session ended in and it is worth saying plainly: there is no longer
-a queue of things that can be picked up and finished without a decision.
+**The map rebuild is not finished, and two open issues gate almost everything
+else on this list.** [#271](https://github.com/ricschuster/NFS_MW_tribute/issues/271)
+(districts describe streets; places are what streets go to) and
+[#272](https://github.com/ricschuster/NFS_MW_tribute/issues/272) (the district
+plan as data) are what stand between today's roads-and-terrain-only city and
+turning `CITY_STREET_GRID` back on: `fillSuperblock` needs to know how a piece
+of authored ground becomes blocks, and it currently only knows how to do that
+for a seeded radius pick, which ADR-0009 just retired. Until those land there
+are no blocks, no buildings, no street finds, no roadside breakables, and
+`routesFor` cannot find the four-corner circuits and speed runs need - which
+is why an entire slice of the test suite is `it.skip` on "zero routes today"
+rather than failing.
 
-Twelve issues were closed in a day - #179, #177, #178, #183, #181, #166, #180,
-#185, #192, #11's first item, and half each of #170 and #14 - and almost all of
-them came from **two people-hours of actually playing the game**. The test suite
-was green throughout. So were the probes.
+**[#268](https://github.com/ricschuster/NFS_MW_tribute/issues/268) - downtown
+should feel grown, not planned.** Partly landed already (the parkland-vs-lot
+foundation, and the traffic-density rescale that now reads the road actually
+there instead of a fixed count) but the harder half - what a grown-looking
+downtown's blocks and lots actually look like - is downstream of #271/#272.
 
-### The four live ones
+**[#266](https://github.com/ricschuster/NFS_MW_tribute/issues/266),
+[#265](https://github.com/ricschuster/NFS_MW_tribute/issues/265),
+[#261](https://github.com/ricschuster/NFS_MW_tribute/issues/261),
+[#260](https://github.com/ricschuster/NFS_MW_tribute/issues/260),
+[#259](https://github.com/ricschuster/NFS_MW_tribute/issues/259),
+[#257](https://github.com/ricschuster/NFS_MW_tribute/issues/257),
+[#256](https://github.com/ricschuster/NFS_MW_tribute/issues/256),
+[#253](https://github.com/ricschuster/NFS_MW_tribute/issues/253)** - content
+density by district, a beltway ring, the freeway loop leaving the city proper,
+a periphery of non-city road, buildings you can drive into, a tunnel breaking
+pursuit line of sight, street tunnels and cuttings, and blocks that sit as pads
+on a hillside rather than boxes. All of them are things the generator will
+want once #271/#272 give it real blocks again; none of them are startable
+before that.
 
-**#201 - a circuit is a six-minute race.** Nobody had seen it because until
-#192 nobody had ever *finished* one: the field was three times faster than any
-drivable pace, so the player was lapped and the race ended without them.
-`ROUTE_LAPS` is 2 as a stopgap; the real fix is shorter routes, which
-regenerates every start line. It carries the question underneath everything
-else on this list: a quarter of top speed is 80 km/h in a game whose
-speedometer reads to 320, and every number downstream is now calibrated around
-a car that cannot get out of second gear in its own city.
+**[#249](https://github.com/ricschuster/NFS_MW_tribute/issues/249) - the land
+is lobes joined by channels.** Largely built - ADR-0008 is this issue's
+outcome, and today's pinned city has six bodies of land, not a slab - but the
+issue is still open, and `npm run plan` found one loose thread while checking
+it: the water model's own notion of where "downtown" is sits 2.6 km from the
+plan's authored downtown polygon and inside the plan's industrial polygon
+instead. Worth resolving before it causes something to be built in the wrong
+place.
 
-**#204 - nitrous is a net loss on a city circuit**, 25% boosted against 30%
-clean. #105's regression arriving on a road it was never measured on: a corner
-every few hundred metres scrubs the overspeed off. It cost the ladder its
-design property - "the boss is lost clean and won with the boost" is not
-reachable - so the top of the ladder now wants a better *car* instead, which is
-coherent but was arrived at rather than chosen.
+**[#210](https://github.com/ricschuster/NFS_MW_tribute/issues/210) - the
+reference driver cannot recover from a wide line.** Unrelated to the map
+rebuild and unblocked by it; still open.
 
-**#14 - how the car feels.** Now has numbers under it rather than adjectives: a
-good driver holds 24-31% of top speed in traffic and about half of it on an
-empty road, three flat-out wall impacts wreck a car, and #201 and #204 are both
-really this issue wearing a hat.
-
-**#170 - should a wrecked car be able to pull away from a heat 1 cruiser?** The
-measurable half is done and the docs that oversold speed are fixed; a wrecked
-car escapes about as often as a clean one, because escaping is line of sight.
-What is left is a preference.
-
-### And the rest
-
-**#11 - replace vector-drawn art.** The epic. Signs and bridge parapets are
-done; night, weather and wet roads arrived in part with #180's day cycle. What
-is left, in the order it would show: cars have no headlights, every lit window
-is lit because the facade tile is one bay wide, nothing casts a moving shadow
-as the sun goes round, buildings are still one or two boxes, and the HUD has
-had one pass (#181) and no more.
-
-**M6: beyond the browser - #99, #100, #102, deliberately not started.** There is
-no Rust toolchain and no display here, so a Tauri build cannot be compiled or
-run, and choosing between Electron and Tauri is a heavyweight dependency plus a
-CI and signing decision. Per the house rule that wants an ADR for a new
-dependency, that is a choice for a person.
-
+**[#14](https://github.com/ricschuster/NFS_MW_tribute/issues/14) - tune how
+the car feels**, and **[#11](https://github.com/ricschuster/NFS_MW_tribute/issues/11)
+- replace vector-drawn art with sprites.** Both predate this rebuild and both
+want the map finished before their old numbers (lap pace, event length, the
+ladder's calibration) mean anything again: they were measured against a grid
+that no longer exists, and re-measuring them now would be measuring a city
+with no buildings and no findable race routes.
 
 ## Known problems, not papered over
 
-- **A wrecked car cannot pull away from a heat 1 cruiser** (#170). At full
-  damage the player tops out at 72% of reference and the slowest unit runs at
-  84%, so on a straight it cannot be done - the fractions in `HEAT_LEVELS` are
-  measured against the *undamaged* top speed. **That is not how you escape, and
-  the docs used to say it was.** `seenBy` needs a unit within `SEEN_RANGE` with
-  line of sight, so a corner breaks contact at any speed, and
-  `npm run endings -- --damage 1` measures a wrecked car getting away 67 / 17 /
-  50% of the time at heat 1 / 3 / 6 against a clean car's 50 / 17 / 67% - no
-  consistent difference, inside the noise at six runs a cell. What is left is a
-  preference: *should* damage cost you the ability to break away? `npm run pace`
-  guards whichever way it is settled, and its exit status covers the clean car
-  only.
-- **A stuck car has a way out, and it is deliberately narrow** (#179, fixed).
-  Three seconds of asking the car to move without covering twelve metres earns
-  a prompt; taking it puts the car on the *nearest* road, keeping heat, damage
-  and whatever event is running, which is what stops a free reset being a way
-  out of a pursuit. Two things it does not catch, both on purpose. A car
-  scraping along a wall is covering ground, so the clock keeps resetting - it
-  reads as driving because it is. And a car boxed in by traffic at a junction
-  under throttle will be offered the reset, which is generous rather than
-  wrong. What proved the first of those was a screenshot: `--view stuck` first
-  tried to *drive* into a wall and hold the throttle, and the car bounced off
-  and drove away every time, so the shot is a placed wedge instead.
-- **The ladder is measured, and every number in it was re-derived** (#166 built
-  the probe, #192 was the finding). `npm run citylap`'s second table races every
-  rival twice on one circuit, clean and boosted, driven by an *expert* rather
-  than the perfect driver - this file's own rule for tuning - and records the
-  result in the baseline. It reports rather than fails, because whether the
-  ladder is right is a judgement, and it prints the two numbers a calibration
-  has to reconcile: what the field was configured to hold, and what the driver
-  actually held. The property it checks changed with #204 and the reason is in
-  the constant's comment.
-- **Tarmac means drivable, and it did not used to** (#176, fixed). The ground
-  was one asphalt plane with the road network showing through the gaps between
-  block slabs. The gaps are not the roads - blocks are rectangles, roads bend
-  and get clipped - so anywhere they disagreed was tarmac the sim caps you at a
-  quarter of top speed on. Now the ground is paved-but-not-road and
-  `Cityscape.carriageways` paints each road at exactly the width `onRoad`
-  tests, rotated to its segment and extended half a width past each end, which
-  approximates the capsule and fills junctions from both sides. One rule carries
-  it: dark tarmac is drivable, anything lighter is not, green is a genuinely
-  open block. Do not put the asphalt back on the ground plane to hide #185.
+- **`npm run pace` fails, and it is not yet known whether that is the car or
+  the probe.** A clean, undamaged car measures 78% of reference top speed on
+  the pinned city today; every heat level's slowest unit outruns that; `main`
+  measures 100% and passes. The probe holds the throttle for 120 s on an empty
+  straight starting from the default spawn, which used to be a safe assumption
+  on a gridded arterial and may no longer be one on a sparse, curved authored
+  network - the drive-view screenshot at the default spawn shows a bend within
+  sight of the start. Investigate `pace.mjs`'s assumption before touching
+  `HEAT_LEVELS` or the car's own physics; whichever one is wrong, this gate
+  should stay red until it is understood; it is not safe to merge past it
+  silently.
+- **A stationary car under pursuit cannot be busted, and the search never
+  reaches it.** The nearest cop closes to a stable 50-52 m from a car that
+  never moves and holds there indefinitely - checked to 180 s, well past
+  `CITY_BUST_DISTANCE` (11 m) and still inside `COP_LEASH` (70 m, the off-road
+  "drive straight at them" reach) - so this reads as navigation stalling near
+  the target rather than the search failing to converge on it. Wants real
+  investigation in `citypolice.ts`/`graphcar.ts`, not a fix made under the
+  pressure that found it (`cityworld.playtest.test.ts`, "closes on a car that
+  is standing still, and ends it", currently `it.skip`).
+- **`routesFor` finds zero routes on the pinned city.** It searches for four
+  corner junctions scattered round a candidate centre, and the authored
+  network does not have that kind of junction density near most of the map
+  yet. Every circuit, speed run, claim-after-winning-a-race and the Quick
+  Wheel's mid-race lock is currently untestable on this branch as a result -
+  skipped in the test suite, not deleted, and it will come back with
+  #271/#272.
+- **The `embankment` flag does not survive the road editor.** `AuthoredRoad`
+  in `city/roads.ts` carries `kind`, `district`, `bridge` and `deadEnd` but no
+  `embankment` field, so no road in the generated network is tagged one today,
+  even though the physical quay road is still there (it was in the draft that
+  became the authored roads) and `waterEnds` still rails off every dead end at
+  the water on its own geometry - measured, 13 of 13 - independent of the tag.
+  The player-facing guarantee holds; the network-level "which roads are these"
+  question cannot be asked of the data any more.
+- **Bridge spacing is 1795 m at its worst point, against an 800 m promise.**
+  `chooseBridges` has no dense arterial candidate set left to spread crossings
+  across on the current authored network - a known, measured gap, not a
+  loosened test.
 - **The `CITY_` prefix is history, not a distinction.** `CITY_HEAT_RISE`,
-  `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` are named that way because the track
-  had different constants meaning different things, and reusing one caused three
-  separate bugs - one of which culled every cop the step after it spawned. There
-  is only one world now, so the prefix is a scar. Leave it: renaming it touches
-  every pursuit file for nothing.
-- **Traffic halves the pace, and the baseline now says so** (#171, fixed). The
-  reference driver holds a lane, brakes for the car in front, and corners on the
-  radius its own line actually has, so `npm run citylap` runs every route twice
-  and records both. A good driver holds around 50% of top speed on an empty
-  road and around 26% in traffic. Tune against the traffic number: the empty one
-  describes a game nobody plays.
-
-  Worth knowing how that fix went, because two of the three measurements said
-  the opposite of what was expected. Classifying impacts, the centreline driver
-  met oncoming traffic head on in only **10%** of them - it rear-ended
-  same-direction traffic in 47% and hit buildings in 43%. So a lane on its own
-  made things *worse*, tripling building impacts. Only once it braked for the
-  car in front did head-ons become 59% of what was left, and only once
-  `cornerSpeed` knew about the offset did holding a lane stop costing corners.
-  Three changes, none of which works alone, and the issue as originally written
-  named the smallest of the three.
-- **Pursuit Rep no longer dominates the economy, and the old note was right
-  when it was written.** It used to say twenty minutes at heat 6 earned several
-  times the whole ladder, because the helicopter held you seen and the heat
-  never came down. Measured after #177, #178 and #183: fifteen minutes of
-  `npm run patrol` earns **10,631** against a 65,000 ladder, across five
-  pursuits, four escapes and two busts, with 8.5 of the 15 minutes in free
-  roam. Three things moved it - pursuits have to be provoked, they end, and a
-  bust takes that pursuit's earnings back. Whether that is now too *thin* is
-  #14's to settle, and it should be settled against this number rather than
-  against the old one. Beware short samples: a six-minute slice of the same run
-  paid 575, because it happened to contain a bust and no long escape.
-- **Cover is not a mechanic any more** (#183, and read this before adding one).
-  The helicopter is deleted, and `coveredAt` with it: a deck overhead and the
-  tunnel are geometry now, because there is nothing left that watches you from
-  above. That was the one thing making map knowledge matter in a pursuit, so if
-  cover should mean something again it needs a new thing to mean it against -
-  and whatever that is has to be *visible*, which is the test the helicopter
-  failed. It was about four pixels in a rendered frame while the HUD explained
-  what it was doing, which is exactly what #62's own rationale said not to
-  build.
-- **Both maps were mirrored east to west, and #182 is why it survived.** A map
-  seen from above with +z up has -x to the *right*; both maps drew +x
-  rightwards, and so did `npm run city`, so all three agreed with each other
-  and disagreed with the 3D view. #182 found the minimap drawing the road ahead
-  of you behind you, fixed it by flipping the rotation - which makes "ahead is
-  up" true - and left the mirror. It took somebody playing to say "the map
-  seems flipped". `scene/mapping.ts` is the one conversion now and
-  `mapview.test.ts` proves it against a real camera. If you add a map, use
-  `toMap`; if you add a marker to one, check it against the windscreen and not
-  against the other markers.
-- **The minimap is hard to read in daylight.** Its background is
-  `rgba(8, 12, 18, 0.62)`, so a bright or busy scene shows through it and the
-  roads lose contrast. It clips correctly - a building apparently spilling past
-  the circle is the scene behind it, not a masking bug - but 62% is not enough
-  over pale tarmac. Worse now than it was: the day cycle means the scene behind
-  it is sometimes a white afternoon and sometimes a dark street, and one alpha
-  cannot serve both.
-- **The lighting is no longer flat, and shadows are still doing nothing.** #180
-  put a clock in the sim and a palette on it, so the city runs from moonlight
-  through sunrise, a long afternoon and a sunset - and the difference between
-  three in the morning and half past eight is now the biggest thing in a frame.
-  What has *not* changed is that `castShadow` and `receiveShadow` contribute
-  almost nothing: the sun moves through the day and nothing casts a moving
-  shadow, which at sunrise is the most conspicuous it has ever been. Wet roads
-  and weather are still untouched, and both are #11.
-- **Night is a fake, and knowing which parts is the point.** The lamps do not
-  light anything: `lamp-glow` is an additive quad on the tarmac under each one,
-  because four thousand point lights is a slideshow. Lit windows are an
-  emissive map with *every* window lit - the tile is one bay wide, so "some
-  windows dark" would repeat in a perfect grid across every building. Cars have
-  no headlights at all. Each of those is a place the illusion ends, and the
-  order to fix them in is probably headlights, then window variety, then real
-  light from the lamps.
-- **The city's sound is thin.** #76 wired `audio.ts` into Kestrel Bay - engine,
-  siren and a radio squelch - but there is still nothing for a takedown or a
-  spike strip, and no music.
-- **The traffic column in `citylap` moved per route with #180, in both
-  directions**, which is the point: routes through downtown got slower (Crosstown
-  29% -> 25%) and routes through the quieter quarters faster (Bayside 24% ->
-  29%). The average across the six is about where it was. Damage moved around a
-  lot at the same time and not obviously in one direction - it was already
-  anywhere from 0% to 100% route to route - so do not read a single route's
-  damage figure as a signal.
-- **Traffic does not resolve traffic-vs-traffic collisions** at junctions. One
-  overlapping pair in ~2775 at last measurement: acceptable, not solved.
-- **Blocks stay rectangles in winding quarters**, so they do not follow the
-  curves. Reads acceptably; fixing it needs rotated or polygonal blocks. #185
-  papered over the *consequence* rather than fixing this: the land a dropped or
-  shrunken block leaves behind is parkland now, so it reads as somewhere rather
-  than as an apron, but the blocks themselves are still rectangles and about a
-  tenth of the map still belongs to nothing. That tenth is margin - a median of
-  15 m from the nearest block - which is why it stopped being urgent.
-- **`npm run cityshot -- --view pursuit` is unreliable.** The scripted drive
-  tends to wedge the car against a building and the pursuit ends. The pursuit is
-  verified by probes and playtests instead. `--view takedown` is *not* scripted
-  by driving: it reaches into `globalThis.crosstown` and steps the sim by hand,
-  which is the pattern to copy for anything else that needs an exact setup.
-  Headless Chromium runs this scene at about two frames a second, so a rendered
-  frame is fifteen physics steps and anything timed off `waitForTimeout` lands
-  wherever it lands. The same rate is why the camera director is still running
-  its opening orbit ten seconds in: wait on
-  `view.director.mode === 'chase'`, not on a clock. And a cop pushed onto
-  `police.cops` with a position but a `t` that does not match it is silently
-  teleported onto its road on the next step, because the pursuit re-derives
-  every cop's place from the graph.
-- **`citylap`'s driver is perfect, and nobody is.** It holds its lane exactly,
-  looks the whole braking window ahead, never misjudges a corner and never stops
-  paying attention. `npm run drivers` runs the same routes at four skill levels,
-  and the spread is large: in traffic a beginner holds 43-81% of the reference
-  driver's average speed depending on the route, an advanced driver 72-86% and
-  an expert 92-97%. Tune against the middle of that, not the top of it. **The
-  tier calibration is a first pass and wants a person**: the numbers were fitted
-  to make the gaps legible, not against anyone's actual play. Two things
-  the model got wrong on the way in are worth not repeating: faults have to be
-  square-rooted rather than linear, or an "expert" gets a 45 ms reaction time
-  that no person has; and reaction time must lag the *steering* only, because a
-  person brakes for a corner by anticipation and lagging that too turned the
-  expert into a driver who crashed 358 times over six routes.
-- **The city feel baseline is a driver's, not a player's.** `npm run citylap`
-  gets a reference driver round all six routes, and the average-speed column is
-  the only measurement of how fast Kestrel Bay can be driven. Read it as a floor
-  rather than a target: the driver follows the centreline at a margin under the
-  grip limit and never touches nitrous, so a player has headroom it does not.
-  Getting it there found five bugs, two in the city and three in the driver, and
-  the test suite passed through every one of them.
-- **One speed run may not be winnable at the top difficulty.** The speed-run
-  target is `SPEEDRUN_TARGET` 0.38 rising to 0.52 with difficulty, and the
-  reference driver holds 39%, 57% and 62% on the three speed runs. Foundry
-  Mile at 39% clears the easiest target and nothing above it. That is not
-  proof it is unwinnable - nitrous and a line that cuts corners are both
-  available to a player and not to the driver - but it is the one number in
-  the table that looks like a difficulty cliff, and it is #14's to settle.
-
-  The obvious fix was tried and does not work, which is worth knowing before
-  trying it again: scale the target by what each route's own geometry allows,
-  derived from `sqrt(LATERAL_GRIP * R)` with a forward and backward pass over
-  the polyline the way a racing-line solver does. The answer comes out nearly
-  flat - 75% to 83% across all six routes - because braking from top speed
-  takes only about 45 m in this sim, so a right-angle junction costs almost
-  nothing and corner density barely registers. The spread in the lap table is
-  the *driver*, not the routes. If the targets should vary per route, the
-  number to vary them by has to come from somewhere other than the geometry.
+  `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` are named that way because the
+  deleted track had different constants meaning different things, and reusing
+  one caused three separate bugs. There is only one world now, so the prefix
+  is a scar. Leave it: renaming it touches every pursuit file for nothing.
+- **Cover is not a mechanic.** The helicopter and `coveredAt` were both
+  deleted (#183): a deck overhead and the tunnel are geometry now, and nothing
+  watches you from above. If cover should mean something again it needs a new
+  thing to mean it against, and that thing has to be *visible* - the test the
+  helicopter failed.
+- **Both maps agree with each other and the windscreen, and it took a person
+  playing to find out they didn't used to.** `scene/mapping.ts` is the one
+  conversion (`toMap`), proved against a real camera in `mapview.test.ts`. If
+  you add a map, use `toMap`; if you add a marker, check it against the
+  windscreen and not against the other markers.
+- **The minimap is hard to read in daylight**, and the lighting is not flat
+  any more (#180 put a clock in the sim and a palette on it) while shadows
+  still do nothing as the sun moves through the day.
+- **Blocks stay rectangles wherever they exist**, which today is nowhere, but
+  the underlying limitation (#253) survives the rebuild and will matter again
+  the day #271/#272 bring blocks back.
 
 ## If you are picking this up cold
 
-Read `CLAUDE.md`, then ADR-0004, ADR-0005 and ADR-0006, then "How this went
-wrong twice" above.
+Read `CLAUDE.md`, then ADR-0007, ADR-0008 and ADR-0009 in order, then
+`docs/map-exploration.md` for the log of how the rebuild actually went - it is
+more detailed and more current than this file's summary of it.
 
-**Then play the game for ten minutes.** Not the probes, not the tests - drive
-it. Two people-hours of playing produced twelve closed issues in a day, while
-the test suite and half a dozen probes stayed green throughout. It is by a wide
-margin the highest-yield thing anyone can do here, and it is the thing that
-keeps not getting done because there is always a number to go and look at
-instead. `npm run playthrough` is the closest a machine gets - four driver
-tiers, six heat levels, six events, five ambushes, reported as a session log -
-and it is not close.
+**Then look at the city and drive it.** `npm run city` and `npm run cityshot`
+first, because a generator change is far easier to judge as a picture than as
+a test; then `npm run dev` and drive it, because playing has found more real
+defects than every probe and test combined, on both rebuilds.
 
-Then read "Where the work is", and expect to have a conversation rather than to
-start typing: everything open now turns on a decision. #201 and #204 are the
-two that block the most, and they are really the same question - **the car
-holds a quarter of its top speed in its own city**, and the routes, the rivals,
-the speed-run targets and the boost have all been calibrated around that rather
-than anyone deciding it should be true.
-
-Whatever you pick: keep behaviour in the sim and drawing in the renderer,
-because that split is the only reason this rebuild has been survivable, and keep
-the city's *descriptions* in `city/` for the same reason. If you change a
-generator constant, remember it moves every seeded draw downstream of it - the
-routes, the collectibles, the parked cars - so re-record the baseline and
-re-shoot anything that framed a specific place.
+Then read "Where the work is" above: the two-issue gate (#271, #272) is where
+a session should start if it wants to move the map forward, and the two
+unresolved probe findings (`pace`, the stationary bust) are where a session
+should start if it wants to make the current branch trustworthy before
+anything is built on top of it further.
 
 ## The probes, and what each is for
 
 | | |
 | --- | --- |
-| `npm run test` | 479 unit tests and playtests |
-| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning |
+| `npm run test` | unit tests and playtests: 428 passed, 101 skipped, 0 failed as of the last full run on `feat/landmass` |
+| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Untested on this branch - see `routesFor` above |
 | `npm run playthrough` | the whole game at every level it has one, as a session log |
 | `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
-| `npm run pace` | the one *gate*: can an undamaged car outrun every heat level |
+| `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Currently failing - see known problems |
+| `npm run plan` | does the authored plan still fit the ground the generator makes for the pinned seed - a guard, not a probe |
 | `npm run patrol` | twenty minutes with the police live, and what came of it |
 | `npm run drivers` | the same routes at four skill levels |
 | `npm run city` · `npm run cityshot` | look at it - the city is far easier to judge as a picture than as a test |
