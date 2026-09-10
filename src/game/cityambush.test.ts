@@ -38,7 +38,7 @@ describe('where the traps are', () => {
     for (const spot of city.ambushes) {
       const node = city.nodes.find((n) => n.pos === spot.at);
       expect(node).toBeDefined();
-      expect(node!.y).toBe(0);
+      expect(node!.level).toBe('surface');
       expect(node!.roads.length).toBeGreaterThanOrEqual(3);
       for (const id of node!.roads) {
         expect(city.roads[id].class).not.toBe('interstate');
