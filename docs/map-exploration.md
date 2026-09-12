@@ -20,6 +20,13 @@ Quarry. 98 editable roads, 78 km, eight water crossings.
 That is a deliberately small thing. It is also the first version of this map
 where every road on it is a road somebody would draw.
 
+The interstate loop got the same treatment since this was last written: it is
+now a 26-point authored path with 4 tunnel anchors (`city/freeway.ts`, #261),
+drawn and checked the same way the surface roads were, through its own editor
+and its own export/sync pair. See "5. The freeway loop" below. `CITY_FREEWAY`
+is still off, for the same reason `CITY_STREET_GRID` is: the ramps it needs
+have nowhere to land without the grid back.
+
 ## The order things were tried in
 
 ### 1. The plan is the map (worked, kept)
@@ -79,6 +86,73 @@ layer that does. Both are switches rather than deletions: `fillSuperblock` is
 the only thing that knows how a district becomes blocks, and `interstate.ts` is
 the only thing that knows how a deck, its ramps, its pillars and its tunnel are
 built. All of that is wanted. A ruled grid and a rectangle are not.
+
+### 5. The freeway loop (worked, authored, not yet enabled) (#261, #274-284)
+
+`addInterstate` used to walk four sides inset from the land's own bounding
+rectangle - a ring around the middle of the city, which is why every ramp
+landed downtown and the freeway read as a faster way round the same blocks
+rather than a journey out and back. The same move as the surface roads, one
+level up: draw it by hand instead, over the real terrain, and check it with a
+purpose-built editor rather than trust a formula that had never looked at the
+ground.
+
+The loop that came out of that is 26 points, 13.6 km, checked interactively
+against grade and water the whole way. Four things about *how* it was
+drawn are worth keeping:
+
+- **A tunnel's length stopped being a fraction of the loop.** It was 12% of
+  whatever the loop computed out to, which made sense when the loop was a
+  rectangle of a known size. A hand-drawn loop's length is not the
+  generator's to plan a fraction of - the same 12% is 400 m on a tight loop
+  and several kilometres on a wide one - so it is now an absolute length
+  (`TUNNEL_LENGTH`, 700 m), with a count and a spacing (`TUNNEL_COUNT`,
+  `TUNNEL_SPACING`) so a loop through real hills gets a few short dives
+  instead of one long one.
+- **Tunnel placement needed a reason, not just a rule.** The search picked the
+  first dry candidate it rolled, which is blind to *why* a tunnel is worth
+  having - a hill offered the choice to climb or dive under it. Every dry
+  candidate is scored on the ground under its own middle third now, and the
+  highest wins. Checking that against a real water crossing found the
+  obvious flaw: open water reads as strongly negative elevation, so scoring
+  on height alone makes a genuine river or strait crossing the one place this
+  would never tunnel, which is backwards. A candidate whose middle actually
+  crosses water now outranks any hill.
+- **Two tunnels are decisions, not finds.** A tunnel under downtown, and one
+  through a specific strait north of the docks channel, are not something the
+  scored search would ever land on by itself - downtown is flat, ordinary
+  ground with nothing to justify a dive. `addInterstate` takes optional
+  `tunnelAnchors`: a world position per tunnel wanted, resolved to the
+  nearest point on the path. Authored anchors go in first, unconditionally;
+  the search only fills the remaining count, kept clear of them.
+- **A short edge needs a scaled margin, not a flat one.** `rampsFor` produced
+  zero ramps the first time this loop was checked, not because nothing was
+  close enough - five real junctions sat inside the ramp window somewhere
+  along the loop - but because its corner margin was a flat 430 m at both
+  ends of every edge, and a hand-drawn path is dozens of short bends where
+  the old rectangle had four multi-kilometre sides. Scaled to a quarter of
+  the edge's own length, capped at the old flat value: 0 ramps became 6 on
+  the same loop, worst grade unchanged at 7.6%.
+
+`city/freeway.ts` is generated - `npm run freewaysync` writes it from
+`docs/freeway-edited.json`, the same convention `roadsync.mjs` uses for the
+surface network - and `generate.ts` now calls `addInterstate` with it instead
+of the placeholder rectangle. `CITY_FREEWAY` stays off in committed code.
+
+**Known, accepted gap.** With `CITY_STREET_GRID` still off, `rampsFor` finds a
+real surface junction near only a handful of this loop's edges - flipping
+`CITY_FREEWAY` on locally against the real generator produces about one
+drivable ramp across the whole 13.6 km loop. That is expected, not a
+regression: it is the same "no blocks, no buildings" gap as everything else on
+this branch of work, and it is expected to open up once #271/#272 bring the
+street grid and districts back.
+
+**Left open:** whether a specific ramp marker drawn near the docks-channel
+tunnel would actually resolve onto the elevated deck rather than into the
+tunnel itself - the editor's own marker-validity check does not yet test a
+marker's along-loop position against a tunnel's span. Worth adding to the
+editor (tunnel spans are already in `freewayexport.mjs`'s output) before
+trusting a marker placed near one.
 
 ## The bridge count, and four wrong explanations for it
 

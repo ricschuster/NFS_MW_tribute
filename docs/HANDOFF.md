@@ -3,10 +3,16 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`, with
-  `feat/landmass` (37 commits) open against it as a pull request
-- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ (this is
-  `main`, which still ships the *old* gridded city - the branch has not merged)
+- **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`. PR #273 (the
+  map rebuild) merged into `main` already; everything below describes `main`
+  itself, not a branch waiting to land. `origin/feat/landmass` still exists on
+  the remote but is a stale leftover sharing a name with the merged PR's
+  branch - 44 commits ahead of `main` and 12 behind it, not the thing #273
+  was. Safe to ignore or delete; nothing in this repo depends on it.
+- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
+  `main`, which now ships the rebuilt map: real terrain, a landmass, authored
+  districts, no street grid and no interstate yet (both are switched off, see
+  below).
 - **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
   · the README lists the named viewpoints
 - **Status:** mid-rebuild, and this is the second one. The first rebuild
@@ -14,12 +20,14 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   densely gridded free-roam city and finished cleanly - that is the "finished"
   this file used to describe. This rebuild (ADR-0007 through ADR-0009) is
   replacing *that* city's ground with real terrain and its street grid with an
-  authored map, and it is not finished: the grid and the elevated interstate
-  are switched off on purpose while the map is rebuilt from routed roads
-  outward, which means today's pinned city has no blocks, no buildings and no
-  interstate. Read `docs/map-exploration.md` for the day-by-day log and
-  [ADR-0009](decisions/0009-kestrel-bay-is-an-authored-map.md) for the rule
-  that is currently in force.
+  authored map, and it is not finished: the grid is still switched off on
+  purpose while the map is rebuilt from routed roads outward, which means
+  today's city has no blocks and no buildings. The interstate loop itself is
+  no longer missing - it is authored data now (#261, PRs #274-284) - but it
+  is still switched off too, because the ramps it needs have nowhere to land
+  until the grid comes back. Read `docs/map-exploration.md` for the
+  day-by-day log and [ADR-0009](decisions/0009-kestrel-bay-is-an-authored-map.md)
+  for the rule that is currently in force.
 
 ## What this is
 
@@ -50,14 +58,8 @@ with no car in it, for judging the generator rather than playing it.
 [ADR-0006](decisions/0006-the-city-is-the-game.md) is why there is only one of
 each.
 
-**What `main` still plays:** the city ADR-0004 through ADR-0006 built - flat
-ground, a seeded street grid, 3102 roads, 841 blocks, 3771 buildings. That
-snapshot is real but it describes a deleted city: nothing about it is true of
-`feat/landmass` any more, and it will stop being true of `main` too the day
-that branch merges.
-
-**What `feat/landmass` generates today**, measured with `npm run city` against
-the pinned seed: **4181 roads, 4162 junctions, 71.3 km of road**, all of it
+**What `main` generates today**, measured with `npm run city` against the
+pinned seed: **4181 roads, 4162 junctions, 71.3 km of road**, all of it
 `boulevard`-class because `CITY_STREET_GRID` is off - there is no arterial
 grid, so there are no arterial-only roads either. **7 water crossings, 1.24 km
 of bridge.** **926 blocks, and every one of them is open ground** - `parksFor`
@@ -68,23 +70,35 @@ interstate, 0 ramps**, because the two flags that build them
 own comments say why: they are a switch, not a deletion, and `fillSuperblock`
 and `interstate.ts` are the only code that knows how a district becomes blocks
 and how a deck is built - both are wanted back, just not laid with a ruler
-(ADR-0009).
+(ADR-0009). This describes the city ADR-0007 through ADR-0009 built. The
+gridded, buildinged city ADR-0004 through ADR-0006 built (3102 roads, 841
+blocks, 3771 buildings) is what `main` played *before* PR #273 merged, and
+nothing about it is true of `main` any more.
 
-Underneath that, three things are real and new since the last time this file
+Underneath that, four things are real and new since the last time this file
 was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
 terrain field, roads are cut and filled into it (`cutfill.ts`, #252), and the
 car's own physics read real grade now - a slope changes drive and grip rather
 than being invisible tarmac. The **water is one sea with the land as holes in
 it** (ADR-0008) rather than a bay-and-river pair drawn over a slab, which is
 what let the coastline stop being an edge-to-edge wall and become six separate
-bodies of land joined by routed river crossings. And **downtown, the harbour,
-the industrial edge and the four places (docks, airfield, quarry, lookout) are
+bodies of land joined by routed river crossings. **Downtown, the harbour, the
+industrial edge and the four places (docks, airfield, quarry, lookout) are
 authored polygons** in `city/plan.ts` (ADR-0009) rather than a seeded radius
 pick - `npm run plan` checks the polygons still agree with whatever ground the
 generator draws for the pinned seed, and today they do (`nothing overlaps`),
 though the water model's own idea of where downtown is sits 2.6 km from the
 plan's downtown and inside the plan's industrial district, which is one of the
-"where the work is" items below.
+"where the work is" items below. And **the interstate loop is authored data
+too now** (#261, `city/freeway.ts`): a hand-drawn 26-point path and 4 tunnel
+anchors (downtown, a water crossing, west, north), worked out interactively
+against the real terrain/grade/water rules and written by `npm run
+freewaysync` from `docs/freeway-edited.json`, replacing the old computed
+rectangle. It is real, merged, and still switched off - `rampsFor` finds a
+real surface junction near only a handful of this 13.6 km loop's edges while
+the grid is off, so flipping `CITY_FREEWAY` on today gets the loop and its
+tunnels but almost nowhere to get on or off it. That is expected to open up
+once #271/#272 bring the grid back, not a bug in the loop.
 
 ## How this went wrong twice, and will again
 
@@ -178,16 +192,19 @@ src/game/
                   point is on), plan (authored districts and places), roads
                   (the authored network itself), routing (a router that prices
                   water and grade), places, cutfill, embankment, boulevards,
-                  interstate, buildings, furniture, collectibles, streetfinds,
-                  routes, ambushes, repairs, breakables, grid, navigate, faces
+                  interstate, freeway (the authored loop and tunnel anchors),
+                  buildings, furniture, collectibles, streetfinds, routes,
+                  ambushes, repairs, breakables, grid, navigate, faces
   scene/          the renderer. cityscape assembles it - ground, carriageways,
                   water, pavements, markings, bridges, viaduct - while cameras,
                   hud and cityview drive it; buildings, furniture, collectibles
                   and breakables build the instanced geometry; worlduv, facades,
                   surfaces, roofs, carshape and daylight are the art pass (#11)
 tools/            citylap + citydriver (the reference driver), citymap,
-                  cityshot, pwacheck, icons, plan, sketch, and the road-editor
-                  chain: roadexport, roaddiff, roadcheck, roadfix, roadsync
+                  cityshot, pwacheck, icons, plan, sketch, and two editor
+                  chains: roadexport/roaddiff/roadcheck/roadfix/roadsync for
+                  the surface network, freewayexport/freewaysync for the
+                  interstate loop
 ```
 
 **The city is data.** `city/` turns a seed into junctions, roads, blocks,
@@ -231,6 +248,8 @@ npm run sketch     # a candidate landmass/terrain/road network from scratch,
 npm run plan       # does the authored plan still fit the ground the generator
                    # makes? a guard: a polygon that leaves the land is a failure
 npm run roadexport # write the road network + relief + plan for the road editor
+npm run freewayexport # write the freeway loop + tunnel anchors for its editor
+npm run freewaysync   # write src/game/city/freeway.ts from the edited loop
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic, then every rival on the
                    # ladder, clean and boosted; all of it vs. its baseline
@@ -290,8 +309,8 @@ of them turned out to double back on itself, because four independent
 shortest paths between four corners shared streets. If a system has never been
 exercised end to end, that is where the bugs are - and `routesFor` finding
 zero routes on today's pinned city (see "known problems") means the race,
-speed-run and claim events have not been exercised end to end on this branch
-at all yet.
+speed-run and claim events have not been exercised end to end on `main` at
+all yet.
 
 ## Repo mechanics
 
@@ -335,18 +354,27 @@ downtown's blocks and lots actually look like - is downstream of #271/#272.
 
 **[#266](https://github.com/ricschuster/NFS_MW_tribute/issues/266),
 [#265](https://github.com/ricschuster/NFS_MW_tribute/issues/265),
-[#261](https://github.com/ricschuster/NFS_MW_tribute/issues/261),
 [#260](https://github.com/ricschuster/NFS_MW_tribute/issues/260),
 [#259](https://github.com/ricschuster/NFS_MW_tribute/issues/259),
 [#257](https://github.com/ricschuster/NFS_MW_tribute/issues/257),
 [#256](https://github.com/ricschuster/NFS_MW_tribute/issues/256),
 [#253](https://github.com/ricschuster/NFS_MW_tribute/issues/253)** - content
-density by district, a beltway ring, the freeway loop leaving the city proper,
-a periphery of non-city road, buildings you can drive into, a tunnel breaking
-pursuit line of sight, street tunnels and cuttings, and blocks that sit as pads
-on a hillside rather than boxes. All of them are things the generator will
-want once #271/#272 give it real blocks again; none of them are startable
-before that.
+density by district, a beltway ring, a periphery of non-city road, buildings
+you can drive into, a tunnel breaking pursuit line of sight, street tunnels
+and cuttings, and blocks that sit as pads on a hillside rather than boxes. All
+of them are things the generator will want once #271/#272 give it real blocks
+again; none of them are startable before that.
+
+**[#261](https://github.com/ricschuster/NFS_MW_tribute/issues/261) - the
+freeway loop leaving the city proper.** Further along than the rest of this
+list: the loop itself is drawn (`city/freeway.ts`, PRs #274-284), a 26-point
+path with 4 authored/found tunnel mouths, checked interactively against real
+grade and water rules. What is left is not drawing but *connecting* it -
+`rampsFor` needs real surface junctions near the loop's edges to place ramps
+on, and the current authored network only offers a handful, so this stays
+open until #271/#272 give it a real grid to land ramps on. Re-check the ramp
+count after that, not before - a low count today is the known gap, not a
+regression.
 
 **[#249](https://github.com/ricschuster/NFS_MW_tribute/issues/249) - the land
 is lobes joined by channels.** Largely built - ADR-0008 is this issue's
@@ -390,8 +418,8 @@ with no buildings and no findable race routes.
   sea level already. The actual mechanism: `cutsCorner` is designed as a short
   nudge off the road and back, not a second navigator, and a unit rejoins the
   instant `onRoad()` finds *any* nearby road - which in a normally-gridded area
-  is almost always true one step after it leaves, so on this branch's current
-  network it contributes a single frame of real progress before control passes
+  is almost always true one step after it leaves, so on today's network it
+  contributes a single frame of real progress before control passes
   back to ordinary on-road `toward()` navigation for the rest of every cycle.
   Traced on the pinned city: the chaser gets to within 30 m purely on that
   on-road greedy hill-climb, and once no adjacent junction is any closer - the
@@ -410,9 +438,8 @@ with no buildings and no findable race routes.
   corner junctions scattered round a candidate centre, and the authored
   network does not have that kind of junction density near most of the map
   yet. Every circuit, speed run, claim-after-winning-a-race and the Quick
-  Wheel's mid-race lock is currently untestable on this branch as a result -
-  skipped in the test suite, not deleted, and it will come back with
-  #271/#272.
+  Wheel's mid-race lock is currently untestable as a result - skipped in the
+  test suite, not deleted, and it will come back with #271/#272.
 - **The `embankment` flag does not survive the road editor.** `AuthoredRoad`
   in `city/roads.ts` carries `kind`, `district`, `bridge` and `deadEnd` but no
   `embankment` field, so no road in the generated network is tagged one today,
@@ -425,6 +452,14 @@ with no buildings and no findable race routes.
   `chooseBridges` has no dense arterial candidate set left to spread crossings
   across on the current authored network - a known, measured gap, not a
   loosened test.
+- **The freeway loop has almost nowhere to put a ramp yet.** `city/freeway.ts`
+  (#261) is a real, merged, 13.6 km authored loop with 4 tunnel anchors, but
+  `rampsFor` finds a real surface junction near only a handful of its edges
+  while `CITY_STREET_GRID` is off - flipping `CITY_FREEWAY` on locally against
+  the real generator produces about one drivable ramp across the whole loop.
+  Expected, not a regression: it is the same "no blocks, no buildings" gap as
+  everything else on this list, and it closes when #271/#272 bring the grid
+  back. Don't chase it as a bug before then.
 - **The `CITY_` prefix is history, not a distinction.** `CITY_HEAT_RISE`,
   `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` are named that way because the
   deleted track had different constants meaning different things, and reusing
@@ -468,8 +503,8 @@ top of it further.
 
 | | |
 | --- | --- |
-| `npm run test` | unit tests and playtests: 428 passed, 101 skipped, 0 failed as of the last full run on `feat/landmass` |
-| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Untested on this branch - see `routesFor` above |
+| `npm run test` | unit tests and playtests: 428 passed, 101 skipped, 0 failed as of the last full run on `main` |
+| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Untested on today's map - see `routesFor` above |
 | `npm run playthrough` | the whole game at every level it has one, as a session log |
 | `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
 | `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Passes; measures from the longest straight, not the default spawn - see known problems |
