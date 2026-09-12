@@ -9,9 +9,24 @@ free-roam city, a ladder of ten rivals, Rep earned from everything you do, cars
 found parked around the city, and police pursuits with six heat levels.
 TypeScript + Vite + three.js, no backend; it builds to static files.
 
-Original work. It takes its cues from the genre, not from any one game: no
-third-party names, places, cars or assets appear anywhere in the repo, and none
-should be added.
+Original work, and the line is about **what ships**, not about what may be
+discussed. Nothing third-party appears in the game or its data: no names, no
+places, no cars, no assets, no imported map, no ripped geometry. Kestrel Bay
+comes out of a seed. None of that should ever be added.
+
+**Influences are named openly in the documentation**, because a decision whose
+reasoning has been anonymised is a decision nobody can check. The map's
+structure was studied against *Need for Speed: Most Wanted* (2012) and its city
+Fairhaven while ADR-0007 and ADR-0008 were written - its size measured from a
+published drive across it, its districts and its two ring roads read off a wiki
+page, its content density off a community map - and against the two real cities
+it names as its own influences, Boston and Pittsburgh, one of which gave us the
+number for how tall a hill should be. Where those ADRs say "the reference city",
+that is what they mean; they were written under an earlier reading of this rule
+that treated the two things as one.
+
+Studying a map is not copying one. The test is whether anything third-party is
+*in* what we ship, and the answer stays no.
 
 **There is one game and one simulation.** It used to be two - a pseudo-3D
 projected-segment racer on a single closed track, and the city replacing it -
@@ -654,7 +669,10 @@ and that is the case that breaks.
 ## Non-goals
 
 - Not networked, not commercial. No third-party assets and no imported map:
-  Kestrel Bay is generated from a seed, not ripped.
+  Kestrel Bay is generated from a seed, not ripped. Reading about another game's
+  map, timing a drive across it and measuring a published picture of its roads
+  is research and is done openly; downloading a port of it is not, and was
+  declined for that reason.
 - Asset *quality* is a separate axis and is not a non-goal. Geometry may be
   upgraded behind the generator's interface - textures on the boxes first,
   then cars, then a modular building kit - as long as everything shipped is
