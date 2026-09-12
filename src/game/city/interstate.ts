@@ -22,6 +22,7 @@ import {
 } from '../constants';
 import type { Rng } from './rng';
 import { nearWater, type Water } from './water';
+import { groundAt, type Terrain } from './terrain';
 import type { CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
 
 /**
@@ -69,11 +70,18 @@ export function addInterstate(
   nodes: CityNode[],
   roads: CityRoad[],
   water: Water,
+  terrain: Terrain,
   path: Vec2[],
 ): void {
   const edges = buildEdges(path);
   const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
-  const profile = heightProfile(rng, perimeter, (along) => point(...whereAlong(edges, along)), water);
+  const profile = heightProfile(
+    rng,
+    perimeter,
+    (along) => point(...whereAlong(edges, along)),
+    water,
+    terrain,
+  );
 
   // Surface nodes a ramp could land on, indexed so the search per edge is not
   // a scan of the whole city.
@@ -335,8 +343,9 @@ function heightProfile(
   perimeter: number,
   at: (along: number) => Vec2,
   water: Water,
+  terrain: Terrain,
 ): (along: number) => number {
-  const tunnels = pickTunnels(rng, perimeter, at, water);
+  const tunnels = pickTunnels(rng, perimeter, at, water, terrain);
 
   return (along: number) => {
     let height = INTERSTATE_HEIGHT;
@@ -357,8 +366,16 @@ function heightProfile(
 }
 
 /**
- * Where `TUNNEL_COUNT` tunnels start: anywhere on the loop whose *mouths* are
- * on land, kept `TUNNEL_SPACING` apart from each other.
+ * Where `TUNNEL_COUNT` tunnels start: the highest ground the loop crosses,
+ * among candidates whose *mouths* are on land, kept `TUNNEL_SPACING` apart
+ * from each other.
+ *
+ * A tunnel is a hill offered a choice - climb it or dive under it - and a
+ * candidate picked at random honours neither: it is as likely to dive under
+ * flat ground as under a real summit. Every dry candidate this rolls is
+ * scored by the ground under its middle third and the highest wins, so a
+ * tunnel lands where a car would otherwise be climbing, not wherever the
+ * dice said.
  *
  * The deck at 12 m over the bay is a viaduct and the tunnel at -9 m under the
  * river is a tunnel; both are fine. The transition between them is neither -
@@ -377,12 +394,27 @@ function pickTunnels(
   perimeter: number,
   at: (along: number) => Vec2,
   water: Water,
+  terrain: Terrain,
 ): { start: number; end: number }[] {
   const tunnels: { start: number; end: number }[] = [];
+
+  // The ground under the middle third of a candidate, which is the part
+  // actually under a hill rather than easing down into or up out of one.
+  const elevationOf = (start: number, end: number) => {
+    let sum = 0;
+    const samples = 3;
+    for (let i = 0; i <= samples; i++) {
+      const t = 1 / 3 + ((1 / 3) * i) / samples;
+      const p = at(start + (end - start) * t);
+      sum += groundAt(terrain, p.x, p.z);
+    }
+    return sum / (samples + 1);
+  };
 
   for (let n = 0; n < TUNNEL_COUNT; n++) {
     let best: { start: number; end: number } | null = null;
     let bestWet = Infinity;
+    let bestElevation = -Infinity;
     for (let attempt = 0; attempt < TUNNEL_TRIES; attempt++) {
       const start = rng.range(0.05, 0.95) * perimeter;
       const end = start + TUNNEL_LENGTH;
@@ -408,11 +440,17 @@ function pickTunnels(
           if (nearWater(water, p.x, p.z, RAMP_OFFSET)) wet++;
         }
       }
+
       if (wet === 0) {
-        best = { start, end };
-        break;
-      }
-      if (wet < bestWet) {
+        // Once any dry candidate is found, only a higher dry one replaces
+        // it - never fall back to a wetter candidate for more elevation.
+        const elevation = elevationOf(start, end);
+        if (bestWet > 0 || elevation > bestElevation) {
+          bestWet = 0;
+          bestElevation = elevation;
+          best = { start, end };
+        }
+      } else if (bestWet > 0 && wet < bestWet) {
         bestWet = wet;
         best = { start, end };
       }
