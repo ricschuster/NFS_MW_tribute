@@ -150,223 +150,233 @@ function angleTo(a, b) {
 /** The circuit every rival is raced on. One route, so the rows compare. */
 const proving = city.routes.find((r) => r.kind === 'circuit');
 
-/**
- * Race one rival, and hand back what happened.
- *
- * The race is started through the game's own door - park on the line and press
- * confirm - rather than by reaching into `CityRace`, because #91 gates a start
- * on Rep and the last probe to do this did not pay: every race after the first
- * silently never started and the table read as ten losses. It throws rather
- * than reporting a loss if the start does not take.
- */
-function race(rival, index, boost) {
-  // With traffic, because that is what a race is: nothing turns it off, and
-  // the empty-road number describes a game nobody plays (#171).
-  const world = new CityWorld(undefined, { traffic: true, police: false });
-  // Standing at the front of the ladder with the Rep to be taken seriously.
-  world.beaten = index;
-  world.rep.total = Math.max(world.rep.total, rival.rep);
-  world.x = proving.start.x;
-  world.z = proving.start.z;
-  world.y = 0;
-
-  world.step(K.STEP, { ...NONE, confirm: true });
-  if (world.race.state !== 'countdown') {
-    throw new Error(
-      `#${rival.rank} ${rival.name}: the race did not start (state ${world.race.state}, ` +
-        `rep ${world.rep.total}, needs ${rival.rep}). A probe that reports this as a loss is lying.`,
-    );
-  }
-  if (world.race.challenger?.rank !== rival.rank) {
-    throw new Error(`#${rival.rank} ${rival.name}: raced #${world.race.challenger?.rank} instead`);
-  }
-
-  for (let t = 0; t < K.CITY_COUNTDOWN + 1 && world.race.state === 'countdown'; t += K.STEP) {
-    world.step(K.STEP, NONE);
-  }
-
-  // Read at the flag, not afterwards. A finished race holds its result for a
-  // couple of seconds and then puts itself away, and `driveRoute` returns only
-  // at the end of a lap - so looking after the drive found state `'idle'`, the
-  // field gone and nothing to report. The step callback is the only place that
-  // sees the moment it happens.
-  let result = null;
-  let wasHeading = world.heading;
-  let turned = 0;
-  // Ground actually covered, against the clock the race is scored on. `held`
-  // below is `playerDist`, which is *gates passed* and not distance - so where
-  // these two disagree the table is reporting the scoring and not the driving.
-  //
-  // Summed per step rather than per lap. `driveRoute` returns at the end of a
-  // lap and the flag falls in the middle of one, so a per-lap total is short by
-  // however much of the last lap was in flight - which is most of a lap, and
-  // reads as the car having covered half the ground it did.
-  let ground = 0;
-  /** Steps with the boost actually lit, so a policy that never fires cannot hide. */
-  let lit = 0;
-  let steps = 0;
-  const watch = (w) => {
-    ground += Math.abs(w.speed) * K.STEP;
-    if (!result && w.race.state === 'finished') {
-      const challenger = w.race.field.find((r) => r.rival.rank === rival.rank);
-      result = {
-        won: w.race.won,
-        position: w.race.position,
-        // Metres of route between the two of you at the flag. Positive is you.
-        gap: challenger ? (w.race.playerDist - challenger.dist) / M : null,
-        // What each of you actually held, as a fraction of top speed. This is
-        // the pair of numbers a calibration needs: the field runs at a
-        // *configured* fraction along the route line, and the driver holds
-        // whatever the corners and the traffic leave it.
-        held: w.race.elapsed > 0 ? w.race.playerDist / (w.race.elapsed * w.maxSpeed) : 0,
-        real: w.race.elapsed > 0 ? ground / w.race.elapsed / K.REFERENCE_TOP_SPEED : 0,
-        lit: steps > 0 ? lit / steps : 0,
-      };
-    }
-    // Used where it is worth using (#105), which means *on a straight*. The
-    // first version of this pressed it whenever there was charge and speed,
-    // and measured a boosted lap 3 points slower than a clean one - which is
-    // exactly the regression #105 fixed in the game and this probe then
-    // reintroduced in the driver. Overspeed carried into a bend is scrubbed
-    // off again by the grip limit, so a boost taken into a corner is worse
-    // than no boost at all.
-    //
-    // "Straight" is measured rather than asked: how much the car has turned
-    // over the last half second.
-    turned = turned * 0.94 + Math.abs(angleTo(w.heading, wasHeading)) * 0.06;
-    wasHeading = w.heading;
-    if (!boost) return {};
-    const nitro = w.nitro > 0.4 && turned < 0.004 && w.speed > w.maxSpeed * 0.35;
-    steps++;
-    if (nitro) lit++;
-    return { nitro };
-  };
-
-  // A lap at a time: `driveRoute` stops at the end of one, and a circuit is
-  // three. Two extra passes, because the last lap ends a little past the line.
-  let laps = 0;
-  while (!result && world.race.state !== 'idle' && laps < K.ROUTE_LAPS + 2) {
-    laps++;
-    driveRoute(world, proving, K, {
-      seconds: 300,
-      none: NONE,
-      hold: watch,
-      skill: ladderDriver.skill,
-    });
-  }
-
-  // A result is a thing that happened, not the absence of one. The first
-  // version of this asked whether the state was still `'running'` - and the
-  // state is called `'racing'`, so every race "finished" without a lap being
-  // driven and the table read ten first places with a zero gap. Which is the
-  // lie #166 was filed about, arriving in a different place.
-  if (!result) {
-    throw new Error(
-      `#${rival.rank} ${rival.name}: no result after ${laps} laps ` +
-        `(state '${world.race.state}', lap ${world.race.lap}). Nothing here should report one.`,
-    );
-  }
-  return { finished: true, ...result };
-}
-
-console.log('\nTHE LADDER');
-console.log(
-  `  every rival on "${proving.name}", driven by ${ladderDriver.name === 'perfect' ? 'the perfect driver' : `an ${ladderDriver.name}`} in traffic, clean and boosted\n`,
-);
-
-const ladderHead = ['rival', 'their pace', 'clean', 'scored', 'ground', 'gap', 'boosted', 'scored', 'ground', 'gap', 'on boost'];
-const ladderRows = [ladderHead];
-
-for (let i = RIVALS.length - 1; i >= 0; i--) {
-  const rival = RIVALS[i];
-  const clean = race(rival, i, false);
-  const boosted = race(rival, i, true);
-  if (!clean.finished || !boosted.finished) {
-    throw new Error(`#${rival.rank} ${rival.name}: the race never finished`);
-  }
-
-  const key = `ladder_${String(rival.rank).padStart(2, '0')}`;
-  metrics[`${key}_won`] = clean.won;
-  metrics[`${key}_gap_m`] = clean.gap === null ? null : Math.round(clean.gap);
-  metrics[`${key}_boost_won`] = boosted.won;
-  metrics[`${key}_boost_gap_m`] = boosted.gap === null ? null : Math.round(boosted.gap);
-  metrics[`${key}_boost_lit`] = round(boosted.lit);
-
-  const shown = (r) => (r.gap === null ? '-' : `${r.gap > 0 ? '+' : ''}${Math.round(r.gap)} m`);
-  const pace = K.RIVAL_BASE_SPEED_FRAC + rival.difficulty * K.RIVAL_DIFF_SPEED_FRAC;
-  metrics[`${key}_you_held`] = round(clean.held);
-  ladderRows.push([
-    `#${rival.rank} ${rival.name}`,
-    `${Math.round(pace * 100)}%`,
-    clean.won ? 'won' : `${clean.position}th`,
-    `${Math.round(clean.held * 100)}%`,
-    `${Math.round(clean.real * 100)}%`,
-    shown(clean),
-    boosted.won ? 'won' : `${boosted.position}th`,
-    `${Math.round(boosted.held * 100)}%`,
-    `${Math.round(boosted.real * 100)}%`,
-    shown(boosted),
-    `${Math.round(boosted.lit * 100)}%`,
-  ]);
-}
-
-const lw = ladderHead.map((_, i) => Math.max(...ladderRows.map((r) => r[i].length)));
-for (const row of ladderRows) {
-  console.log(
-    '  ' + row.map((cell, i) => (i === 0 ? cell.padEnd(lw[i]) : cell.padStart(lw[i]))).join('   '),
-  );
-}
-
-// The property the handoff claims, checked rather than asserted: the top of the
-// ladder should be lost clean and won with the boost, or #105 bought nothing.
-// It is reported rather than thrown, because whether the ladder is right is a
-// judgement and this is an instrument.
-// The table is built from the boss down, because `RIVALS` runs rank 10 first
-// and this iterates it backwards - so row 1 is #1 and the last row is #10.
-// Reading those the other way round reported the property inverted.
-const boss = ladderRows[1];
-const bottom = ladderRows[ladderRows.length - 1];
-const asDesigned = boss[2] !== 'won' && bottom[2] === 'won';
-console.log('\n  designed for: the bottom of the ladder won in the car you start in,');
-console.log('                the boss lost in it - the top of the ladder wants a better car');
-console.log(
-  `  measured:     bottom ${bottom[2]} clean, boss ${boss[2]} clean` +
-    (asDesigned ? '   (as designed)' : '   <- NOT what it is designed for'),
-);
-// A boost that never lights is not a measurement of the boost, and this probe
-// spent #204's whole lifetime reporting one. `turned < 0.004` is unreachable for
-// any driver with a reaction time and a wander, so every row below `perfect`
-// compares a clean lap against an identical clean lap.
-const litBoss = ladderRows[1][10];
-if (litBoss === '0%') {
-  console.log(
-    `\n  the boost was never pressed (${litBoss} of the lap): this policy asks for half a` +
-      '\n  second of dead-straight heading, which no driver with a reaction time holds.' +
-      '\n  The boosted rows above are clean rows. See #204.',
-  );
+// Nothing to race without one. `routesFor` finds none on the authored map
+// until #271/#272 give it real blocks again (see HANDOFF.md), and a probe
+// that throws on that is worse than useless - it hides whatever the empty-lap
+// section above still had to say.
+if (!proving) {
+  console.log('\nTHE LADDER');
+  console.log('  no circuit route on this city - routesFor found none, so there is nothing to');
+  console.log('  race the ladder on. Skipped rather than crashed; see #271/#272.');
 } else {
-  // Measured by `npm run nitro`, and it is not what #204 assumed. Speed carried
-  // into a bend is *not* what the boost costs: the fraction of a lap spent above
-  // the speed the next corner allows is flat at 5-6% whether the boost is used
-  // or not. What the boost buys is a faster exit, and in traffic that is spent
-  // arriving at the car in front sooner - it comes back as damage (16% to 98%
-  // over a lap), not as scrubbed overspeed. On an empty road the same policy is
-  // worth eight points.
+  /**
+   * Race one rival, and hand back what happened.
+   *
+   * The race is started through the game's own door - park on the line and press
+   * confirm - rather than by reaching into `CityRace`, because #91 gates a start
+   * on Rep and the last probe to do this did not pay: every race after the first
+   * silently never started and the table read as ten losses. It throws rather
+   * than reporting a loss if the start does not take.
+   */
+  function race(rival, index, boost) {
+    // With traffic, because that is what a race is: nothing turns it off, and
+    // the empty-road number describes a game nobody plays (#171).
+    const world = new CityWorld(undefined, { traffic: true, police: false });
+    // Standing at the front of the ladder with the Rep to be taken seriously.
+    world.beaten = index;
+    world.rep.total = Math.max(world.rep.total, rival.rep);
+    world.x = proving.start.x;
+    world.z = proving.start.z;
+    world.y = 0;
+
+    world.step(K.STEP, { ...NONE, confirm: true });
+    if (world.race.state !== 'countdown') {
+      throw new Error(
+        `#${rival.rank} ${rival.name}: the race did not start (state ${world.race.state}, ` +
+          `rep ${world.rep.total}, needs ${rival.rep}). A probe that reports this as a loss is lying.`,
+      );
+    }
+    if (world.race.challenger?.rank !== rival.rank) {
+      throw new Error(`#${rival.rank} ${rival.name}: raced #${world.race.challenger?.rank} instead`);
+    }
+
+    for (let t = 0; t < K.CITY_COUNTDOWN + 1 && world.race.state === 'countdown'; t += K.STEP) {
+      world.step(K.STEP, NONE);
+    }
+
+    // Read at the flag, not afterwards. A finished race holds its result for a
+    // couple of seconds and then puts itself away, and `driveRoute` returns only
+    // at the end of a lap - so looking after the drive found state `'idle'`, the
+    // field gone and nothing to report. The step callback is the only place that
+    // sees the moment it happens.
+    let result = null;
+    let wasHeading = world.heading;
+    let turned = 0;
+    // Ground actually covered, against the clock the race is scored on. `held`
+    // below is `playerDist`, which is *gates passed* and not distance - so where
+    // these two disagree the table is reporting the scoring and not the driving.
+    //
+    // Summed per step rather than per lap. `driveRoute` returns at the end of a
+    // lap and the flag falls in the middle of one, so a per-lap total is short by
+    // however much of the last lap was in flight - which is most of a lap, and
+    // reads as the car having covered half the ground it did.
+    let ground = 0;
+    /** Steps with the boost actually lit, so a policy that never fires cannot hide. */
+    let lit = 0;
+    let steps = 0;
+    const watch = (w) => {
+      ground += Math.abs(w.speed) * K.STEP;
+      if (!result && w.race.state === 'finished') {
+        const challenger = w.race.field.find((r) => r.rival.rank === rival.rank);
+        result = {
+          won: w.race.won,
+          position: w.race.position,
+          // Metres of route between the two of you at the flag. Positive is you.
+          gap: challenger ? (w.race.playerDist - challenger.dist) / M : null,
+          // What each of you actually held, as a fraction of top speed. This is
+          // the pair of numbers a calibration needs: the field runs at a
+          // *configured* fraction along the route line, and the driver holds
+          // whatever the corners and the traffic leave it.
+          held: w.race.elapsed > 0 ? w.race.playerDist / (w.race.elapsed * w.maxSpeed) : 0,
+          real: w.race.elapsed > 0 ? ground / w.race.elapsed / K.REFERENCE_TOP_SPEED : 0,
+          lit: steps > 0 ? lit / steps : 0,
+        };
+      }
+      // Used where it is worth using (#105), which means *on a straight*. The
+      // first version of this pressed it whenever there was charge and speed,
+      // and measured a boosted lap 3 points slower than a clean one - which is
+      // exactly the regression #105 fixed in the game and this probe then
+      // reintroduced in the driver. Overspeed carried into a bend is scrubbed
+      // off again by the grip limit, so a boost taken into a corner is worse
+      // than no boost at all.
+      //
+      // "Straight" is measured rather than asked: how much the car has turned
+      // over the last half second.
+      turned = turned * 0.94 + Math.abs(angleTo(w.heading, wasHeading)) * 0.06;
+      wasHeading = w.heading;
+      if (!boost) return {};
+      const nitro = w.nitro > 0.4 && turned < 0.004 && w.speed > w.maxSpeed * 0.35;
+      steps++;
+      if (nitro) lit++;
+      return { nitro };
+    };
+
+    // A lap at a time: `driveRoute` stops at the end of one, and a circuit is
+    // three. Two extra passes, because the last lap ends a little past the line.
+    let laps = 0;
+    while (!result && world.race.state !== 'idle' && laps < K.ROUTE_LAPS + 2) {
+      laps++;
+      driveRoute(world, proving, K, {
+        seconds: 300,
+        none: NONE,
+        hold: watch,
+        skill: ladderDriver.skill,
+      });
+    }
+
+    // A result is a thing that happened, not the absence of one. The first
+    // version of this asked whether the state was still `'running'` - and the
+    // state is called `'racing'`, so every race "finished" without a lap being
+    // driven and the table read ten first places with a zero gap. Which is the
+    // lie #166 was filed about, arriving in a different place.
+    if (!result) {
+      throw new Error(
+        `#${rival.rank} ${rival.name}: no result after ${laps} laps ` +
+          `(state '${world.race.state}', lap ${world.race.lap}). Nothing here should report one.`,
+      );
+    }
+    return { finished: true, ...result };
+  }
+
+  console.log('\nTHE LADDER');
   console.log(
-    `\n  the boost is worth ${boss[7]} against ${boss[3]} clean on this circuit.` +
-      '\n  It pays on an empty road and costs in traffic, and what it costs is damage\n' +
-      '  rather than speed scrubbed off in bends. `npm run nitro` is the breakdown.',
+    `  every rival on "${proving.name}", driven by ${ladderDriver.name === 'perfect' ? 'the perfect driver' : `an ${ladderDriver.name}`} in traffic, clean and boosted\n`,
   );
-}
-if (!asDesigned) {
+
+  const ladderHead = ['rival', 'their pace', 'clean', 'scored', 'ground', 'gap', 'boosted', 'scored', 'ground', 'gap', 'on boost'];
+  const ladderRows = [ladderHead];
+
+  for (let i = RIVALS.length - 1; i >= 0; i--) {
+    const rival = RIVALS[i];
+    const clean = race(rival, i, false);
+    const boosted = race(rival, i, true);
+    if (!clean.finished || !boosted.finished) {
+      throw new Error(`#${rival.rank} ${rival.name}: the race never finished`);
+    }
+
+    const key = `ladder_${String(rival.rank).padStart(2, '0')}`;
+    metrics[`${key}_won`] = clean.won;
+    metrics[`${key}_gap_m`] = clean.gap === null ? null : Math.round(clean.gap);
+    metrics[`${key}_boost_won`] = boosted.won;
+    metrics[`${key}_boost_gap_m`] = boosted.gap === null ? null : Math.round(boosted.gap);
+    metrics[`${key}_boost_lit`] = round(boosted.lit);
+
+    const shown = (r) => (r.gap === null ? '-' : `${r.gap > 0 ? '+' : ''}${Math.round(r.gap)} m`);
+    const pace = K.RIVAL_BASE_SPEED_FRAC + rival.difficulty * K.RIVAL_DIFF_SPEED_FRAC;
+    metrics[`${key}_you_held`] = round(clean.held);
+    ladderRows.push([
+      `#${rival.rank} ${rival.name}`,
+      `${Math.round(pace * 100)}%`,
+      clean.won ? 'won' : `${clean.position}th`,
+      `${Math.round(clean.held * 100)}%`,
+      `${Math.round(clean.real * 100)}%`,
+      shown(clean),
+      boosted.won ? 'won' : `${boosted.position}th`,
+      `${Math.round(boosted.held * 100)}%`,
+      `${Math.round(boosted.real * 100)}%`,
+      shown(boosted),
+      `${Math.round(boosted.lit * 100)}%`,
+    ]);
+  }
+
+  const lw = ladderHead.map((_, i) => Math.max(...ladderRows.map((r) => r[i].length)));
+  for (const row of ladderRows) {
+    console.log(
+      '  ' + row.map((cell, i) => (i === 0 ? cell.padEnd(lw[i]) : cell.padStart(lw[i]))).join('   '),
+    );
+  }
+
+  // The property the handoff claims, checked rather than asserted: the top of the
+  // ladder should be lost clean and won with the boost, or #105 bought nothing.
+  // It is reported rather than thrown, because whether the ladder is right is a
+  // judgement and this is an instrument.
+  // The table is built from the boss down, because `RIVALS` runs rank 10 first
+  // and this iterates it backwards - so row 1 is #1 and the last row is #10.
+  // Reading those the other way round reported the property inverted.
+  const boss = ladderRows[1];
+  const bottom = ladderRows[ladderRows.length - 1];
+  const asDesigned = boss[2] !== 'won' && bottom[2] === 'won';
+  console.log('\n  designed for: the bottom of the ladder won in the car you start in,');
+  console.log('                the boss lost in it - the top of the ladder wants a better car');
   console.log(
-    '\n  The field runs at a configured fraction of your top speed along the route\n' +
-      '  line; you hold whatever the corners and the traffic leave you. Those two\n' +
-      '  columns are what a calibration has to reconcile.\n' +
-      '\n  Check the other tier before moving either constant. `--driver advanced`\n' +
-      '  holds four points less than an expert, and a ladder fitted to one of them\n' +
-      '  puts an unwinnable race at whichever end the other one is standing.',
+    `  measured:     bottom ${bottom[2]} clean, boss ${boss[2]} clean` +
+      (asDesigned ? '   (as designed)' : '   <- NOT what it is designed for'),
   );
+  // A boost that never lights is not a measurement of the boost, and this probe
+  // spent #204's whole lifetime reporting one. `turned < 0.004` is unreachable for
+  // any driver with a reaction time and a wander, so every row below `perfect`
+  // compares a clean lap against an identical clean lap.
+  const litBoss = ladderRows[1][10];
+  if (litBoss === '0%') {
+    console.log(
+      `\n  the boost was never pressed (${litBoss} of the lap): this policy asks for half a` +
+        '\n  second of dead-straight heading, which no driver with a reaction time holds.' +
+        '\n  The boosted rows above are clean rows. See #204.',
+    );
+  } else {
+    // Measured by `npm run nitro`, and it is not what #204 assumed. Speed carried
+    // into a bend is *not* what the boost costs: the fraction of a lap spent above
+    // the speed the next corner allows is flat at 5-6% whether the boost is used
+    // or not. What the boost buys is a faster exit, and in traffic that is spent
+    // arriving at the car in front sooner - it comes back as damage (16% to 98%
+    // over a lap), not as scrubbed overspeed. On an empty road the same policy is
+    // worth eight points.
+    console.log(
+      `\n  the boost is worth ${boss[7]} against ${boss[3]} clean on this circuit.` +
+        '\n  It pays on an empty road and costs in traffic, and what it costs is damage\n' +
+        '  rather than speed scrubbed off in bends. `npm run nitro` is the breakdown.',
+    );
+  }
+  if (!asDesigned) {
+    console.log(
+      '\n  The field runs at a configured fraction of your top speed along the route\n' +
+        '  line; you hold whatever the corners and the traffic leave you. Those two\n' +
+        '  columns are what a calibration has to reconcile.\n' +
+        '\n  Check the other tier before moving either constant. `--driver advanced`\n' +
+        '  holds four points less than an expert, and a ladder fitted to one of them\n' +
+        '  puts an unwinnable race at whichever end the other one is standing.',
+    );
+  }
 }
 
 // A number here moving is the only warning you get that a change to
