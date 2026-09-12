@@ -20,8 +20,7 @@ import {
 } from '../constants';
 import type { Rng } from './rng';
 import { nearWater, type Water } from './water';
-import type { Axis, CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
-
+import type { CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
 
 /**
  * The elevated interstate (#85).
@@ -49,6 +48,18 @@ import type { Axis, CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
  * at -9 m; what is not fine is the stretch in between, so the two places the
  * deck comes down to street level - a ramp, and a tunnel mouth - are the two
  * places that ask.
+ *
+ * **The loop is authored, not computed** (#261). It used to be four sides
+ * inset from the land's own bounding rectangle - a ring around the middle of
+ * the city, which is why every ramp landed downtown and the freeway read as a
+ * faster way round the same blocks rather than as a journey out and back.
+ * `path` is a closed polyline instead: however many points, in order, walked
+ * edge to edge and closed from the last point back to the first. Everything
+ * below reasons about "distance travelled around the loop" and "which edge is
+ * that on", which is exactly as true of four authored bends as of forty - the
+ * rectangle was never load-bearing, only convenient. `draftLoop` below
+ * reproduces that rectangle as a four-point path, which is what `generate.ts`
+ * passes until a hand-routed one replaces it.
  */
 export function addInterstate(
   rng: Rng,
@@ -56,41 +67,13 @@ export function addInterstate(
   nodes: CityNode[],
   roads: CityRoad[],
   water: Water,
+  path: Vec2[],
 ): void {
-  // Inset from the **land**, not from the map's rectangle. ADR-0008 made the
-  // land a lobed island inside the bounds, so a loop inset from the corners of
-  // the rectangle runs out over open sea on two sides - which is what it did
-  // the first time the island was generated. Fitting it to the land keeps it a
-  // rectangle for now; making it a circuit that leaves the city and comes back
-  // is #261.
-  const on = landBounds(bounds, water);
-  const width = on.maxX - on.minX;
-  const depth = on.maxZ - on.minZ;
+  const edges = buildEdges(path);
+  const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
+  const profile = heightProfile(rng, perimeter, (along) => point(...whereAlong(edges, along)), water);
 
-  const west = on.minX + width * INTERSTATE_INSET;
-  const east = on.maxX - width * INTERSTATE_INSET;
-  const south = on.minZ + depth * INTERSTATE_INSET;
-  const north = on.maxZ - depth * INTERSTATE_INSET;
-
-  // The loop, as four sides walked in order. Each carries the distance already
-  // travelled around the circuit, so the height profile is a function of one
-  // number rather than of which side you are on.
-  const sides: Side[] = [
-    { axis: 'x', at: south, from: west, to: east },
-    { axis: 'z', at: east, from: south, to: north },
-    { axis: 'x', at: north, from: east, to: west },
-    { axis: 'z', at: west, from: north, to: south },
-  ];
-
-  const perimeter = sides.reduce((sum, side) => sum + Math.abs(side.to - side.from), 0);
-  const profile = heightProfile(
-    rng,
-    perimeter,
-    (along) => point(...whereAlong(sides, along)),
-    water,
-  );
-
-  // Surface nodes a ramp could land on, indexed so the search per side is not
+  // Surface nodes a ramp could land on, indexed so the search per edge is not
   // a scan of the whole city.
   const surface = nodes.filter((node) => node.level === 'surface' && node.roads.length >= 3);
 
@@ -100,20 +83,20 @@ export function addInterstate(
   // Every node the loop is made of, so a spur can leave from one of them
   // rather than from a new node that merely shares its position - which is a
   // spur floating unattached above the city.
-  const built: { node: CityNode; side: Side }[] = [];
+  const built: { node: CityNode; edge: Edge }[] = [];
 
-  for (const side of sides) {
-    const ramps = rampsFor(rng, side, surface, water);
-    const stations = stationsAlong(side, ramps);
+  for (const edge of edges) {
+    const ramps = rampsFor(rng, edge, surface, water);
+    const stations = stationsAlong(edge, ramps);
 
     for (const station of stations) {
-      const along = travelled + Math.abs(station.at - side.from);
-      const node = make(nodes, point(side, station.at), profile(along));
+      const along = travelled + station.at;
+      const node = make(nodes, point(edge, station.at), profile(along));
 
       if (previous) link(roads, nodes, previous, node, 'interstate');
       else first = node;
       previous = node;
-      built.push({ node, side });
+      built.push({ node, edge });
 
       // A ramp only makes sense where the deck is actually above the street.
       if (station.ramp && node.level === 'elevated') {
@@ -121,13 +104,37 @@ export function addInterstate(
       }
     }
 
-    travelled += Math.abs(side.to - side.from);
+    travelled += edge.length;
   }
 
   // Close the circuit.
   if (previous && first) link(roads, nodes, previous, first, 'interstate');
 
-  addSpurs(rng, bounds, built, nodes, roads, water);
+  addSpurs(rng, bounds, path, built, nodes, roads, water);
+}
+
+/**
+ * A placeholder loop until the real one is authored (#261): today's inset
+ * rectangle, kept on the land, as four corners rather than four sides. It is
+ * not the shape the issue wants - it still reads as a ring around the middle
+ * of the city rather than a journey out through the hills and back - but it
+ * keeps `addInterstate` exercised and its tests green while the real route is
+ * drawn by hand and synced in, the same way the surface roads were.
+ */
+export function draftLoop(bounds: Rect, water: Water): Vec2[] {
+  const on = landBounds(bounds, water);
+  const width = on.maxX - on.minX;
+  const depth = on.maxZ - on.minZ;
+  const west = on.minX + width * INTERSTATE_INSET;
+  const east = on.maxX - width * INTERSTATE_INSET;
+  const south = on.minZ + depth * INTERSTATE_INSET;
+  const north = on.maxZ - depth * INTERSTATE_INSET;
+  return [
+    { x: west, z: south },
+    { x: east, z: south },
+    { x: east, z: north },
+    { x: west, z: north },
+  ];
 }
 
 /**
@@ -138,30 +145,40 @@ export function addInterstate(
  * well as a middle: somewhere to be chased towards, and a reason to pick a
  * direction when you join.
  *
- * A spur leaves a side of the loop at right angles and runs to the map edge,
+ * A spur leaves an edge of the loop at right angles and runs to the map edge,
  * elevated the whole way, which keeps it clear of the streets it crosses for
- * the same reason the loop is.
+ * the same reason the loop is. "At right angles" used to mean whichever axis
+ * the side it left from ran on; an authored loop has no axis, so outward is
+ * whichever of the edge's two perpendiculars points away from the loop's own
+ * centroid.
  */
 function addSpurs(
   rng: Rng,
   bounds: Rect,
-  stations: { node: CityNode; side: Side }[],
+  path: Vec2[],
+  stations: { node: CityNode; edge: Edge }[],
   nodes: CityNode[],
   roads: CityRoad[],
   water: Water,
 ): void {
-  const middleX = (bounds.minX + bounds.maxX) / 2;
-  const middleZ = (bounds.minZ + bounds.maxZ) / 2;
+  if (path.length === 0) return;
+  const centroid = { x: 0, z: 0 };
+  for (const p of path) {
+    centroid.x += p.x;
+    centroid.z += p.z;
+  }
+  centroid.x /= path.length;
+  centroid.z /= path.length;
 
-  // Only stations up on the deck, and only ones with room to run to an edge.
-  const candidates = stations.filter(({ node, side }) => {
-    if (node.level !== 'elevated') return false; // leaving from inside the tunnel is not a junction
-    const run =
-      side.axis === 'x'
-        ? Math.abs((side.at > middleZ ? bounds.maxZ : bounds.minZ) - node.pos.z)
-        : Math.abs((side.at > middleX ? bounds.maxX : bounds.minX) - node.pos.x);
-    return run >= FREEWAY_SPUR_MIN;
-  });
+  const outwardFor = (edge: Edge): Vec2 => {
+    const perp = { x: -edge.uz, z: edge.ux };
+    const mid = { x: (edge.a.x + edge.b.x) / 2, z: (edge.a.z + edge.b.z) / 2 };
+    const towardMid = (mid.x - centroid.x) * perp.x + (mid.z - centroid.z) * perp.z;
+    return towardMid >= 0 ? perp : { x: -perp.x, z: -perp.z };
+  };
+
+  // Only stations up on the deck - leaving from inside the tunnel is not a junction.
+  const candidates = stations.filter(({ node }) => node.level === 'elevated');
 
   const chosen: CityNode[] = [];
   for (let attempt = 0; attempt < 60 && chosen.length < FREEWAY_SPURS; attempt++) {
@@ -173,22 +190,26 @@ function addSpurs(
     );
     if (crowded) continue;
 
-    const { node, side } = pick;
-    const outward =
-      side.axis === 'x'
-        ? { x: 0, z: side.at > middleZ ? 1 : -1 }
-        : { x: side.at > middleX ? 1 : -1, z: 0 };
+    const { node, edge } = pick;
+    const outward = outwardFor(edge);
     // As far as the land goes, not as far as the map does. A spur is a freeway
     // out of town and it should end at the coast, not two kilometres past it
     // over open water (ADR-0008 made the map bigger than the island).
-    const toEdge =
-      outward.x !== 0
-        ? Math.abs((outward.x > 0 ? bounds.maxX : bounds.minX) - node.pos.x)
-        : Math.abs((outward.z > 0 ? bounds.maxZ : bounds.minZ) - node.pos.z);
+    const toEdge = rayToBounds(node.pos, outward, bounds);
+    if (toEdge < FREEWAY_SPUR_MIN) continue;
+
     let run = 0;
     for (let d = 0; d <= toEdge; d += INTERSTATE_SEGMENT / 2) {
       if (!water.isWater(node.pos.x + outward.x * d, node.pos.z + outward.z * d)) run = d;
     }
+    // The deck itself can be over water (a viaduct is fine at height), and a
+    // station right at the water's edge can find no dry ground outward at
+    // all - `run` comes back 0. Building a spur anyway made two nodes on top
+    // of each other, `link`'s own `length < 1` guard silently declined to
+    // join them, and both sat in the network with no road at all: unreachable,
+    // never picked up by anything, only visible as a connectivity count that
+    // did not match the node count.
+    if (run < INTERSTATE_SEGMENT) continue;
 
     // Elevated the whole way out, for the same reason the loop is: it crosses
     // every street on the way and joins none of them.
@@ -208,12 +229,24 @@ function addSpurs(
   }
 }
 
-interface Side {
-  axis: Axis;
-  /** The fixed coordinate: z for a side running along x, x for one along z. */
-  at: number;
-  from: number;
-  to: number;
+/** How far from `pos`, heading along `dir`, before the map's own rectangle is reached. */
+function rayToBounds(pos: Vec2, dir: Vec2, bounds: Rect): number {
+  let t = Infinity;
+  if (dir.x > 1e-9) t = Math.min(t, (bounds.maxX - pos.x) / dir.x);
+  else if (dir.x < -1e-9) t = Math.min(t, (bounds.minX - pos.x) / dir.x);
+  if (dir.z > 1e-9) t = Math.min(t, (bounds.maxZ - pos.z) / dir.z);
+  else if (dir.z < -1e-9) t = Math.min(t, (bounds.minZ - pos.z) / dir.z);
+  return t;
+}
+
+/** One edge of the authored loop: two consecutive points, and its own direction. */
+interface Edge {
+  a: Vec2;
+  b: Vec2;
+  length: number;
+  /** Unit vector from `a` to `b`. */
+  ux: number;
+  uz: number;
 }
 
 /** A point on the loop, and the surface node a ramp there would descend to. */
@@ -222,8 +255,21 @@ interface Station {
   ramp: CityNode | null;
 }
 
-const point = (side: Side, at: number) =>
-  side.axis === 'x' ? { x: at, z: side.at } : { x: side.at, z: at };
+/** The loop's edges, `path[i]` to `path[i + 1]`, closed from the last point to the first. */
+function buildEdges(path: Vec2[]): Edge[] {
+  const edges: Edge[] = [];
+  for (let i = 0; i < path.length; i++) {
+    const a = path[i];
+    const b = path[(i + 1) % path.length];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const length = Math.max(1, Math.hypot(dx, dz));
+    edges.push({ a, b, length, ux: dx / length, uz: dz / length });
+  }
+  return edges;
+}
+
+const point = (edge: Edge, at: number): Vec2 => ({ x: edge.a.x + edge.ux * at, z: edge.a.z + edge.uz * at });
 
 /**
  * The box the land actually occupies, which is not the box the map does.
@@ -253,22 +299,21 @@ function landBounds(bounds: Rect, water: Water): Rect {
 }
 
 /**
- * Which side of the loop a distance around it lands on, and where along that
- * side. The height profile is a function of one number and the water is a
+ * Which edge of the loop a distance around it lands on, and where along that
+ * edge. The height profile is a function of one number and the water is a
  * function of a position, so something has to turn the first into the second.
  */
-function whereAlong(sides: Side[], along: number): [Side, number] {
-  const perimeter = sides.reduce((sum, side) => sum + Math.abs(side.to - side.from), 0);
+function whereAlong(edges: Edge[], along: number): [Edge, number] {
+  const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
   // Wrapped, because a tunnel near the end of the circuit has its far mouth
   // round the corner past the start.
   let left = ((along % perimeter) + perimeter) % perimeter;
-  for (const side of sides) {
-    const span = Math.abs(side.to - side.from);
-    if (left <= span) return [side, side.from + Math.sign(side.to - side.from) * left];
-    left -= span;
+  for (const edge of edges) {
+    if (left <= edge.length) return [edge, left];
+    left -= edge.length;
   }
-  const last = sides[sides.length - 1];
-  return [last, last.to];
+  const last = edges[edges.length - 1];
+  return [last, last.length];
 }
 
 /**
@@ -337,73 +382,67 @@ function tunnelStart(rng: Rng, perimeter: number, at: (along: number) => Vec2, w
 }
 
 /**
- * Pick where this side's ramps come down.
+ * Pick where this edge's ramps come down.
  *
- * A ramp descends *along* a surface street's alignment, which keeps it
- * axis-aligned like everything else and lands it on a junction that already
- * exists. That means the choice is really "which surface junction", and the
- * ramp is then the line from the deck above it to the street.
+ * A ramp descends *along* a surface street's alignment, which lands it on a
+ * junction that already exists. That means the choice is really "which
+ * surface junction", and the ramp is then the line from the deck above it to
+ * the street. "Across" and "along" are the edge's own direction now rather
+ * than a map axis, which is what an authored, freely-angled loop needs.
  */
 function rampsFor(
   rng: Rng,
-  side: Side,
+  edge: Edge,
   surface: CityNode[],
   water: Water,
 ): { at: number; node: CityNode }[] {
-  const across = (node: CityNode) => (side.axis === 'x' ? node.pos.z : node.pos.x);
-  const along = (node: CityNode) => (side.axis === 'x' ? node.pos.x : node.pos.z);
-
-  const lo = Math.min(side.from, side.to);
-  const hi = Math.max(side.from, side.to);
-
-  const reachable = surface.filter((node) => {
-    const run = Math.abs(across(node) - side.at);
-    const at = along(node);
-    if (run < RAMP_MIN_RUN || run > RAMP_MAX_RUN) return false;
-    if (at <= lo + GRADE_RUN || at >= hi - GRADE_RUN) return false;
+  const reachable: { node: CityNode; along: number }[] = [];
+  for (const node of surface) {
+    const dx = node.pos.x - edge.a.x;
+    const dz = node.pos.z - edge.a.z;
+    const along = dx * edge.ux + dz * edge.uz;
+    const across = Math.abs(dx * -edge.uz + dz * edge.ux);
+    if (across < RAMP_MIN_RUN || across > RAMP_MAX_RUN) continue;
+    if (along <= GRADE_RUN || along >= edge.length - GRADE_RUN) continue;
     // And the descent itself has to be over land (#244). A ramp is only a few
     // metres up for most of its run, so one crossing the river is a road going
     // into the water rather than a viaduct over it - and it is rejected here,
-    // among the other reasons a junction cannot take a ramp, so the side picks
+    // among the other reasons a junction cannot take a ramp, so the edge picks
     // a different junction instead of losing the ramp.
-    return dryRun(water, point(side, at), node.pos);
-  });
+    if (!dryRun(water, point(edge, along), node.pos)) continue;
+    reachable.push({ node, along });
+  }
   if (reachable.length === 0) return [];
 
-  // Spread them out: a side's ramps clustered together are one ramp.
-  const spacing = Math.abs(hi - lo) / (RAMP_COUNT_PER_SIDE + 1);
+  // Spread them out: an edge's ramps clustered together are one ramp.
+  const spacing = edge.length / (RAMP_COUNT_PER_SIDE + 1);
   const chosen: { at: number; node: CityNode }[] = [];
   for (let i = 1; i <= RAMP_COUNT_PER_SIDE; i++) {
-    const want = lo + spacing * i + rng.range(-0.15, 0.15) * spacing;
-    let best: CityNode | null = null;
-    for (const node of reachable) {
-      if (chosen.some((c) => c.node === node)) continue;
-      if (!best || Math.abs(along(node) - want) < Math.abs(along(best) - want)) best = node;
+    const want = spacing * i + rng.range(-0.15, 0.15) * spacing;
+    let best: { node: CityNode; along: number } | null = null;
+    for (const candidate of reachable) {
+      if (chosen.some((c) => c.node === candidate.node)) continue;
+      if (!best || Math.abs(candidate.along - want) < Math.abs(best.along - want)) best = candidate;
     }
-    if (best) chosen.push({ at: along(best), node: best });
+    if (best) chosen.push({ at: best.along, node: best.node });
   }
   return chosen;
 }
 
 /**
- * The points along one side that get a node: every ramp, plus enough in
+ * The points along one edge that get a node: every ramp, plus enough in
  * between that the deck follows its height profile as a slope rather than as
  * a staircase.
  */
-function stationsAlong(side: Side, ramps: { at: number; node: CityNode }[]): Station[] {
-  const forward = side.to > side.from;
-  const span = Math.abs(side.to - side.from);
-  const steps = Math.max(1, Math.round(span / INTERSTATE_SEGMENT));
+function stationsAlong(edge: Edge, ramps: { at: number; node: CityNode }[]): Station[] {
+  const steps = Math.max(1, Math.round(edge.length / INTERSTATE_SEGMENT));
 
   const points = new Map<number, CityNode | null>();
-  for (let i = 0; i <= steps; i++) {
-    const at = side.from + (forward ? 1 : -1) * (span * i) / steps;
-    points.set(at, null);
-  }
+  for (let i = 0; i <= steps; i++) points.set((edge.length * i) / steps, null);
   for (const ramp of ramps) points.set(ramp.at, ramp.node);
 
-  const ordered = [...points.entries()].sort((a, b) => (forward ? a[0] - b[0] : b[0] - a[0]));
-  // The far end is the next side's first station, so drop it to avoid a doubled node.
+  const ordered = [...points.entries()].sort((a, b) => a[0] - b[0]);
+  // The far end is the next edge's first station, so drop it to avoid a doubled node.
   return ordered.slice(0, -1).map(([at, ramp]) => ({ at, ramp }));
 }
 
@@ -455,24 +494,40 @@ function footFor(
 
   // Across the descent, either side. Which side is decided by where the deck
   // is, so the foot is always on the inside of the turn off the street.
+  //
+  // At the junction's own height, not zero (#261 found this against real
+  // terrain). Zero was every surface node's height before ADR-0007 gave the
+  // network real elevation, so it was never wrong to hardcode; a junction up a
+  // hillside now sits well above the map's zero, and a foot pinned there turned
+  // RAMP_OFFSET - a lateral step meant to put the foot beside the street rather
+  // than on top of it - into a cliff the mouth had to climb in fourteen metres.
+  // The whole descent belongs on the climb (`deck` to `foot`, tens to hundreds
+  // of metres per `RAMP_MIN_RUN`/`RAMP_MAX_RUN`); the mouth stays flat because
+  // both its ends are the ground already is.
   const foot = make(
     nodes,
     {
       x: junction.pos.x - (dz / length) * RAMP_OFFSET,
       z: junction.pos.z + (dx / length) * RAMP_OFFSET,
     },
-    0,
+    junction.y,
+    // Explicitly surface: it stands at the junction's own height, which on a
+    // hillside is not zero, and `make`'s sign-of-`y` guess would call that
+    // elevated - the one thing this point specifically is not.
+    'surface',
   );
   link(roads, nodes, foot, junction, 'ramp');
   return foot;
 }
 
-function make(nodes: CityNode[], at: { x: number; z: number }, y: number): CityNode {
-  // Derived from the height, because on flat ground they are the same question
-  // and this has to stay a no-op (#250). When the ground stops being flat, this
-  // is the line that stops being a derivation.
-  const level: NodeLevel = y > 0 ? 'elevated' : y < 0 ? 'tunnel' : 'surface';
-  const node: CityNode = { id: nodes.length, pos: { x: at.x, z: at.z }, y, level, roads: [] };
+function make(nodes: CityNode[], at: { x: number; z: number }, y: number, level?: NodeLevel): CityNode {
+  // Derived from the height when not given explicitly, because on flat ground
+  // they are the same question and this has to stay a no-op (#250). Once the
+  // ground itself has real height, `y > 0` stops meaning "on the deck" - a
+  // hillside surface point is above zero too - so anything that is not the
+  // loop or a tunnel passes its own level rather than trusting the sign.
+  const lvl: NodeLevel = level ?? (y > 0 ? 'elevated' : y < 0 ? 'tunnel' : 'surface');
+  const node: CityNode = { id: nodes.length, pos: { x: at.x, z: at.z }, y, level: lvl, roads: [] };
   nodes.push(node);
   return node;
 }

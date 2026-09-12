@@ -43,7 +43,7 @@ import { routesFor } from './routes';
 import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
-import { addInterstate } from './interstate';
+import { addInterstate, draftLoop } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
@@ -326,7 +326,10 @@ export function generateCity(seed: number): City {
   // The interstate goes on after the surface network is whole, and joins it
   // only through its ramps. It is deliberately not part of the connectivity
   // repair above: the surface city has to stand up without it.
-  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water);
+  // draftLoop stands in for a hand-routed one (#261) until there is one to
+  // pass instead - it reproduces today's rectangle-inset-from-the-land as an
+  // authored four-point path, so addInterstate never computes its own shape.
+  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water, draftLoop(bounds, water));
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.

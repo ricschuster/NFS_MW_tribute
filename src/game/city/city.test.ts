@@ -798,10 +798,12 @@ describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
     );
     expect(climbs.length).toBeGreaterThan(0);
     // And every flat piece of ramp is a mouth at street level, not a ramp that
-    // forgot to rise: both ends on the ground.
+    // forgot to rise: both ends on the ground. "On the ground" is `level`, not
+    // literally `y === 0` - a junction on a hillside (ADR-0007) is surface at
+    // whatever height the terrain actually is there.
     for (const flat of ramps().filter((r) => !climbs.includes(r))) {
-      expect(city.nodes[flat.a].y).toBe(0);
-      expect(city.nodes[flat.b].y).toBe(0);
+      expect(city.nodes[flat.a].level).toBe('surface');
+      expect(city.nodes[flat.b].level).toBe('surface');
     }
     // The deck changes level too, on the run into and out of the tunnel. What
     // must not happen is a step: every change is spread over enough road to
@@ -815,9 +817,10 @@ describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
 
   it('stays reachable from the streets', () => {
     // Already covered by the connectivity test, but state it directly: an
-    // interstate you cannot get onto is scenery.
+    // interstate you cannot get onto is scenery. `level`, not `y === 0`, for
+    // the same reason as above.
     const onRamp = new Set(ramps().flatMap((r) => [r.a, r.b]));
-    const touchesSurface = [...onRamp].some((id) => city.nodes[id].y === 0);
+    const touchesSurface = [...onRamp].some((id) => city.nodes[id].level === 'surface');
     expect(touchesSurface).toBe(true);
   });
 });
