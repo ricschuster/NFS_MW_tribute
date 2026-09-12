@@ -182,17 +182,21 @@ describe('generateCity', () => {
     SLOW,
   );
 
-  it('never calls Math.random', () => {
-    const real = Math.random;
-    Math.random = () => {
-      throw new Error('city generation must not use Math.random');
-    };
-    try {
-      expect(() => generateCity(99)).not.toThrow();
-    } finally {
-      Math.random = real;
-    }
-  });
+  it(
+    'never calls Math.random',
+    () => {
+      const real = Math.random;
+      Math.random = () => {
+        throw new Error('city generation must not use Math.random');
+      };
+      try {
+        expect(() => generateCity(99)).not.toThrow();
+      } finally {
+        Math.random = real;
+      }
+    },
+    SLOW,
+  );
 
   it('builds a city of a plausible size', () => {
     expect(city.roads.length).toBeGreaterThan(200);
