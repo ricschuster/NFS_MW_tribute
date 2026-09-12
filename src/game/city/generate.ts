@@ -329,7 +329,7 @@ export function generateCity(seed: number): City {
   // draftLoop stands in for a hand-routed one (#261) until there is one to
   // pass instead - it reproduces today's rectangle-inset-from-the-land as an
   // authored four-point path, so addInterstate never computes its own shape.
-  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water, draftLoop(bounds, water));
+  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water, terrain, draftLoop(bounds, water));
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.
