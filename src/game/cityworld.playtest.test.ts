@@ -426,8 +426,9 @@ describe.skipIf(!CITY_FREEWAY)('two levels', () => {
     world.z = a.pos.z;
 
     // Standing at that map position at street level is *not* being on the deck.
-    world.y = 0;
-    expect(world.groundHeight()).toBe(0);
+    // "Street level" is the real ground there (ADR-0007), not literally zero.
+    world.y = groundAt(city.terrain, a.pos.x, a.pos.z);
+    expect(world.groundHeight()).toBeCloseTo(world.y, 0);
 
     // Standing at the same map position up at deck height is.
     world.y = a.y;
@@ -447,7 +448,8 @@ describe.skipIf(!CITY_FREEWAY)('two levels', () => {
     world.speed = 0;
     drive(world, 5, NONE);
 
-    expect(world.y).toBe(0);
+    // Landed on the real ground there (ADR-0007), not literally zero.
+    expect(world.y).toBeCloseTo(groundAt(city.terrain, world.x, world.z), 0);
     expect(world.falling).toBe(false);
   });
 });
