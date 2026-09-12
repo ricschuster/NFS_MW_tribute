@@ -468,6 +468,17 @@ function pickTunnels(
  * surface junction", and the ramp is then the line from the deck above it to
  * the street. "Across" and "along" are the edge's own direction now rather
  * than a map axis, which is what an authored, freely-angled loop needs.
+ *
+ * Kept away from both ends of the edge, but by a margin scaled to the edge's
+ * own length rather than a flat `GRADE_RUN` (#261). That constant is right
+ * for the four multi-kilometre sides of a rectangle - it keeps a ramp off a
+ * sharp 90-degree corner - but an authored path is dozens of short bends, and
+ * a fixed 430 m margin at both ends leaves no window at all on anything
+ * shorter than 860 m. Measured on a hand-drawn 25-point loop: every edge but
+ * five was under 860 m, and every ramp candidate within reach of a real
+ * junction was excluded regardless of distance - zero ramps, not because
+ * nothing was close enough, but because nowhere on the loop was allowed to
+ * have one.
  */
 function rampsFor(
   rng: Rng,
@@ -475,6 +486,7 @@ function rampsFor(
   surface: CityNode[],
   water: Water,
 ): { at: number; node: CityNode }[] {
+  const margin = Math.min(GRADE_RUN, edge.length * 0.25);
   const reachable: { node: CityNode; along: number }[] = [];
   for (const node of surface) {
     const dx = node.pos.x - edge.a.x;
@@ -482,7 +494,7 @@ function rampsFor(
     const along = dx * edge.ux + dz * edge.uz;
     const across = Math.abs(dx * -edge.uz + dz * edge.ux);
     if (across < RAMP_MIN_RUN || across > RAMP_MAX_RUN) continue;
-    if (along <= GRADE_RUN || along >= edge.length - GRADE_RUN) continue;
+    if (along <= margin || along >= edge.length - margin) continue;
     // And the descent itself has to be over land (#244). A ramp is only a few
     // metres up for most of its run, so one crossing the river is a road going
     // into the water rather than a viaduct over it - and it is rejected here,
