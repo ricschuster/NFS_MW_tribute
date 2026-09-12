@@ -146,14 +146,6 @@ export function addInterstate(
  * drawn by hand and synced in, the same way the surface roads were.
  */
 export function draftLoop(bounds: Rect, water: Water): Vec2[] {
-  const M = 135;
-  const pathMeters = [
-    [100,-2650],[1250,-2950],[1473,-2867],[2150,-2650],[2500,-1700],[2450,250],[2108,998],
-    [1807,1515],[1553,1882],[1280,2588],[856,2720],[292,2579],[-94,2268],[-301,1769],
-    [-452,1365],[-555,922],[-517,445],[-670,76],[-784,-199],[-950,-600],[-980,-943],
-    [-1026,-1459],[-921,-1995],[-847,-2221],[-640,-2385],[-362,-2408],
-  ];
-  return pathMeters.map(([x, z]) => ({ x: x * M, z: z * M }));
   const on = landBounds(bounds, water);
   const width = on.maxX - on.minX;
   const depth = on.maxZ - on.minZ;

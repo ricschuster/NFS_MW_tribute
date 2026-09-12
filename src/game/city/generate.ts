@@ -43,7 +43,8 @@ import { routesFor } from './routes';
 import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
-import { addInterstate, draftLoop } from './interstate';
+import { addInterstate } from './interstate';
+import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
@@ -326,10 +327,16 @@ export function generateCity(seed: number): City {
   // The interstate goes on after the surface network is whole, and joins it
   // only through its ramps. It is deliberately not part of the connectivity
   // repair above: the surface city has to stand up without it.
-  // draftLoop stands in for a hand-routed one (#261) until there is one to
-  // pass instead - it reproduces today's rectangle-inset-from-the-land as an
-  // authored four-point path, so addInterstate never computes its own shape.
-  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water, terrain, draftLoop(bounds, water));
+  // FREEWAY_LOOP is the hand-routed path #261 asked for, drawn over the real
+  // terrain and grade the same way the surface roads were (ADR-0009);
+  // FREEWAY_TUNNELS is where two of its dives are authored rather than found.
+  // With CITY_STREET_GRID still off, `rampsFor` finds a real junction near
+  // only a handful of the loop's edges, so most of this 13.6 km loop has
+  // nowhere to get on or off it yet - expected to open up once the grid comes
+  // back (#271/#272), not a bug in the loop or in rampsFor itself.
+  if (CITY_FREEWAY) {
+    addInterstate(rng, bounds, nodes, roads, water, terrain, FREEWAY_LOOP, FREEWAY_TUNNELS);
+  }
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.
