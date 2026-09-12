@@ -3,6 +3,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
 import { segmentIntersection } from '../city/grid';
+import { groundAt } from '../city/terrain';
 import { CameraDirector } from './cameras';
 import type { Hud } from './hud';
 import { QuickWheel } from '../quickwheel';
@@ -348,13 +349,14 @@ export class CityView {
       // about which way is up are worth less than either alone.
       return {
         position: new THREE.Vector3(centre.x, 2200 * M, centre.z - 2900 * M),
-        target: centre,
+        target: centre.clone().setY(this.groundY(centre.x, centre.z)),
       };
     }
 
     if (where === 'downtown') {
       const at = this.districtCentre('downtown');
-      return { position: new THREE.Vector3(at.x - 700 * M, 280 * M, at.z + 900 * M), target: at };
+      const y = this.groundY(at.x, at.z);
+      return { position: new THREE.Vector3(at.x - 700 * M, y + 280 * M, at.z + 900 * M), target: at.clone().setY(y) };
     }
 
     if (where === 'overpass') {
@@ -377,8 +379,9 @@ export class CityView {
       const b = this.city.nodes[span.b].pos;
       const at = new THREE.Vector3((a.x + b.x) / 2, 0, (a.z + b.z) / 2);
       const along = new THREE.Vector3(b.x - a.x, 0, b.z - a.z).normalize();
+      const eye = at.clone().addScaledVector(along, -320 * M);
       return {
-        position: at.clone().addScaledVector(along, -320 * M).setY(70 * M),
+        position: eye.setY(this.groundY(eye.x, eye.z) + 70 * M),
         target: at,
       };
     }
@@ -386,13 +389,31 @@ export class CityView {
     // Street level, looking down a downtown street: the view the game will
     // have. Standing on a road matters - the middle of a district is a block,
     // and a camera put there is inside a building looking at its own wall.
-    const streets = this.city.roads.filter((road) => road.district === 'downtown' && !road.bridge);
+    // Any road if there is no downtown one. The map has been rebuilt around the
+    // roads that were drawn (ADR-0009) and the districts a road carries are not
+    // guaranteed to include one - and a viewpoint that throws is a black
+    // rectangle with a stack trace behind it, which is what this was.
+    const downtown = this.city.roads.filter((road) => road.district === 'downtown' && !road.bridge);
+    const streets = downtown.length > 0 ? downtown : this.city.roads.filter((road) => !road.bridge);
+    if (streets.length === 0) return { position: new THREE.Vector3(centre.x, 200 * M, centre.z), target: centre };
     const street = streets.reduce((best, road) => (road.length > best.length ? road : best), streets[0]);
     const from = this.city.nodes[street.a].pos;
     const to = this.city.nodes[street.b].pos;
     const along = new THREE.Vector3(to.x - from.x, 0, to.z - from.z).normalize();
-    const eye = new THREE.Vector3(from.x, 5 * M, from.z);
-    return { position: eye, target: eye.clone().addScaledVector(along, 600 * M).setY(24 * M) };
+    const eye = new THREE.Vector3(from.x, this.groundY(from.x, from.z) + 5 * M, from.z);
+    const at = eye.clone().addScaledVector(along, 600 * M);
+    return { position: eye, target: at.setY(this.groundY(at.x, at.z) + 24 * M) };
+  }
+
+  /**
+   * How high the land is under a point (#254).
+   *
+   * Every fixed viewpoint was written against a world whose ground was a plane
+   * at zero, so on a landscape they stand inside the hill they were meant to be
+   * looking at: the street shot came out as a black rectangle.
+   */
+  private groundY(x: number, z: number): number {
+    return groundAt(this.city.terrain, x, z);
   }
 
   /** Stand on a street, looking at the deck passing over it. */

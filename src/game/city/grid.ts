@@ -1,4 +1,5 @@
 import { CITY_GRID_CELL, SURFACE_REACH } from '../constants';
+import { groundAt } from './terrain';
 import type { Building, City, CityNode, CityRoad, Rect, Vec2 } from './types';
 
 /**
@@ -236,17 +237,31 @@ export function segmentToRect(from: Vec2, to: Vec2, r: Rect): number {
  * water function, which would be a second source of truth for the same thing.
  */
 export function inWater(city: City, x: number, z: number): boolean {
-  for (const body of city.water) {
-    const outline = body.outline;
+  const crosses = (ring: Vec2[]): boolean => {
     let inside = false;
-    for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
-      const a = outline[i];
-      const b = outline[j];
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const a = ring[i];
+      const b = ring[j];
       if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) {
         inside = !inside;
       }
     }
-    if (inside) return true;
+    return inside;
+  };
+
+  for (const body of city.water) {
+    if (!crosses(body.outline)) continue;
+    // **The holes are the land** (ADR-0008). The sea stopped being "a bay along
+    // the north edge" and became everywhere the land is not, so its outline is
+    // the whole map and every body of land is a hole in it. Testing the outline
+    // alone therefore says *every point on the map is water* - and it did.
+    //
+    // What hid it was the other half of `afloat`: a car on a road is not
+    // afloat whatever the water says, so the sim only asked this question the
+    // moment you left the tarmac. Which is exactly when the car sank, from a
+    // road four seconds out of the spawn, on dry land at 1.2 m above the sea.
+    if (body.holes?.some(crosses)) continue;
+    return true;
   }
   return false;
 }
@@ -300,7 +315,7 @@ export function roadHeightAt(city: City, road: CityRoad, x: number, z: number): 
 export interface Surface {
   /** The road under this point, or null for open ground. */
   road: CityRoad | null;
-  /** Ground height here: the deck if on a road, otherwise street level. */
+  /** Height here: the deck if on a road, otherwise the land itself. */
   y: number;
 }
 
@@ -332,5 +347,8 @@ export function surfaceAt(city: City, grid: CityGrid, x: number, z: number, near
     }
   }
 
-  return best ? { road: best, y: bestY } : { road: null, y: 0 };
+  // Open ground is **the land**, not zero (#255). Cutting across a block used to
+  // put the car at sea level whatever hill the block was on, so the same step
+  // that let you leave the road also teleported you into or above the ground.
+  return best ? { road: best, y: bestY } : { road: null, y: groundAt(city.terrain, x, z) };
 }

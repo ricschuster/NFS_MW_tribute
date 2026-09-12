@@ -23,6 +23,7 @@ import {
   DUNK_HOLD,
   DUNK_DAMAGE,
   DUNK_DEPTH,
+  FALL_CLEARANCE,
   WRECK_LINGER,
   TAKEDOWN_FLASH,
   TAKEDOWN_SPEED_KEPT,
@@ -104,6 +105,8 @@ import {
   distanceToRoad,
 } from './city/grid';
 import { routeTo, offRoute } from './city/navigate';
+import { groundAt } from './city/terrain';
+import { planCentre } from './city/plan';
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -412,18 +415,30 @@ export class CityWorld {
     this.reinflating = mods.reinflating;
   }
 
-  /** Put the car on a surface street near the middle of the city, pointing along it. */
+  /** Put the car on a surface street in **downtown**, pointing along it. */
   spawn(): void {
-    const middle = {
-      x: (this.city.bounds.minX + this.city.bounds.maxX) / 2,
-      z: (this.city.bounds.minZ + this.city.bounds.maxZ) / 2,
-    };
+    // The middle of the map is not the middle of the city and never was: it is
+    // a point in a rectangle, and Kestrel Bay is five bodies of land with the
+    // town on one corner of the biggest. Starting there put the car in open
+    // country, two and a half kilometres from anything, which is a poor first
+    // ten seconds of a game about a city.
+    //
+    // The plan knows where downtown is (ADR-0009), so ask it.
+    const middle = planCentre('downtown');
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;
     for (const road of this.city.roads) {
-      // A street, at street level, long enough to be somewhere rather than a stub.
-      if (road.class !== 'street' && road.class !== 'arterial') continue;
+      // A surface road, long enough to be somewhere rather than a stub.
+      //
+      // It used to insist on `street` or `arterial`, which was every road worth
+      // starting on until the map was rebuilt around drawn roads (ADR-0009) and
+      // they are all boulevards. Nothing matched, `spawn` returned without
+      // placing anything, and the car began the game at the origin with no road
+      // under it - which reads as "the car is not on a road" and was diagnosed
+      // three times as a height problem. Ask what a road is *not* instead: the
+      // freeway and its ramps are the roads you do not start on.
+      if (road.class === 'interstate' || road.class === 'ramp' || road.bridge) continue;
       if (this.city.nodes[road.a].level !== 'surface' || road.length < SPAWN_SEARCH) continue;
       // Measured from the road's middle, not from one of its ends. A long
       // arterial can pass through the centre of the city while both its ends
@@ -443,7 +458,12 @@ export class CityWorld {
     const b = this.city.nodes[best.b].pos;
     this.x = (a.x + b.x) / 2;
     this.z = (a.z + b.z) / 2;
-    this.y = 0;
+    // On the road, not at sea level (#255). A car put at zero on a road that is
+    // forty metres up is not on that road as far as `surfaceAt` is concerned -
+    // it rejects anything further than `SURFACE_REACH` from the height asked
+    // about - so the car spawned in mid-air over the hill and `onRoad` was null
+    // from the first step.
+    this.y = roadHeightAt(this.city, best, this.x, this.z);
     this.heading = Math.atan2(b.x - a.x, b.z - a.z);
     this.speed = 0;
     this.onRoad = best;
@@ -697,7 +717,9 @@ export class CityWorld {
       this.y = -DUNK_DEPTH;
       if (this.dunked <= 0) {
         this.dunked = 0;
-        this.y = 0;
+        // `recover` puts the car on a road and sets its height with it; coming
+        // up out of the water at zero first would be a step through the ground
+        // wherever the bank is above sea level.
         this.recover();
       }
       if (this.withTraffic) this.traffic.update(dt, this);
@@ -1460,12 +1482,21 @@ export class CityWorld {
     this.onRoad = surface.road;
 
     // Off the side of a deck with nothing under it at this height: fall.
-    const supported = surface.road !== null || this.y <= 0;
+    //
+    // "Nothing under it" is the **land**, not zero (#255). A car that came off a
+    // deck over a hill used to fall to sea level and land inside the hillside,
+    // and one driving over ground above sea level was never considered supported
+    // at all.
+    const land = groundAt(this.city.terrain, this.x, this.z);
+    // Driving down a slope is not falling. The ground under the car is lower
+    // every step than the car was the step before, and testing `y <= land`
+    // exactly makes every downhill metre a fall - see `FALL_CLEARANCE`.
+    const supported = surface.road !== null || this.y <= land + FALL_CLEARANCE;
     if (!supported) {
       this.falling = true;
       this.fallSpeed += GRAVITY * dt;
-      this.y = Math.max(0, this.y - this.fallSpeed * dt);
-      if (this.y === 0) {
+      this.y = Math.max(land, this.y - this.fallSpeed * dt);
+      if (this.y === land) {
         this.falling = false;
         this.fallSpeed = 0;
         this.speed *= HIT_SPEED_KEPT;

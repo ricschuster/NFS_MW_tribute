@@ -17,8 +17,17 @@ import { disposeFacades, facadeLights, facadeTexture, facadeUvs } from './facade
  * and returns one instanced mesh per kind rather than one mesh per building.
  */
 export interface BuildingProvider {
-  /** One instanced mesh per kind present, ready to add to the scene. */
-  build(buildings: Building[]): THREE.Object3D[];
+  /**
+   * One instanced mesh per kind present, ready to add to the scene.
+   *
+   * `groundY` is how high the land is under a point (#254). A building stands
+   * on the ground, and the ground stopped being a plane at zero - which is a
+   * question about the *world*, not about how a building is drawn, so it comes
+   * in rather than being looked up: the seam stays "city emits descriptions,
+   * the renderer builds geometry" and a provider that swaps boxes for models
+   * needs the same number for the same reason.
+   */
+  build(buildings: Building[], groundY: (x: number, z: number) => number): THREE.Object3D[];
   dispose(): void;
 }
 
@@ -87,7 +96,7 @@ export function setbackOf(
 export class BoxBuildings implements BuildingProvider {
   private readonly meshes: THREE.InstancedMesh[] = [];
 
-  build(buildings: Building[]): THREE.Object3D[] {
+  build(buildings: Building[], groundY: (x: number, z: number) => number): THREE.Object3D[] {
     const byKind = new Map<BuildingKind, Building[]>();
     for (const building of buildings) {
       const list = byKind.get(building.kind);
@@ -150,13 +159,13 @@ export class BoxBuildings implements BuildingProvider {
         // car can hit, and it keeps the full footprint the city gave it, so
         // collision sees exactly what it saw before.
         matrix.makeScale(width, step ? step.at : building.height, depth);
-        matrix.setPosition(midX, 0, midZ);
+        matrix.setPosition(midX, groundY(midX, midZ), midZ);
         mesh.setMatrixAt(i, matrix);
         mesh.setColorAt(i, colour);
 
         if (step) {
           matrix.makeScale(width - step.inset * 2, building.height - step.at, depth - step.inset * 2);
-          matrix.setPosition(midX, step.at, midZ);
+          matrix.setPosition(midX, groundY(midX, midZ) + step.at, midZ);
           upper.setMatrixAt(stepped, matrix);
           upper.setColorAt(stepped, colour);
           stepped++;

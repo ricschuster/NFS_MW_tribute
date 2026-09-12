@@ -104,6 +104,12 @@ what the city is shaped like.
   advanced, expert and perfect. `citylap` measures only the last of those, which
   is a floor nobody stands on; this is what a change does to somebody who is not
   perfect. Seeded, so a driver's mistakes land in the same places each run
+- `npm run plan` — does the authored map (#272) still fit the ground the
+  generator makes? Reproduces #271's audit and reports where the plan and the
+  generator disagree; `-- --draw` puts it over the relief. A guard, not a probe:
+  a polygon that leaves the land is a failure
+- `npm run roadexport` — write the road network, the relief and the plan to
+  `screenshots/roads.json`, for the road editor to load
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 
@@ -578,6 +584,16 @@ steps, and the camera director is still running its opening orbit ten seconds
 in - wait on `director.mode === 'chase'`), a cop pushed in with a position and
 a `t` is teleported onto its road on the next step unless the `t` matches, and
 the police sweep up roadblocks the instant the pursuit stops.
+
+**The map is being rebuilt, and the log is `docs/map-exploration.md`.** Read it
+with [ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) before
+touching the generator: the districts and the places are *authored data* in
+`city/plan.ts` now, the landmass and the terrain are frozen (`CITY_LAND_STREAM`),
+and `CITY_STREET_GRID` and `CITY_FREEWAY` are both **off** while the map is
+rebuilt from the routed roads outward. Those two are switches rather than
+deletions because `fillSuperblock` and `interstate.ts` are the only things that
+know how a district becomes blocks and how a deck is built, and both are wanted
+back - just not laid with a ruler.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

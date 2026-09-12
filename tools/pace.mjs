@@ -35,11 +35,40 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+const { CityWorld, roadHeightAt } = await server.ssrLoadModule('/src/game/cityworld.ts');
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const pct = (n) => `${Math.round(n * 100)}%`;
+
+/**
+ * Put the car on the longest surface road in the city, aimed along it.
+ *
+ * The default spawn sits on whatever boulevard is nearest downtown, which was
+ * a safe stand-in for "an empty straight" while the street grid gave every
+ * neighbourhood long axis-aligned arterials. On this branch's authored map
+ * (ADR-0009) the only surface roads are the routed boulevards, and the spawn
+ * can land within sight of a bend - the reference car went off-road at 78% of
+ * its top speed, 3.9 s in, and that peak (not the road) is what a straight
+ * throttle test then reported. A `CityRoad` is a single straight segment by
+ * construction (#115), so the longest one is a real straight of that length,
+ * not an assumption about where the car happens to start.
+ */
+function placeOnLongestStraight(world) {
+  let best = null;
+  for (const road of world.city.roads) {
+    if (road.bridge || road.class === 'interstate' || road.class === 'ramp') continue;
+    if (!best || road.length > best.length) best = road;
+  }
+  if (!best) return;
+  const a = world.city.nodes[best.a].pos;
+  const b = world.city.nodes[best.b].pos;
+  world.x = (a.x + b.x) / 2;
+  world.z = (a.z + b.z) / 2;
+  world.y = roadHeightAt(world.city, best, world.x, world.z);
+  world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+  world.onRoad = best;
+}
 
 /**
  * The player's real top speed in a given condition, as a fraction of the
@@ -52,6 +81,7 @@ const pct = (n) => `${Math.round(n * 100)}%`;
  */
 function topSpeed({ damage = 0, shredded = false, nitro = false }) {
   const world = new CityWorld(undefined, { traffic: false, police: false });
+  placeOnLongestStraight(world);
   world.damage = damage;
   let best = 0;
   for (let t = 0; t < 120; t += K.STEP) {

@@ -17,9 +17,15 @@ const city = kestrelBay();
 const M = UNITS_PER_METRE;
 
 describe('what there is to find in Kestrel Bay', () => {
+  // `BILLBOARD_COUNT` is a target and not a guarantee: placement stops when
+  // the road runs out of room at `BILLBOARD_SPACING`, and the road is 71 km
+  // today against 231 km on the old dense grid. Measured on the pinned city:
+  // 65 of 90 fit. That climbs back toward the target as the network grows
+  // with #268 - it is not something to chase by loosening the spacing.
   it('scatters billboards across the map rather than piling them up', () => {
     const boards = city.collectibles.filter((c) => c.kind === 'billboard');
-    expect(boards.length).toBe(BILLBOARD_COUNT);
+    expect(boards.length).toBeGreaterThan(0);
+    expect(boards.length).toBeLessThanOrEqual(BILLBOARD_COUNT);
 
     for (let i = 0; i < boards.length; i++) {
       for (let j = i + 1; j < boards.length; j++) {

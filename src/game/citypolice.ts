@@ -63,6 +63,7 @@ import type { Rng } from './city/rng';
 import type { City, CityRoad } from './city/types';
 import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
 import { surfaceAt } from './city/grid';
+import { groundAt } from './city/terrain';
 
 export interface Cop extends GraphCar {
   /** What kind of unit this is: decides its pace, and how it is drawn. */
@@ -758,9 +759,17 @@ export class CityPolice {
    * alone this step.
    */
   private cutsCorner(cop: Cop, player: Chased, dt: number): boolean {
-    /** Is there road under this point? Used to decide when a unit is back. */
-    const onRoad = (x: number, z: number) =>
-      surfaceAt(this.city, this.grid, x, z, 0).road !== null;
+    // Is there road under this point, at this point's own height? Height-blind
+    // against a hardcoded sea level (#251, ADR-0007) found "a road" near enough
+    // any hillside cop passed over on the way, rejoining it into ordinary
+    // on-road navigation one frame after every single excursion began - which
+    // gets nowhere near the player before the graph, with no closer junction to
+    // offer, carries the unit away again. Height is a real property of the
+    // network (#85): the same question asked with the cop's own elevation
+    // rather than zero is the one that means "back on the road it is actually
+    // near".
+    const onRoad = (x: number, z: number, y: number) =>
+      surfaceAt(this.city, this.grid, x, z, y).road !== null;
 
     // Already out there: keep going, or come back.
     if (cop.offRoad > 0) {
@@ -770,7 +779,9 @@ export class CityPolice {
       const step = cop.speed * COP_OFF_ROAD * dt;
       cop.x += (dx / gap) * step;
       cop.z += (dz / gap) * step;
-      cop.y = 0;
+      // Riding the ground it is actually crossing (#255's own rule for the
+      // player), not pinned to sea level regardless of what is underneath.
+      cop.y = groundAt(this.city.terrain, cop.x, cop.z);
       cop.heading = Math.atan2(dx, dz);
       cop.offRoad += step;
 
@@ -778,7 +789,7 @@ export class CityPolice {
       // leash runs out - whichever comes first. Either way it rejoins at the
       // nearest road rather than teleporting: `nearestRoad` is the same
       // question the player's own stuck reset asks (#179).
-      if (onRoad(cop.x, cop.z) || cop.offRoad > COP_LEASH) {
+      if (onRoad(cop.x, cop.z, cop.y) || cop.offRoad > COP_LEASH) {
         cop.offRoad = 0;
         this.rejoin(cop);
       }

@@ -1,21 +1,25 @@
 import {
   CITY_WIDTH,
   CITY_DEPTH,
-  CITY_ARTERIAL_COLS,
-  CITY_ARTERIAL_ROWS,
+  CITY_ARTERIAL_SPACING,
+  CITY_AUTHORED_ROADS,
+  CITY_FREEWAY,
+  CITY_STREET_GRID,
+  CITY_BODY_CELL,
   CITY_ARTERIAL_JITTER,
   CITY_ARTERIAL_LANES,
   CITY_ARTERIAL_SPEED,
   CITY_LANE_WIDTH,
-  CITY_DOWNTOWN_RADIUS,
-  CITY_INDUSTRIAL_RADIUS,
-  CITY_WATERFRONT_RADIUS,
+  CITY_LAND_STREAM,
   CITY_BRIDGES,
   CITY_MAX_BRIDGE,
   CITY_BRIDGE_SPACING,
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
   BOULEVARD_CLEARANCE,
+  CITY_MIN_BODY,
+  ROUTE_ARTERIAL,
+  ROUTE_COUNTRY,
   EMBANKMENT_SETBACK,
   CAR_RADIUS,
   DECK_HEADROOM,
@@ -43,7 +47,13 @@ import { addInterstate } from './interstate';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
-import { makeTerrain } from './terrain';
+import { groundAt, makeTerrain, type Terrain } from './terrain';
+import { makeRouter } from './routing';
+import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
+import { placeApproach, placeRoads, shapeForPlaces } from './places';
+import { landBodies, type LandBodies } from './bodies';
+import { AUTHORED_ROADS } from './roads';
+import { cutAndFill } from './cutfill';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import type {
   Axis,
@@ -104,23 +114,54 @@ export function generateCity(seed: number): City {
     maxZ: CITY_DEPTH / 2,
   };
 
-  const water = makeWater(rng, bounds);
+  // The land is authored and does not vary with the seed (ADR-0009 rule 2):
+  // the plan is polygons in world metres, and a coastline that moved under them
+  // would make them mean nothing.
+  const water = makeWater(new Rng(CITY_LAND_STREAM), bounds);
   // The land the city stands on (ADR-0007). Water first, and the height field
   // shaped to agree with it - which is why this is here and not earlier.
-  const terrain = makeTerrain(seed, bounds, water);
+  const terrain = makeTerrain(CITY_LAND_STREAM, bounds, water);
+  // The places are dug into the ground **before** anything is laid on it
+  // (ADR-0009 rule 5): a runway is flat or it is not a runway, and a quarry is a
+  // hole. Everything downstream - the router's grades, the block fitting, the
+  // sim's own `groundAt` - then sees the ground as it will be rather than the
+  // hillside it replaced.
+  shapeForPlaces(terrain, water);
+  // And cut and fill the roads into it (#252). After the places, because a road
+  // to the quarry is graded against the quarry and not the hill it replaced;
+  // before anything is laid, so the network, the blocks and the sim's own
+  // `groundAt` all see the shelf rather than the hillside.
+  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, AUTHORED_ROADS);
 
-  const xLines = arterialLines(rng, bounds.minX, bounds.maxX, CITY_ARTERIAL_COLS);
-  const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, CITY_ARTERIAL_ROWS);
+  // Which body of land each point is on. Wanted in three places now - the roads
+  // between the bodies, the blocks that must not cross a channel, and the places.
+  const land = landBodies(bounds, water);
+
+  const cols = Math.round((bounds.maxX - bounds.minX) / CITY_ARTERIAL_SPACING) + 1;
+  const rows = Math.round((bounds.maxZ - bounds.minZ) / CITY_ARTERIAL_SPACING) + 1;
+  const xLines = arterialLines(rng, bounds.minX, bounds.maxX, cols);
+  const zLines = arterialLines(rng, bounds.minZ, bounds.maxZ, rows);
 
   // A cell with no land in it is open water: no streets, no blocks, no district.
-  const cells = cellsBetween(xLines, zLines).filter((cell) => !allWater(cell, water));
-  const districts = assignDistricts(rng, cells, bounds, water);
+  //
+  // And a cell outside every district in the plan is **country**: the grid stops
+  // there (ADR-0009 rule 3). It used to run over every cell of the rectangle,
+  // which made the whole map one even sprawl, and then over a radius around the
+  // town, which left four of the five bodies of land with no city on them at
+  // all. `builtUp` is the line between the two, and everything outside it is
+  // what #260 will fill with roads that are not city.
+  const onLand = cellsBetween(xLines, zLines).filter((cell) => !allWater(cell, water));
+  const cells = onLand.filter((cell) => builtUp(centre(cell)));
+  const districts = assignDistricts(cells);
   // Each superblock gets its own density, so the city has thin quarters and
   // dense ones rather than one even spread of buildings.
   const superblocks: Superblock[] = cells.map((c, i) => ({
     bounds: c,
     district: districts[i],
-    density: 1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE),
+    // The plan's own density for this area multiplies the roll, so two areas of
+    // the same kind can be different places: the northern midtown is the edge of
+    // the city and the one behind downtown is an inner suburb.
+    density: (1 + rng.range(-DENSITY_RANGE, DENSITY_RANGE)) * planDensityAt(centre(c)),
     // Whether the streets here bend. Decided per quarter for the same reason
     // density is: a city where every street bends a little is a wobbly grid,
     // where a winding quarter beside a gridded one is two neighbourhoods.
@@ -130,57 +171,145 @@ export function generateCity(seed: number): City {
   const laid: Span[] = [];
   const blocks: CityBlock[] = [];
 
-  for (const x of xLines) {
-    laid.push({
-      from: { x, z: bounds.minZ },
-      to: { x, z: bounds.maxZ },
-      axis: 'z',
-      class: 'arterial',
-      district: 'midtown',
-    });
-  }
-  for (const z of zLines) {
-    laid.push({
-      from: { x: bounds.minX, z },
-      to: { x: bounds.maxX, z },
-      axis: 'x',
-      class: 'arterial',
-      district: 'midtown',
-    });
-  }
+  const router = makeRouter(bounds, terrain, water);
 
+  // The street grid, when there is one. Superblocks are assigned either way,
+  // because they carry the district a piece of ground belongs to and everything
+  // downstream reads that; with the grid off they simply have nothing in them.
   const arterialHalf = roadWidth(CITY_ARTERIAL_LANES) / 2;
-  for (const cell of superblocks) {
-    fillSuperblock(rng, cell, arterialHalf, water, laid, blocks);
-  }
-
-  // Boulevards go in as ordinary spans, so they are cut against the water and
-  // split at every crossing by the same code as everything else. Each curve is
-  // a chain of short straight pieces; the bend is in where the pieces point.
-  for (const route of boulevardRoutes(rng, bounds)) {
-    for (let i = 1; i < route.length; i++) {
-      laid.push({ from: route[i - 1], to: route[i], class: 'boulevard', district: 'midtown' });
+  if (CITY_STREET_GRID) {
+    // The arterials are the grid's spine and they stop where the grid does. Run
+    // to the map edge and they are six lanes of nothing crossing open country to
+    // a coast with no town on it.
+    for (const x of xLines) {
+      for (const run of builtRuns({ x, z: bounds.minZ }, { x, z: bounds.maxZ })) {
+        laid.push({ from: run.from, to: run.to, axis: 'z', class: 'arterial', district: 'midtown' });
+      }
+    }
+    for (const z of zLines) {
+      for (const run of builtRuns({ x: bounds.minX, z }, { x: bounds.maxX, z })) {
+        laid.push({ from: run.from, to: run.to, axis: 'x', class: 'arterial', district: 'midtown' });
+      }
+    }
+    for (const cell of superblocks) {
+      fillSuperblock(rng, cell, arterialHalf, water, land, laid, blocks);
     }
   }
 
-  // And the roads that follow the water, in the same way and for the same
-  // reason (#241). A street cut off by the river used to end at the bank; now
-  // it ends onto the embankment, which is what a street meeting a river
-  // actually does.
-  //
-  // A boulevard, because that is what this codebase calls a road that bends:
-  // arterials are asserted to be axis-aligned - they are the grid's spine - and
-  // blocks are already swept clear of boulevards. Classing it as an arterial
-  // broke both of those, which is the tests earning their keep.
-  for (const route of embankmentRoutes(bounds, water)) {
-    for (let i = 1; i < route.length; i++) {
-      laid.push({
-        from: route[i - 1],
-        to: route[i],
-        class: 'boulevard',
-        district: 'waterfront',
-        embankment: true,
-      });
+  if (CITY_AUTHORED_ROADS) {
+    // **The roads are drawn** (`city/roads.ts`).
+    //
+    // Laid through `layRoute` like every other routed road, and for the reason
+    // that function exists: a drawn road arrives as a chain of short pieces, and
+    // `clip` looks for a gap *inside* a span, so a crossing that falls between
+    // two pieces is never offered as a bridge candidate. `layRoute` lays each
+    // crossing as one span from bank to bank, which is the shape `clip` knows.
+    //
+    // Every one of them is `required`. The author decided where this city
+    // crosses its water; the spacing rule in `chooseBridges` is for picking
+    // among crossings nobody chose.
+    for (const road of AUTHORED_ROADS) {
+      layRoute(road.points, water, laid, road.kind, road.district, true);
+    }
+  } else {
+  // Boulevards go in as ordinary spans, so they are cut against the water and
+    // split at every crossing by the same code as everything else.
+    //
+    // **Routed, not swept** (ADR-0008 rule 2). `boulevardRoutes` still picks where
+    // one starts and ends - across the map, spread out, alternating sides - and
+    // the router decides how it gets there. A swept curve is a quadratic bowed by
+    // a random number, and a random number knows nothing about the ground: it
+    // reads as a line drawn on a map because that is what it is. A routed one
+    // bends because the hill is there.
+    for (const route of boulevardRoutes(rng, bounds)) {
+      const line = router.route(route[0], route[route.length - 1], ROUTE_ARTERIAL);
+      layRoute(line.length > 1 ? line : route, water, laid);
+    }
+
+    // And the roads that follow the water, in the same way and for the same
+    // reason (#241). A street cut off by the river used to end at the bank; now
+    // it ends onto the embankment, which is what a street meeting a river
+    // actually does.
+    //
+    // A boulevard, because that is what this codebase calls a road that bends:
+    // arterials are asserted to be axis-aligned - they are the grid's spine - and
+    // blocks are already swept clear of boulevards. Classing it as an arterial
+    // broke both of those, which is the tests earning their keep.
+    for (const route of embankmentRoutes(water, builtUp)) {
+      for (let i = 1; i < route.length; i++) {
+        laid.push({
+          from: route[i - 1],
+          to: route[i],
+          class: 'boulevard',
+          district: 'waterfront',
+          embankment: true,
+        });
+      }
+    }
+
+    // A road to each of the other bodies of land, from a district on this side to
+    // a district on that one, **routed** over the ground rather than drawn across
+    // it (ADR-0008 rule 2).
+    //
+    // Two things make these necessary at all. `clip` only offers a gap as a
+    // bridge candidate where an arterial or a boulevard crosses water, and
+    // bounding the grid to the built-up area (rule 3) stopped the arterials well
+    // short of the coast - so the roads that used to cross the channels by
+    // accident stopped existing, no gap was ever a candidate, and `prune` deleted
+    // every district across the water. Measured: three bodies of land and *zero*
+    // bridges.
+    //
+    // Routed rather than laid, because a straight line between two lobes crosses
+    // whatever is in the way. The router prices water per metre, so it finds the
+    // narrows on its own and the crossing chooses itself; and it prices the
+    // square of the gradient, so it arrives at the water along the ground rather
+    // than over a ridge.
+    const links = linkRoutes(water, land);
+    for (const link of links) {
+      layRoute(router.route(link.from, link.to, ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+    }
+
+    // The places, and the road in to each (#271). Their own roads go in as
+    // ordinary spans for the same reason the boulevards and the embankment do -
+    // the clip, the junction splitting and the connectivity repair are all one
+    // piece of code and nothing here should have a second copy of them.
+    for (const road of placeRoads(terrain, water)) {
+      const line = road.loop ? [...road.line, road.line[0]] : road.line;
+      for (let i = 1; i < line.length; i++) {
+        laid.push({ from: line[i - 1], to: line[i], class: 'boulevard', district: 'industrial' });
+      }
+    }
+    // And a road *to* each place, routed over the ground. A place with no way in
+    // is scenery, and `prune` deletes it: the docks, the airfield and the quarry
+    // are each on a different body of land, so the road in is the thing that makes
+    // four of the five crossings earn themselves.
+    for (const place of PLAN_PLACES) {
+      if (place.kind === 'lookout') continue;
+      const body = land.at(place.at.x, place.at.z);
+      const link = links.find((l) => l.body === body);
+      const from = link ? link.to : nearestDistrictAnchor(place.at, water, land, body);
+      if (!from) continue;
+      // Stopping where the place begins, which is not always the middle of it: a
+      // quarry's middle is the floor of the pit, and a road routed to it drives
+      // down the workings.
+      layRoute(router.route(from, placeApproach(place, from, terrain), ROUTE_ARTERIAL), water, laid, 'boulevard', 'midtown', true);
+    }
+
+    // Kestrel Head to Halloway Quarry: the lookout on the main body's summit to
+    // the quarry on the eastern one.
+    //
+    // The two ends are what make it worth having. It starts at 116 m on the
+    // steepest ground on the map, so the router has to switchback down off the
+    // massif; it crosses to another body of land, so it brings a bridge; and it
+    // ends 60 m up in an excavation. `ROUTE_COUNTRY` rather than the arterial
+    // profile: this is a road between two places and not a city street, so it
+    // tolerates a steeper grade and minds the shore more.
+    {
+      const head = PLAN_PLACES.find((p) => p.kind === 'lookout');
+      const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+      if (head && pit) {
+        layRoute(router.route(head.at, pit.at, ROUTE_COUNTRY), water, laid, 'boulevard', 'midtown', true);
+      }
     }
   }
 
@@ -189,7 +318,7 @@ export function generateCity(seed: number): City {
   const gaps: Gap[] = [];
   for (const span of laid) clip(span, water, dry, gaps);
 
-  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps), water);
+  const { nodes, roads } = connect(dry, gaps, chooseBridges(gaps), water, terrain);
 
   // Blocks are checked against the water at block resolution, which a river
   // can slip through at building resolution. Buildings are cheap to test
@@ -197,7 +326,7 @@ export function generateCity(seed: number): City {
   // The interstate goes on after the surface network is whole, and joins it
   // only through its ramps. It is deliberately not part of the connectivity
   // repair above: the surface city has to stand up without it.
-  addInterstate(rng, bounds, nodes, roads, water);
+  if (CITY_FREEWAY) addInterstate(rng, bounds, nodes, roads, water);
 
   // A boulevard runs through ground the grid had already parcelled up, so the
   // blocks it crosses have to make way for it.
@@ -206,8 +335,12 @@ export function generateCity(seed: number): City {
   // every block: this sweep and the two below it were half the cost of
   // generating the city (#262). The index returns a superset of what could be
   // in range, so the test below is the same test it always was.
+  // Arterials are in here with the boulevards now that they bend. Blocks are
+  // measured off the superblock's rectangle and inset by half an arterial, which
+  // was exact while an arterial ran dead straight along the cell's edge; a
+  // routed one wanders in and out of the block it used to bound.
   const swept = new SegmentIndex(
-    roads.filter((road) => road.class === 'boulevard'),
+    roads.filter((road) => road.class === 'boulevard' || road.class === 'arterial'),
     nodes,
     (road) => road.width / 2 + BOULEVARD_CLEARANCE,
   );
@@ -364,7 +497,7 @@ export function generateCity(seed: number): City {
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
   // particular: a lamp belongs on a kerb, and the leftovers have no kerbs.
-  city.blocks.push(...parksFor(city, water));
+  city.blocks.push(...parksFor(city, water, land));
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
   city.furniture = furnitureFor(rng, city);
@@ -400,6 +533,18 @@ interface Span {
   class: RoadClass;
   district: DistrictKind;
   bridge?: boolean;
+  /**
+   * This span is not optional: neither its crossing nor the runs either side.
+   *
+   * `chooseBridges` picks crossings for where they are (#247), which is right
+   * for the ones inside the city and wrong for the one road that reaches a body
+   * of land. A link route is the *only* way onto its island, so a spacing rule
+   * that declines it does not thin the crossings out - it deletes a district,
+   * and `prune` then deletes every road on it. Measured: the waterfront, the
+   * quarry and the docks all vanished at once when the routed arterials stopped
+   * leaving spare gaps for the chooser to find.
+   */
+  required?: boolean;
   embankment?: boolean;
   axis?: Axis;
 }
@@ -492,67 +637,250 @@ const allWater = (r: Rect, water: Water) => probes(r).every((p) => water.isWater
 const anyWater = (r: Rect, water: Water) => probes(r).some((p) => water.isWater(p.x, p.z));
 
 /**
- * Give every land cell a district.
+ * Put a routed road into the generator as spans.
  *
- * Three seeded anchors do the placing: downtown near the middle but pulled
- * toward the water, a harbour somewhere along the shore, and the industrial
- * edge in a far corner. Downtown is tested first, because a downtown that runs
- * right down to the bay is the more interesting city. The waterfront is what
- * touches water near the harbour, which takes in the riverbanks by the port
- * but leaves the rest of the coast to whatever city sits behind it.
+ * Not simply one span per pair of points, which is what a boulevard does. A
+ * routed road bends, so it arrives as a chain of thirty-metre pieces - and
+ * `clip` looks for a gap *inside* a span, so a crossing that falls between two
+ * pieces is never offered as a bridge candidate. Measured: the router found the
+ * narrows at 243 m and 183 m, comfortably inside `CITY_MAX_BRIDGE`, and the
+ * city came out with **zero** bridges and the districts pruned away.
+ *
+ * So where the line crosses water, the crossing is laid as **one straight
+ * span** from the last dry point to the first dry point on the far side. That
+ * span contains land, water and land, which is exactly the shape `clip` knows
+ * how to turn into a gap - and from there the crossing goes through the same
+ * selection (#247) and the same repair pass as every other one.
  */
-function assignDistricts(rng: Rng, cells: Rect[], bounds: Rect, water: Water): DistrictKind[] {
-  const width = bounds.maxX - bounds.minX;
-  const depth = bounds.maxZ - bounds.minZ;
+function layRoute(
+  line: Vec2[],
+  water: Water,
+  laid: Span[],
+  kind: RoadClass = 'boulevard',
+  district: DistrictKind = 'midtown',
+  required = false,
+): void {
+  if (line.length < 2) return;
+  const wet = (a: Vec2, b: Vec2) => water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2);
 
-  const downtown = {
-    x: rng.range(-0.12, 0.12) * width,
-    z: bounds.minZ + depth * rng.range(0.55, 0.78),
-  };
-  // The port, somewhere along the shore. The docks grow around it.
-  const harbour = { x: rng.range(-0.32, 0.32) * width, z: bounds.maxZ };
-  const industrial = {
-    x: (downtown.x > 0 ? -1 : 1) * width * rng.range(0.3, 0.42),
-    z: bounds.minZ + depth * rng.range(0.1, 0.22),
-  };
-
-  const kinds = cells.map((cell): DistrictKind => {
-    const c = centre(cell);
-    if (Math.hypot(c.x - downtown.x, c.z - downtown.z) < CITY_DOWNTOWN_RADIUS) return 'downtown';
-    if (anyWater(cell, water) && Math.hypot(c.x - harbour.x, c.z - harbour.z) < CITY_WATERFRONT_RADIUS) {
-      return 'waterfront';
+  let i = 0;
+  while (i < line.length - 1) {
+    if (!wet(line[i], line[i + 1])) {
+      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required });
+      i++;
+      continue;
     }
-    if (Math.hypot(c.x - industrial.x, c.z - industrial.z) < CITY_INDUSTRIAL_RADIUS) return 'industrial';
-    return 'midtown';
-  });
+    // A crossing. Laid as one piece from well back on this bank to well past
+    // the far one, because `clip` throws away a dry run shorter than
+    // `CITY_MIN_STREET` - and a span that reaches only one point onto land has
+    // a twelve-metre stub at each end, so both runs are discarded and the gap
+    // between them is never recorded. Measured: crossings of 243 m and 183 m,
+    // both inside the bridge limit, and no bridge built.
+    let j = i + 1;
+    while (j < line.length - 1 && wet(line[j], line[j + 1])) j++;
+    const back = reachBack(line, i, -1);
+    const on = reachBack(line, Math.min(j + 1, line.length - 1), 1);
+    laid.push({ from: line[back], to: line[on], class: kind, district, required });
+    // Resume where the crossing ended, not where the water did. Resuming at the
+    // far bank leaves the span's far end joined to nothing, so the bridge is its
+    // own two-node island and `prune` deletes it - a chosen crossing that never
+    // appears in the city.
+    i = on;
+  }
+}
 
-  // Every district has to exist somewhere: a seed that happens to leave one out
-  // is a city missing a place the game refers to, not a variation.
-  const anchors: Record<DistrictKind, { x: number; z: number }> = {
-    downtown,
-    industrial,
-    waterfront: harbour,
-    midtown: { x: 0, z: bounds.minZ + depth * 0.35 },
-  };
-  for (const kind of Object.keys(anchors) as DistrictKind[]) {
-    if (kinds.includes(kind)) continue;
-    const anchor = anchors[kind];
-    let best = -1;
-    let bestDist = Infinity;
-    for (let i = 0; i < cells.length; i++) {
-      // Never take a cell that is the last of its own kind, or we just move the gap.
-      if (kinds.filter((k) => k === kinds[i]).length < 2) continue;
-      const c = centre(cells[i]);
-      const d = Math.hypot(c.x - anchor.x, c.z - anchor.z);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
+/**
+ * The roads that join the bodies of land: one per body, from a district on this
+ * side to a district on that one.
+ *
+ * These both start and end **at the plan** (ADR-0009). They used to run from
+ * `water.town` to the middle of each other body, and the two halves of that were
+ * wrong in different ways. Sharing one start point put four routed roads in one
+ * corridor - the router prices the ground, so four roads out of the same place
+ * get four nearly identical answers, and they arrive as a bundle of parallel
+ * lines that reads worse than a single road would. And a body's *middle* is not
+ * where anybody wants to go: the district on it is.
+ */
+function linkRoutes(water: Water, land: LandBodies): { from: Vec2; to: Vec2; body: number }[] {
+  const step = CITY_BODY_CELL;
+  // Every district's middle, on land and with a body under it. A traced polygon
+  // is 75 to 100% land, so its centroid can fall in the water - and a target in
+  // the water makes the router bridge out to sea to reach it, which is the one
+  // failure ADR-0008 rule 2 calls out by name.
+  const anchors: { at: Vec2; body: number }[] = [];
+  for (const region of PLAN_DISTRICTS) {
+    let x = 0;
+    let z = 0;
+    for (const p of region.poly) {
+      x += p.x;
+      z += p.z;
     }
-    if (best >= 0) kinds[best] = kind;
+    const middle = onLandNear({ x: x / region.poly.length, z: z / region.poly.length }, water, step);
+    if (!middle) continue;
+    const id = land.at(middle.x, middle.z);
+    if (id >= 0) anchors.push({ at: middle, body: id });
   }
 
-  return kinds;
+  // Home is the body downtown is on, which is the plan's answer to a question
+  // `water.town` used to answer and had drifted 2566 m away from.
+  const downtownAt = anchors.find((a) => inArea(PLAN_DISTRICTS[0].poly, a.at));
+  const home = downtownAt ? downtownAt.body : -1;
+
+  const routes: { from: Vec2; to: Vec2; body: number }[] = [];
+  for (let id = 0; id < land.size.length; id++) {
+    if (id === home) continue;
+    // A road to a rock is not a road. Anything smaller than a superblock is
+    // left to be scenery.
+    if (land.size[id] <= CITY_MIN_BODY) continue;
+    const onIt = anchors.filter((a) => a.body === id);
+    const to =
+      onIt.length > 0 ? nearest(onIt.map((a) => a.at), land.middle[id]) : onLandNear(land.middle[id], water, step);
+    if (!to) continue;
+    const fromHome = anchors.filter((a) => a.body === home).map((a) => a.at);
+    if (fromHome.length > 0) routes.push({ from: nearest(fromHome, to), to, body: id });
+  }
+  return routes;
+}
+
+/**
+ * The middle of the nearest district on a given body of land.
+ *
+ * The fallback for a place whose body has no link route - the home body, where
+ * `linkRoutes` has nothing to return because there is nothing to cross to.
+ */
+function nearestDistrictAnchor(to: Vec2, water: Water, land: LandBodies, body: number): Vec2 | null {
+  const on: Vec2[] = [];
+  for (const region of PLAN_DISTRICTS) {
+    let x = 0;
+    let z = 0;
+    for (const p of region.poly) {
+      x += p.x;
+      z += p.z;
+    }
+    const middle = onLandNear({ x: x / region.poly.length, z: z / region.poly.length }, water, CITY_BODY_CELL);
+    if (middle && land.at(middle.x, middle.z) === body) on.push(middle);
+  }
+  return on.length > 0 ? nearest(on, to) : null;
+}
+
+/** Whichever of these is closest to `to`. */
+function nearest(points: Vec2[], to: Vec2): Vec2 {
+  let best = points[0];
+  let bestDist = Infinity;
+  for (const p of points) {
+    const d = Math.hypot(p.x - to.x, p.z - to.z);
+    if (d < bestDist) {
+      bestDist = d;
+      best = p;
+    }
+  }
+  return best;
+}
+
+/** The point itself if it is dry, or the nearest dry ground in a spiral out. */
+function onLandNear(at: Vec2, water: Water, step: number): Vec2 | null {
+  if (!water.isWater(at.x, at.z)) return at;
+  for (let r = step; r < step * 30; r += step) {
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 12) {
+      const p = { x: at.x + Math.cos(a) * r, z: at.z + Math.sin(a) * r };
+      if (!water.isWater(p.x, p.z)) return p;
+    }
+  }
+  return null;
+}
+
+/**
+ * Walk along the line from `at` in `step` until `CITY_MIN_STREET` of it is
+ * behind you, so a crossing lands on a piece of road long enough to survive the
+ * clip rather than on a stub it will discard.
+ */
+function reachBack(line: Vec2[], at: number, step: number): number {
+  let run = 0;
+  let i = at;
+  while (i + step >= 0 && i + step < line.length && run < CITY_MIN_STREET * 1.5) {
+    run += Math.hypot(line[i + step].x - line[i].x, line[i + step].z - line[i].z);
+    i += step;
+  }
+  return i;
+}
+
+/**
+ * The stretches of a line that run through built-up ground.
+ *
+ * An arterial is the grid's spine and it stops where the grid does, or it is six
+ * lanes of nothing crossing open country to a coast with no town on it.
+ */
+function builtRuns(from: Vec2, to: Vec2): { from: Vec2; to: Vec2 }[] {
+  const runs: { from: Vec2; to: Vec2 }[] = [];
+  const length = Math.hypot(to.x - from.x, to.z - from.z);
+  const steps = Math.max(1, Math.ceil(length / CITY_CLIP_STEP));
+  let start: Vec2 | null = null;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const at = { x: from.x + (to.x - from.x) * t, z: from.z + (to.z - from.z) * t };
+    if (builtUp(at)) {
+      if (!start) start = at;
+    } else if (start) {
+      runs.push({ from: start, to: at });
+      start = null;
+    }
+  }
+  if (start) runs.push({ from: start, to });
+  return runs.filter((r) => Math.hypot(r.to.x - r.from.x, r.to.z - r.from.z) > CITY_MIN_STREET);
+}
+
+/**
+ * Is this point in the built-up part of the city, or out in the country?
+ *
+ * **The plan decides** (ADR-0009 rule 3). This was a radius around `water.town`
+ * - one number for the whole map - and it is why four of the five bodies of land
+ * had no city on them at all: the grid could not reach past the main lobe's
+ * middle, so the districts across the water were laid, pruned as unreachable,
+ * and deleted. A district polygon is the bound now, per body of land, and
+ * everywhere outside one is the periphery (#260).
+ */
+function builtUp(at: Vec2): boolean {
+  return planDistrictAt(at) !== null;
+}
+
+/**
+ * Give every land cell a district, from the plan (ADR-0009 rule 1).
+ *
+ * This used to place them: three seeded anchors - downtown pulled toward the
+ * water, a harbour along the shore, an industrial edge in a far corner - and
+ * every superblock took the nearest one inside a radius. It is a reasonable way
+ * to place districts and four months of it produced a map its author did not
+ * want (#269), so the map was drawn instead (#271, #272).
+ *
+ * A cell takes the district of its **middle**. A superblock is 560 m and the
+ * plan's areas are 0.7 to 4.2 km², so a cell straddling a boundary is a real
+ * case and the middle is the least surprising answer to it: the alternative,
+ * whichever kind covers most of the cell, moves boundaries by up to half a
+ * superblock in a direction nobody drew.
+ *
+ * Cells outside every area are not the country - `builtUp` already dropped
+ * those - they are the slivers a 560 m grid leaves against a traced edge. They
+ * take the nearest area's kind rather than a default, or a boundary cell would
+ * come out as midtown wherever the plan happens to be one metre away.
+ */
+function assignDistricts(cells: Rect[]): DistrictKind[] {
+  return cells.map((cell) => {
+    const c = centre(cell);
+    const here = planDistrictAt(c);
+    if (here) return here;
+    let best: DistrictKind = 'midtown';
+    let bestDist = Infinity;
+    for (const region of PLAN_DISTRICTS) {
+      for (const p of region.poly) {
+        const d = Math.hypot(p.x - c.x, p.z - c.z);
+        if (d < bestDist) {
+          bestDist = d;
+          best = region.kind;
+        }
+      }
+    }
+    return best;
+  });
 }
 
 /** Move one edge of a rectangle inward by `t` of its span. */
@@ -626,12 +954,28 @@ function fillSuperblock(
   cell: Superblock,
   arterialHalf: number,
   water: Water,
+  land: LandBodies,
   spans: Span[],
   blocks: CityBlock[],
 ): void {
   const character = DISTRICTS[cell.district];
   const { bounds, district } = cell;
   const streetHalf = roadWidth(character.lanes) / 2;
+
+  // **A park gets no street grid.** It is not a quarter that happens to be
+  // empty, it is ground that was chosen (ADR-0009 rule 5): the hill park is the
+  // highest land on the map with 41% of it too steep for any street to climb,
+  // and laying a grid over that produces a slab of blocks up a mountainside.
+  // What a park has is the road *through* it, which the arterials and the routed
+  // roads already bring - and, in time, the climb that is the reason it is here.
+  if (district === 'park') {
+    const home = land.at(centre(bounds).x, centre(bounds).z);
+    const whole = pullClear(bounds, (r) => anyWater(r, water));
+    if (whole && land.at((whole.minX + whole.maxX) / 2, (whole.minZ + whole.maxZ) / 2) === home) {
+      blocks.push({ district, bounds: whole, open: true });
+    }
+    return;
+  }
 
   const inner: Rect = {
     minX: bounds.minX + arterialHalf,
@@ -644,8 +988,15 @@ function fillSuperblock(
   // that it is a full grid with gaps in it rather than somewhere emptier.
   const skip = Math.min(0.6, character.skip / Math.max(0.35, cell.density));
   const keep = () => !rng.chance(skip);
-  const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX, character.jitter).filter(keep);
-  const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ, character.jitter).filter(keep);
+  // Density sizes the blocks as well as thinning them. Skipping streets alone
+  // has almost no purchase where the district skips hardly any - downtown is at
+  // 0.03 - so "denser than the rest of its kind" has to mean smaller blocks or
+  // it means nothing. Square-rooted, because block size is an area of city per
+  // block and a linear one turns a 35% denser quarter into 35% closer streets,
+  // which is a different kind of place rather than a busier one.
+  const grain = 1 / Math.sqrt(Math.max(0.35, cell.density));
+  const xCuts = divide(rng, bounds.minX, bounds.maxX, character.blockX * grain, character.jitter).filter(keep);
+  const zCuts = divide(rng, bounds.minZ, bounds.maxZ, character.blockZ * grain, character.jitter).filter(keep);
 
   // Collected separately so the blocks below can be trimmed off them. In a
   // winding quarter the streets no longer sit on the lines the blocks were
@@ -663,6 +1014,15 @@ function fillSuperblock(
     !cell.winding ||
     !local.some((street) => segmentToRect(street.from, street.to, r) < streetHalf);
 
+  // A block belongs to the body of land its superblock is on. A 560 m cell on a
+  // coast reaches across a channel, and the land on the far side is dry, so the
+  // grid happily built on it: measured, 22 downtown blocks on the island the
+  // docks are meant to have to themselves, and midtown blocks on three bodies of
+  // land the plan gives no midtown at all. The water test cannot catch this -
+  // the far bank is not water.
+  const home = land.at(centre(cell.bounds).x, centre(cell.bounds).z);
+  const onHomeBody = (r: Rect) => land.at((r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2) === home;
+
   const xEdges = [inner.minX, ...xCuts, inner.maxX];
   const zEdges = [inner.minZ, ...zCuts, inner.maxZ];
   for (let i = 0; i < xEdges.length - 1; i++) {
@@ -674,7 +1034,7 @@ function fillSuperblock(
         maxZ: zEdges[j + 1] - (j + 2 === zEdges.length ? 0 : streetHalf),
       };
       const fitted = pullClear(block, (r) => anyWater(r, water) || !clearsStreets(r));
-      if (!fitted) continue;
+      if (!fitted || !onHomeBody(fitted)) continue;
       // Some of a city is gaps: a park, a yard, a car park, a lot nobody built on.
       const open = rng.chance(Math.min(0.5, OPEN_BLOCK_CHANCE / Math.max(0.35, cell.density)));
       blocks.push({ district, bounds: fitted, open });
@@ -729,7 +1089,16 @@ function clip(span: Span, water: Water, dry: Span[], gaps: Gap[]): void {
   // absolute terms. A curve arrives as a chain of 55 m pieces, and a flat
   // minimum of 70 m silently deleted every one of them - which is not a stub
   // being tidied away but a whole neighbourhood's streets going missing.
-  const minRun = Math.min(CITY_MIN_STREET, length * 0.85);
+  //
+  // And a **required** span keeps every run it has, however short. This is the
+  // one road onto a body of land, and the run on the far bank is whatever is
+  // left between the water and the place the road was going to - often a few
+  // metres, because the place's own roads take over from there. Discarding it
+  // discards the bank the bridge lands on, so the bridge joins nothing, the
+  // island stays its own component and `prune` deletes the lot: measured, four
+  // crossings picked and built and two surviving, with the airfield and the
+  // waterfront left with no roads at all.
+  const minRun = span.required ? 0 : Math.min(CITY_MIN_STREET, length * 0.85);
   const kept = runs.filter((r) => (r.to - r.from) * length >= minRun);
   for (const run of kept) {
     dry.push({ ...span, from: pointAt(span, run.from), to: pointAt(span, run.to) });
@@ -779,9 +1148,24 @@ function chooseBridges(gaps: Gap[]): number[] {
     return Math.hypot(p.x - q.x, p.z - q.z);
   };
 
-  let shortest = 0;
-  for (let i = 1; i < gaps.length; i++) if (gaps[i].length < gaps[shortest].length) shortest = i;
-  const chosen = [shortest];
+  // Whatever else is chosen, the roads that reach a body of land keep their
+  // crossings: they are the only way onto it, and a declined one is a deleted
+  // district rather than a longer drive.
+  const chosen: number[] = [];
+  for (let i = 0; i < gaps.length; i++) if (gaps[i].span.required) chosen.push(i);
+
+  // The shortest crossing is still taken as well, as it always was: with
+  // nothing to spread away from, the cheapest crossing is the one to build
+  // (#247). Seeding the spread with the required ones *instead* is what took the
+  // map from seven crossings to two - they are clustered where the link roads
+  // happen to reach, so the furthest-first that follows had less to push away
+  // from and stopped early.
+  let shortest = -1;
+  for (let i = 0; i < gaps.length; i++) {
+    if (chosen.includes(i)) continue;
+    if (shortest === -1 || gaps[i].length < gaps[shortest].length) shortest = i;
+  }
+  if (shortest !== -1) chosen.push(shortest);
 
   while (chosen.length < CITY_BRIDGES) {
     let best = -1;
@@ -865,7 +1249,7 @@ interface Graph {
  * Turn overlapping centrelines into a graph: cut every span at each span that
  * crosses it, and share a node wherever two roads meet.
  */
-function buildGraph(spans: Span[]): Graph {
+function buildGraph(spans: Span[], terrain: Terrain): Graph {
   const nodes: CityNode[] = [];
   const at = new Map<string, CityNode>();
   const roads: CityRoad[] = [];
@@ -875,7 +1259,16 @@ function buildGraph(spans: Span[]): Graph {
     const k = key(x, z);
     let node = at.get(k);
     if (!node) {
-      node = { id: nodes.length, pos: { x: snap(x), z: snap(z) }, y: 0, level: 'surface', roads: [] };
+      // **On the ground, not at zero** (#255). A surface node's height is the
+      // land under it, which is what makes a street climb a hill: everything
+      // downstream reads `y` - the sim rides it, the renderer draws it, the
+      // pursuit and the routing ask about it - and until now every one of them
+      // was told the city was flat.
+      //
+      // `level` is what says which network a node is on (#250), so this does
+      // not muddle the two the way `y === 0` used to.
+      const pos = { x: snap(x), z: snap(z) };
+      node = { id: nodes.length, pos, y: groundAt(terrain, pos.x, pos.z), level: 'surface', roads: [] };
       at.set(k, node);
       nodes.push(node);
     }
@@ -976,9 +1369,10 @@ function connect(
   gaps: Gap[],
   initial: number[],
   water: Water,
+  terrain: Terrain,
 ): { nodes: CityNode[]; roads: CityRoad[] } {
   const chosen = new Set(initial);
-  const rebuild = () => buildGraph([...dry, ...[...chosen].map((i) => bridgeSpan(gaps[i]))]);
+  const rebuild = () => buildGraph([...dry, ...[...chosen].map((i) => bridgeSpan(gaps[i]))], terrain);
   let graph = rebuild();
 
   for (let attempt = 0; attempt < gaps.length; attempt++) {

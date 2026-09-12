@@ -24,7 +24,15 @@ export interface Rect {
 /** Which axis a road runs along: 'x' varies in x at a fixed z, and vice versa. */
 export type Axis = 'x' | 'z';
 
-export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial';
+/**
+ * What a piece of the city is like to drive through.
+ *
+ * `park` joins the four with the authored plan (ADR-0009 rule 5): parkland
+ * that is *chosen* - the hill park is on the highest ground on the map, a third
+ * of it too steep for any street - which is a different thing from #185's
+ * parks, the land the street grid failed to claim. Both should exist.
+ */
+export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial' | 'park';
 
 /**
  * Arterials cross the whole city and carry the traffic; streets fill a
@@ -132,10 +140,18 @@ export interface CityRoad {
   embankment?: boolean;
 }
 
-/** A bay or a river, as a closed outline in world space for #84 to build from. */
+/**
+ * Water as a polygon for #84 to build from.
+ *
+ * With a lobed landmass (ADR-0008) there is no longer "a bay" to draw: there is
+ * everywhere the land is not. So the sea is one polygon reaching past the map,
+ * and each body of land is a **hole** in it.
+ */
 export interface WaterBody {
   kind: 'bay' | 'river';
   outline: Vec2[];
+  /** Land inside the polygon. Closed loops, each one a body of land. */
+  holes?: Vec2[][];
 }
 
 /**

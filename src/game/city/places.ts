@@ -1,0 +1,390 @@
+/**
+ * The named places: a dock, an airfield, a quarry (#271, ADR-0009 rule 5).
+ *
+ * A district says how streets and blocks are laid out. Half of what a city
+ * needs is not laid out in streets and blocks at all - a wharf, a runway and an
+ * excavation each have their own geometry and want **a road in** rather than a
+ * grid over, and forcing them through `DistrictKind` is how the port came to
+ * define a quarter of Kestrel Bay's street layout.
+ *
+ * Two things happen here, in this order, and the order is the whole design.
+ *
+ * **The ground is shaped first.** A runway is flat or it is not a runway, and a
+ * quarry is a hole. Both are terrain edits, and they run before a single road is
+ * laid so that everything downstream - the router, the grade caps, the block
+ * fitting, the sim's own `groundAt` - sees the ground as it will be. This is the
+ * displacement ADR-0007 said the height field was baked rather than computed
+ * *for*: a formula cannot be dug into.
+ *
+ * **Then the place's own roads go in**, as ordinary spans, before the graph is
+ * built - the same way `boulevards.ts` and `embankment.ts` do it, so they are
+ * clipped against the water, split at every crossing and repaired by the same
+ * code as everything else. Nothing here builds a graph of its own.
+ *
+ * The lookout is not here. It is a destination on the hill park's summit and it
+ * wants the road that climbs to it, which is the canyon run and not yet built.
+ */
+import {
+  DOCK_APRON,
+  DOCK_LEVEL,
+  DOCK_PIERS,
+  DOCK_PIER_LENGTH,
+  PLACE_BLEND,
+  QUARRY_BENCH,
+  QUARRY_DEPTH,
+  QUARRY_FLOOR,
+  QUARRY_HAUL_BLEND,
+  QUARRY_HAUL_WIDTH,
+  QUARRY_RAMP_TURNS,
+  RUNWAY_APRON,
+  RUNWAY_WIDTH,
+  TAXIWAY_OFFSET,
+} from '../constants';
+import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
+import { groundAt, type Terrain } from './terrain';
+import type { Vec2 } from './types';
+import type { Water } from './water';
+
+/** A road a place brings with it, as a polyline to be laid like any other. */
+export interface PlaceRoad {
+  line: Vec2[];
+  /** Closed roads - a taxiway circuit, a quay loop - join their own ends. */
+  loop: boolean;
+}
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
+
+/** How far a point is from a segment, and how far along it that lands. */
+function toSegment(a: Vec2, b: Vec2, p: Vec2): { away: number; along: number } {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const span = dx * dx + dz * dz;
+  const t = span < 1 ? 0 : clamp01(((p.x - a.x) * dx + (p.z - a.z) * dz) / span);
+  return { away: Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z), along: t };
+}
+
+/**
+ * Walk every terrain cell that could be within `reach` of a place and offer it a
+ * new height.
+ *
+ * `shape` returns the height it wants, or null to leave the cell alone. The
+ * bounding box is worked out from the reach rather than the whole field, because
+ * this runs three times over a 10 x 8 km grid and the places are hundreds of
+ * metres across.
+ */
+function reshape(
+  terrain: Terrain,
+  centre: Vec2,
+  reach: number,
+  shape: (at: Vec2, was: number) => number | null,
+): void {
+  const { cells, cols, rows, cell, bounds } = terrain;
+  const minCol = Math.max(0, Math.floor((centre.x - reach - bounds.minX) / cell));
+  const maxCol = Math.min(cols - 1, Math.ceil((centre.x + reach - bounds.minX) / cell));
+  const minRow = Math.max(0, Math.floor((centre.z - reach - bounds.minZ) / cell));
+  const maxRow = Math.min(rows - 1, Math.ceil((centre.z + reach - bounds.minZ) / cell));
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
+      const i = row * cols + col;
+      const at = { x: bounds.minX + col * cell, z: bounds.minZ + row * cell };
+      const want = shape(at, cells[i]);
+      if (want !== null) cells[i] = want;
+    }
+  }
+}
+
+/**
+ * Dig the places into the ground.
+ *
+ * Runs before any road is laid, so the router prices the runway's flat and the
+ * quarry's walls rather than the hillside they replaced.
+ */
+export function shapeForPlaces(terrain: Terrain, water: Water): void {
+  for (const place of PLAN_PLACES) {
+    if (place.kind === 'airfield') levelRunway(terrain, water);
+    if (place.kind === 'quarry') digQuarry(terrain, place.at, place.radius);
+    if (place.kind === 'docks') levelDocks(terrain, water, place.at, place.radius);
+  }
+}
+
+/**
+ * A closed loop round a point, pushed in and out so it is not a circle.
+ *
+ * The first version of the quay and the quarry rim were regular polygons of
+ * fourteen and sixteen sides, which drew as perfect circles at map scale and
+ * were the most artificial thing on the map - a wharf is built out to the water
+ * it has and a quarry rim is wherever the digging stopped, and neither of them
+ * is round. The radius is pushed by two waves of different frequency rather than
+ * by an independent roll per vertex, because independent rolls give a *ragged*
+ * ring and what is wanted is a lumpy one.
+ */
+function lumpyLoop(at: Vec2, radius: number, sides: number, phase: number, rough: number): Vec2[] {
+  const loop: Vec2[] = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (i / sides) * Math.PI * 2;
+    const push = Math.sin(angle * 2 + phase) * 0.62 + Math.sin(angle * 3 + phase * 1.7) * 0.38;
+    const r = radius * (1 + push * rough);
+    loop.push({ x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r });
+  }
+  return loop;
+}
+
+/**
+ * Level the strip under the runway, and grade out from it.
+ *
+ * The target is the **mean** ground along the centreline rather than its lowest
+ * or highest point: the island runs -2 m to 22 m under the line, so cutting to
+ * the low end would put a 20 m face across the island and filling to the high
+ * end would put the strip on an embankment out over the water at the near end.
+ * Mean is a cut at one end and a fill at the other, which is what levelling a
+ * strip of ground actually is.
+ */
+function levelRunway(terrain: Terrain, water: Water): void {
+  const [a, b] = PLAN_RUNWAY;
+  let sum = 0;
+  const steps = 60;
+  for (let i = 0; i <= steps; i++) {
+    sum += groundAt(terrain, lerp(a.x, b.x, i / steps), lerp(a.z, b.z, i / steps));
+  }
+  const target = sum / (steps + 1);
+
+  const half = RUNWAY_WIDTH / 2 + TAXIWAY_OFFSET + RUNWAY_APRON;
+  const middle = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+  const reach = Math.hypot(b.x - a.x, b.z - a.z) / 2 + half + PLACE_BLEND;
+  reshape(terrain, middle, reach, (at, was) => {
+    // The water keeps its bed: an airfield does not reclaim the sea.
+    if (water.isWater(at.x, at.z)) return null;
+    const { away } = toSegment(a, b, at);
+    if (away > half + PLACE_BLEND) return null;
+    if (away <= half) return target;
+    return lerp(target, was, (away - half) / PLACE_BLEND);
+  });
+}
+
+/**
+ * Cut the quarry: a stepped bowl, benched rather than smooth.
+ *
+ * A quarry does not need pre-existing drama because it *is* an excavation - it
+ * cuts its own walls, which is where the tunnels and the bridges over the
+ * workings come from. The benches are what make it read as worked ground rather
+ * than as a crater: the floor is quantised to `QUARRY_BENCH`, so the sides come
+ * out as a flight of terraces at whatever grade the radius gives them.
+ *
+ * It never cuts below `QUARRY_FLOOR`. Below sea level the hole would be a hole
+ * with no water in it - the water is a field and knows nothing about height -
+ * and a dry pit under the sea reads as a bug in the terrain.
+ */
+function digQuarry(terrain: Terrain, at: Vec2, radius: number): void {
+  const rim = groundAt(terrain, at.x, at.z);
+  const floor = Math.max(QUARRY_FLOOR, rim - QUARRY_DEPTH);
+  reshape(terrain, at, radius + PLACE_BLEND, (p, was) => {
+    const away = Math.hypot(p.x - at.x, p.z - at.z);
+    if (away > radius + PLACE_BLEND) return null;
+    // Outside the rim, blend back into the hillside.
+    if (away > radius) return lerp(was, Math.min(was, rim), 1 - (away - radius) / PLACE_BLEND);
+    // A cosine bowl rather than a cone, so the floor is flat and the walls
+    // steepen toward the rim the way a worked face does.
+    const t = away / radius;
+    const smooth = floor + (rim - floor) * (0.5 - Math.cos(Math.PI * t) / 2);
+    const benched = floor + Math.round((smooth - floor) / QUARRY_BENCH) * QUARRY_BENCH;
+    return Math.min(was, benched);
+  });
+
+  // Then cut the haul road into the benches.
+  //
+  // This is the piece that was missing, and the reason the road down read at
+  // 110%: the benches are a flight of 11 m cliffs and the road crossed them.
+  // Displacing the ground to meet the road turns each crossing into a graded
+  // shelf, which is what a haul road actually is - cut on the outside, filled on
+  // the inside, all the way round.
+  //
+  // Both cut *and* fill, unlike the bowl above, which only ever lowers: on the
+  // inner turns the pit is already deeper than the ramp and the shelf has to be
+  // built up to meet it.
+  const path = quarryHaul(at, radius);
+  const half = QUARRY_HAUL_WIDTH / 2;
+  reshape(terrain, at, radius + QUARRY_HAUL_BLEND, (p, was) => {
+    let best = Infinity;
+    let want = 0;
+    for (let i = 1; i < path.length; i++) {
+      const { away, along } = toSegment(path[i - 1].at, path[i].at, p);
+      if (away >= best) continue;
+      best = away;
+      want = lerp(rim, floor, lerp(path[i - 1].down, path[i].down, along));
+    }
+    if (best > half + QUARRY_HAUL_BLEND) return null;
+    if (best <= half) return want;
+    return lerp(want, was, (best - half) / QUARRY_HAUL_BLEND);
+  });
+}
+
+/** Flatten the wharf apron. A dock is level ground beside deep water. */
+function levelDocks(terrain: Terrain, water: Water, at: Vec2, radius: number): void {
+  reshape(terrain, at, radius + PLACE_BLEND, (p, was) => {
+    if (water.isWater(p.x, p.z)) return null;
+    const away = Math.hypot(p.x - at.x, p.z - at.z);
+    if (away > radius + PLACE_BLEND) return null;
+    if (away <= radius) return DOCK_LEVEL;
+    return lerp(DOCK_LEVEL, was, (away - radius) / PLACE_BLEND);
+  });
+}
+
+/**
+ * The roads each place is made of.
+ *
+ * Laid as ordinary spans before the graph exists, so the clip, the junction
+ * splitting and the connectivity repair all apply. Nothing here is a special
+ * case downstream - a runway is a very wide straight road with a taxiway beside
+ * it, and a quarry road is a switchback.
+ */
+export function placeRoads(terrain: Terrain, water: Water): PlaceRoad[] {
+  const roads: PlaceRoad[] = [];
+  for (const place of PLAN_PLACES) {
+    if (place.kind === 'airfield') roads.push(...airfieldRoads());
+    if (place.kind === 'quarry') roads.push(...quarryRoads(terrain, place.at, place.radius));
+    if (place.kind === 'docks') roads.push(...dockRoads(water, place.at, place.radius));
+  }
+  return roads;
+}
+
+/**
+ * The runway, and a taxiway beside it joined at both ends.
+ *
+ * A strip on its own is a straight line you drive up and turn round at the end
+ * of. Paired with a taxiway it is a circuit, which is the difference between a
+ * feature and a cul-de-sac 2.3 km long - and it is what an airfield looks like
+ * from the air anyway.
+ */
+function airfieldRoads(): PlaceRoad[] {
+  const [a, b] = PLAN_RUNWAY;
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const nx = -(b.z - a.z) / length;
+  const nz = (b.x - a.x) / length;
+  const off = RUNWAY_WIDTH / 2 + TAXIWAY_OFFSET;
+  // Pulled in at both ends, so the taxiway's turn is inside the levelled ground
+  // rather than out on the blend where the runway meets the hillside.
+  const inset = 0.06;
+  const at = (t: number, side: number): Vec2 => ({
+    x: lerp(a.x, b.x, t) + nx * off * side,
+    z: lerp(a.z, b.z, t) + nz * off * side,
+  });
+  return [
+    { line: [a, b], loop: false },
+    {
+      line: [at(inset, 1), at(1 - inset, 1), at(1 - inset, -1), at(inset, -1)],
+      loop: true,
+    },
+  ];
+}
+
+/**
+ * A road down into the quarry: a switchback that loses height on every turn.
+ *
+ * Not a spiral of one radius - that is a helix, and a helix inside a bowl is a
+ * road cut into the wall the whole way round, which is a tunnel with the roof
+ * off. It steps in as it descends, so each leg sits on the bench below the last.
+ */
+/**
+ * Where a road *to* a place should stop.
+ *
+ * For most places that is the place itself: the docks and the airfield are
+ * level ground, so a road can drive onto them. A quarry is a hole, and its
+ * middle is the floor of it - measured, the access road ran from (-2323, -873)
+ * to (-2590, -850), straight over the benches and down the workings at **110%**,
+ * because it was routed to `place.at` like everything else. The road in stops at
+ * the rim; getting to the bottom is the haul road's job, which is why it
+ * switchbacks.
+ */
+export function placeApproach(place: PlanPlace, from: Vec2, terrain: Terrain): Vec2 {
+  if (place.kind !== 'quarry') return place.at;
+  const rim = quarryRim(place.at, place.radius).filter((p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR);
+  if (rim.length === 0) return place.at;
+  let best = rim[0];
+  let bestD = Infinity;
+  for (const p of rim) {
+    const d = Math.hypot(p.x - from.x, p.z - from.z);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best;
+}
+
+/**
+ * The haul road's path down the pit, as points with how far down each one is.
+ *
+ * A pure function of where the quarry is and how big it is, so the terrain carve
+ * and the road itself are the same line rather than two lines that agree.
+ *
+ * It spirals **inward** as it descends, which is what an open pit does and also
+ * what a height field requires: a helix at constant radius would stack road over
+ * road, and a height field has one height per point.
+ */
+export function quarryHaul(at: Vec2, radius: number): { at: Vec2; down: number }[] {
+  const path: { at: Vec2; down: number }[] = [];
+  const steps = Math.round(QUARRY_RAMP_TURNS * 48);
+  const start = Math.atan2(1, 0);
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const angle = start + t * QUARRY_RAMP_TURNS * Math.PI * 2;
+    // Not on a circle: a haul road follows the face it was cut into, which is
+    // not round either.
+    const push = Math.sin(angle * 2 + 2.1) * 0.62 + Math.sin(angle * 3 + 3.57) * 0.38;
+    // Starts just inside the lip. Starting it *outside*, at the rim road's own
+    // radius, was tried so the two would meet on the flat - and it cut a trench
+    // through the rim instead: the carve follows the road, and outside the bowl
+    // the road is on natural ground that has to be dug away to reach it. q1 went
+    // to 56% and the rim road to 93%. The ramp belongs inside the hole.
+    const r = radius * lerp(0.94, 0.2, t) * (1 + push * 0.12);
+    path.push({ at: { x: at.x + Math.cos(angle) * r, z: at.z + Math.sin(angle) * r }, down: t });
+  }
+  return path;
+}
+
+/** The lip of the bowl, as a loop. */
+function quarryRim(at: Vec2, radius: number): Vec2[] {
+  return lumpyLoop(at, radius + PLACE_BLEND * 0.5, 18, 2.1, 0.17);
+}
+
+function quarryRoads(terrain: Terrain, at: Vec2, radius: number): PlaceRoad[] {
+  const line = quarryHaul(at, radius).map((step) => step.at);
+  // The rim road, so the descent has something to leave from and the workings
+  // can be looked at from above without driving into them.
+  // A rim road only where there is rim: the bowl can sit against a coast.
+  const rim = quarryRim(at, radius).filter((p) => groundAt(terrain, p.x, p.z) > QUARRY_FLOOR);
+  const roads: PlaceRoad[] = [{ line, loop: false }];
+  if (rim.length > 8) roads.push({ line: rim, loop: true });
+  return roads;
+}
+
+/**
+ * The wharves: a road along the apron and the piers running off it.
+ *
+ * The piers are what make it a port rather than a car park by the sea, and they
+ * are dead ends on purpose - a pier is somewhere a pursuit can corner you, which
+ * is the whole argument for putting the docks on an island (ADR-0009 rule 6).
+ */
+function dockRoads(water: Water, at: Vec2, radius: number): PlaceRoad[] {
+  const roads: PlaceRoad[] = [];
+  roads.push({ line: lumpyLoop(at, DOCK_APRON, 15, 0.6, 0.26), loop: true });
+
+  // Piers go where there is water to put them in, found by looking outward.
+  for (let i = 0; i < DOCK_PIERS; i++) {
+    const angle = ((i + 0.5) / DOCK_PIERS) * Math.PI * 2;
+    const push = Math.sin(angle * 2 + 0.6) * 0.62 + Math.sin(angle * 3 + 1.02) * 0.38;
+    const reach = DOCK_APRON * (1 + push * 0.26);
+    const from = { x: at.x + Math.cos(angle) * reach, z: at.z + Math.sin(angle) * reach };
+    const to = {
+      x: from.x + Math.cos(angle) * DOCK_PIER_LENGTH,
+      z: from.z + Math.sin(angle) * DOCK_PIER_LENGTH,
+    };
+    // Only where the pier would actually reach the water, and only where it
+    // stays inside the place: a jetty across dry ground is a road to nowhere.
+    if (!water.isWater(to.x, to.z)) continue;
+    if (Math.hypot(to.x - at.x, to.z - at.z) > radius + DOCK_PIER_LENGTH) continue;
+    roads.push({ line: [from, to], loop: false });
+  }
+  return roads;
+}

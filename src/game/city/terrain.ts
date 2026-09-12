@@ -5,10 +5,12 @@ import {
   TERRAIN_FEATURE,
   TERRAIN_LATTICE,
   TERRAIN_OCTAVES,
+  TERRAIN_BANK,
   TERRAIN_RELIEF,
   TERRAIN_RIM_LIFT,
   TERRAIN_SEABED,
   TERRAIN_SHORE,
+  TERRAIN_SOFTEN,
   TERRAIN_STREAM,
 } from '../constants';
 import { Rng } from './rng';
@@ -70,6 +72,10 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
 
   const shape = fractal(rng);
   const wet = new Uint8Array(cols * rows);
+  // Inland water kept separately, because a bank is not a beach: the land
+  // climbs out of the sea over hundreds of metres and out of a channel over
+  // tens. Telling them apart is what `isChannel` is for.
+  const inland = new Uint8Array(cols * rows);
   const cells = new Float32Array(cols * rows);
 
   const at = (col: number, row: number) => ({
@@ -80,14 +86,27 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const p = at(col, row);
-      if (water.isWater(p.x, p.z)) wet[row * cols + col] = 1;
+      if (!water.isWater(p.x, p.z)) continue;
+      wet[row * cols + col] = 1;
+      if (water.isChannel(p.x, p.z)) inland[row * cols + col] = 1;
     }
   }
 
-  const toWater = distanceToWet(wet, cols, rows);
+  // Blurred, and this is the important one. A chamfer transform has a ridge
+  // down the middle of every strip of land, where the fields from two stretches
+  // of coast meet, and the shore ramp turns that ridge into a straight crease
+  // hundreds of metres long. Smoothing the *height* afterwards barely touches
+  // it - the crease is bigger than any blur worth doing to a landscape.
+  // Smoothing the distance before it becomes height removes it at the source.
+  const toWater = blur(distanceToWet(wet, cols, rows), cols, rows, TERRAIN_SOFTEN);
+  const toBank = blur(distanceToWet(inland, cols, rows), cols, rows, TERRAIN_SOFTEN);
 
-  const cx = (bounds.minX + bounds.maxX) / 2;
-  const cz = (bounds.minZ + bounds.maxZ) / 2;
+  // The bowl is the *city's*, not the rectangle's. Centred on the map it landed
+  // exactly on the island's interior - the only ground far enough from the sea
+  // for the shore ramp to have let it rise - so the flattening and the ramp
+  // between them held the hills to 75 m of a 120 m budget. Centred on the body
+  // of land the city is built on, the flat part is the part that is built on.
+  const town = { at: water.town, radius: water.lobes[0].radius };
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -102,20 +121,29 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
         continue;
       }
 
-      // The land rises from the shore. Without this the coast is a cliff
-      // wherever the noise happens to be high, and a quay (#241) is a shelf
-      // sixty metres above the river it is supposed to be beside.
-      const shore = smooth(Math.min(1, (toWater[i] * TERRAIN_CELL) / TERRAIN_SHORE));
+      // The land rises from the water. Gently from the sea, over
+      // `TERRAIN_SHORE`, or the coast is a cliff wherever the noise happens to
+      // be high and #241's quay is a shelf a hundred metres above the water it
+      // is beside. **Steeply from a bank**, over `TERRAIN_BANK`, because a
+      // channel cut through a landmass has sides and not beaches - and because
+      // a river that ramps as gently as the sea flattens the whole interior of
+      // an island, which is what held the hills to 75 m.
+      //
+      // The lower of the two wins: near the sea the sea decides, near a bank
+      // the bank does, and inland neither restrains anything.
+      const shore = Math.min(
+        smooth(Math.min(1, (toWater[i] * TERRAIN_CELL) / TERRAIN_SHORE)),
+        smooth(Math.min(1, (toBank[i] * TERRAIN_CELL) / TERRAIN_BANK)),
+      );
 
       // Flat in the middle, hills at the rim. The dense grid is in the middle
       // and every metre of relief under it is cut and fill somebody has to pay
       // for; the reference map this is shaped after does the same thing, with
       // its city in a bowl and its mountains round the edge.
-      // Measured against the map's own half-diagonal rather than a fixed
-      // radius, so the basin is the middle of *this* map whatever size it is -
-      // and ADR-0007 rule 3 is about to make it twice as wide.
-      const fromCentre = Math.hypot(p.x - cx, p.z - cz) / Math.hypot(width / 2, depth / 2);
-      const core = 1 - smooth(Math.min(1, fromCentre / TERRAIN_CORE_RADIUS));
+      // Measured against the town's own size, so the basin is the city's
+      // whatever the map is doing around it.
+      const fromTown = Math.hypot(p.x - town.at.x, p.z - town.at.z) / town.radius;
+      const core = 1 - smooth(Math.min(1, fromTown / TERRAIN_CORE_RADIUS));
       // Flat in the middle *and* lifted at the rim: without the second half the
       // city sits in a dish with nothing around it, which is a basin and not a
       // skyline. Together they are what makes a hill somewhere you drive up to.
@@ -130,7 +158,77 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
     }
   }
 
+  soften(cells, wet, cols, rows);
+
   return { cells, cols, rows, cell: TERRAIN_CELL, bounds };
+}
+
+/**
+ * Take the creases out.
+ *
+ * The shore ramp is a function of the distance to the water, and that distance
+ * comes from a two-pass chamfer transform - which has a **medial axis**: a
+ * ridge running down the middle of every strip of land, where the fields from
+ * two stretches of coast meet. The ramp turns that ridge into a visible crease,
+ * and on a small body of land it is the dominant feature: straight-edged facets
+ * meeting at a sharp line, which is what "some topography seems quite abrupt"
+ * was looking at.
+ *
+ * A few passes of a box blur is the cheap fix and the right one. It is only the
+ * artefact that is sharp; the hills underneath are smooth already, and blurring
+ * a height field by tens of metres at a ten-metre grid moves nothing that
+ * matters. Water is held at its own depth so the coastline does not soften with
+ * it - a blurred shoreline is a beach the collision does not agree with.
+ */
+function blur(field: Float32Array, cols: number, rows: number, passes: number): Float32Array {
+  let from: Float32Array = field;
+  let to: Float32Array = new Float32Array(field.length);
+  for (let pass = 0; pass < passes; pass++) {
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        let sum = 0;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const r = row + dr;
+            const c = col + dc;
+            if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+            sum += from[r * cols + c];
+            n++;
+          }
+        }
+        to[row * cols + col] = sum / n;
+      }
+    }
+    const swap: Float32Array = from;
+    from = to;
+    to = swap;
+  }
+  return from;
+}
+
+function soften(cells: Float32Array, wet: Uint8Array, cols: number, rows: number): void {
+  const scratch = new Float32Array(cells.length);
+  for (let pass = 0; pass < TERRAIN_SOFTEN; pass++) {
+    scratch.set(cells);
+    for (let row = 1; row < rows - 1; row++) {
+      for (let col = 1; col < cols - 1; col++) {
+        const i = row * cols + col;
+        if (wet[i]) continue;
+        let sum = 0;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const j = i + dr * cols + dc;
+            if (wet[j]) continue;
+            sum += scratch[j];
+            n++;
+          }
+        }
+        if (n > 0) cells[i] = sum / n;
+      }
+    }
+  }
 }
 
 /**

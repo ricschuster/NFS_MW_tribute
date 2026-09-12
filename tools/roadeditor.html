@@ -1,0 +1,1003 @@
+<title>Kestrel Bay Road Editor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --sea: #1a5568;
+    --sea-deep: #14414f;
+    --ink: #0d1a1f;
+    --paper: #eef1ef;
+    --panel: #10242c;
+    --panel-2: #16303a;
+    --line: #244653;
+    --text: #dae8ec;
+    --dim: #8fb0ba;
+    --road: #e07a3f;
+    --road-hot: #ffd54f;
+    --bridge: #ff8a4c;
+    --new: #7fd6a2;
+    --warn: #e9615a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 268px 1fr;
+    overflow: hidden;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  header { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); }
+  h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .seed {
+    margin-top: 3px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.04em;
+  }
+  .tools { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
+  .row { display: flex; gap: 8px; }
+  button {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 7px 9px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: #3a6b7d; }
+  button:focus-visible { outline: 2px solid var(--road-hot); outline-offset: 1px; }
+  button[aria-pressed="true"] { background: var(--road); border-color: var(--road); color: #201005; font-weight: 600; }
+  button.save { background: var(--new); border-color: var(--new); color: #06251a; font-weight: 600; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .legend { padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 11.5px; color: var(--dim); line-height: 1.75; }
+  .legend b { color: var(--text); font-weight: 500; }
+  kbd {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1px 4px;
+    color: var(--text);
+  }
+  .sel { padding: 12px 16px; border-bottom: 1px solid var(--line); min-height: 92px; }
+  .sel h2 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+  .facts dt { color: var(--dim); }
+  .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .goto input {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 7px 9px;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .goto input:focus-visible { outline: 2px solid var(--road-hot); outline-offset: 1px; }
+  .listhead {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+  .listhead .sort {
+    flex: 1;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+  }
+  .list { flex: 1; overflow-y: auto; min-height: 0; }
+  .list ol { margin: 0; padding: 6px 0; list-style: none; }
+  .list li {
+    padding: 5px 16px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .list li:hover { background: var(--panel-2); }
+  .list li[aria-current="true"] { background: var(--road); color: #201005; font-weight: 600; }
+  .list li .len { color: var(--dim); font-variant-numeric: tabular-nums; }
+  .list li[aria-current="true"] .len { color: #201005; }
+  .list li.gone { text-decoration: line-through; opacity: 0.45; }
+  .list li.stub .len { color: var(--warn); font-weight: 600; }
+  .list li[aria-current="true"].stub .len { color: #4a0f0c; }
+  main { position: relative; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+  .status {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 7px 14px;
+    background: rgba(10, 26, 32, 0.88);
+    border-top: 1px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--dim);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .status b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .toast {
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+  .toast.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<aside>
+  <header>
+    <h1>Kestrel Bay Road Editor</h1>
+    <div class="seed" id="seed"></div>
+  </header>
+
+  <div class="tools">
+    <div class="row">
+      <button id="tool-select" aria-pressed="true">Select</button>
+      <button id="tool-draw" aria-pressed="false">Draw road</button>
+    </div>
+    <div class="row">
+      <button id="zoom-out" title="Zoom out (-)">&minus;</button>
+      <button id="zoom-in" title="Zoom in (+)">+</button>
+      <button id="zoom-fit" title="Fit the whole map (0)">Fit</button>
+    </div>
+    <div class="row">
+      <button id="slope" aria-pressed="false" title="Shade ground too steep for a road">Show grade</button>
+    </div>
+    <div class="row goto">
+      <input id="goto" type="text" placeholder="go to x, z" aria-label="Go to coordinates" />
+    </div>
+    <div class="row">
+      <button id="undo" disabled>Undo</button>
+      <button id="reset" title="Back to the roads the generator made">Revert all</button>
+    </div>
+    <div class="row">
+      <button id="save" class="save">Save edits</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <b>Click</b> a road to select · <b>drag</b> a handle to move a point<br>
+    <kbd>Alt</kbd>+click a road to add a point · <kbd>Del</kbd> removes the road<br>
+    <kbd>Alt</kbd>+click a handle deletes that point<br>
+    <b>Drag</b> empty ground to pan · <b>wheel</b> or <kbd>+</kbd> <kbd>-</kbd> <kbd>0</kbd> to zoom<br>
+    <b><kbd>Shift</kbd>+drag anywhere to draw freehand</b><br>
+    <b>Show grade</b>: amber over 10%, red over 13% - no road crosses red<br>
+    Draw road: click points, <kbd>Enter</kbd> to finish, <kbd>Esc</kbd> to cancel
+  </div>
+
+  <div class="sel">
+    <h2>Selection</h2>
+    <dl class="facts" id="facts"><dt>—</dt><dd>nothing selected</dd></dl>
+  </div>
+
+  <div class="listhead">
+    <button id="sort-id" class="sort" aria-pressed="true">Road</button>
+    <button id="sort-len" class="sort" aria-pressed="false">Length <span id="sort-arrow"></span></button>
+  </div>
+  <div class="list"><ol id="roadlist"></ol></div>
+</aside>
+
+<main>
+  <canvas id="map"></canvas>
+  <div class="status">
+    <span>roads <b id="s-roads">0</b></span>
+    <span>edited <b id="s-edited">0</b></span>
+    <span>under 30 m <b id="s-stubs">0</b></span>
+    <span>x <b id="s-x">—</b></span>
+    <span>z <b id="s-z">—</b></span>
+    <span>ground <b id="s-h">—</b></span>
+    <span>zoom <b id="s-zoom">—</b></span>
+  </div>
+  <div class="toast" id="toast"></div>
+</main>
+
+<script id="mapdata" type="application/json">__DATA__</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById('mapdata').textContent);
+  const { bounds, height, places, districts } = DATA;
+
+  // Roads, as the editor's own mutable copy. `origin` is what came out of the
+  // generator, so "edited" means something and Revert has somewhere to go back to.
+  let roads = DATA.roads.map((r) => ({ ...r, points: r.points.map((p) => [...p]) }));
+  const origin = JSON.stringify(DATA.roads);
+  let removed = new Set();
+  let selected = null;
+  let mode = 'select';
+  let drawing = null;
+  // How the list is ordered. Shortest-first is the one that earns its keep: a
+  // road of a few metres is almost always a fragment rather than a decision, and
+  // there is no way to find one by eye on a ten-kilometre map.
+  let sort = { by: 'id', ascending: true };
+  const undoStack = [];
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('map');
+  const ctx = canvas.getContext('2d');
+  $('seed').textContent = `seed ${DATA.seed} · ${(bounds.maxX - bounds.minX) / 1000} × ${(bounds.maxZ - bounds.minZ) / 1000} km`;
+
+  // The repo's own convention (scene/mapping.ts, #182): seen from above with
+  // +z up the screen, **-x is to the right**. Getting this wrong would make an
+  // editor that disagrees with the windscreen, which is the bug #182 was.
+  const view = { scale: 1, x: 0, y: 0 };
+  const sx = (x) => (bounds.maxX - x) * view.scale + view.x;
+  const sy = (z) => (bounds.maxZ - z) * view.scale + view.y;
+  const wx = (px) => bounds.maxX - (px - view.x) / view.scale;
+  const wz = (py) => bounds.maxZ - (py - view.y) / view.scale;
+
+  // The relief, unpacked from one byte a cell and drawn once at grid resolution.
+  // A road that reads as wrong usually reads as wrong against a slope, so the
+  // ground is the point of the background rather than decoration - and at 12 m a
+  // cell there is enough of it to place a road against at full zoom. At 40 m it
+  // was mush the moment you zoomed in.
+  const HEIGHTS = (() => {
+    const raw = atob(height.cells);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  })();
+  const isWater = (v) => v === height.water;
+
+  const relief = document.createElement('canvas');
+  relief.width = height.cols;
+  relief.height = height.rows;
+  {
+    const rc = relief.getContext('2d');
+    const img = rc.createImageData(height.cols, height.rows);
+    const at = (c, r) => {
+      if (r < 0 || r >= height.rows || c < 0 || c >= height.cols) return height.water;
+      return HEIGHTS[r * height.cols + c];
+    };
+    for (let r = 0; r < height.rows; r++) {
+      for (let c = 0; c < height.cols; c++) {
+        // Row 0 is minZ, which is the BOTTOM of the picture.
+        const i = ((height.rows - 1 - r) * height.cols + c) * 4;
+        const h = at(c, r);
+        if (isWater(h)) {
+          img.data[i] = 20; img.data[i + 1] = 65; img.data[i + 2] = 79; img.data[i + 3] = 255;
+          continue;
+        }
+        const t = Math.min(1, h / 120);
+        // Lit from the north-west, off the real gradient rather than one
+        // difference: at 12 m a cell a single neighbour is mostly noise, and a
+        // slope somebody is about to lay a road along should read as a slope.
+        const west = isWater(at(c - 1, r)) ? h : at(c - 1, r);
+        const east = isWater(at(c + 1, r)) ? h : at(c + 1, r);
+        const south = isWater(at(c, r - 1)) ? h : at(c, r - 1);
+        const north = isWater(at(c, r + 1)) ? h : at(c, r + 1);
+        const grade = ((west - east) * 0.7 + (north - south) * 0.7) / (height.step * 2);
+        const lit = Math.max(-34, Math.min(34, grade * 190));
+        img.data[i] = Math.round(Math.max(0, Math.min(255, 88 + t * 140 + lit)));
+        img.data[i + 1] = Math.round(Math.max(0, Math.min(255, 124 + t * 90 + lit)));
+        img.data[i + 2] = Math.round(Math.max(0, Math.min(255, 86 + t * 58 + lit)));
+        img.data[i + 3] = 255;
+      }
+    }
+    rc.putImageData(img, 0, 0);
+  }
+
+  /**
+   * Where the ground is too steep for a road, as its own layer.
+   *
+   * The relief shows *height*, and height is not the thing that stops a road:
+   * a bench edge in the quarry is 11 m over one cell and looks like a faint line
+   * on a hill-shade, while being the one place a road cannot go. This shades
+   * anything over the country cap, so the obstacles are visible rather than
+   * inferred - which is what the last three failed attempts at one road were
+   * short of.
+   */
+  const STREET_CAP = 0.1;
+  const COUNTRY_CAP = 0.13;
+  const grade = document.createElement('canvas');
+  grade.width = height.cols;
+  grade.height = height.rows;
+  {
+    const gc = grade.getContext('2d');
+    const img = gc.createImageData(height.cols, height.rows);
+    const at = (c, r) => {
+      if (r < 0 || r >= height.rows || c < 0 || c >= height.cols) return height.water;
+      return HEIGHTS[r * height.cols + c];
+    };
+    for (let r = 0; r < height.rows; r++) {
+      for (let c = 0; c < height.cols; c++) {
+        const i = ((height.rows - 1 - r) * height.cols + c) * 4;
+        const h = at(c, r);
+        if (isWater(h)) continue;
+        const dx = (isWater(at(c + 1, r)) ? h : at(c + 1, r)) - (isWater(at(c - 1, r)) ? h : at(c - 1, r));
+        const dz = (isWater(at(c, r + 1)) ? h : at(c, r + 1)) - (isWater(at(c, r - 1)) ? h : at(c, r - 1));
+        const slope = Math.hypot(dx, dz) / (height.step * 2);
+        if (slope <= STREET_CAP) continue;
+        // Amber where only a country road could climb it, red where nothing can.
+        const bad = slope > COUNTRY_CAP;
+        img.data[i] = bad ? 235 : 232;
+        img.data[i + 1] = bad ? 70 : 160;
+        img.data[i + 2] = bad ? 70 : 60;
+        img.data[i + 3] = bad ? 200 : 130;
+      }
+    }
+    gc.putImageData(img, 0, 0);
+  }
+  let showGrade = false;
+
+  const DISTRICT_TINT = {
+    downtown: 'rgba(92,107,192,0.20)',
+    midtown: 'rgba(102,137,122,0.16)',
+    waterfront: 'rgba(63,143,168,0.18)',
+    industrial: 'rgba(138,109,67,0.20)',
+    park: 'rgba(79,138,74,0.20)',
+  };
+
+  const length = (r) => {
+    let d = 0;
+    for (let i = 1; i < r.points.length; i++) {
+      d += Math.hypot(r.points[i][0] - r.points[i - 1][0], r.points[i][1] - r.points[i - 1][1]);
+    }
+    return d;
+  };
+  const live = () => roads.filter((r) => !removed.has(r.id));
+  // Below this a road is a fragment: shorter than a single city block, too short
+  // to be somewhere you drive, and usually left behind by a clip or a trim.
+  const STUB = 30;
+
+  function fit() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return rect;
+  }
+
+  function home() {
+    const rect = canvas.getBoundingClientRect();
+    const w = bounds.maxX - bounds.minX;
+    const h = bounds.maxZ - bounds.minZ;
+    view.scale = Math.min(rect.width / w, (rect.height - 30) / h) * 0.96;
+    view.x = (rect.width - w * view.scale) / 2;
+    view.y = (rect.height - 30 - h * view.scale) / 2;
+  }
+
+  // Zoom about a point on the screen, so whatever is under the cursor - or the
+  // middle of the view, for the buttons and the keys - stays where it is.
+  function zoomBy(factor, px, py) {
+    const rect = canvas.getBoundingClientRect();
+    const ax = px === undefined ? rect.width / 2 : px;
+    const ay = py === undefined ? (rect.height - 30) / 2 : py;
+    const before = { x: wx(ax), z: wz(ay) };
+    view.scale = Math.max(0.012, Math.min(4, view.scale * factor));
+    view.x += ax - sx(before.x);
+    view.y += ay - sy(before.z);
+    draw();
+  }
+
+  function draw() {
+    const rect = fit();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = '#14414f';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // The relief image is stored with +x to the right; the map wants -x there,
+    // so it is drawn mirrored rather than rebuilt.
+    ctx.save();
+    // Smoothed while a cell is smaller than a pixel, crisp once it is bigger:
+    // interpolating a 12 m cell up to 40 screen pixels is a blur, and the point
+    // of zooming in is to see where the ground actually goes.
+    ctx.imageSmoothingEnabled = height.step * view.scale < 1.4;
+    ctx.translate(sx(bounds.minX), sy(bounds.maxZ));
+    ctx.scale(-1, 1);
+    ctx.drawImage(
+      relief,
+      0, 0,
+      (bounds.maxX - bounds.minX) * view.scale,
+      (bounds.maxZ - bounds.minZ) * view.scale,
+    );
+    ctx.restore();
+
+    if (showGrade) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(sx(bounds.minX), sy(bounds.maxZ));
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        grade,
+        0, 0,
+        (bounds.maxX - bounds.minX) * view.scale,
+        (bounds.maxZ - bounds.minZ) * view.scale,
+      );
+      ctx.restore();
+    }
+
+    for (const area of districts) {
+      ctx.beginPath();
+      area.poly.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      ctx.closePath();
+      ctx.fillStyle = DISTRICT_TINT[area.kind] || 'rgba(255,255,255,0.06)';
+      ctx.fill();
+    }
+
+    // 26 m of carriageway, so a road thickens as you zoom in the way the ground
+    // does, with a floor that keeps it visible when the whole map is in view.
+    const wide = Math.max(1.4, 26 * view.scale);
+    for (const r of live()) {
+      const hot = selected && selected.road === r;
+      ctx.beginPath();
+      r.points.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      ctx.strokeStyle = hot ? '#ffd54f' : r.bridge ? '#ff8a4c' : r.isNew ? '#7fd6a2' : '#e07a3f';
+      ctx.lineWidth = hot ? wide + 2 : wide;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    if (drawing && drawing.length) {
+      ctx.beginPath();
+      drawing.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      ctx.strokeStyle = '#7fd6a2';
+      ctx.lineWidth = wide;
+      ctx.setLineDash([6, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if (selected) {
+      for (const [x, z] of selected.road.points) {
+        ctx.beginPath();
+        ctx.arc(sx(x), sy(z), 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#0d1a1f';
+        ctx.fill();
+        ctx.strokeStyle = '#ffd54f';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+    }
+
+    showZoom();
+
+    for (const p of places) {
+      const x = sx(p.at[0]);
+      const y = sy(p.at[1]);
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffd54f';
+      ctx.fill();
+      ctx.strokeStyle = '#1b1b1b';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.font = '600 13px "IBM Plex Sans", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#0d1a1f';
+      ctx.strokeText(p.name, x, y - 11);
+      ctx.fillStyle = '#ffd54f';
+      ctx.fillText(p.name, x, y - 11);
+    }
+  }
+
+  function showZoom() {
+    const perPixel = 1 / view.scale;
+    $('s-zoom').textContent = perPixel >= 10 ? `${Math.round(perPixel)} m/px` : `${perPixel.toFixed(1)} m/px`;
+  }
+
+  /**
+   * Put a road in the middle of the view, at a scale that shows all of it.
+   *
+   * Picking one out of a list is only useful if you then end up looking at it:
+   * the roads worth hunting for are the short ones, and a 1 m road on a 10 km
+   * map is a pixel somebody would never find by panning.
+   */
+  function goTo(road) {
+    const rect = canvas.getBoundingClientRect();
+    const xs = road.points.map((p) => p[0]);
+    const zs = road.points.map((p) => p[1]);
+    const pad = 180;
+    const w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+    const h = Math.max(...zs) - Math.min(...zs) + pad * 2;
+    view.scale = Math.max(0.012, Math.min(4, Math.min(rect.width / w, (rect.height - 30) / h)));
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+    const cz = (Math.max(...zs) + Math.min(...zs)) / 2;
+    view.x = 0;
+    view.y = 0;
+    view.x = rect.width / 2 - sx(cx);
+    view.y = (rect.height - 30) / 2 - sy(cz);
+  }
+
+  function refresh() {
+    const list = live();
+    $('s-roads').textContent = list.length;
+    const stubs = list.filter((r) => length(r) < STUB).length;
+    $('s-stubs').textContent = stubs;
+    $('s-stubs').style.color = stubs > 0 ? '#e9615a' : '';
+    const edited = JSON.stringify(roads.filter((r) => !removed.has(r.id)).map((r) => ({ id: r.id, kind: r.kind, bridge: r.bridge, district: r.district, points: r.points })));
+    $('s-edited').textContent = removed.size + (edited === origin ? 0 : 1) === 0 ? '0' : String(countEdits());
+    $('undo').disabled = undoStack.length === 0;
+
+    const ol = $('roadlist');
+    ol.textContent = '';
+    const order = [...roads];
+    if (sort.by === 'length') {
+      order.sort((a, b) => length(a) - length(b));
+      if (!sort.ascending) order.reverse();
+    } else {
+      // By the number in the id, not the string: r9 comes before r10.
+      const num = (id) => Number(id.replace(/\D+/g, ''));
+      order.sort((a, b) => (a.id[0] === b.id[0] ? num(a.id) - num(b.id) : a.id[0] < b.id[0] ? -1 : 1));
+      if (!sort.ascending) order.reverse();
+    }
+    for (const r of order) {
+      const li = document.createElement('li');
+      li.textContent = r.id + (r.bridge ? ' ⌁' : '') + (r.deadEnd ? ' ·' : '');
+      const len = document.createElement('span');
+      len.className = 'len';
+      const metres = Math.round(length(r));
+      len.textContent = `${metres} m`;
+      li.appendChild(len);
+      const classes = [];
+      if (removed.has(r.id)) classes.push('gone');
+      if (metres < STUB) classes.push('stub');
+      li.className = classes.join(' ');
+      if (selected && selected.road === r) li.setAttribute('aria-current', 'true');
+      li.onclick = () => {
+        if (removed.has(r.id)) {
+          selected = null;
+        } else {
+          selected = { road: r, point: null };
+          goTo(r);
+        }
+        refresh();
+        draw();
+      };
+      ol.appendChild(li);
+    }
+
+    const facts = $('facts');
+    facts.textContent = '';
+    const add = (k, v) => {
+      const dt = document.createElement('dt');
+      dt.textContent = k;
+      const dd = document.createElement('dd');
+      dd.textContent = v;
+      facts.append(dt, dd);
+    };
+    if (!selected) add('—', 'nothing selected');
+    else {
+      add('road', selected.road.id);
+      add('kind', selected.road.bridge ? `${selected.road.kind} · bridge` : selected.road.kind);
+      add('points', String(selected.road.points.length));
+      add('length', `${Math.round(length(selected.road))} m`);
+      const ends = selected.road.points;
+      add('from', `${ends[0][0]}, ${ends[0][1]}`);
+      add('to', `${ends[ends.length - 1][0]}, ${ends[ends.length - 1][1]}`);
+    }
+  }
+
+  const byId = new Map(DATA.roads.map((r) => [r.id, JSON.stringify(r.points)]));
+  function countEdits() {
+    let n = removed.size;
+    for (const r of roads) {
+      if (removed.has(r.id)) continue;
+      if (r.isNew) n++;
+      else if (byId.get(r.id) !== JSON.stringify(r.points)) n++;
+    }
+    return n;
+  }
+
+  function snapshot() {
+    undoStack.push({ roads: JSON.stringify(roads), removed: [...removed] });
+    if (undoStack.length > 60) undoStack.shift();
+  }
+
+  // Hit testing in screen space, so the tolerance is the same however far in
+  // you are zoomed - the thing being clicked is a line on a screen.
+  function nearestRoad(px, py, tol) {
+    let best = null;
+    let bestD = tol;
+    for (const r of live()) {
+      for (let i = 1; i < r.points.length; i++) {
+        const ax = sx(r.points[i - 1][0]);
+        const ay = sy(r.points[i - 1][1]);
+        const bx = sx(r.points[i][0]);
+        const by = sy(r.points[i][1]);
+        const dx = bx - ax;
+        const dy = by - ay;
+        const span = dx * dx + dy * dy;
+        const t = span < 1e-6 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / span));
+        const d = Math.hypot(ax + dx * t - px, ay + dy * t - py);
+        if (d < bestD) {
+          bestD = d;
+          best = { road: r, index: i, t };
+        }
+      }
+    }
+    return best;
+  }
+
+  function nearestHandle(px, py, tol) {
+    if (!selected) return null;
+    for (let i = 0; i < selected.road.points.length; i++) {
+      const [x, z] = selected.road.points[i];
+      if (Math.hypot(sx(x) - px, sy(z) - py) <= tol) return i;
+    }
+    return null;
+  }
+
+  const groundAt = (x, z) => {
+    const c = Math.round((x - bounds.minX) / height.step);
+    const r = Math.round((z - bounds.minZ) / height.step);
+    if (c < 0 || r < 0 || c >= height.cols || r >= height.rows) return null;
+    const v = HEIGHTS[r * height.cols + c];
+    return isWater(v) ? -1 : v;
+  };
+
+  // Freehand, on Shift+drag.
+  //
+  // Sampled by how far the pointer has moved **in world metres** rather than
+  // per event: a pointer fires as fast as the screen does, so a slow careful
+  // stroke would come out with ten times the points of a quick one and the road
+  // would be denser where the hand was less sure. A generated road is a chain of
+  // 30 m pieces, so `FREEHAND_STEP` puts a hand-drawn one on the same footing.
+  const FREEHAND_STEP = 28;
+  // How far a point may sit off the line between its neighbours before it is
+  // worth keeping. Shrinking the stroke afterwards matters because these are
+  // what somebody has to drag later: a road nobody can edit is not much better
+  // than a road nobody drew.
+  const FREEHAND_TOLERANCE = 12;
+
+  /** Drop the points that were not saying anything (Ramer-Douglas-Peucker). */
+  function thin(points, tolerance) {
+    if (points.length < 3) return points;
+    let worst = 0;
+    let at = 0;
+    const [ax, az] = points[0];
+    const [bx, bz] = points[points.length - 1];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const span = dx * dx + dz * dz;
+    for (let i = 1; i < points.length - 1; i++) {
+      const [px, pz] = points[i];
+      const t = span < 1e-6 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / span));
+      const d = Math.hypot(ax + dx * t - px, az + dz * t - pz);
+      if (d > worst) {
+        worst = d;
+        at = i;
+      }
+    }
+    if (worst <= tolerance) return [points[0], points[points.length - 1]];
+    return [...thin(points.slice(0, at + 1), tolerance).slice(0, -1), ...thin(points.slice(at), tolerance)];
+  }
+
+  function finishFreehand() {
+    if (!drawing || drawing.length < 2) {
+      drawing = null;
+      draw();
+      return;
+    }
+    const points = thin(drawing, FREEHAND_TOLERANCE);
+    snapshot();
+    const id = `n${roads.length}`;
+    roads.push({ id, kind: 'boulevard', bridge: false, district: 'midtown', points, isNew: true });
+    selected = { road: roads[roads.length - 1], point: null };
+    drawing = null;
+    refresh();
+    draw();
+    toast(`Drew ${Math.round(length(selected.road))} m in ${points.length} points`);
+  }
+
+  let drag = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+
+    // Shift beats every other tool, in either mode: it is a gesture rather than
+    // a state, so it should not matter what is selected or which button is lit.
+    if (e.shiftKey) {
+      selected = null;
+      drawing = [[Math.round(wx(px)), Math.round(wz(py))]];
+      drag = { kind: 'freehand' };
+      canvas.setPointerCapture(e.pointerId);
+      refresh();
+      draw();
+      return;
+    }
+
+    if (mode === 'draw') {
+      drawing = drawing || [];
+      drawing.push([Math.round(wx(px)), Math.round(wz(py))]);
+      draw();
+      return;
+    }
+
+    const handle = nearestHandle(px, py, 8);
+    if (handle !== null) {
+      if (e.altKey) {
+        if (selected.road.points.length > 2) {
+          snapshot();
+          selected.road.points.splice(handle, 1);
+          refresh();
+          draw();
+        }
+        return;
+      }
+      snapshot();
+      drag = { kind: 'point', index: handle };
+      canvas.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    const hit = nearestRoad(px, py, 7);
+    if (hit) {
+      if (e.altKey) {
+        snapshot();
+        hit.road.points.splice(hit.index, 0, [Math.round(wx(px)), Math.round(wz(py))]);
+        selected = { road: hit.road, point: null };
+        refresh();
+        draw();
+        return;
+      }
+      selected = { road: hit.road, point: null };
+      refresh();
+      draw();
+      return;
+    }
+
+    selected = null;
+    drag = { kind: 'pan', px, py, vx: view.x, vy: view.y };
+    canvas.setPointerCapture(e.pointerId);
+    refresh();
+    draw();
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const x = Math.round(wx(px));
+    const z = Math.round(wz(py));
+    $('s-x').textContent = x;
+    $('s-z').textContent = z;
+    const g = groundAt(x, z);
+    $('s-h').textContent = g === null ? '—' : g < 0 ? 'water' : `${g} m`;
+
+    if (!drag) return;
+    if (drag.kind === 'freehand') {
+      const last = drawing[drawing.length - 1];
+      if (Math.hypot(x - last[0], z - last[1]) >= FREEHAND_STEP) drawing.push([x, z]);
+      draw();
+      return;
+    }
+    if (drag.kind === 'pan') {
+      view.x = drag.vx + (px - drag.px);
+      view.y = drag.vy + (py - drag.py);
+    } else if (drag.kind === 'point' && selected) {
+      selected.road.points[drag.index] = [x, z];
+    }
+    draw();
+  });
+
+  const endDrag = () => {
+    if (drag && drag.kind === 'point') refresh();
+    if (drag && drag.kind === 'freehand') {
+      drag = null;
+      finishFreehand();
+      return;
+    }
+    drag = null;
+  };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  $('zoom-in').onclick = () => zoomBy(1.35);
+  $('zoom-out').onclick = () => zoomBy(1 / 1.35);
+  $('zoom-fit').onclick = () => { home(); draw(); };
+
+  window.addEventListener('keydown', (e) => {
+    // Typing in the go-to box is typing, not a shortcut: without this, "-2682"
+    // zooms out four times and puts nothing in the field.
+    if (e.target instanceof HTMLInputElement) return;
+    if (e.key === '+' || e.key === '=') { zoomBy(1.35); return; }
+    if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.35); return; }
+    if (e.key === '0') { home(); draw(); return; }
+    if (e.key === 'Escape') {
+      drawing = null;
+      setMode('select');
+      draw();
+      return;
+    }
+    if (e.key === 'Enter' && mode === 'draw' && drawing && drawing.length > 1) {
+      snapshot();
+      const id = `n${roads.length}`;
+      roads.push({ id, kind: 'boulevard', bridge: false, district: 'midtown', points: drawing, isNew: true });
+      drawing = null;
+      selected = { road: roads[roads.length - 1], point: null };
+      setMode('select');
+      refresh();
+      draw();
+      return;
+    }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+      snapshot();
+      removed.add(selected.road.id);
+      selected = null;
+      refresh();
+      draw();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      const last = undoStack.pop();
+      if (!last) return;
+      roads = JSON.parse(last.roads);
+      removed = new Set(last.removed);
+      selected = null;
+      refresh();
+      draw();
+    }
+  });
+
+  function setMode(next) {
+    mode = next;
+    $('tool-select').setAttribute('aria-pressed', String(next === 'select'));
+    $('tool-draw').setAttribute('aria-pressed', String(next === 'draw'));
+    canvas.style.cursor = next === 'draw' ? 'copy' : 'crosshair';
+    if (next !== 'draw') drawing = null;
+  }
+  function setSort(by) {
+    sort = { by, ascending: sort.by === by ? !sort.ascending : by === 'id' };
+    $('sort-id').setAttribute('aria-pressed', String(by === 'id'));
+    $('sort-len').setAttribute('aria-pressed', String(by === 'length'));
+    $('sort-arrow').textContent = by === 'length' ? (sort.ascending ? '↑' : '↓') : '';
+    refresh();
+  }
+  $('slope').onclick = () => {
+    showGrade = !showGrade;
+    $('slope').setAttribute('aria-pressed', String(showGrade));
+    $('slope').textContent = showGrade ? 'Hide grade' : 'Show grade';
+    draw();
+  };
+
+  // "go to x, z" - the coordinates the checks report, so a finding can be looked
+  // at rather than hunted for.
+  $('goto').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const parts = $('goto').value.split(/[ ,]+/).map(Number).filter((v) => !Number.isNaN(v));
+    if (parts.length < 2) return;
+    const rect = canvas.getBoundingClientRect();
+    view.scale = Math.max(view.scale, 0.35);
+    view.x = 0;
+    view.y = 0;
+    view.x = rect.width / 2 - sx(parts[0]);
+    view.y = (rect.height - 30) / 2 - sy(parts[1]);
+    draw();
+    toast(`at ${parts[0]}, ${parts[1]}`);
+  });
+  $('goto').addEventListener('keyup', (e) => e.stopPropagation());
+
+  $('sort-id').onclick = () => setSort('id');
+  $('sort-len').onclick = () => setSort('length');
+
+  $('tool-select').onclick = () => { setMode('select'); draw(); };
+  $('tool-draw').onclick = () => { setMode('draw'); selected = null; refresh(); draw(); };
+  $('undo').onclick = () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }));
+  $('reset').onclick = () => {
+    snapshot();
+    roads = DATA.roads.map((r) => ({ ...r, points: r.points.map((p) => [...p]) }));
+    removed = new Set();
+    selected = null;
+    refresh();
+    draw();
+  };
+
+  let toastTimer = null;
+  function toast(message) {
+    const el = $('toast');
+    el.textContent = message;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+  }
+
+  // Saving puts the edited network where Claude can read it back and put it
+  // into the generator. Without the store the page still works - it is an
+  // editor either way, it just cannot hand anything over.
+  let db = null;
+  claude.use('db').then(async (it) => {
+    db = it;
+    if (!db) {
+      $('save').disabled = true;
+      $('save').textContent = 'Saving unavailable';
+      return;
+    }
+    // Open on the last saved network rather than on the generated one.
+    //
+    // The page ships with what the generator made, which is the right thing to
+    // fall back to and the wrong thing to greet somebody with once they have
+    // spent an evening editing. Revert all still goes back to the generated
+    // network, so nothing is lost by adopting the save - it is the more recent
+    // of two things the page already holds.
+    try {
+      const snap = await db.doc('edits/roads').get();
+      const saved = snap && snap.exists ? snap.data() : null;
+      if (!saved || !Array.isArray(saved.roads) || saved.seed !== DATA.seed) return;
+      roads = saved.roads.map((r) => ({ ...r, points: r.points.map((p) => [...p]) }));
+      removed = new Set(saved.removed ?? []);
+      selected = null;
+      undoStack.length = 0;
+      refresh();
+      draw();
+      toast(`Opened your last save · ${roads.length} roads`);
+    } catch {
+      // An unreadable save is not a reason to show nothing: the generated
+      // network is still there and still editable.
+    }
+  });
+  $('save').onclick = async () => {
+    if (!db) return;
+    $('save').disabled = true;
+    try {
+      await db.doc('edits/roads').set({
+        seed: DATA.seed,
+        savedAt: new Date().toISOString(),
+        removed: [...removed],
+        // Everything the road carries, not a chosen subset. The first version
+        // listed the fields by hand and quietly dropped `deadEnd` - the flag
+        // that says a road stops where it means to - so two roads marked
+        // deliberate came back flagged as mistakes on the next check. A save
+        // that loses a field is worse than one that saves a field too many.
+        roads: live().map(({ isNew, ...rest }) => ({ ...rest, isNew: !!isNew })),
+      });
+      toast(`Saved ${live().length} roads, ${countEdits()} edited`);
+    } catch (err) {
+      toast(`Could not save: ${err && err.code ? err.code : 'unknown error'}`);
+    } finally {
+      $('save').disabled = false;
+    }
+  };
+
+  window.addEventListener('resize', () => { draw(); });
+  fit();
+  home();
+  refresh();
+  draw();
+})();
+</script>

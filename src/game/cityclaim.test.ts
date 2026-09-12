@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CityClaim } from './cityclaim';
-import { CityGrid } from './city/grid';
+import { CityGrid, roadHeightAt } from './city/grid';
 import { kestrelBay } from './city/index';
 import { CARS, carById } from './cars';
 import { RIVALS } from './rivals';
@@ -21,14 +21,18 @@ const MAX = REFERENCE_TOP_SPEED;
 /** Somewhere on a street, with the car pointed along it. */
 function somewhere() {
   const road = city.roads.find(
-    (r) => r.class === 'street' && !r.bridge && city.nodes[r.a].y === 0 && r.length > 20000,
+    (r) =>
+      r.class === 'boulevard' &&
+      !r.bridge &&
+      city.nodes[r.a].level === 'surface' &&
+      r.length > 20000,
   )!;
   const a = city.nodes[road.a].pos;
   const b = city.nodes[road.b].pos;
   return {
     x: (a.x + b.x) / 2,
     z: (a.z + b.z) / 2,
-    y: 0,
+    y: roadHeightAt(city, road, (a.x + b.x) / 2, (a.z + b.z) / 2),
     heading: Math.atan2(b.x - a.x, b.z - a.z),
     speed: 0,
   };

@@ -209,20 +209,40 @@ const m = (metres: number) => metres * UNITS_PER_METRE;
 const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
 
 /**
- * Overall extent (ADR-0005). Sized from what the game needs rather than from a
- * remembered figure: a pursuit should be able to cross the map in two to four
- * minutes at the pace the car actually holds, which is a city about this big.
+ * Overall extent (ADR-0005, sized by ADR-0007 rule 3).
+ *
+ * It was 5 x 4 km, from a behaviour rather than a number: a pursuit should
+ * cross the map in two to four minutes at the pace the car actually holds.
+ * Measured, that rule was already being missed - corner to corner took 4m 15s
+ * on the streets - and ADR-0007 rescoped it to the *core*, which is where a
+ * pursuit is fought, leaving the periphery for free roam and being chased along
+ * at top speed. 10 x 8 km is the reference city's own crossing measured back
+ * into an area, and it is four times this map with the same amount of city in
+ * it: the grid is bounded by `CITY_BUILT_UP` now, so a bigger map is more
+ * country and not more blocks.
+ *
+ * It is also what makes the relief possible. A gentle coast is a shore ramp
+ * `TERRAIN_SHORE` wide, and on a small island that ramp covers everything -
+ * measured, the hills fell from 139 m to 40 m the moment the landmass became
+ * lobes inside a 5 x 4 km rectangle, because nowhere was far enough from the
+ * water to reach full height. Hills need an interior to stand in.
  */
-export const CITY_WIDTH = m(5000);
-export const CITY_DEPTH = m(4000);
+export const CITY_WIDTH = m(10000);
+export const CITY_DEPTH = m(8000);
 
 /**
- * Arterials are laid first and cross the whole city, so every local street
- * meets one at both ends and the network cannot come out in pieces. Counts
- * include both edges, which is what gives the city a perimeter road.
+ * Arterials are laid first and cross the city, so every local street meets one
+ * at both ends and the network cannot come out in pieces.
+ *
+ * A **spacing**, not a count. It was nine columns and seven rows, which was
+ * 555 m apart on a 5 x 4 km map and 1.25 km apart once ADR-0007 doubled it -
+ * and since the grid is now bounded to the town (rule 3), a 2.7 km wide
+ * built-up area contained about four superblocks. Each district was therefore
+ * one enormous rectangle, which is what "all the named areas are smooshed
+ * together" was looking at. A distance survives a change of map size; a count
+ * does not.
  */
-export const CITY_ARTERIAL_COLS = 9;
-export const CITY_ARTERIAL_ROWS = 7;
+export const CITY_ARTERIAL_SPACING = m(560);
 /** How far an interior arterial may wander, as a fraction of the even spacing. */
 export const CITY_ARTERIAL_JITTER = 0.16;
 export const CITY_ARTERIAL_LANES = 4;
@@ -238,23 +258,285 @@ export const CITY_ARTERIAL_SPEED = kmh(90);
  */
 export const CITY_LANE_WIDTH = 2000 / 3;
 
-/** How far the districts reach from their anchors. */
-export const CITY_DOWNTOWN_RADIUS = m(850);
-export const CITY_INDUSTRIAL_RADIUS = m(1250);
-/**
- * How far the docks reach from the harbour. The waterfront is a port, not
- * every square metre that happens to touch water: a city whose whole coast and
- * both riverbanks are wharves has no city behind them.
- */
-export const CITY_WATERFRONT_RADIUS = m(1350);
-
 /**
  * The water (ADR-0005, rule 1). The bay eats into the north edge and the river
  * runs inland from it and severs the city, which is what makes bridges worth
  * having.
  */
-export const CITY_BAY_DEPTH = m(750); // how far inland the bay reaches on average
-export const CITY_BAY_WAVE = m(380); // how far the coastline wanders either side of that
+/**
+ * The landmass (ADR-0008 rule 1). Land is a field summed from `CITY_LOBES`
+ * overlapping blobs and cut at `CITY_LAND_LEVEL`, with `CITY_CHANNELS` straits
+ * subtracted across the necks between them.
+ *
+ * The lobes are why the coast is irregular in every direction instead of being
+ * a wavy line along one edge, and the channels are why there are bodies of land
+ * facing each other rather than one blob with headlands. `CITY_CHANNEL_CUT` has
+ * to be deep enough to sever: a channel that only dents the coast is an inlet,
+ * and an inlet does not need a bridge, which is the whole point of having one.
+ *
+ * `CITY_LOBE_SPREAD` squashes the ring of lobes onto the map's own aspect, so a
+ * wide map gets a wide landmass rather than a circular one with sea in the
+ * corners.
+ */
+/**
+ * The landmass is **authored, and therefore fixed** (ADR-0009 rule 2).
+ *
+ * `makeWater` draws from this stream rather than from `CITY_SEED`, the way
+ * `makeTerrain` already draws from `TERRAIN_STREAM`. The map is a plan in world
+ * metres (`city/plan.ts`) and a polygon pinned in metres over a coastline that
+ * moves with the seed is two answers to where the coast is.
+ *
+ * The terrain is frozen by the same constant, because the plan was audited
+ * against the *ground* as well as the coastline - the hill park is 87 m mean and
+ * 122 m peak, and those numbers are the reason it is a park.
+ *
+ * The value is `CITY_SEED`'s own, because the land this plan was drawn on is the
+ * land that seed produced. It is written out rather than referring to
+ * `CITY_SEED` on purpose: the whole point is that changing the seed no longer
+ * moves the coast.
+ *
+ * The seed still varies the *city* - which streets are inside a district, which
+ * blocks are skipped, what stands on them, where the content lands. It no longer
+ * varies where downtown is. Kestrel Bay is one place.
+ */
+export const CITY_LAND_STREAM = 0x4b657374;
+
+/**
+ * The named places (#271, ADR-0009 rule 5), which are shaped into the ground
+ * before any road is laid.
+ *
+ * `PLACE_BLEND` is how far a place grades back into the hillside around it. Too
+ * short and every place has a retaining wall round it; too long and levelling a
+ * runway flattens the island it is on.
+ */
+export const PLACE_BLEND = m(160);
+/**
+ * How finely the land is flood-filled into bodies.
+ *
+ * Its own number rather than `CITY_GRID_CELL`, which is 120 m and was too coarse
+ * to see the straits: a channel narrower than one cell is never sampled as
+ * water, so the fill walks straight across it and two bodies of land come back
+ * as one. Measured, that merged the docks' island into the main body, which cost
+ * it its link road, its bridge and its separateness - and let the downtown grid
+ * lay 29 blocks on it, because a block may only cross onto another body if the
+ * generator thinks there is no other body.
+ */
+export const CITY_BODY_CELL = m(40);
+
+/**
+ * Whether the street grid is laid at all.
+ *
+ * Off. The arterials were ruled straight across the map and the streets were a
+ * grid inside each superblock, and between them they were everything that read
+ * as drawn on a map rather than grown on the ground (#269). Routing the
+ * arterials was tried; the blocks cannot follow a curved one, which is #268.
+ *
+ * So the map is being rebuilt from the roads that already work - the routed
+ * boulevards, the quay, the embankment and the roads between the places - and
+ * the grid comes back when there is something to lay that is not a ruler. A
+ * switch rather than a deletion because `fillSuperblock` is the only thing that
+ * knows how a district turns into blocks, and that will be wanted again.
+ */
+export const CITY_STREET_GRID = false;
+
+/**
+ * Whether the roads come from `city/roads.ts` rather than from the generator.
+ *
+ * On. The generator still makes a perfectly good *draft* - routed boulevards, a
+ * quay, an embankment, a road to each body of land - and that draft is where
+ * these came from. What it cannot do is decide which of them the city wants,
+ * and that turned out to be most of the work: seventy-four roads survived out of
+ * ninety-eight, thirty were deleted as fragments or duplicates, eight were drawn
+ * and twelve moved.
+ *
+ * Generated-then-edited is the shape that fits here, and it fits because of the
+ * *number*. Seventy-four is too many to draw from nothing and few enough to fix
+ * by eye. The districts went the same way at ADR-0009 for the same reason.
+ *
+ * With this off, the generator lays its own roads again and `city/roads.ts` is
+ * ignored - which is how a new draft gets made when the plan or the land moves.
+ */
+export const CITY_AUTHORED_ROADS = true;
+
+/**
+ * Cut and fill (#252): how wide a shelf a road cuts, and how far that shelf
+ * grades back into the ground either side.
+ *
+ * The width is the carriageway and its shoulders and no more - this displaces
+ * terrain, and terrain displaced further than a road needs is a scar. The blend
+ * is what turns the edge of the shelf into a bank rather than a wall; too short
+ * and every road in hill country has a kerb of rock beside it.
+ *
+ * `ROAD_CUT_STEP` is how finely the road is sampled before its profile is
+ * computed. Finer than `TERRAIN_CELL`, because the profile is a filter over
+ * distance and a filter fed uneven samples has a wobble in it.
+ */
+export const ROAD_CUT_WIDTH = m(24);
+export const ROAD_CUT_BLEND = m(26);
+export const ROAD_CUT_STEP = m(8);
+/** How many times the grade constraints are relaxed before giving up on them. */
+export const ROAD_CUT_RELAX = 400;
+/**
+ * How far inside the grade cap the earthworks aim.
+ *
+ * Grading exactly to the limit lands exactly on it, and a surface written to a
+ * 10 m grid and read back through bilinear interpolation is not exact: the road
+ * that forced cut and fill came out at precisely 13.0% against a 13% cap and
+ * failed by a rounding error. Design to a margin, like anything else that has to
+ * hold a tolerance after being built.
+ */
+export const ROAD_CUT_MARGIN = 0.88;
+
+
+
+
+/**
+ * Whether the elevated freeway is built.
+ *
+ * Off, with the grid. It is a rectangle inset from the map bounds - a shape
+ * chosen by two numbers and no landscape - and at 21 km it was the largest and
+ * straightest thing in every picture of the city. ADR-0008 rule 6 wants a ring
+ * round the whole city and a beltway round downtown, both following the ground
+ * (#261, #265); neither of those is what this is, and shrinking its inset and
+ * halving its ramps did not make it one.
+ *
+ * A switch rather than a deletion for the same reason as the grid: `interstate.ts`
+ * knows how a deck, its ramps, its pillars and its tunnel are built, and all of
+ * that is wanted. What is not wanted is a rectangle.
+ */
+export const CITY_FREEWAY = false;
+
+/**
+ * How far a piece of leftover parkland (#185) will reach for a quarter to belong
+ * to before it settles for being parkland.
+ *
+ * About a superblock and a half. It had no limit at all, which was harmless
+ * while the city covered the whole map and became nonsense once the districts
+ * were on five bodies of land: country on the far side of a channel took the
+ * district of whatever quarter was nearest *across the water*, which put a
+ * square kilometre of downtown on the eastern body.
+ */
+export const PARK_DISTRICT_REACH = m(850);
+/** The strip itself. Wide, because a runway is - and because it is the one road in the city that is a straight 2.3 km. */
+export const RUNWAY_WIDTH = m(46);
+/** How far the taxiway sits off the runway's edge, making the pair a circuit rather than a dead end. */
+export const TAXIWAY_OFFSET = m(64);
+/** Level ground held either side of the pair, before the blend starts. */
+export const RUNWAY_APRON = m(70);
+/**
+ * How deep the quarry cuts below the ground it is in, and the height of one
+ * bench.
+ *
+ * Benched rather than smooth: the floor is quantised to `QUARRY_BENCH`, so the
+ * walls come out as terraces. That is what makes it read as worked ground rather
+ * than as a crater, and it is where the road down gets its switchbacks.
+ *
+ * `QUARRY_FLOOR` is the hard bottom. Below sea level the pit would be a dry hole
+ * under the sea - the water is a field and knows nothing about height - which
+ * reads as a bug in the terrain rather than as a quarry.
+ */
+export const QUARRY_DEPTH = m(52);
+export const QUARRY_BENCH = m(11);
+export const QUARRY_FLOOR = m(6);
+/**
+ * The haul road down into the pit.
+ *
+ * `QUARRY_RAMP_TURNS` is what makes it drivable at all. The depth is fixed, so
+ * the grade is the drop per turn over the length of that turn: 52 m in 1.75
+ * turns of a bowl this size is already gentle on paper, and three turns puts it
+ * near 1%. The road was never steep because of its *plan* - it was steep because
+ * it crossed the benches, and an 11 m bench edge is a cliff whatever route you
+ * take over it.
+ *
+ * So the ramp is **cut into the wall**: the terrain is displaced along the
+ * spiral to meet the road, which is what a haul road is and the first piece of
+ * cut and fill in the generator (#252 in miniature). `QUARRY_HAUL_WIDTH` is the
+ * shelf it runs on and `QUARRY_HAUL_BLEND` is how far that shelf grades back
+ * into the benches either side.
+ */
+export const QUARRY_RAMP_TURNS = 3;
+export const QUARRY_HAUL_WIDTH = m(26);
+export const QUARRY_HAUL_BLEND = m(34);
+/** The wharf apron: level ground beside deep water, and the piers off it. */
+export const DOCK_LEVEL = m(5);
+export const DOCK_APRON = m(300);
+export const DOCK_PIERS = 6;
+export const DOCK_PIER_LENGTH = m(190);
+
+export const CITY_LOBES = 5;
+export const CITY_CHANNELS = 2;
+export const CITY_LAND_LEVEL = 0.46;
+export const CITY_LOBE_SPREAD = 0.8;
+/**
+ * How far back from the water the middle of downtown sits.
+ *
+ * The walk goes all the way to the shore and then steps back by this, so the
+ * city is *on* the coast with a few hundred metres of quay and waterfront in
+ * front of it rather than in the surf. This used to be a fraction of the lobe's
+ * radius and a cap on the walk, which stopped it before it ever reached the sea
+ * - the town came out 1.65 km inland.
+ */
+export const CITY_TOWN_INLAND = m(400);
+/** How far off due south the town may sit, in radians. */
+export const CITY_TOWN_SPREAD = 0.7;
+/**
+ * How wide a band of sea is kept at the map's edge, as a fraction of its width.
+ * Land reaching the border has a coastline that never closes, and it puts the
+ * cliff back that ADR-0008 removed.
+ */
+export const CITY_SEA_EDGE = 0.05;
+/** Smaller than this and a body of land is scenery, not somewhere to build a road to. */
+export const CITY_MIN_BODY = m(700) * m(700);
+
+/**
+ * How finely a routed road searches, and how hard its staircase is smoothed
+ * (ADR-0008 rule 2).
+ *
+ * Fifty metres is a third of a block: fine enough that a road can find a way
+ * round a hill, coarse enough that the whole map is thirty thousand nodes and a
+ * search over it costs about as much as one more pass of the block sweeps.
+ */
+export const ROUTE_CELL = m(50);
+export const ROUTE_SMOOTHING = 3;
+
+/**
+ * What each class of road will put up with (ADR-0008 rule 2).
+ *
+ * `cap` is the steepest grade it takes, `climb` how hard it prices gradient
+ * against that cap, `water` what a metre of water costs as a multiple of a
+ * metre of road, and `shore`/`shyness` how close to the waterline it is willing
+ * to run and how much it minds.
+ *
+ * The shore terms are the ones nobody expects to need. The coast is the
+ * flattest ground on the map, because the land ramps up out of the water, so a
+ * router that prices only gradient pins every road to the beach - the first
+ * freeway routed this way ran round the whole island at the waterline. Being
+ * shy of the shore is what pushes it inland into the hills, where the corners
+ * are.
+ *
+ * `water` prices a crossing rather than choosing one. High enough that going
+ * round is usually cheaper, low enough that a short crossing beats a long
+ * detour: the path then finds the narrows on its own.
+ */
+export const ROUTE_FREEWAY = { cap: 0.06, water: 30, climb: 26, shore: m(700), shyness: 2.2 };
+export const ROUTE_ARTERIAL = { cap: 0.1, water: 55, climb: 16, shore: m(250), shyness: 0.8 };
+export const ROUTE_COUNTRY = { cap: 0.13, water: 120, climb: 9, shore: m(900), shyness: 3 };
+export const CITY_COAST_RIPPLE = 0.17;
+/**
+ * The last three are **fractions of the map's width**, not metres, because they
+ * are shape and shape does not have a size.
+ *
+ * They were metres, tuned when the map was 5 x 4 km, and doubling the map to
+ * 10 x 8 (ADR-0007 rule 3) quietly changed the shape rather than the scale: the
+ * coast rippled twice as often across the island, and a 150 m strait stopped
+ * severing a landmass twice as big, so three bodies of land became one blob
+ * with an inlet. A ratio survives a change of size; a measurement does not.
+ */
+export const CITY_COAST_SCALE = 0.52;
+export const CITY_CHANNEL_CUT = 0.9;
+export const CITY_CHANNEL_WIDTH = 0.02;
+export const CITY_CHANNEL_BOW = 0.07;
+
 export const CITY_RIVER_WIDTH = m(160); // at its narrowest, upstream
 export const CITY_RIVER_MOUTH = 1.7; // how much wider it is where it meets the bay
 export const CITY_RIVER_WANDER = m(600); // how far the channel meanders off its mouth
@@ -319,15 +601,72 @@ export const EMBANKMENT_STEP = m(90);
  * the hills" and "change the city" the same act.
  */
 export const TERRAIN_RELIEF = m(120);
+/**
+ * The smallest piece of ground the road network can enclose and have it mean
+ * something (#268).
+ *
+ * Below this a face is the sliver between two roads that nearly touch rather
+ * than a block: the network is a chain of thirty-metre pieces and any two of
+ * them that cross at a shallow angle leave a triangle. About a tenth of the
+ * smallest block the city has ever had.
+ */
+export const FACE_MIN_AREA = m(60) * m(60);
+/**
+ * How far a local street may lean off the axis the face's own shape chose, in
+ * radians.
+ *
+ * Small on purpose. The split is chosen by the shape of the ground being split,
+ * which is what makes the result read as grown; the jitter only stops the
+ * splits stacking into a perfect binary tree. More than this and the streets
+ * read as noise rather than as streets.
+ */
+export const FACE_SPLIT_JITTER = 0.14;
+
 export const TERRAIN_CELL = m(10);
+
+/**
+ * How finely the renderer draws the landscape (#254).
+ *
+ * Half a road's shelf, so the shelf exists in the drawn ground.
+ *
+ * It was 40 m, on the reasoning that a landscape is read at hundreds of metres.
+ * That is true of a landscape and false of the things cut into it: a road's
+ * shelf is `ROAD_CUT_WIDTH` wide, 24 m, so a 40 m mesh cannot see it at all.
+ * Measured across nine thousand off-road points, the mean disagreement was 9 cm
+ * and the worst was **15 m** - and the worst is what a player feels, because it
+ * is exactly where the road is. Driving off a carriageway dropped the car into
+ * the unshelved hillside the shelf had been cut out of.
+ *
+ * `TERRAIN_CELL` itself - 10 m, which would make the drawn ground and the ground
+ * the car stands on the same surface rather than two approximations of one - is
+ * eight hundred thousand vertices in one mesh, and the headless renderer times
+ * out building it. 20 m is two hundred thousand, resolves a 24 m shelf, and
+ * takes the worst disagreement from 15 m to something a car does not fall into.
+ */
+export const TERRAIN_RENDER_STEP = m(20);
 export const TERRAIN_SHORE = m(1400);
+/**
+ * How far the land takes to climb out of *inland* water - a channel or the
+ * river - as against the sea. A tenth of the shore ramp, because a strait cut
+ * through a landmass has sides and a coast has beaches, and because a river
+ * ramping as gently as the sea flattens the whole interior of an island.
+ */
+export const TERRAIN_BANK = m(140);
 export const TERRAIN_CORE_FLAT = 0.8;
-/** As a fraction of the map's half-diagonal, so the basin scales with the map. */
-export const TERRAIN_CORE_RADIUS = 0.55;
+/** As a fraction of the town's own radius, so the basin is the city's and not the map's. */
+export const TERRAIN_CORE_RADIUS = 0.85;
 /** How much taller the rim is than the noise alone would make it. */
 export const TERRAIN_RIM_LIFT = 0.9;
 export const TERRAIN_SEABED = m(6);
 export const TERRAIN_STREAM = 0x7e44a1;
+/**
+ * How many box-blur passes take the creases out of the height field. The shore
+ * ramp is a function of a chamfer distance transform, and a chamfer transform
+ * has a ridge down the middle of every strip of land where the fields from two
+ * coasts meet; the ramp turns that into a straight crease. Only the artefact is
+ * sharp, so blurring costs nothing real.
+ */
+export const TERRAIN_SOFTEN = 14;
 /**
  * The height field's noise: how big the largest feature is, how many octaves
  * sit on top of it, and how big the lattice each is drawn from is.
@@ -391,15 +730,35 @@ export const CITY_CLIP_STEP = m(15);
 export const CITY_MIN_STREET = m(70);
 
 /**
- * What each district is like to drive through. Block size and its variation do
- * most of the work: a tight regular grid downtown, long shallow blocks facing
- * the water, and sprawling lots with few streets out on the industrial edge.
+ * What each district is like to drive through, and a design document as much as
+ * it is code. Block size and its variation do most of the work.
+ *
+ * **What three of the five mean changed with the authored plan** (#271,
+ * ADR-0009). The old table described a city that was downtown in the middle,
+ * docks on the water and sheds at the edge, at whatever size the radii happened
+ * to produce.
+ *
+ * - **Downtown is small.** 1.5 km² of the map, and the only place with a tight
+ *   regular grid on it. It was a third of the city.
+ * - **Midtown is suburban** and is most of the built-up extent: bigger blocks,
+ *   curving streets, low buildings. Three separate areas of it.
+ * - **The waterfront is affluent**, not the port. Few roads, well spaced, large
+ *   lots, deep setbacks and a lot of open ground. This is a reassignment rather
+ *   than a tweak: it used to be 170 x 190 m blocks of sheds growing round a
+ *   harbour, and the port is a *place* on island E now rather than a street
+ *   pattern.
+ * - **Industrial is unchanged**, and is the only one of the five that is.
+ * - **Park is new.** It has no streets of its own worth the name - what it has
+ *   is the road through it - so the blocks are enormous and almost everything is
+ *   skipped. The hill park is 41% too steep for a street to climb, and what is
+ *   left is the road up.
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
-  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 0 },
-  midtown: { blockX: m(150), blockZ: m(130), jitter: 0.26, skip: 0.2, lanes: 2, speed: kmh(60), winding: 0.45 },
-  waterfront: { blockX: m(170), blockZ: m(190), jitter: 0.2, skip: 0.24, lanes: 2, speed: kmh(70), winding: 0.35 },
-  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 0.2 },
+  downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 1 },
+  midtown: { blockX: m(165), blockZ: m(145), jitter: 0.3, skip: 0.22, lanes: 2, speed: kmh(60), winding: 1 },
+  waterfront: { blockX: m(280), blockZ: m(300), jitter: 0.34, skip: 0.5, lanes: 2, speed: kmh(60), winding: 1 },
+  industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 1 },
+  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 1, speed: kmh(50), winding: 1 },
 };
 
 /**
@@ -428,8 +787,9 @@ export const WINDING_STEP = m(55);
 export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
   downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.07, landmark: 0.07, kind: 'tower' },
   midtown: { lot: m(38), setback: m(5), minHeight: m(10), maxHeight: m(34), empty: 0.2, landmark: 0.03, kind: 'block' },
-  waterfront: { lot: m(58), setback: m(7), minHeight: m(7), maxHeight: m(20), empty: 0.3, landmark: 0.02, kind: 'shed' },
+  waterfront: { lot: m(76), setback: m(14), minHeight: m(7), maxHeight: m(17), empty: 0.42, landmark: 0.02, kind: 'block' },
   industrial: { lot: m(72), setback: m(10), minHeight: m(6), maxHeight: m(18), empty: 0.36, landmark: 0.02, kind: 'shed' },
+  park: { lot: m(90), setback: m(20), minHeight: m(4), maxHeight: m(9), empty: 0.93, landmark: 0, kind: 'shed' },
 };
 /** How much taller a landmark stands than the district's ordinary ceiling. */
 export const BUILDING_LANDMARK_MULT = 1.9;
@@ -489,7 +849,16 @@ export const BARRIER_HEIGHT = m(1.1);
  * crosses the surface streets instead of shadowing them. Every one of those
  * crossings is an overpass, which is the case ADR-0004 exists to make possible.
  */
-export const INTERSTATE_INSET = 0.23; // of the map, in from each edge
+/**
+ * How far in from the map's edges the loop sits.
+ *
+ * Wider, so the freeway is a ring round the city rather than a rectangle drawn
+ * across the middle of it. It is still a rectangle, which is the thing actually
+ * wrong with it: ADR-0008 rule 6 wants a ring round the whole city and a beltway
+ * round downtown, and both of those are shapes that follow the land (#261,
+ * #265). Stripping it back is not the same as fixing it.
+ */
+export const INTERSTATE_INSET = 0.16; // of the map, in from each edge
 export const INTERSTATE_HEIGHT = m(12);
 export const INTERSTATE_LANES = 6;
 export const INTERSTATE_SPEED = kmh(140);
@@ -521,7 +890,16 @@ export const FREEWAY_SPUR_MIN = m(700);
  * them entirely, so the interstate was drawn as a purple loop with no visible
  * way onto it.
  */
-export const RAMP_COUNT_PER_SIDE = 4;
+/**
+ * Ramps per side of the loop.
+ *
+ * Two rather than four, with the street grid off: sixteen exits onto a road
+ * network of a few dozen routed roads is a junction every few hundred metres of
+ * freeway, which is what made the loop read as a piece of infrastructure laid
+ * over the map rather than through it. An exit is worth something when there is
+ * a reason to take it.
+ */
+export const RAMP_COUNT_PER_SIDE = 2;
 export const RAMP_MIN_RUN = m(190);
 export const RAMP_MAX_RUN = m(320);
 /**
@@ -629,6 +1007,23 @@ export const DUNK_DAMAGE = 0.12;
 export const DUNK_DEPTH = m(2.4);
 
 /**
+ * How far the car may be above the ground before it is *falling* rather than
+ * driving down a slope.
+ *
+ * `settle` decided this by asking whether the car was at or below the ground,
+ * which is exact and wrong: drive downhill off-road and the ground under the
+ * car is lower every step than the car was the step before, so the car was
+ * falling continuously. It landed sixty times a second, took `DAMAGE_FALL`
+ * each time and kept `HIT_SPEED_KEPT` of its speed each time - full damage in
+ * two seconds and a car crawling at 0.4 km/h that read, from the driver's seat,
+ * as being stuck on nothing.
+ *
+ * A metre and a half is more than any slope drops under a car in one step and
+ * far less than the twelve-metre deck a fall is meant to be about.
+ */
+export const FALL_CLEARANCE = m(1.5);
+
+/**
  * Parkland on the land the street grid never claimed (#185).
  *
  * A fifth of the map belonged to neither block nor road: blocks are laid on
@@ -698,6 +1093,19 @@ export const BOULEVARD_CLEARANCE = m(5);
 export const TRAFFIC_IN_CITY = 52;
 export const TRAFFIC_RADIUS = m(360);
 /**
+ * How much road within `TRAFFIC_RADIUS` counts as a full neighbourhood, so
+ * `TRAFFIC_IN_CITY` is cars per that much road rather than cars per player.
+ *
+ * A flat count is the same thing only while every part of the city has about
+ * the same amount of road in it, and that stopped being true when the map was
+ * rebuilt around drawn roads: fifty-two cars sized for a dense grid were poured
+ * onto the four or five roads now passing within 360 m.
+ *
+ * Six kilometres is about what a 360 m circle of gridded downtown holds, so the
+ * old number still means what it meant where it was measured.
+ */
+export const TRAFFIC_ROAD_FULL = m(6000);
+/**
  * How much of that each district gets (#180).
  *
  * It used to be exactly constant: the same seventy-five cars in a downtown
@@ -715,8 +1123,9 @@ export const TRAFFIC_RADIUS = m(360);
 export const TRAFFIC_DENSITY: Record<DistrictKind, number> = {
   downtown: 1.25,
   midtown: 1,
-  waterfront: 0.75,
+  waterfront: 0.6,
   industrial: 0.5,
+  park: 0.3,
 };
 /**
  * The number of lanes a road needs before traffic will certainly spawn on it.
