@@ -933,10 +933,30 @@ export const RAMP_CLEARANCE = m(6);
 export const RAMP_LANES = 2;
 export const RAMP_SPEED = kmh(70);
 
-/** One stretch of the loop dives instead of climbing, which is a tunnel. */
+/** One or more stretches of the loop dive instead of climbing, which is a tunnel. */
 export const TUNNEL_DEPTH = m(9);
-/** How much of the loop is tunnel, as a fraction of its perimeter. */
-export const TUNNEL_LENGTH = 0.12;
+/**
+ * How long one tunnel stretch is, absolute rather than a fraction of the
+ * loop's own perimeter.
+ *
+ * It was a fraction - 12% of whatever the loop came out to be - while the
+ * loop was a computed rectangle of a known size. #261 made it an authored
+ * path instead, and a hand-drawn loop's length is not the generator's to
+ * plan a fraction of: the same 12% is 400 m on a tight loop and several
+ * kilometres on a wide one. A tunnel under a kilometre reads as a dive under
+ * one obstacle; a several-kilometre one reads as a second road.
+ */
+export const TUNNEL_LENGTH = m(700);
+/**
+ * How many separate tunnel stretches the loop gets, spread round it rather
+ * than one long dive. A loop that goes through real hills crosses low ground
+ * more than once, and one short dive under each reads as the terrain doing
+ * that; a single long one reads as a decision to go underground once and
+ * stay there.
+ */
+export const TUNNEL_COUNT = 2;
+/** How far apart two tunnels have to start, so they read as separate dives rather than one interrupted by a sliver of daylight. */
+export const TUNNEL_SPACING = m(3000);
 /**
  * How many places to try before settling for the driest (#244).
  *

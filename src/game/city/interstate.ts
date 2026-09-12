@@ -13,6 +13,8 @@ import {
   RAMP_SPEED,
   TUNNEL_DEPTH,
   TUNNEL_LENGTH,
+  TUNNEL_COUNT,
+  TUNNEL_SPACING,
   TUNNEL_TRIES,
   GRADE_RUN,
   FREEWAY_SPURS,
@@ -317,9 +319,16 @@ function whereAlong(edges: Edge[], along: number): [Edge, number] {
 }
 
 /**
- * Height as a function of distance around the circuit: elevated nearly all the
- * way, with one stretch that dives into a tunnel instead. The transitions take
- * a fixed run so the grade stays something a car can climb.
+ * Height as a function of distance around the circuit: elevated nearly all
+ * the way, with `TUNNEL_COUNT` stretches that dive into a tunnel instead of
+ * one long one (#261 - a loop that actually goes through hills crosses low
+ * ground more than once). The transitions take a fixed run so the grade
+ * stays something a car can climb.
+ *
+ * Each zone is checked shifted by a whole perimeter either way, because a
+ * zone near the seam - chosen close to 0 or close to `perimeter` - has a
+ * transition that lands on the *other* side of the wrap, and `along` here is
+ * one uninterrupted walk from 0 to `perimeter` rather than a wrapped angle.
  */
 function heightProfile(
   rng: Rng,
@@ -327,23 +336,29 @@ function heightProfile(
   at: (along: number) => Vec2,
   water: Water,
 ): (along: number) => number {
-  const start = tunnelStart(rng, perimeter, at, water);
-  const end = start + TUNNEL_LENGTH * perimeter;
+  const tunnels = pickTunnels(rng, perimeter, at, water);
 
   return (along: number) => {
-    // How far into the tunnel stretch, in run-length units either side.
-    const into = Math.min(along - start, end - along);
-    if (into <= -GRADE_RUN) return INTERSTATE_HEIGHT;
-    if (into >= 0) return -TUNNEL_DEPTH;
-    // Ease across the transition rather than kinking from one level to the other.
-    const t = (into + GRADE_RUN) / GRADE_RUN;
-    const eased = (1 - Math.cos(t * Math.PI)) / 2;
-    return INTERSTATE_HEIGHT + (-TUNNEL_DEPTH - INTERSTATE_HEIGHT) * eased;
+    let height = INTERSTATE_HEIGHT;
+    for (const { start, end } of tunnels) {
+      for (const shift of [-perimeter, 0, perimeter]) {
+        const here = along + shift;
+        const into = Math.min(here - start, end - here);
+        if (into >= 0) return -TUNNEL_DEPTH;
+        if (into > -GRADE_RUN) {
+          const t = (into + GRADE_RUN) / GRADE_RUN;
+          const eased = (1 - Math.cos(t * Math.PI)) / 2;
+          height = Math.min(height, INTERSTATE_HEIGHT + (-TUNNEL_DEPTH - INTERSTATE_HEIGHT) * eased);
+        }
+      }
+    }
+    return height;
   };
 }
 
 /**
- * Where the tunnel starts: anywhere on the loop whose *mouths* are on land.
+ * Where `TUNNEL_COUNT` tunnels start: anywhere on the loop whose *mouths* are
+ * on land, kept `TUNNEL_SPACING` apart from each other.
  *
  * The deck at 12 m over the bay is a viaduct and the tunnel at -9 m under the
  * river is a tunnel; both are fine. The transition between them is neither -
@@ -353,32 +368,58 @@ function heightProfile(
  * Rolled and checked rather than solved, because "is this over water" is a
  * sampled question either way. If the map leaves nowhere clean - a loop whose
  * every quarter meets the bay - the driest roll wins, so this can only improve
- * a city and never fail to build one.
+ * a city and never fail to build one. The same is true of the count: a short
+ * loop that cannot fit `TUNNEL_COUNT` tunnels `TUNNEL_SPACING` apart gets
+ * fewer, not a broken one.
  */
-function tunnelStart(rng: Rng, perimeter: number, at: (along: number) => Vec2, water: Water): number {
-  let best = 0;
-  let bestWet = Infinity;
-  for (let attempt = 0; attempt < TUNNEL_TRIES; attempt++) {
-    const start = rng.range(0.05, 0.85) * perimeter;
-    const end = start + TUNNEL_LENGTH * perimeter;
-    let wet = 0;
-    // Both grade runs: down into the tunnel, and back up out of it.
-    for (const from of [start - GRADE_RUN, end]) {
-      const steps = Math.max(2, Math.round(GRADE_RUN / INTERSTATE_SEGMENT));
-      for (let i = 0; i <= steps; i++) {
-        const p = at(from + (GRADE_RUN * i) / steps);
-        // A margin, because a mouth on the very edge of the bank is a mouth
-        // with the water lapping at it.
-        if (nearWater(water, p.x, p.z, RAMP_OFFSET)) wet++;
+function pickTunnels(
+  rng: Rng,
+  perimeter: number,
+  at: (along: number) => Vec2,
+  water: Water,
+): { start: number; end: number }[] {
+  const tunnels: { start: number; end: number }[] = [];
+
+  for (let n = 0; n < TUNNEL_COUNT; n++) {
+    let best: { start: number; end: number } | null = null;
+    let bestWet = Infinity;
+    for (let attempt = 0; attempt < TUNNEL_TRIES; attempt++) {
+      const start = rng.range(0.05, 0.95) * perimeter;
+      const end = start + TUNNEL_LENGTH;
+
+      // Clear of every tunnel already placed, wrapping either way round the
+      // loop - two tunnels a stone's throw apart at the seam are one tunnel
+      // with a gap in it, not two.
+      // Padded-interval overlap: too close if [start, end] widened by the
+      // spacing on both sides reaches into a tunnel already placed.
+      const tooClose = tunnels.some(
+        (t) => start < t.end + TUNNEL_SPACING && end + TUNNEL_SPACING > t.start,
+      );
+      if (tooClose) continue;
+
+      let wet = 0;
+      // Both grade runs: down into the tunnel, and back up out of it.
+      for (const from of [start - GRADE_RUN, end]) {
+        const steps = Math.max(2, Math.round(GRADE_RUN / INTERSTATE_SEGMENT));
+        for (let i = 0; i <= steps; i++) {
+          const p = at(from + (GRADE_RUN * i) / steps);
+          // A margin, because a mouth on the very edge of the bank is a mouth
+          // with the water lapping at it.
+          if (nearWater(water, p.x, p.z, RAMP_OFFSET)) wet++;
+        }
+      }
+      if (wet === 0) {
+        best = { start, end };
+        break;
+      }
+      if (wet < bestWet) {
+        bestWet = wet;
+        best = { start, end };
       }
     }
-    if (wet === 0) return start;
-    if (wet < bestWet) {
-      bestWet = wet;
-      best = start;
-    }
+    if (best) tunnels.push(best);
   }
-  return best;
+  return tunnels;
 }
 
 /**
