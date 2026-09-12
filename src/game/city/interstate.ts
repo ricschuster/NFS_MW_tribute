@@ -366,16 +366,20 @@ function heightProfile(
 }
 
 /**
- * Where `TUNNEL_COUNT` tunnels start: the highest ground the loop crosses,
- * among candidates whose *mouths* are on land, kept `TUNNEL_SPACING` apart
- * from each other.
+ * Where `TUNNEL_COUNT` tunnels start: a real river first, the highest ground
+ * otherwise, among candidates whose *mouths* are on land and kept
+ * `TUNNEL_SPACING` apart from each other.
  *
- * A tunnel is a hill offered a choice - climb it or dive under it - and a
- * candidate picked at random honours neither: it is as likely to dive under
- * flat ground as under a real summit. Every dry candidate this rolls is
- * scored by the ground under its middle third and the highest wins, so a
- * tunnel lands where a car would otherwise be climbing, not wherever the
- * dice said.
+ * A tunnel is worth having for one of two reasons, and a candidate picked at
+ * random honours neither: a hill offered a choice, climb it or dive under it,
+ * or a crossing that was always the point - "the tunnel at -9 m under the
+ * river is a tunnel" is this mechanism's own oldest justification. Every dry
+ * candidate this rolls is scored on both: a stretch whose *middle* actually
+ * crosses water outranks every stretch that does not, and among stretches
+ * that agree on that, the one over the higher ground wins. Without the first
+ * half, the second is actively hostile to a river crossing - open water reads
+ * as strongly negative elevation, so scoring on height alone means a real
+ * strait is the one place this would never put a tunnel.
  *
  * The deck at 12 m over the bay is a viaduct and the tunnel at -9 m under the
  * river is a tunnel; both are fine. The transition between them is neither -
@@ -411,9 +415,21 @@ function pickTunnels(
     return sum / (samples + 1);
   };
 
+  // Does the tunnel proper - not the mouths either side of it, which are
+  // already required to be dry - actually pass over water anywhere?
+  const crossesWater = (start: number, end: number) => {
+    const steps = Math.max(2, Math.round((end - start) / INTERSTATE_SEGMENT));
+    for (let i = 0; i <= steps; i++) {
+      const p = at(start + ((end - start) * i) / steps);
+      if (water.isWater(p.x, p.z)) return true;
+    }
+    return false;
+  };
+
   for (let n = 0; n < TUNNEL_COUNT; n++) {
     let best: { start: number; end: number } | null = null;
     let bestWet = Infinity;
+    let bestCrosses = false;
     let bestElevation = -Infinity;
     for (let attempt = 0; attempt < TUNNEL_TRIES; attempt++) {
       const start = rng.range(0.05, 0.95) * perimeter;
@@ -442,11 +458,17 @@ function pickTunnels(
       }
 
       if (wet === 0) {
-        // Once any dry candidate is found, only a higher dry one replaces
-        // it - never fall back to a wetter candidate for more elevation.
+        // Once any dry candidate is found, only a higher-ranked dry one
+        // replaces it - never fall back to a wetter candidate for either.
+        const crosses = crossesWater(start, end);
         const elevation = elevationOf(start, end);
-        if (bestWet > 0 || elevation > bestElevation) {
+        const better =
+          bestWet > 0 ||
+          (crosses && !bestCrosses) ||
+          (crosses === bestCrosses && elevation > bestElevation);
+        if (better) {
           bestWet = 0;
+          bestCrosses = crosses;
           bestElevation = elevation;
           best = { start, end };
         }
