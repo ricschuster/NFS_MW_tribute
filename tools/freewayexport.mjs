@@ -20,7 +20,7 @@ const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
 const { draftLoop } = await server.ssrLoadModule('/src/game/city/interstate.ts');
 const plan = await server.ssrLoadModule('/src/game/city/plan.ts');
 const C = await server.ssrLoadModule('/src/game/constants.ts');
-const { CITY_SEED, CITY_LAND_STREAM, UNITS_PER_METRE } = C;
+const { CITY_SEED, CITY_LAND_STREAM, UNITS_PER_METRE, RAMP_MIN_RUN, RAMP_MAX_RUN, GRADE_RUN } = C;
 
 const city = generateCity(CITY_SEED);
 const bounds = city.bounds;
@@ -115,6 +115,12 @@ const out = {
   })),
   roads,
   draft: draft.map((p) => [round(toM(p.x)), round(toM(p.z))]),
+  // For the ramp-marker check: the same window and corner margin rampsFor
+  // itself uses, in metres, so a marker dropped in the editor is judged
+  // against the real constants rather than a guess at them.
+  rampRunMin: round(toM(RAMP_MIN_RUN)),
+  rampRunMax: round(toM(RAMP_MAX_RUN)),
+  gradeRun: round(toM(GRADE_RUN)),
 };
 
 mkdirSync('screenshots', { recursive: true });
