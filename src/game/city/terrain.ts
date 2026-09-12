@@ -16,6 +16,7 @@ import {
 import { Rng } from './rng';
 import type { Water } from './water';
 import type { Rect } from './types';
+import { planCentre } from './plan';
 
 /**
  * The ground has height (ADR-0007).
@@ -106,7 +107,14 @@ export function makeTerrain(seed: number, bounds: Rect, water: Water): Terrain {
   // for the shore ramp to have let it rise - so the flattening and the ramp
   // between them held the hills to 75 m of a 120 m budget. Centred on the body
   // of land the city is built on, the flat part is the part that is built on.
-  const town = { at: water.town, radius: water.lobes[0].radius };
+  //
+  // The plan's downtown, not `water.town` (#249): the latter is the water
+  // model's own seeded guess at where the city is, and `npm run plan` found it
+  // 2566 m from the middle of the plan's authored downtown and sitting inside
+  // the industrial area instead - the same drift `generate.ts` already routes
+  // around when it picks which body of land downtown is on. Left uncorrected
+  // here, the flat core was centred on industrial rather than downtown.
+  const town = { at: planCentre('downtown'), radius: water.lobes[0].radius };
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
