@@ -63,6 +63,17 @@ import type { CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
  * rectangle was never load-bearing, only convenient. `draftLoop` below
  * reproduces that rectangle as a four-point path, which is what `generate.ts`
  * passes until a hand-routed one replaces it.
+ *
+ * **Tunnels can be authored too.** `pickTunnels`' own search finds a hill to
+ * dive under or a river to duck beneath, but "under downtown" or "the
+ * crossing at this exact strait" are decisions about what the city is, not
+ * questions the ground can answer by itself - the docks and the airfield are
+ * authored for the same reason (ADR-0009). `tunnelAnchors` names a point on
+ * the loop each wants to start from; nearest-point-on-path finds where, and
+ * every one is built regardless of what the dry-mouth check would have said,
+ * because an authored choice is not a roll to be overruled by one. Only the
+ * remaining `TUNNEL_COUNT - tunnelAnchors.length` tunnels are still found by
+ * search, kept `TUNNEL_SPACING` clear of the authored ones same as any other.
  */
 export function addInterstate(
   rng: Rng,
@@ -72,15 +83,18 @@ export function addInterstate(
   water: Water,
   terrain: Terrain,
   path: Vec2[],
+  tunnelAnchors: Vec2[] = [],
 ): void {
   const edges = buildEdges(path);
   const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
+  const anchoredAlong = tunnelAnchors.map((p) => nearestAlong(edges, p));
   const profile = heightProfile(
     rng,
     perimeter,
     (along) => point(...whereAlong(edges, along)),
     water,
     terrain,
+    anchoredAlong,
   );
 
   // Surface nodes a ramp could land on, indexed so the search per edge is not
@@ -132,6 +146,14 @@ export function addInterstate(
  * drawn by hand and synced in, the same way the surface roads were.
  */
 export function draftLoop(bounds: Rect, water: Water): Vec2[] {
+  const M = 135;
+  const pathMeters = [
+    [100,-2650],[1250,-2950],[1473,-2867],[2150,-2650],[2500,-1700],[2450,250],[2108,998],
+    [1807,1515],[1553,1882],[1280,2588],[856,2720],[292,2579],[-94,2268],[-301,1769],
+    [-452,1365],[-555,922],[-517,445],[-670,76],[-784,-199],[-950,-600],[-980,-943],
+    [-1026,-1459],[-921,-1995],[-847,-2221],[-640,-2385],[-362,-2408],
+  ];
+  return pathMeters.map(([x, z]) => ({ x: x * M, z: z * M }));
   const on = landBounds(bounds, water);
   const width = on.maxX - on.minX;
   const depth = on.maxZ - on.minZ;
@@ -327,6 +349,30 @@ function whereAlong(edges: Edge[], along: number): [Edge, number] {
 }
 
 /**
+ * The inverse of `whereAlong`: given a world position - an authored tunnel
+ * anchor, not a point the loop necessarily passes through exactly - the
+ * distance around the loop to whichever point on it sits closest.
+ */
+function nearestAlong(edges: Edge[], at: Vec2): number {
+  let travelled = 0;
+  let best = 0;
+  let bestGap = Infinity;
+  for (const edge of edges) {
+    const dx = at.x - edge.a.x;
+    const dz = at.z - edge.a.z;
+    const t = Math.max(0, Math.min(edge.length, dx * edge.ux + dz * edge.uz));
+    const p = point(edge, t);
+    const gap = Math.hypot(at.x - p.x, at.z - p.z);
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = travelled + t;
+    }
+    travelled += edge.length;
+  }
+  return best;
+}
+
+/**
  * Height as a function of distance around the circuit: elevated nearly all
  * the way, with `TUNNEL_COUNT` stretches that dive into a tunnel instead of
  * one long one (#261 - a loop that actually goes through hills crosses low
@@ -344,8 +390,9 @@ function heightProfile(
   at: (along: number) => Vec2,
   water: Water,
   terrain: Terrain,
+  anchoredAlong: number[],
 ): (along: number) => number {
-  const tunnels = pickTunnels(rng, perimeter, at, water, terrain);
+  const tunnels = pickTunnels(rng, perimeter, at, water, terrain, anchoredAlong);
 
   return (along: number) => {
     let height = INTERSTATE_HEIGHT;
@@ -399,8 +446,16 @@ function pickTunnels(
   at: (along: number) => Vec2,
   water: Water,
   terrain: Terrain,
+  anchoredAlong: number[],
 ): { start: number; end: number }[] {
-  const tunnels: { start: number; end: number }[] = [];
+  // Authored first, and unconditionally - see addInterstate's own doc comment
+  // for why a chosen tunnel is not a roll to be overruled by the dry-mouth
+  // check. Spacing among themselves is the author's own to keep; only the
+  // *search* below is kept clear of them, the same as it would be of itself.
+  const tunnels: { start: number; end: number }[] = anchoredAlong.map((start) => ({
+    start,
+    end: start + TUNNEL_LENGTH,
+  }));
 
   // The ground under the middle third of a candidate, which is the part
   // actually under a hill rather than easing down into or up out of one.
@@ -426,7 +481,9 @@ function pickTunnels(
     return false;
   };
 
-  for (let n = 0; n < TUNNEL_COUNT; n++) {
+  // The authored ones already fill part of the count; the search only owes
+  // the rest, same as it would if some earlier search attempt had won.
+  for (let n = tunnels.length; n < TUNNEL_COUNT; n++) {
     let best: { start: number; end: number } | null = null;
     let bestWet = Infinity;
     let bestCrosses = false;
