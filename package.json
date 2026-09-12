@@ -20,6 +20,7 @@
     "roadfix": "node tools/roadfix.mjs",
     "roadsync": "node tools/roadsync.mjs",
     "freewayexport": "node tools/freewayexport.mjs",
+    "freewaysync": "node tools/freewaysync.mjs",
     "quarryroad": "node tools/quarryroad.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",

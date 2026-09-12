@@ -4,8 +4,8 @@
 // loop rather than a network of independent chains, so it gets its own small
 // export instead of being squeezed into the roads schema. Writes the relief,
 // the surface network (for context - the loop has to cross it, not ignore
-// it), and today's rectangle-inset-from-the-land as the starting draft to
-// drag into shape.
+// it), and the locked-in loop (`freeway.ts`) as the draft to refine further -
+// `draftLoop`'s rectangle is still there as the fallback before one exists.
 //
 // Usage:
 //   npm run freewayexport            # -> screenshots/freeway.json
@@ -18,6 +18,7 @@ const { groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { makeWater } = await server.ssrLoadModule('/src/game/city/water.ts');
 const { Rng } = await server.ssrLoadModule('/src/game/city/rng.ts');
 const { draftLoop } = await server.ssrLoadModule('/src/game/city/interstate.ts');
+const { FREEWAY_LOOP, FREEWAY_TUNNELS } = await server.ssrLoadModule('/src/game/city/freeway.ts');
 const plan = await server.ssrLoadModule('/src/game/city/plan.ts');
 const C = await server.ssrLoadModule('/src/game/constants.ts');
 const { CITY_SEED, CITY_LAND_STREAM, UNITS_PER_METRE, RAMP_MIN_RUN, RAMP_MAX_RUN, GRADE_RUN } = C;
@@ -25,7 +26,7 @@ const { CITY_SEED, CITY_LAND_STREAM, UNITS_PER_METRE, RAMP_MIN_RUN, RAMP_MAX_RUN
 const city = generateCity(CITY_SEED);
 const bounds = city.bounds;
 const water = makeWater(new Rng(CITY_LAND_STREAM), bounds);
-const draft = draftLoop(bounds, water);
+const draft = FREEWAY_LOOP.length > 0 ? FREEWAY_LOOP : draftLoop(bounds, water);
 await server.close();
 
 const toM = (v) => v / UNITS_PER_METRE;
@@ -115,6 +116,7 @@ const out = {
   })),
   roads,
   draft: draft.map((p) => [round(toM(p.x)), round(toM(p.z))]),
+  tunnels: FREEWAY_TUNNELS.map((p) => [round(toM(p.x)), round(toM(p.z))]),
   // For the ramp-marker check: the same window and corner margin rampsFor
   // itself uses, in metres, so a marker dropped in the editor is judged
   // against the real constants rather than a guess at them.
