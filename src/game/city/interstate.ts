@@ -494,11 +494,18 @@ function pickTunnels(
 
       // Clear of every tunnel already placed, wrapping either way round the
       // loop - two tunnels a stone's throw apart at the seam are one tunnel
-      // with a gap in it, not two.
-      // Padded-interval overlap: too close if [start, end] widened by the
-      // spacing on both sides reaches into a tunnel already placed.
-      const tooClose = tunnels.some(
-        (t) => start < t.end + TUNNEL_SPACING && end + TUNNEL_SPACING > t.start,
+      // with a gap in it, not two. The comment here used to claim this and
+      // the code did not do it: found when an authored tunnel at the very
+      // start of the loop and a searched one near the very end - close
+      // together once the loop closes, 9450 raw units of perimeter apart on
+      // paper - passed the check anyway, because start and end were never
+      // shifted to check the wrap. Checked against three copies of every
+      // placed tunnel (shifted back a whole perimeter, as is, and forward a
+      // whole perimeter) the same way heightProfile already has to.
+      const tooClose = tunnels.some((t) =>
+        [-perimeter, 0, perimeter].some(
+          (shift) => start < t.end + shift + TUNNEL_SPACING && end + TUNNEL_SPACING > t.start + shift,
+        ),
       );
       if (tooClose) continue;
 
