@@ -390,12 +390,27 @@ export class Cityscape {
    *
    * Bridges, the interstate and its ramps are not here: they carry their own
    * geometry at their own height, and painting them twice would z-fight.
+   *
+   * A long road is more than one quad. One flat quad per road, pitched between
+   * its two endpoint heights, was fine while every road was a street a block
+   * or two long; the routed boulevards this branch draws can run hundreds of
+   * metres between junctions (#274), and a straight line between just the two
+   * ends cuts through whatever the terrain does in between - the ground mesh
+   * disagrees with the flat quad and shows through as grass in the middle of
+   * the road. Chopped no finer than `TERRAIN_RENDER_STEP`: that is the height
+   * field the ground itself is drawn at, so a shorter step buys the tarmac
+   * nothing the ground can actually show. Each piece pads its own two ends by
+   * half a width exactly as the whole road used to, so pieces of the same road
+   * overlap slightly at their joins rather than leave a seam - harmless, since
+   * it is the same tarmac on both sides.
    */
   private carriageways(city: City): THREE.InstancedMesh {
     const roads = city.roads.filter(
       (road) =>
         !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
     );
+    const pieces = roads.map((road) => Math.max(1, Math.ceil(road.length / TERRAIN_RENDER_STEP)));
+    const total = pieces.reduce((sum, n) => sum + n, 0);
 
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
@@ -403,8 +418,8 @@ export class Cityscape {
       color: '#4a5057',
       map: asphaltTexture(1, 1),
     });
-    // One shared quad scaled per road, so a baked uv would size the aggregate
-    // by how long each street happens to be. Computed from the instance scale
+    // One shared quad scaled per piece, so a baked uv would size the aggregate
+    // by how long each piece happens to be. Computed from the instance scale
     // instead, the way every other instanced surface here does it.
     worldUvs(material, {
       faces: 'top',
@@ -413,9 +428,9 @@ export class Cityscape {
     });
     this.owned.push(geometry, material);
 
-    const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, roads.length));
+    const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, total));
     mesh.name = 'carriageways';
-    mesh.count = roads.length;
+    mesh.count = total;
     mesh.receiveShadow = true;
 
     const matrix = new THREE.Matrix4();
@@ -424,33 +439,49 @@ export class Cityscape {
     const forward = new THREE.Vector3();
     const normal = new THREE.Vector3();
 
-    roads.forEach((road, i) => {
+    let i = 0;
+    roads.forEach((road, r) => {
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
-      // **Pitched to the ground, not laid on a plane.** A carriageway is a quad
-      // scaled to its road, and on a hillside a quad at one height is a shelf
-      // with the hill going through it. Its basis is built from the road's own
-      // direction *in three dimensions* - so the tarmac climbs with the road,
-      // and two roads meeting on a slope meet along the same line.
-      const ay = this.groundUnder(city, a.x, a.z);
-      const by = this.groundUnder(city, b.x, b.z);
-      forward.set(b.x - a.x, by - ay, b.z - a.z).normalize();
-      right.crossVectors(up, forward).normalize();
-      normal.crossVectors(forward, right).normalize();
+      const steps = pieces[r];
+      const pieceLength = road.length / steps;
 
-      // Half a width past each end, so junctions are covered and the capsule
-      // ends are approximated without drawing them.
-      matrix.makeBasis(
-        right.multiplyScalar(road.width),
-        normal.multiplyScalar(1),
-        forward.multiplyScalar(road.length + road.width),
-      );
-      matrix.setPosition(
-        (a.x + b.x) / 2 + normal.x * ROAD_LIFT,
-        (ay + by) / 2 + ROAD_LIFT,
-        (a.z + b.z) / 2 + normal.z * ROAD_LIFT,
-      );
-      mesh.setMatrixAt(i, matrix);
+      for (let s = 0; s < steps; s++) {
+        const t0 = s / steps;
+        const t1 = (s + 1) / steps;
+        const ax = a.x + (b.x - a.x) * t0;
+        const az = a.z + (b.z - a.z) * t0;
+        const bx = a.x + (b.x - a.x) * t1;
+        const bz = a.z + (b.z - a.z) * t1;
+
+        // **Pitched to the ground, not laid on a plane.** A piece is a quad
+        // scaled to its own short stretch, and on a hillside a quad at one
+        // height is a shelf with the hill going through it. Its basis is built
+        // from the piece's own direction *in three dimensions* - so the tarmac
+        // climbs with the road, and two pieces meeting on a slope meet along
+        // the same line.
+        const ay = this.groundUnder(city, ax, az);
+        const by = this.groundUnder(city, bx, bz);
+        forward.set(bx - ax, by - ay, bz - az).normalize();
+        right.crossVectors(up, forward).normalize();
+        normal.crossVectors(forward, right).normalize();
+
+        // Half a width past each end, so junctions - and the next piece along
+        // the same road - are covered, and the capsule ends are approximated
+        // without drawing them.
+        matrix.makeBasis(
+          right.multiplyScalar(road.width),
+          normal.multiplyScalar(1),
+          forward.multiplyScalar(pieceLength + road.width),
+        );
+        matrix.setPosition(
+          (ax + bx) / 2 + normal.x * ROAD_LIFT,
+          (ay + by) / 2 + ROAD_LIFT,
+          (az + bz) / 2 + normal.z * ROAD_LIFT,
+        );
+        mesh.setMatrixAt(i, matrix);
+        i++;
+      }
     });
     mesh.instanceMatrix.needsUpdate = true;
     return mesh;

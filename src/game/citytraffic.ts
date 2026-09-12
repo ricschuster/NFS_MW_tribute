@@ -156,9 +156,17 @@ export class CityTraffic {
 
     // Trimmed as well as topped up: driving from downtown into the industrial
     // quarter has to be able to *lose* cars, or the density is whatever the
-    // busiest place you have been through was.
+    // busiest place you have been through was. Furthest first: `wanted` swings
+    // with how much road is nearby, which on a sparse network can drop hard in
+    // a single step, and popping by array order rather than distance could cut
+    // a car sitting right beside the player instead of one already trailing off.
     const wanted = this.wanted;
-    while (this.cars.length > wanted) this.cars.pop();
+    if (this.cars.length > wanted) {
+      this.cars.sort(
+        (a, b) => Math.hypot(a.x - at.x, a.z - at.z) - Math.hypot(b.x - at.x, b.z - at.z),
+      );
+      this.cars.length = wanted;
+    }
 
     let attempts = 0;
     while (this.cars.length < wanted && attempts < 30) {
