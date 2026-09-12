@@ -108,8 +108,8 @@ reported every crash as a low-speed scrape, because it read the speed *after*
 the collision had reversed it. If a number looks strange, suspect the probe
 first - and when a probe tells you something surprising, make it tell you
 *twice*, in two ways. This rebuild's own instance is under "known problems"
-below: `npm run pace` currently fails hard, and it has not yet been decided
-whether that is the car or the probe.
+below: `npm run pace` failed hard, and it turned out to be the probe, not the
+car.
 
 **A long branch drifts red without anyone noticing, because nobody runs the
 whole suite against a moving world.** `feat/landmass` reached 37 commits and
@@ -234,8 +234,7 @@ npm run roadexport # write the road network + relief + plan for the road editor
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic, then every rival on the
                    # ladder, clean and boosted; all of it vs. its baseline
-npm run pace       # can the police be outrun? yours vs theirs, every heat level.
-                   # currently FAILING - see known problems
+npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run ramps      # can every ramp be climbed? currently vacuous (0 of 0),
                    # because CITY_FREEWAY is off and there are no ramps to check
 npm run patrol     # twenty minutes with the police live: what started each
@@ -271,19 +270,19 @@ waterfront that had swallowed a third of the map. `npm run city` and
 
 **And the converse: some defects are invisible in a picture and obvious in a
 number.** Two live examples from finishing this rebuild's test suite, neither
-visible in a screenshot: `npm run pace` says a clean, undamaged car tops out at
-78% of reference speed on the pinned city today, against 100% on `main` and
-every heat level's cop being faster - which either means the car cannot be
-outrun any more or means the probe's "hold the throttle on an empty straight"
-assumption stopped being true the day the network stopped being a grid full of
-long straights. And a stationary car under a live pursuit gets a cop to a
-stable 50-52 m and no closer, for as long as the simulation was allowed to run
-- checked to 180 s - which reads as a navigation stall rather than a design
-choice, because nothing about *choosing* to hold station should look the same
-at every distance from 11 m to 70 m. Neither is diagnosed. Both are in "known
-problems" below rather than fixed under pressure, because both sit on a
-mechanism ("you can always be outrun" and "a pursuit can always end") the rest
-of the game depends on.
+visible in a screenshot: `npm run pace` said a clean, undamaged car topped out
+at 78% of reference speed on the pinned city, against 100% on `main` and every
+heat level's cop being faster - which turned out to mean the probe's "hold the
+throttle on an empty straight" assumption had stopped being true the day the
+network stopped being a grid full of long straights, not that the car could no
+longer be outrun; see "known problems" for the fix. And a stationary car under
+a live pursuit gets a cop to a stable 50-52 m and no closer, for as long as the
+simulation was allowed to run - checked to 180 s - which reads as a navigation
+stall rather than a design choice, because nothing about *choosing* to hold
+station should look the same at every distance from 11 m to 70 m. That one is
+still undiagnosed, in "known problems" below rather than fixed under pressure,
+because it sits on a mechanism ("a pursuit can always end") the rest of the
+game depends on.
 
 The clearest historical case of "obvious in a number" is `npm run citylap`:
 the first time anything *drove* a generated race route end to end, every one
@@ -372,17 +371,15 @@ with no buildings and no findable race routes.
 
 ## Known problems, not papered over
 
-- **`npm run pace` fails, and it is not yet known whether that is the car or
-  the probe.** A clean, undamaged car measures 78% of reference top speed on
-  the pinned city today; every heat level's slowest unit outruns that; `main`
-  measures 100% and passes. The probe holds the throttle for 120 s on an empty
-  straight starting from the default spawn, which used to be a safe assumption
-  on a gridded arterial and may no longer be one on a sparse, curved authored
-  network - the drive-view screenshot at the default spawn shows a bend within
-  sight of the start. Investigate `pace.mjs`'s assumption before touching
-  `HEAT_LEVELS` or the car's own physics; whichever one is wrong, this gate
-  should stay red until it is understood; it is not safe to merge past it
-  silently.
+- ~~`npm run pace` fails, and it is not yet known whether that is the car or
+  the probe.~~ **Resolved: it was the probe.** It held the throttle from the
+  default spawn, which used to sit on a long gridded arterial and on this
+  branch's authored map can land within sight of a bend - the car measured 78%
+  of top speed and went off-road 3.9 s in, matching a linear 5 s ramp cut
+  short at exactly that point. `pace.mjs` now places the car on the longest
+  straight `CityRoad` segment in the city instead of trusting the spawn point;
+  clean top speed measures 100% again, matching `main`, and the gate passes.
+  No change was needed in the car's physics or `HEAT_LEVELS`.
 - **A stationary car under pursuit cannot be busted, and the search never
   reaches it.** The nearest cop closes to a stable 50-52 m from a car that
   never moves and holds there indefinitely - checked to 180 s, well past
@@ -445,10 +442,10 @@ a test; then `npm run dev` and drive it, because playing has found more real
 defects than every probe and test combined, on both rebuilds.
 
 Then read "Where the work is" above: the two-issue gate (#271, #272) is where
-a session should start if it wants to move the map forward, and the two
-unresolved probe findings (`pace`, the stationary bust) are where a session
-should start if it wants to make the current branch trustworthy before
-anything is built on top of it further.
+a session should start if it wants to move the map forward, and the remaining
+unresolved probe finding (the stationary bust) is where a session should start
+if it wants to make the current branch trustworthy before anything is built on
+top of it further.
 
 ## The probes, and what each is for
 
@@ -458,7 +455,7 @@ anything is built on top of it further.
 | `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Untested on this branch - see `routesFor` above |
 | `npm run playthrough` | the whole game at every level it has one, as a session log |
 | `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
-| `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Currently failing - see known problems |
+| `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Passes; measures from the longest straight, not the default spawn - see known problems |
 | `npm run plan` | does the authored plan still fit the ground the generator makes for the pinned seed - a guard, not a probe |
 | `npm run patrol` | twenty minutes with the police live, and what came of it |
 | `npm run drivers` | the same routes at four skill levels |
