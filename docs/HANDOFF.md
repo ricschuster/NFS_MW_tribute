@@ -381,12 +381,29 @@ with no buildings and no findable race routes.
   clean top speed measures 100% again, matching `main`, and the gate passes.
   No change was needed in the car's physics or `HEAT_LEVELS`.
 - **A stationary car under pursuit cannot be busted, and the search never
-  reaches it.** The nearest cop closes to a stable 50-52 m from a car that
-  never moves and holds there indefinitely - checked to 180 s, well past
-  `CITY_BUST_DISTANCE` (11 m) and still inside `COP_LEASH` (70 m, the off-road
-  "drive straight at them" reach) - so this reads as navigation stalling near
-  the target rather than the search failing to converge on it. Wants real
-  investigation in `citypolice.ts`/`graphcar.ts`, not a fix made under the
+  reaches it.** Instrumented directly (`cop.x/y/z`, `cop.offRoad`, frame by
+  frame) rather than guessed at, which ruled out the first suspect: `onRoad()`
+  inside `cutsCorner` was checking for a road at a hardcoded sea level instead
+  of the cop's own height, which is a real bug against #85's own rule ("height
+  is a real property of the network") and is fixed, but it made no measurable
+  difference to this stall, because the area it was reproduced in is close to
+  sea level already. The actual mechanism: `cutsCorner` is designed as a short
+  nudge off the road and back, not a second navigator, and a unit rejoins the
+  instant `onRoad()` finds *any* nearby road - which in a normally-gridded area
+  is almost always true one step after it leaves, so on this branch's current
+  network it contributes a single frame of real progress before control passes
+  back to ordinary on-road `toward()` navigation for the rest of every cycle.
+  Traced on the pinned city: the chaser gets to within 30 m purely on that
+  on-road greedy hill-climb, and once no adjacent junction is any closer - the
+  car is stopped in the interior of a block, off every road - the heuristic has
+  nothing better to offer and is carried onto a road that curves away, gaining
+  altitude, never to return. That may be a real design gap rather than a bug:
+  `cutsCorner` was built for shortcutting a corner between two roads, and
+  nothing today lets a unit close a "stranded in the middle of a block" gap
+  the road network never comes within `CITY_BUST_DISTANCE` of. Whether the
+  fix is a longer or repeatable cut, a widened search that gives up on the
+  road entirely near a stationary target, or something else, is a design
+  question and still wants real investigation, not a fix made under the
   pressure that found it (`cityworld.playtest.test.ts`, "closes on a car that
   is standing still, and ends it", currently `it.skip`).
 - **`routesFor` finds zero routes on the pinned city.** It searches for four
