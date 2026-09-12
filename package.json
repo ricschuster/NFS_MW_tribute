@@ -19,6 +19,7 @@
     "roadcheck": "node tools/roadcheck.mjs",
     "roadfix": "node tools/roadfix.mjs",
     "roadsync": "node tools/roadsync.mjs",
+    "freewayexport": "node tools/freewayexport.mjs",
     "quarryroad": "node tools/quarryroad.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
