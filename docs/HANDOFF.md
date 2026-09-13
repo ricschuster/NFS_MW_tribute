@@ -88,10 +88,11 @@ with no car in it, for judging the generator rather than playing it.
 each.
 
 **What `main` generates today**, measured with `npm run city` against the
-pinned seed: **4687 roads, 4666 junctions, 72.9 km of road**, all of it
-`boulevard`-class because `CITY_STREET_GRID` is off - there is no arterial
-grid, so there are no arterial-only roads either. **7 water crossings, 1.24 km
-of bridge.** **1044 blocks**, of which all but 41 are open ground - `parksFor`
+pinned seed: **4682 roads, 4661 junctions, 73.9 km of road** - 4167 boulevard
+(70.6 km) plus 515 `street`-class driveways at Ashford Point, and no
+`arterial`-class roads at all, since `CITY_STREET_GRID` is off and that is the
+only thing that lays one. **7 water crossings, 1.24 km of bridge.** **1044
+blocks**, of which all but 41 are open ground - `parksFor`
 still covers whatever the road network does not claim, and almost nothing
 claims anything yet, but it is no longer *literally* nothing: Ashford Point's
 driveway houses (#268's pilot, `localstreets.ts`) and Marrow Field's one
