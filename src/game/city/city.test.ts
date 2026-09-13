@@ -556,16 +556,13 @@ describe('the embankment', () => {
     return false;
   };
 
-  // `road.embankment` does not survive the trip through `city/roads.ts`
-  // (issue TBD): `AuthoredRoad` carries `kind`, `district`, `bridge` and
-  // `deadEnd` but no `embankment` flag, so with `CITY_AUTHORED_ROADS` on, none
-  // of the generator's own embankment-laying code ever runs and no road is
-  // ever tagged. The physical quay is still there - it was in the draft that
-  // became the authored roads - and `waterEnds` still rails off a dead end at
-  // the water on its own geometry, independent of this flag; what is lost is
-  // being able to point at *which* roads are the embankment. Skipped rather
-  // than loosened to `embankment.length >= 0`, which would assert nothing.
-  it.skip('runs a road along the coast and both banks of the river', () => {
+  // `road.embankment` used to not survive the trip through `city/roads.ts`:
+  // `AuthoredRoad` carries `kind`, `district`, `bridge` and `deadEnd` but no
+  // `embankment` flag, so with `CITY_AUTHORED_ROADS` on, none of the
+  // generator's own embankment-laying code ran and no road was ever tagged.
+  // `markEmbankment` finds the quay by the same geometry `embankmentRoutes`
+  // is built from instead of trusting a flag that cannot survive the sync.
+  it('runs a road along the coast and both banks of the river', () => {
     const length = embankment.reduce((sum, r) => sum + r.length, 0);
     expect(embankment.length).toBeGreaterThan(50);
     expect(length / M).toBeGreaterThan(5000);
@@ -585,16 +582,7 @@ describe('the embankment', () => {
   // The stub the playtest saw: a street crossing the embankment and carrying on
   // to stop at the bank. The embankment's own ends are allowed to be there -
   // a quay stops where the estuary opens out - and so is a bridge.
-  //
-  // `!road.embankment` cannot do its job today: the flag never survives into
-  // `city/roads.ts` (see the skipped 'runs a road along the coast' test
-  // above), so every one of the 13 dead ends this finds is being asked to
-  // prove it is not the embankment's own end with the one signal that would
-  // say so switched off. Measured on the pinned city, `waterEnds` rails 13 of
-  // 13 of them off on its own geometry regardless of the tag - see 'rails off
-  // the roads the water cut short' below, which is the invariant this was
-  // really standing in for and still holds.
-  it.skip('leaves no street stopping at the water', () => {
+  it('leaves no street stopping at the water', () => {
     const stubs = deadEnds().filter(
       ({ road, node }) =>
         !road.embankment &&
@@ -611,11 +599,13 @@ describe('the embankment', () => {
   // A few dozen houses is a few dozen genuine dead ends, which is not the
   // same thing this check was written against (stubs a road left at the
   // water, or a fragment nothing connected to). The ceiling moved up to cover
-  // them; it is still a ceiling, and it will climb again with every district
-  // that grows real houses of its own - if it climbs for any other reason,
-  // that is a stub to go find.
+  // them, then up again once `markEmbankment` ran early enough to protect the
+  // quay's own five legitimate ends from `trimWaterStubs` instead of losing
+  // them to it - both are genuine dead ends, not stubs, and it will climb
+  // again with every district that grows real houses of its own; if it climbs
+  // for any other reason, that is a stub to go find.
   it('leaves the network with few dead ends at all', () => {
-    expect(deadEnds().length).toBeLessThan(60);
+    expect(deadEnds().length).toBeLessThan(70);
   });
 });
 

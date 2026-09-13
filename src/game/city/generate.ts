@@ -47,7 +47,7 @@ import { breakablesFor } from './breakables';
 import { addInterstate } from './interstate';
 import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
-import { embankmentRoutes } from './embankment';
+import { embankmentRoutes, markEmbankment } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
 import { groundAt, makeTerrain, type Terrain } from './terrain';
 import { makeRouter } from './routing';
@@ -212,9 +212,14 @@ export function generateCity(seed: number): City {
     // Every one of them is `required`. The author decided where this city
     // crosses its water; the spacing rule in `chooseBridges` is for picking
     // among crossings nobody chose.
+    const authoredStart = laid.length;
     for (const road of AUTHORED_ROADS) {
       layRoute(road.points, water, laid, road.kind, road.district, true);
     }
+    // The quay, found rather than trusted (#241): `AuthoredRoad` carries no
+    // `embankment` of its own once synced, so the code that would have tagged
+    // one as it was laid never ran. See `markEmbankment`.
+    markEmbankment(laid.slice(authoredStart), water);
   } else {
   // Boulevards go in as ordinary spans, so they are cut against the water and
     // split at every crossing by the same code as everything else.
@@ -1302,7 +1307,14 @@ function connect(
  */
 function trimWaterStubs(graph: Graph, water: Water): Graph {
   let roads = graph.roads;
-  for (let pass = 0; pass < 4; pass++) {
+  // Capped at 4 passes rather than run to a fixed point: a stub four deep
+  // near (-2722,-2722) needed a fifth, and stopping one short of convergence
+  // left the last link in the chain standing, itself now a stub with nothing
+  // upstream of it left to blame. A chain cannot be longer than the network
+  // has roads, so that is the ceiling instead - always enough to reach the
+  // fixed point, and the loop below still breaks the moment it does.
+  const ceiling = roads.length;
+  for (let pass = 0; pass < ceiling; pass++) {
     const degree = new Map<number, number>();
     for (const road of roads) {
       degree.set(road.a, (degree.get(road.a) ?? 0) + 1);

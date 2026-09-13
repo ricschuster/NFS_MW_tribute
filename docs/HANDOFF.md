@@ -25,6 +25,19 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   steeper than that cap (10.5-16%), which is expected rather than a bug, since
   `cutAndFill` runs before `localStreetsFor` lays a driveway and never
   promised them anything; reported, not gated.
+  `road.embankment` survives the road editor now, too: `markEmbankment` finds
+  the quay by the same coastline geometry `embankmentRoutes` is built from and
+  tags it on the *spans*, before `clip`/`connect` rather than after. Tagging
+  it after (the first attempt) was too late to matter: `trimWaterStubs` reads
+  the flag to protect the quay's own legitimate ends while it runs, and it
+  runs as part of building that same graph, so a flag that arrives afterward
+  protects nothing. Finding that also found a second, older bug in the same
+  function: its trim loop was capped at 4 passes, and a stub chain near
+  (-2722,-2722) was 5 deep, so the last link always survived as a stub with
+  nothing upstream of it left to blame. Both are fixed - the cap is now the
+  network's own size, which is always enough to reach the fixed point the
+  loop already looks for - and the two previously-skipped embankment tests in
+  `city.test.ts` pass along with everything else (441 of 543, 102 skipped).
 - **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
   `main`, which now ships the rebuilt map: real terrain, a landmass, authored
   districts, no street grid and no interstate yet (both are switched off, see
@@ -468,8 +481,23 @@ that work.
   of top speed and went off-road 3.9 s in, matching a linear 5 s ramp cut
   short at exactly that point. `pace.mjs` now places the car on the longest
   straight `CityRoad` segment in the city instead of trusting the spawn point;
-  clean top speed measures 100% again, matching `main`, and the gate passes.
-  No change was needed in the car's physics or `HEAT_LEVELS`.
+  clean top speed measured 100% again at the time, matching `main`, and the
+  gate passed. **It broke a second time since, the same way**: the airfield
+  and the quarry access road (#294, #295) gave the network its two longest
+  straights, and both are dirt - `DIRT_SPEED_FRAC` caps a car at 85% of its
+  top speed there by design, so the probe measured the surface instead of the
+  car, clean read CAUGHT at heat 3 through 6, and nothing in the physics was
+  wrong. `pace.mjs` now excludes dirt the same way it excludes bridges and
+  ramps, places the car a few metres past the *start* of the chosen road
+  rather than its midpoint (so the whole length is ahead of it, not half),
+  and excludes a road within reach of a repair shop too - `CityWorld.repairs`
+  zeroes damage every step a car sits near one (#95), which the previous fix's
+  road happened not to be close enough to matter, and the new one was. Clean
+  measures 100% again and the gate passes; the damaged rows, still reported
+  rather than asserted (#170), are 90/72/81/40% for half-damaged, wrecked,
+  wrecked+nitrous and shredded - sensibly different from each other again,
+  where the repair-shop bug had them reading identically to clean. No change
+  was needed in the car's physics or `HEAT_LEVELS` either time.
 - **A stationary car under pursuit cannot be busted, and the search never
   reaches it.** Instrumented directly (`cop.x/y/z`, `cop.offRoad`, frame by
   frame) rather than guessed at, which ruled out the first suspect: `onRoad()`
@@ -503,14 +531,6 @@ that work.
   Wheel's mid-race lock is currently untestable as a result - skipped in the
   test suite, not deleted, and it will come back once #268 lands and more
   districts get real blocks.
-- **The `embankment` flag does not survive the road editor.** `AuthoredRoad`
-  in `city/roads.ts` carries `kind`, `district`, `bridge` and `deadEnd` but no
-  `embankment` field, so no road in the generated network is tagged one today,
-  even though the physical quay road is still there (it was in the draft that
-  became the authored roads) and `waterEnds` still rails off every dead end at
-  the water on its own geometry - measured, 13 of 13 - independent of the tag.
-  The player-facing guarantee holds; the network-level "which roads are these"
-  question cannot be asked of the data any more.
 - **Bridge spacing is 1795 m at its worst point, against an 800 m promise.**
   `chooseBridges` has no dense arterial candidate set left to spread crossings
   across on the current authored network - a known, measured gap, not a

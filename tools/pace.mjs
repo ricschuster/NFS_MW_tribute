@@ -53,20 +53,47 @@ const pct = (n) => `${Math.round(n * 100)}%`;
  * throttle test then reported. A `CityRoad` is a single straight segment by
  * construction (#115), so the longest one is a real straight of that length,
  * not an assumption about where the car happens to start.
+ *
+ * Dirt is excluded for the same reason bridges and ramps are: `DIRT_SPEED_FRAC`
+ * caps a car at 85% of its top speed by design (#294), so once the airfield and
+ * the quarry access road (#295) gave the network its two longest straights,
+ * both dirt, this measured the surface instead of the car - a clean run read
+ * as CAUGHT at heat 3 through 6 with nothing wrong underneath it.
+ *
+ * A repair shop within reach is excluded too: `CityWorld.repairs` zeroes
+ * damage every step a car sits in range of one (#95), which made the damaged
+ * rows measure a shop instead of the car the moment the longest clean straight
+ * happened to run past one.
+ *
+ * Started a few metres past the near end rather than at the midpoint, so the
+ * whole length is ahead of the car rather than half of it.
  */
 function placeOnLongestStraight(world) {
+  const nearShop = (road) => {
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+    return world.city.repairs.some((shop) => Math.hypot(shop.at.x - mid.x, shop.at.z - mid.z) < K.REPAIR_RANGE * 4);
+  };
   let best = null;
   for (const road of world.city.roads) {
     if (road.bridge || road.class === 'interstate' || road.class === 'ramp') continue;
-    if (!best || road.length > best.length) best = road;
+    if (road.surface === 'dirt') continue;
+    if (!best || road.length > best.length) {
+      if (nearShop(road)) continue;
+      best = road;
+    }
   }
   if (!best) return;
   const a = world.city.nodes[best.a].pos;
   const b = world.city.nodes[best.b].pos;
-  world.x = (a.x + b.x) / 2;
-  world.z = (a.z + b.z) / 2;
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const along = Math.min(5 * K.UNITS_PER_METRE, best.length * 0.1);
+  world.x = a.x + (dx / best.length) * along;
+  world.z = a.z + (dz / best.length) * along;
   world.y = roadHeightAt(world.city, best, world.x, world.z);
-  world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+  world.heading = Math.atan2(dx, dz);
   world.onRoad = best;
 }
 
