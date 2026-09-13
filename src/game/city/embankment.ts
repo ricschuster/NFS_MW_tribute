@@ -1,5 +1,6 @@
 import { EMBANKMENT_SETBACK, EMBANKMENT_STEP } from '../constants';
 import { nearWater, type Water } from './water';
+import type { Span } from './spans';
 import type { Vec2 } from './types';
 
 /**
@@ -107,4 +108,66 @@ function inland(at: Vec2, previous: Vec2, next: Vec2, water: Water): Vec2 | null
     if (!nearWater(water, p.x, p.z, EMBANKMENT_SETBACK * 0.35)) return p;
   }
   return null;
+}
+
+/**
+ * Tag the spans that already run along the water, before they are cut.
+ *
+ * `embankmentRoutes` above only runs with `CITY_STREET_GRID` on; with
+ * `CITY_AUTHORED_ROADS` on instead, the live geometry comes from
+ * `city/roads.ts`'s hand-drawn network, which carries no `embankment` of its
+ * own once synced - the same reason `markAirfieldDirt` exists for `surface`.
+ * The quay is still there, drawn by hand into the authored roads along with
+ * everything else; this finds it by the geometry `embankmentRoutes` itself is
+ * built from, rather than trusting a flag nothing can carry through the sync.
+ *
+ * Run on spans, before `clip`/`connect`, and not after on the finished graph:
+ * `trimWaterStubs` reads `span.embankment` to decide which dead ends at the
+ * water are the quay's own legitimate end rather than a street the water cut
+ * short, and it runs as part of building that graph. Tagged too late, every
+ * one of those legitimate ends looks like an ordinary stub and is trimmed
+ * along with the real ones - measured, tagging after `connect` traded a
+ * missing flag for a missing quay.
+ *
+ * A span counts if its midpoint sits about a setback's width from the coast
+ * - further out is an ordinary street, right on the line is the water itself
+ * - **and** runs with the coastline's own local direction rather than across
+ * it, which is what tells a quay from a street that merely meets the bank
+ * near a right angle and stops there.
+ */
+export function markEmbankment(spans: Span[], water: Water): void {
+  const samples: { at: Vec2; dx: number; dz: number }[] = [];
+  for (const loop of water.coast) {
+    for (let i = 0; i < loop.length; i++) {
+      const previous = loop[(i - 1 + loop.length) % loop.length];
+      const next = loop[(i + 1) % loop.length];
+      samples.push({ at: loop[i], dx: next.x - previous.x, dz: next.z - previous.z });
+    }
+  }
+  if (samples.length === 0) return;
+
+  for (const span of spans) {
+    if (span.class === 'ramp' || span.class === 'interstate' || span.bridge) continue;
+    const { from: a, to: b } = span;
+    const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+
+    let nearest = samples[0];
+    let bestD = Infinity;
+    for (const s of samples) {
+      const d = Math.hypot(s.at.x - mid.x, s.at.z - mid.z);
+      if (d < bestD) {
+        bestD = d;
+        nearest = s;
+      }
+    }
+    if (bestD < EMBANKMENT_SETBACK * 0.3 || bestD > EMBANKMENT_SETBACK * 1.8) continue;
+
+    const rdx = b.x - a.x;
+    const rdz = b.z - a.z;
+    const rlen = Math.hypot(rdx, rdz);
+    const tlen = Math.hypot(nearest.dx, nearest.dz);
+    if (rlen < 1 || tlen < 1) continue;
+    const cos = Math.abs((rdx * nearest.dx + rdz * nearest.dz) / (rlen * tlen));
+    if (cos > Math.cos((40 * Math.PI) / 180)) span.embankment = true;
+  }
 }
