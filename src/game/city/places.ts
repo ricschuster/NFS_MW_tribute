@@ -29,6 +29,10 @@ import {
   DOCK_LEVEL,
   DOCK_PIERS,
   DOCK_PIER_LENGTH,
+  HANGAR_CLEAR,
+  HANGAR_DEPTH,
+  HANGAR_HEIGHT,
+  HANGAR_WIDTH,
   PLACE_BLEND,
   QUARRY_BENCH,
   QUARRY_DEPTH,
@@ -42,7 +46,8 @@ import {
 } from '../constants';
 import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
 import { groundAt, type Terrain } from './terrain';
-import type { Vec2 } from './types';
+import type { Rng } from './rng';
+import type { Building, CityNode, CityRoad, RoadSurface, Vec2 } from './types';
 import type { Water } from './water';
 
 /** A road a place brings with it, as a polyline to be laid like any other. */
@@ -50,6 +55,8 @@ export interface PlaceRoad {
   line: Vec2[];
   /** Closed roads - a taxiway circuit, a quay loop - join their own ends. */
   loop: boolean;
+  /** What it's paved with (#294). Undefined means asphalt, same as everywhere else. */
+  surface?: RoadSurface;
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -255,6 +262,9 @@ export function placeRoads(terrain: Terrain, water: Water): PlaceRoad[] {
  * of. Paired with a taxiway it is a circuit, which is the difference between a
  * feature and a cul-de-sac 2.3 km long - and it is what an airfield looks like
  * from the air anyway.
+ *
+ * Dirt (#294, #295): Marrow Field is a disused airfield, not a working one,
+ * and cracked, unmaintained tarmac is most of what says so at a glance.
  */
 function airfieldRoads(): PlaceRoad[] {
   const [a, b] = PLAN_RUNWAY;
@@ -270,12 +280,85 @@ function airfieldRoads(): PlaceRoad[] {
     z: lerp(a.z, b.z, t) + nz * off * side,
   });
   return [
-    { line: [a, b], loop: false },
+    { line: [a, b], loop: false, surface: 'dirt' },
     {
       line: [at(inset, 1), at(1 - inset, 1), at(1 - inset, -1), at(inset, -1)],
       loop: true,
+      surface: 'dirt',
     },
   ];
+}
+
+/**
+ * The one structure on Marrow Field (#295): a derelict hangar beside the
+ * runway's midpoint, on the side away from the mainland approach - the
+ * access road already lands near one end (`placeApproach`), and a hangar
+ * dropped next to that junction would read as sited for the road rather than
+ * for the field.
+ *
+ * `HANGAR_CLEAR` is what actually keeps it off the taxiway - see its own
+ * comment in `constants.ts` for why that has to be measured against the real
+ * roads rather than derived from `TAXIWAY_OFFSET`.
+ *
+ * A plain box, `'shed'` kind: the building pipeline only knows axis-aligned
+ * rectangles (#268), so a hangar squared to the map rather than rotated to
+ * the runway's own angle is the same simplification every other building on
+ * a diagonal street already makes.
+ */
+export function airfieldHangar(rng: Rng): Building {
+  const [a, b] = PLAN_RUNWAY;
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const length = Math.hypot(dx, dz);
+  const nx = -dz / length;
+  const nz = dx / length;
+  const clear = HANGAR_CLEAR;
+  // The far side from the mainland: `nx, nz` is the taxiway's `side: 1`
+  // direction in `airfieldRoads`, and the approach in `generate.ts` lands
+  // near this runway's own `a` end, not off to either side of it - either
+  // side clears the junction, so the choice is just "pick one" made once.
+  const cx = (a.x + b.x) / 2 + nx * clear;
+  const cz = (a.z + b.z) / 2 + nz * clear;
+  return {
+    footprint: {
+      minX: cx - HANGAR_WIDTH / 2,
+      maxX: cx + HANGAR_WIDTH / 2,
+      minZ: cz - HANGAR_DEPTH / 2,
+      maxZ: cz + HANGAR_DEPTH / 2,
+    },
+    height: HANGAR_HEIGHT,
+    kind: 'shed',
+    district: 'industrial',
+    variant: rng.float(),
+  };
+}
+
+/**
+ * Paint dirt onto whatever the runway and taxiway actually are (#294, #295),
+ * rather than trusting how they got laid.
+ *
+ * `airfieldRoads()`'s own `surface: 'dirt'` only reaches the city with
+ * `CITY_AUTHORED_ROADS` off: on, every road is routed through `city/roads.ts`'s
+ * hand-drawn network instead (`generate.ts`), which carries no `surface` of
+ * its own once synced - the same gap `embankment` has there. Finding the
+ * runway back by its distance from `PLAN_RUNWAY` itself, rather than by which
+ * code path laid it, means this keeps working whichever one did, and does not
+ * silently stop the day the authored network is next re-synced.
+ */
+export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
+  const [a, b] = PLAN_RUNWAY;
+  // The taxiway's own centreline sits exactly at this distance from the
+  // runway's - `airfieldRoads()`'s `off` - so the threshold needs slack past
+  // it rather than sitting exactly on it, or a hand-traced copy of the same
+  // line one metre further out reads as a different road entirely.
+  const half = (RUNWAY_WIDTH / 2 + TAXIWAY_OFFSET) * 1.15;
+  for (const road of roads) {
+    const mid = {
+      x: (nodes[road.a].pos.x + nodes[road.b].pos.x) / 2,
+      z: (nodes[road.a].pos.z + nodes[road.b].pos.z) / 2,
+    };
+    if (toSegment(a, b, mid).away <= half) road.surface = 'dirt';
+  }
 }
 
 /**
