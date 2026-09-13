@@ -17,7 +17,14 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   data) are closed - `city/plan.ts` and `city/places.ts` are the shipped
   answer - and #249 (the land as lobes, not a slab) is closed too, its loose
   `water.town` thread fixed in #274. None of the three are the thing gating
-  the grid any more; see "Where the work is" below for what is.
+  the grid any more; see "Where the work is" below for what is. And
+  `npm run grades` closes out #252's own acceptance criterion (a probe "in the
+  manner of `npm run ramps`"): every arterial and boulevard is within the
+  grade `cutAndFill` actually cuts and fills to, and it surfaced one small,
+  unforced finding along the way - five of Ashford Point's 519 driveways run
+  steeper than that cap (10.5-16%), which is expected rather than a bug, since
+  `cutAndFill` runs before `localStreetsFor` lays a driveway and never
+  promised them anything; reported, not gated.
 - **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
   `main`, which now ships the rebuilt map: real terrain, a landmass, authored
   districts, no street grid and no interstate yet (both are switched off, see
@@ -273,6 +280,9 @@ npm run citylap    # every route, empty and in traffic, then every rival on the
 npm run pace       # can the police be outrun? yours vs theirs, every heat level
 npm run ramps      # can every ramp be climbed? currently vacuous (0 of 0),
                    # because CITY_FREEWAY is off and there are no ramps to check
+npm run grades     # can every arterial/boulevard actually be climbed? a guard
+                   # on cutAndFill (#252); Ashford Point's driveways and ramps
+                   # are excluded and reported instead, not gated
 npm run patrol     # twenty minutes with the police live: what started each
                    # pursuit, time to the first, and how much of it was free roam
 npm run endings    # how a pursuit ends - busted, escaped, or neither - at each
@@ -561,6 +571,7 @@ anything is built on top of it further.
 | `npm run playthrough` | the whole game at every level it has one, as a session log |
 | `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
 | `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Passes; measures from the longest straight, not the default spawn - see known problems |
+| `npm run grades` | can every arterial/boulevard be climbed - a guard on `cutAndFill` (#252). Passes (4168 of 4168); Ashford Point's driveways (519, never passed to `cutAndFill`) are reported, not gated, and five of those exceed the surface-street cap at 10.5-16% |
 | `npm run plan` | does the authored plan still fit the ground the generator makes for the pinned seed - a guard, not a probe |
 | `npm run patrol` | twenty minutes with the police live, and what came of it |
 | `npm run drivers` | the same routes at four skill levels |
