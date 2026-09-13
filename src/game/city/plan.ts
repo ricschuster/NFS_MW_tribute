@@ -32,6 +32,12 @@ const m = (metres: number) => metres * UNITS_PER_METRE;
 /** An area of the map, and what kind of place it is. */
 export interface PlanArea {
   kind: DistrictKind;
+  /**
+   * What this area is called, where it is distinct enough to have earned a
+   * name of its own rather than just a kind - the way a place already does.
+   * Not every area has one yet.
+   */
+  name?: string;
   /** Closed, in world units, wound either way. */
   poly: Vec2[];
   /**
@@ -70,8 +76,14 @@ export interface PlanPlace {
 }
 
 /** Metres in, world units out, so the plan reads as it was drawn. */
-const area = (kind: DistrictKind, poly: [number, number][], density?: number): PlanArea => ({
+const area = (
+  kind: DistrictKind,
+  poly: [number, number][],
+  density?: number,
+  name?: string,
+): PlanArea => ({
   kind,
+  ...(name === undefined ? {} : { name }),
   poly: poly.map(([x, z]) => ({ x: m(x), z: m(z) })),
   ...(density === undefined ? {} : { density }),
 });
@@ -104,26 +116,27 @@ export const PLAN_DISTRICTS: PlanArea[] = [
     [1225, -2500], [1150, -2825], [1875, -3150], [2335, -2960],
   ]),
 
-  // The hill park: 87 m mean, 122 m peak, and 41% of it too steep for a street.
-  // Deliberate, and the one area chosen for its ground rather than in spite of
-  // it - it is a hill with a road up it, and nothing else on the map rewards
-  // climbing. The lookout sits on its high ground.
+  // Highmoor Park, the hill: 87 m mean, 122 m peak, and 41% of it too steep
+  // for a street. Deliberate, and the one area chosen for its ground rather
+  // than in spite of it - it is a hill with a road up it, and nothing else on
+  // the map rewards climbing. Kestrel Head, the lookout, sits on its high
+  // ground.
   //
   // Pulled in about a tenth from where it was traced: it still covers the same
   // three superblocks - 113 m, 91 m and the 122 m summit with the lookout on it -
   // and stops running out into ground the plan does not mean to claim.
   area('park', [
     [1245, 423], [1547, -256], [1098, -664], [513, -207], [963, 491],
-  ]),
-  // The coastal park behind downtown. Its twin on island E was dropped: the
-  // island is the docks (ADR-0009 rule 6). It reaches up to take the row of the
-  // southern midtown that sat between it and the hill - half and half of the
-  // ground the two were sharing - so the parkland behind downtown is continuous
-  // instead of being a strip under a row of suburb.
+  ], undefined, 'Highmoor Park'),
+  // Tidewater Park, the coastal park behind downtown. Its twin on island E was
+  // dropped: the island is the docks (ADR-0009 rule 6). It reaches up to take
+  // the row of the southern midtown that sat between it and the hill - half
+  // and half of the ground the two were sharing - so the parkland behind
+  // downtown is continuous instead of being a strip under a row of suburb.
   area('park', [
     [1700, -3225], [1250, -3325], [625, -3225], [150, -3125],
     [-75, -3050], [150, -2500], [1000, -2500], [1050, -2800],
-  ]),
+  ], undefined, 'Tidewater Park'),
 
   // Three midtowns, which are most of the built-up extent: suburban, bigger
   // blocks, curving streets, low buildings.
@@ -141,9 +154,10 @@ export const PLAN_DISTRICTS: PlanArea[] = [
     [950, 2625], [1325, 2550],
   ], 0.55),
 
-  // The waterfront, on its own body of land across the channel: 4.2 km², the
-  // largest area on the plan, and the loosest. Few roads, well spaced, large
-  // lots and a lot of open ground.
+  // Ashford Point, the waterfront, on its own body of land across the
+  // channel: 4.2 km², the largest area on the plan, and the loosest. Few
+  // roads, well spaced, large lots and a lot of open ground - the affluent
+  // enclave, not the port the waterfront used to mean.
   //
   // Half density on top of that. It is the biggest area on the map and it came
   // out with the densest street grid on it, which is the opposite of affluent -
@@ -152,7 +166,7 @@ export const PLAN_DISTRICTS: PlanArea[] = [
   area('waterfront', [
     [-2325, 1575], [-1900, 2675], [-3250, 2675], [-4050, 2250],
     [-4475, 1650], [-4275, 600], [-3225, 525], [-2000, 825],
-  ], 0.7),
+  ], 0.7, 'Ashford Point'),
 ];
 
 /**

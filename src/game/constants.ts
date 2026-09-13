@@ -340,6 +340,22 @@ export const CITY_BODY_CELL = m(40);
 export const CITY_STREET_GRID = false;
 
 /**
+ * Which districts get real local streets and blocks from `city/localstreets.ts`,
+ * rather than nothing.
+ *
+ * Not `CITY_STREET_GRID` turned back on, and not the same mechanism: that flag
+ * is the old ruled arterial mesh plus a uniform lattice across the whole map,
+ * and it is staying off (see above) rather than being revived. This is a
+ * second, newer generator - local streets that branch off a district's own
+ * authored major roads (`city/roads.ts`) instead of a synthetic grid, clipped
+ * to that district's own plan polygon instead of a global lattice cell - built
+ * and judged one district at a time. `waterfront` (Ashford Point) is the pilot;
+ * every other kind stays without blocks or buildings until it earns its own
+ * pass.
+ */
+export const CITY_LOCAL_STREETS_KINDS: DistrictKind[] = ['waterfront'];
+
+/**
  * Whether the roads come from `city/roads.ts` rather than from the generator.
  *
  * On. The generator still makes a perfectly good *draft* - routed boulevards, a
@@ -787,7 +803,17 @@ export const WINDING_STEP = m(55);
 export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
   downtown: { lot: m(38), setback: m(3), minHeight: m(28), maxHeight: m(115), empty: 0.07, landmark: 0.07, kind: 'tower' },
   midtown: { lot: m(38), setback: m(5), minHeight: m(10), maxHeight: m(34), empty: 0.2, landmark: 0.03, kind: 'block' },
-  waterfront: { lot: m(76), setback: m(14), minHeight: m(7), maxHeight: m(17), empty: 0.42, landmark: 0.02, kind: 'block' },
+  // `empty` used to thin a dense multi-lot block, where missing on one sub-lot
+  // still leaves several others - Ashford Point's own lots (#268) are sized to
+  // `divideLots` into exactly one sub-lot each, so this is now "how often a
+  // driveway's own lot has no house on it at all", which wants to be rare: the
+  // organic gaps between houses already come from where a driveway was placed
+  // (`ASHFORD_LOT_SKIP`), not from a committed driveway leading to nothing.
+  // The setback is most of the work here: `ASHFORD_LOT_SIDE` (95 m) inset by
+  // only 16 m left a 63 m footprint standing right at spawn - a single house
+  // reading as a warehouse. A big lot with a modest house and a lawn around
+  // it is the point of "large lots"; a lot that is mostly house is not.
+  waterfront: { lot: m(76), setback: m(28), minHeight: m(6), maxHeight: m(13), empty: 0.08, landmark: 0, kind: 'mansion' },
   industrial: { lot: m(72), setback: m(10), minHeight: m(6), maxHeight: m(18), empty: 0.36, landmark: 0.02, kind: 'shed' },
   park: { lot: m(90), setback: m(20), minHeight: m(4), maxHeight: m(9), empty: 0.93, landmark: 0, kind: 'shed' },
 };
@@ -795,6 +821,49 @@ export const BUILDINGS: Record<DistrictKind, BuildingCharacter> = {
 export const BUILDING_LANDMARK_MULT = 1.9;
 /** A lot smaller than this is a gap between buildings, not a plot. */
 export const BUILDING_MIN_LOT = m(14);
+
+/**
+ * Ashford Point (issue #268): not a district of blocks at all, but houses on
+ * their own driveways off the district's own major roads - the shape a real
+ * low-density island reads as (a single road, a scatter of private lots off
+ * it, and mostly nothing between them), not a city grid at a lower density.
+ * A block-and-grid version of "large lots, well spaced" is still a grid.
+ */
+export const ASHFORD_LOT_SPACING = m(110);
+/** How unevenly spaced the driveways are - real gaps, not a ruler. */
+export const ASHFORD_LOT_JITTER = 0.45;
+/** A candidate driveway position dropped anyway, for real gaps between houses. */
+export const ASHFORD_LOT_SKIP = 0.3;
+export const ASHFORD_DRIVE_MIN = m(25);
+export const ASHFORD_DRIVE_MAX = m(70);
+/** A house's own lot, square, centred on the driveway's end. */
+export const ASHFORD_LOT_SIDE = m(95);
+/** Never closer than this to another lot's own centre. */
+export const ASHFORD_LOT_GAP = m(85);
+
+/**
+ * The village centre: a shrunk, denser cluster near wherever the district's
+ * own road reaches this body of land from the rest of the city - the first
+ * ground a bridge lands on is where a small centre reads as itself, not the
+ * empty interior.
+ */
+export const ASHFORD_VILLAGE_RADIUS = m(380);
+export const ASHFORD_VILLAGE_SPACING = m(42);
+export const ASHFORD_VILLAGE_LOT_SIDE = m(55);
+export const ASHFORD_VILLAGE_LOT_GAP = m(45);
+
+/**
+ * A handful of roads reaching off the coastal loop into the interior, so the
+ * island is a driveable network rather than a ring with nothing inside it -
+ * a lap needs somewhere to go, and a house needs some of them to open onto
+ * besides the loop itself. Grown before any house is placed, and each new
+ * branch reaches for whichever point of the network - the loop, or an
+ * earlier branch - is already nearest, which is what gives the result its
+ * fork rather than every branch running back to the coast individually.
+ */
+export const ASHFORD_INTERIOR_COUNT = 9;
+/** Never closer than this to another interior branch's own target, or to the loop. */
+export const ASHFORD_INTERIOR_SPACING = m(340);
 
 /** Street furniture (#84), placed along the generated streets. */
 export const LAMP_SPACING = m(32);

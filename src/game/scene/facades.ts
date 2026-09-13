@@ -37,6 +37,10 @@ const TILE: Record<BuildingKind, { bay: number; storey: number }> = {
   tower: { bay: 2.6, storey: 3.4 },
   block: { bay: 3.2, storey: 3.6 },
   shed: { bay: 1.8, storey: 7 },
+  // Wide and tall: a few big windows read as one house, where `block`'s tight
+  // 3.2 m grid on the same wall reads as flats - the thing a mansion enclave
+  // (#268) was getting mistaken for at a glance.
+  mansion: { bay: 7, storey: 4.5 },
 };
 
 /**
