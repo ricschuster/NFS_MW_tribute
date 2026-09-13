@@ -78,6 +78,14 @@ what the city is shaped like.
   existing street, and two roads sharing a footprint is a place the car cannot
   choose between; and a ramp is solid against blocks below `CAR_RADIUS * 2`, so
   anything it passed over while low walled the car in
+- `npm run grades` — can every road actually be climbed? A guard on
+  `cutAndFill` (#252): it exits non-zero if an arterial or boulevard comes out
+  steeper than the cap cut-and-fill is run with, because a road that only
+  looks climbable on the map is worse than no road. Ramps and the interstate
+  are excluded, since they are graded by their own construction and checked by
+  `npm run ramps` instead; so are Ashford Point's driveways (#287), since
+  `cutAndFill` runs before `localStreetsFor` ever lays one and never promised
+  them anything - their grades are reported, not gated
 - `npm run pace` — can the police be outrun? Compares your real top speed
   against the quickest unit at every heat level, in every condition. Exits
   non-zero if an *undamaged* car cannot outrun a level, which is an invariant
