@@ -62,7 +62,14 @@ what the city is shaped like.
   the traffic lap says what the drive is like, and traffic roughly halves the
   pace, so tuning against the empty number alone is tuning against a game
   nobody plays. This is the only driving baseline; the track's `npm run feel`
-  retired with the track.
+  retired with the track. It is also a guard (#210): traffic can only ever
+  cost a lap time, never buy one back, so a route that comes back *faster*
+  with traffic than empty is not a hard route, it is the driver thrashing on
+  one the generator broke - Foundry Mile did this unnoticed by every other
+  test in the suite, because the seed still built and the route still closed.
+  A route that does not finish a lap at all fails it the same way. Exits
+  non-zero on either, so a seed cannot ship six routes of which one nobody
+  can actually drive.
 - `npm run ramps` — can every ramp be driven up? A guard, not an instrument: it
   exits non-zero if any ramp cannot be climbed, because the ramps are the only
   way onto the interstate and an interstate you cannot reach is scenery. Eleven
