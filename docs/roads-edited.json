@@ -2831,7 +2831,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r11",
       "isNew": false,
       "kind": "boulevard",
@@ -5094,7 +5094,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r26",
       "isNew": false,
       "kind": "boulevard",
@@ -5191,7 +5191,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r27",
       "isNew": false,
       "kind": "boulevard",
@@ -5305,7 +5305,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r30",
       "isNew": false,
       "kind": "boulevard",
@@ -5454,7 +5454,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r31",
       "isNew": false,
       "kind": "boulevard",
@@ -11587,7 +11587,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "downtown",
       "id": "r43",
       "isNew": false,
       "kind": "boulevard",
@@ -11879,7 +11879,7 @@
     },
     {
       "bridge": false,
-      "district": "waterfront",
+      "district": "midtown",
       "id": "r54",
       "isNew": false,
       "kind": "boulevard",
@@ -15448,7 +15448,7 @@
     },
     {
       "bridge": false,
-      "district": "midtown",
+      "district": "waterfront",
       "id": "r89",
       "isNew": false,
       "kind": "boulevard",
@@ -16829,7 +16829,7 @@
     },
     {
       "bridge": false,
-      "district": "midtown",
+      "district": "waterfront",
       "id": "n101",
       "isNew": true,
       "kind": "boulevard",
@@ -17184,7 +17184,7 @@
     {
       "bridge": false,
       "deadEnd": true,
-      "district": "midtown",
+      "district": "waterfront",
       "id": "n103",
       "isNew": true,
       "kind": "boulevard",
