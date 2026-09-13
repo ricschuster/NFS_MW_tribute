@@ -45,6 +45,15 @@ export type DistrictKind = 'downtown' | 'midtown' | 'waterfront' | 'industrial' 
 export type RoadClass = 'arterial' | 'street' | 'boulevard' | 'interstate' | 'ramp';
 
 /**
+ * What a road is paved with, independent of `RoadClass` (#294): a road's
+ * class sets its lane count and speed, and its surface is a separate axis - a
+ * `street` can be asphalt or dirt, the same way a two-lane road can be a
+ * street or a boulevard. Defaults to `asphalt` everywhere until something
+ * asks for dirt.
+ */
+export type RoadSurface = 'asphalt' | 'dirt';
+
+/**
  * What makes a district read as a place. Block size and how much it varies do
  * most of the work: a tight regular grid downtown, long shallow blocks facing
  * the water, and sprawling lots out in the industrial edge.
@@ -126,6 +135,8 @@ export interface CityRoad {
   width: number;
   /** The speed this road is built for, in world units per second. */
   speed: number;
+  /** What it is paved with (#294). Independent of `class`. */
+  surface: RoadSurface;
   /** Length across the map. A ramp's slope makes its real length a shade longer. */
   length: number;
   /** True where the road crosses water. Bridges are the chokepoints (ADR-0005). */

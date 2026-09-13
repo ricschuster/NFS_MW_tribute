@@ -55,6 +55,7 @@ import {
   AMBUSH_RING,
   DAMAGE_FREE,
   DAMAGE_SPEED_LOSS,
+  DIRT_SPEED_FRAC,
   REPAIR_COUNT,
   REPAIR_SPACING,
   REPAIR_RANGE,
@@ -2172,6 +2173,63 @@ describe('damage', () => {
     world.damage = 1;
     drive(world, 6, press({ up: true }));
     expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.5);
+  });
+});
+
+// A road, just a worse one (#294): dirt costs less than the full off-road
+// penalty, but it costs something. `still()`'s spawn road is a shared object
+// off the pinned city (`kestrelBay()`), not a copy, so every test here
+// restores `surface` in a `finally` - leaving it mutated would bleed a dirt
+// road into whichever test in this file runs next.
+describe('driving surfaces (#294)', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+
+  // Given a running start, the same way the damage equivalent is: driven up
+  // to it from a stop is a straight line from the spawn, which is a building.
+  it('caps the top speed lower on a dirt road', () => {
+    const settle = (dirt: boolean) => {
+      const world = still();
+      const road = world.onRoad!;
+      const original = road.surface;
+      road.surface = dirt ? 'dirt' : 'asphalt';
+      try {
+        world.speed = world.maxSpeed;
+        const home = { x: world.x, z: world.z };
+        for (let t = 0; t < 2; t += STEP) {
+          world.x = home.x;
+          world.z = home.z;
+          world.step(STEP, press({ up: true }));
+        }
+        return world.speed;
+      } finally {
+        road.surface = original;
+      }
+    };
+
+    const paved = settle(false);
+    const dirt = settle(true);
+    expect(dirt).toBeLessThan(paved);
+    expect(dirt).toBeCloseTo(paved * DIRT_SPEED_FRAC, -2);
+  });
+
+  it('takes the steering with it too', () => {
+    const turn = (dirt: boolean) => {
+      const world = still();
+      const road = world.onRoad!;
+      const original = road.surface;
+      road.surface = dirt ? 'dirt' : 'asphalt';
+      try {
+        const facing = world.heading;
+        for (let t = 0; t < 0.5; t += STEP) {
+          world.speed = world.maxSpeed * 0.5;
+          world.step(STEP, press({ left: true }));
+        }
+        return Math.abs(world.heading - facing);
+      } finally {
+        road.surface = original;
+      }
+    };
+    expect(turn(true)).toBeLessThan(turn(false));
   });
 });
 

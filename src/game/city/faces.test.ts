@@ -34,6 +34,7 @@ function graphOf(points: Vec2[], edges: [number, number][]): City {
     speed: 10,
     lanes: 2,
     bridge: false,
+    surface: 'asphalt',
   }));
   for (const road of roads) {
     nodes[road.a].roads.push(road.id);

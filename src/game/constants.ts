@@ -28,6 +28,16 @@ export const LATERAL_GRIP = 14400;
 export const REVERSE_SPEED_FRAC = 0.18;
 
 /**
+ * Dirt roads (#294): still a road - `onRoad` is true, the off-road decel in
+ * `settle` never applies - just a worse one. Grip and top speed are cut by
+ * these fractions while `onRoad.surface` is `'dirt'`, short of the off-road
+ * penalty (`offRoadDecel`/`offRoadLimit` in `cityworld.ts`), because leaving
+ * the network entirely should always cost more than staying on a bad road.
+ */
+export const DIRT_GRIP_FRAC = 0.8;
+export const DIRT_SPEED_FRAC = 0.85;
+
+/**
  * Nitrous (#45, #48, #105).
  *
  * The boost is an *acceleration* boost first and a top-speed boost second, and
