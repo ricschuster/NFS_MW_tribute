@@ -25,7 +25,7 @@ const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
  * test at range, far below the pavement kerb. */
 const ROAD_LIFT = 0.02 * UNITS_PER_METRE;
 /** How far under the water the drawn ground is allowed to go. */
-const SHORE_FLOOR = -0.8 * UNITS_PER_METRE;
+const SHORE_FLOOR = -1.8 * UNITS_PER_METRE;
 /**
  * How far a block's kerb reaches below its own top.
  *
@@ -46,7 +46,7 @@ const ROAD_TILE = 6 * UNITS_PER_METRE;
  * with terrain in #85. The two bodies are a hair apart so the estuary, where
  * the river outline overlaps the bay, does not z-fight with itself.
  */
-const WATER_LEVEL = 0.25 * UNITS_PER_METRE;
+const WATER_LEVEL = -0.75 * UNITS_PER_METRE;
 const WATER_STACK = 0.02 * UNITS_PER_METRE;
 const BRIDGE_HEIGHT = 1.2 * UNITS_PER_METRE;
 /** Just clear of the ground plane, so markings do not fight it for depth. */
