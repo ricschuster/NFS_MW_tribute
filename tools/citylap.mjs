@@ -62,11 +62,22 @@ console.log('each route twice: what the empty road allows, and what traffic make
 const head = ['route', 'kind', 'traffic', 'lap', 'time', 'avg', 'crashes', 'damage', 'worst off line'];
 const rows = [head];
 const metrics = {};
+// A route the driver cannot actually lap (#210): found by Foundry Mile, whose
+// tell was not a low number anywhere but a backwards one - slower empty than
+// in traffic (169.4 s against 126.1 s), which only happens when the driver is
+// thrashing rather than driving. Traffic can only ever cost a lap time, never
+// buy one back, so "empty is slower" is the road defeating the driver, and it
+// is a generator defect a test suite never sees: the seed still builds, the
+// route still closes, it is just undrivable. `TRAFFIC_SLACK` allows for the
+// ordinary noise of two different runs before calling that backwards.
+const TRAFFIC_SLACK = 1.05;
+const broken = [];
 
 for (const route of city.routes) {
   // Twice: an empty city says what the *road* allows, and a populated one says
   // what the drive is actually like. Traffic is on in the real game every
   // second of every session, and until #171 nothing had ever driven with it.
+  const runs = {};
   for (const traffic of [false, true]) {
     const world = new CityWorld(undefined, { traffic, police: false });
     let damage = 0;
@@ -78,6 +89,7 @@ for (const route of city.routes) {
         return {};
       },
     });
+    runs[traffic ? 'traffic' : 'empty'] = run;
     // Keyed by name rather than index so a re-seeded city diffs as routes
     // appearing and disappearing instead of as every number having moved.
     const key = route.name.toLowerCase().replace(/[^a-z]+/g, '_') + (traffic ? '_traffic' : '');
@@ -98,6 +110,15 @@ for (const route of city.routes) {
       `${Math.round(run.offRoute / M)} m`,
     ]);
   }
+
+  if (!runs.empty.finished || !runs.traffic.finished) {
+    broken.push(`${route.name}: did not complete a lap (empty ${runs.empty.finished ? 'ok' : 'FAILED'}, traffic ${runs.traffic.finished ? 'ok' : 'FAILED'})`);
+  } else if (runs.traffic.average > runs.empty.average * TRAFFIC_SLACK) {
+    const pct = (v) => Math.round((v / K.REFERENCE_TOP_SPEED) * 100);
+    broken.push(
+      `${route.name}: slower empty (${pct(runs.empty.average)}%) than in traffic (${pct(runs.traffic.average)}%) - the driver is thrashing, not the route being hard`,
+    );
+  }
 }
 
 const widths = head.map((_, i) => Math.max(...rows.map((r) => r[i].length)));
@@ -109,6 +130,18 @@ for (const row of rows) {
 
 const done = rows.slice(1).filter((r) => r[4] !== '-').length;
 console.log(`\n${done} of ${city.routes.length * 2} laps completed.`);
+
+// A guard, not a probe (#210): a route a reference driver cannot lap sensibly
+// is a generator defect, and nothing else in the test suite can see one - the
+// seed still builds, the route still closes, `citylap` is the only thing that
+// actually drives it. Failing here is what stops a seed shipping six routes
+// of which one is broken, the way Foundry Mile did unnoticed until this file
+// went looking for it by eye.
+if (broken.length > 0) {
+  console.log(`\n${broken.length} route(s) a reference driver cannot lap sensibly:`);
+  for (const line of broken) console.log(`  - ${line}`);
+  process.exitCode = 1;
+}
 
 // ---------------------------------------------------------------------------
 // The ladder (#166).
