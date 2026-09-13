@@ -450,6 +450,23 @@ export const TAXIWAY_OFFSET = m(64);
 /** Level ground held either side of the pair, before the blend starts. */
 export const RUNWAY_APRON = m(70);
 /**
+ * The one structure on Marrow Field (#295): a derelict hangar rather than an
+ * active building, which is what tells the airfield apart from a working one
+ * at a glance.
+ *
+ * `HANGAR_CLEAR` is measured, not derived from `TAXIWAY_OFFSET`: the taxiway
+ * is authored/hand-traced (`CITY_AUTHORED_ROADS`, `city/roads.ts`) rather
+ * than laid to `airfieldRoads()`'s exact line, and it wanders up to 113 m
+ * from the runway's own centreline - a formula built from the ideal offset
+ * put the hangar's block on top of it. 150 m clears that with margin and
+ * still lands inside the gentle outer third of `RUNWAY_APRON`'s blend rather
+ * than its flat plateau, which is not a cliff to build a foundation on.
+ */
+export const HANGAR_WIDTH = m(55);
+export const HANGAR_DEPTH = m(35);
+export const HANGAR_HEIGHT = m(11);
+export const HANGAR_CLEAR = m(150);
+/**
  * How deep the quarry cuts below the ground it is in, and the height of one
  * bench.
  *

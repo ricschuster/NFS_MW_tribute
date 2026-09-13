@@ -17,7 +17,7 @@ import { makeWater } from './water';
 import { landBodies } from './bodies';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
-import { PLAN_PLACES } from './plan';
+import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
 import { layRoute, type Span } from './spans';
 import type { Water } from './water';
 import type { City, CityRoad, Rect } from './types';
@@ -233,13 +233,15 @@ describe('the street network', () => {
     }
   });
 
-  // Nothing lays a dirt road yet (#294 is the surface itself; #295 is the
-  // first thing to ask for one), so every road on the current seed should
-  // still come out paved.
-  it('defaults every road to an asphalt surface', () => {
+  // Marrow Field is dirt now (#295, see its own describe block below);
+  // everything else on the current seed should still come out paved.
+  it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
-      expect(road.surface).toBe('asphalt');
+      expect(['asphalt', 'dirt']).toContain(road.surface);
     }
+    const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    expect(dirt.length).toBeGreaterThan(0);
+    expect(dirt.length).toBeLessThan(city.roads.length / 20);
   });
 
   // Roads used to be axis-aligned and this test used to say so. Boulevards
@@ -1590,4 +1592,87 @@ describe('road surface (#294)', () => {
     expect(spans.length).toBeGreaterThan(0);
     for (const span of spans) expect(span.surface).toBe('dirt');
   });
+});
+
+// Marrow Field, turned from a working airfield into a disused one (#295).
+describe('Marrow Field, the disused airfield (#295)', () => {
+  const [runwayA, runwayB] = PLAN_RUNWAY;
+  const midOf = (road: CityRoad) => {
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+  };
+
+  it('marks the runway and taxiway dirt, and leaves the rest of the network paved', () => {
+    const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    // The runway is 2300 m, the taxiway runs beside it for most of that
+    // length twice, plus two short end caps: a few km, not a few hundred
+    // metres and not a meaningful share of a 70+ km network either.
+    const totalM = dirt.reduce((sum, r) => sum + r.length, 0) / M;
+    expect(totalM).toBeGreaterThan(4000);
+    expect(totalM).toBeLessThan(10000);
+    expect(city.roads.length - dirt.length).toBeGreaterThan(dirt.length * 10);
+  });
+
+  it('keeps every dirt road within the runway/taxiway envelope', () => {
+    // RUNWAY_WIDTH/2 + TAXIWAY_OFFSET is ~87 m, and `markAirfieldDirt` allows
+    // 15% past that; a generous round-number ceiling here keeps this test
+    // from having to import the constants just to recompute the same sum.
+    const ceiling = m(110);
+    for (const road of city.roads.filter((r) => r.surface === 'dirt')) {
+      const mid = midOf(road);
+      expect(distanceToSegment(mid.x, mid.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z)).toBeLessThan(
+        ceiling,
+      );
+    }
+  });
+
+  it('never leaves a dirt road in the water', () => {
+    for (const road of city.roads.filter((r) => r.surface === 'dirt')) {
+      const mid = midOf(road);
+      expect(water.isWater(mid.x, mid.z)).toBe(false);
+    }
+  });
+
+  it('puts a derelict structure beside the runway, clear of the water', () => {
+    // Identified by proximity rather than by `kind`: 'shed' is not
+    // necessarily unique to the hangar once other districts grow buildings
+    // of their own again (#268).
+    const near = city.buildings.filter(
+      (b) =>
+        distanceToSegment(
+          (b.footprint.minX + b.footprint.maxX) / 2,
+          (b.footprint.minZ + b.footprint.maxZ) / 2,
+          runwayA.x,
+          runwayA.z,
+          runwayB.x,
+          runwayB.z,
+        ) < m(300),
+    );
+    expect(near.length).toBe(1);
+    const [hangar] = near;
+    expect(touchesWater(hangar.footprint)).toBe(false);
+
+    // Clear of the taxiway itself, not overlapping it.
+    const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    const cx = (hangar.footprint.minX + hangar.footprint.maxX) / 2;
+    const cz = (hangar.footprint.minZ + hangar.footprint.maxZ) / 2;
+    const half = Math.max(
+      hangar.footprint.maxX - hangar.footprint.minX,
+      hangar.footprint.maxZ - hangar.footprint.minZ,
+    ) / 2;
+    for (const road of dirt) {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      expect(distanceToSegment(cx, cz, a.x, a.z, b.x, b.z)).toBeGreaterThan(half);
+    }
+  });
+
+  // Not yet true, and deliberately not asserted either way: the access road
+  // to Marrow Field is routed separately (`generate.ts` sends one to *every*
+  // place) rather than drawn by `airfieldRoads()`, so it stays outside
+  // `markAirfieldDirt`'s envelope and stays asphalt. Widening the envelope to
+  // catch it would also catch the ordinary boulevard network passing nearby
+  // on its own business - it needs its own way of being found, not a bigger
+  // net. Left for a follow-up.
 });

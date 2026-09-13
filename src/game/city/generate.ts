@@ -53,7 +53,7 @@ import { groundAt, makeTerrain, type Terrain } from './terrain';
 import { makeRouter } from './routing';
 import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
 import { localStreetsFor } from './localstreets';
-import { placeApproach, placeRoads, shapeForPlaces } from './places';
+import { airfieldHangar, markAirfieldDirt, placeApproach, placeRoads, shapeForPlaces } from './places';
 import { landBodies, type LandBodies } from './bodies';
 import { AUTHORED_ROADS } from './roads';
 import { cutAndFill } from './cutfill';
@@ -280,7 +280,13 @@ export function generateCity(seed: number): City {
     for (const road of placeRoads(terrain, water)) {
       const line = road.loop ? [...road.line, road.line[0]] : road.line;
       for (let i = 1; i < line.length; i++) {
-        laid.push({ from: line[i - 1], to: line[i], class: 'boulevard', district: 'industrial' });
+        laid.push({
+          from: line[i - 1],
+          to: line[i],
+          class: 'boulevard',
+          district: 'industrial',
+          surface: road.surface,
+        });
       }
     }
     // And a road *to* each place, routed over the ground. A place with no way in
@@ -499,6 +505,25 @@ export function generateCity(seed: number): City {
     // A block that ended up with nothing on it is open ground, whatever the
     // roll said. Left as a paved block it reads as an enormous empty forecourt.
     if (built === 0) block.open = true;
+  }
+
+  // Marrow Field, the disused airfield (#294, #295): dirt found by geometry
+  // rather than trusted from whichever path laid the road (see
+  // `markAirfieldDirt`), and its one structure, authored directly rather
+  // than grown from a superblock. The hangar still needs a `CityBlock` of
+  // its own, not just a `Building` - `parksFor` runs after this on whatever
+  // ground no block has claimed, and a building with no block under it is
+  // ground `parksFor` cannot see is taken, which it then paves as parkland
+  // right on top of the hangar. `anyWater` is the same guard the block loop
+  // above uses: `levelRunway` flattens the ground here but does not reclaim
+  // any water already in it.
+  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
+    markAirfieldDirt(nodes, roads);
+    const hangar = airfieldHangar(rng);
+    if (!anyWater(hangar.footprint, water)) {
+      buildings.push(hangar);
+      blocks.push({ district: hangar.district, bounds: hangar.footprint, open: false });
+    }
   }
 
   const city: City = {
