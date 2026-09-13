@@ -12,7 +12,7 @@
 import { CITY_MIN_STREET } from '../constants';
 import type { Rng } from './rng';
 import type { Water } from './water';
-import type { Axis, DistrictKind, Rect, RoadClass, Vec2 } from './types';
+import type { Axis, DistrictKind, Rect, RoadClass, RoadSurface, Vec2 } from './types';
 
 /**
  * A road centreline before it is cut at its crossings.
@@ -43,6 +43,8 @@ export interface Span {
   required?: boolean;
   embankment?: boolean;
   axis?: Axis;
+  /** What it is paved with (#294). Undefined means asphalt, same as everywhere else. */
+  surface?: RoadSurface;
 }
 
 export const centre = (r: Rect) => ({ x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2 });
@@ -149,6 +151,7 @@ export function layRoute(
   kind: RoadClass = 'boulevard',
   district: DistrictKind = 'midtown',
   required = false,
+  surface?: RoadSurface,
 ): void {
   if (line.length < 2) return;
   const wet = (a: Vec2, b: Vec2) => water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2);
@@ -156,7 +159,7 @@ export function layRoute(
   let i = 0;
   while (i < line.length - 1) {
     if (!wet(line[i], line[i + 1])) {
-      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required });
+      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required, surface });
       i++;
       continue;
     }
@@ -170,7 +173,7 @@ export function layRoute(
     while (j < line.length - 1 && wet(line[j], line[j + 1])) j++;
     const back = reachBack(line, i, -1);
     const on = reachBack(line, Math.min(j + 1, line.length - 1), 1);
-    laid.push({ from: line[back], to: line[on], class: kind, district, required });
+    laid.push({ from: line[back], to: line[on], class: kind, district, required, surface });
     // Resume where the crossing ended, not where the water did. Resuming at the
     // far bank leaves the span's far end joined to nothing, so the bridge is its
     // own two-node island and `prune` deletes it - a chosen crossing that never

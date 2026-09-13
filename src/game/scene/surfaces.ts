@@ -102,6 +102,52 @@ function asphaltTile(): HTMLCanvasElement {
 }
 
 /**
+ * Packed earth, for a dirt road (#294).
+ *
+ * The same speckle-and-patch shape as `asphaltTile`, just without the fine
+ * aggregate a rolled road surface has - dirt is patchy and uneven at the
+ * scale a tile covers, not gritty at the scale a car passes over.
+ */
+function dirtTile(): HTMLCanvasElement {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Patches of packed and loose ground, coarser and more contrasty than
+  // asphalt's wear marks - this is the whole road surface, not a repair on it.
+  speckle(size, 22, 131, (x, y, i) => {
+    ctx.fillStyle = hash(i * 8.3) > 0.5 ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.16)';
+    ctx.beginPath();
+    ctx.ellipse(
+      x,
+      y,
+      size * (0.05 + hash(i * 2.9) * 0.14),
+      size * (0.04 + hash(i * 5.7) * 0.11),
+      hash(i * 4.1) * Math.PI,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  });
+
+  // Loose stones, coarser than asphalt's aggregate.
+  speckle(size, 260, 173, (x, y, i) => {
+    ctx.fillStyle = hash(i * 6.1) > 0.5 ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.arc(x, y, 0.9 + hash(i * 3.3) * 2.1, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  return canvas;
+}
+
+/**
  * How many times the tile repeats over a ground plane of this size.
  *
  * Pulled out and exported because it is the part that fails quietly. The
@@ -216,22 +262,16 @@ export function blockTexture(kind: 'paving' | 'grass'): THREE.CanvasTexture {
   return texture;
 }
 
-let cached: THREE.CanvasTexture | null = null;
+let asphaltCached: THREE.CanvasTexture | null = null;
+let dirtCached: THREE.CanvasTexture | null = null;
 
-/**
- * The tarmac texture, tiled to cover `width` by `depth` world units.
- *
- * The repeat is set from the ground's real size rather than left at 1, so one
- * tile is always the same number of metres however big the map turns out to
- * be. A seed that generates a wider city gets more tarmac, not stretched
- * tarmac.
- */
-export function asphaltTexture(
+function roadTexture(
+  cached: THREE.CanvasTexture | null,
+  tile: () => HTMLCanvasElement,
   width: number,
   depth: number,
 ): THREE.CanvasTexture {
-  const texture = cached ?? new THREE.CanvasTexture(asphaltTile());
-  cached = texture;
+  const texture = cached ?? new THREE.CanvasTexture(tile());
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   // A road runs away to the horizon, so this surface is seen at the grazing
@@ -245,10 +285,31 @@ export function asphaltTexture(
   return texture;
 }
 
-/** Drop the shared texture. For a scene teardown that means it. */
+/**
+ * The tarmac texture, tiled to cover `width` by `depth` world units.
+ *
+ * The repeat is set from the ground's real size rather than left at 1, so one
+ * tile is always the same number of metres however big the map turns out to
+ * be. A seed that generates a wider city gets more tarmac, not stretched
+ * tarmac.
+ */
+export function asphaltTexture(width: number, depth: number): THREE.CanvasTexture {
+  asphaltCached = roadTexture(asphaltCached, asphaltTile, width, depth);
+  return asphaltCached;
+}
+
+/** The packed-earth texture for a dirt road (#294), tiled the same way asphalt is. */
+export function dirtTexture(width: number, depth: number): THREE.CanvasTexture {
+  dirtCached = roadTexture(dirtCached, dirtTile, width, depth);
+  return dirtCached;
+}
+
+/** Drop the shared textures. For a scene teardown that means all of them. */
 export function disposeSurfaces(): void {
-  cached?.dispose();
-  cached = null;
+  asphaltCached?.dispose();
+  asphaltCached = null;
+  dirtCached?.dispose();
+  dirtCached = null;
   for (const texture of blockCache.values()) texture.dispose();
   blockCache.clear();
 }

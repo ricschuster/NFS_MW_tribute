@@ -18,6 +18,8 @@ import { landBodies } from './bodies';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES } from './plan';
+import { layRoute, type Span } from './spans';
+import type { Water } from './water';
 import type { City, CityRoad, Rect } from './types';
 
 // The same water the pinned city was cut against: `makeWater` is the first
@@ -228,6 +230,15 @@ describe('the street network', () => {
       expect(road.length).toBeGreaterThan(0);
       expect(road.width).toBeGreaterThan(0);
       expect(road.speed).toBeGreaterThan(0);
+    }
+  });
+
+  // Nothing lays a dirt road yet (#294 is the surface itself; #295 is the
+  // first thing to ask for one), so every road on the current seed should
+  // still come out paved.
+  it('defaults every road to an asphalt surface', () => {
+    for (const road of city.roads) {
+      expect(road.surface).toBe('asphalt');
     }
   });
 
@@ -1513,5 +1524,70 @@ describe('every road in an area', () => {
       }
       previous = now;
     }
+  });
+});
+
+describe('road surface (#294)', () => {
+  // A fake with no water anywhere, and a variant with a strip of it - enough
+  // to exercise both branches of `layRoute` without generating a real city.
+  const dryWater = { isWater: () => false } as unknown as Water;
+  const strip = (from: number, to: number) =>
+    ({
+      isWater: (x: number) => x > from && x < to,
+    }) as unknown as Water;
+
+  it('leaves surface unset when none is requested', () => {
+    const spans: Span[] = [];
+    layRoute(
+      [
+        { x: 0, z: 0 },
+        { x: 100, z: 0 },
+      ],
+      dryWater,
+      spans,
+    );
+    expect(spans.length).toBeGreaterThan(0);
+    for (const span of spans) expect(span.surface).toBeUndefined();
+  });
+
+  it('carries a requested surface onto a dry span', () => {
+    const spans: Span[] = [];
+    layRoute(
+      [
+        { x: 0, z: 0 },
+        { x: 100, z: 0 },
+      ],
+      dryWater,
+      spans,
+      'street',
+      'midtown',
+      false,
+      'dirt',
+    );
+    expect(spans.length).toBeGreaterThan(0);
+    for (const span of spans) expect(span.surface).toBe('dirt');
+  });
+
+  // The water-crossing branch pushes its span through a second code path
+  // (`reachBack` on both sides rather than the two endpoints given) - it
+  // needs its own case, or a bug only on that path would go unnoticed.
+  it('carries a requested surface across a water crossing too', () => {
+    const spans: Span[] = [];
+    layRoute(
+      [
+        { x: 0, z: 0 },
+        { x: 40, z: 0 },
+        { x: 60, z: 0 },
+        { x: 100, z: 0 },
+      ],
+      strip(30, 70),
+      spans,
+      'boulevard',
+      'midtown',
+      true,
+      'dirt',
+    );
+    expect(spans.length).toBeGreaterThan(0);
+    for (const span of spans) expect(span.surface).toBe('dirt');
   });
 });

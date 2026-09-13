@@ -1172,6 +1172,7 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
         lanes,
         width: roadWidth(lanes),
         speed,
+        surface: span.surface ?? 'asphalt',
         length: piece,
         bridge: span.bridge ?? false,
         embankment: span.embankment,

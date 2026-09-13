@@ -729,6 +729,7 @@ function link(
     lanes,
     width: lanes * CITY_LANE_WIDTH,
     speed: kind === 'interstate' ? INTERSTATE_SPEED : RAMP_SPEED,
+    surface: 'asphalt',
     length,
     bridge: false,
   };

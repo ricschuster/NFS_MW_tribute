@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import {
   asphaltTexture,
+  dirtTexture,
   BLOCK_TILE,
   blockTexture,
   disposeSurfaces,
 } from './surfaces';
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
-import type { City } from '../city/types';
+import type { City, CityRoad, RoadSurface } from '../city/types';
 import { groundAt } from '../city/terrain';
 import {
   UNITS_PER_METRE,
@@ -86,7 +87,7 @@ export class Cityscape {
 
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
-    this.group.add(this.carriageways(city));
+    for (const mesh of this.carriageways(city)) this.group.add(mesh);
     for (const mesh of this.water(city)) this.group.add(mesh);
     for (const slab of this.pavements(city)) this.group.add(slab);
     this.group.add(this.markings(city));
@@ -375,6 +376,26 @@ export class Cityscape {
   }
 
   /**
+   * One `InstancedMesh` per road surface (#294), the same way `scene/buildings.ts`
+   * is one per building kind: a shared quad and a shared material can only
+   * ever carry one texture, so two surfaces are two meshes, not one mesh with
+   * a texture that changes per instance.
+   */
+  private carriageways(city: City): THREE.InstancedMesh[] {
+    const drivable = city.roads.filter(
+      (road) =>
+        !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
+    );
+    const meshes: THREE.InstancedMesh[] = [];
+    for (const surface of ['asphalt', 'dirt'] as const) {
+      const roads = drivable.filter((road) => (road.surface ?? 'asphalt') === surface);
+      if (roads.length === 0) continue;
+      meshes.push(this.carriagewaysFor(city, roads, surface));
+    }
+    return meshes;
+  }
+
+  /**
    * The tarmac, painted exactly where the sim says road is (#176).
    *
    * `onRoad` is `distanceToRoad(...) <= road.width / 2`, which is a capsule:
@@ -404,19 +425,15 @@ export class Cityscape {
    * overlap slightly at their joins rather than leave a seam - harmless, since
    * it is the same tarmac on both sides.
    */
-  private carriageways(city: City): THREE.InstancedMesh {
-    const roads = city.roads.filter(
-      (road) =>
-        !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
-    );
+  private carriagewaysFor(city: City, roads: CityRoad[], surface: RoadSurface): THREE.InstancedMesh {
     const pieces = roads.map((road) => Math.max(1, Math.ceil(road.length / TERRAIN_RENDER_STEP)));
     const total = pieces.reduce((sum, n) => sum + n, 0);
 
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
     const material = new THREE.MeshLambertMaterial({
-      color: '#4a5057',
-      map: asphaltTexture(1, 1),
+      color: surface === 'dirt' ? '#7a6a52' : '#4a5057',
+      map: surface === 'dirt' ? dirtTexture(1, 1) : asphaltTexture(1, 1),
     });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
     // by how long each piece happens to be. Computed from the instance scale
@@ -424,12 +441,12 @@ export class Cityscape {
     worldUvs(material, {
       faces: 'top',
       tile: { u: ROAD_TILE, v: ROAD_TILE },
-      key: 'asphalt',
+      key: surface,
     });
     this.owned.push(geometry, material);
 
     const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, total));
-    mesh.name = 'carriageways';
+    mesh.name = `carriageways-${surface}`;
     mesh.count = total;
     mesh.receiveShadow = true;
 
