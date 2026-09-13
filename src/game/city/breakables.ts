@@ -106,7 +106,7 @@ export function breakablesFor(rng: Rng, city: City): Breakable[] {
         x: a.x + (b.x - a.x) * along - dir.z * offset * side,
         z: a.z + (b.z - a.z) * along + dir.x * offset * side,
       };
-      if (outside(city, spot) || crowded(found, spot)) continue;
+      if (outside(city, spot) || crowded(found, spot) || onPark(city, spot)) continue;
 
       found.push({
         id: id++,
@@ -143,6 +143,23 @@ function crowded(found: Breakable[], at: Vec2): boolean {
 function outside(city: City, at: Vec2): boolean {
   const b = city.bounds;
   return at.x < b.minX || at.x > b.maxX || at.z < b.minZ || at.z > b.maxZ;
+}
+
+/**
+ * A stack sits a fixed offset off whichever kerb it rolled, which used to be
+ * a safe assumption: every quarter this ran in was one shapeless park with
+ * its edges far away. A district with real blocks in it has park edges close
+ * against its own roads, so the offset needs to check rather than assume.
+ */
+function onPark(city: City, at: Vec2): boolean {
+  return city.blocks.some(
+    (block) =>
+      block.park &&
+      at.x >= block.bounds.minX &&
+      at.x <= block.bounds.maxX &&
+      at.z >= block.bounds.minZ &&
+      at.z <= block.bounds.maxZ,
+  );
 }
 
 /** The surface road whose middle is nearest this point. */

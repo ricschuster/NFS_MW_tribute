@@ -160,7 +160,7 @@ export interface WaterBody {
  * later some become modelled and the rest stay boxes, and nothing about the
  * generator changes.
  */
-export type BuildingKind = 'tower' | 'block' | 'shed';
+export type BuildingKind = 'tower' | 'block' | 'shed' | 'mansion';
 
 /**
  * One building, as a description rather than as geometry. The generator emits

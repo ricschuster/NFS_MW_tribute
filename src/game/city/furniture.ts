@@ -6,7 +6,7 @@ import {
   UNITS_PER_METRE,
   WATER_END_REACH,
 } from '../constants';
-import { inWater } from './grid';
+import { distanceToRoad, inWater } from './grid';
 import type { Rng } from './rng';
 import type { City, CityRoad, StreetProp } from './types';
 
@@ -267,6 +267,26 @@ function waterEnds(city: City, props: StreetProp[]): void {
 }
 
 /**
+ * Is this point genuinely inside a live lane, rather than merely close to one
+ * of its ends - which a kerb at a junction always is, and is not a bug. The
+ * same test the city's own suite checks furniture against.
+ */
+function inLiveLane(city: City, at: { x: number; z: number }): boolean {
+  for (const road of city.roads) {
+    if (road.class === 'ramp' || road.class === 'interstate' || road.bridge) continue;
+    if (city.nodes[road.a].level !== 'surface') continue;
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    if (distanceToRoad(city, road, at.x, at.z) >= road.width / 2) continue;
+    const clear = Math.min(road.width, road.length / 3);
+    const fromA = Math.hypot(at.x - a.x, at.z - a.z);
+    const fromB = Math.hypot(at.x - b.x, at.z - b.z);
+    if (fromA > clear && fromB > clear) return true;
+  }
+  return false;
+}
+
+/**
  * A sign on one corner of each proper junction. Only where three or more roads
  * meet: the places a graph node exists purely because a road was cut in two are
  * not junctions, and putting a signpost at each of them would line the streets
@@ -318,11 +338,25 @@ function signs(rng: Rng, city: City, props: StreetProp[]): void {
     const inward = node.id === road.a ? 1 : -1;
     const side = rng.chance(0.5) ? 1 : -1;
 
+    const spot = {
+      x: node.pos.x + across.x * sideways * side + along.x * backwards * inward,
+      z: node.pos.z + across.z * sideways * side + along.z * backwards * inward,
+    };
+    // The corner offset above is exact for a square crossing; an organic
+    // road (a routed 'street', not the ruled grid) can meet another at
+    // whatever angle the ground gave it, and the same offset that clears a
+    // right-angle corner cuts straight across a shallow one - and a routed
+    // network splits into short fragments near a junction far more often
+    // than a ruled grid does, so the stray fragment that catches a sign is
+    // rarely one of *this* junction's own `streets`. Checked against every
+    // nearby surface road, not just this node's, with the same "is this
+    // genuinely a junction here" allowance the city's own test uses: close
+    // to a road's centreline is fine near either of its own ends, and only
+    // a problem in the middle of it.
+    if (inLiveLane(city, spot)) continue;
+
     props.push({
-      at: {
-        x: node.pos.x + across.x * sideways * side + along.x * backwards * inward,
-        z: node.pos.z + across.z * sideways * side + along.z * backwards * inward,
-      },
+      at: spot,
       y: 0,
       angle: Math.atan2(along.x, along.z),
       reach: 0,

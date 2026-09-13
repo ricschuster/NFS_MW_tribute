@@ -5,6 +5,7 @@ import { Rng } from './rng';
 import {
   CITY_BRIDGE_SPACING,
   CITY_FREEWAY,
+  CITY_LOCAL_STREETS_KINDS,
   CITY_SEED,
   CITY_STREET_GRID,
   DISTRICTS,
@@ -13,6 +14,7 @@ import {
   UNITS_PER_METRE,
 } from '../constants';
 import { makeWater } from './water';
+import { landBodies } from './bodies';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES } from './plan';
@@ -590,8 +592,17 @@ describe('the embankment', () => {
     expect(stubs.map(({ node }) => `${Math.round(node.pos.x / M)},${Math.round(node.pos.z / M)}`)).toEqual([]);
   });
 
+  // Ashford Point's houses (#268) sit at the end of their own private
+  // driveway off the district's major roads, and a driveway is *supposed* to
+  // dead-end at the house - that is the one thing a house's own drive is for.
+  // A few dozen houses is a few dozen genuine dead ends, which is not the
+  // same thing this check was written against (stubs a road left at the
+  // water, or a fragment nothing connected to). The ceiling moved up to cover
+  // them; it is still a ceiling, and it will climb again with every district
+  // that grows real houses of its own - if it climbs for any other reason,
+  // that is a stub to go find.
   it('leaves the network with few dead ends at all', () => {
-    expect(deadEnds().length).toBeLessThan(30);
+    expect(deadEnds().length).toBeLessThan(60);
   });
 });
 
@@ -1049,12 +1060,15 @@ describe('street furniture', () => {
 
   // Signs go on 'street'/'arterial' junctions only (see `furniture.ts`): the
   // corner offset is exact for a rectangular grid crossing and not for an
-  // organic boulevard one, and every road is a boulevard while the grid is
-  // off (ADR-0009). Barriers and lamps do not depend on the grid, so they are
-  // still checked here.
+  // organic one, which used to mean every road being a boulevard while the
+  // grid was off (ADR-0009) and therefore no signs at all. Ashford Point's
+  // interior roads (#268) are real 'street'-class branches that now do cross
+  // each other, not just join the coastal spine, so a sign can appear
+  // without the grid too.
   it('puts lamps and barriers on the streets', () => {
     const kinds = new Set(city.furniture.map((p) => p.kind));
-    expect([...kinds].sort()).toEqual(CITY_STREET_GRID ? ['barrier', 'lamp', 'sign'] : ['barrier', 'lamp']);
+    const realStreets = CITY_STREET_GRID || CITY_LOCAL_STREETS_KINDS.length > 0;
+    expect([...kinds].sort()).toEqual(realStreets ? ['barrier', 'lamp', 'sign'] : ['barrier', 'lamp']);
     expect(city.furniture.length).toBeGreaterThan(1000);
   });
 
@@ -1166,9 +1180,11 @@ describe('street furniture', () => {
     for (const node of atTheWater) expect(railed).toContain(node);
   });
 
-  // Signs go on 'street'/'arterial' junctions only (see `furniture.ts`), and
-  // there are none of those while the grid is off (ADR-0009).
-  it.skipIf(!CITY_STREET_GRID)('signs only a real junction, not every cut in a road', () => {
+  // Signs go on 'street'/'arterial' junctions only (see `furniture.ts`).
+  // There were none of those while the grid was off (ADR-0009) and nothing
+  // else crossed a 'street'; Ashford Point's interior roads (#268) are the
+  // first thing that does without the grid.
+  it.skipIf(!CITY_STREET_GRID && CITY_LOCAL_STREETS_KINDS.length === 0)('signs only a real junction, not every cut in a road', () => {
     const signs = city.furniture.filter((p) => p.kind === 'sign');
     const junctions = city.nodes.filter(
       (n) =>
@@ -1378,6 +1394,54 @@ describe('blocks', () => {
       }
     }
     expect(clashes).toEqual([]);
+  });
+});
+
+// Ashford Point (waterfront) is the pilot for `localStreetsFor` (#268): local
+// streets grown around the district's own 7 authored major roads instead of a
+// synthetic grid, gated by `CITY_LOCAL_STREETS_KINDS`. The generic block/road
+// checks above already cover it (no overlap with another block or a
+// carriageway); these are the things specific to growing real content in one
+// sparse, irregular, authored area rather than a uniform lattice.
+describe.skipIf(!CITY_LOCAL_STREETS_KINDS.includes('waterfront'))('Ashford Point local streets', () => {
+  const land = landBodies(city.bounds, water);
+  const blocks = city.blocks.filter((b) => b.district === 'waterfront');
+  const built = blocks.filter((b) => !b.open);
+  const streets = city.roads.filter((r) => r.class === 'street' && r.district === 'waterfront');
+
+  it('grows some real blocks, not zero and not a dense grid', () => {
+    // "Few roads, well spaced, large lots" (plan.ts): a handful of real
+    // blocks is the area working, and anywhere near midtown's block count
+    // would be the grain wrong for what this district is supposed to read as.
+    expect(built.length).toBeGreaterThan(0);
+    expect(built.length).toBeLessThan(50);
+  });
+
+  it('places buildings only on the blocks it built, not on open ground', () => {
+    const inside = (r: Rect, x: number, z: number) => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
+    for (const building of city.buildings) {
+      const cx = (building.footprint.minX + building.footprint.maxX) / 2;
+      const cz = (building.footprint.minZ + building.footprint.maxZ) / 2;
+      const home = blocks.find((b) => inside(b.bounds, cx, cz));
+      if (home) expect(home.open).toBe(false);
+    }
+  });
+
+  it('keeps every local street on dry land', () => {
+    for (const road of streets) {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      expect(inWater(city, (a.x + b.x) / 2, (a.z + b.z) / 2)).toBe(false);
+    }
+  });
+
+  it('never grows a block off Ashford Point\'s own body of land', () => {
+    const home = land.at(built[0]?.bounds.minX ?? 0, built[0]?.bounds.minZ ?? 0);
+    for (const block of built) {
+      const cx = (block.bounds.minX + block.bounds.maxX) / 2;
+      const cz = (block.bounds.minZ + block.bounds.maxZ) / 2;
+      expect(land.at(cx, cz)).toBe(home);
+    }
   });
 });
 
