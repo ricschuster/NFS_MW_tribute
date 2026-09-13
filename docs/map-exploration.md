@@ -280,3 +280,22 @@ city.
 The road editor exists to test the first bullet at road scale. 98 roads is
 enough to edit by hand and too many to have drawn from nothing, which is exactly
 the range where "generate a draft, then edit it" beats either extreme.
+
+## What the pattern across this whole log turned into
+
+Roads (#115), the land shape (ADR-0008) and the districts (ADR-0009, and this
+entire file) each went the same way: built procedurally, tuned for a while -
+four months, in the districts' case - and then found wrong once there was a
+picture to judge it against, at which point the fix was to author or freeze
+the shape rather than tune the generator further. [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md)
+writes that down as two rules rather than something to relearn on the next
+subsystem: settle a shape question in `npm run sketch` (or by hand, the way
+#272 was drawn) before it goes into `generate.ts`, and sequence work by what a
+change invalidates *backward* rather than by what it is worth to the player -
+which is the reading, with hindsight, of why ADR-0005 put relief last and got
+ADR-0008 for it.
+
+The "procedural, authored, or both" question directly above is the content
+answer to the same problem this file kept hitting; ADR-0010 is the process
+answer - when to reach for `sketch` rather than for another generator
+parameter.
