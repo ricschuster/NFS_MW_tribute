@@ -9,6 +9,17 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   the remote but is a stale leftover sharing a name with the merged PR's
   branch - 44 commits ahead of `main` and 12 behind it, not the thing #273
   was. Safe to ignore or delete; nothing in this repo depends on it.
+- **Since this file was last written:** Ashford Point (#268's pilot) grows
+  real houses on their own driveways rather than a block grid (PR #287), the
+  spawn point sits there temporarily while it's judged by eye (PR #288,
+  `SPAWN_DISTRICT` in `cityworld.ts`), roads got a `surface` axis independent
+  of class - `RoadSurface`, `'asphalt' | 'dirt'` (#294, PR #296) - and Marrow
+  Field's runway/taxiway are the first thing painted with it, alongside one
+  derelict hangar (#295, PR #298, still open for the fence/weeds/rust).
+  `citylap` is also a guard now, not just an instrument (#210, PR #297): it
+  fails if a route comes back faster with traffic than empty, which is what a
+  driver thrashing on a broken route looks like, or if a route never finishes
+  a lap. `city.buildings` is no longer empty - see the numbers below.
 - **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
   `main`, which now ships the rebuilt map: real terrain, a landmass, authored
   districts, no street grid and no interstate yet (both are switched off, see
@@ -59,21 +70,24 @@ with no car in it, for judging the generator rather than playing it.
 each.
 
 **What `main` generates today**, measured with `npm run city` against the
-pinned seed: **4181 roads, 4162 junctions, 71.3 km of road**, all of it
+pinned seed: **4687 roads, 4666 junctions, 72.9 km of road**, all of it
 `boulevard`-class because `CITY_STREET_GRID` is off - there is no arterial
 grid, so there are no arterial-only roads either. **7 water crossings, 1.24 km
-of bridge.** **926 blocks, and every one of them is open ground** - `parksFor`
-still covers whatever the road network does not claim, but nothing claims
-anything right now, so the entire pinned city is parkland. **0 buildings, 0
-interstate, 0 ramps**, because the two flags that build them
-(`CITY_STREET_GRID`, `CITY_FREEWAY` in `constants.ts`) are both `false`. Their
-own comments say why: they are a switch, not a deletion, and `fillSuperblock`
-and `interstate.ts` are the only code that knows how a district becomes blocks
-and how a deck is built - both are wanted back, just not laid with a ruler
-(ADR-0009). This describes the city ADR-0007 through ADR-0009 built. The
-gridded, buildinged city ADR-0004 through ADR-0006 built (3102 roads, 841
-blocks, 3771 buildings) is what `main` played *before* PR #273 merged, and
-nothing about it is true of `main` any more.
+of bridge.** **1044 blocks**, of which all but 41 are open ground - `parksFor`
+still covers whatever the road network does not claim, and almost nothing
+claims anything yet, but it is no longer *literally* nothing: Ashford Point's
+driveway houses (#268's pilot, `localstreets.ts`) and Marrow Field's one
+hangar (#295, `places.ts`) are real, non-open blocks with real buildings on
+them. **41 buildings** as a result - 40 houses plus the hangar - **still 0
+interstate, 0 ramps**, because the two flags that build the grid and the
+freeway (`CITY_STREET_GRID`, `CITY_FREEWAY` in `constants.ts`) are both
+`false`. Their own comments say why: they are a switch, not a deletion, and
+`fillSuperblock` and `interstate.ts` are the only code that knows how a
+district becomes blocks and how a deck is built - both are wanted back, just
+not laid with a ruler (ADR-0009). This describes the city ADR-0007 through
+ADR-0009 built. The gridded, buildinged city ADR-0004 through ADR-0006 built
+(3102 roads, 841 blocks, 3771 buildings) is what `main` played *before* PR
+#273 merged, and nothing about it is true of `main` any more.
 
 Underneath that, four things are real and new since the last time this file
 was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
@@ -386,8 +400,24 @@ instead. Worth resolving before it causes something to be built in the wrong
 place.
 
 **[#210](https://github.com/ricschuster/NFS_MW_tribute/issues/210) - the
-reference driver cannot recover from a wide line.** Unrelated to the map
-rebuild and unblocked by it; still open.
+reference driver cannot recover from a wide line.** Closed (PR #297):
+`citylap` now fails the run if a route comes back faster with traffic than
+empty (traffic can only ever cost a lap time, never buy one back) or does
+not finish at all - the guard Foundry Mile needed. Unverified against a real
+bad route so far, because `routesFor` finds none on today's map (see
+directly below); dormant until routes come back.
+
+**[#295](https://github.com/ricschuster/NFS_MW_tribute/issues/295) - Marrow
+Field should be a disused airfield, not an active one.** Partly landed (PR
+#298): the runway and taxiway are `surface: 'dirt'` now, found by distance
+from `PLAN_RUNWAY` rather than trusted from whichever code path laid the
+road (`markAirfieldDirt`, `places.ts`) - it has to work that way because
+`CITY_AUTHORED_ROADS` routes the live geometry through `city/roads.ts`'s
+hand-drawn network, which carries no `surface` of its own once synced, same
+as `embankment` below. One derelict hangar stands beside it. Still open:
+weeds, a breached fence, rust, and the access road (routed separately,
+stays asphalt) - closer to the iterative editor workflow than a one-shot
+change, on purpose.
 
 **[#14](https://github.com/ricschuster/NFS_MW_tribute/issues/14) - tune how
 the car feels**, and **[#11](https://github.com/ricschuster/NFS_MW_tribute/issues/11)
@@ -503,8 +533,8 @@ top of it further.
 
 | | |
 | --- | --- |
-| `npm run test` | unit tests and playtests: 428 passed, 101 skipped, 0 failed as of the last full run on `main` |
-| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Untested on today's map - see `routesFor` above |
+| `npm run test` | unit tests and playtests: 439 passed, 104 skipped, 0 failed as of the last full run on `main` |
+| `npm run citylap` | every route, empty and in traffic, then every ladder rival; the only baseline, and the diff is the warning. Also a guard now (#210): fails on a route that never finishes or comes back faster with traffic than empty. Untested against a real route on today's map - see `routesFor` above |
 | `npm run playthrough` | the whole game at every level it has one, as a session log |
 | `npm run endings` | how a pursuit ends - busted, escaped, or neither - driving and stopped, and `--damage 1` for a wrecked car |
 | `npm run pace` | the one *gate*: can an undamaged car outrun every heat level. Passes; measures from the longest straight, not the default spawn - see known problems |
