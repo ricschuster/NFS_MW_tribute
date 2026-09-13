@@ -5,21 +5,19 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`. PR #273 (the
   map rebuild) merged into `main` already; everything below describes `main`
-  itself, not a branch waiting to land. `origin/feat/landmass` still exists on
-  the remote but is a stale leftover sharing a name with the merged PR's
-  branch - 44 commits ahead of `main` and 12 behind it, not the thing #273
-  was. Safe to ignore or delete; nothing in this repo depends on it.
-- **Since this file was last written:** Ashford Point (#268's pilot) grows
-  real houses on their own driveways rather than a block grid (PR #287), the
-  spawn point sits there temporarily while it's judged by eye (PR #288,
-  `SPAWN_DISTRICT` in `cityworld.ts`), roads got a `surface` axis independent
-  of class - `RoadSurface`, `'asphalt' | 'dirt'` (#294, PR #296) - and Marrow
-  Field's runway/taxiway are the first thing painted with it, alongside one
-  derelict hangar (#295, PR #298, still open for the fence/weeds/rust).
-  `citylap` is also a guard now, not just an instrument (#210, PR #297): it
-  fails if a route comes back faster with traffic than empty, which is what a
-  driver thrashing on a broken route looks like, or if a route never finishes
-  a lap. `city.buildings` is no longer empty - see the numbers below.
+  itself, not a branch waiting to land. `origin/feat/landmass`, the stale
+  leftover branch this used to flag, is gone - deleted.
+- **Since this file was last written:** [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md)
+  names a pattern this rebuild kept paying for - roads, the land shape and the
+  districts were each built procedurally, tuned for a while, then found wrong
+  once judged against a picture - as two rules: sketch a shape question before
+  wiring it into `generate.ts`, and sequence work by what it invalidates
+  backward rather than by what it's worth to the player. Issue housekeeping
+  caught up with the code: #271 and #272 (districts and places as authored
+  data) are closed - `city/plan.ts` and `city/places.ts` are the shipped
+  answer - and #249 (the land as lobes, not a slab) is closed too, its loose
+  `water.town` thread fixed in #274. None of the three are the thing gating
+  the grid any more; see "Where the work is" below for what is.
 - **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
   `main`, which now ships the rebuilt map: real terrain, a landmass, authored
   districts, no street grid and no interstate yet (both are switched off, see
@@ -112,7 +110,7 @@ rectangle. It is real, merged, and still switched off - `rampsFor` finds a
 real surface junction near only a handful of this 13.6 km loop's edges while
 the grid is off, so flipping `CITY_FREEWAY` on today gets the loop and its
 tunnels but almost nowhere to get on or off it. That is expected to open up
-once #271/#272 bring the grid back, not a bug in the loop.
+once #268 brings the grid back, not a bug in the loop.
 
 ## How this went wrong twice, and will again
 
@@ -175,6 +173,11 @@ branch like this, not just the file you last edited.
   radius pick, and the street grid and elevated interstate are switched off
   while the map is rebuilt from the routed roads outward. This is the decision
   in force right now; read it before touching `generate.ts`.
+- [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md) - names the
+  pattern behind ADR-0008 and ADR-0009 both: sketch a shape question before
+  wiring it into `generate.ts`, and sequence subsystems by what they
+  invalidate backward rather than by what they're worth to the player. #268
+  is the current live case it applies to.
 
 ## Architecture
 
@@ -347,24 +350,37 @@ all yet.
 
 ## Where the work is
 
-**The map rebuild is not finished, and two open issues gate almost everything
-else on this list.** [#271](https://github.com/ricschuster/NFS_MW_tribute/issues/271)
-(districts describe streets; places are what streets go to) and
-[#272](https://github.com/ricschuster/NFS_MW_tribute/issues/272) (the district
-plan as data) are what stand between today's roads-and-terrain-only city and
-turning `CITY_STREET_GRID` back on: `fillSuperblock` needs to know how a piece
-of authored ground becomes blocks, and it currently only knows how to do that
-for a seeded radius pick, which ADR-0009 just retired. Until those land there
-are no blocks, no buildings, no street finds, no roadside breakables, and
-`routesFor` cannot find the four-corner circuits and speed runs need - which
-is why an entire slice of the test suite is `it.skip` on "zero routes today"
-rather than failing.
+**The map rebuild is not finished, and the gate moved.** #271 (districts
+describe streets; places are what streets go to) and #272 (the district plan
+as data) are both closed and done: `city/plan.ts` and `city/places.ts` are the
+authored data they asked for. What's missing now is not that data but a
+decision about how to use it. `CITY_STREET_GRID` - the old ruled arterial mesh
+plus a uniform lattice across the whole map - is not coming back; its own
+comment in `constants.ts` says so plainly. In its place is a second, newer
+generator, `city/localstreets.ts`, gated per district by
+`CITY_LOCAL_STREETS_KINDS`: local streets that branch off a district's own
+authored major roads and clip to its plan polygon, built and judged one
+district at a time. `waterfront` (Ashford Point) is the only entry in that
+list today; downtown, midtown and industrial stay without blocks or buildings
+until each earns its own pass. Until then there are no street finds, no
+roadside breakables, and `routesFor` cannot find the four-corner circuits and
+speed runs need - which is why an entire slice of the test suite is `it.skip`
+on "zero routes today" rather than failing.
+[#301](https://github.com/ricschuster/NFS_MW_tribute/issues/301) tracks the
+specific dependency this creates for the freeway loop's ramps.
 
 **[#268](https://github.com/ricschuster/NFS_MW_tribute/issues/268) - downtown
-should feel grown, not planned.** Partly landed already (the parkland-vs-lot
-foundation, and the traffic-density rescale that now reads the road actually
-there instead of a fixed count) but the harder half - what a grown-looking
-downtown's blocks and lots actually look like - is downstream of #271/#272.
+should feel grown, not planned.** This is what has to be answered before
+downtown gets its own entry in `CITY_LOCAL_STREETS_KINDS`. Partly landed
+already (the parkland-vs-lot foundation, the traffic-density rescale that now
+reads the road actually there instead of a fixed count, and Ashford Point
+itself as a pilot for "grown, not planned" on the easy case - large lots on
+driveways). Downtown is the hard case the issue is actually about:
+`fillSuperblock`'s grid versus something that reads as grown. Per ADR-0010,
+this wants a `npm run sketch` pass before another attempt goes into
+`generate.ts` - routing arterials over terrain was already tried and reverted
+once for exactly this reason (`docs/map-exploration.md`, "3. Routing the
+arterials").
 
 **[#266](https://github.com/ricschuster/NFS_MW_tribute/issues/266),
 [#265](https://github.com/ricschuster/NFS_MW_tribute/issues/265),
@@ -376,8 +392,8 @@ downtown's blocks and lots actually look like - is downstream of #271/#272.
 density by district, a beltway ring, a periphery of non-city road, buildings
 you can drive into, a tunnel breaking pursuit line of sight, street tunnels
 and cuttings, and blocks that sit as pads on a hillside rather than boxes. All
-of them are things the generator will want once #271/#272 give it real blocks
-again; none of them are startable before that.
+of them are things the generator will want once downtown and the rest have
+real blocks again (#268); none of them are startable before that.
 
 **[#261](https://github.com/ricschuster/NFS_MW_tribute/issues/261) - the
 freeway loop leaving the city proper.** Further along than the rest of this
@@ -386,18 +402,18 @@ path with 4 authored/found tunnel mouths, checked interactively against real
 grade and water rules. What is left is not drawing but *connecting* it -
 `rampsFor` needs real surface junctions near the loop's edges to place ramps
 on, and the current authored network only offers a handful, so this stays
-open until #271/#272 give it a real grid to land ramps on. Re-check the ramp
-count after that, not before - a low count today is the known gap, not a
-regression.
+open until #268 gives downtown (and the rest) a real grid to land ramps on.
+Re-check the ramp count after that, not before - a low count today is the
+known gap, not a regression.
 
 **[#249](https://github.com/ricschuster/NFS_MW_tribute/issues/249) - the land
-is lobes joined by channels.** Largely built - ADR-0008 is this issue's
-outcome, and today's pinned city has six bodies of land, not a slab - but the
-issue is still open, and `npm run plan` found one loose thread while checking
-it: the water model's own notion of where "downtown" is sits 2.6 km from the
-plan's authored downtown polygon and inside the plan's industrial polygon
-instead. Worth resolving before it causes something to be built in the wrong
-place.
+is lobes joined by channels.** Closed. ADR-0008 is this issue's outcome, and
+today's pinned city has six bodies of land, not a slab. The loose thread
+`npm run plan` found while checking it - the water model's own notion of
+where "downtown" is sitting 2.6 km from the plan's authored downtown and
+inside the plan's industrial polygon instead - is fixed too (#274): the
+terrain's flat core now centres on the plan's downtown rather than on
+`water.town`.
 
 **[#210](https://github.com/ricschuster/NFS_MW_tribute/issues/210) - the
 reference driver cannot recover from a wide line.** Closed (PR #297):
@@ -421,11 +437,17 @@ change, on purpose.
 
 **[#14](https://github.com/ricschuster/NFS_MW_tribute/issues/14) - tune how
 the car feels**, and **[#11](https://github.com/ricschuster/NFS_MW_tribute/issues/11)
-- replace vector-drawn art with sprites.** Both predate this rebuild and both
-want the map finished before their old numbers (lap pace, event length, the
-ladder's calibration) mean anything again: they were measured against a grid
-that no longer exists, and re-measuring them now would be measuring a city
-with no buildings and no findable race routes.
+- replace vector-drawn art with sprites** (its title is stale; the live
+reading, per its own comment, is "everything is boxes" - a running asset-pass
+issue, most recently signs and bridge parapets in #198). Both predate this
+rebuild and both want the map finished before their old numbers (lap pace,
+event length, the ladder's calibration) mean anything again: they were
+measured against a grid that no longer exists, and re-measuring them now
+would be measuring a city with no buildings and no findable race routes. #14
+also has an upstream dependency worth knowing about: #255 (slope changes the
+drive) will re-derive `docs/city-baseline.json` and the `HEAT_LEVELS` police
+fractions when it lands, so tuning #14 against today's numbers risks redoing
+that work.
 
 ## Known problems, not papered over
 
@@ -469,7 +491,8 @@ with no buildings and no findable race routes.
   network does not have that kind of junction density near most of the map
   yet. Every circuit, speed run, claim-after-winning-a-race and the Quick
   Wheel's mid-race lock is currently untestable as a result - skipped in the
-  test suite, not deleted, and it will come back with #271/#272.
+  test suite, not deleted, and it will come back once #268 lands and more
+  districts get real blocks.
 - **The `embankment` flag does not survive the road editor.** `AuthoredRoad`
   in `city/roads.ts` carries `kind`, `district`, `bridge` and `deadEnd` but no
   `embankment` field, so no road in the generated network is tagged one today,
@@ -488,8 +511,8 @@ with no buildings and no findable race routes.
   while `CITY_STREET_GRID` is off - flipping `CITY_FREEWAY` on locally against
   the real generator produces about one drivable ramp across the whole loop.
   Expected, not a regression: it is the same "no blocks, no buildings" gap as
-  everything else on this list, and it closes when #271/#272 bring the grid
-  back. Don't chase it as a bug before then.
+  everything else on this list, and it closes once #268 lands. Don't chase it
+  as a bug before then.
 - **The `CITY_` prefix is history, not a distinction.** `CITY_HEAT_RISE`,
   `CITY_COP_LOSE` and `CITY_PURSUIT_RANGE` are named that way because the
   deleted track had different constants meaning different things, and reusing
@@ -508,9 +531,9 @@ with no buildings and no findable race routes.
 - **The minimap is hard to read in daylight**, and the lighting is not flat
   any more (#180 put a clock in the sim and a palette on it) while shadows
   still do nothing as the sun moves through the day.
-- **Blocks stay rectangles wherever they exist**, which today is nowhere, but
-  the underlying limitation (#253) survives the rebuild and will matter again
-  the day #271/#272 bring blocks back.
+- **Blocks stay rectangles wherever they exist**, which today is only
+  Ashford Point, but the underlying limitation (#253) survives the rebuild and
+  will matter again once #268 brings blocks back to more of the map.
 
 ## If you are picking this up cold
 
@@ -523,11 +546,11 @@ first, because a generator change is far easier to judge as a picture than as
 a test; then `npm run dev` and drive it, because playing has found more real
 defects than every probe and test combined, on both rebuilds.
 
-Then read "Where the work is" above: the two-issue gate (#271, #272) is where
-a session should start if it wants to move the map forward, and the remaining
-unresolved probe finding (the stationary bust) is where a session should start
-if it wants to make the current branch trustworthy before anything is built on
-top of it further.
+Then read "Where the work is" above: #268 is where a session should start if
+it wants to move the map forward - sketch it first, per ADR-0010 - and the
+remaining unresolved probe finding (the stationary bust) is where a session
+should start if it wants to make the current branch trustworthy before
+anything is built on top of it further.
 
 ## The probes, and what each is for
 
