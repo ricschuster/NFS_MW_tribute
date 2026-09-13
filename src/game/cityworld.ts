@@ -107,6 +107,7 @@ import {
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { planCentre } from './city/plan';
+import type { DistrictKind } from './city/types';
 import { impactDamage, touching } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -180,6 +181,15 @@ export interface CityWorldOptions {
   /** Run the police pursuit (default true). */
   police?: boolean;
 }
+
+/**
+ * Where `spawn()` puts the car. `'waterfront'` (Ashford Point) while its own
+ * local streets (#268) are being judged by eye and driven, not `'downtown'` -
+ * a handful of playtests that assume the default downtown spawn are skipped
+ * for exactly as long as this says something other than `'downtown'`. Move
+ * this back once the pilot is settled.
+ */
+export const SPAWN_DISTRICT: DistrictKind = 'waterfront';
 
 export class CityWorld {
   readonly city: City;
@@ -415,7 +425,7 @@ export class CityWorld {
     this.reinflating = mods.reinflating;
   }
 
-  /** Put the car on a surface street in **downtown**, pointing along it. */
+  /** Put the car on a surface street in **Ashford Point**, pointing along it. */
   spawn(): void {
     // The middle of the map is not the middle of the city and never was: it is
     // a point in a rectangle, and Kestrel Bay is five bodies of land with the
@@ -423,8 +433,8 @@ export class CityWorld {
     // country, two and a half kilometres from anything, which is a poor first
     // ten seconds of a game about a city.
     //
-    // The plan knows where downtown is (ADR-0009), so ask it.
-    const middle = planCentre('downtown');
+    // The plan knows where an area is (ADR-0009), so ask it.
+    const middle = planCentre(SPAWN_DISTRICT);
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;
