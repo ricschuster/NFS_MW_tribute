@@ -1071,7 +1071,12 @@ describe('street furniture', () => {
   it('puts lamps and barriers on the streets', () => {
     const kinds = new Set(city.furniture.map((p) => p.kind));
     const realStreets = CITY_STREET_GRID || CITY_LOCAL_STREETS_KINDS.length > 0;
-    expect([...kinds].sort()).toEqual(realStreets ? ['barrier', 'lamp', 'sign'] : ['barrier', 'lamp']);
+    // 'fence' and 'weed' are Marrow Field's own (#295), added regardless of
+    // which street-laying path is on: the airfield is an authored place, not
+    // a district the grid or the local streets touch.
+    expect([...kinds].sort()).toEqual(
+      realStreets ? ['barrier', 'fence', 'lamp', 'sign', 'weed'] : ['barrier', 'fence', 'lamp', 'weed'],
+    );
     expect(city.furniture.length).toBeGreaterThan(1000);
   });
 
@@ -1642,6 +1647,7 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     expect(near.length).toBe(1);
     const [hangar] = near;
     expect(touchesWater(hangar.footprint)).toBe(false);
+    expect(hangar.derelict).toBe(true);
 
     // Clear of the taxiway itself, not overlapping it.
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
@@ -1665,4 +1671,51 @@ describe('Marrow Field, the disused airfield (#295)', () => {
   // catch it would also catch the ordinary boulevard network passing nearby
   // on its own business - it needs its own way of being found, not a bigger
   // net. Left for a follow-up.
+
+  it('casts no lamp light on the runway', () => {
+    // "No lighting implying operation" is in the brief for this place - a
+    // disused airfield with a working street lamp down each side of the
+    // runway reads as staffed. `furnitureFor` skips every dirt road; this is
+    // the envelope check confirming none landed there anyway.
+    const ceiling = m(110);
+    const lamps = city.furniture.filter((p) => p.kind === 'lamp');
+    for (const lamp of lamps) {
+      expect(
+        distanceToSegment(lamp.at.x, lamp.at.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z),
+      ).toBeGreaterThan(ceiling);
+    }
+  });
+
+  it('fences the field, broken by real gaps rather than left intact', () => {
+    const fence = city.furniture.filter((p) => p.kind === 'fence');
+    expect(fence.length).toBeGreaterThan(100);
+    // The loop clears the taxiway by `FENCE_MARGIN` and each runway end by
+    // `FENCE_END_MARGIN` (both well under the ceiling below), so every post
+    // should still read as "this place's fence" and not some other road's.
+    const ceiling = m(160);
+    for (const post of fence) {
+      expect(
+        distanceToSegment(post.at.x, post.at.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z),
+      ).toBeLessThan(ceiling);
+    }
+    // A run of posts spaced `FENCE_POST_SPACING` apart round the whole
+    // perimeter would be several hundred; breaches (and the water clipping
+    // a corner or two) should have thinned that out measurably rather than
+    // leaving every span standing.
+    const perimeter =
+      2 * (Math.hypot(runwayB.x - runwayA.x, runwayB.z - runwayA.z) + 2 * m(50)) + 2 * 2 * m(24 + 87);
+    expect(fence.length).toBeLessThan(perimeter / m(9));
+  });
+
+  it('grows weeds along the runway and taxiway seams', () => {
+    const weeds = city.furniture.filter((p) => p.kind === 'weed');
+    expect(weeds.length).toBeGreaterThan(20);
+    const ceiling = m(110);
+    for (const weed of weeds) {
+      expect(
+        distanceToSegment(weed.at.x, weed.at.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z),
+      ).toBeLessThan(ceiling);
+      expect(water.isWater(weed.at.x, weed.at.z)).toBe(false);
+    }
+  });
 });
