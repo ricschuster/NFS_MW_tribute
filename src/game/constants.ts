@@ -312,6 +312,18 @@ export const CITY_LANE_WIDTH = 2000 / 3;
 export const CITY_LAND_STREAM = 0x4b657374;
 
 /**
+ * A stream of its own for Marrow Field's fence and weeds (#295), for the same
+ * reason `CITY_LAND_STREAM` is: `airfieldFurniture` draws hundreds of times
+ * from it (a post or a skip for every few metres of a ~5 km perimeter), and
+ * drawing that many values from the *shared* seed would shift everything
+ * generated after it - the collectibles among them, which place off the exact
+ * sequence the shared stream is at when they run. The fence's own pattern is
+ * cosmetic and does not need to vary with `CITY_SEED` either; keeping it on a
+ * fixed stream means it does not.
+ */
+export const CITY_AIRFIELD_STREAM = 0x4d617272;
+
+/**
  * The named places (#271, ADR-0009 rule 5), which are shaped into the ground
  * before any road is laid.
  *
@@ -466,6 +478,33 @@ export const HANGAR_WIDTH = m(55);
 export const HANGAR_DEPTH = m(35);
 export const HANGAR_HEIGHT = m(11);
 export const HANGAR_CLEAR = m(150);
+/**
+ * Marrow Field's perimeter fence (#295): a line, not a wall around the whole
+ * 700 m place radius - the field is the runway and the taxiway, so the fence
+ * is drawn off *their* extent rather than off `PlanPlace.radius`, which would
+ * put it far out over open ground the airfield never used.
+ *
+ * `FENCE_MARGIN` clears the taxiway loop; `FENCE_END_MARGIN` gives the strip
+ * the same clearance past each runway end, where a real perimeter road runs
+ * behind the overrun.
+ */
+export const FENCE_MARGIN = m(24);
+export const FENCE_END_MARGIN = m(50);
+export const FENCE_POST_SPACING = m(9);
+export const FENCE_HEIGHT = m(1.9);
+/**
+ * How often the perimeter breaks, and for how long, once every
+ * `FENCE_POST_SPACING` is offered the choice (#295: "breached... rather
+ * than intact"). A run rather than a single missing post, because one gap in
+ * a fence reads as a rendering error and a run of them reads as a fence
+ * nobody has mended.
+ */
+export const FENCE_BREACH_CHANCE = 0.03;
+export const FENCE_BREACH_MIN = 3;
+export const FENCE_BREACH_SPAN = 5;
+/** Weeds through the tarmac's seams (#295), scattered along the dirt strip. */
+export const WEED_SPACING = m(14);
+export const WEED_HEIGHT = m(0.5);
 /**
  * How deep the quarry cuts below the ground it is in, and the height of one
  * bench.

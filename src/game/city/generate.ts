@@ -12,6 +12,7 @@ import {
   CITY_ARTERIAL_SPEED,
   CITY_LANE_WIDTH,
   CITY_LAND_STREAM,
+  CITY_AIRFIELD_STREAM,
   CITY_BRIDGES,
   CITY_MAX_BRIDGE,
   CITY_BRIDGE_SPACING,
@@ -53,7 +54,14 @@ import { groundAt, makeTerrain, type Terrain } from './terrain';
 import { makeRouter } from './routing';
 import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } from './plan';
 import { localStreetsFor } from './localstreets';
-import { airfieldHangar, markAirfieldDirt, placeApproach, placeRoads, shapeForPlaces } from './places';
+import {
+  airfieldFurniture,
+  airfieldHangar,
+  markAirfieldDirt,
+  placeApproach,
+  placeRoads,
+  shapeForPlaces,
+} from './places';
 import { landBodies, type LandBodies } from './bodies';
 import { AUTHORED_ROADS } from './roads';
 import { cutAndFill } from './cutfill';
@@ -556,6 +564,15 @@ export function generateCity(seed: number): City {
   // Furniture is placed from the finished road graph, so it goes on kerbs that
   // actually exist rather than on ones that were bridged or pruned away.
   city.furniture = furnitureFor(rng, city);
+  // Marrow Field's own furniture (#295): a fence and its weeds, generated off
+  // `PLAN_RUNWAY` rather than the road graph, so it is exempt from
+  // `furnitureFor`'s "clear of every road" filtering - a weed grows in the
+  // tarmac, not beside it. On `CITY_AIRFIELD_STREAM`, not the shared `rng`:
+  // see that constant for why hundreds of draws for one place's fence should
+  // not be the thing that reshuffles where every billboard in the city lands.
+  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
+    city.furniture.push(...airfieldFurniture(new Rng(CITY_AIRFIELD_STREAM), terrain, water));
+  }
   // Collectibles come last, off the finished graph and the finished buildings:
   // a billboard is placed on a kerb that exists and out of a wall that does.
   city.collectibles = collectiblesFor(rng, city);

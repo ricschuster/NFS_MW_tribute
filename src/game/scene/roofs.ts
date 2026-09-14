@@ -33,6 +33,9 @@ export class Rooftops {
     let mastCount = 0;
 
     for (const building of buildings) {
+      // A derelict roof (#295) has nothing maintained on it: no ducting, no
+      // aerial - the roof detail below is what an *operating* building has.
+      if (building.derelict) continue;
       const { footprint, variant } = building;
       const width = footprint.maxX - footprint.minX;
       const depth = footprint.maxZ - footprint.minZ;

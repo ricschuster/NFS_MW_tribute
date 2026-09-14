@@ -29,6 +29,12 @@ import {
   DOCK_LEVEL,
   DOCK_PIERS,
   DOCK_PIER_LENGTH,
+  FENCE_BREACH_CHANCE,
+  FENCE_BREACH_MIN,
+  FENCE_BREACH_SPAN,
+  FENCE_END_MARGIN,
+  FENCE_MARGIN,
+  FENCE_POST_SPACING,
   HANGAR_CLEAR,
   HANGAR_DEPTH,
   HANGAR_HEIGHT,
@@ -43,11 +49,12 @@ import {
   RUNWAY_APRON,
   RUNWAY_WIDTH,
   TAXIWAY_OFFSET,
+  WEED_SPACING,
 } from '../constants';
 import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
 import { groundAt, type Terrain } from './terrain';
 import type { Rng } from './rng';
-import type { Building, CityNode, CityRoad, RoadSurface, Vec2 } from './types';
+import type { Building, CityNode, CityRoad, RoadSurface, StreetProp, Vec2 } from './types';
 import type { Water } from './water';
 
 /** A road a place brings with it, as a polyline to be laid like any other. */
@@ -330,6 +337,7 @@ export function airfieldHangar(rng: Rng): Building {
     kind: 'shed',
     district: 'industrial',
     variant: rng.float(),
+    derelict: true,
   };
 }
 
@@ -359,6 +367,123 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
     };
     if (toSegment(a, b, mid).away <= half) road.surface = 'dirt';
   }
+}
+
+/**
+ * The corners of a fence loop round the runway and taxiway - not round the
+ * place's own 700 m radius, which reaches far out over ground the airfield
+ * never used. `FENCE_MARGIN` clears the taxiway; `FENCE_END_MARGIN` gives the
+ * strip the same clearance past each runway end.
+ */
+function fenceLoop(): Vec2[] {
+  const [a, b] = PLAN_RUNWAY;
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const ux = (b.x - a.x) / length;
+  const uz = (b.z - a.z) / length;
+  const nx = -uz;
+  const nz = ux;
+  const across = RUNWAY_WIDTH / 2 + TAXIWAY_OFFSET + FENCE_MARGIN;
+  const corner = (t: number, side: number): Vec2 => ({
+    x: a.x + ux * t + nx * across * side,
+    z: a.z + uz * t + nz * across * side,
+  });
+  return [
+    corner(-FENCE_END_MARGIN, 1),
+    corner(length + FENCE_END_MARGIN, 1),
+    corner(length + FENCE_END_MARGIN, -1),
+    corner(-FENCE_END_MARGIN, -1),
+  ];
+}
+
+/**
+ * Marrow Field's own furniture (#295): a perimeter fence, breached rather
+ * than intact, and weeds through the runway's seams. Generated the same way
+ * the roads are - as data derived from `PLAN_RUNWAY`, not scattered - and kept
+ * separate from `furnitureFor` because both belong on the road they stand on
+ * or beside rather than clear of every road the way ordinary street furniture
+ * has to be (`inSomeRoad`'s exclusion): a weed grows *in* the tarmac.
+ */
+export function airfieldFurniture(rng: Rng, terrain: Terrain, water: Water): StreetProp[] {
+  const props: StreetProp[] = [];
+  const loop = fenceLoop();
+
+  // Walk the loop's four edges, dropping a post-and-rail segment every
+  // `FENCE_POST_SPACING` unless the ground under it is water or a breach run
+  // is in progress. One prop per segment, its rail sized to the spacing in
+  // `scene/furniture.ts`, the same trick `barriers()` uses so consecutive
+  // instances tile into a continuous run rather than leaving a gap.
+  let breachLeft = 0;
+  for (let i = 0; i < loop.length; i++) {
+    const from = loop[i];
+    const to = loop[(i + 1) % loop.length];
+    const edge = Math.hypot(to.x - from.x, to.z - from.z);
+    const ux = (to.x - from.x) / edge;
+    const uz = (to.z - from.z) / edge;
+    const angle = Math.atan2(ux, uz);
+    for (let at = 0; at < edge; at += FENCE_POST_SPACING) {
+      const x = from.x + ux * at;
+      const z = from.z + uz * at;
+      if (water.isWater(x, z)) continue;
+      if (breachLeft > 0) {
+        breachLeft--;
+        continue;
+      }
+      if (rng.chance(FENCE_BREACH_CHANCE)) {
+        breachLeft = FENCE_BREACH_MIN + rng.int(FENCE_BREACH_SPAN);
+        continue;
+      }
+      props.push({
+        at: { x, z },
+        y: groundAt(terrain, x, z),
+        angle,
+        reach: 0,
+        kind: 'fence',
+        variant: rng.float(),
+      });
+    }
+  }
+
+  // Weeds down the runway's own seam - its centreline - and the taxiway's,
+  // scattered rather than evenly spaced so they read as growth and not as a
+  // second dashed line.
+  const seams: [Vec2, Vec2][] = [[PLAN_RUNWAY[0], PLAN_RUNWAY[1]]];
+  const [ra, rb] = PLAN_RUNWAY;
+  const rlength = Math.hypot(rb.x - ra.x, rb.z - ra.z);
+  const rux = (rb.x - ra.x) / rlength;
+  const ruz = (rb.z - ra.z) / rlength;
+  const rnx = -ruz;
+  const rnz = rux;
+  const off = RUNWAY_WIDTH / 2 + TAXIWAY_OFFSET;
+  const inset = 0.06;
+  const taxi = (t: number, side: number): Vec2 => ({
+    x: lerp(ra.x, rb.x, t) + rnx * off * side,
+    z: lerp(ra.z, rb.z, t) + rnz * off * side,
+  });
+  seams.push([taxi(inset, 1), taxi(1 - inset, 1)]);
+  seams.push([taxi(inset, -1), taxi(1 - inset, -1)]);
+
+  for (const [from, to] of seams) {
+    const length = Math.hypot(to.x - from.x, to.z - from.z);
+    const ux = (to.x - from.x) / length;
+    const uz = (to.z - from.z) / length;
+    for (let at = 0; at < length; at += WEED_SPACING) {
+      if (!rng.chance(0.55)) continue;
+      const jitter = rng.range(-1, 1) * RUNWAY_WIDTH * 0.3;
+      const x = from.x + ux * at - uz * jitter;
+      const z = from.z + uz * at + ux * jitter;
+      if (water.isWater(x, z)) continue;
+      props.push({
+        at: { x, z },
+        y: groundAt(terrain, x, z),
+        angle: rng.range(0, Math.PI * 2),
+        reach: 0,
+        kind: 'weed',
+        variant: rng.float(),
+      });
+    }
+  }
+
+  return props;
 }
 
 /**

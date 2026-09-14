@@ -530,7 +530,14 @@ export class Cityscape {
 
     const runs = city.roads
       .filter(
-        (road) => !road.bridge && road.length > GAP * 3 && road.width >= ROADBLOCK_MIN_WIDTH,
+        // A dirt road carries no paint (#295): Marrow Field's runway and
+        // taxiway are the only ones today, and a crisp centre line down a
+        // strip nobody has resurfaced in years says the opposite of "disused".
+        (road) =>
+          !road.bridge &&
+          road.length > GAP * 3 &&
+          road.width >= ROADBLOCK_MIN_WIDTH &&
+          road.surface !== 'dirt',
       )
       .map((road) => {
         const a = city.nodes[road.a].pos;

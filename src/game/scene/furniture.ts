@@ -7,6 +7,9 @@ import {
   BARRIER_SPACING,
   LAMP_REACH,
   LAMP_GLOW,
+  FENCE_HEIGHT,
+  FENCE_POST_SPACING,
+  WEED_HEIGHT,
 } from '../constants';
 import { lampGlowTexture, signTexture } from './signage';
 import type { StreetProp } from '../city/types';
@@ -30,6 +33,8 @@ export class StreetFurniture {
     const lamps = props.filter((p) => p.kind === 'lamp');
     const signs = props.filter((p) => p.kind === 'sign');
     const barriers = props.filter((p) => p.kind === 'barrier');
+    const fences = props.filter((p) => p.kind === 'fence');
+    const weeds = props.filter((p) => p.kind === 'weed');
 
     // Posts share one geometry and one material across lamps and signs; only
     // their heights differ, and an instance can be scaled.
@@ -106,6 +111,27 @@ export class StreetFurniture {
       BARRIER_SPACING,
       BARRIER_HEIGHT * 0.82,
     );
+
+    // Marrow Field's perimeter (#295): a post and a rail rather than a solid
+    // wall, rusted rather than the barrier's clean grey. One prop per span,
+    // the rail's own depth set to `FENCE_POST_SPACING` so - like the barrier
+    // above - consecutive instances tile into a continuous run rather than
+    // leaving a gap between posts. A breached span simply has no prop in it.
+    this.add('fence-posts', fences, '#5b4a3c', 0.1 * M, FENCE_HEIGHT, 0.1 * M, 0);
+    this.add(
+      'fence-rail',
+      fences,
+      '#8a6a4d',
+      0.05 * M,
+      FENCE_HEIGHT * 0.6,
+      FENCE_POST_SPACING,
+      FENCE_HEIGHT * 0.3,
+    );
+
+    // Weeds through the tarmac's seams (#295): a thin green blade, one box
+    // per clump, standing at whatever angle the generator scattered it at so
+    // a run of them does not read as a second row of dashes.
+    this.add('weed-clumps', weeds, '#5c7a3f', 0.16 * M, WEED_HEIGHT, 0.16 * M, 0);
   }
 
   /**

@@ -146,8 +146,15 @@ export class BoxBuildings implements BuildingProvider {
         const midX = (footprint.minX + footprint.maxX) / 2;
         const midZ = (footprint.minZ + footprint.maxZ) / 2;
 
-        const palette = PALETTE[building.district] ?? PALETTE.midtown;
-        colour.set(palette[Math.floor(building.variant * palette.length)] ?? palette[0]);
+        if (building.derelict) {
+          // Weathered rather than the district's own palette (#295): a rust
+          // and dust tone with the same per-variant nudge everything else
+          // gets, so the one hangar does not stand out as a flat colour swap.
+          colour.set('#6e5d4d');
+        } else {
+          const palette = PALETTE[building.district] ?? PALETTE.midtown;
+          colour.set(palette[Math.floor(building.variant * palette.length)] ?? palette[0]);
+        }
         // Nudge each building off its palette entry, so a row of them is not
         // one flat wall of the same grey.
         const shade = 0.88 + building.variant * 0.24;

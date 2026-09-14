@@ -187,6 +187,8 @@ export interface Building {
   district: DistrictKind;
   /** Seeded 0..1, so the provider can vary colour and detail deterministically. */
   variant: number;
+  /** Weathered and unlit rather than the district's own palette (#295). */
+  derelict?: boolean;
 }
 
 /** How tall the buildings on a block are, and how the land is divided into lots. */
@@ -205,7 +207,7 @@ export interface BuildingCharacter {
 }
 
 /** Street furniture: the same idea as the old roadside props, on real streets. */
-export type FurnitureKind = 'lamp' | 'sign' | 'barrier';
+export type FurnitureKind = 'lamp' | 'sign' | 'barrier' | 'fence' | 'weed';
 
 /** One piece of street furniture, described rather than built. */
 export interface StreetProp {
