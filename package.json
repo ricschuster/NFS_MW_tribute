@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "An open-world arcade street racer set in Kestrel Bay, a city generated from a seed.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
