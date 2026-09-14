@@ -150,70 +150,29 @@ until it is. Rules 4-7 of that ADR (curved residential streets, the interstate
 loop, landmarks, relief) are partly built: landmarks and relief are not.
 
 **A crossing is chosen for where it is, not for how cheap it is** (issue
-#247). Bridges are few because they are the pursuit chokepoints, but "few" is
-about the count and what a player feels is the *distance to one*. Picking them
-shortest-first put them all where the channel is narrow, which is one stretch of
-river: three crossings on a 3.3 km river, and a 2.7 km round trip at the worst
-point of some seeds. `chooseBridges` takes the shortest gap first - with nothing
-to spread away from, the cheapest crossing is the one to build - and then
-repeatedly the candidate **furthest from every crossing already chosen**. Two
-things to know before touching the constants. `CITY_BRIDGE_SPACING` is what
-decides how many crossings a city gets, not `CITY_BRIDGES`, which was 4 while
-every seed built two or three and eight of eleven candidates were being rejected
-for crowding. And `CITY_MAX_BRIDGE` is not a lever: raised from 700 m to a
-kilometre it changed nothing on any seed, because no candidate gap falls in
-between - what limits the crossings is which arterials happen to meet the river.
+#247, ADR-0005 rule 2). Bridges are the pursuit chokepoints, and "few" is
+about distance-to-one, not count. `chooseBridges` in `city/generate.ts` has
+the furthest-first algorithm and the reasoning; `CITY_BRIDGE_SPACING`, not
+`CITY_BRIDGES`, is the constant that actually controls how many a city gets.
 
-**Land belongs to something** (issue #185). Blocks are laid on lines and then
-pulled clear of the water, and one that will not fit is dropped, so a riverbank
-loses whole blocks at a time - a fifth of the map used to belong to neither
-block nor road, and #176 made that visible by painting the ground as not-road.
-`city/parks.ts` covers what is left at `PARK_CELL` and merges the free cells
-into open blocks, which is the answer to "what is that land *meant* to be":
-parkland. It is down to a tenth of the map, and what remains is margin - a
-median of 15 m from the nearest block rather than 50. Two things it has to get
-right, both of which it got wrong first: a pavement slab is *raised*, so a park
-laid over a carriageway is a kerb across the road, and the water *field* is not
-the water *outline* - everything upstream fits blocks against the field, and
-parks that agreed with the polygon went into the river.
+**Land belongs to something** (issue #185). A riverbank used to lose whole
+blocks at a time to `pullClear`, leaving a fifth of the map neither block nor
+road - #176 made that visible by painting the ground as not-road.
+`city/parks.ts`'s doc comment has the fill algorithm and the two ways it went
+wrong first (raised pavement over a carriageway, the water field vs. its
+outline).
 
-**The ground has height, and the water still comes first** (ADR-0007,
-issue #251). `city/terrain.ts` bakes a height field with the city: a grid at
-`TERRAIN_CELL`, sampled by `groundAt(terrain, x, z)`, carried on `City` as data
-that the sim and the renderer both read. Baked rather than a formula in the
-style of `water.ts`, because the next thing that happens to it is that roads are
-cut and filled *into* it, and a formula cannot be displaced without becoming a
-formula plus a road lookup in a function the sim calls every step for every car.
-Three things to know. The land is shaped to agree with the water rather than the
-other way round - carving terrain and letting water pool would invalidate
-ADR-0005 rules 1-3 and everything built on them. The **shore ramp** is the
-biggest lever on how steep the map is, because it is a slope the length of the
-whole coast: it scales with `TERRAIN_RELIEF`, and at a quarter of its current
-width the maximum grade on the map was 47%. And `groundAt` is a free function
-over the data rather than a method on it, because the city is data before it is
-anything else - the test that found that is the one asserting the generator is
-pure, since two runs make two closures and two closures are never equal.
+**The ground has height, and the water still comes first** (ADR-0007, issue
+#251). `city/terrain.ts` bakes a height field with the city, read by
+`groundAt(terrain, x, z)`; both the sim and the renderer read the same data.
+ADR-0007 has the full reasoning, including why it's baked rather than a
+formula and what the shore ramp does to the map's steepness.
 
-**The water gets a road, not a hundred dead ends** (issue #241). The streets
-are cut against the water, and that left 106 of the network's 109 dead ends as
-a street running to the bank and stopping - a median of four metres from the
-river. Railing those off was the first answer and it was the wrong one: a city
-does not have a hundred streets ending at a barrier by the water, it has a road
-*along* the water that the streets end onto. `city/embankment.ts` walks the
-coast and both banks - the water is a formula rather than a traced outline, so
-walking it is cheap - and the result goes in as ordinary spans *before* the
-graph is built, exactly as `boulevards.ts` does, so it is clipped against the
-water, split at every street it crosses and repaired by the same code as
-everything else. Two things it has to get right. The bank is walked in **runs**:
-a row with no bank in it is not the end of the road, and near the mouth two
-consecutive samples can land on opposite sides of a headland - so a run breaks
-where the ground *between* two samples is not by the water, which is a question
-about what the road would run over rather than about how far apart they are.
-And a street has to **cross** the embankment to end onto it, so the scrap left
-between the carriageway and the bank is trimmed after the graph exists
-(`trimWaterStubs`) rather than clipped short before it: clipping short was
-tried, and it left the same stub with no junction on it, disconnected as well.
-The rail from the first attempt stayed, for the ends the quay itself has.
+**The water gets a road, not a hundred dead ends** (issue #241). Streets cut
+against the water used to leave 106 of the network's 109 dead ends stopped at
+the bank; railing them off was the wrong fix. `city/embankment.ts`'s doc
+comments have the algorithm - walking the coastline in runs, tagging spans
+before `trimWaterStubs` runs - and why the two obvious shortcuts didn't work.
 
 **The city is drawn through a provider seam** (issue #84). `city/` emits
 descriptions - blocks, buildings, water - and never constructs geometry or
@@ -234,42 +193,24 @@ reimplementing water-clipping, junction-splitting and the connectivity repair,
 badly.
 
 **A ramp is two roads, and its foot is set aside on purpose** (issue #212).
-The climb, and a short flat mouth joining its foot back to the junction it
-serves. Laid straight at that junction the climb runs down an existing street -
-the interstate is axis-aligned, so is the grid, so the perpendicular between
-them *is* a street - and `surfaceAt` picks whichever road is nearest the height
-the car is at, so the flat one wins every step and the car drives the length of
-its own on-ramp at ground level. `RAMP_OFFSET` puts the two carriageways side
-by side instead of on top of each other. The other half is that blocks are
-solid below `CAR_RADIUS * 2`, so `generate.ts` clears them along the stretch
-where a ramp is still low, the same way it already makes way for a boulevard -
-and #185's parkland fills what that leaves, so a cleared corridor reads as
-somewhere rather than as a scar.
+Laid straight at its junction, a ramp's climb runs down the street underneath
+it and `surfaceAt` always picks the flat one. `footFor` in
+`city/interstate.ts` has the full reasoning for `RAMP_OFFSET`; the other
+half - blocks cleared along a low ramp's corridor, same as for a boulevard -
+is in `generate.ts` next to where it happens.
 
-**The deck is 12 m up and the city is taller than that.** The interstate ran
-straight through buildings - measured, 197 of the 255 places it crossed a
-footprint had the building standing above the road surface, the worst by 105 m -
-because the deck sits at 12 m and the *median* building in Kestrel Bay is 21 m.
-`generate.ts` holds a building under the deck rather than sweeping the corridor
-clear, because an elevated road over a city ought to have something beneath it:
-`DECK_HEADROOM` is the gap it has to leave, and anything with too little room to
-fit is dropped and becomes parkland like any other empty ground. Note this is
-the *opposite* trade from the ramps, which do clear their corridor (#212) - a
-ramp is low enough that a building beside it is in the road, and the deck is
-high enough that one under it is scenery.
+**The deck is 12 m up and the city is taller than that.** Buildings are held
+under the interstate rather than swept out from under it - the opposite trade
+from a ramp's corridor (#212), because a ramp is low enough to be in the road
+and the deck is high enough to be scenery. `DECK_HEADROOM`'s doc comment in
+`constants.ts` has the measurement that forced this.
 
 **The freeway is built last, so it is the one thing that can end up in the
-bay** (issue #244). `addInterstate` runs after the network has been cut against
-the water, and for a long time it was never given the water at all: a ramp came
-down across the river and the tunnel's mouth was in the estuary. The rule is
-not "keep the freeway off the water" - the deck over the bay is a viaduct and
-the tunnel under the river is a tunnel, and both are wanted. It is that the
-*transition* between them may not be: the two places the freeway reaches street
-level are a ramp and a tunnel mouth, so a ramp whose descent crosses water is
-rejected while its junction is being picked (the side then chooses another
-junction rather than losing the ramp), and the tunnel's position is rolled
-until both mouths are on land - keeping the driest roll if a seed offers
-nothing clean, so this can only improve a city and never fail to build one.
+bay** (issue #244). The rule isn't "keep the freeway off the water" - the
+viaduct over the bay and the tunnel under the river are both wanted - it's
+that the *transition* between them, a ramp or a tunnel mouth, may not land on
+water. `addInterstate`'s doc comment in `city/interstate.ts` has the full
+reasoning.
 
 **Height is a real property of the network** (issue #85). Nodes have a `y`, so
 two roads at the same map position and different heights are two different
@@ -287,33 +228,19 @@ space**, because roads are split at every junction so the car ahead is almost
 always on a different road object.
 
 **The city keeps a clock, and the traffic reads it** (issue #180).
-`CityWorld.hour` is simulation, not decoration, because how busy a street is
-depends on it: `TRAFFIC_BY_HOUR` has two peaks and a long trough, so three in
-the morning on an industrial back street is a different drive from half past
-eight downtown. A day takes `DAY_MINUTES` of play and starts in the afternoon,
-which is why every screenshot in the repo is taken in daylight without having
-to say so. The renderer reads the *same* number: `scene/daylight.ts` is a pure
-function of the hour returning a palette - sun, fill, sky, haze, and how lit
-the lamps are - so the sky and the traffic cannot disagree about what time it
-is. Its 13:00 row is #75's shipped numbers to the letter, so midday looks like
-the game has always looked. Night is *moonlit* and not dark: the first version
-dropped the fill and the screenshot was a black rectangle with two tail lights
-in it. What actually says "night" in a street is not the lamp being bright but
-the ground under it being bright, which is `lamp-glow` - one additive quad per
-lamp, because four thousand point lights is a slideshow and four thousand
-instances of one quad is a draw call.
+`CityWorld.hour` drives `TRAFFIC_BY_HOUR`, and the renderer reads the exact
+same number - `scene/daylight.ts` is a pure function of the hour returning a
+palette, so the sky and the traffic never disagree about what time it is.
+Night is *moonlit* and not dark: what says "night" is the ground under a lamp
+being bright (`lamp-glow`), not the lamp itself. A day takes `DAY_MINUTES` and
+starts in the afternoon, which is why every screenshot in the repo needs no
+comment about lighting.
 
 **How much traffic depends on where you are** (issue #180). `TRAFFIC_DENSITY`
-scales the population by the district of the road under the car - downtown
-carries two and a half times what the industrial quarter does - and the count
-is trimmed as well as topped up, or the density is whatever the busiest place
-you drove through was. The district is *remembered* when there is no road
-under the car, because traffic that thinned out every time you cut across a car
-park would read as a bug. Spawns also turn down small roads
-(`TRAFFIC_LANE_BIAS`) so arterials carry more than the side streets crossing
-them - by rejection rather than a weighted pick, because a weighted pick
-measurably did nothing: candidates come from one grid cell and the roads in one
-cell are much of a muchness, so the retry has to land somewhere else entirely.
+scales population by the district under the car, remembered when there's no
+road under it so cutting across a car park doesn't thin traffic out.
+`TRAFFIC_DENSITY` and `TRAFFIC_LANE_BIAS`'s doc comments in `constants.ts`
+have the reasoning, including why lane bias rejects rather than weights.
 
 **A hit is one thing, wherever it lands** (issue #94). `impact.ts` is the whole
 damage model: closing speed along the line between the two cars, how square the
@@ -332,33 +259,25 @@ nearly as wide as a lane at this scale and a block across a two-lane street is
 a wall with no decision in it - which also leaves the side streets as the way
 round.
 
-**A pursuit has to be started by something** (issue #177). There is a `patrol`
-role on `Cop`: cars that cruise the network the way traffic does, kept around
-the player, taking no interest in you. `CityPolice.witness` is the whole
-trigger - it asks whether any unit can see you, through the same line of sight
-the pursuit uses, and opens the pursuit if one can. Speeding well over the
-road's own limit, ploughing into somebody, or bringing something down all go
-through it, and hitting the police goes through `rammed`, which needs no
-witness because they were there. A provocation nobody saw is free, which is
-what makes free roam a state rather than a countdown. The patrol that saw it is
-the car that turns in behind you: patrols convert to `chase` and spend the same
-budget `recruit` does, so the pursuit is made of cars that were already in the
-street. `startedBy` carries the reason so the radio can say it, and everything
-a pursuit reads - the bust timer, eyes-on, the budget - skips patrols.
+**A pursuit has to be started by something** (issue #177). Patrol cars cruise
+the network like traffic and take no interest in you until
+`CityPolice.witness` - the whole trigger - sees you do something, through the
+same line of sight the pursuit itself uses; a provocation nobody saw is free.
+The patrol that saw it converts to `chase` and spends the same budget
+`recruit` does, so a pursuit is always built from cars already on the street.
+`witness`'s doc comment in `citypolice.ts` has the reasoning.
 
-**A pursuit has to be able to end** (issue #178). Two things end one, and
-before this only one of them worked. A bust needs a unit within
-`CITY_BUST_DISTANCE` for `BUST_TIME`, and the clock now runs on how *slow* you
-are (`BUST_SPEED_FRAC`): flat out beside a cruiser is not a bust, stopped
-against a roadblock with one behind you is. Units that have caught a stopped
-car hold station instead of driving through it, which is what makes the timer
-reachable at all - measured, they got to within 0.0 m and kept going. A search
-sends units to sweep the area (`SEARCH_UNITS`), each checking its own spot in
-it, and the clock runs even while you sit inside it (`SEARCH_INSIDE_RATE`), so
-a pursuit always reaches an ending. The stake is the pursuit's own Rep:
-`RepLedger.forfeit` takes back what that pursuit paid and never reaches past
-where it started, because a bust that can re-lock a rival you already earned is
-progress going backwards. `npm run endings` is the probe for all of it.
+**A pursuit has to be able to end** (issue #178). A bust needs a unit within
+`CITY_BUST_DISTANCE` for `BUST_TIME`, gated on how *slow* you are rather than
+how close, and units holding a stopped car don't drive through it - both
+needed to make the timer reachable at all. A search that finds nobody still
+has to end one, so `SEARCH_UNITS` sweep the area and the clock runs even
+while you sit inside it; their doc comments in `constants.ts` have the
+reasoning and the measurement that forced it (100% of stopped pursuits
+deadlocked at heat 6 before this). `RepLedger.forfeit` takes back what that
+pursuit paid and never past where it started - a bust that can re-lock an
+already-earned rival is progress going backwards. `npm run endings` is the
+probe for all of it.
 
 **A pursuit can step off the road, and only just** (issue #220). Police are
 `GraphCar`s and the player deliberately is not, so a pursuit used to end at a
@@ -566,13 +485,10 @@ were, because a flat number makes it either useless or a button that deletes a
 pursuit.
 
 **Post-processing goes through the renderer, not `EffectComposer`** (issue
-#75). three.js r185 has its own effect pipeline: build the renderer with
-`outputBufferType: HalfFloatType` and hand it passes with `setEffects`. The
-legacy `EffectComposer` path applies tone mapping in its `OutputPass` *and*
-leaves the renderer applying it too, so the frame is ACES-mapped twice - a pale
-sky, dark buildings and no obvious cause. That cost an hour and is why the
-comment is there. `three/examples/jsm` ships inside the three.js package, so
-using its passes is not a new dependency; ADR-0004 already bought it.
+#75). The legacy composer double-maps tone mapping and costs an hour of
+head-scratching to find. `scene/cityview.ts`, where the renderer is built,
+has the comment; `three/examples/jsm` ships inside the three.js package
+already bought by ADR-0004.
 
 **The radio watches; it is not told** (issue #76). Every system that could
 raise a callout - the roadblocks, the spikes, the Enforcers -
@@ -651,15 +567,12 @@ right for a browser tab with no storage and wrong for a test runner: `src/test-s
 gives every test a fresh one, or the first test's Rep is the second test's
 starting total.
 
-**The service worker is generated, not written** (issue #98). Vite hashes every
-filename it emits, so a hand-written precache list is stale the first time
-anything changes: a small plugin in `vite.config.ts` lists the bundle plus the
-handful of stable files in `public/` and emits `sw.js` at build time. It runs
-`enforce: 'post'`, or `index.html` is not in the bundle yet and the one file
-every player asks for is the one not cached. `npm run pwa` serves `dist/`,
-cuts the network and checks the game still loads - including `?renderer=city`,
-because a navigation with a query string is not the same cache entry as `./`
-and that is the case that breaks.
+**The service worker is generated, not written** (issue #98). A plugin in
+`vite.config.ts` lists the build's own output and emits `sw.js`, because Vite
+hashes filenames and a hand-written list goes stale on the first change - its
+doc comment has the reasoning. `npm run pwa` serves `dist/`, cuts the network
+and checks the game still loads, including `?renderer=city`, whose query
+string is a different cache entry than `./`.
 
 ## Conventions
 
