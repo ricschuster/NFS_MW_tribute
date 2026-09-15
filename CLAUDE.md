@@ -242,13 +242,11 @@ road under it so cutting across a car park doesn't thin traffic out.
 `TRAFFIC_DENSITY` and `TRAFFIC_LANE_BIAS`'s doc comments in `constants.ts`
 have the reasoning, including why lane bias rejects rather than weights.
 
-**A hit is one thing, wherever it lands** (issue #94). `impact.ts` is the whole
-damage model: closing speed along the line between the two cars, how square the
-hit is, and whether the car has a wall behind it. It is a pure function of two
-cars and the buildings around them, so it can be asserted on in numbers rather
-than judged from a screenshot. A car that reaches full damage stops being a
-`GraphCar` and becomes a `Wreck` on `CityWorld` - lifted out of traffic and out
-of the pursuit entirely, so nothing in either has to remember to skip it.
+**A hit is one thing, wherever it lands** (issue #94). `impact.ts` is the
+whole damage model, a pure function of two cars and the buildings around
+them so it can be asserted on rather than judged from a screenshot. A car at
+full damage stops being a `GraphCar` and becomes a `Wreck` instead - both
+doc comments (`impact.ts`, and `Wreck` in `cityworld.ts`) have the reasoning.
 
 **A roadblock is a line, not a row of cars** (issue #59). A wall built out of
 circles has holes between the circles, and a barrier you slip through by
@@ -294,13 +292,10 @@ in the pursuit, because asking the grid directly counted a car five metres from
 the centre of a ten-metre street as off-road and sent the whole pursuit over the
 pavement after it.
 
-**Not every cop is chasing you** (issue #61). A `Cop` has a `role`: a `chase`
-unit is spawned behind you, navigates to close the distance and keeps right; an
-Enforcer is spawned *ahead* of you and steers to the lane you are actually in,
-so dodging it means committing late. They have their own budget in
-`HEAT_LEVELS` rather than a share of `maxCops`, because spending the chase
-budget on them would thin out the pursuit behind you every time one arrived in
-front of it.
+**Not every cop is chasing you** (issue #61). `Cop.role`'s doc comment in
+`citypolice.ts` has the reasoning for `chase` vs. `enforcer` vs. `patrol`;
+each role spends its own share of `HEAT_LEVELS`' budget rather than
+`maxCops`, so an Enforcer arriving in front never thins the chase behind you.
 
 **"Put something in front of them" is one question** (issues #59, #60).
 `CityPolice.aheadOfThem` finds a spot on a road far enough ahead to be seen,
@@ -358,17 +353,12 @@ on, because being dredged out of the bay does not mean they have lost you.
 
 **Rep is one currency and its own module** (issue #64). `rep.ts` holds the
 award table, the heat multiplier and the popup feed, and knows nothing about
-the renderer, storage or the pursuit: it is told what happened and at what heat
-and decides what that is worth. The table is a design document as much as it is
-code - it is the answer to "is a takedown worth more than getting away?" - and
-races, collectibles and rivals all pay into it without reaching into the car's
-physics. Everything is worth more while a pursuit is running, which is the
-whole shape of the economy.
+the renderer, storage or the pursuit. Its own doc comment has the reasoning,
+including why the table counts as a design document and not just code.
 
-**The ladder is a price, not a queue** (issue #91). Ten rivals, and each one
-takes the call at a Rep total rather than after you beat the one below.
-`CityWorld` gates a race start on `challengeReady`, so the thing that moves you
-up the ladder is everything you do rather than only the last race you won.
+**The ladder is a price, not a queue** (issue #91). `rivals.ts` has the
+reasoning for unlocking by Rep total rather than by beating the rival below;
+`CityWorld` gates a race start on `challengeReady`.
 
 **Collectibles are city data, and the collection is not** (issue #93).
 `city/collectibles.ts` places billboards and speed cameras against the finished
@@ -379,14 +369,9 @@ the half that gets saved. Ids are stable within a seed, which is what makes a
 save file mean anything.
 
 **A car is a set of multipliers, not a set of numbers** (issue #67). Every
-figure in `cars.ts` is written against the reference car, and
-`REFERENCE_TOP_SPEED` is the number the feel work was done against. That is
-what keeps three things honest at once across a change of car: the police run
-at fractions of *your* top speed, so they stay outrunnable in a slow car and
-catchable in a fast one; the speedometer divides by the reference, so a
-hypercar reads faster rather than reading 320 km/h like everything else; and
-`CityWorld.drive()` applies the profile once instead of multiplying it into
-eight expressions in the hot loop.
+figure in `cars.ts` is written against the reference car, which is what keeps
+the police, the speedometer and the feel work honest across a change of car.
+`cars.ts` and `maxSpeed`'s doc comment in `cityworld.ts` have the reasoning.
 
 **A race is checkpoints for you and a distance for the field** (issues #70,
 #71, #72). `CityRace` scores the player on gates passed in order, because a
@@ -447,12 +432,9 @@ and the direction keys are busy driving. Its "go to" branch sets a marker
 rather than teleporting: quick travel that moved the car would make the pursuit
 a formality and the city a menu of places rather than a place.
 
-**Parts are progress; a profile is content** (issue #68). `mods.ts` is the
-catalogue and `garage.ts` owns which car has earned what and what is bolted on,
-because two cars of the same model have the same profile and different parts -
-and the day the roster is edited nobody should lose an engine. Every mod is a
-*trade*: a part that is better at everything is an upgrade with a menu in front
-of it rather than a decision about what kind of car you want.
+**Parts are progress; a profile is content** (issue #68). `mods.ts` and
+`garage.ts` have the reasoning - why parts live on the garage rather than on
+`CarProfile`, and why every mod is a *trade* rather than a flat upgrade.
 
 **The map is where the game explains itself** (issue #181). A playtest produced
 five separate comments that were all one problem: every mechanic worked and
@@ -535,10 +517,9 @@ behaviour is frame-rate independent; rendering happens once per animation frame
 after physics catches up.
 
 **Nitrous buys the way out of a corner** (issue #105). It used to be mostly
-top speed, and since #82 made corners grip-limited that had nowhere to go: the
-charge bought overspeed that had to be scrubbed off before the next bend, and a
-lap with the boost was measurably *slower* than one without. The acceleration
-multiplier tapers with speed now, so it is worth most where the car is slowest.
+top speed, which had nowhere to go once #82 made corners grip-limited.
+`NITRO_TAPER`'s doc comment in `constants.ts` has the reasoning for why the
+acceleration multiplier tapers with speed instead.
 
 Tune feel via `constants.ts` first — most "how it drives / how it looks" knobs
 live there.
@@ -553,14 +534,10 @@ for a deterministic city. That split is the only reason the renderer rebuild
 was survivable, and it is why the track could be deleted without deleting the
 game.
 
-**A save is a format, not a place** (issue #101). `storage.ts` is a three-method
-`Store`; `progress.ts` encodes and decodes a versioned record through whichever
-one the host installed. `setStore` is the seam a desktop shell uses at startup
-to put a file in the user's app data directory behind it. The version lives
-*in the record* rather than in the key, because a versioned key orphans every
-older save where a versioned record can be read and brought forward - and every
-field is validated rather than trusted, so a save written before Rep existed is
-a save with no `rep` in it and not a corrupt one.
+**A save is a format, not a place** (issue #101). `storage.ts`'s `Store` and
+`progress.ts`'s versioned record have the reasoning - why the version lives
+in the record rather than the key, and why every field is validated rather
+than trusted.
 
 The in-memory fallback keeps a save for as long as the process lives, which is
 right for a browser tab with no storage and wrong for a test runner: `src/test-setup.ts`
