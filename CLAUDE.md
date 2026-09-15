@@ -182,15 +182,10 @@ lets boxes become models later by swapping a provider, and it is also why the
 sim can collide with buildings without a renderer in the room. Building
 footprints and heights are city *data* for exactly that reason.
 
-**Roads are segments, not axis-aligned lines** (issue #115). `CityRoad` used
-to carry an `axis` and every geometric test leant on it; boulevards bend, so it
-is gone. Direction comes from the two endpoints, and "is this point on this
-road" is a distance to a segment. The street grid is still generated
-axis-aligned - that is what keeps blocks rectangular - but nothing may assume
-it. Boulevards go through the same pipeline as everything else rather than
-being spliced into a finished graph: that was tried first and meant
-reimplementing water-clipping, junction-splitting and the connectivity repair,
-badly.
+**Roads are segments, not axis-aligned lines** (issue #115). `CityRoad`'s doc
+comment in `city/types.ts` has the reasoning for dropping the `axis` field;
+`boulevards.ts` has why curved roads go through the same pipeline as
+everything else rather than being spliced into a finished graph.
 
 **A ramp is two roads, and its foot is set aside on purpose** (issue #212).
 Laid straight at its junction, a ramp's climb runs down the street underneath
@@ -220,12 +215,11 @@ make possible, and it means anything asking "what is at this position" has to
 ask about a height too. Tunnels are the same mechanism with the sign flipped.
 
 **Traffic lives on the graph, not in the world** (issue #87). A traffic car is
-"which road, how far along, which way"; its position is derived from that each
-step. That is what makes it follow streets instead of drifting across them.
-Two things about it are easy to get wrong: it is kept *around the player*
-rather than spread over the map, and cars look for the one in front in **world
-space**, because roads are split at every junction so the car ahead is almost
-always on a different road object.
+"which road, how far along, which way", derived to a position each step.
+`citytraffic.ts`'s class doc and its `follow` method have the two easy ways to
+get this wrong: spreading cars over the whole map instead of keeping them
+around the player, and comparing distance along a road instead of in world
+space.
 
 **The city keeps a clock, and the traffic reads it** (issue #180).
 `CityWorld.hour` drives `TRAFFIC_BY_HOUR`, and the renderer reads the exact
@@ -311,29 +305,17 @@ swept by how far the car travels in a step rather than tested against its drawn
 depth, because at top speed the car covers more ground in one step than the
 strip is wide.
 
-**There is no helicopter** (issue #183, and #62 before it). One existed and was
-cut. It kept you *seen*, so the cooldown never started while it was up, and the
-answer to it was cover. Two things finished it: in a rendered frame it is about
-four pixels, so #62's own test - "a thing you can never see is a thing the HUD
-has to explain" - was failing, and it was airborne for more than half of a
-high-heat session holding `seenBy` unconditionally true. Cover went with it:
-`coveredAt` and the `COVER_*` constants existed only to answer it, and the
-decks and the tunnel are geometry again. Nothing in the game watches you from
-above; if cover should mean something, it needs a new thing to mean it
-against.
+**There is no helicopter** (issue #183, and #62 before it). One existed and
+was cut, along with cover - `constants.ts` carries a standalone note with the
+full reasoning for both. Nothing in the game watches you from above; if cover
+should mean something, it needs a new thing to mean it against.
 
-**Every map goes through `scene/mapping.ts`** (a playtest, after #182). A map
-seen from above with +z up the screen has **-x to the right**, because heading
-0 is +z and a driver facing +z has their right hand pointing at -x - the same
-right-handed cross product the steering uses. Both of the game's maps drew +x
-rightwards and were therefore mirrored east to west, and so did `npm run city`,
-so all three agreed with each other and disagreed with the windscreen. #182
-found the minimap drawing the road ahead of you behind you and fixed it by
-flipping the rotation, which made "ahead is up" true and left the mirror in
-place. `toMap` is the one conversion now, a heading-up map rotates by **plus**
-the heading, and `mapview.test.ts` settles it by projecting a point through an
-actual camera rather than by reasoning about it - which is the only way this
-has ever been got right.
+**Every map goes through `scene/mapping.ts`** (a playtest, after #182). One
+conversion (`toMap`) for the minimap, the full map and `npm run city`, because
+three maps that disagree about which way is up are worth less than any one of
+them. Its own doc comment has the arithmetic and the history; `mapview.test.ts`
+settles it by projecting a point through an actual camera rather than by
+reasoning about it.
 
 **The maps only show what you have found** (a playtest). `Collectibles.known`
 and `Garage.seen` fill in as you drive past things, and both are saved. A map
@@ -472,13 +454,11 @@ head-scratching to find. `scene/cityview.ts`, where the renderer is built,
 has the comment; `three/examples/jsm` ships inside the three.js package
 already bought by ADR-0004.
 
-**The radio watches; it is not told** (issue #76). Every system that could
-raise a callout - the roadblocks, the spikes, the Enforcers -
-already says what it is doing, so `Radio` compares a report of the pursuit
-against the last step and queues what changed. One place that can be wrong
-beats eight places that can forget to speak. The lines are a table because they
-are content: the tone of a pursuit is in them as much as it is in the heat
-curve. Subtitles and a synthesized squelch, never recorded speech.
+**The radio watches; it is not told** (issue #76). `radio.ts`'s doc comment
+has the reasoning for watching the pursuit rather than being told about it.
+The lines are a table because they are content: the tone of a pursuit is in
+them as much as it is in the heat curve. Subtitles and a synthesized squelch,
+never recorded speech.
 
 **`?renderer=city` is the only query string left** (ADR-0006). It flies a free
 camera over the city with no car in it, and `&view=aerial|downtown|bridge|street|overpass`
