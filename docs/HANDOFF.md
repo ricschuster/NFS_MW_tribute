@@ -7,6 +7,22 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   map rebuild) merged into `main` already; everything below describes `main`
   itself, not a branch waiting to land. `origin/feat/landmass`, the stale
   leftover branch this used to flag, is gone - deleted.
+- **Marrow Field, since:** the airfield went from dressed to playable in one
+  run of PRs. #312 added a prop editor on the road editor's pattern
+  (`npm run propexport`, the **Marrow Field Props** artifact, `npm run
+  propsync` into `city/marrowprops.ts`) and 108 hand-placed props: gates and
+  stacks as `Breakable`s, everything else a new `SetPiece` with a
+  height-banded solid footprint. #313 fixed a bug that surfaced then rather
+  than one it caused: collision measured the car's height from sea level, so
+  26 of 41 buildings and nearly every prop on raised ground were not solid.
+  #314 gave the car a real airborne state (#307 closed): jumps as shaped
+  ground, landings priced on how steeply they come down, and the Cargo Plane
+  Jump laid onto the east taxiway where a run-up can reach the ~150 km/h it
+  takes. #316 pays Rep for a landed jump, #317 made billboards placeable and
+  stacked four behind the Hangar Ramp, #315 added Off-road Tyres as a third
+  set in the tyre slot, and #318 put dirt on the field's access roads up to
+  their bridges, closing #295. #311 (an event on the field) is open and has
+  design questions in it, not just work.
 - **Since this file was last written:** [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md)
   names a pattern this rebuild kept paying for - roads, the land shape and the
   districts were each built procedurally, tuned for a while, then found wrong
@@ -110,9 +126,10 @@ ADR-0009 built. The gridded, buildinged city ADR-0004 through ADR-0006 built
 
 Underneath that, four things are real and new since the last time this file
 was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
-terrain field, roads are cut and filled into it (`cutfill.ts`, #252), and the
-car's own physics read real grade now - a slope changes drive and grip rather
-than being invisible tarmac. The **water is one sea with the land as holes in
+terrain field, and roads are cut and filled into it (`cutfill.ts`, #252). The
+car's physics do **not** read that grade yet, whatever an earlier version of
+this file said: `CityWorld` reads the ground's height and never its slope, so
+a hill drives like flat tarmac until #255 lands. The **water is one sea with the land as holes in
 it** (ADR-0008) rather than a bay-and-river pair drawn over a slab, which is
 what let the coastline stop being an edge-to-edge wall and become six separate
 bodies of land joined by routed river crossings. **Downtown, the harbour, the
