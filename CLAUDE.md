@@ -482,6 +482,10 @@ in - wait on `director.mode === 'chase'`), a cop pushed in with a position and
 a `t` is teleported onto its road on the next step unless the `t` matches, and
 the police sweep up roadblocks the instant the pursuit stops.
 
+**The map is finished one area at a time, downtown last** - the order,
+what "done" means for an area, and which are done is `docs/map-areas.md`; keep
+it current in the same PR as the work.
+
 **The map is being rebuilt, and the log is `docs/map-exploration.md`.** Read it
 with [ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) before
 touching the generator: the districts and the places are *authored data* in

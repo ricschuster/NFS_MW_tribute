@@ -405,6 +405,13 @@ all yet.
 
 ## Where the work is
 
+**Downtown goes last, and the checklist is [`docs/map-areas.md`](map-areas.md).**
+Decided 2026-09-18: every other area of the map is finished first, one at a
+time, the way Marrow Field was, and #268 comes last. That reverses the
+ordering the paragraphs below were written under - they call #268 the gate -
+so read them for what each issue is, and `map-areas.md` for the order, what
+"done" means for an area, and which areas are.
+
 **The map rebuild is not finished, and the gate moved.** #271 (districts
 describe streets; places are what streets go to) and #272 (the district plan
 as data) are both closed and done: `city/plan.ts` and `city/places.ts` are the
