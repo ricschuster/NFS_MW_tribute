@@ -41,7 +41,7 @@ import { furnitureFor } from './furniture';
 import { collectiblesFor } from './collectibles';
 import { parksFor } from './parks';
 import { findsFor } from './streetfinds';
-import { routesFor } from './routes';
+import { placedRoutes, routesFor } from './routes';
 import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
@@ -589,6 +589,8 @@ export function generateCity(seed: number): City {
   // survived the water-clipping and the connectivity repair, not of ones that
   // were laid out and then pruned.
   city.routes = routesFor(city);
+  // Then the ones a place asked for (#311), numbered after the search's own.
+  city.routes.push(...placedRoutes(city, city.routes.length));
   city.ambushes = ambushesFor(city);
   city.repairs = repairsFor(city);
   city.breakables = breakablesFor(rng, city);

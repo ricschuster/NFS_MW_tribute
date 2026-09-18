@@ -21,8 +21,14 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   takes. #316 pays Rep for a landed jump, #317 made billboards placeable and
   stacked four behind the Hangar Ramp, #315 added Off-road Tyres as a third
   set in the tyre slot, and #318 put dirt on the field's access roads up to
-  their bridges, closing #295. #311 (an event on the field) is open and has
-  design questions in it, not just work. Then #255: slope changes the drive
+  their bridges, closing #295. #311 then gave the field an event: the
+  Marrow Field Run, a 6 km speed run laid by hand through it
+  (`placedRoutes` in `city/routes.ts`), the first route the rebuilt city has
+  had - which is also what brought the speed-run tests back. Finding its
+  shape found two things about the map: the land past the south-west gate,
+  a sixth of the city's road, reaches everything else only through the
+  airfield; and a gate placed across a road used to pin the car behind its
+  own debris for seven seconds (`Wreck.debris` now lets you through once). Then #255: slope changes the drive
   (see "the ground has height" below). The lap-time baselines it invalidates
   (`docs/city-baseline.json`, the rival pace fractions) cannot be re-derived
   while the city has no routes, so they wait on #268 along with everything
