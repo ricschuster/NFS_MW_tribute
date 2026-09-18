@@ -80,18 +80,6 @@
   .kind .meta { display: flex; flex-direction: column; min-width: 0; }
   .kind .size { font: 10.5px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
   .kind .count { font: 500 11px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
-  .chip {
-    display: inline-block;
-    font: 600 9px var(--mono);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 1px 4px;
-    border-radius: 3px;
-    margin-left: 5px;
-    vertical-align: 1px;
-  }
-  .chip.live { background: #20402f; color: var(--save); }
-  .chip.later { background: #2d2640; color: #bfa8ff; }
   .field { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 6px 8px; margin-bottom: 6px; }
   .field label { font: 11px var(--mono); color: var(--dim); }
   input, select {
@@ -278,8 +266,8 @@
   // one if it does (absent). `flat` props are the ones a slope would show
   // under - a bunker on a hillside is #253's problem arriving early.
   const KINDS = [
-    { id: 'gate', group: 'Breakables', name: 'Security gate', w: 10, l: 1.2, shape: 'gate', color: '#ff8a4c', road: 'must', live: true },
-    { id: 'stack', group: 'Breakables', name: 'Pallet stack', w: 3, l: 2, shape: 'box', color: '#ff8a4c', road: 'ok', live: true, variants: ['pallets', 'drums'] },
+    { id: 'gate', group: 'Breakables', name: 'Security gate', w: 10, l: 1.2, shape: 'gate', color: '#ff8a4c', road: 'must' },
+    { id: 'stack', group: 'Breakables', name: 'Pallet stack', w: 3, l: 2, shape: 'box', color: '#ff8a4c', road: 'ok', variants: ['pallets', 'drums'] },
     { id: 'plane-belly', group: 'Planes', name: 'Cargo plane, on its belly', w: 32, l: 30, shape: 'plane', color: '#d6dcdf', flat: true },
     { id: 'plane-nose', group: 'Planes', name: 'Plane, nose-buried', w: 28, l: 16, shape: 'planeNose', color: '#d6dcdf' },
     { id: 'fuselage', group: 'Planes', name: 'Fuselage wreck', w: 4, l: 18, shape: 'fuselage', color: '#d6dcdf', flat: true },
@@ -294,7 +282,9 @@
     { id: 'shed', group: 'Structures', name: 'Derelict shed', w: 9, l: 14, shape: 'shed', color: '#9c7454', flat: true },
     { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
     { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
-    { id: 'jump', group: 'Needs #307', name: 'Jump', w: 8, l: 12, shape: 'jump', color: '#b99cff', road: 'ok', later: true, variants: ['built ramp', 'grass mound', 'lifted slab'] },
+    // Sized per variant, to match `JUMP_SHAPES` in `city/jumps.ts` (#307).
+    { id: 'jump', group: 'Jumps', name: 'Jump', w: 8, l: 12, shape: 'jump', color: '#b99cff', road: 'ok', variants: ['built ramp', 'grass mound', 'lifted slab'],
+      sizes: { 'built ramp': [8, 12], 'grass mound': [10, 12], 'lifted slab': [4, 3] } },
   ];
   const KIND = Object.fromEntries(KINDS.map((k) => [k.id, k]));
 
@@ -323,7 +313,11 @@
   const wx = (px) => B.maxX - (px - view.x) / view.scale;
   const wz = (py) => B.maxZ - (py - view.y) / view.scale;
 
-  const dims = (p) => ({ w: p.w ?? KIND[p.kind].w, l: KIND[p.kind].l });
+  const dims = (p) => {
+    const k = KIND[p.kind];
+    const sized = k.sizes && k.sizes[p.variant];
+    return sized ? { w: sized[0], l: sized[1] } : { w: p.w ?? k.w, l: k.l };
+  };
   const snapshot = () => JSON.stringify(props.map(clean));
   function clean(p) {
     const out = { id: p.id, kind: p.kind, x: Math.round(p.x * 10) / 10, z: Math.round(p.z * 10) / 10, angle: Math.round(p.angle * 1000) / 1000 };
@@ -416,8 +410,23 @@
       const reach = (Math.min(a.w, a.l) + Math.min(b.w, b.l)) / 2;
       if (Math.hypot(p.x - q.x, p.z - q.z) < reach * 0.8) { out.push(['info', `Overlaps a ${KIND[q.kind].name.toLowerCase()}`]); break; }
     }
-    if (k.later) out.push(['info', 'A marker for now: jumps need #307 first']);
-    if (!k.live && !k.later) out.push(['info', 'Not built yet - placed now, built when it is first placed']);
+    // Generated things the sim acts on where they stand: a prop on top of a
+    // repair shop or a speed camera changes what driving through it does.
+    for (const [x, z] of DATA.repairs) {
+      if (Math.hypot(p.x - x, p.z - z) < Math.max(dims(p).w, dims(p).l) / 2 + 10) { out.push(['warn', 'On top of a repair shop']); break; }
+    }
+    for (const c of DATA.collectibles) {
+      if (Math.hypot(p.x - c.at[0], p.z - c.at[1]) < Math.max(dims(p).w, dims(p).l) / 2 + 4) { out.push(['warn', `On top of a ${c.kind}`]); break; }
+    }
+    if (p.kind === 'jump') {
+      // The run-up is what decides how far a jump goes, and open ground caps
+      // the car at a quarter of its top speed.
+      const { l } = dims(p);
+      const back = l / 2 + 20;
+      const rx = p.x - Math.sin(p.angle) * back, rz = p.z - Math.cos(p.angle) * back;
+      const n = nearestRoad(rx, rz);
+      if (!n || n.d > n.r.width / 2) out.push(['warn', 'Run-up is on grass - the car arrives at 80 km/h at most']);
+    }
     return out;
   }
   const severity = (list) => (list.some((c) => c[0] === 'err') ? 'err' : list.some((c) => c[0] === 'warn') ? 'warn' : 'ok');
@@ -887,18 +896,15 @@
       b.className = 'kind';
       b.id = `k-${k.id}`;
       b.setAttribute('aria-pressed', 'false');
-      b.title = k.live ? 'Already exists in the game' : k.later ? 'A planning marker until #307 lands' : 'New - built once placed';
       const meta = document.createElement('span');
       meta.className = 'meta';
       const name = document.createElement('span');
       name.textContent = k.name;
-      if (k.live) name.insertAdjacentHTML('beforeend', '<span class="chip live">in game</span>');
-      if (k.later) name.insertAdjacentHTML('beforeend', '<span class="chip later">later</span>');
       const size = document.createElement('span');
       size.className = 'size';
       size.textContent = k.shape === 'circle' || k.shape === 'tower' || k.shape === 'tree' || k.shape === 'cone'
         ? `⌀ ${k.w} m`
-        : k.id === 'gate' ? 'spans its road' : `${k.w} × ${k.l} m`;
+        : k.id === 'gate' ? 'spans its road' : k.sizes ? 'ramp, mound or slab' : `${k.w} × ${k.l} m`;
       meta.append(name, size);
       const count = document.createElement('span');
       count.className = 'count';

@@ -500,6 +500,17 @@ so far was found that way rather than by the tests, which passed throughout.
 behaviour is frame-rate independent; rendering happens once per animation frame
 after physics catches up.
 
+**A jump is ground with a shape, and the air is its own state** (issue
+#307). `city/jumps.ts` holds each kind's profile, and the sim rides it exactly
+rather than easing onto it the way it does a deck - at speed the car is on a
+twelve-metre ramp for a fifth of a second. Leaving the lip sets
+`CityWorld.airborne`: no steering, no throttle, gravity only, until the car
+comes down on the ground, a road, a deck or another jump. A landing is priced
+on how *steeply* it comes down (`LAND_SOFT`), not how far it flew, because the
+game's gravity is over twice the real thing. Set pieces are solid in height
+bands (`SET_PIECE_SOLIDS`), which is what lets a car drive under the cargo
+plane's wing and still catch it on a jump that comes up short.
+
 **Nitrous buys the way out of a corner** (issue #105). It used to be mostly
 top speed, which had nowhere to go once #82 made corners grip-limited.
 `NITRO_TAPER`'s doc comment in `constants.ts` has the reasoning for why the

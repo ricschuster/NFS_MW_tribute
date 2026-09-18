@@ -2,7 +2,7 @@
 // Place props in the Marrow Field Props editor (`npm run propexport`), save,
 // read the save back into docs/props-edited.json, and run the sync again.
 //
-// Seed 0x4b657374, saved 2026-09-18T16:16:10.516Z.
+// Seed 0x4b657374, saved 2026-09-18T16:54:39.153Z.
 import type { AuthoredProp } from './types';
 
 /** Marrow Field's set dressing, in metres, as placed in the editor (#295). */
@@ -28,8 +28,8 @@ export const MARROW_PROPS: AuthoredProp[] = [
   { kind: 'cone', x: -1243.4, z: 2059.5, angle: 0.384 },
   { kind: 'cone', x: -1241.2, z: 2065.1, angle: 0.384 },
   { kind: 'cone', x: -1238.9, z: 2070.7, angle: 0.384 },
-  { kind: 'plane-belly', x: -923.4, z: 2456.6, angle: 0.524, note: 'Cargo Plane Jump - the plane' },
-  { kind: 'jump', x: -942.1, z: 2410.2, angle: 0.384, variant: 'grass mound', note: 'Cargo Plane Jump - the mound' },
+  { kind: 'plane-belly', x: -933, z: 2318.1, angle: 1.955, note: 'Cargo Plane Jump - the plane, across the taxiway' },
+  { kind: 'jump', x: -947.2, z: 2282.8, angle: 0.384, variant: 'grass mound', note: 'Cargo Plane Jump - the mound' },
   { kind: 'plane-nose', x: -851.4, z: 2869.7, angle: -0.052, note: 'Nose-buried at the north end' },
   { kind: 'fuselage', x: -1455.4, z: 1377.3, angle: 0.593 },
   { kind: 'plane-nose', x: -1203.6, z: 1426.6, angle: 0.995 },

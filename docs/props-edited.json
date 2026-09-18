@@ -1,7 +1,7 @@
 {
  "seed": "0x4b657374",
  "place": "Marrow Field",
- "savedAt": "2026-09-18T16:16:10.516Z",
+ "savedAt": "2026-09-18T16:54:39.153Z",
  "props": [
   {
    "angle": -0.785,
@@ -167,12 +167,12 @@
    "z": 2070.7
   },
   {
-   "angle": 0.524,
+   "angle": 1.955,
    "id": "seedl",
    "kind": "plane-belly",
-   "note": "Cargo Plane Jump - the plane",
-   "x": -923.4,
-   "z": 2456.6
+   "note": "Cargo Plane Jump - the plane, across the taxiway",
+   "x": -933,
+   "z": 2318.1
   },
   {
    "angle": 0.384,
@@ -180,8 +180,8 @@
    "kind": "jump",
    "note": "Cargo Plane Jump - the mound",
    "variant": "grass mound",
-   "x": -942.1,
-   "z": 2410.2
+   "x": -947.2,
+   "z": 2282.8
   },
   {
    "angle": -0.052,

@@ -558,6 +558,7 @@ export function generateCity(seed: number): City {
     repairs: [],
     breakables: [],
     setPieces: [],
+    jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
@@ -596,6 +597,7 @@ export function generateCity(seed: number): City {
   if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
     const authored = airfieldProps(terrain, city.breakables.length);
     city.setPieces = authored.pieces;
+    city.jumps = authored.jumps;
     city.breakables.push(...authored.breakables);
   }
   return city;

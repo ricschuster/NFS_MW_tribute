@@ -1116,6 +1116,12 @@ export const GRADE_RUN = m(430);
 export const CITY_GRID_CELL = m(120);
 /** The car's collision radius, from its centre. */
 export const CAR_RADIUS = m(2.2);
+/**
+ * How tall the car is, from its wheels. Only matters for what it can pass
+ * under or over (#307): a wing four and a half metres up is clear, a
+ * fuselage is not.
+ */
+export const CAR_HEIGHT = m(1.5);
 /** Speed kept after hitting a building, as a fraction. */
 export const HIT_SPEED_KEPT = 0.25;
 /** How quickly the car settles onto the height of the road it is on. */
@@ -1177,6 +1183,26 @@ export const DUNK_DEPTH = m(2.4);
  * far less than the twelve-metre deck a fall is meant to be about.
  */
 export const FALL_CLEARANCE = m(1.5);
+
+/**
+ * Landing a jump (#307).
+ *
+ * Priced on how *steeply* the car comes down - its vertical speed squared
+ * over its whole speed - rather than on how fast it falls. The game's gravity
+ * is over twice the real thing, so a jump taken quickly comes down hard in
+ * absolute terms however well it is flown; what separates a good landing
+ * from a bad one is the angle. A fast, flat landing carries on with
+ * `LAND_SPEED_KEPT` of its speed; rolling off something tall and dropping
+ * nearly straight down is what `DAMAGE_FALL` is for, reached in full at
+ * `LAND_HARD`.
+ *
+ * Measured on Marrow Field's jumps: every one lands soft from 40 to 240
+ * km/h on flat ground, and a car dropped from a standstill off four metres
+ * does not.
+ */
+export const LAND_SOFT = m(11);
+export const LAND_HARD = m(22);
+export const LAND_SPEED_KEPT = 0.94;
 
 /**
  * Parkland on the land the street grid never claimed (#185).
