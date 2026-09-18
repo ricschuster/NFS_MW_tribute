@@ -45,6 +45,7 @@ import { routesFor } from './routes';
 import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
+import { airfieldProps } from './setpieces';
 import { addInterstate } from './interstate';
 import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
@@ -556,6 +557,7 @@ export function generateCity(seed: number): City {
     ambushes: [],
     repairs: [],
     breakables: [],
+    setPieces: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
@@ -587,6 +589,15 @@ export function generateCity(seed: number): City {
   city.ambushes = ambushesFor(city);
   city.repairs = repairsFor(city);
   city.breakables = breakablesFor(rng, city);
+  // Marrow Field's hand-placed props (#295), last and off no stream at all:
+  // they are data, so placing them draws nothing from `rng` and cannot move
+  // anything generated before them. Their gates and stacks number on from
+  // the generated breakables, which keeps those ids where they were.
+  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
+    const authored = airfieldProps(terrain, city.breakables.length);
+    city.setPieces = authored.pieces;
+    city.breakables.push(...authored.breakables);
+  }
   return city;
 }
 

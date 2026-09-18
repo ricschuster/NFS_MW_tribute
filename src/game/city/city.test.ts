@@ -1356,7 +1356,9 @@ describe('open land', () => {
     for (const find of city.finds) {
       expect(parks.some((p) => inside(p.bounds, find.at.x, find.at.z))).toBe(false);
     }
-    for (const thing of city.breakables) {
+    // Hand-placed ones are exempt (#295): Marrow Field is parkland to the
+    // generator, and a gate across its entrance was put there on purpose.
+    for (const thing of city.breakables.filter((b) => !b.placed)) {
       expect(parks.some((p) => inside(p.bounds, thing.at.x, thing.at.z))).toBe(false);
     }
   });

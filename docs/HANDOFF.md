@@ -239,10 +239,11 @@ src/game/
                   and breakables build the instanced geometry; worlduv, facades,
                   surfaces, roofs, carshape and daylight are the art pass (#11)
 tools/            citylap + citydriver (the reference driver), citymap,
-                  cityshot, pwacheck, icons, plan, sketch, and two editor
+                  cityshot, pwacheck, icons, plan, sketch, and three editor
                   chains: roadexport/roaddiff/roadcheck/roadfix/roadsync for
                   the surface network, freewayexport/freewaysync for the
-                  interstate loop
+                  interstate loop, propexport/propsync for Marrow Field's
+                  hand-placed props
 ```
 
 **The city is data.** `city/` turns a seed into junctions, roads, blocks,
@@ -288,6 +289,8 @@ npm run plan       # does the authored plan still fit the ground the generator
 npm run roadexport # write the road network + relief + plan for the road editor
 npm run freewayexport # write the freeway loop + tunnel anchors for its editor
 npm run freewaysync   # write src/game/city/freeway.ts from the edited loop
+npm run propexport # write the Marrow Field prop editor page, field inlined
+npm run propsync   # write src/game/city/marrowprops.ts from the placed props
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic, then every rival on the
                    # ladder, clean and boosted; all of it vs. its baseline

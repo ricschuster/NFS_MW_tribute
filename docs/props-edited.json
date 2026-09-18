@@ -1,0 +1,789 @@
+{
+ "seed": "0x4b657374",
+ "place": "Marrow Field",
+ "savedAt": "2026-09-18T16:16:10.516Z",
+ "props": [
+  {
+   "angle": -0.785,
+   "id": "seed0",
+   "kind": "gate",
+   "note": "Main gate",
+   "w": 21.8,
+   "x": -1089.3,
+   "z": 1839.3
+  },
+  {
+   "angle": -1.571,
+   "id": "seed1",
+   "kind": "gate",
+   "note": "South-east gate",
+   "w": 21.8,
+   "x": -1327.7,
+   "z": 1250
+  },
+  {
+   "angle": -1.713,
+   "id": "seed2",
+   "kind": "gate",
+   "note": "South-west gate",
+   "w": 21.8,
+   "x": -1587.5,
+   "z": 1248.5
+  },
+  {
+   "angle": 1.955,
+   "id": "seed3",
+   "kind": "fuselage-hung",
+   "note": "Hanging fuselage - the landmark at the main gate",
+   "x": -1042.4,
+   "z": 1879.1
+  },
+  {
+   "angle": 0.384,
+   "id": "seed4",
+   "kind": "jump",
+   "note": "Hangar Ramp - stack billboards behind the landing",
+   "variant": "built ramp",
+   "x": -1254.6,
+   "z": 1986.4
+  },
+  {
+   "angle": 3.875,
+   "id": "seed5",
+   "kind": "helicopter",
+   "x": -1263.2,
+   "z": 2200.2
+  },
+  {
+   "angle": 0.384,
+   "id": "seed6",
+   "kind": "water-tower",
+   "note": "Water tower - seen from across the field",
+   "x": -1384.5,
+   "z": 2006.5
+  },
+  {
+   "angle": 0.384,
+   "id": "seed7",
+   "kind": "silo",
+   "x": -1281.4,
+   "z": 2288.5
+  },
+  {
+   "angle": 0.384,
+   "id": "seed8",
+   "kind": "silo",
+   "x": -1293.5,
+   "z": 2293.3
+  },
+  {
+   "angle": 1.955,
+   "id": "seed9",
+   "kind": "shed",
+   "note": "Long shed beside the silos",
+   "x": -1249,
+   "z": 2275.3
+  },
+  {
+   "angle": 0.646,
+   "id": "seeda",
+   "kind": "shed",
+   "x": -1355,
+   "z": 1946.1
+  },
+  {
+   "angle": 1.955,
+   "id": "seedb",
+   "kind": "stack",
+   "variant": "drums",
+   "x": -1249.6,
+   "z": 2108.4
+  },
+  {
+   "angle": 1.78,
+   "id": "seedc",
+   "kind": "stack",
+   "variant": "drums",
+   "x": -1245.8,
+   "z": 2123.1
+  },
+  {
+   "angle": 0.384,
+   "id": "seedd",
+   "kind": "stack",
+   "variant": "pallets",
+   "x": -1273.9,
+   "z": 2042.7
+  },
+  {
+   "angle": 0.733,
+   "id": "seede",
+   "kind": "jump",
+   "variant": "lifted slab",
+   "x": -1225.3,
+   "z": 2141.7
+  },
+  {
+   "angle": 0.209,
+   "id": "seedf",
+   "kind": "jump",
+   "variant": "lifted slab",
+   "x": -1324.6,
+   "z": 1896
+  },
+  {
+   "angle": 0.384,
+   "id": "seedg",
+   "kind": "cone",
+   "x": -1247.9,
+   "z": 2048.4
+  },
+  {
+   "angle": 0.384,
+   "id": "seedh",
+   "kind": "cone",
+   "x": -1245.7,
+   "z": 2054
+  },
+  {
+   "angle": 0.384,
+   "id": "seedi",
+   "kind": "cone",
+   "x": -1243.4,
+   "z": 2059.5
+  },
+  {
+   "angle": 0.384,
+   "id": "seedj",
+   "kind": "cone",
+   "x": -1241.2,
+   "z": 2065.1
+  },
+  {
+   "angle": 0.384,
+   "id": "seedk",
+   "kind": "cone",
+   "x": -1238.9,
+   "z": 2070.7
+  },
+  {
+   "angle": 0.524,
+   "id": "seedl",
+   "kind": "plane-belly",
+   "note": "Cargo Plane Jump - the plane",
+   "x": -923.4,
+   "z": 2456.6
+  },
+  {
+   "angle": 0.384,
+   "id": "seedm",
+   "kind": "jump",
+   "note": "Cargo Plane Jump - the mound",
+   "variant": "grass mound",
+   "x": -942.1,
+   "z": 2410.2
+  },
+  {
+   "angle": -0.052,
+   "id": "seedn",
+   "kind": "plane-nose",
+   "note": "Nose-buried at the north end",
+   "x": -851.4,
+   "z": 2869.7
+  },
+  {
+   "angle": 0.593,
+   "id": "seedo",
+   "kind": "fuselage",
+   "x": -1455.4,
+   "z": 1377.3
+  },
+  {
+   "angle": 0.995,
+   "id": "seedp",
+   "kind": "plane-nose",
+   "x": -1203.6,
+   "z": 1426.6
+  },
+  {
+   "angle": 0.035,
+   "id": "seedq",
+   "kind": "plane-nose",
+   "x": -1141,
+   "z": 1541.5
+  },
+  {
+   "angle": 1.606,
+   "id": "seedr",
+   "kind": "fuselage",
+   "x": -1209.5,
+   "z": 1331.9
+  },
+  {
+   "angle": -0.314,
+   "id": "seeds",
+   "kind": "fuselage",
+   "x": -1143.2,
+   "z": 1456.1
+  },
+  {
+   "angle": 2.129,
+   "id": "seedt",
+   "kind": "fuselage",
+   "x": -1138,
+   "z": 1615.7
+  },
+  {
+   "angle": -0.663,
+   "id": "seedu",
+   "kind": "crane",
+   "note": "Scrapyard crane",
+   "x": -1081.3,
+   "z": 1636
+  },
+  {
+   "angle": 0.908,
+   "id": "seedv",
+   "kind": "stack",
+   "variant": "drums",
+   "x": -1246.4,
+   "z": 1400.7
+  },
+  {
+   "angle": 0.384,
+   "id": "seedw",
+   "kind": "stack",
+   "variant": "pallets",
+   "x": -1197.7,
+   "z": 1521.2
+  },
+  {
+   "angle": 0.384,
+   "id": "seedx",
+   "kind": "shed",
+   "note": "Maintenance shed",
+   "x": -926.4,
+   "z": 2112.7
+  },
+  {
+   "angle": 1.955,
+   "id": "seedy",
+   "kind": "stack",
+   "variant": "drums",
+   "x": -937.5,
+   "z": 2138.7
+  },
+  {
+   "angle": 0.384,
+   "id": "seedz",
+   "kind": "bunker",
+   "x": -1664.2,
+   "z": 1218.3
+  },
+  {
+   "angle": 0.384,
+   "id": "seed10",
+   "kind": "bunker",
+   "x": -1667.4,
+   "z": 1279.6
+  },
+  {
+   "angle": 1.955,
+   "id": "seed11",
+   "kind": "blast-wall",
+   "x": -1637.1,
+   "z": 1181.1
+  },
+  {
+   "angle": 1.955,
+   "id": "seed12",
+   "kind": "blast-wall",
+   "x": -1634.5,
+   "z": 1187.6
+  },
+  {
+   "angle": 1.955,
+   "id": "seed13",
+   "kind": "blast-wall",
+   "x": -1631.9,
+   "z": 1194
+  },
+  {
+   "angle": 1.955,
+   "id": "seed14",
+   "kind": "blast-wall",
+   "x": -1629.3,
+   "z": 1200.5
+  },
+  {
+   "angle": 0.384,
+   "id": "seed15",
+   "kind": "mast",
+   "note": "Lattice mast",
+   "x": -1182.4,
+   "z": 2733.8
+  },
+  {
+   "angle": 0.384,
+   "id": "seed16",
+   "kind": "mast",
+   "x": -1646.5,
+   "z": 1691.8
+  },
+  {
+   "angle": 1.955,
+   "id": "seed17",
+   "kind": "cone",
+   "x": -1466,
+   "z": 1252.2
+  },
+  {
+   "angle": 1.955,
+   "id": "seed18",
+   "kind": "cone",
+   "x": -1462.3,
+   "z": 1250.7
+  },
+  {
+   "angle": 1.955,
+   "id": "seed19",
+   "kind": "cone",
+   "x": -1458.6,
+   "z": 1249.2
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1a",
+   "kind": "cone",
+   "x": -1454.9,
+   "z": 1247.7
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1b",
+   "kind": "cone",
+   "x": -1451.2,
+   "z": 1246.2
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1c",
+   "kind": "cone",
+   "x": -829.3,
+   "z": 2828.4
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1d",
+   "kind": "cone",
+   "x": -825.6,
+   "z": 2826.9
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1e",
+   "kind": "cone",
+   "x": -821.9,
+   "z": 2825.4
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1f",
+   "kind": "cone",
+   "x": -818.1,
+   "z": 2823.9
+  },
+  {
+   "angle": 1.955,
+   "id": "seed1g",
+   "kind": "cone",
+   "x": -814.4,
+   "z": 2822.4
+  },
+  {
+   "angle": 3.791,
+   "id": "seed1h",
+   "kind": "tree",
+   "x": -1709.1,
+   "z": 1681.2
+  },
+  {
+   "angle": 3.709,
+   "id": "seed1i",
+   "kind": "tree",
+   "x": -1674.6,
+   "z": 1696.8
+  },
+  {
+   "angle": 0.852,
+   "id": "seed1j",
+   "kind": "tree",
+   "x": -1661.9,
+   "z": 1682.8
+  },
+  {
+   "angle": 1.599,
+   "id": "seed1k",
+   "kind": "tree",
+   "x": -1704.4,
+   "z": 1709.6
+  },
+  {
+   "angle": 2.797,
+   "id": "seed1l",
+   "kind": "tree",
+   "x": -1714.3,
+   "z": 1713.2
+  },
+  {
+   "angle": 4.617,
+   "id": "seed1m",
+   "kind": "tree",
+   "x": -1738.7,
+   "z": 1650.4
+  },
+  {
+   "angle": 5.041,
+   "id": "seed1n",
+   "kind": "tree",
+   "x": -1667.4,
+   "z": 1689.1
+  },
+  {
+   "angle": 3.5,
+   "id": "seed1o",
+   "kind": "tree",
+   "x": -1702.4,
+   "z": 1638.2
+  },
+  {
+   "angle": 0.817,
+   "id": "seed1p",
+   "kind": "tree",
+   "x": -1680.9,
+   "z": 1640.2
+  },
+  {
+   "angle": 0.555,
+   "id": "seed1q",
+   "kind": "tree",
+   "x": -1557,
+   "z": 1872.6
+  },
+  {
+   "angle": 5.808,
+   "id": "seed1r",
+   "kind": "tree",
+   "x": -1520.8,
+   "z": 1851.5
+  },
+  {
+   "angle": 5.049,
+   "id": "seed1s",
+   "kind": "tree",
+   "x": -1511.9,
+   "z": 1855.5
+  },
+  {
+   "angle": 1.328,
+   "id": "seed1t",
+   "kind": "tree",
+   "x": -1564.6,
+   "z": 1817.8
+  },
+  {
+   "angle": 2.265,
+   "id": "seed1u",
+   "kind": "tree",
+   "x": -1545.4,
+   "z": 1857
+  },
+  {
+   "angle": 5.878,
+   "id": "seed1v",
+   "kind": "tree",
+   "x": -1546.5,
+   "z": 1867.4
+  },
+  {
+   "angle": 3.287,
+   "id": "seed1w",
+   "kind": "tree",
+   "x": -1559.9,
+   "z": 1855.3
+  },
+  {
+   "angle": 2.258,
+   "id": "seed1x",
+   "kind": "tree",
+   "x": -1318.7,
+   "z": 2492.4
+  },
+  {
+   "angle": 2.604,
+   "id": "seed1y",
+   "kind": "tree",
+   "x": -1299.7,
+   "z": 2504.8
+  },
+  {
+   "angle": 2.894,
+   "id": "seed1z",
+   "kind": "tree",
+   "x": -1303.8,
+   "z": 2497.2
+  },
+  {
+   "angle": 0.926,
+   "id": "seed20",
+   "kind": "tree",
+   "x": -1330.2,
+   "z": 2497.1
+  },
+  {
+   "angle": 3.241,
+   "id": "seed21",
+   "kind": "tree",
+   "x": -1311.1,
+   "z": 2490.7
+  },
+  {
+   "angle": 0.884,
+   "id": "seed22",
+   "kind": "tree",
+   "x": -1323.6,
+   "z": 2473.4
+  },
+  {
+   "angle": 1.142,
+   "id": "seed23",
+   "kind": "tree",
+   "x": -1327.3,
+   "z": 2510.8
+  },
+  {
+   "angle": 4.264,
+   "id": "seed24",
+   "kind": "tree",
+   "x": -1293.2,
+   "z": 2505.4
+  },
+  {
+   "angle": 3.403,
+   "id": "seed25",
+   "kind": "tree",
+   "x": -1320.1,
+   "z": 2520
+  },
+  {
+   "angle": 4.658,
+   "id": "seed26",
+   "kind": "tree",
+   "x": -1169.7,
+   "z": 2580.4
+  },
+  {
+   "angle": 4.263,
+   "id": "seed27",
+   "kind": "tree",
+   "x": -1202.5,
+   "z": 2581.4
+  },
+  {
+   "angle": 5.266,
+   "id": "seed28",
+   "kind": "tree",
+   "x": -1202.7,
+   "z": 2564
+  },
+  {
+   "angle": 2.691,
+   "id": "seed29",
+   "kind": "tree",
+   "x": -1172.9,
+   "z": 2609.8
+  },
+  {
+   "angle": 2.221,
+   "id": "seed2a",
+   "kind": "tree",
+   "x": -1191.2,
+   "z": 2597.8
+  },
+  {
+   "angle": 4.121,
+   "id": "seed2b",
+   "kind": "tree",
+   "x": -1180.6,
+   "z": 2618.8
+  },
+  {
+   "angle": 4.701,
+   "id": "seed2c",
+   "kind": "tree",
+   "x": -1724,
+   "z": 1323
+  },
+  {
+   "angle": 5.583,
+   "id": "seed2d",
+   "kind": "tree",
+   "x": -1759.3,
+   "z": 1366.7
+  },
+  {
+   "angle": 3.244,
+   "id": "seed2e",
+   "kind": "tree",
+   "x": -1760.4,
+   "z": 1355.1
+  },
+  {
+   "angle": 0.391,
+   "id": "seed2f",
+   "kind": "tree",
+   "x": -1738.4,
+   "z": 1382.9
+  },
+  {
+   "angle": 6.608,
+   "id": "seed2g",
+   "kind": "tree",
+   "x": -1765.9,
+   "z": 1367.9
+  },
+  {
+   "angle": 4.109,
+   "id": "seed2h",
+   "kind": "tree",
+   "x": -1737.7,
+   "z": 1345.1
+  },
+  {
+   "angle": 6.507,
+   "id": "seed2i",
+   "kind": "tree",
+   "x": -1278.4,
+   "z": 1120.2
+  },
+  {
+   "angle": 3.497,
+   "id": "seed2j",
+   "kind": "tree",
+   "x": -1327.3,
+   "z": 1091.4
+  },
+  {
+   "angle": 3.567,
+   "id": "seed2k",
+   "kind": "tree",
+   "x": -1287.3,
+   "z": 1085.7
+  },
+  {
+   "angle": 3.551,
+   "id": "seed2l",
+   "kind": "tree",
+   "x": -1271.4,
+   "z": 1121.6
+  },
+  {
+   "angle": 4.055,
+   "id": "seed2m",
+   "kind": "tree",
+   "x": -1299.4,
+   "z": 1129.9
+  },
+  {
+   "angle": 2.505,
+   "id": "seed2n",
+   "kind": "tree",
+   "x": -1027.9,
+   "z": 2776.2
+  },
+  {
+   "angle": 5.877,
+   "id": "seed2o",
+   "kind": "tree",
+   "x": -1003.4,
+   "z": 2755.4
+  },
+  {
+   "angle": 2.524,
+   "id": "seed2p",
+   "kind": "tree",
+   "x": -1060.5,
+   "z": 2735.9
+  },
+  {
+   "angle": 4.541,
+   "id": "seed2q",
+   "kind": "tree",
+   "x": -1071.1,
+   "z": 2730.3
+  },
+  {
+   "angle": 3.855,
+   "id": "seed2r",
+   "kind": "tree",
+   "x": -1044.6,
+   "z": 2777.4
+  },
+  {
+   "angle": 4.162,
+   "id": "seed2s",
+   "kind": "tree",
+   "x": -1061.7,
+   "z": 2744.3
+  },
+  {
+   "angle": 6.113,
+   "id": "seed2t",
+   "kind": "tree",
+   "x": -1434.1,
+   "z": 2112.9
+  },
+  {
+   "angle": 1.132,
+   "id": "seed2u",
+   "kind": "tree",
+   "x": -1459.9,
+   "z": 2093.2
+  },
+  {
+   "angle": 2.344,
+   "id": "seed2v",
+   "kind": "tree",
+   "x": -1467.2,
+   "z": 2139.9
+  },
+  {
+   "angle": 5.691,
+   "id": "seed2w",
+   "kind": "tree",
+   "x": -1485.1,
+   "z": 2137.3
+  },
+  {
+   "angle": 4.229,
+   "id": "seed2x",
+   "kind": "tree",
+   "x": -1483.3,
+   "z": 2111
+  },
+  {
+   "angle": 6.24,
+   "id": "seed2y",
+   "kind": "tree",
+   "x": -1462,
+   "z": 2111.3
+  },
+  {
+   "angle": 0.851,
+   "id": "seed2z",
+   "kind": "tree",
+   "x": -1434.9,
+   "z": 2098.6
+  }
+ ]
+}

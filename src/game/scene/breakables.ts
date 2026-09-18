@@ -50,7 +50,9 @@ export class CityBreakables {
     for (let i = 0; i < items.length; i++) {
       dummy.position.set(items[i].at.x, items[i].y + base + height / 2, items[i].at.z);
       dummy.rotation.set(0, items[i].angle, 0);
-      dummy.scale.setScalar(1);
+      // Across whatever it was sized to: a gate placed by hand spans the road
+      // it was snapped across (#295), which is wider than a yard's mouth.
+      dummy.scale.set(name === 'gates' ? (items[i].half * 2) / width : 1, 1, 1);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     }

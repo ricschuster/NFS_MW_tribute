@@ -342,6 +342,13 @@ export interface Breakable {
   angle: number;
   /** Half its width, so the sim knows what "through it" means. */
   half: number;
+  /**
+   * Placed by hand in the prop editor (#295) rather than picked by
+   * `breakablesFor`. The generator's rules for where one goes - spaced out, by
+   * a road, off parkland - are for its own picks; a stack of drums in a
+   * scrapyard is a judgement, and the editor checks those instead.
+   */
+  placed?: boolean;
 }
 
 /** A city block: the land between the roads, for #84 to put buildings on. */
@@ -374,6 +381,61 @@ export interface Superblock {
   density: number;
 }
 
+/**
+ * A prop placed by hand in the Marrow Field Props editor (#295), as the editor
+ * saves it: metres, and a heading in the generator's own convention - the
+ * prop's length runs along (sin angle, cos angle) and its span across that.
+ * `w` overrides the kind's span, which only a gate uses, to reach across the
+ * road it was snapped to.
+ */
+export interface AuthoredProp {
+  kind: AuthoredPropKind;
+  x: number;
+  z: number;
+  angle: number;
+  w?: number;
+  variant?: string;
+  note?: string;
+}
+
+/**
+ * Everything the prop editor can place. Gates and stacks become `Breakable`s,
+ * which already exist; a jump is a marker until #307 gives the car an airborne
+ * state; the rest are set pieces.
+ */
+export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump';
+
+/** The set pieces: things that stand somewhere and are driven round, not through. */
+export type SetPieceKind =
+  | 'plane-belly'
+  | 'plane-nose'
+  | 'fuselage'
+  | 'fuselage-hung'
+  | 'helicopter'
+  | 'silo'
+  | 'water-tower'
+  | 'crane'
+  | 'mast'
+  | 'bunker'
+  | 'blast-wall'
+  | 'shed'
+  | 'cone'
+  | 'tree';
+
+/**
+ * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
+ * hand rather than generated, and turned to any angle, which is why it is not
+ * a `Building` - a building's footprint is an axis-aligned `Rect` (#268).
+ */
+export interface SetPiece {
+  kind: SetPieceKind;
+  at: Vec2;
+  /** The ground under it. */
+  y: number;
+  /** Heading, as `AuthoredProp.angle`. */
+  angle: number;
+}
+
 /** A generated city. A pure function of `seed`, and the same one every time. */
 export interface City {
   seed: number;
@@ -394,4 +456,6 @@ export interface City {
   ambushes: AmbushSpot[];
   repairs: RepairShop[];
   breakables: Breakable[];
+  /** Hand-placed set dressing (#295). */
+  setPieces: SetPiece[];
 }
