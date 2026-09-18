@@ -566,7 +566,12 @@ export class CityView {
     }
 
     this.car.position.set(world.x, world.y, world.z);
+    // Yaw, then pitch about the car's own axle (#307): nose up the ramp, and
+    // along its line of flight once it leaves it. Negative because a positive
+    // turn about x tips the nose down.
+    this.car.rotation.order = 'YXZ';
     this.car.rotation.y = world.heading;
+    this.car.rotation.x = -world.pitch;
     // Repaint and resize only when the car actually changed. A Street Find
     // swaps the profile mid-drive, and the mesh has to follow it.
     // Repainted when the car changes, and dulled as it gets beaten up (#95):

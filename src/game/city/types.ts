@@ -400,8 +400,8 @@ export interface AuthoredProp {
 
 /**
  * Everything the prop editor can place. Gates and stacks become `Breakable`s,
- * which already exist; a jump is a marker until #307 gives the car an airborne
- * state; the rest are set pieces.
+ * which already exist; a jump becomes a `Jump` (#307); the rest are set
+ * pieces.
  */
 export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump';
 
@@ -436,6 +436,23 @@ export interface SetPiece {
   angle: number;
 }
 
+/** The kinds of jump (#307): built, dug, or a slab of apron that has lifted. */
+export type JumpKind = 'ramp' | 'mound' | 'slab';
+
+/**
+ * Something to launch off (#307). Ground with a shape, not a road: the car
+ * rides its surface up to the lip and leaves it there. Its size and profile
+ * come from its kind (`city/jumps.ts`).
+ */
+export interface Jump {
+  kind: JumpKind;
+  at: Vec2;
+  /** The ground under its centre. */
+  y: number;
+  /** Heading, as `AuthoredProp.angle`: the lip is at the +heading end. */
+  angle: number;
+}
+
 /** A generated city. A pure function of `seed`, and the same one every time. */
 export interface City {
   seed: number;
@@ -458,4 +475,6 @@ export interface City {
   breakables: Breakable[];
   /** Hand-placed set dressing (#295). */
   setPieces: SetPiece[];
+  /** Things to launch off (#307). */
+  jumps: Jump[];
 }

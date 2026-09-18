@@ -21,6 +21,7 @@ import { StreetFurniture } from './furniture';
 import { CityCollectibles } from './collectibles';
 import { CityBreakables } from './breakables';
 import { CitySetPieces } from './setpieces';
+import { CityJumps } from './jumps';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
@@ -82,6 +83,7 @@ export class Cityscape {
   /** Gates and stacks (#57). Public for the same reason. */
   readonly breakables: CityBreakables;
   readonly setPieces: CitySetPieces;
+  readonly jumps: CityJumps;
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
@@ -112,6 +114,8 @@ export class Cityscape {
     for (const mesh of this.breakables.meshes) this.group.add(mesh);
     this.setPieces = new CitySetPieces(city.setPieces);
     for (const mesh of this.setPieces.meshes) this.group.add(mesh);
+    this.jumps = new CityJumps(city.jumps);
+    for (const mesh of this.jumps.meshes) this.group.add(mesh);
   }
 
   /**
@@ -760,6 +764,7 @@ export class Cityscape {
     this.collectibles.dispose();
     this.breakables.dispose();
     this.setPieces.dispose();
+    this.jumps.dispose();
     for (const thing of this.owned) thing.dispose();
     disposeSurfaces();
     this.group.clear();

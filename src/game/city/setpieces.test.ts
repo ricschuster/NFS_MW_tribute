@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAR_RADIUS, UNITS_PER_METRE } from '../constants';
+import { CAR_HEIGHT, CAR_RADIUS, UNITS_PER_METRE } from '../constants';
 import { CityWorld } from '../cityworld';
 import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
@@ -21,10 +21,10 @@ function beside(piece: SetPiece, along: number, across: number) {
 }
 
 describe('Marrow Field props (#295)', () => {
-  it('turns every placed prop into a set piece or a breakable, except the jumps', () => {
-    const { pieces, breakables } = airfieldProps(city.terrain, 1000);
-    const jumps = MARROW_PROPS.filter((p) => p.kind === 'jump').length;
-    expect(pieces.length + breakables.length).toBe(MARROW_PROPS.length - jumps);
+  it('turns every placed prop into a set piece, a breakable or a jump', () => {
+    const { pieces, breakables, jumps } = airfieldProps(city.terrain, 1000);
+    expect(pieces.length + breakables.length + jumps.length).toBe(MARROW_PROPS.length);
+    expect(jumps.length).toBe(MARROW_PROPS.filter((p) => p.kind === 'jump').length);
     expect(pieces.every((p) => p.kind !== ('jump' as string))).toBe(true);
     // Numbered on from where they were told to start, so they cannot collide
     // with the generated breakables' ids.
@@ -60,31 +60,31 @@ describe('hitsSetPiece', () => {
     const hull = piece('fuselage');
     const along = beside(hull, 8, 0);
     const across = beside(hull, 0, 8);
-    expect(hitsSetPiece([hull], along.x, along.z, 0, CAR_RADIUS)).toBe(true);
-    expect(hitsSetPiece([hull], across.x, across.z, 0, CAR_RADIUS)).toBe(false);
+    expect(hitsSetPiece([hull], along.x, along.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([hull], across.x, across.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
   });
 
   it('lets a car under a cargo plane wing but not into its fuselage', () => {
     const plane = piece('plane-belly');
     const wing = beside(plane, 2, 11);
     const body = beside(plane, -5, 0);
-    expect(hitsSetPiece([plane], wing.x, wing.z, 0, CAR_RADIUS)).toBe(false);
-    expect(hitsSetPiece([plane], body.x, body.z, 0, CAR_RADIUS)).toBe(true);
+    expect(hitsSetPiece([plane], wing.x, wing.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece([plane], body.x, body.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
   });
 
   it('hits a tree at its trunk and nowhere else', () => {
     const tree = piece('tree');
-    expect(hitsSetPiece([tree], 0, 0, 0, CAR_RADIUS)).toBe(true);
+    expect(hitsSetPiece([tree], 0, 0, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
     const clear = beside(tree, 0, 0.6 + CAR_RADIUS / M + 0.5);
-    expect(hitsSetPiece([tree], clear.x, clear.z, 0, CAR_RADIUS)).toBe(false);
+    expect(hitsSetPiece([tree], clear.x, clear.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
   });
 
   it('never stops a car for a cone', () => {
-    expect(hitsSetPiece([piece('cone')], 0, 0, 0, CAR_RADIUS)).toBe(false);
+    expect(hitsSetPiece([piece('cone')], 0, 0, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
   });
 
   it('lets anything well above the ground pass over', () => {
-    expect(hitsSetPiece([piece('bunker')], 0, 0, 12 * M, CAR_RADIUS)).toBe(false);
+    expect(hitsSetPiece([piece('bunker')], 0, 0, 12 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
   });
 });
 
