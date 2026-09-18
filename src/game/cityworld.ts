@@ -6,6 +6,8 @@ import {
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
   OFFROAD_TYRE_LIMIT,
+  REP_JUMP_MIN,
+  REP_JUMP_DISTANCE,
   ESCAPED_FLASH,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
@@ -1662,6 +1664,10 @@ export class CityWorld {
       this.crashFlash = t;
     } else {
       this.speed *= LAND_SPEED_KEPT;
+      const distance = this.lastJump.distance;
+      if (distance >= REP_JUMP_MIN) {
+        this.rep.award('jump', this.level, distance / REP_JUMP_DISTANCE, `JUMP ${Math.round(distance / UNITS_PER_METRE)} M`);
+      }
     }
   }
 

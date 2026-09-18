@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { UNITS_PER_METRE } from './constants';
+import { REP_JUMP, REP_JUMP_DISTANCE, REP_JUMP_MIN, UNITS_PER_METRE } from './constants';
 import { CityWorld } from './cityworld';
 import { JUMP_SHAPES, jumpProfile, lipSlope } from './city/jumps';
 import { groundAt } from './city/terrain';
@@ -123,5 +123,27 @@ describe('the Cargo Plane Jump', () => {
     const { world } = launch(mound, kmh(110));
     expect(along(world.x, world.z)).toBeLessThan(along(plane.at.x, plane.at.z));
     expect(world.damage).toBeGreaterThan(0);
+  });
+});
+
+describe('what a jump pays', () => {
+  it('pays for a landed jump by the metre, and says how far it was', () => {
+    const { world } = launch(first('ramp'), kmh(160));
+    const distance = world.lastJump!.distance;
+    const award = world.rep.recent.find((a) => a.reason === 'jump')!;
+    expect(award.label).toBe(`JUMP ${Math.round(distance / M)} M`);
+    expect(award.amount).toBe(Math.round((REP_JUMP * distance) / REP_JUMP_DISTANCE));
+  });
+
+  it('pays nothing for a hop', () => {
+    const { world } = launch(first('slab'), kmh(40));
+    expect(world.lastJump!.distance).toBeLessThan(REP_JUMP_MIN);
+    expect(world.rep.total).toBe(0);
+  });
+
+  it('pays nothing for a jump that was not landed', () => {
+    const { world } = launch(first('mound'), kmh(110));
+    expect(world.lastJump!.hard).toBe(true);
+    expect(world.rep.recent.some((a) => a.reason === 'jump')).toBe(false);
   });
 });
