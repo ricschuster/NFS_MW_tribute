@@ -125,6 +125,10 @@ what the city is shaped like.
   a polygon that leaves the land is a failure
 - `npm run roadexport` — write the road network, the relief and the plan to
   `screenshots/roads.json`, for the road editor to load
+- `npm run propexport` — crop Marrow Field out of the generated city and write
+  `screenshots/propeditor.html`, the prop placement editor with the field
+  inlined; `npm run propsync` writes `city/marrowprops.ts` from the placements
+  saved back into `docs/props-edited.json`
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 

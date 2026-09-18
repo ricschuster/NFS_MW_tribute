@@ -1,0 +1,1241 @@
+<title>Marrow Field Props</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* One deliberate look, shared with the Road Editor: a dark bench under a
+     lit map. The accent is runway-marking yellow; green saves, amber warns,
+     red is a prop that cannot stand where it is. */
+  :root {
+    color-scheme: dark;
+    --ink: #0e1412;
+    --panel: #141c1a;
+    --panel-2: #1b2623;
+    --line: #293833;
+    --text: #e2ebe6;
+    --dim: #92a69e;
+    --accent: #f2c230;
+    --save: #7fd6a2;
+    --warn: #f0a33c;
+    --err: #e9615a;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font: 13px/1.4 var(--sans);
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    overflow: hidden;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  header { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+  .sub {
+    margin-top: 3px;
+    font: 11px var(--mono);
+    color: var(--dim);
+    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .scroll { flex: 1; overflow-y: auto; min-height: 0; }
+  section { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  h2 {
+    margin: 0 0 8px;
+    font: 600 10.5px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dim);
+  }
+  .group + .group { margin-top: 10px; }
+  .group-name { font: 500 10.5px var(--mono); color: var(--dim); letter-spacing: 0.05em; margin-bottom: 4px; }
+  .kind {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .kind:hover { background: var(--panel-2); }
+  .kind[aria-pressed='true'] { background: var(--panel-2); border-color: var(--accent); }
+  .kind:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .kind canvas { width: 22px; height: 22px; }
+  .kind .meta { display: flex; flex-direction: column; min-width: 0; }
+  .kind .size { font: 10.5px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .kind .count { font: 500 11px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .chip {
+    display: inline-block;
+    font: 600 9px var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 5px;
+    vertical-align: 1px;
+  }
+  .chip.live { background: #20402f; color: var(--save); }
+  .chip.later { background: #2d2640; color: #bfa8ff; }
+  .field { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 6px 8px; margin-bottom: 6px; }
+  .field label { font: 11px var(--mono); color: var(--dim); }
+  input, select {
+    width: 100%;
+    background: var(--ink);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font: 12px var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .xyz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .row { display: flex; gap: 6px; margin-top: 8px; }
+  button.act {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font: 500 12px var(--sans);
+    cursor: pointer;
+  }
+  button.act:hover:not(:disabled) { border-color: var(--dim); }
+  button.act:disabled { opacity: 0.45; cursor: default; }
+  button.save { background: var(--save); border-color: var(--save); color: #06251a; font-weight: 600; }
+  button.danger:hover { border-color: var(--err); color: var(--err); }
+  .checks { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .checks li { font-size: 12px; padding-left: 14px; position: relative; }
+  .checks li::before { content: ''; position: absolute; left: 2px; top: 6px; width: 6px; height: 6px; border-radius: 50%; }
+  .checks .err::before { background: var(--err); }
+  .checks .warn::before { background: var(--warn); }
+  .checks .info::before { background: var(--dim); }
+  .checks .ok { color: var(--save); }
+  .checks .ok::before { background: var(--save); }
+  .empty { color: var(--dim); font-size: 12px; margin: 0; }
+  .layers { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .layers label { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+  .layers input { width: auto; }
+  footer { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+  .status { font: 11px var(--mono); color: var(--dim); display: flex; justify-content: space-between; gap: 8px; }
+  .status .dirty { color: var(--accent); }
+  #attention { background: none; border: none; padding: 0; font: inherit; color: var(--warn); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  main { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  #map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .hud {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    background: rgba(14, 20, 18, 0.86);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 9px;
+    font: 11px var(--mono);
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .hud b { color: var(--text); font-weight: 500; }
+  .hint {
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%);
+    background: rgba(14, 20, 18, 0.9);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .hint kbd { font: 11px var(--mono); background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+  .zoom { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .zoom button {
+    width: 32px; height: 32px;
+    background: rgba(20, 28, 26, 0.92);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font: 500 15px var(--mono);
+    cursor: pointer;
+  }
+  #toast {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.18s, transform 0.18s;
+    pointer-events: none;
+  }
+  #toast.on { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+  @media (max-width: 760px) {
+    body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--line); }
+    .hint { white-space: normal; width: calc(100% - 80px); text-align: center; }
+  }
+</style>
+
+<aside>
+  <header>
+    <h1>Marrow Field Props</h1>
+    <div class="sub" id="sub">—</div>
+  </header>
+  <div class="scroll">
+    <section>
+      <h2>Place</h2>
+      <div id="palette"></div>
+    </section>
+    <section id="inspector">
+      <h2>Selected</h2>
+      <p class="empty" id="none">Nothing selected. Pick a prop above and click the map to place it, or click one already placed.</p>
+      <div id="detail" hidden>
+        <div class="field"><label>Prop</label><div id="d-kind"></div></div>
+        <div class="field" id="f-variant"><label for="d-variant">Variant</label><select id="d-variant"></select></div>
+        <div class="field"><label>x · z · °</label>
+          <div class="xyz">
+            <input id="d-x" type="number" step="1" aria-label="x in metres">
+            <input id="d-z" type="number" step="1" aria-label="z in metres">
+            <input id="d-a" type="number" step="5" aria-label="heading in degrees">
+          </div>
+        </div>
+        <div class="field" id="f-w"><label for="d-w">Span m</label><input id="d-w" type="number" step="0.5" min="1"></div>
+        <div class="field"><label for="d-note">Note</label><input id="d-note" type="text" placeholder="e.g. the Hangar Ramp's landing"></div>
+        <ul class="checks" id="d-checks"></ul>
+        <div class="row">
+          <button class="act" id="align" title="Turn it to run along the nearest road (A)">Align to road</button>
+          <button class="act" id="dupe" title="Duplicate (Ctrl+D)">Duplicate</button>
+          <button class="act danger" id="del" title="Delete (Del)">Delete</button>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2>Show</h2>
+      <div class="layers" id="layers"></div>
+    </section>
+  </div>
+  <footer>
+    <div class="status"><span id="count">—</span><span id="dirty"></span></div>
+    <div class="row" style="margin-top:0">
+      <button class="act" id="undo" title="Undo (Ctrl+Z)">Undo</button>
+      <button class="act" id="revert" title="Back to the last save">Revert</button>
+      <button class="act save" id="save">Save placements</button>
+    </div>
+  </footer>
+</aside>
+<main>
+  <canvas id="map"></canvas>
+  <div class="hint" id="hint"></div>
+  <div class="zoom">
+    <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+    <button id="zout" title="Zoom out" aria-label="Zoom out">−</button>
+    <button id="zfit" title="Fit the field" aria-label="Fit the field">⤢</button>
+  </div>
+  <div class="hud"><span>x <b id="h-x">—</b></span><span>z <b id="h-z">—</b></span><span>ground <b id="h-y">—</b></span><span id="h-scale"></span></div>
+  <div id="toast" role="status"></div>
+</main>
+
+<script id="mapdata" type="application/json">__DATA__</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById('mapdata').textContent);
+  const $ = (id) => document.getElementById(id);
+  const B = DATA.box;
+  const H = DATA.height;
+  const cells = Uint8Array.from(atob(H.cells), (c) => c.charCodeAt(0));
+
+  // The catalogue settled on #295. `w` is the span *across* the prop's heading
+  // and `l` its length *along* it, both in metres; the heading follows the
+  // generator's own convention, direction (sin a, cos a), so a saved angle
+  // means the same thing to `places.ts` as it does here. `road` says whether a
+  // prop belongs on a carriageway ('must'), may sit on one ('ok'), or blocks
+  // one if it does (absent). `flat` props are the ones a slope would show
+  // under - a bunker on a hillside is #253's problem arriving early.
+  const KINDS = [
+    { id: 'gate', group: 'Breakables', name: 'Security gate', w: 10, l: 1.2, shape: 'gate', color: '#ff8a4c', road: 'must', live: true },
+    { id: 'stack', group: 'Breakables', name: 'Pallet stack', w: 3, l: 2, shape: 'box', color: '#ff8a4c', road: 'ok', live: true, variants: ['pallets', 'drums'] },
+    { id: 'plane-belly', group: 'Planes', name: 'Cargo plane, on its belly', w: 32, l: 30, shape: 'plane', color: '#d6dcdf', flat: true },
+    { id: 'plane-nose', group: 'Planes', name: 'Plane, nose-buried', w: 28, l: 16, shape: 'planeNose', color: '#d6dcdf' },
+    { id: 'fuselage', group: 'Planes', name: 'Fuselage wreck', w: 4, l: 18, shape: 'fuselage', color: '#d6dcdf', flat: true },
+    { id: 'fuselage-hung', group: 'Planes', name: 'Hanging fuselage', w: 8, l: 22, shape: 'hung', color: '#d6dcdf' },
+    { id: 'helicopter', group: 'Planes', name: 'Helicopter', w: 14, l: 16, shape: 'heli', color: '#d6dcdf', flat: true },
+    { id: 'silo', group: 'Structures', name: 'Silo or tank', w: 8, l: 8, shape: 'circle', color: '#c9925c', flat: true },
+    { id: 'water-tower', group: 'Structures', name: 'Water tower', w: 10, l: 10, shape: 'tower', color: '#c9925c', flat: true },
+    { id: 'crane', group: 'Structures', name: 'Crane', w: 6, l: 6, shape: 'crane', color: '#c9925c', flat: true, jib: 30 },
+    { id: 'mast', group: 'Structures', name: 'Lattice mast', w: 4, l: 4, shape: 'mast', color: '#c9925c', flat: true },
+    { id: 'bunker', group: 'Structures', name: 'Concrete bunker', w: 12, l: 8, shape: 'box', color: '#a9aea5', flat: true },
+    { id: 'blast-wall', group: 'Structures', name: 'Blast wall', w: 6, l: 1.2, shape: 'box', color: '#a9aea5', road: 'ok' },
+    { id: 'shed', group: 'Structures', name: 'Derelict shed', w: 9, l: 14, shape: 'shed', color: '#9c7454', flat: true },
+    { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
+    { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
+    { id: 'jump', group: 'Needs #307', name: 'Jump', w: 8, l: 12, shape: 'jump', color: '#b99cff', road: 'ok', later: true, variants: ['built ramp', 'grass mound', 'lifted slab'] },
+  ];
+  const KIND = Object.fromEntries(KINDS.map((k) => [k.id, k]));
+
+  // ---- state ----------------------------------------------------------------
+  let props = [];
+  let saved = '[]';
+  let selected = null;
+  let mode = 'select';
+  const undoStack = [];
+  const lastAngle = {};
+  let checks = new Map();
+  let attentionAt = -1;
+  const layers = { relief: true, roads: true, fence: true, generated: true, outline: true, labels: true };
+  const view = { scale: 1, x: 0, y: 0 };
+  let dpr = window.devicePixelRatio || 1;
+  let hover = null;
+  let ghost = null;
+  let drag = null;
+
+  // A map seen from above with +z up the screen has **-x to the right**: the
+  // same rule `scene/mapping.ts` settles for the game's own maps, and the
+  // Road Editor's. Drawn any other way, a prop placed "left of the hangar"
+  // here is right of it in the game.
+  const sx = (x) => (B.maxX - x) * view.scale + view.x;
+  const sy = (z) => (B.maxZ - z) * view.scale + view.y;
+  const wx = (px) => B.maxX - (px - view.x) / view.scale;
+  const wz = (py) => B.maxZ - (py - view.y) / view.scale;
+
+  const dims = (p) => ({ w: p.w ?? KIND[p.kind].w, l: KIND[p.kind].l });
+  const snapshot = () => JSON.stringify(props.map(clean));
+  function clean(p) {
+    const out = { id: p.id, kind: p.kind, x: Math.round(p.x * 10) / 10, z: Math.round(p.z * 10) / 10, angle: Math.round(p.angle * 1000) / 1000 };
+    if (p.w != null) out.w = Math.round(p.w * 10) / 10;
+    if (p.variant) out.variant = p.variant;
+    if (p.note) out.note = p.note;
+    return out;
+  }
+  let nextId = 0;
+  const newId = () => `p${Date.now().toString(36)}${(nextId++).toString(36)}`;
+
+  // ---- ground and roads -----------------------------------------------------
+  function heightAt(x, z) {
+    const col = Math.round((x - B.minX) / H.step);
+    const row = Math.round((z - B.minZ) / H.step);
+    if (col < 0 || row < 0 || col >= H.cols || row >= H.rows) return undefined;
+    return cells[row * H.cols + col];
+  }
+  function project(x, z, a, b) {
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const len2 = dx * dx + dz * dz;
+    const t = len2 < 1e-9 ? 0 : Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2));
+    const px = a[0] + dx * t;
+    const pz = a[1] + dz * t;
+    return { px, pz, d: Math.hypot(x - px, z - pz) };
+  }
+  function nearestRoad(x, z) {
+    let best = null;
+    for (const r of DATA.roads) {
+      const hit = project(x, z, r.a, r.b);
+      if (!best || hit.d < best.d) best = { ...hit, r };
+    }
+    return best;
+  }
+  const roadHeading = (r) => Math.atan2(r.b[0] - r.a[0], r.b[1] - r.a[1]);
+
+  /** Points spread over a prop's footprint, in world metres. */
+  function samples(p) {
+    const { w, l } = dims(p);
+    const nu = Math.max(2, Math.min(9, Math.ceil(w / 2) + 1));
+    const nv = Math.max(2, Math.min(9, Math.ceil(l / 2) + 1));
+    const s = Math.sin(p.angle);
+    const c = Math.cos(p.angle);
+    const pts = [[p.x, p.z]];
+    for (let i = 0; i < nu; i++) {
+      for (let j = 0; j < nv; j++) {
+        const u = -w / 2 + (w * i) / (nu - 1);
+        const v = -l / 2 + (l * j) / (nv - 1);
+        pts.push([p.x + u * c + v * s, p.z - u * s + v * c]);
+      }
+    }
+    return pts;
+  }
+
+  /** What is wrong with where this prop stands, measured against the export. */
+  function check(p) {
+    const k = KIND[p.kind];
+    const out = [];
+    let wet = 0, off = 0, lo = Infinity, hi = -Infinity, inside = null, onRoad = null;
+    const pts = samples(p);
+    for (const [x, z] of pts) {
+      const h = heightAt(x, z);
+      if (h === undefined) { off++; continue; }
+      if (h === H.water) { wet++; continue; }
+      lo = Math.min(lo, h);
+      hi = Math.max(hi, h);
+      for (const b of DATA.buildings) {
+        if (x >= b.rect[0] && x <= b.rect[2] && z >= b.rect[1] && z <= b.rect[3]) inside = b;
+      }
+      if (!onRoad) {
+        for (const r of DATA.roads) {
+          if (project(x, z, r.a, r.b).d <= r.width / 2) { onRoad = r; break; }
+        }
+      }
+    }
+    if (off) out.push(['err', 'Off the edge of the exported field']);
+    if (wet) out.push(['err', wet >= pts.length - off ? 'In the water' : 'Hangs out over the water']);
+    if (inside) out.push(['err', `Inside ${inside.derelict ? 'the derelict hangar' : `a ${inside.kind}`}`]);
+    if (k.road === 'must') {
+      const n = nearestRoad(p.x, p.z);
+      if (!n || n.d > n.r.width / 2) out.push(['warn', 'Not across a road - a gate belongs in one']);
+    } else if (k.road !== 'ok' && onRoad) {
+      out.push(['warn', onRoad.surface === 'dirt' ? 'Sits on the runway or taxiway' : 'Blocks a road']);
+    }
+    if (k.flat && Number.isFinite(lo) && hi - lo >= 2) out.push(['warn', `Ground falls ${hi - lo} m under it`]);
+    for (const q of props) {
+      if (q === p || q.kind === 'cone' || p.kind === 'cone') continue;
+      const a = dims(p), b = dims(q);
+      const reach = (Math.min(a.w, a.l) + Math.min(b.w, b.l)) / 2;
+      if (Math.hypot(p.x - q.x, p.z - q.z) < reach * 0.8) { out.push(['info', `Overlaps a ${KIND[q.kind].name.toLowerCase()}`]); break; }
+    }
+    if (k.later) out.push(['info', 'A marker for now: jumps need #307 first']);
+    if (!k.live && !k.later) out.push(['info', 'Not built yet - placed now, built when it is first placed']);
+    return out;
+  }
+  const severity = (list) => (list.some((c) => c[0] === 'err') ? 'err' : list.some((c) => c[0] === 'warn') ? 'warn' : 'ok');
+
+  // ---- relief ---------------------------------------------------------------
+  // Hill-shaded once into an offscreen image, mirrored in both axes so image
+  // pixels run the way the screen does (-x right, -z down).
+  const relief = document.createElement('canvas');
+  relief.width = H.cols;
+  relief.height = H.rows;
+  {
+    const ctx = relief.getContext('2d');
+    const img = ctx.createImageData(H.cols, H.rows);
+    const at = (c, r) => {
+      const v = cells[Math.max(0, Math.min(H.rows - 1, r)) * H.cols + Math.max(0, Math.min(H.cols - 1, c))];
+      return v === H.water ? 0 : v;
+    };
+    let top = 1;
+    for (const v of cells) if (v !== H.water) top = Math.max(top, v);
+    // Light from the top left of the screen, which is +x and +z in the world.
+    const L = [0.55, 0.62, 0.55];
+    for (let r = 0; r < H.rows; r++) {
+      for (let c = 0; c < H.cols; c++) {
+        const i = ((H.rows - 1 - r) * H.cols + (H.cols - 1 - c)) * 4;
+        const v = cells[r * H.cols + c];
+        if (v === H.water) {
+          img.data.set([26, 66, 80, 255], i);
+          continue;
+        }
+        const gx = (at(c + 1, r) - at(c - 1, r)) / (2 * H.step);
+        const gz = (at(c, r + 1) - at(c, r - 1)) / (2 * H.step);
+        const n = Math.hypot(gx, 1, gz);
+        const shade = Math.max(0.35, Math.min(1.25, ((-gx * L[0] + L[1] - gz * L[2]) / n) * 1.25));
+        const t = v / top;
+        const base = [58 + t * 52, 72 + t * 34, 56 + t * 22];
+        img.data.set([base[0] * shade, base[1] * shade, base[2] * shade, 255], i);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // ---- drawing --------------------------------------------------------------
+  const canvas = $('map');
+  const ctx = canvas.getContext('2d');
+
+  /** Set a transform whose units are metres along the prop's own axes. */
+  function propFrame(p) {
+    const s = view.scale, a = p.angle;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.transform(-Math.cos(a) * s, Math.sin(a) * s, -Math.sin(a) * s, -Math.cos(a) * s, sx(p.x), sy(p.z));
+  }
+
+  function shapePath(k, w, l, c) {
+    // Local frame: u across (-w/2..w/2), v along (-l/2..l/2), the front at +v.
+    c.beginPath();
+    switch (k.shape) {
+      case 'circle':
+      case 'cone':
+        c.arc(0, 0, w / 2, 0, Math.PI * 2);
+        break;
+      case 'tree': {
+        const n = 7;
+        for (let i = 0; i <= n * 2; i++) {
+          const r = i % 2 ? w / 2 : w / 3.2;
+          const t = (i / (n * 2)) * Math.PI * 2;
+          c[i ? 'lineTo' : 'moveTo'](Math.sin(t) * r, Math.cos(t) * r);
+        }
+        break;
+      }
+      case 'plane':
+      case 'planeNose': {
+        const fw = 4.2, nose = l / 2, tail = -l / 2;
+        c.moveTo(-fw / 2, tail + 2); c.lineTo(-fw / 2, nose - 3); c.quadraticCurveTo(0, nose + 1, fw / 2, nose - 3);
+        c.lineTo(fw / 2, tail + 2); c.closePath();
+        const wy = k.shape === 'plane' ? 2 : 0;
+        c.moveTo(-w / 2, wy - 1); c.lineTo(w / 2, wy - 1); c.lineTo(w / 2 - 2, wy + 4); c.lineTo(-w / 2 + 2, wy + 4); c.closePath();
+        c.moveTo(-6, tail + 1); c.lineTo(6, tail + 1); c.lineTo(5, tail + 4); c.lineTo(-5, tail + 4); c.closePath();
+        break;
+      }
+      case 'fuselage':
+      case 'hung':
+        c.moveTo(-2, -l / 2); c.lineTo(-2, l / 2 - 2); c.quadraticCurveTo(0, l / 2 + 0.5, 2, l / 2 - 2); c.lineTo(2, -l / 2); c.closePath();
+        if (k.shape === 'hung') {
+          for (const v of [-l / 3, l / 3]) for (const u of [-w / 2, w / 2 - 1]) c.rect(u, v - 0.5, 1, 1);
+        }
+        break;
+      case 'heli':
+        c.ellipse(0, 2, 1.8, 4.5, 0, 0, Math.PI * 2);
+        c.rect(-0.4, -l / 2, 0.8, l / 2);
+        break;
+      case 'tower':
+        c.arc(0, 0, w / 2 - 1.5, 0, Math.PI * 2);
+        for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) c.rect(u * (w / 2 - 0.8) - 0.6, v * (w / 2 - 0.8) - 0.6, 1.2, 1.2);
+        break;
+      case 'gate':
+        c.rect(-w / 2, -l / 2, w, l);
+        c.rect(-w / 2 - 0.6, -0.9, 1.2, 1.8);
+        c.rect(w / 2 - 0.6, -0.9, 1.2, 1.8);
+        break;
+      case 'jump':
+        c.moveTo(-w / 2, -l / 2); c.lineTo(w / 2, -l / 2); c.lineTo(w / 2 - 1, l / 2); c.lineTo(-w / 2 + 1, l / 2); c.closePath();
+        break;
+      default:
+        c.rect(-w / 2, -l / 2, w, l);
+    }
+  }
+
+  function drawDetail(k, w, l, c, px) {
+    // Strokes that say what a shape is, beyond its outline.
+    c.beginPath();
+    if (k.shape === 'mast') { c.moveTo(-w / 2, -l / 2); c.lineTo(w / 2, l / 2); c.moveTo(w / 2, -l / 2); c.lineTo(-w / 2, l / 2); }
+    if (k.shape === 'shed') { c.moveTo(0, -l / 2); c.lineTo(0, l / 2); }
+    if (k.shape === 'crane') { c.moveTo(0, 0); c.lineTo(0, k.jib); c.moveTo(0, 0); c.lineTo(0, -k.jib / 3); }
+    if (k.shape === 'heli') { c.moveTo(w / 2, 2); c.arc(0, 2, w / 2, 0, Math.PI * 2); }
+    if (k.shape === 'jump') {
+      c.moveTo(0, -l / 2 + 2); c.lineTo(0, l / 2 - 2);
+      c.moveTo(-2, l / 2 - 4.5); c.lineTo(0, l / 2 - 2); c.lineTo(2, l / 2 - 4.5);
+    }
+    if (k.shape === 'planeNose') { c.moveTo(3.5, l / 2); c.arc(0, l / 2, 3.5, 0, Math.PI * 2); }
+    c.setLineDash(k.shape === 'crane' || k.shape === 'heli' ? [3 * px, 2 * px] : []);
+    c.stroke();
+    c.setLineDash([]);
+  }
+
+  function drawProp(p, opts = {}) {
+    const k = KIND[p.kind];
+    const { w, l } = dims(p);
+    const s = view.scale;
+    const px = 1 / s;
+    propFrame(p);
+    ctx.globalAlpha = opts.ghost ? 0.55 : 1;
+    shapePath(k, w, l, ctx);
+    ctx.fillStyle = k.color;
+    ctx.fill('nonzero');
+    ctx.lineWidth = 1.2 * px;
+    ctx.strokeStyle = '#0b0f0e';
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(11,15,14,0.8)';
+    drawDetail(k, w, l, ctx, px);
+    // Anything too small to see at this zoom still gets a mark, or a cone is
+    // a thing you placed and then lost.
+    const sev = opts.sev;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (Math.max(w, l) * s < 7) {
+      ctx.beginPath();
+      ctx.arc(sx(p.x), sy(p.z), 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = k.color;
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#0b0f0e';
+      ctx.stroke();
+    }
+    if (sev && sev !== 'ok' && !opts.ghost) {
+      const r = Math.max(6, (Math.max(w, l) * s) / 2 + 4);
+      ctx.beginPath();
+      ctx.arc(sx(p.x), sy(p.z), r, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = sev === 'err' ? '#e9615a' : '#f0a33c';
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function outline(p, color, width) {
+    const { w, l } = dims(p);
+    propFrame(p);
+    ctx.beginPath();
+    const pad = 3 / view.scale;
+    ctx.rect(-w / 2 - pad, -l / 2 - pad, w + pad * 2, l + pad * 2);
+    ctx.lineWidth = width / view.scale;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function handlePos(p) {
+    const { l } = dims(p);
+    const reach = (l / 2) * view.scale + 22;
+    return [sx(p.x) - Math.sin(p.angle) * reach, sy(p.z) - Math.cos(p.angle) * reach];
+  }
+
+  function draw() {
+    const W = canvas.clientWidth, Hh = canvas.clientHeight;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#0e1412';
+    ctx.fillRect(0, 0, W, Hh);
+    const s = view.scale;
+
+    // Ground. The raster's far edge is its last cell, not `box.maxX`.
+    const farX = B.minX + H.cols * H.step, farZ = B.minZ + H.rows * H.step;
+    if (layers.relief) {
+      ctx.imageSmoothingEnabled = s < H.step * 2;
+      ctx.drawImage(relief, sx(farX), sy(farZ), H.cols * H.step * s, H.rows * H.step * s);
+    } else {
+      ctx.fillStyle = '#26312c';
+      ctx.fillRect(sx(farX), sy(farZ), H.cols * H.step * s, H.rows * H.step * s);
+    }
+
+    if (layers.outline) {
+      ctx.beginPath();
+      ctx.arc(sx(DATA.centre[0]), sy(DATA.centre[1]), DATA.radius * s, 0, Math.PI * 2);
+      ctx.setLineDash([6, 6]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(242,194,48,0.35)';
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if (layers.roads) {
+      ctx.lineCap = 'round';
+      for (const surface of ['asphalt', 'dirt']) {
+        ctx.strokeStyle = surface === 'dirt' ? '#a58759' : '#565f62';
+        for (const r of DATA.roads) {
+          if ((r.surface === 'dirt') !== (surface === 'dirt')) continue;
+          ctx.lineWidth = Math.max(1.5, r.width * s);
+          ctx.beginPath();
+          ctx.moveTo(sx(r.a[0]), sy(r.a[1]));
+          ctx.lineTo(sx(r.b[0]), sy(r.b[1]));
+          ctx.stroke();
+        }
+      }
+      if (layers.outline) {
+        const [a, b] = DATA.runway;
+        ctx.beginPath();
+        ctx.moveTo(sx(a[0]), sy(a[1]));
+        ctx.lineTo(sx(b[0]), sy(b[1]));
+        ctx.setLineDash([10, 8]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(240,235,220,0.55)';
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    for (const b of DATA.buildings) {
+      const [x0, z0, x1, z1] = b.rect;
+      ctx.fillStyle = b.derelict ? '#6d5845' : '#848a90';
+      ctx.fillRect(sx(x1), sy(z1), (x1 - x0) * s, (z1 - z0) * s);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#0b0f0e';
+      ctx.strokeRect(sx(x1), sy(z1), (x1 - x0) * s, (z1 - z0) * s);
+      if (layers.labels && s > 0.5) label(b.derelict ? 'hangar' : b.kind, sx((x0 + x1) / 2), sy((z0 + z1) / 2), '#e8dccd');
+    }
+
+    if (layers.fence) {
+      const dot = (list, color, r) => {
+        ctx.fillStyle = color;
+        for (const [x, z] of list ?? []) ctx.fillRect(sx(x) - r, sy(z) - r, r * 2, r * 2);
+      };
+      dot(DATA.furniture.weed, 'rgba(128,178,94,0.75)', Math.max(0.8, 0.5 * s));
+      dot(DATA.furniture.fence, 'rgba(222,226,214,0.7)', Math.max(0.9, 0.35 * s));
+      dot(DATA.furniture.barrier, 'rgba(200,120,90,0.8)', Math.max(0.9, 0.35 * s));
+      dot(DATA.furniture.lamp, 'rgba(255,230,150,0.9)', Math.max(1.2, 0.5 * s));
+    }
+
+    if (layers.generated) {
+      for (const b of DATA.breakables) {
+        drawProp({ kind: b.kind === 'gate' ? 'gate' : 'stack', x: b.at[0], z: b.at[1], angle: b.angle, w: b.kind === 'gate' ? b.half * 2 : undefined });
+      }
+      for (const c of DATA.collectibles) {
+        const x = sx(c.at[0]), y = sy(c.at[1]);
+        ctx.beginPath();
+        if (c.kind === 'camera') { ctx.moveTo(x, y - 5); ctx.lineTo(x + 5, y + 4); ctx.lineTo(x - 5, y + 4); ctx.closePath(); ctx.fillStyle = '#5fd0e0'; }
+        else { ctx.rect(x - 4, y - 4, 8, 8); ctx.fillStyle = '#ffd54f'; }
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#0b0f0e';
+        ctx.stroke();
+      }
+      for (const [x0, z0] of DATA.repairs) {
+        const x = sx(x0), y = sy(z0);
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#4f8ff0';
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = '600 8px IBM Plex Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('R', x, y + 0.5);
+      }
+      for (const a of DATA.ambushes) {
+        ctx.beginPath();
+        ctx.arc(sx(a.at[0]), sy(a.at[1]), Math.max(8, 40 * s), 0, Math.PI * 2);
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = '#e9615a';
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (layers.labels) label(`ambush · heat ${a.level}`, sx(a.at[0]), sy(a.at[1]) - Math.max(8, 40 * s) - 8, '#f4a39d');
+      }
+    }
+
+    // Big things first, so a cone on a plane's wing is drawn on top of it.
+    const order = [...props].sort((a, b) => dims(b).w * dims(b).l - dims(a).w * dims(a).l);
+    for (const p of order) drawProp(p, { sev: severity(checks.get(p) ?? []) });
+    // A note is what somebody wanted said about a prop, so it shows from
+    // further out; a bare kind name only once props are big enough to need
+    // telling apart, or fifty trees each say "Conifer".
+    if (layers.labels) {
+      for (const p of order) {
+        const text = p.note ? p.note : s > 3 ? KIND[p.kind].name : null;
+        if (!text || (p.note && s < 0.45)) continue;
+        const { l } = dims(p);
+        label(text, sx(p.x), sy(p.z) + Math.max(10, (l / 2) * s + 10), '#e2ebe6');
+      }
+    }
+
+    if (hover && hover !== selected) outline(hover, 'rgba(242,194,48,0.55)', 1);
+    if (selected) {
+      outline(selected, '#f2c230', 2);
+      const [hx, hy] = handlePos(selected);
+      ctx.beginPath();
+      ctx.moveTo(sx(selected.x), sy(selected.z));
+      ctx.lineTo(hx, hy);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(242,194,48,0.7)';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#f2c230';
+      ctx.fill();
+      ctx.strokeStyle = '#0b0f0e';
+      ctx.stroke();
+    }
+    if (ghost) drawProp(ghost, { ghost: true });
+
+    // Scale bar, in the only units the game uses.
+    const nice = [5, 10, 20, 50, 100, 200, 500, 1000];
+    const m = nice.find((n) => n * s >= 70) ?? 1000;
+    $('h-scale').innerHTML = `<span style="display:inline-block;width:${Math.round(m * s)}px;border-bottom:2px solid var(--dim);height:6px;margin-right:6px;vertical-align:1px"></span>${m} m`;
+  }
+
+  function label(text, x, y, color) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = '500 10.5px IBM Plex Sans, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(14,20,18,0.85)';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+  }
+
+  // ---- view -----------------------------------------------------------------
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(canvas.clientWidth * dpr);
+    canvas.height = Math.round(canvas.clientHeight * dpr);
+    draw();
+  }
+  function fit() {
+    // The field and its runway, not the margin the export carries around them.
+    const xs = [DATA.centre[0] - DATA.radius, DATA.centre[0] + DATA.radius, ...DATA.runway.map((p) => p[0])];
+    const zs = [DATA.centre[1] - DATA.radius, DATA.centre[1] + DATA.radius, ...DATA.runway.map((p) => p[1])];
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+    const W = canvas.clientWidth || 800, Hh = canvas.clientHeight || 600;
+    view.scale = Math.min((W - 60) / (x1 - x0), (Hh - 60) / (z1 - z0));
+    view.x = W / 2 - (B.maxX - (x0 + x1) / 2) * view.scale;
+    view.y = Hh / 2 - (B.maxZ - (z0 + z1) / 2) * view.scale;
+  }
+  function zoomAt(px, py, f) {
+    const x = wx(px), z = wz(py);
+    view.scale = Math.max(0.15, Math.min(40, view.scale * f));
+    view.x = px - (B.maxX - x) * view.scale;
+    view.y = py - (B.maxZ - z) * view.scale;
+    draw();
+  }
+  function centreOn(p) {
+    view.x = canvas.clientWidth / 2 - (B.maxX - p.x) * view.scale;
+    view.y = canvas.clientHeight / 2 - (B.maxZ - p.z) * view.scale;
+  }
+
+  // ---- editing --------------------------------------------------------------
+  function remember() {
+    undoStack.push(snapshot());
+    if (undoStack.length > 200) undoStack.shift();
+  }
+  function changed() {
+    checks = new Map(props.map((p) => [p, check(p)]));
+    refresh();
+    draw();
+  }
+  function hitTest(x, z) {
+    const pad = 6 / view.scale;
+    let best = null, bestArea = Infinity;
+    for (const p of props) {
+      const { w, l } = dims(p);
+      const dx = x - p.x, dz = z - p.z;
+      const v = dx * Math.sin(p.angle) + dz * Math.cos(p.angle);
+      const u = dx * Math.cos(p.angle) - dz * Math.sin(p.angle);
+      if (Math.abs(u) <= w / 2 + pad && Math.abs(v) <= l / 2 + pad && w * l < bestArea) {
+        best = p;
+        bestArea = w * l;
+      }
+    }
+    return best;
+  }
+  function makeProp(kind, x, z) {
+    const k = KIND[kind];
+    const p = { id: newId(), kind, x, z, angle: lastAngle[kind] ?? 0 };
+    if (k.variants) p.variant = k.variants[0];
+    if (kind === 'gate') snapGate(p);
+    return p;
+  }
+  /** A gate stands across the road nearest it, spanning its full width. */
+  function snapGate(p) {
+    const n = nearestRoad(p.x, p.z);
+    if (!n || n.d > 30) return;
+    p.x = n.px;
+    p.z = n.pz;
+    p.angle = roadHeading(n.r);
+    p.w = Math.round((n.r.width + 2) * 10) / 10;
+  }
+  function select(p) {
+    selected = p;
+    refresh();
+    draw();
+  }
+  function setMode(m) {
+    mode = m;
+    ghost = null;
+    canvas.style.cursor = m === 'select' ? 'default' : 'crosshair';
+    refresh();
+    draw();
+  }
+
+  // ---- panel ----------------------------------------------------------------
+  function glyph(k) {
+    const c = document.createElement('canvas');
+    const r = window.devicePixelRatio || 1;
+    c.width = 22 * r;
+    c.height = 22 * r;
+    const g = c.getContext('2d');
+    const w = k.shape === 'cone' ? 6 : k.w, l = k.shape === 'cone' ? 6 : k.l;
+    // The crane's jib runs off the icon rather than shrinking the crane to a dot.
+    const span = Math.max(w, l) * (k.jib ? 2.2 : 1);
+    const s = (18 * r) / span;
+    // Front up, as a prop placed at heading 0 looks on the map.
+    g.setTransform(-s, 0, 0, -s, 11 * r, 11 * r);
+    shapePath(k, w, l, g);
+    g.fillStyle = k.color;
+    g.fill();
+    g.lineWidth = 1.2 / s;
+    g.strokeStyle = '#0b0f0e';
+    g.stroke();
+    g.strokeStyle = 'rgba(11,15,14,0.8)';
+    drawDetail(k, w, l, g, 1 / s);
+    return c;
+  }
+
+  function buildPalette() {
+    const root = $('palette');
+    let group = null, box = null;
+    for (const k of KINDS) {
+      if (k.group !== group) {
+        group = k.group;
+        box = document.createElement('div');
+        box.className = 'group';
+        box.innerHTML = `<div class="group-name">${group}</div>`;
+        root.append(box);
+      }
+      const b = document.createElement('button');
+      b.className = 'kind';
+      b.id = `k-${k.id}`;
+      b.setAttribute('aria-pressed', 'false');
+      b.title = k.live ? 'Already exists in the game' : k.later ? 'A planning marker until #307 lands' : 'New - built once placed';
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      const name = document.createElement('span');
+      name.textContent = k.name;
+      if (k.live) name.insertAdjacentHTML('beforeend', '<span class="chip live">in game</span>');
+      if (k.later) name.insertAdjacentHTML('beforeend', '<span class="chip later">later</span>');
+      const size = document.createElement('span');
+      size.className = 'size';
+      size.textContent = k.shape === 'circle' || k.shape === 'tower' || k.shape === 'tree' || k.shape === 'cone'
+        ? `⌀ ${k.w} m`
+        : k.id === 'gate' ? 'spans its road' : `${k.w} × ${k.l} m`;
+      meta.append(name, size);
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.id = `c-${k.id}`;
+      b.append(glyph(k), meta, count);
+      b.onclick = () => setMode(mode === k.id ? 'select' : k.id);
+      box.append(b);
+    }
+  }
+
+  function buildLayers() {
+    const names = { relief: 'Relief', roads: 'Roads', fence: 'Fence & weeds', generated: 'Generated', outline: 'Field outline', labels: 'Labels' };
+    for (const [id, text] of Object.entries(names)) {
+      const l = document.createElement('label');
+      const i = document.createElement('input');
+      i.type = 'checkbox';
+      i.id = `l-${id}`;
+      i.checked = layers[id];
+      i.onchange = () => { layers[id] = i.checked; draw(); };
+      l.append(i, text);
+      $('layers').append(l);
+    }
+  }
+
+  const attention = () => props.filter((p) => severity(checks.get(p) ?? []) !== 'ok');
+
+  function refresh() {
+    for (const k of KINDS) {
+      $(`k-${k.id}`).setAttribute('aria-pressed', String(mode === k.id));
+      const n = props.filter((p) => p.kind === k.id).length;
+      $(`c-${k.id}`).textContent = n ? n : '';
+    }
+    const need = attention();
+    $('count').innerHTML = `${props.length} placed` + (need.length ? ` · <button id="attention">${need.length} need a look</button>` : '');
+    if (need.length) $('attention').onclick = () => {
+      attentionAt = (attentionAt + 1) % need.length;
+      selected = need[attentionAt];
+      centreOn(selected);
+      refresh();
+      draw();
+    };
+    const dirty = snapshot() !== saved;
+    $('dirty').textContent = dirty ? 'unsaved' : 'saved';
+    $('dirty').className = dirty ? 'dirty' : '';
+    $('undo').disabled = !undoStack.length;
+    $('revert').disabled = !dirty;
+
+    $('hint').innerHTML = mode === 'select'
+      ? 'Drag to move · handle to turn · <kbd>R</kbd> ±15° · <kbd>Del</kbd> remove · drag the map to pan'
+      : `Click to place ${KIND[mode].name.toLowerCase()}${mode === 'gate' ? ' - it snaps across the nearest road' : ''} · <kbd>R</kbd> turns it · <kbd>Esc</kbd> done`;
+
+    $('none').hidden = !!selected;
+    $('detail').hidden = !selected;
+    if (!selected) return;
+    const p = selected, k = KIND[p.kind];
+    $('d-kind').textContent = k.name;
+    $('f-variant').hidden = !k.variants;
+    if (k.variants) {
+      $('d-variant').innerHTML = k.variants.map((v) => `<option>${v}</option>`).join('');
+      $('d-variant').value = p.variant ?? k.variants[0];
+    }
+    if (document.activeElement !== $('d-x')) $('d-x').value = Math.round(p.x);
+    if (document.activeElement !== $('d-z')) $('d-z').value = Math.round(p.z);
+    if (document.activeElement !== $('d-a')) $('d-a').value = Math.round(((p.angle * 180) / Math.PI + 360) % 360);
+    $('f-w').hidden = p.kind !== 'gate';
+    if (p.kind === 'gate') $('d-w').value = dims(p).w;
+    if (document.activeElement !== $('d-note')) $('d-note').value = p.note ?? '';
+    const list = checks.get(p) ?? check(p);
+    const g = heightAt(p.x, p.z);
+    const ground = g === undefined || g === H.water ? '' : `<li class="info">Ground ${g} m above the sea</li>`;
+    $('d-checks').innerHTML = (list.length ? '' : '<li class="ok">Clear of roads, water and buildings</li>')
+      + list.map(([sev, text]) => `<li class="${sev}">${text}</li>`).join('') + ground;
+  }
+
+  function edit(fn) {
+    if (!selected) return;
+    remember();
+    fn(selected);
+    lastAngle[selected.kind] = selected.angle;
+    changed();
+  }
+  $('d-variant').onchange = () => edit((p) => { p.variant = $('d-variant').value; });
+  $('d-x').onchange = () => edit((p) => { p.x = Number($('d-x').value) || p.x; });
+  $('d-z').onchange = () => edit((p) => { p.z = Number($('d-z').value) || p.z; });
+  $('d-a').onchange = () => edit((p) => { p.angle = ((Number($('d-a').value) || 0) * Math.PI) / 180; });
+  $('d-w').onchange = () => edit((p) => { p.w = Math.max(1, Number($('d-w').value) || dims(p).w); });
+  $('d-note').onchange = () => edit((p) => { p.note = $('d-note').value.trim() || undefined; });
+  $('align').onclick = () => edit((p) => {
+    if (p.kind === 'gate') { snapGate(p); return; }
+    const n = nearestRoad(p.x, p.z);
+    if (n && n.d < 80) p.angle = roadHeading(n.r);
+    else toast('No road within 80 m to line up with');
+  });
+  $('dupe').onclick = () => duplicate();
+  $('del').onclick = () => remove();
+  function duplicate() {
+    if (!selected) return;
+    remember();
+    const { w } = dims(selected);
+    const off = Math.max(3, w * 1.2);
+    const q = { ...selected, id: newId(), x: selected.x + Math.cos(selected.angle) * off, z: selected.z - Math.sin(selected.angle) * off };
+    props.push(q);
+    selected = q;
+    changed();
+  }
+  function remove() {
+    if (!selected) return;
+    remember();
+    props = props.filter((p) => p !== selected);
+    selected = null;
+    changed();
+  }
+  function undo() {
+    const prev = undoStack.pop();
+    if (prev == null) return;
+    const id = selected && selected.id;
+    props = JSON.parse(prev);
+    selected = props.find((p) => p.id === id) ?? null;
+    changed();
+  }
+  function rotate(delta) {
+    if (mode !== 'select' && ghost) {
+      lastAngle[mode] = (lastAngle[mode] ?? 0) + delta;
+      ghost.angle = lastAngle[mode];
+      draw();
+      return;
+    }
+    edit((p) => { p.angle += delta; });
+  }
+  $('undo').onclick = undo;
+  $('revert').onclick = () => {
+    remember();
+    props = JSON.parse(saved);
+    selected = null;
+    changed();
+    toast('Back to the last save');
+  };
+
+  // ---- pointer --------------------------------------------------------------
+  const local = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    const [px, py] = local(e);
+    const x = wx(px), z = wz(py);
+    if (e.button === 1 || e.button === 2) {
+      drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
+      return;
+    }
+    if (mode !== 'select') {
+      remember();
+      const p = makeProp(mode, x, z);
+      props.push(p);
+      selected = p;
+      changed();
+      return;
+    }
+    if (selected) {
+      const [hx, hy] = handlePos(selected);
+      if (Math.hypot(px - hx, py - hy) < 10) {
+        drag = { type: 'turn', before: snapshot(), p: selected };
+        return;
+      }
+    }
+    const hit = hitTest(x, z);
+    if (hit) {
+      selected = hit;
+      drag = { type: 'move', before: snapshot(), p: hit, dx: x - hit.x, dz: z - hit.z, moved: false };
+      refresh();
+      draw();
+    } else {
+      selected = null;
+      refresh();
+      drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
+      draw();
+    }
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const [px, py] = local(e);
+    const x = wx(px), z = wz(py);
+    const g = heightAt(x, z);
+    $('h-x').textContent = Math.round(x);
+    $('h-z').textContent = Math.round(z);
+    $('h-y').textContent = g === undefined ? '—' : g === H.water ? 'water' : `${g} m`;
+    if (drag?.type === 'pan') {
+      view.x = drag.vx + (px - drag.px);
+      view.y = drag.vy + (py - drag.py);
+      draw();
+      return;
+    }
+    if (drag?.type === 'move') {
+      drag.p.x = x - drag.dx;
+      drag.p.z = z - drag.dz;
+      drag.moved = true;
+      checks.set(drag.p, check(drag.p));
+      refresh();
+      draw();
+      return;
+    }
+    if (drag?.type === 'turn') {
+      let a = Math.atan2(x - drag.p.x, z - drag.p.z);
+      if (e.shiftKey) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12);
+      drag.p.angle = a;
+      checks.set(drag.p, check(drag.p));
+      refresh();
+      draw();
+      return;
+    }
+    if (mode !== 'select') {
+      ghost = makeProp(mode, x, z);
+      draw();
+      return;
+    }
+    const h = hitTest(x, z);
+    if (h !== hover) {
+      hover = h;
+      canvas.style.cursor = h ? 'move' : 'default';
+      draw();
+    }
+  });
+  const end = () => {
+    if (drag && (drag.type === 'move' || drag.type === 'turn')) {
+      if (drag.type === 'turn' || drag.moved) {
+        undoStack.push(drag.before);
+        lastAngle[drag.p.kind] = drag.p.angle;
+      }
+      drag = null;
+      changed();
+      return;
+    }
+    drag = null;
+  };
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+  canvas.addEventListener('pointerleave', () => { if (ghost) { ghost = null; draw(); } });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const [px, py] = local(e);
+    zoomAt(px, py, Math.exp(-e.deltaY * 0.0015));
+  }, { passive: false });
+  $('zin').onclick = () => zoomAt(canvas.clientWidth / 2, canvas.clientHeight / 2, 1.5);
+  $('zout').onclick = () => zoomAt(canvas.clientWidth / 2, canvas.clientHeight / 2, 1 / 1.5);
+  $('zfit').onclick = () => { fit(); draw(); };
+
+  window.addEventListener('keydown', (e) => {
+    const typing = /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName ?? '');
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && !typing) { e.preventDefault(); duplicate(); return; }
+    if (typing) return;
+    if (e.key === 'Escape') { if (mode !== 'select') setMode('select'); else select(null); return; }
+    if (e.key === 'r' || e.key === 'R') { rotate((e.shiftKey ? -1 : 1) * (Math.PI / 12)); return; }
+    if (e.key === 'a' || e.key === 'A') { $('align').click(); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selected) { e.preventDefault(); remove(); return; }
+    const nudge = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+    if (nudge && selected) {
+      e.preventDefault();
+      const step = e.shiftKey ? 5 : 1;
+      edit((p) => { p.x += nudge[0] * step; p.z += nudge[1] * step; });
+    }
+  });
+
+  let toastTimer = null;
+  function toast(message) {
+    const el = $('toast');
+    el.textContent = message;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+  }
+
+  // ---- saving ---------------------------------------------------------------
+  // One document holding the whole placement set, like the Road Editor's
+  // `edits/roads`: a patch is a thing that can be applied to the wrong
+  // version, and the set is small. Claude reads it back and `propsync`
+  // writes it into the generator. Without the store the page is still an
+  // editor; it just cannot hand anything over.
+  const DOC = 'edits/props';
+  let db = null;
+  $('save').disabled = true;
+  $('save').textContent = 'Connecting…';
+  const use = window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null);
+  use.then(async (it) => {
+    db = it;
+    if (!db) {
+      $('save').textContent = 'Saving unavailable';
+      return;
+    }
+    $('save').disabled = false;
+    $('save').textContent = 'Save placements';
+    try {
+      const snap = await db.doc(DOC).get();
+      const doc = snap && snap.exists ? snap.data() : null;
+      if (!doc || !Array.isArray(doc.props) || doc.seed !== DATA.seed) return;
+      const hadEdits = props.length > 0;
+      if (hadEdits) remember();
+      props = doc.props.map((p) => ({ ...p }));
+      saved = snapshot();
+      selected = null;
+      changed();
+      toast(`Opened your last save · ${props.length} props`);
+    } catch {
+      // An unreadable save is not a reason to show nothing: the field is
+      // still there and still editable.
+    }
+  }).catch(() => { $('save').textContent = 'Saving unavailable'; });
+
+  $('save').onclick = async () => {
+    if (!db) return;
+    $('save').disabled = true;
+    try {
+      await db.doc(DOC).set({
+        seed: DATA.seed,
+        place: DATA.place,
+        savedAt: new Date().toISOString(),
+        props: props.map(clean),
+      });
+      saved = snapshot();
+      refresh();
+      toast(`Saved ${props.length} props`);
+    } catch (err) {
+      toast(`Could not save (${err && err.code ? err.code : 'unknown error'}). Your placements are still here - try again.`);
+    } finally {
+      $('save').disabled = false;
+    }
+  };
+
+  // ---- start ----------------------------------------------------------------
+  $('sub').textContent = `seed ${DATA.seed} · ${Math.round(B.maxX - B.minX)} × ${Math.round(B.maxZ - B.minZ)} m of field`;
+  buildPalette();
+  buildLayers();
+  new ResizeObserver(resize).observe(canvas);
+  canvas.width = Math.round(canvas.clientWidth * dpr);
+  canvas.height = Math.round(canvas.clientHeight * dpr);
+  fit();
+  changed();
+})();
+</script>

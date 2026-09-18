@@ -106,6 +106,7 @@ import {
   inWater,
   distanceToRoad,
 } from './city/grid';
+import { hitsSetPiece } from './city/setpieces';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { planCentre } from './city/plan';
@@ -1535,7 +1536,7 @@ export class CityWorld {
     }
   }
 
-  /** Does the car overlap a building footprint? Buildings are solid. */
+  /** Does the car overlap a building footprint or a set piece? Both are solid. */
   private hitsBuilding(): boolean {
     // Only what is on the ground can be hit: the interstate flies over the
     // rooftops, and a deck at 12 m does not collide with a block at street level.
@@ -1547,7 +1548,9 @@ export class CityWorld {
       const nearestZ = Math.max(f.minZ, Math.min(this.z, f.maxZ));
       if (Math.hypot(this.x - nearestX, this.z - nearestZ) < CAR_RADIUS) return true;
     }
-    return false;
+    // A crashed plane or a silo is as solid as a wall (#295), though it is
+    // turned to any angle and so is not in the grid's axis-aligned buildings.
+    return hitsSetPiece(this.city.setPieces, this.x, this.z, this.y, CAR_RADIUS);
   }
 
   /**

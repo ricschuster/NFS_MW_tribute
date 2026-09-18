@@ -17,6 +17,8 @@ import {
 const city = kestrelBay();
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const M = UNITS_PER_METRE;
+/** The ones `breakablesFor` picked, which its placement rules are about. */
+const generated = city.breakables.filter((b) => !b.placed);
 
 describe('what there is to break', () => {
   it('puts stacks on the industrial kerbs', () => {
@@ -33,11 +35,11 @@ describe('what there is to break', () => {
   });
 
   it('keeps them apart, so a corner is not four of them', () => {
-    for (let i = 0; i < city.breakables.length; i++) {
-      for (let j = i + 1; j < city.breakables.length; j++) {
+    for (let i = 0; i < generated.length; i++) {
+      for (let j = i + 1; j < generated.length; j++) {
         const gap = Math.hypot(
-          city.breakables[i].at.x - city.breakables[j].at.x,
-          city.breakables[i].at.z - city.breakables[j].at.z,
+          generated[i].at.x - generated[j].at.x,
+          generated[i].at.z - generated[j].at.z,
         );
         expect(gap).toBeGreaterThanOrEqual(BREAKER_SPACING - 1);
       }
@@ -53,7 +55,7 @@ describe('what there is to break', () => {
     // Every road, not the spatial index: a thing standing just outside a
     // road's cells is exactly the case being checked, and the index would
     // report nothing rather than a distance.
-    for (const thing of city.breakables) {
+    for (const thing of generated) {
       const near = city.roads.reduce(
         (best, road) => Math.min(best, distanceToRoad(city, road, thing.at.x, thing.at.z)),
         Infinity,

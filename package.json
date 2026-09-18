@@ -18,6 +18,8 @@
     "city": "node tools/citymap.mjs",
     "plan": "node tools/plan.mjs",
     "roadexport": "node tools/roadexport.mjs",
+    "propexport": "node tools/propexport.mjs",
+    "propsync": "node tools/propsync.mjs",
     "roaddiff": "node tools/roaddiff.mjs",
     "roadcheck": "node tools/roadcheck.mjs",
     "roadfix": "node tools/roadfix.mjs",
