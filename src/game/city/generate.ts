@@ -598,6 +598,18 @@ export function generateCity(seed: number): City {
     const authored = airfieldProps(terrain, city.breakables.length);
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps;
+    // Billboards number on from the generated ones, the same way the
+    // breakables do: a save remembers smashed boards by id, and appending is
+    // the one change that cannot make an old save point at the wrong board.
+    for (const board of authored.billboards) {
+      city.collectibles.push({
+        id: city.collectibles.length,
+        kind: 'billboard',
+        ...board,
+        road: nearestRoadTo(roads, nodes, board.at),
+        placed: true,
+      });
+    }
     city.breakables.push(...authored.breakables);
   }
   return city;
@@ -1405,4 +1417,23 @@ function prune(graph: Graph): { nodes: CityNode[]; roads: CityRoad[] } {
   }
 
   return { nodes, roads };
+}
+
+/** The id of the road whose centreline passes closest to a point. */
+function nearestRoadTo(roads: CityRoad[], nodes: CityNode[], at: Vec2): number {
+  let best = -1;
+  let gap = Infinity;
+  for (const road of roads) {
+    const a = nodes[road.a].pos;
+    const b = nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const t = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const d = Math.hypot(at.x - a.x - dx * t, at.z - a.z - dz * t);
+    if (d < gap) {
+      gap = d;
+      best = road.id;
+    }
+  }
+  return best;
 }

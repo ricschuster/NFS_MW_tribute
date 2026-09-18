@@ -23,7 +23,8 @@ describe('what there is to find in Kestrel Bay', () => {
   // 65 of 90 fit. That climbs back toward the target as the network grows
   // with #268 - it is not something to chase by loosening the spacing.
   it('scatters billboards across the map rather than piling them up', () => {
-    const boards = city.collectibles.filter((c) => c.kind === 'billboard');
+    // The generator's own: hand-placed boards (#295) are stacked on purpose.
+    const boards = city.collectibles.filter((c) => c.kind === 'billboard' && !c.placed);
     expect(boards.length).toBeGreaterThan(0);
     expect(boards.length).toBeLessThanOrEqual(BILLBOARD_COUNT);
 

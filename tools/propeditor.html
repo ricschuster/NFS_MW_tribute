@@ -268,6 +268,9 @@
   const KINDS = [
     { id: 'gate', group: 'Breakables', name: 'Security gate', w: 10, l: 1.2, shape: 'gate', color: '#ff8a4c', road: 'must' },
     { id: 'stack', group: 'Breakables', name: 'Pallet stack', w: 3, l: 2, shape: 'box', color: '#ff8a4c', road: 'ok', variants: ['pallets', 'drums'] },
+    // Faces along its heading, so a board placed at a jump's heading faces
+    // the car coming off the lip. Smashed from within `BILLBOARD_HIT`.
+    { id: 'billboard', group: 'Collectibles', name: 'Billboard', w: 11, l: 0.6, shape: 'board', color: '#ffd54f', road: 'ok' },
     { id: 'plane-belly', group: 'Planes', name: 'Cargo plane, on its belly', w: 32, l: 30, shape: 'plane', color: '#d6dcdf', flat: true },
     { id: 'plane-nose', group: 'Planes', name: 'Plane, nose-buried', w: 28, l: 16, shape: 'planeNose', color: '#d6dcdf' },
     { id: 'fuselage', group: 'Planes', name: 'Fuselage wreck', w: 4, l: 18, shape: 'fuselage', color: '#d6dcdf', flat: true },
@@ -525,6 +528,11 @@
         c.rect(-w / 2, -l / 2, w, l);
         c.rect(-w / 2 - 0.6, -0.9, 1.2, 1.8);
         c.rect(w / 2 - 0.6, -0.9, 1.2, 1.8);
+        break;
+      case 'board':
+        c.rect(-w / 2, -l / 2, w, l);
+        c.rect(-w / 2 + 1, -0.5, 0.8, 1);
+        c.rect(w / 2 - 1.8, -0.5, 0.8, 1);
         break;
       case 'jump':
         c.moveTo(-w / 2, -l / 2); c.lineTo(w / 2, -l / 2); c.lineTo(w / 2 - 1, l / 2); c.lineTo(-w / 2 + 1, l / 2); c.closePath();

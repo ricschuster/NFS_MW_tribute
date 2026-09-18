@@ -21,9 +21,9 @@ function beside(piece: SetPiece, along: number, across: number) {
 }
 
 describe('Marrow Field props (#295)', () => {
-  it('turns every placed prop into a set piece, a breakable or a jump', () => {
-    const { pieces, breakables, jumps } = airfieldProps(city.terrain, 1000);
-    expect(pieces.length + breakables.length + jumps.length).toBe(MARROW_PROPS.length);
+  it('turns every placed prop into a set piece, a breakable, a jump or a billboard', () => {
+    const { pieces, breakables, jumps, billboards } = airfieldProps(city.terrain, 1000);
+    expect(pieces.length + breakables.length + jumps.length + billboards.length).toBe(MARROW_PROPS.length);
     expect(jumps.length).toBe(MARROW_PROPS.filter((p) => p.kind === 'jump').length);
     expect(pieces.every((p) => p.kind !== ('jump' as string))).toBe(true);
     // Numbered on from where they were told to start, so they cannot collide
@@ -42,6 +42,14 @@ describe('Marrow Field props (#295)', () => {
     const { breakables } = airfieldProps(city.terrain, 0);
     const gates = breakables.filter((b) => b.kind === 'gate');
     expect(gates.map((g) => g.half)).toEqual(placed.map((p) => ((p.w ?? 12) / 2) * M));
+  });
+
+  it('numbers placed billboards after the generated ones, so a save still means the same boards', () => {
+    const ids = city.collectibles.map((c) => c.id);
+    expect(ids).toEqual(ids.map((_, i) => i));
+    const placed = city.collectibles.filter((c) => c.placed);
+    expect(placed.length).toBe(MARROW_PROPS.filter((p) => p.kind === 'billboard').length);
+    expect(city.collectibles.slice(-placed.length).every((c) => c.placed)).toBe(true);
   });
 
   it('adds to the generated breakables without renumbering them', () => {
