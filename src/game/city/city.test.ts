@@ -1611,16 +1611,23 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     expect(city.roads.length - dirt.length).toBeGreaterThan(dirt.length * 10);
   });
 
-  it('keeps every dirt road within the runway/taxiway envelope', () => {
+  it('keeps dirt to the runway, the taxiways and the junction-free roads to them', () => {
     // RUNWAY_WIDTH/2 + TAXIWAY_OFFSET is ~87 m, and `markAirfieldDirt` allows
     // 15% past that; a generous round-number ceiling here keeps this test
     // from having to import the constants just to recompute the same sum.
+    //
+    // Past it, dirt is the field's access roads (`markAirfieldAccess`), and
+    // those run without a junction: a dirt road out there with a side street
+    // off it would be the airfield's dirt leaking onto the network, which is
+    // what this test was written to catch.
     const ceiling = m(110);
+    const away = (p: { x: number; z: number }) =>
+      distanceToSegment(p.x, p.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z);
     for (const road of city.roads.filter((r) => r.surface === 'dirt')) {
-      const mid = midOf(road);
-      expect(distanceToSegment(mid.x, mid.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z)).toBeLessThan(
-        ceiling,
-      );
+      if (away(midOf(road)) < ceiling) continue;
+      for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
+        if (away(end.pos) >= ceiling) expect(end.roads.length).toBeLessThanOrEqual(2);
+      }
     }
   });
 

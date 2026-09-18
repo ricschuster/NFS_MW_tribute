@@ -370,6 +370,46 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
 }
 
 /**
+ * The roads to Marrow Field, in dirt as well (#295: "dirt on the access
+ * road").
+ *
+ * Found by what they are rather than by where they were drawn: a road that
+ * leaves the field's dirt and runs on, junction-free, until it meets the rest
+ * of the network is one whose only purpose is reaching the field. Walked out
+ * from every node where the dirt meets a paved road, through plain through
+ * points, and stopped at the first real junction - so the road it joins stays
+ * paved - or at a bridge. On `CITY_SEED` it is always the bridge: the field
+ * has a lobe of land to itself, all three of its roads leave that lobe over
+ * water, and what turns to dirt is the 0.85 km of them on the island. The
+ * bridges stay paved, being the pursuit's chokepoints and drawn as bridges,
+ * and so does the mainland past them. Runs after `markAirfieldDirt`, which is
+ * what makes the field's own roads findable.
+ */
+export function markAirfieldAccess(nodes: CityNode[], roads: CityRoad[]): void {
+  const joins = nodes.filter(
+    (node) =>
+      node.roads.some((id) => roads[id].surface === 'dirt') &&
+      node.roads.some((id) => roads[id].surface !== 'dirt'),
+  );
+  for (const start of joins) {
+    for (const first of start.roads) {
+      let road = roads[first];
+      if (road.surface === 'dirt') continue;
+      let node = start;
+      for (let guard = 0; guard < roads.length; guard++) {
+        if (road.bridge || road.class === 'interstate' || road.class === 'ramp') break;
+        road.surface = 'dirt';
+        node = nodes[road.a === node.id ? road.b : road.a];
+        if (node.roads.length !== 2) break;
+        const next = node.roads.find((id) => id !== road.id);
+        if (next === undefined || roads[next].surface === 'dirt') break;
+        road = roads[next];
+      }
+    }
+  }
+}
+
+/**
  * The corners of a fence loop round the runway and taxiway - not round the
  * place's own 700 m radius, which reaches far out over ground the airfield
  * never used. `FENCE_MARGIN` clears the taxiway; `FENCE_END_MARGIN` gives the
