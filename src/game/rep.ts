@@ -12,6 +12,7 @@ import {
   REP_AMBUSH,
   REP_CLAIM,
   REP_BREAKER,
+  REP_JUMP,
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
@@ -51,6 +52,7 @@ export type RepReason =
   | 'ambush'
   | 'claim'
   | 'breaker'
+  | 'jump'
   /** Not an award: what a bust takes back (#178). Only `forfeit` uses it. */
   | 'busted';
 
@@ -76,6 +78,7 @@ const KINDS: Record<RepReason, RepKind> = {
   ambush: { value: REP_AMBUSH, label: 'AMBUSH SURVIVED' },
   claim: { value: REP_CLAIM, label: 'CAR CLAIMED' },
   breaker: { value: REP_BREAKER, label: 'PURSUIT BREAKER' },
+  jump: { value: REP_JUMP, label: 'JUMP' }, // scaled by the caller, by distance
   busted: { value: 0, label: 'BUSTED' }, // taken, not paid: see `forfeit`
 };
 
@@ -102,8 +105,11 @@ export class RepLedger {
    * That multiplier is the shape of the whole economy: a takedown in free roam
    * is worth a takedown, and the same takedown at heat five is worth two and a
    * half of them. Running is the multiplier.
+   *
+   * `label` replaces the kind's own for this one popup, for an award whose
+   * size is the point of it - "JUMP 84 M" says what "JUMP" does not.
    */
-  award(reason: RepReason, level = 1, units = 1): number {
+  award(reason: RepReason, level = 1, units = 1, label?: string): number {
     const kind = KINDS[reason];
     const base = (kind.value || 1) * units;
     const amount = Math.round(base * (1 + REP_HEAT_BONUS * (level - 1)));
@@ -120,7 +126,7 @@ export class RepLedger {
       last.amount += amount;
       last.age = 0;
     } else {
-      this.recent.push({ reason, label: kind.label, amount, age: 0 });
+      this.recent.push({ reason, label: label ?? kind.label, amount, age: 0 });
       if (this.recent.length > REP_POPUPS) this.recent.shift();
     }
     return amount;

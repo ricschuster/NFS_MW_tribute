@@ -2270,6 +2270,16 @@ export const BREAKER_BLAST = m(24);
 export const BREAKER_BLAST_DAMAGE = 1.6;
 /** Rep for property damage, and the heat it brings. */
 export const REP_BREAKER = 120;
+/**
+ * Rep for a jump (#307), paid by the metre like a speed camera is paid by
+ * the km/h: `REP_JUMP` for a jump of `REP_JUMP_DISTANCE`, in proportion
+ * either side of it. Nothing under `REP_JUMP_MIN`, or a lifted slab taken
+ * back and forth at walking pace would be the best-paid thing in the game,
+ * and nothing for a hard landing - a jump you did not land is a crash.
+ */
+export const REP_JUMP = 200;
+export const REP_JUMP_DISTANCE = m(100);
+export const REP_JUMP_MIN = m(20);
 export const BREAKER_HEAT = 0.02;
 /** How long the wreckage lies there. */
 export const BREAKER_DEBRIS = 7;
