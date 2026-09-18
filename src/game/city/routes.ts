@@ -7,8 +7,9 @@ import {
   ROUTE_MAX_LENGTH,
   ROUTE_MAX_TURN,
   CHECKPOINT_SPACING,
+  UNITS_PER_METRE,
 } from '../constants';
-import type { City, CityRoute, Vec2 } from './types';
+import type { City, CityRoute, RouteKind, Vec2 } from './types';
 
 /**
  * Circuit routes through Kestrel Bay (#70).
@@ -207,6 +208,99 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
     // route, and three laps of that is the same question asked three times.
     laps: kind === 'circuit' ? ROUTE_LAPS : 1,
   };
+}
+
+/**
+ * Events laid by hand through a place (#311, ADR-0009): a place asks for its
+ * event rather than waiting for the ring search to land on it.
+ *
+ * A route here is a name, a kind and the points it must pass through, in
+ * metres; the roads between them are found the same way `routesFor` finds a
+ * lap's legs - shortest path over the surface graph, no road used twice - so
+ * every metre of it is still a road that exists.
+ *
+ * **Marrow Field Run.** Marrow Field is a section of it, not all of it, the
+ * way an event in the 2012 game runs *through* its airfield. In off the
+ * mainland over the main gate's bridge, north up the east taxiway - over the
+ * Cargo Plane Jump, which the lap does not go round: clear it at speed or lose
+ * the time going round the plane on the grass - round the north end, down the
+ * runway to the road that crosses all three strips 300 m from its south end,
+ * and out over the south-east gate's bridge and back through the mainland to
+ * the start. Leaving at the crossing is a right angle; running on to the
+ * runway's end and doubling back was a 165-degree hairpin. And not the
+ * south-west gate, though it is nearer: the land past it - a sixth of the
+ * city's road - reaches the rest of the map only through Marrow Field, so a
+ * lap that left that way could never come back without driving the field
+ * twice. One lap, scored on average speed: a speed run, because a field of
+ * rivals on a fixed line would feel neither the dirt nor the hills.
+ *
+ * Two things chosen knowingly. The mainland road back to the start meets it
+ * at an acute junction, so the lap has one hairpin, a braking zone half a
+ * kilometre from the finish; going round it instead doubles the lap to 12 km.
+ * And it takes the shared speed-run target (`SPEEDRUN_TARGET`) rather than
+ * one of its own: measured, the reference driver averages 35% of top speed
+ * round it in traffic, at the fast end of the 24-35% the ladder was balanced
+ * on, so it is one of the easier speed runs rather than a special case.
+ */
+const PLACED_ROUTES: { name: string; kind: RouteKind; via: [number, number][] }[] = [
+  {
+    name: 'Marrow Field Run',
+    kind: 'speedrun',
+    via: [
+      [-804, 1525],
+      [-666, 2978],
+      [-766, 2964],
+      [-1414, 1360],
+      [-866, 1100],
+    ],
+  },
+];
+
+/** The hand-laid events that the streets will make, numbered from `firstId`. */
+export function placedRoutes(city: City, firstId: number): CityRoute[] {
+  const graph = surfaceGraph(city);
+  if (graph.nodes.length === 0) return [];
+  const routes: CityRoute[] = [];
+  for (const def of PLACED_ROUTES) {
+    const stops: number[] = [];
+    for (const [x, z] of def.via) {
+      const node = nearestNode(city, graph, { x: x * UNITS_PER_METRE, z: z * UNITS_PER_METRE });
+      if (node === null) break;
+      stops.push(node);
+    }
+    if (stops.length !== def.via.length) continue;
+
+    const points: Vec2[] = [];
+    const used = new Set<string>();
+    let ok = true;
+    for (let i = 0; i < stops.length; i++) {
+      const leg = shortestPath(graph, stops[i], stops[(i + 1) % stops.length], Infinity, used);
+      if (!leg) {
+        ok = false;
+        break;
+      }
+      for (let n = 1; n < leg.length; n++) used.add(edgeKey(leg[n - 1], leg[n]));
+      for (const node of i === 0 ? leg : leg.slice(1)) points.push(city.nodes[node].pos);
+    }
+    // The last leg ends where the first began: drop the repeat, or the loop
+    // closes with a zero-length segment.
+    points.pop();
+    if (!ok || points.length < 8) continue;
+
+    const length = lengthOf(points);
+    routes.push({
+      id: firstId + routes.length,
+      name: def.name,
+      kind: def.kind,
+      points,
+      checkpoints: checkpointsAlong(points, length),
+      start: points[0],
+      length,
+      laps: def.kind === 'circuit' ? ROUTE_LAPS : 1,
+      placed: true,
+    });
+  }
+  return routes;
 }
 
 /**

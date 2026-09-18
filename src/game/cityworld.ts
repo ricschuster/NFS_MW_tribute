@@ -172,6 +172,14 @@ export interface Wreck {
   roll: number;
   /** Seconds since it was wrecked. Cleared away at `WRECK_LINGER`. */
   age: number;
+  /**
+   * What is left of something the player brought down (#57), rather than a
+   * car: passable to the player until they have driven through it once, then
+   * solid like any other wreck. See `contacts`.
+   */
+  debris?: boolean;
+  /** Set once the player is in the debris on that first pass through. */
+  entered?: boolean;
 }
 
 /**
@@ -1215,6 +1223,7 @@ export class CityWorld {
       police: false,
       roll: this.rng.range(-0.9, 0.9),
       age: WRECK_LINGER - BREAKER_DEBRIS,
+      debris: true,
     });
   }
 
@@ -1285,7 +1294,23 @@ export class CityWorld {
     // Wrecks first: they are already dead, so they only cost you speed. A
     // wreck you can drive through is a strange reward for having made it.
     for (const wreck of this.wrecks) {
-      if (!touching(this, wreck)) continue;
+      const touch = touching(this, wreck);
+      // The debris of something you just drove through is not a wall in front
+      // of you. It comes down while the car is still short of it - within
+      // `BREAKER_RANGE` of its edge, and a gate across a road is twenty metres
+      // wide - so it used to land in the car's path and hold it there for the
+      // whole of `BREAKER_DEBRIS`: measured, a lap of the Marrow Field Run
+      // (#311) spent fourteen seconds pinned at its two gates. It lets you
+      // through once, and is solid from the moment you are out the far side.
+      if (wreck.debris) {
+        if (touch) {
+          wreck.entered = true;
+          continue;
+        }
+        if (wreck.entered) wreck.debris = false;
+        continue;
+      }
+      if (!touch) continue;
       this.speed *= SHUNT_SPEED_KEPT;
       this.crashFlash = 1;
       return;

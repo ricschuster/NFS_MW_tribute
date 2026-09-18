@@ -301,6 +301,12 @@ export interface CityRoute {
   /** One lap, in world units. */
   length: number;
   laps: number;
+  /**
+   * Laid by hand through a place (#311) rather than found by `routesFor`'s
+   * search, whose rules - a set of six, a length band, spread apart - are
+   * about its own picks.
+   */
+  placed?: boolean;
 }
 
 /**
