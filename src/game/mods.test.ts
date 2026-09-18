@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { MODS, effectOf, modById, type ModSlot } from './mods';
 import { Garage } from './garage';
 import { kestrelBay } from './city/index';
-import { WHEEL_ENTRIES, SHRED_REINFLATE } from './constants';
+import { WHEEL_ENTRIES, SHRED_REINFLATE, DIRT_SPEED_FRAC, OFFROAD_TYRE_LIMIT, UNITS_PER_METRE } from './constants';
+import { CityWorld } from './cityworld';
+import { PLAN_RUNWAY } from './city/plan';
+import { groundAt } from './city/terrain';
 
 const city = kestrelBay();
 
@@ -48,6 +51,14 @@ describe('the parts catalogue', () => {
     expect(both.topSpeed).toBeCloseTo(0.96, 5);
     expect(effectOf(['not-a-part']).accel).toBe(1);
     expect(effectOf([]).grip).toBe(1);
+  });
+
+  it('has exactly one set of tyres for leaving the tarmac, and it costs grip on it', () => {
+    const offRoad = MODS.filter((m) => m.offRoad);
+    expect(offRoad.length).toBe(1);
+    expect(offRoad[0].slot).toBe('tyres');
+    expect(effectOf([offRoad[0].id]).offRoad).toBe(true);
+    expect(offRoad[0].grip).toBeLessThan(1);
   });
 
   it('has exactly one part that argues with the police', () => {
@@ -144,5 +155,42 @@ describe('earning and fitting them', () => {
     const g = garage();
     g.loadParts([['kestrel', []]], [['kestrel', ['turbo']]]);
     expect(g.isFitted('kestrel', 'turbo')).toBe(false);
+  });
+});
+
+// Marrow Field's runway is the one long stretch of dirt, and the grass beside
+// it is the flattest open ground in the city: somewhere to measure a tyre.
+describe('off-road tyres on the field', () => {
+  const FLOOR = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
+  const M = UNITS_PER_METRE;
+
+  /** Top speed held down the runway's line, `across` metres off its centre. */
+  function flatOut(tyres: boolean, across: number): number {
+    const world = new CityWorld(city, { traffic: false, police: false });
+    if (tyres) {
+      world.finds.loadParts([[world.car.id, ['offroad-tyres']]], [[world.car.id, ['offroad-tyres']]]);
+      world.drive(world.car);
+    }
+    const [a, b] = PLAN_RUNWAY;
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    const ux = (b.x - a.x) / length;
+    const uz = (b.z - a.z) / length;
+    world.x = a.x + ux * 500 * M + uz * across * M;
+    world.z = a.z + uz * 500 * M - ux * across * M;
+    world.y = groundAt(city.terrain, world.x, world.z);
+    world.heading = Math.atan2(ux, uz);
+    world.speed = 0;
+    for (let i = 0; i < 60 * 12; i++) world.step(1 / 60, FLOOR);
+    return world.speed / world.maxSpeed;
+  }
+
+  it('lose nothing on dirt, where stock tyres lose top speed', () => {
+    expect(flatOut(false, 0)).toBeCloseTo(DIRT_SPEED_FRAC, 2);
+    expect(flatOut(true, 0)).toBeGreaterThan(0.99);
+  });
+
+  it('raise how fast the car can cross open ground', () => {
+    expect(flatOut(false, 44)).toBeCloseTo(0.25, 2);
+    expect(flatOut(true, 44)).toBeCloseTo(OFFROAD_TYRE_LIMIT, 2);
   });
 });

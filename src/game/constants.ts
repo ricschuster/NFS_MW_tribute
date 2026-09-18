@@ -36,6 +36,15 @@ export const REVERSE_SPEED_FRAC = 0.18;
  */
 export const DIRT_GRIP_FRAC = 0.8;
 export const DIRT_SPEED_FRAC = 0.85;
+/**
+ * Off-road tyres (a part, `mods.ts`): on dirt they take nothing off at all,
+ * and open ground caps the car at this fraction of its top speed instead of
+ * the quarter it is otherwise held to (`offRoadLimit`). Under half, so a
+ * park is still slower than the road round it - a shortcut, not a second
+ * road network - and cutting across one in a pursuit gains a lot rather than
+ * everything; the police are held to `COP_OFF_ROAD` either way.
+ */
+export const OFFROAD_TYRE_LIMIT = 0.45;
 
 /**
  * Nitrous (#45, #48, #105).
