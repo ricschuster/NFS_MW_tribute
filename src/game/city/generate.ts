@@ -57,6 +57,7 @@ import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } fr
 import { localStreetsFor } from './localstreets';
 import {
   airfieldFurniture,
+  markAirfieldAccess,
   airfieldHangar,
   markAirfieldDirt,
   placeApproach,
@@ -533,6 +534,7 @@ export function generateCity(seed: number): City {
   // any water already in it.
   if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
     markAirfieldDirt(nodes, roads);
+    markAirfieldAccess(nodes, roads);
     const hangar = airfieldHangar(rng);
     if (!anyWater(hangar.footprint, water)) {
       buildings.push(hangar);

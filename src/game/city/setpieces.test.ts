@@ -5,6 +5,7 @@ import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
+import { PLAN_RUNWAY } from './plan';
 import type { SetPiece } from './types';
 
 const M = UNITS_PER_METRE;
@@ -132,5 +133,38 @@ describe('driving into them', () => {
     // From the -x side, so the wall in the way is `minX`.
     const halfWidth = (f.maxX - f.minX) / 2 / M;
     expect(closest(world, centre, halfWidth + 12)).toBeGreaterThan(halfWidth);
+  });
+});
+
+// "Dirt on the access road" (#295): the roads that exist only to reach the
+// field, found by the network's own structure rather than by where they were
+// drawn.
+describe('the roads to Marrow Field', () => {
+  const dirt = city.roads.filter((r) => r.surface === 'dirt');
+
+  it('are dirt right up to where they meet somebody else\'s road', () => {
+    for (const node of city.nodes) {
+      const here = node.roads.map((id) => city.roads[id]);
+      if (!here.some((r) => r.surface === 'dirt') || !here.some((r) => r.surface !== 'dirt')) continue;
+      // Where dirt meets paving, the paving is a bridge or a real junction.
+      const paved = here.filter((r) => r.surface !== 'dirt');
+      expect(paved.every((r) => r.bridge) || node.roads.length >= 3).toBe(true);
+    }
+  });
+
+  it('leave every bridge paved', () => {
+    expect(dirt.some((r) => r.bridge)).toBe(false);
+  });
+
+  it('reach past the runway and taxiways', () => {
+    const [a, b] = PLAN_RUNWAY;
+    const far = dirt.filter((road) => {
+      const p = city.nodes[road.a].pos;
+      const along = ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / Math.hypot(b.x - a.x, b.z - a.z) ** 2;
+      const t = Math.max(0, Math.min(1, along));
+      const away = Math.hypot(p.x - (a.x + (b.x - a.x) * t), p.z - (a.z + (b.z - a.z) * t));
+      return away > 150 * M;
+    });
+    expect(far.length).toBeGreaterThan(0);
   });
 });
