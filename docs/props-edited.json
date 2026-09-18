@@ -1,7 +1,7 @@
 {
  "seed": "0x4b657374",
  "place": "Marrow Field",
- "savedAt": "2026-09-18T16:54:39.153Z",
+ "savedAt": "2026-09-18T17:28:27.976Z",
  "props": [
   {
    "angle": -0.785,
@@ -784,6 +784,35 @@
    "kind": "tree",
    "x": -1434.9,
    "z": 2098.6
+  },
+  {
+   "id": "board0",
+   "kind": "billboard",
+   "x": -1238.9,
+   "z": 2025.3,
+   "angle": 0.384,
+   "note": "Hangar Ramp billboards - smash them off the jump"
+  },
+  {
+   "id": "board1",
+   "kind": "billboard",
+   "x": -1234.4,
+   "z": 2036.5,
+   "angle": 0.384
+  },
+  {
+   "id": "board2",
+   "kind": "billboard",
+   "x": -1229.9,
+   "z": 2047.6,
+   "angle": 0.384
+  },
+  {
+   "id": "board3",
+   "kind": "billboard",
+   "x": -1225.4,
+   "z": 2058.7,
+   "angle": 0.384
   }
  ]
 }

@@ -2,7 +2,7 @@
 // Place props in the Marrow Field Props editor (`npm run propexport`), save,
 // read the save back into docs/props-edited.json, and run the sync again.
 //
-// Seed 0x4b657374, saved 2026-09-18T16:54:39.153Z.
+// Seed 0x4b657374, saved 2026-09-18T17:28:27.976Z.
 import type { AuthoredProp } from './types';
 
 /** Marrow Field's set dressing, in metres, as placed in the editor (#295). */
@@ -115,4 +115,8 @@ export const MARROW_PROPS: AuthoredProp[] = [
   { kind: 'tree', x: -1483.3, z: 2111, angle: 4.229 },
   { kind: 'tree', x: -1462, z: 2111.3, angle: 6.24 },
   { kind: 'tree', x: -1434.9, z: 2098.6, angle: 0.851 },
+  { kind: 'billboard', x: -1238.9, z: 2025.3, angle: 0.384, note: 'Hangar Ramp billboards - smash them off the jump' },
+  { kind: 'billboard', x: -1234.4, z: 2036.5, angle: 0.384 },
+  { kind: 'billboard', x: -1229.9, z: 2047.6, angle: 0.384 },
+  { kind: 'billboard', x: -1225.4, z: 2058.7, angle: 0.384 },
 ];

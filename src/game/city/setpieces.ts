@@ -2,7 +2,7 @@ import { UNITS_PER_METRE } from '../constants';
 import { MARROW_PROPS } from './marrowprops';
 import { groundAt } from './terrain';
 import type { Terrain } from './terrain';
-import type { AuthoredProp, Breakable, Jump, JumpKind, SetPiece, SetPieceKind } from './types';
+import type { AuthoredProp, Breakable, Jump, JumpKind, SetPiece, SetPieceKind, Vec2 } from './types';
 
 const M = UNITS_PER_METRE;
 
@@ -62,6 +62,13 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   tree: [post(0, 0, 0.6, 3), { u: 0, v: 0, r: 2, y0: 3, y1: 11.6 }],
 };
 
+/** Where a hand-placed thing stands, before it is given an id. */
+export interface Placed {
+  at: Vec2;
+  y: number;
+  angle: number;
+}
+
 /** The editor's names for the kinds of jump. */
 const JUMP_VARIANTS: Record<string, JumpKind> = {
   'built ramp': 'ramp',
@@ -78,21 +85,27 @@ const SOLID_REACH = 28;
  * Gates and stacks join the breakables that already exist, numbered on from
  * `firstId` so a smashed one is remembered by the same id the sim uses for
  * every other. Jumps become `Jump`s (#307), their kind read off the variant
- * the editor saved. The rest are set pieces, sat on the ground where they
+ * the editor saved; billboards are handed back as positions, for `generate.ts`
+ * to number after the generated ones. The rest are set pieces, sat on the ground where they
  * were placed.
  */
 export function airfieldProps(
   terrain: Terrain,
   firstId: number,
   props: readonly AuthoredProp[] = MARROW_PROPS,
-): { pieces: SetPiece[]; breakables: Breakable[]; jumps: Jump[] } {
+): { pieces: SetPiece[]; breakables: Breakable[]; jumps: Jump[]; billboards: Placed[] } {
   const pieces: SetPiece[] = [];
   const jumps: Jump[] = [];
+  const billboards: Placed[] = [];
   const breakables: Breakable[] = [];
   let id = firstId;
   for (const prop of props) {
     const at = { x: prop.x * M, z: prop.z * M };
     const y = groundAt(terrain, at.x, at.z);
+    if (prop.kind === 'billboard') {
+      billboards.push({ at, y, angle: prop.angle });
+      continue;
+    }
     if (prop.kind === 'jump') {
       jumps.push({ kind: JUMP_VARIANTS[prop.variant ?? ''] ?? 'ramp', at, y, angle: prop.angle });
       continue;
@@ -106,7 +119,7 @@ export function airfieldProps(
     }
     pieces.push({ kind: prop.kind, at, y, angle: prop.angle });
   }
-  return { pieces, breakables, jumps };
+  return { pieces, breakables, jumps, billboards };
 }
 
 /**

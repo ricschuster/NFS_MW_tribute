@@ -147,3 +147,19 @@ describe('what a jump pays', () => {
     expect(world.rep.recent.some((a) => a.reason === 'jump')).toBe(false);
   });
 });
+
+// Billboards stacked on the Hangar Ramp's flight line (#295), as the reference
+// has them: something to smash on the way down.
+describe('the Hangar Ramp billboards', () => {
+  it('are smashed by taking the jump', () => {
+    const ramp = first('ramp');
+    const { world } = launch(ramp, kmh(160));
+    // Carry on past the landing, through the rest of the stack.
+    const keys = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
+    for (let i = 0; i < 60; i++) world.step(1 / 60, keys);
+    const boards = city.collectibles.filter((c) => c.placed);
+    const smashed = boards.filter((b) => world.collectibles.smashed.has(b.id));
+    expect(boards.length).toBe(4);
+    expect(smashed.length).toBe(4);
+  });
+});

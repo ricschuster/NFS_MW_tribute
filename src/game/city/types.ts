@@ -251,6 +251,12 @@ export interface Collectible {
   angle: number;
   /** Which road it belongs to, so a camera knows what road it is clocking. */
   road: number;
+  /**
+   * Placed by hand in the prop editor (#295) rather than by `collectiblesFor`,
+   * whose spacing and kerb rules are about its own picks: four boards stacked
+   * behind a jump's landing are a judgement, not a placement mistake.
+   */
+  placed?: boolean;
 }
 
 /**
@@ -399,11 +405,11 @@ export interface AuthoredProp {
 }
 
 /**
- * Everything the prop editor can place. Gates and stacks become `Breakable`s,
- * which already exist; a jump becomes a `Jump` (#307); the rest are set
- * pieces.
+ * Everything the prop editor can place. Gates and stacks become `Breakable`s
+ * and billboards `Collectible`s, which already exist; a jump becomes a `Jump`
+ * (#307); the rest are set pieces.
  */
-export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump';
+export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump' | 'billboard';
 
 /** The set pieces: things that stand somewhere and are driven round, not through. */
 export type SetPieceKind =
