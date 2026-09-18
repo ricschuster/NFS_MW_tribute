@@ -5,6 +5,7 @@ import {
   REVERSE_SPEED_FRAC,
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
+  OFFROAD_TYRE_LIMIT,
   ESCAPED_FLASH,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
@@ -368,6 +369,8 @@ export class CityWorld {
   private nitroAccel = NITRO_ACCEL_MULT;
   /** Tyres that come back up: a spike strip is a moment, not the pursuit (#68). */
   private reinflating = false;
+  /** Fitted with off-road tyres, which take the sting out of dirt and open ground. */
+  private offRoadTyres = false;
   private fallSpeed = 0;
   /** Vertical speed while airborne, up positive (#307). */
   private climb = 0;
@@ -441,7 +444,7 @@ export class CityWorld {
     this.braking = -this.maxSpeed;
     this.decel = -this.maxSpeed / 5;
     this.offRoadDecel = -this.maxSpeed / 2;
-    this.offRoadLimit = this.maxSpeed / 4;
+    this.offRoadLimit = this.maxSpeed * (mods.offRoad ? OFFROAD_TYRE_LIMIT : 1 / 4);
     this.maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
     this.grip = LATERAL_GRIP * profile.grip * mods.grip;
     // Only the *excess* is scaled. `NITRO_SPEED_MULT` has to stay under 2 or
@@ -449,6 +452,7 @@ export class CityWorld {
     this.nitroSpeed = 1 + (NITRO_SPEED_MULT - 1) * profile.nitro * mods.nitro;
     this.nitroAccel = 1 + (NITRO_ACCEL_MULT - 1) * profile.nitro * mods.nitro;
     this.reinflating = mods.reinflating;
+    this.offRoadTyres = mods.offRoad;
   }
 
   /** Put the car on a surface street in **Ashford Point**, pointing along it. */
@@ -782,8 +786,9 @@ export class CityWorld {
     }
 
     // A road, just a worse one (#294): still `onRoad`, still short of the
-    // off-road penalty in `settle`, just less grip and a lower top speed.
-    const onDirt = this.onRoad?.surface === 'dirt';
+    // off-road penalty in `settle`, just less grip and a lower top speed -
+    // unless the tyres were made for it.
+    const onDirt = this.onRoad?.surface === 'dirt' && !this.offRoadTyres;
 
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car

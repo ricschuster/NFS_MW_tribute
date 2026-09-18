@@ -9,6 +9,12 @@
  * can hold in their head at two hundred kilometres an hour; four slots of two
  * is a choice you can make from the Quick Wheel without stopping.
  *
+ * The tyres are the one slot with three, and it is a deliberate exception:
+ * each set answers a different question - grip, the police's spike strips, or
+ * where you can drive at all - and off-road tyres became worth having only
+ * once the map had dirt and open ground worth crossing (#294, #185). Nine
+ * parts is still one page of the wheel (`WHEEL_ENTRIES`).
+ *
  * Every mod is a *trade*, which is the difference between tuning and a stat
  * boost. Long gears buy top speed with acceleration; a splitter buys grip with
  * top speed. Only the tyres are close to free, and what they cost is the grip
@@ -33,6 +39,12 @@ export interface Mod {
    * rather than with the stopwatch.
    */
   reinflating?: boolean;
+  /**
+   * Tyres for leaving the tarmac: dirt stops costing anything and open
+   * ground stops being a crawl (`OFFROAD_TYRE_LIMIT`). Paid for in grip on
+   * the tarmac, which is where the car spends most of its time.
+   */
+  offRoad?: boolean;
 }
 
 /**
@@ -108,6 +120,16 @@ export const MODS: Mod[] = [
     topSpeed: 1.05,
     grip: 0.97,
   },
+  {
+    // Last, because it is the most particular trade in the catalogue: worse
+    // everywhere the city is paved, and better only once you leave it.
+    id: 'offroad-tyres',
+    name: 'Off-road Tyres',
+    slot: 'tyres',
+    detail: 'GRP -10%, fast on dirt and grass',
+    grip: 0.9,
+    offRoad: true,
+  },
 ];
 
 export const modById = (id: string): Mod | undefined => MODS.find((mod) => mod.id === id);
@@ -119,6 +141,7 @@ export interface ModEffect {
   grip: number;
   nitro: number;
   reinflating: boolean;
+  offRoad: boolean;
 }
 
 export function effectOf(fitted: Iterable<string>): ModEffect {
@@ -128,6 +151,7 @@ export function effectOf(fitted: Iterable<string>): ModEffect {
     grip: 1,
     nitro: 1,
     reinflating: false,
+    offRoad: false,
   };
   for (const id of fitted) {
     const mod = modById(id);
@@ -137,6 +161,7 @@ export function effectOf(fitted: Iterable<string>): ModEffect {
     effect.grip *= mod.grip ?? 1;
     effect.nitro *= mod.nitro ?? 1;
     effect.reinflating = effect.reinflating || mod.reinflating === true;
+    effect.offRoad = effect.offRoad || mod.offRoad === true;
   }
   return effect;
 }
