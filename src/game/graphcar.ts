@@ -1,3 +1,4 @@
+import { slopeSpeed } from './slope';
 import { roadHeightAt } from './city/grid';
 import type { City, CityRoad } from './city/types';
 
@@ -79,7 +80,13 @@ export function advanceAlong(
   choose: (car: GraphCar, node: number) => CityRoad | null,
   laneOffset: number,
 ): void {
-  car.t += (car.speed * dt) / Math.max(1, car.road.length);
+  // The same hill the player feels (#255): every car on the graph - traffic,
+  // the police, a rival running - covers ground at the pace the grade allows,
+  // so the police's fraction of your top speed holds uphill and down and
+  // `HEAT_LEVELS` stays outrunnable on any grade.
+  const rise = city.nodes[car.road.b].y - city.nodes[car.road.a].y;
+  const grade = (car.forward ? rise : -rise) / Math.max(1, car.road.length);
+  car.t += (car.speed * slopeSpeed(grade) * dt) / Math.max(1, car.road.length);
 
   let hops = 0;
   while (car.t >= 1 && hops < 4) {

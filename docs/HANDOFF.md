@@ -22,7 +22,11 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   stacked four behind the Hangar Ramp, #315 added Off-road Tyres as a third
   set in the tyre slot, and #318 put dirt on the field's access roads up to
   their bridges, closing #295. #311 (an event on the field) is open and has
-  design questions in it, not just work.
+  design questions in it, not just work. Then #255: slope changes the drive
+  (see "the ground has height" below). The lap-time baselines it invalidates
+  (`docs/city-baseline.json`, the rival pace fractions) cannot be re-derived
+  while the city has no routes, so they wait on #268 along with everything
+  else that needs a race.
 - **Since this file was last written:** [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md)
   names a pattern this rebuild kept paying for - roads, the land shape and the
   districts were each built procedurally, tuned for a while, then found wrong
@@ -126,10 +130,11 @@ ADR-0009 built. The gridded, buildinged city ADR-0004 through ADR-0006 built
 
 Underneath that, four things are real and new since the last time this file
 was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
-terrain field, and roads are cut and filled into it (`cutfill.ts`, #252). The
-car's physics do **not** read that grade yet, whatever an earlier version of
-this file said: `CityWorld` reads the ground's height and never its slope, so
-a hill drives like flat tarmac until #255 lands. The **water is one sea with the land as holes in
+terrain field, and roads are cut and filled into it (`cutfill.ts`, #252), and
+since #255 the car feels it (`slope.ts`): a climb lowers top speed and a
+descent raises it, gravity pulls along the road, and a crest takes grip away.
+Every car on the graph feels the same hill, so the police's fraction of your
+top speed holds uphill and down. The **water is one sea with the land as holes in
 it** (ADR-0008) rather than a bay-and-river pair drawn over a slab, which is
 what let the coastline stop being an edge-to-edge wall and become six separate
 bodies of land joined by routed river crossings. **Downtown, the harbour, the

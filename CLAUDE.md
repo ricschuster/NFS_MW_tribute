@@ -511,6 +511,15 @@ game's gravity is over twice the real thing. Set pieces are solid in height
 bands (`SET_PIECE_SOLIDS`), which is what lets a car drive under the cargo
 plane's wing and still catch it on a jump that comes up short.
 
+**A hill moves the top speed, not the acceleration** (issue #255). The speed
+model has a hard cap and no drag, so gravity alone could never make a climb
+cost a car at full throttle anything. `slope.ts` shifts the cap by the grade
+(`SLOPE_SPEED`), the cap eases toward it (`SLOPE_EASE`) so the existing
+overspeed bleed follows gently, and gravity pulls along the road on top. Every
+`GraphCar` covers ground at the same factor in `advanceAlong`, which is what
+keeps `HEAT_LEVELS` outrunnable on a climb - a cop that did not feel the hill
+you did would close on you up every one of them.
+
 **Nitrous buys the way out of a corner** (issue #105). It used to be mostly
 top speed, which had nowhere to go once #82 made corners grip-limited.
 `NITRO_TAPER`'s doc comment in `constants.ts` has the reasoning for why the

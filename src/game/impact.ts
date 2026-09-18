@@ -52,6 +52,16 @@ export function touching(a: { x: number; z: number; y: number }, b: { x: number;
  * hatchback out of the pursuit. Zero when the two are not actually closing,
  * which is what stops a car being ground down by resting against you.
  */
+/**
+ * Full damage, give or take the last bit of a float. A ram that is square on
+ * paper - the target dead ahead - multiplies out to 0.9999999999999998 or to
+ * exactly 1 depending on where the car was to the twelfth decimal place, and
+ * whether that is a takedown must not depend on it: before this, taking a hill
+ * into account (#255) moved the car by that much and turned a textbook
+ * takedown into a car that shrugged it off.
+ */
+export const WRECKED = 1 - 1e-9;
+
 export function impactDamage(
   rammer: Rammer,
   car: GraphCar,

@@ -1137,6 +1137,35 @@ export const HIT_SPEED_KEPT = 0.25;
 export const RIDE_RATE = 8;
 /** Fall acceleration when the car leaves the deck, in world units per second squared. */
 export const GRAVITY = m(22);
+
+/**
+ * Relief you can feel (#255, `slope.ts`).
+ *
+ * `SLOPE_SPEED` is how far a grade moves top speed: at 2.5, a 6% climb - the
+ * steepest an arterial or boulevard is allowed (ADR-0007 rule 7) - tops out at
+ * 85% and the same descent runs on to 115%, and `SLOPE_SPEED_MAX` caps it for
+ * the few steeper stretches (the map's worst is 16%). Measured on `CITY_SEED`,
+ * a fifth of the network is steeper than 2% and a tenth steeper than 4%, so
+ * this is felt on a real drive without deciding every one.
+ *
+ * `SLOPE_EASE` is how fast the cap follows a change of grade, per second. The
+ * cap moves and the existing overspeed bleed follows it, so a climb takes the
+ * speed off over a second or so rather than like a wall - and the bleed after
+ * a boost, which #105 depends on, is untouched.
+ *
+ * The grade is sampled `SLOPE_SAMPLE` either side of the car, and a crest over
+ * `CREST_SAMPLE`: long enough that the kink where two road pieces meet does
+ * not read as a crest at every junction, short enough that a real brow does.
+ */
+export const SLOPE_SPEED = 2.5;
+export const SLOPE_SPEED_MAX = 0.3;
+export const SLOPE_EASE = 0.15;
+export const SLOPE_SAMPLE = m(6);
+export const CREST_SAMPLE = m(15);
+/** The least grip a car keeps going light over a crest. */
+export const CREST_GRIP_MIN = 0.35;
+/** Below this speed a car on a hill stays put rather than rolling. */
+export const SLOPE_HOLD = m(2);
 /**
  * How far above or below a road the car can be and still count as on it.
  * Without this, standing in the street under an overpass reports the deck 12 m

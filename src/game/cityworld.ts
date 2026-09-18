@@ -8,6 +8,10 @@ import {
   OFFROAD_TYRE_LIMIT,
   REP_JUMP_MIN,
   REP_JUMP_DISTANCE,
+  SLOPE_EASE,
+  SLOPE_HOLD,
+  SLOPE_SAMPLE,
+  CREST_SAMPLE,
   ESCAPED_FLASH,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
@@ -117,11 +121,12 @@ import {
 import { hitsSetPiece } from './city/setpieces';
 import { JUMP_SHAPES, jumpProfile, jumpUnder, lipSlope } from './city/jumps';
 import type { OnJump } from './city/jumps';
+import { crestGrip, slopePull, slopeSpeed } from './slope';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { planCentre } from './city/plan';
 import type { DistrictKind } from './city/types';
-import { impactDamage, touching } from './impact';
+import { impactDamage, touching, WRECKED } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
 import type { City, CityRoad, CityRoute } from './city/types';
@@ -235,6 +240,8 @@ export class CityWorld {
   airborne = false;
   /** Nose-up angle to draw the car at: the slope of a jump, or its line of flight. */
   pitch = 0;
+  /** The grade under the car along its direction of travel, rise over run: uphill positive (#255). */
+  grade = 0;
   /** The last jump landed: how far it went, how high over its lip, and how it came down. */
   lastJump: { distance: number; height: number; airtime: number; hard: boolean } | null = null;
   /** Frozen in the BUSTED state, holding the overlay before the pursuit resets. */
@@ -376,6 +383,8 @@ export class CityWorld {
   private fallSpeed = 0;
   /** Vertical speed while airborne, up positive (#307). */
   private climb = 0;
+  /** Top speed's multiplier for the hill, easing toward `slopeSpeed` of the grade (#255). */
+  private hill = 1;
   /** Where the car left the ground, the highest it got, and for how long, for `lastJump`. */
   private flight = { x: 0, z: 0, y: 0, peak: 0, time: 0 };
   /** The jump under the car last step, so leaving it can be told from never being on one. */
@@ -787,6 +796,18 @@ export class CityWorld {
       return;
     }
 
+    // Relief (#255): how steep the ground is along the way the car is going,
+    // and whether it is going light over a brow. Not on a jump or in the air,
+    // which have a shape of their own (#307). Signed by the direction of
+    // travel, so reversing up a hill is climbing it.
+    const lie = this.airborne || this.ramp ? { grade: 0, bend: 0 } : this.lie();
+    const travel = Math.sign(this.speed || 1);
+    this.grade = lie.grade * travel;
+    const crest = crestGrip(this.speed, lie.bend);
+    // The cap follows the grade rather than jumping to it: see `SLOPE_EASE`.
+    const hill = slopeSpeed(this.grade);
+    this.hill += Math.max(-SLOPE_EASE * dt, Math.min(SLOPE_EASE * dt, hill - this.hill));
+
     // A road, just a worse one (#294): still `onRoad`, still short of the
     // off-road penalty in `settle`, just less grip and a lower top speed -
     // unless the tyres were made for it.
@@ -800,7 +821,9 @@ export class CityWorld {
         TURN_RATE,
         (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS) * (onDirt ? DIRT_GRIP_FRAC : 1)) /
           Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)),
-      ) * (this.shredded > 0 ? SHRED_GRIP : 1);
+      ) *
+      (this.shredded > 0 ? SHRED_GRIP : 1) *
+      crest;
 
     const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
     const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15 && !this.airborne;
@@ -840,12 +863,20 @@ export class CityWorld {
       this.speed = Math.min(0, accelerate(this.speed, -this.decel, dt));
     }
 
+    // Gravity along the road: a climb pulls the car back and a descent pushes
+    // it on. A car standing on a hill stays standing - rolling away from a
+    // standstill is realistic and not a thing anybody wants from this game.
+    if (!this.airborne && Math.abs(this.speed) > SLOPE_HOLD) {
+      this.speed -= travel * slopePull(this.grade) * dt;
+    }
+
     // Shredded tyres cap the top speed under everything, nitrous included:
     // lighting the boost on four ruined tyres does not make them work.
     const topSpeed = Math.min(
       (boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed) *
         (1 - this.hurt * DAMAGE_SPEED_LOSS) *
-        (onDirt ? DIRT_SPEED_FRAC : 1),
+        (onDirt ? DIRT_SPEED_FRAC : 1) *
+        this.hill,
       this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
     );
     if (this.speed > topSpeed) {
@@ -1269,7 +1300,7 @@ export class CityWorld {
       // though: `impactDamage` is zero below a real closing speed, and being
       // gently nudged from behind is not something you did.
       if (hurt > 0 && this.droveInto(car)) this.police.witness(this, 'crashed');
-      if (car.damage >= 1) {
+      if (car.damage >= WRECKED) {
         this.traffic.remove(car);
         this.wreck(car, car.colour, 1, false);
       }
@@ -1296,7 +1327,7 @@ export class CityWorld {
       // takedown is for, and a flat bump per frame saturates the whole curve
       // in three seconds of grinding along a wing.
       if (hurt > 0 && this.droveInto(cop)) this.police.rammed(this);
-      if (cop.damage >= 1) {
+      if (cop.damage >= WRECKED) {
         this.police.remove(cop);
         this.wreck(cop, unit.colour, unit.scale, true);
       }
@@ -1605,6 +1636,29 @@ export class CityWorld {
     if (!surface.road && this.speed > this.offRoadLimit) {
       this.speed = accelerate(this.speed, this.offRoadDecel, dt);
     }
+  }
+
+  /**
+   * The lie of the ground along the car's heading (#255): its grade from
+   * `SLOPE_SAMPLE` either side, and its vertical curvature from `CREST_SAMPLE`
+   * either side - negative over a brow. Read off whatever the car would drive
+   * on at each point, a road at this height if there is one and the ground if
+   * not, so a deck is flat however the hill under it runs.
+   */
+  private lie(): { grade: number; bend: number } {
+    const sx = Math.sin(this.heading);
+    const sz = Math.cos(this.heading);
+    const at = (d: number): number => {
+      const x = this.x + sx * d;
+      const z = this.z + sz * d;
+      const surface = surfaceAt(this.city, this.grid, x, z, this.y);
+      return surface.road ? surface.y : groundAt(this.city.terrain, x, z);
+    };
+    const here = at(0);
+    return {
+      grade: (at(SLOPE_SAMPLE) - at(-SLOPE_SAMPLE)) / (2 * SLOPE_SAMPLE),
+      bend: (at(CREST_SAMPLE) - 2 * here + at(-CREST_SAMPLE)) / (CREST_SAMPLE * CREST_SAMPLE),
+    };
   }
 
   /**
