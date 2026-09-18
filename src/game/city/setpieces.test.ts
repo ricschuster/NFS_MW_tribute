@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAR_RADIUS, UNITS_PER_METRE } from '../constants';
+import { CityWorld } from '../cityworld';
 import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
 import { airfieldProps, hitsSetPiece } from './setpieces';
@@ -84,5 +85,44 @@ describe('hitsSetPiece', () => {
 
   it('lets anything well above the ground pass over', () => {
     expect(hitsSetPiece([piece('bunker')], 0, 0, 12 * M, CAR_RADIUS)).toBe(false);
+  });
+});
+
+describe('driving into them', () => {
+  const FLOOR = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
+
+  /** Aim the car at a point from `back` metres away and hold the throttle. */
+  function closest(world: CityWorld, target: { x: number; z: number }, back: number) {
+    world.x = target.x - back * M;
+    world.z = target.z;
+    world.y = groundAt(world.city.terrain, world.x, world.z);
+    world.heading = Math.PI / 2;
+    world.speed = 0;
+    let gap = Infinity;
+    for (let i = 0; i < 240; i++) {
+      world.step(1 / 60, FLOOR);
+      gap = Math.min(gap, Math.hypot(world.x - target.x, world.z - target.z) / M);
+    }
+    return gap;
+  }
+
+  // Marrow Field stands ten metres above the sea. Collision used to ask how
+  // high the car was above *sea level*, and above four metres nothing on the
+  // ground was solid - the car drove through the silos and the hangar.
+  it('stops at a silo on raised ground rather than driving through it', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const silo = world.city.setPieces.find((p) => p.kind === 'silo')!;
+    expect(silo.y / M).toBeGreaterThan(4.4);
+    expect(closest(world, silo.at, 12)).toBeGreaterThan(4);
+  });
+
+  it('stops at the hangar wall', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const hangar = world.city.buildings.find((b) => b.derelict)!;
+    const f = hangar.footprint;
+    const centre = { x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 };
+    // From the -x side, so the wall in the way is `minX`.
+    const halfWidth = (f.maxX - f.minX) / 2 / M;
+    expect(closest(world, centre, halfWidth + 12)).toBeGreaterThan(halfWidth);
   });
 });

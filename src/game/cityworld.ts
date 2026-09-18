@@ -1540,7 +1540,14 @@ export class CityWorld {
   private hitsBuilding(): boolean {
     // Only what is on the ground can be hit: the interstate flies over the
     // rooftops, and a deck at 12 m does not collide with a block at street level.
-    if (this.y > CAR_RADIUS * 2) return false;
+    //
+    // Measured from the ground under the car, not from sea level. This was
+    // written for a flat city (#113), where the two were the same number; once
+    // the ground had height (#251) anything standing more than four metres
+    // above the sea stopped being solid, which was most of Marrow Field and
+    // over half the buildings in the city. Either side of the ground, so a
+    // tunnel passes under what stands on top of it.
+    if (Math.abs(this.y - groundAt(this.city.terrain, this.x, this.z)) > CAR_RADIUS * 2) return false;
 
     for (const building of this.grid.buildingsNear(this.x, this.z)) {
       const f = building.footprint;
