@@ -42,13 +42,19 @@ import {
   PLACE_BLEND,
   QUARRY_BENCH,
   QUARRY_DEPTH,
+  QUARRY_DIRT_REACH,
   QUARRY_FLOOR,
   QUARRY_HAUL_BLEND,
   QUARRY_HAUL_WIDTH,
+  QUARRY_PLANT_DEPTH,
+  QUARRY_PLANT_HEIGHT,
+  QUARRY_PLANT_WIDTH,
   QUARRY_RAMP_TURNS,
+  QUARRY_YARD_CLEAR,
   RUNWAY_APRON,
   RUNWAY_WIDTH,
   TAXIWAY_OFFSET,
+  UNITS_PER_METRE,
   WEED_SPACING,
 } from '../constants';
 import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
@@ -66,6 +72,7 @@ export interface PlaceRoad {
   surface?: RoadSurface;
 }
 
+const m = (metres: number) => metres * UNITS_PER_METRE;
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
@@ -370,8 +377,8 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
 }
 
 /**
- * The roads to Marrow Field, in dirt as well (#295: "dirt on the access
- * road").
+ * The roads to a dirt place, in dirt as well (#295: "dirt on the access
+ * road"; Halloway Quarry uses the same walk).
  *
  * Found by what they are rather than by where they were drawn: a road that
  * leaves the field's dirt and runs on, junction-free, until it meets the rest
@@ -382,10 +389,10 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
  * has a lobe of land to itself, all three of its roads leave that lobe over
  * water, and what turns to dirt is the 0.85 km of them on the island. The
  * bridges stay paved, being the pursuit's chokepoints and drawn as bridges,
- * and so does the mainland past them. Runs after `markAirfieldDirt`, which is
- * what makes the field's own roads findable.
+ * and so does the mainland past them. Runs after `markAirfieldDirt` and
+ * `markQuarryDirt`, which are what make each place's own roads findable.
  */
-export function markAirfieldAccess(nodes: CityNode[], roads: CityRoad[]): void {
+export function markDirtAccess(nodes: CityNode[], roads: CityRoad[]): void {
   const joins = nodes.filter(
     (node) =>
       node.roads.some((id) => roads[id].surface === 'dirt') &&
@@ -407,6 +414,135 @@ export function markAirfieldAccess(nodes: CityNode[], roads: CityRoad[]): void {
       }
     }
   }
+}
+
+/**
+ * Halloway Quarry's own roads in dirt: the haul road and the rim road (#294).
+ *
+ * By distance from the place's centre, for the reason `markAirfieldDirt` gives:
+ * the roads come from the hand-traced network and carry no `surface` of their
+ * own, so the quarry's are found by where they are. `QUARRY_DIRT_REACH` has the
+ * measurement that puts the edge in the gap between the rim road and the next
+ * road that is not the way in.
+ */
+export function markQuarryDirt(nodes: CityNode[], roads: CityRoad[]): void {
+  for (const place of PLAN_PLACES) {
+    if (place.kind !== 'quarry') continue;
+    const reach = place.radius * QUARRY_DIRT_REACH;
+    for (const road of roads) {
+      if (road.bridge) continue;
+      const mid = {
+        x: (nodes[road.a].pos.x + nodes[road.b].pos.x) / 2,
+        z: (nodes[road.a].pos.z + nodes[road.b].pos.z) / 2,
+      };
+      if (Math.hypot(mid.x - place.at.x, mid.z - place.at.z) <= reach) road.surface = 'dirt';
+    }
+  }
+}
+
+/**
+ * The working buildings of Halloway Quarry: a crushing plant on the pit floor
+ * and a yard - site office and weighbridge - on the rim beside the road in.
+ *
+ * Found against the real network rather than laid to fixed offsets. The floor
+ * is level for a radius of about 100 m and the haul road ends on its edge, so the
+ * plant sits at the centre with the clearance the ground gives it. The yard
+ * goes on the nearest level ground to the paved road that reaches the rim, at
+ * least `QUARRY_YARD_CLEAR` from every road: an office door on the carriageway is
+ * the failure `HANGAR_CLEAR` was measured to avoid. Both are pure functions of
+ * the terrain and the roads and draw nothing from any stream, so placing them
+ * cannot move a collectible.
+ *
+ * Runs after `markQuarryDirt` and before `markDirtAccess`, which is what makes
+ * "the paved road nearest the pit" the way in.
+ */
+export function quarryBuildings(
+  terrain: Terrain,
+  water: Water,
+  nodes: CityNode[],
+  roads: CityRoad[],
+): Building[] {
+  const place = PLAN_PLACES.find((p) => p.kind === 'quarry');
+  if (!place) return [];
+  const at = place.at;
+  const built: Building[] = [];
+  const box = (cx: number, cz: number, w: number, d: number, height: number, variant: number): Building => ({
+    footprint: { minX: cx - w / 2, maxX: cx + w / 2, minZ: cz - d / 2, maxZ: cz + d / 2 },
+    height,
+    kind: 'shed',
+    district: 'industrial',
+    variant,
+  });
+
+  const segments = roads.map((road) => [nodes[road.a].pos, nodes[road.b].pos] as const);
+  const awayFromRoads = (p: Vec2) =>
+    segments.reduce((least, [a, b]) => Math.min(least, toSegment(a, b, p).away), Infinity);
+  // Level enough to build on: the steepest of four neighbours a building's
+  // half-width away, as a grade.
+  const levelAt = (p: Vec2, reach: number) => {
+    const h = groundAt(terrain, p.x, p.z);
+    let steepest = 0;
+    for (const [dx, dz] of [[reach, 0], [-reach, 0], [0, reach], [0, -reach]]) {
+      steepest = Math.max(steepest, Math.abs(groundAt(terrain, p.x + dx, p.z + dz) - h) / reach);
+    }
+    return steepest;
+  };
+  const fits = (cx: number, cz: number, w: number, d: number, clear: number) => {
+    const reach = Math.max(w, d) / 2 + clear / 2;
+    if (levelAt({ x: cx, z: cz }, reach) > 0.05) return false;
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) {
+      const p = { x: cx + (dx * w) / 2, z: cz + (dz * d) / 2 };
+      if (water.isWater(p.x, p.z) || awayFromRoads(p) < clear) return false;
+    }
+    return true;
+  };
+
+  // The plant: on the floor, with a workshop shed against it.
+  const plant = box(at.x, at.z, QUARRY_PLANT_WIDTH, QUARRY_PLANT_DEPTH, QUARRY_PLANT_HEIGHT, 0.31);
+  const shed = box(at.x + m(48), at.z + m(30), m(28), m(18), m(8), 0.62);
+  for (const b of [plant, shed]) {
+    const f = b.footprint;
+    if (fits((f.minX + f.maxX) / 2, (f.minZ + f.maxZ) / 2, f.maxX - f.minX, f.maxZ - f.minZ, m(12))) built.push(b);
+  }
+
+  // The yard: the paved road nearest the pit is the way in.
+  let anchor: Vec2 | null = null;
+  let nearest = Infinity;
+  roads.forEach((road, i) => {
+    if (road.surface === 'dirt' || road.bridge) return;
+    const [a, b] = segments[i];
+    const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+    const d = Math.hypot(mid.x - at.x, mid.z - at.z);
+    if (d < nearest) {
+      nearest = d;
+      anchor = mid;
+    }
+  });
+  if (anchor) {
+    const from: Vec2 = anchor;
+    const step = m(20);
+    const found: { p: Vec2; d: number }[] = [];
+    for (let x = at.x - place.radius * 1.6; x <= at.x + place.radius * 1.6; x += step) {
+      for (let z = at.z - place.radius * 1.6; z <= at.z + place.radius * 1.6; z += step) {
+        // Outside the bowl: a yard inside it is on somebody's bench.
+        if (Math.hypot(x - at.x, z - at.z) < place.radius * 1.1) continue;
+        found.push({ p: { x, z }, d: Math.hypot(x - from.x, z - from.z) });
+      }
+    }
+    found.sort((l, r) => l.d - r.d);
+    const office = { w: m(26), d: m(14), h: m(6) };
+    const scale = { w: m(12), d: m(30), h: m(3) };
+    const span = office.w + scale.w + m(16);
+    for (const { p } of found) {
+      if (!fits(p.x, p.z, span, scale.d, QUARRY_YARD_CLEAR)) continue;
+      built.push(
+        box(p.x - (span - office.w) / 2, p.z, office.w, office.d, office.h, 0.18),
+        box(p.x + (span - scale.w) / 2, p.z, scale.w, scale.d, scale.h, 0.77),
+      );
+      break;
+    }
+  }
+  return built;
 }
 
 /**
