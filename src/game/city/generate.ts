@@ -46,6 +46,8 @@ import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
 import { airfieldProps } from './setpieces';
+import { MARROW_PROPS } from './marrowprops';
+import { QUARRY_PROPS } from './quarryprops';
 import { addInterstate } from './interstate';
 import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
@@ -611,8 +613,11 @@ export function generateCity(seed: number): City {
   // they are data, so placing them draws nothing from `rng` and cannot move
   // anything generated before them. Their gates and stacks number on from
   // the generated breakables, which keeps those ids where they were.
-  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
-    const authored = airfieldProps(terrain, city.breakables.length);
+  // Marrow Field's, then Halloway Quarry's: appended in that order so the ids
+  // and the save-remembered billboards of the first do not move.
+  const placed = [...(hasAirfield ? MARROW_PROPS : []), ...(hasQuarry ? QUARRY_PROPS : [])];
+  if (placed.length > 0) {
+    const authored = airfieldProps(terrain, city.breakables.length, placed);
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps;
     // Billboards number on from the generated ones, the same way the

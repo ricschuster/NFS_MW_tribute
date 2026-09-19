@@ -3,9 +3,11 @@ import { CAR_HEIGHT, CAR_RADIUS, UNITS_PER_METRE } from '../constants';
 import { CityWorld } from '../cityworld';
 import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
+import { QUARRY_PROPS } from './quarryprops';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
-import { PLAN_RUNWAY } from './plan';
+import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { distanceToSegment } from './grid';
 import type { SetPiece } from './types';
 
 const M = UNITS_PER_METRE;
@@ -57,6 +59,40 @@ describe('Marrow Field props (#295)', () => {
     const ids = city.breakables.map((b) => b.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toEqual(ids.map((_, i) => i));
+  });
+});
+
+describe('Halloway Quarry props (#323)', () => {
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+  const away = (x: number, z: number) => Math.hypot(x - pit.at.x, z - pit.at.z);
+  const roadGap = (x: number, z: number) =>
+    Math.min(
+      ...city.roads.map((r) => {
+        const a = city.nodes[r.a].pos;
+        const b = city.nodes[r.b].pos;
+        return distanceToSegment(x, z, a.x, a.z, b.x, b.z) - r.width / 2;
+      }),
+    );
+
+  it('puts every placed prop into the city, after Marrow Field\'s and without renumbering them', () => {
+    const { pieces, breakables, jumps, billboards } = airfieldProps(city.terrain, 0, QUARRY_PROPS);
+    expect(pieces.length + breakables.length + jumps.length + billboards.length).toBe(QUARRY_PROPS.length);
+    const inQuarry = city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3);
+    expect(inQuarry.length).toBe(pieces.length);
+  });
+
+  it('keeps every set piece off the road, off the water and inside the place', () => {
+    for (const piece of city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3)) {
+      // A cone is the one thing that is meant to stand on tarmac.
+      if (piece.kind !== 'cone') expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
+      expect(piece.y).toBeGreaterThan(0);
+    }
+  });
+
+  it('lays each gate across a road it can close', () => {
+    const gates = QUARRY_PROPS.filter((p) => p.kind === 'gate');
+    expect(gates.length).toBeGreaterThan(0);
+    for (const gate of gates) expect(roadGap(gate.x * M, gate.z * M)).toBeLessThan(0);
   });
 });
 
