@@ -54,7 +54,7 @@ so the next area has the same checklist:
 
 ## The checklist
 
-Measured on `CITY_SEED` on 2026-09-18. Areas are the districts and places in
+Measured on `CITY_SEED` on 2026-09-18 (Halloway Quarry, 2026-09-19). Areas are the districts and places in
 `city/plan.ts`; directions are as the game's own map shows them (+z up).
 ✓ done, ◐ partly done, ✗ not started, n/a does not apply.
 
@@ -62,7 +62,7 @@ Measured on `CITY_SEED` on 2026-09-18. Areas are the districts and places in
 |---|---|---|---|---|---|---|---|---|---|
 | Marrow Field | airfield | ✓ | n/a | ✓ hangar | ✓ dirt, decay | ✓ 108 placed | ✓ Marrow Field Run, jumps, gates, billboards | ✓ | **Done** |
 | Ashford Point | waterfront | ◐ 7 of 40 houses have no road (#293, parked) | ✓ driveways (#268 pilot) | ✓ 40 houses | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | In progress |
-| Halloway Quarry | quarry | ✗ | n/a | ✗ | ◐ haul road down into the pit | ✗ | ◐ collectibles and breakables, no event | ✗ | Not started |
+| Halloway Quarry | quarry | ✓ connected, no orphans (#323) | n/a | ✓ plant and shed on the floor, yard on the rim | ✓ dirt haul, rim and access roads, no lamps in the pit | ✗ | ◐ collectibles and breakables, no event | ✗ | In progress |
 | Sablet Wharf | docks | ✗ | n/a | ✗ | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | Not started |
 | Kestrel Head | lookout | ✗ | n/a | ✗ | ✗ | ✗ | ✗ (0.2 km of road) | ✗ | Not started |
 | Highmoor Park | park | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Not started |

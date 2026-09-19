@@ -488,6 +488,28 @@ export const HANGAR_DEPTH = m(35);
 export const HANGAR_HEIGHT = m(11);
 export const HANGAR_CLEAR = m(150);
 /**
+ * Halloway Quarry, a working one: the opposite call from Marrow Field's
+ * disused airfield, so the two places do not read as the same place twice.
+ *
+ * `QUARRY_DIRT_REACH` is how far out, as a multiple of the place's radius, a
+ * road counts as the quarry's own. Measured on `CITY_SEED`: the haul road and
+ * the rim road end 701 m from the centre (1.17 x the 600 m radius), and the
+ * next thing that is not the access road is past 850 m, so 1.2 sits in the gap.
+ * The access road itself is found by `markDirtAccess` rather than by reach, for
+ * the reason `markAirfieldDirt` says.
+ *
+ * The plant stands on the pit floor - the one place the haul road goes to -
+ * and the yard on the rim beside the road in. `QUARRY_YARD_CLEAR` is the
+ * clearance the yard's ground has to have from every road, measured against the
+ * real hand-traced network rather than derived, for the reason `HANGAR_CLEAR`
+ * gives.
+ */
+export const QUARRY_DIRT_REACH = 1.2;
+export const QUARRY_PLANT_WIDTH = m(46);
+export const QUARRY_PLANT_DEPTH = m(28);
+export const QUARRY_PLANT_HEIGHT = m(26);
+export const QUARRY_YARD_CLEAR = m(40);
+/**
  * Marrow Field's perimeter fence (#295): a line, not a wall around the whole
  * 700 m place radius - the field is the runway and the taxiway, so the fence
  * is drawn off *their* extent rather than off `PlanPlace.radius`, which would

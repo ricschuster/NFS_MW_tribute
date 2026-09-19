@@ -57,7 +57,9 @@ import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } fr
 import { localStreetsFor } from './localstreets';
 import {
   airfieldFurniture,
-  markAirfieldAccess,
+  markDirtAccess,
+  markQuarryDirt,
+  quarryBuildings,
   airfieldHangar,
   markAirfieldDirt,
   placeApproach,
@@ -532,9 +534,20 @@ export function generateCity(seed: number): City {
   // right on top of the hangar. `anyWater` is the same guard the block loop
   // above uses: `levelRunway` flattens the ground here but does not reclaim
   // any water already in it.
-  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
-    markAirfieldDirt(nodes, roads);
-    markAirfieldAccess(nodes, roads);
+  const hasAirfield = PLAN_PLACES.some((p) => p.kind === 'airfield');
+  const hasQuarry = PLAN_PLACES.some((p) => p.kind === 'quarry');
+  if (hasAirfield) markAirfieldDirt(nodes, roads);
+  // Halloway Quarry, a working one: dirt inside, and its plant and yard found
+  // against the roads as they are before the way in is turned to dirt too.
+  if (hasQuarry) {
+    markQuarryDirt(nodes, roads);
+    for (const building of quarryBuildings(terrain, water, nodes, roads)) {
+      buildings.push(building);
+      blocks.push({ district: building.district, bounds: building.footprint, open: false });
+    }
+  }
+  if (hasAirfield || hasQuarry) markDirtAccess(nodes, roads);
+  if (hasAirfield) {
     const hangar = airfieldHangar(rng);
     if (!anyWater(hangar.footprint, water)) {
       buildings.push(hangar);

@@ -233,15 +233,16 @@ describe('the street network', () => {
     }
   });
 
-  // Marrow Field is dirt now (#295, see its own describe block below);
-  // everything else on the current seed should still come out paved.
+  // Marrow Field (#295) and Halloway Quarry are dirt now, each in its own
+  // describe block below; everything else on the current seed should still
+  // come out paved.
   it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
       expect(['asphalt', 'dirt']).toContain(road.surface);
     }
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
     expect(dirt.length).toBeGreaterThan(0);
-    expect(dirt.length).toBeLessThan(city.roads.length / 20);
+    expect(dirt.length).toBeLessThan(city.roads.length / 8);
   });
 
   // Roads used to be axis-aligned and this test used to say so. Boulevards
@@ -1600,8 +1601,17 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
   };
 
+  // The quarry's dirt is its own (see its describe block): what these tests
+  // mean by "the field's dirt" is the dirt nearer the runway than the pit.
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+  // The quarry's dirt reaches 2.3 radii out along the way in, so 3 clears it.
+  const isFieldDirt = (r: CityRoad) => {
+    const mid = midOf(r);
+    return r.surface === 'dirt' && Math.hypot(mid.x - pit.at.x, mid.z - pit.at.z) > pit.radius * 3;
+  };
+
   it('marks the runway and taxiway dirt, and leaves the rest of the network paved', () => {
-    const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    const dirt = city.roads.filter(isFieldDirt);
     // The runway is 2300 m, the taxiway runs beside it for most of that
     // length twice, plus two short end caps: a few km, not a few hundred
     // metres and not a meaningful share of a 70+ km network either.
@@ -1616,14 +1626,14 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     // 15% past that; a generous round-number ceiling here keeps this test
     // from having to import the constants just to recompute the same sum.
     //
-    // Past it, dirt is the field's access roads (`markAirfieldAccess`), and
+    // Past it, dirt is the field's access roads (`markDirtAccess`), and
     // those run without a junction: a dirt road out there with a side street
     // off it would be the airfield's dirt leaking onto the network, which is
     // what this test was written to catch.
     const ceiling = m(110);
     const away = (p: { x: number; z: number }) =>
       distanceToSegment(p.x, p.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z);
-    for (const road of city.roads.filter((r) => r.surface === 'dirt')) {
+    for (const road of city.roads.filter(isFieldDirt)) {
       if (away(midOf(road)) < ceiling) continue;
       for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
         if (away(end.pos) >= ceiling) expect(end.roads.length).toBeLessThanOrEqual(2);
@@ -1725,6 +1735,81 @@ describe('Marrow Field, the disused airfield (#295)', () => {
         distanceToSegment(weed.at.x, weed.at.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z),
       ).toBeLessThan(ceiling);
       expect(water.isWater(weed.at.x, weed.at.z)).toBe(false);
+    }
+  });
+});
+
+describe('Halloway Quarry, a working quarry (#323)', () => {
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+  const away = (p: { x: number; z: number }) => Math.hypot(p.x - pit.at.x, p.z - pit.at.z);
+  const midOf = (road: CityRoad) => {
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+  };
+  const inPit = city.roads.filter((r) => away(midOf(r)) <= pit.radius * 1.2);
+
+  it('lays the haul road and the rim road in dirt', () => {
+    // 6.4 km of haul road and about 4 km of rim: most of the ten-odd km that
+    // `QUARRY_DIRT_REACH` was measured against.
+    const totalM = inPit.reduce((sum, r) => sum + r.length, 0) / M;
+    expect(totalM).toBeGreaterThan(8000);
+    expect(inPit.every((r) => r.surface === 'dirt' || r.bridge)).toBe(true);
+  });
+
+  it('carries the dirt out along the way in, and stops at a junction', () => {
+    // Beyond the reach, dirt is the access road only, and `markDirtAccess`
+    // stops at the first real junction: a dirt road out there with a side
+    // street off it would be the quarry's dirt leaking onto the network.
+    const past = city.roads.filter((r) => r.surface === 'dirt' && away(midOf(r)) > pit.radius * 1.2);
+    const near = past.filter((r) => away(midOf(r)) < pit.radius * 3);
+    expect(near.length).toBeGreaterThan(0);
+    // A node with dirt on both sides is the middle of the chain and has to be a
+    // plain through point; one with dirt on one side is where the chain ends,
+    // and that is allowed to be the junction it stopped at.
+    for (const road of near) {
+      for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
+        if (away(end.pos) <= pit.radius * 1.3) continue;
+        const dirtSides = end.roads.filter((id) => city.roads[id].surface === 'dirt').length;
+        if (dirtSides >= 2) expect(end.roads.length).toBe(2);
+      }
+    }
+  });
+
+  it('has no lamps in the pit', () => {
+    const lamps = city.furniture.filter((p) => p.kind === 'lamp' && away(p.at) < pit.radius * 1.2);
+    expect(lamps.length).toBe(0);
+  });
+
+  it('puts a plant on the floor and a yard on the rim, clear of every road and the water', () => {
+    const built = city.buildings.filter((b) => {
+      const f = b.footprint;
+      return away({ x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 }) < pit.radius * 2;
+    });
+    // Plant and workshop on the floor, office and weighbridge on the rim.
+    expect(built.length).toBe(4);
+    const floor = built.filter((b) => away({ x: (b.footprint.minX + b.footprint.maxX) / 2, z: (b.footprint.minZ + b.footprint.maxZ) / 2 }) < pit.radius * 0.5);
+    expect(floor.length).toBe(2);
+    for (const b of built) {
+      expect(touchesWater(b.footprint)).toBe(false);
+      // Working, not abandoned: that is the whole point of this place.
+      expect(b.derelict).toBeFalsy();
+      const cx = (b.footprint.minX + b.footprint.maxX) / 2;
+      const cz = (b.footprint.minZ + b.footprint.maxZ) / 2;
+      const half = Math.max(b.footprint.maxX - b.footprint.minX, b.footprint.maxZ - b.footprint.minZ) / 2;
+      for (const road of city.roads) {
+        const a = city.nodes[road.a].pos;
+        const c = city.nodes[road.b].pos;
+        expect(distanceToSegment(cx, cz, a.x, a.z, c.x, c.z)).toBeGreaterThan(half);
+      }
+    }
+  });
+
+  it('keeps every building on a block, or parkland paves over it', () => {
+    for (const b of city.buildings) {
+      const f = b.footprint;
+      if (away({ x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 }) > pit.radius * 2) continue;
+      expect(city.blocks.some((k) => !k.open && k.bounds.minX <= f.minX && k.bounds.maxX >= f.maxX && k.bounds.minZ <= f.minZ && k.bounds.maxZ >= f.maxZ)).toBe(true);
     }
   });
 });
