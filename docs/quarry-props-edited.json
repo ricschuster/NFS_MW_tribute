@@ -1,7 +1,7 @@
 {
  "seed": "0x4b657374",
  "place": "Halloway Quarry",
- "savedAt": "2026-09-19T23:29:50.534Z",
+ "savedAt": "2026-09-19T23:41:12.629Z",
  "props": [
   {
    "id": "seed0",
@@ -371,6 +371,290 @@
    "x": -2652.9,
    "z": -1623.6,
    "angle": 3.198
+  },
+  {
+   "id": "seed50",
+   "kind": "stockpile",
+   "x": -2644,
+   "z": -837,
+   "angle": 0,
+   "variant": "grey",
+   "note": "Product stockpile"
+  },
+  {
+   "id": "seed51",
+   "kind": "stockpile",
+   "x": -2626,
+   "z": -790,
+   "angle": 1.1,
+   "variant": "sand"
+  },
+  {
+   "id": "seed52",
+   "kind": "stockpile",
+   "x": -2799,
+   "z": -784,
+   "angle": 2.2,
+   "variant": "rust"
+  },
+  {
+   "id": "seed53",
+   "kind": "stockpile",
+   "x": -2666,
+   "z": -900,
+   "angle": 3.3,
+   "variant": "grey"
+  },
+  {
+   "id": "seed54",
+   "kind": "stockpile",
+   "x": -2776,
+   "z": -886,
+   "angle": 4.4,
+   "variant": "sand"
+  },
+  {
+   "id": "seed55",
+   "kind": "stockpile",
+   "x": -2591.9,
+   "z": -889.1,
+   "angle": 5.5,
+   "variant": "rust"
+  },
+  {
+   "id": "seed56",
+   "kind": "conveyor",
+   "x": -2772.3,
+   "z": -836.9,
+   "angle": 1.57,
+   "note": "Feed belt to the bins"
+  },
+  {
+   "id": "seed57",
+   "kind": "conveyor",
+   "x": -2669,
+   "z": -746,
+   "angle": 0.5,
+   "note": "Stacker belt"
+  },
+  {
+   "id": "seed58",
+   "kind": "crusher",
+   "x": -2784.7,
+   "z": -811.3,
+   "angle": 0.3,
+   "note": "Primary crusher hopper"
+  },
+  {
+   "id": "seed59",
+   "kind": "haul-truck",
+   "x": -2692,
+   "z": -880,
+   "angle": 0.6,
+   "note": "Being loaded at the gantry"
+  },
+  {
+   "id": "seed60",
+   "kind": "haul-truck",
+   "x": -2754,
+   "z": -757,
+   "angle": 2.4
+  },
+  {
+   "id": "seed61",
+   "kind": "haul-truck",
+   "x": -2499,
+   "z": -852,
+   "angle": 4.1,
+   "note": "Parked on the shooting bench"
+  },
+  {
+   "id": "seed62",
+   "kind": "excavator",
+   "x": -2649,
+   "z": -762,
+   "angle": 3.6,
+   "note": "Digging the face"
+  },
+  {
+   "id": "seed63",
+   "kind": "excavator",
+   "x": -2724,
+   "z": -737,
+   "angle": 0.2
+  },
+  {
+   "id": "seed64",
+   "kind": "excavator",
+   "x": -2484.7,
+   "z": -811.3,
+   "angle": 5.2
+  },
+  {
+   "id": "seed65",
+   "kind": "cabin",
+   "x": -2612.6,
+   "z": -775.6,
+   "angle": 1.57,
+   "note": "Site cabins"
+  },
+  {
+   "id": "seed66",
+   "kind": "cabin",
+   "x": -2614,
+   "z": -760,
+   "angle": 1.57
+  },
+  {
+   "id": "seed67",
+   "kind": "cabin",
+   "x": -1796.5,
+   "z": -572,
+   "angle": 0,
+   "note": "Yard cabins"
+  },
+  {
+   "id": "seed68",
+   "kind": "cabin",
+   "x": -1795.7,
+   "z": -557.9,
+   "angle": 0
+  },
+  {
+   "id": "seed69",
+   "kind": "haul-truck",
+   "x": -1865.5,
+   "z": -582,
+   "angle": 1.2,
+   "note": "Waiting at the weighbridge"
+  },
+  {
+   "id": "seed70",
+   "kind": "mast",
+   "x": -1822.4,
+   "z": -627.9,
+   "angle": 0.3,
+   "note": "Yard floodlight"
+  },
+  {
+   "id": "seed71",
+   "kind": "mast",
+   "x": -2634,
+   "z": -867,
+   "angle": 0.3,
+   "note": "Floodlight over the loading area"
+  },
+  {
+   "id": "seed72",
+   "kind": "rubble",
+   "x": -2901.1,
+   "z": -946.7,
+   "angle": 1.291
+  },
+  {
+   "id": "seed73",
+   "kind": "rubble",
+   "x": -2566.9,
+   "z": -913.9,
+   "angle": 2.766
+  },
+  {
+   "id": "seed74",
+   "kind": "rubble",
+   "x": -2839,
+   "z": -420.4,
+   "angle": 2.424
+  },
+  {
+   "id": "seed75",
+   "kind": "rubble",
+   "x": -2551.2,
+   "z": -1088.3,
+   "angle": 1.454
+  },
+  {
+   "id": "seed76",
+   "kind": "rubble",
+   "x": -2926.7,
+   "z": -666.5,
+   "angle": 5.167
+  },
+  {
+   "id": "seed77",
+   "kind": "rubble",
+   "x": -2469.2,
+   "z": -636.8,
+   "angle": 2.736
+  },
+  {
+   "id": "seed78",
+   "kind": "rubble",
+   "x": -2704.6,
+   "z": -678.9,
+   "angle": 5.324
+  },
+  {
+   "id": "seed79",
+   "kind": "rubble",
+   "x": -2703.7,
+   "z": -970,
+   "angle": 5.55
+  },
+  {
+   "id": "seed80",
+   "kind": "rubble",
+   "x": -2646.5,
+   "z": -388.9,
+   "angle": 5.238
+  },
+  {
+   "id": "seed81",
+   "kind": "rubble",
+   "x": -2793.9,
+   "z": -557.6,
+   "angle": 0.169
+  },
+  {
+   "id": "seed82",
+   "kind": "rubble",
+   "x": -3098,
+   "z": -1119.1,
+   "angle": 2.301
+  },
+  {
+   "id": "seed83",
+   "kind": "rubble",
+   "x": -2413,
+   "z": -1038.2,
+   "angle": 3.182
+  },
+  {
+   "id": "seed84",
+   "kind": "cone",
+   "x": -2686,
+   "z": -694,
+   "angle": 0
+  },
+  {
+   "id": "seed85",
+   "kind": "cone",
+   "x": -2682,
+   "z": -694,
+   "angle": 0
+  },
+  {
+   "id": "seed86",
+   "kind": "cone",
+   "x": -2678,
+   "z": -694,
+   "angle": 0
+  },
+  {
+   "id": "seed87",
+   "kind": "cone",
+   "x": -2674,
+   "z": -694,
+   "angle": 0
   }
  ]
 }

@@ -2,7 +2,7 @@
 // Place props in the Halloway Quarry Props editor (`npm run propexport -- --place quarry`), save,
 // read the save back into docs/quarry-props-edited.json, and run the sync again.
 //
-// Seed 0x4b657374, saved 2026-09-19T23:29:50.534Z.
+// Seed 0x4b657374, saved 2026-09-19T23:41:12.629Z.
 import type { AuthoredProp } from './types';
 
 /** Halloway Quarry's set dressing, in metres, as placed in the editor (#323). */
@@ -57,4 +57,42 @@ export const QUARRY_PROPS: AuthoredProp[] = [
   { kind: 'tree', x: -2095.4, z: -1349.7, angle: 1.741 },
   { kind: 'tree', x: -1910.4, z: -542.3, angle: 5.187 },
   { kind: 'tree', x: -2652.9, z: -1623.6, angle: 3.198 },
+  { kind: 'stockpile', x: -2644, z: -837, angle: 0, variant: 'grey', note: 'Product stockpile' },
+  { kind: 'stockpile', x: -2626, z: -790, angle: 1.1, variant: 'sand' },
+  { kind: 'stockpile', x: -2799, z: -784, angle: 2.2, variant: 'rust' },
+  { kind: 'stockpile', x: -2666, z: -900, angle: 3.3, variant: 'grey' },
+  { kind: 'stockpile', x: -2776, z: -886, angle: 4.4, variant: 'sand' },
+  { kind: 'stockpile', x: -2591.9, z: -889.1, angle: 5.5, variant: 'rust' },
+  { kind: 'conveyor', x: -2772.3, z: -836.9, angle: 1.57, note: 'Feed belt to the bins' },
+  { kind: 'conveyor', x: -2669, z: -746, angle: 0.5, note: 'Stacker belt' },
+  { kind: 'crusher', x: -2784.7, z: -811.3, angle: 0.3, note: 'Primary crusher hopper' },
+  { kind: 'haul-truck', x: -2692, z: -880, angle: 0.6, note: 'Being loaded at the gantry' },
+  { kind: 'haul-truck', x: -2754, z: -757, angle: 2.4 },
+  { kind: 'haul-truck', x: -2499, z: -852, angle: 4.1, note: 'Parked on the shooting bench' },
+  { kind: 'excavator', x: -2649, z: -762, angle: 3.6, note: 'Digging the face' },
+  { kind: 'excavator', x: -2724, z: -737, angle: 0.2 },
+  { kind: 'excavator', x: -2484.7, z: -811.3, angle: 5.2 },
+  { kind: 'cabin', x: -2612.6, z: -775.6, angle: 1.57, note: 'Site cabins' },
+  { kind: 'cabin', x: -2614, z: -760, angle: 1.57 },
+  { kind: 'cabin', x: -1796.5, z: -572, angle: 0, note: 'Yard cabins' },
+  { kind: 'cabin', x: -1795.7, z: -557.9, angle: 0 },
+  { kind: 'haul-truck', x: -1865.5, z: -582, angle: 1.2, note: 'Waiting at the weighbridge' },
+  { kind: 'mast', x: -1822.4, z: -627.9, angle: 0.3, note: 'Yard floodlight' },
+  { kind: 'mast', x: -2634, z: -867, angle: 0.3, note: 'Floodlight over the loading area' },
+  { kind: 'rubble', x: -2901.1, z: -946.7, angle: 1.291 },
+  { kind: 'rubble', x: -2566.9, z: -913.9, angle: 2.766 },
+  { kind: 'rubble', x: -2839, z: -420.4, angle: 2.424 },
+  { kind: 'rubble', x: -2551.2, z: -1088.3, angle: 1.454 },
+  { kind: 'rubble', x: -2926.7, z: -666.5, angle: 5.167 },
+  { kind: 'rubble', x: -2469.2, z: -636.8, angle: 2.736 },
+  { kind: 'rubble', x: -2704.6, z: -678.9, angle: 5.324 },
+  { kind: 'rubble', x: -2703.7, z: -970, angle: 5.55 },
+  { kind: 'rubble', x: -2646.5, z: -388.9, angle: 5.238 },
+  { kind: 'rubble', x: -2793.9, z: -557.6, angle: 0.169 },
+  { kind: 'rubble', x: -3098, z: -1119.1, angle: 2.301 },
+  { kind: 'rubble', x: -2413, z: -1038.2, angle: 3.182 },
+  { kind: 'cone', x: -2686, z: -694, angle: 0 },
+  { kind: 'cone', x: -2682, z: -694, angle: 0 },
+  { kind: 'cone', x: -2678, z: -694, angle: 0 },
+  { kind: 'cone', x: -2674, z: -694, angle: 0 },
 ];

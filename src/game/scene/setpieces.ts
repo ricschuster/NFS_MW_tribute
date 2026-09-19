@@ -193,7 +193,100 @@ function tree(): Part[] {
   ];
 }
 
-const MODELS: Record<SetPieceKind, () => Part[]> = {
+/** A heap of crushed rock, tipped from a conveyor: a cone with a lumpy shoulder. */
+const HEAP = { grey: '#8e9092', sand: '#c4a875', rust: '#a4623f' } as const;
+function stockpile(variant?: string): Part[] {
+  const colour = HEAP[(variant as keyof typeof HEAP) ?? 'grey'] ?? HEAP.grey;
+  return [
+    { geometry: at(new THREE.ConeGeometry(11, 8.5, 16), 0, 4.25, 0), colour },
+    { geometry: at(new THREE.ConeGeometry(6.5, 5.5, 12), 5.5, 2.75, 3), colour },
+  ];
+}
+
+/** A belt climbing 14 m over 42, on trestles: 4 m clear at the low end, so a car passes under. */
+function conveyor(): Part[] {
+  const rise = 14;
+  const run = 40;
+  const tilt = Math.atan2(rise, run);
+  const length = Math.hypot(rise, run) + 2;
+  const heightAt = (v: number) => 4 + ((v + 20) * rise) / run;
+  const legs = [-20, -7, 6, 19].flatMap((v) => [
+    at(box(0.3, heightAt(v), 0.3), -0.75, heightAt(v) / 2, v),
+    at(box(0.3, heightAt(v), 0.3), 0.75, heightAt(v) / 2, v),
+    at(box(1.8, 0.25, 0.25), 0, heightAt(v) * 0.55, v),
+  ]);
+  // Rotated about its own middle, then lifted to the height of the trestles there.
+  const mid = heightAt(0);
+  const belt = box(1.6, 0.45, length).rotateX(-tilt).translate(0, mid + 0.3, 0);
+  const rails = [-0.8, 0.8].map((x) => box(0.12, 0.5, length).rotateX(-tilt).translate(x, mid + 0.6, 0));
+  return [
+    ...legs.map((geometry) => ({ geometry, colour: '#d9a21b' })),
+    { geometry: belt, colour: '#26282a' },
+    ...rails.map((geometry) => ({ geometry, colour: '#9aa0a3' })),
+  ];
+}
+
+const YELLOW = '#dfae22';
+function haulTruck(): Part[] {
+  const wheels = [-2.9, 2.9].flatMap((x) => [-2.6, 1.2, 3.6].map((z) => at(new THREE.CylinderGeometry(1.35, 1.35, 1.1, 14).rotateZ(Math.PI / 2), x, 1.35, z)));
+  return [
+    { geometry: at(box(3.4, 1.1, 10), 0, 1.9, 0), colour: DARK_METAL },
+    { geometry: at(box(6.2, 2.6, 6.8), 0, 3.7, -1.4), colour: YELLOW },
+    { geometry: at(box(6.4, 0.5, 7.2), 0, 5.2, -1.4), colour: '#c6961c' },
+    { geometry: at(box(3.6, 2.4, 2.8), 0, 3.4, 3.7), colour: YELLOW },
+    { geometry: at(box(3.2, 1, 0.15), 0, 3.8, 5.15), colour: '#1f2a30' },
+    ...wheels.map((geometry) => ({ geometry, colour: '#1c1c1c' })),
+  ];
+}
+
+function excavator(): Part[] {
+  const boom = at(box(0.7, 0.8, 6.5), 0, 0, 0).applyMatrix4(new THREE.Matrix4().makeRotationX(-0.55)).translate(0, 4.4, 5.2);
+  const arm = at(box(0.5, 0.6, 4.2), 0, 0, 0).applyMatrix4(new THREE.Matrix4().makeRotationX(0.9)).translate(0, 5.2, 8.3);
+  return [
+    ...[-1.55, 1.55].map((x) => ({ geometry: at(box(1.1, 1.1, 5.2), x, 0.55, 0), colour: '#2b2b2b' })),
+    { geometry: at(box(3.4, 1.3, 4.4), 0, 1.75, 0), colour: YELLOW },
+    { geometry: at(box(2.1, 1.9, 2), 0, 3.35, 0.9), colour: YELLOW },
+    { geometry: at(box(1.9, 1.1, 0.12), 0, 3.5, 1.95), colour: '#1f2a30' },
+    { geometry: at(box(2.6, 1.2, 1.4), 0, 2.4, -2), colour: '#c6961c' },
+    { geometry: boom, colour: YELLOW },
+    { geometry: arm, colour: YELLOW },
+    { geometry: at(box(1.5, 1, 1.1), 0, 3.6, 10.2), colour: DARK_METAL },
+  ];
+}
+
+function cabin(): Part[] {
+  return [
+    { geometry: at(box(3, 2.7, 12), 0, 1.4, 0), colour: '#d7d9d6' },
+    { geometry: at(box(3.2, 0.2, 12.2), 0, 2.8, 0), colour: '#b9bcb8' },
+    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, -2), colour: '#3a4a52' },
+    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, 2), colour: '#3a4a52' },
+    { geometry: at(box(0.15, 1.9, 0.9), -1.52, 1.1, 4.5), colour: '#5a4a38' },
+  ];
+}
+
+/** A hopper on steel legs, feeding a crusher: the rust-red shape at the end of a belt. */
+function crusher(): Part[] {
+  const legs = [-3, 3].flatMap((x) => [-3, 3].map((z) => at(box(0.6, 4, 0.6), x, 2, z)));
+  return [
+    ...legs.map((geometry) => ({ geometry, colour: DARK_METAL })),
+    { geometry: at(box(7.6, 3.2, 7.6), 0, 5.6, 0), colour: RUST },
+    { geometry: at(new THREE.CylinderGeometry(4.6, 2.2, 3.4, 4, 1, false).rotateY(Math.PI / 4), 0, 8.9, 0), colour: '#7a4c33' },
+    { geometry: at(box(1.2, 5, 1.2), 3.4, 8.6, -3.4), colour: '#9aa0a3' },
+  ];
+}
+
+/** Blasted rock along the road edge: a few low lumps, none of them round. */
+function rubble(): Part[] {
+  const lump = (x: number, z: number, r: number, h: number) => at(new THREE.ConeGeometry(r, h, 5), x, h / 2, z);
+  return [
+    { geometry: lump(0, 0, 2.1, 1.7), colour: '#b3afa4' },
+    { geometry: lump(1.7, 0.9, 1.4, 1.1), colour: '#9c988d' },
+    { geometry: lump(-1.4, 1.2, 1.2, 0.9), colour: '#c2beb2' },
+    { geometry: lump(0.4, -1.7, 1.3, 1), colour: '#a5a196' },
+  ];
+}
+
+const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'plane-belly': cargoPlane,
   'plane-nose': noseBuried,
   fuselage,
@@ -208,6 +301,13 @@ const MODELS: Record<SetPieceKind, () => Part[]> = {
   shed,
   cone,
   tree,
+  stockpile,
+  conveyor,
+  'haul-truck': haulTruck,
+  excavator,
+  cabin,
+  crusher,
+  rubble,
 };
 
 /**
@@ -222,15 +322,19 @@ export class CitySetPieces {
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
   constructor(pieces: readonly SetPiece[]) {
-    const byKind = new Map<SetPieceKind, SetPiece[]>();
+    // By what it looks like, not just what it is: a stockpile's rock is a
+    // variant, and one mesh has one colour per part.
+    const byKind = new Map<string, SetPiece[]>();
     for (const piece of pieces) {
-      if (!byKind.has(piece.kind)) byKind.set(piece.kind, []);
-      byKind.get(piece.kind)!.push(piece);
+      const key = piece.variant ? `${piece.kind}:${piece.variant}` : piece.kind;
+      if (!byKind.has(key)) byKind.set(key, []);
+      byKind.get(key)!.push(piece);
     }
 
     const dummy = new THREE.Object3D();
-    for (const [kind, list] of byKind) {
-      const parts = MODELS[kind]();
+    for (const [key, list] of byKind) {
+      const kind = list[0].kind;
+      const parts = MODELS[kind](list[0].variant);
       const byColour = new Map<string, THREE.BufferGeometry[]>();
       for (const part of parts) {
         if (!byColour.has(part.colour)) byColour.set(part.colour, []);
@@ -243,7 +347,7 @@ export class CitySetPieces {
         this.owned.push(geometry, material);
 
         const mesh = new THREE.InstancedMesh(geometry, material, list.length);
-        mesh.name = `setpiece-${kind}`;
+        mesh.name = `setpiece-${key}`;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         for (let i = 0; i < list.length; i++) {

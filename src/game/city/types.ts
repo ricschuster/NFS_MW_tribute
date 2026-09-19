@@ -432,7 +432,14 @@ export type SetPieceKind =
   | 'blast-wall'
   | 'shed'
   | 'cone'
-  | 'tree';
+  | 'tree'
+  | 'stockpile'
+  | 'conveyor'
+  | 'haul-truck'
+  | 'excavator'
+  | 'cabin'
+  | 'crusher'
+  | 'rubble';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
@@ -446,6 +453,8 @@ export interface SetPiece {
   y: number;
   /** Heading, as `AuthoredProp.angle`. */
   angle: number;
+  /** What the editor saved for it, where a kind has more than one look: a stockpile's rock. */
+  variant?: string;
 }
 
 /** The kinds of jump (#307): built, dug, or a slab of apron that has lifted. */
