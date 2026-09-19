@@ -1,0 +1,376 @@
+{
+ "seed": "0x4b657374",
+ "place": "Halloway Quarry",
+ "savedAt": "2026-09-19T23:29:50.534Z",
+ "props": [
+  {
+   "id": "seed0",
+   "kind": "silo",
+   "x": -2749,
+   "z": -850,
+   "angle": 0.4,
+   "note": "Aggregate bin"
+  },
+  {
+   "id": "seed1",
+   "kind": "silo",
+   "x": -2737,
+   "z": -856,
+   "angle": 0.4,
+   "note": "Aggregate bin"
+  },
+  {
+   "id": "seed2",
+   "kind": "silo",
+   "x": -2725,
+   "z": -862,
+   "angle": 0.4,
+   "note": "Aggregate bin"
+  },
+  {
+   "id": "seed3",
+   "kind": "crane",
+   "x": -2674,
+   "z": -857,
+   "angle": 1.2,
+   "note": "Loading gantry"
+  },
+  {
+   "id": "seed4",
+   "kind": "shed",
+   "x": -2766,
+   "z": -804,
+   "angle": 0,
+   "note": "Tool shed"
+  },
+  {
+   "id": "seed5",
+   "kind": "shed",
+   "x": -2699,
+   "z": -750,
+   "angle": 1.57
+  },
+  {
+   "id": "seed6",
+   "kind": "stack",
+   "x": -2734,
+   "z": -772,
+   "angle": 0.3,
+   "variant": "pallets"
+  },
+  {
+   "id": "seed7",
+   "kind": "stack",
+   "x": -2728,
+   "z": -768,
+   "angle": 0.5,
+   "variant": "pallets"
+  },
+  {
+   "id": "seed8",
+   "kind": "stack",
+   "x": -2664,
+   "z": -804,
+   "angle": 0.9,
+   "variant": "drums"
+  },
+  {
+   "id": "seed9",
+   "kind": "stack",
+   "x": -2658,
+   "z": -800,
+   "angle": 0.7,
+   "variant": "drums"
+  },
+  {
+   "id": "seed10",
+   "kind": "blast-wall",
+   "x": -2494,
+   "z": -832,
+   "angle": 1.9
+  },
+  {
+   "id": "seed11",
+   "kind": "blast-wall",
+   "x": -2485.5,
+   "z": -829.5,
+   "angle": 1.9
+  },
+  {
+   "id": "seed12",
+   "kind": "blast-wall",
+   "x": -2481,
+   "z": -821,
+   "angle": 1.9
+  },
+  {
+   "id": "seed13",
+   "kind": "blast-wall",
+   "x": -2468.5,
+   "z": -824.5,
+   "angle": 1.9
+  },
+  {
+   "id": "seed14",
+   "kind": "bunker",
+   "x": -2454,
+   "z": -752,
+   "angle": 0.5,
+   "note": "Explosives magazine"
+  },
+  {
+   "id": "seed15",
+   "kind": "bunker",
+   "x": -2442,
+   "z": -772,
+   "angle": 0.5,
+   "note": "Explosives magazine"
+  },
+  {
+   "id": "seed16",
+   "kind": "mast",
+   "x": -2584,
+   "z": -112,
+   "angle": 0.3,
+   "note": "Radio mast"
+  },
+  {
+   "id": "seed17",
+   "kind": "water-tower",
+   "x": -2924,
+   "z": -122,
+   "angle": 0.4,
+   "note": "Water tower - seen from across the pit"
+  },
+  {
+   "id": "seed18",
+   "kind": "shed",
+   "x": -2404,
+   "z": -172,
+   "angle": 0.2,
+   "note": "Fuel store"
+  },
+  {
+   "id": "seed19",
+   "kind": "shed",
+   "x": -1820.5,
+   "z": -572,
+   "angle": 0,
+   "note": "Plant store"
+  },
+  {
+   "id": "seed20",
+   "kind": "stack",
+   "x": -1850.5,
+   "z": -644,
+   "angle": 0.4,
+   "variant": "pallets"
+  },
+  {
+   "id": "seed21",
+   "kind": "stack",
+   "x": -1824.3,
+   "z": -642.1,
+   "angle": 0.9,
+   "variant": "drums"
+  },
+  {
+   "id": "seed22",
+   "kind": "cone",
+   "x": -1860.5,
+   "z": -646,
+   "angle": 0
+  },
+  {
+   "id": "seed23",
+   "kind": "cone",
+   "x": -1856,
+   "z": -646,
+   "angle": 0
+  },
+  {
+   "id": "seed24",
+   "kind": "cone",
+   "x": -1854.3,
+   "z": -648.8,
+   "angle": 0
+  },
+  {
+   "id": "seed25",
+   "kind": "cone",
+   "x": -1845,
+   "z": -646,
+   "angle": 0
+  },
+  {
+   "id": "seed26",
+   "kind": "cone",
+   "x": -1842.5,
+   "z": -646,
+   "angle": 0
+  },
+  {
+   "id": "seed27",
+   "kind": "gate",
+   "x": -1812.5,
+   "z": -362.5,
+   "angle": -2.356,
+   "w": 23.8,
+   "note": "Quarry gate - the way in"
+  },
+  {
+   "id": "seed28",
+   "kind": "tree",
+   "x": -2631.9,
+   "z": 209.5,
+   "angle": 3.846
+  },
+  {
+   "id": "seed29",
+   "kind": "tree",
+   "x": -2018.3,
+   "z": -1150.7,
+   "angle": 5.374
+  },
+  {
+   "id": "seed30",
+   "kind": "tree",
+   "x": -3195.9,
+   "z": -224.9,
+   "angle": 0.432
+  },
+  {
+   "id": "seed31",
+   "kind": "tree",
+   "x": -2535.3,
+   "z": -1781.4,
+   "angle": 2.626
+  },
+  {
+   "id": "seed32",
+   "kind": "tree",
+   "x": -3476.3,
+   "z": -721.9,
+   "angle": 4.705
+  },
+  {
+   "id": "seed33",
+   "kind": "tree",
+   "x": -2271.2,
+   "z": -1552.2,
+   "angle": 1.123
+  },
+  {
+   "id": "seed34",
+   "kind": "tree",
+   "x": -1922.5,
+   "z": -901.9,
+   "angle": 2.856
+  },
+  {
+   "id": "seed35",
+   "kind": "tree",
+   "x": -3457.1,
+   "z": -600,
+   "angle": 0.716
+  },
+  {
+   "id": "seed36",
+   "kind": "tree",
+   "x": -3413,
+   "z": -1491.3,
+   "angle": 0.531
+  },
+  {
+   "id": "seed37",
+   "kind": "tree",
+   "x": -3425.1,
+   "z": -1272.9,
+   "angle": 1.964
+  },
+  {
+   "id": "seed38",
+   "kind": "tree",
+   "x": -2152,
+   "z": 36.5,
+   "angle": 3.929
+  },
+  {
+   "id": "seed39",
+   "kind": "tree",
+   "x": -3465.5,
+   "z": -90.7,
+   "angle": 3.043
+  },
+  {
+   "id": "seed40",
+   "kind": "tree",
+   "x": -2343.6,
+   "z": -68.7,
+   "angle": 5.782
+  },
+  {
+   "id": "seed41",
+   "kind": "tree",
+   "x": -3468.1,
+   "z": -1283.5,
+   "angle": 1.098
+  },
+  {
+   "id": "seed42",
+   "kind": "tree",
+   "x": -3439.4,
+   "z": -488,
+   "angle": 0.013
+  },
+  {
+   "id": "seed43",
+   "kind": "tree",
+   "x": -3054.6,
+   "z": -1725,
+   "angle": 0.909
+  },
+  {
+   "id": "seed44",
+   "kind": "tree",
+   "x": -3306.3,
+   "z": -181.4,
+   "angle": 4.009
+  },
+  {
+   "id": "seed45",
+   "kind": "tree",
+   "x": -2276.8,
+   "z": -1605.4,
+   "angle": 3.026
+  },
+  {
+   "id": "seed46",
+   "kind": "tree",
+   "x": -2473.3,
+   "z": -1823.2,
+   "angle": 2.037
+  },
+  {
+   "id": "seed47",
+   "kind": "tree",
+   "x": -2095.4,
+   "z": -1349.7,
+   "angle": 1.741
+  },
+  {
+   "id": "seed48",
+   "kind": "tree",
+   "x": -1910.4,
+   "z": -542.3,
+   "angle": 5.187
+  },
+  {
+   "id": "seed49",
+   "kind": "tree",
+   "x": -2652.9,
+   "z": -1623.6,
+   "angle": 3.198
+  }
+ ]
+}

@@ -16,7 +16,8 @@
 // editor with a server.
 //
 // Usage:
-//   npm run propexport   # -> screenshots/props.json, screenshots/propeditor.html
+//   npm run propexport                      # Marrow Field -> screenshots/props.json, propeditor.html
+//   npm run propexport -- --place quarry    # Halloway Quarry -> screenshots/quarry-props.json, quarry-propeditor.html
 import { createServer } from 'vite';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
@@ -40,11 +41,19 @@ const r2 = (v) => Math.round(v * 100) / 100;
 
 // The field is the airfield place's circle *and* the runway, which runs well
 // past the circle at both ends: 2.3 km of runway against a 700 m radius.
-const field = plan.PLAN_PLACES.find((p) => p.kind === 'airfield');
-const runway = plan.PLAN_RUNWAY.map((p) => ({ x: toM(p.x), z: toM(p.z) }));
+const argv = process.argv.slice(2);
+const which = argv.includes('--place') ? argv[argv.indexOf('--place') + 1] : 'airfield';
+const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry' }[which];
+if (!KIND) throw new Error(`unknown place '${which}': airfield or quarry`);
+const field = plan.PLAN_PLACES.find((p) => p.kind === KIND);
+// Only an airfield has a runway; a quarry is a circle, and the crop reaches
+// past it to take in the rim road, the yard and the road in (the yard sits
+// about 1.5 radii out, so the box is not just the place's own circle).
+const runway = KIND === 'airfield' ? plan.PLAN_RUNWAY.map((p) => ({ x: toM(p.x), z: toM(p.z) })) : [];
 const centre = { x: toM(field.at.x), z: toM(field.at.z) };
 const radius = toM(field.radius);
-const MARGIN = 250;
+const MARGIN = KIND === 'airfield' ? 250 : radius * 0.85;
+const OUT = KIND === 'airfield' ? '' : 'quarry-';
 const box = {
   minX: Math.floor(Math.min(centre.x - radius, ...runway.map((p) => p.x)) - MARGIN),
   maxX: Math.ceil(Math.max(centre.x + radius, ...runway.map((p) => p.x)) + MARGIN),
@@ -114,6 +123,7 @@ const out = {
   centre: [r1(centre.x), r1(centre.z)],
   radius,
   runway: runway.map((p) => [r1(p.x), r1(p.z)]),
+  kind: KIND,
   height: { step: STEP, cols, rows, water: WATER, cells: Buffer.from(cells).toString('base64') },
   roads,
   buildings,
@@ -130,16 +140,18 @@ const out = {
 
 mkdirSync('screenshots', { recursive: true });
 const json = JSON.stringify(out);
-writeFileSync('screenshots/props.json', json);
+writeFileSync(`screenshots/${OUT}props.json`, json);
 // A function replacer, because the base64 raster is full of `$` sequences
 // that a replacement *string* would read as patterns.
-const page = readFileSync('tools/propeditor.html', 'utf8').replace('__DATA__', () => json);
-writeFileSync('screenshots/propeditor.html', page);
+const page = readFileSync('tools/propeditor.html', 'utf8')
+  .replace(/__PLACE__/g, () => field.name)
+  .replace('__DATA__', () => json);
+writeFileSync(`screenshots/${OUT}propeditor.html`, page);
 
 const fmt = Object.entries(furniture)
   .map(([k, v]) => `${v.length} ${k}`)
   .join(', ');
 console.log(
-  `wrote screenshots/props.json + propeditor.html  ·  ${out.place}, ${box.maxX - box.minX} x ${box.maxZ - box.minZ} m  ·  ` +
+  `wrote screenshots/${OUT}props.json + ${OUT}propeditor.html  ·  ${out.place}, ${box.maxX - box.minX} x ${box.maxZ - box.minZ} m  ·  ` +
     `${roads.length} road segments, ${buildings.length} buildings, ${fmt}  ·  ${(json.length / 1024).toFixed(0)} KB`,
 );

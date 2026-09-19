@@ -1,4 +1,4 @@
-<title>Marrow Field Props</title>
+<title>__PLACE__ Props</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   /* One deliberate look, shared with the Road Editor: a dark bench under a
@@ -192,7 +192,7 @@
 
 <aside>
   <header>
-    <h1>Marrow Field Props</h1>
+    <h1>__PLACE__ Props</h1>
     <div class="sub" id="sub">—</div>
   </header>
   <div class="scroll">
@@ -404,7 +404,7 @@
       const n = nearestRoad(p.x, p.z);
       if (!n || n.d > n.r.width / 2) out.push(['warn', 'Not across a road - a gate belongs in one']);
     } else if (k.road !== 'ok' && onRoad) {
-      out.push(['warn', onRoad.surface === 'dirt' ? 'Sits on the runway or taxiway' : 'Blocks a road']);
+      out.push(['warn', onRoad.surface === 'dirt' ? (DATA.runway.length ? 'Sits on the runway or taxiway' : 'Sits on a dirt road') : 'Blocks a road']);
     }
     if (k.flat && Number.isFinite(lo) && hi - lo >= 2) out.push(['warn', `Ground falls ${hi - lo} m under it`]);
     for (const q of props) {
@@ -658,7 +658,7 @@
           ctx.stroke();
         }
       }
-      if (layers.outline) {
+      if (layers.outline && DATA.runway.length === 2) {
         const [a, b] = DATA.runway;
         ctx.beginPath();
         ctx.moveTo(sx(a[0]), sy(a[1]));
@@ -790,7 +790,7 @@
     draw();
   }
   function fit() {
-    // The field and its runway, not the margin the export carries around them.
+    // The place and its runway (if it has one), not the margin the export carries around them.
     const xs = [DATA.centre[0] - DATA.radius, DATA.centre[0] + DATA.radius, ...DATA.runway.map((p) => p[0])];
     const zs = [DATA.centre[1] - DATA.radius, DATA.centre[1] + DATA.radius, ...DATA.runway.map((p) => p[1])];
     const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
@@ -1243,7 +1243,7 @@
   };
 
   // ---- start ----------------------------------------------------------------
-  $('sub').textContent = `seed ${DATA.seed} · ${Math.round(B.maxX - B.minX)} × ${Math.round(B.maxZ - B.minZ)} m of field`;
+  $('sub').textContent = `seed ${DATA.seed} · ${Math.round(B.maxX - B.minX)} × ${Math.round(B.maxZ - B.minZ)} m of ground`;
   buildPalette();
   buildLayers();
   new ResizeObserver(resize).observe(canvas);
