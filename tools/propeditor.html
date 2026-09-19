@@ -283,6 +283,14 @@
     { id: 'bunker', group: 'Structures', name: 'Concrete bunker', w: 12, l: 8, shape: 'box', color: '#a9aea5', flat: true },
     { id: 'blast-wall', group: 'Structures', name: 'Blast wall', w: 6, l: 1.2, shape: 'box', color: '#a9aea5', road: 'ok' },
     { id: 'shed', group: 'Structures', name: 'Derelict shed', w: 9, l: 14, shape: 'shed', color: '#9c7454', flat: true },
+    // The working quarry's (#323), from photographs of active ones.
+    { id: 'stockpile', group: 'Quarry', name: 'Stockpile', w: 22, l: 22, shape: 'circle', color: '#b9b2a4', variants: ['grey', 'sand', 'rust'] },
+    { id: 'conveyor', group: 'Quarry', name: 'Conveyor belt', w: 2, l: 42, shape: 'box', color: '#d9a21b', flat: true },
+    { id: 'haul-truck', group: 'Quarry', name: 'Haul truck', w: 6.4, l: 10, shape: 'box', color: '#e0b020', road: 'ok' },
+    { id: 'excavator', group: 'Quarry', name: 'Excavator', w: 3.8, l: 8, shape: 'box', color: '#e2b12a', road: 'ok' },
+    { id: 'cabin', group: 'Quarry', name: 'Site cabin', w: 3.2, l: 12, shape: 'box', color: '#d7d9d6', flat: true },
+    { id: 'crusher', group: 'Quarry', name: 'Crusher hopper', w: 8, l: 8, shape: 'box', color: '#8a5a3c', flat: true },
+    { id: 'rubble', group: 'Quarry', name: 'Rubble pile', w: 5, l: 5, shape: 'circle', color: '#b7b3a8', road: 'ok' },
     { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
     { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
     // Sized per variant, to match `JUMP_SHAPES` in `city/jumps.ts` (#307).

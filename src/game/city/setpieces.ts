@@ -60,6 +60,16 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   shed: [{ u: 0, v: 0, w: 9, l: 14, y0: 0, y1: 7.4 }],
   cone: [],
   tree: [post(0, 0, 0.6, 3), { u: 0, v: 0, r: 2, y0: 3, y1: 11.6 }],
+  // A heap is a cone and a solid is not, so this is the part of it a car can
+  // not drive up: the steep core, narrower than the skirt that is drawn.
+  stockpile: [post(0, 0, 6, 7)],
+  // Legs only. The belt is four metres up at its low end, which is over a car.
+  conveyor: [post(0, -20, 0.6, 4), post(0, -7, 0.6, 8.5), post(0, 6, 0.6, 13), post(0, 19, 0.6, 17.5)],
+  'haul-truck': [{ u: 0, v: 0, w: 6.4, l: 10, y0: 0, y1: 4.9 }],
+  excavator: [{ u: 0, v: 0.5, w: 3.8, l: 8, y0: 0, y1: 4.2 }],
+  cabin: [{ u: 0, v: 0, w: 3.2, l: 12, y0: 0, y1: 2.9 }],
+  crusher: [{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }],
+  rubble: [post(0, 0, 2, 1.5)],
 };
 
 /** Where a hand-placed thing stands, before it is given an id. */
@@ -117,7 +127,7 @@ export function airfieldProps(
       breakables.push({ id: id++, kind: prop.kind, at, y, angle: prop.angle, half, placed: true });
       continue;
     }
-    pieces.push({ kind: prop.kind, at, y, angle: prop.angle });
+    pieces.push({ kind: prop.kind, at, y, angle: prop.angle, ...(prop.variant ? { variant: prop.variant } : {}) });
   }
   return { pieces, breakables, jumps, billboards };
 }
