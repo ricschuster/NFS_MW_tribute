@@ -57,6 +57,8 @@ import {
   DAMAGE_SPEED_LOSS,
   DIRT_SPEED_FRAC,
   GRAVEL_SPEED_FRAC,
+  TRUCK_COUNT,
+  TRUCK_RADIUS,
   REPAIR_COUNT,
   REPAIR_SPACING,
   REPAIR_RANGE,
@@ -3367,5 +3369,70 @@ describe('quarry ponds (#329)', () => {
     world.speed = world.maxSpeed * 0.5;
     drive(world, 0.5, NONE);
     expect(world.dunked).toBeGreaterThan(0);
+  });
+});
+
+// The quarry's haul trucks (#330): the traffic that belongs on the gravel roads.
+describe('quarry haul trucks (#330)', () => {
+  it('runs a handful of them, on the quarry\'s own roads and never on top of each other', () => {
+    const world = new CityWorld(undefined, { police: false });
+    expect(world.trucks.cars.length).toBe(TRUCK_COUNT);
+    const start = world.trucks.cars.map((c) => ({ x: c.x, z: c.z }));
+    for (let second = 0; second < 240; second++) {
+      drive(world, 1, NONE);
+      for (const truck of world.trucks.cars) {
+        expect(truck.road.surface).toBe('gravel');
+        expect(world.city.roads).toContain(truck.road);
+      }
+      for (let i = 0; i < world.trucks.cars.length; i++) {
+        for (let j = i + 1; j < world.trucks.cars.length; j++) {
+          const a = world.trucks.cars[i];
+          const b = world.trucks.cars[j];
+          expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(TRUCK_RADIUS);
+        }
+      }
+    }
+    // They work: after four minutes at least some of them have gone somewhere.
+    const moved = world.trucks.cars.filter((c, i) => Math.hypot(c.x - start[i].x, c.z - start[i].z) > 20 * M);
+    expect(moved.length).toBeGreaterThan(0);
+  });
+
+  it('is a wall: a hit at speed costs more than the same hit on a civilian car, and nearly all your speed', () => {
+    const hit = (kind: 'truck' | 'car') => {
+      const world = new CityWorld(undefined, { traffic: false, police: false });
+      const ahead = {
+        x: world.x + Math.sin(world.heading) * 14 * M,
+        z: world.z + Math.cos(world.heading) * 14 * M,
+      };
+      if (kind === 'truck') {
+        const truck = world.trucks.cars[0];
+        truck.x = ahead.x;
+        truck.z = ahead.z;
+        truck.y = world.y;
+        truck.speed = 0;
+        truck.heading = world.heading + Math.PI;
+      } else {
+        world.traffic.cars.push({
+          road: world.onRoad!,
+          t: 0.5,
+          forward: true,
+          speed: 0,
+          damage: 0,
+          colour: '#c94b4b',
+          x: ahead.x,
+          z: ahead.z,
+          y: world.y,
+          heading: world.heading + Math.PI,
+        });
+      }
+      world.speed = world.maxSpeed * 0.7;
+      const before = world.speed;
+      for (let i = 0; i < 90; i++) world.step(STEP, NONE);
+      return { damage: world.damage, kept: world.speed / before };
+    };
+    const truck = hit('truck');
+    const car = hit('car');
+    expect(truck.damage).toBeGreaterThan(car.damage);
+    expect(truck.kept).toBeLessThan(0.3);
   });
 });

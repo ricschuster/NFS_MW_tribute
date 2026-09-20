@@ -319,6 +319,9 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   rubble: grown(rubble, 3),
 };
 
+/** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */
+export const haulTruckParts = (): Part[] => MODELS['haul-truck']();
+
 /**
  * A tree's size, from its heading, so a clump is not fifty copies of one
  * tree. The heading is already scattered, so it serves as the seed and the

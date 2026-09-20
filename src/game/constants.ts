@@ -537,6 +537,23 @@ export const QUARRY_PONDS = [
 /** How far a pond's surface sits above the ground under it, so the two do not fight for depth. */
 export const POND_LIFT = m(0.12);
 /**
+ * The quarry's haul trucks (#330): a few of them, running the haul road and the
+ * rim road all day, much bigger and slower than a car.
+ *
+ * `TRUCK_RADIUS` is the size of the thing you hit: about 16 m by 25 m drawn, so
+ * a circle of 10 m round its middle. `TRUCK_GAP` is how far behind another truck
+ * one holds, wide enough that a truck's own length is not the gap. A hit is a
+ * wall rather than a shunt: it costs the car `TRUCK_HURT` times what the same
+ * closing speed costs against a civilian car, and nearly all its speed
+ * (`TRUCK_SPEED_KEPT`), while the truck itself takes nothing from it.
+ */
+export const TRUCK_COUNT = 4;
+export const TRUCK_SPEED = kmh(30);
+export const TRUCK_RADIUS = m(10);
+export const TRUCK_GAP = m(70);
+export const TRUCK_HURT = 3;
+export const TRUCK_SPEED_KEPT = 0.15;
+/**
  * Marrow Field's perimeter fence (#295): a line, not a wall around the whole
  * 700 m place radius - the field is the runway and the taxiway, so the fence
  * is drawn off *their* extent rather than off `PlanPlace.radius`, which would
