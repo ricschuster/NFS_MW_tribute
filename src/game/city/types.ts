@@ -49,9 +49,10 @@ export type RoadClass = 'arterial' | 'street' | 'boulevard' | 'interstate' | 'ra
  * class sets its lane count and speed, and its surface is a separate axis - a
  * `street` can be asphalt or dirt, the same way a two-lane road can be a
  * street or a boulevard. Defaults to `asphalt` everywhere until something
- * asks for dirt.
+ * asks for dirt. Gravel is the third: pale crushed stone, what a quarry's own
+ * roads are laid with, and a little better to drive than packed earth.
  */
-export type RoadSurface = 'asphalt' | 'dirt';
+export type RoadSurface = 'asphalt' | 'dirt' | 'gravel';
 
 /**
  * What makes a district read as a place. Block size and how much it varies do

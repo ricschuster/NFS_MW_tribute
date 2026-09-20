@@ -22,6 +22,19 @@ type Solid = { u: number; v: number; y0: number; y1: number } & ({ w: number; l:
 
 const post = (u: number, v: number, r: number, y1: number): Solid => ({ u, v, r, y0: 0, y1 });
 
+/**
+ * A solid made `k` times bigger. The working quarry's plant is drawn at a
+ * multiple of its real size (#323): a car in this game is 4.8 m across, so a
+ * haul truck at 6.5 m is barely a bigger thing than the car is, and the
+ * machinery has to read as machinery.
+ */
+const grown = (solids: Solid[], k: number): Solid[] =>
+  solids.map((s) =>
+    'r' in s
+      ? { u: s.u * k, v: s.v * k, r: s.r * k, y0: s.y0 * k, y1: s.y1 * k }
+      : { u: s.u * k, v: s.v * k, w: s.w * k, l: s.l * k, y0: s.y0 * k, y1: s.y1 * k },
+  );
+
 export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'plane-belly': [
     { u: 0, v: 0, w: 4.4, l: 30, y0: 0, y1: 4.4 },
@@ -62,14 +75,14 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   tree: [post(0, 0, 0.6, 3), { u: 0, v: 0, r: 2, y0: 3, y1: 11.6 }],
   // A heap is a cone and a solid is not, so this is the part of it a car can
   // not drive up: the steep core, narrower than the skirt that is drawn.
-  stockpile: [post(0, 0, 6, 7)],
-  // Legs only. The belt is four metres up at its low end, which is over a car.
-  conveyor: [post(0, -20, 0.6, 4), post(0, -7, 0.6, 8.5), post(0, 6, 0.6, 13), post(0, 19, 0.6, 17.5)],
-  'haul-truck': [{ u: 0, v: 0, w: 6.4, l: 10, y0: 0, y1: 4.9 }],
-  excavator: [{ u: 0, v: 0.5, w: 3.8, l: 8, y0: 0, y1: 4.2 }],
-  cabin: [{ u: 0, v: 0, w: 3.2, l: 12, y0: 0, y1: 2.9 }],
-  crusher: [{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }],
-  rubble: [post(0, 0, 2, 1.5)],
+  stockpile: grown([post(0, 0, 6, 7)], 2),
+  // Legs only. The belt is eight metres up at its low end, which is over a car.
+  conveyor: grown([post(0, -20, 0.6, 4), post(0, -7, 0.6, 8.5), post(0, 6, 0.6, 13), post(0, 19, 0.6, 17.5)], 2),
+  'haul-truck': grown([{ u: 0, v: 0, w: 6.4, l: 10, y0: 0, y1: 4.9 }], 2.5),
+  excavator: grown([{ u: 0, v: 0.5, w: 3.8, l: 8, y0: 0, y1: 4.2 }], 2.5),
+  cabin: grown([{ u: 0, v: 0, w: 3.2, l: 8.4, y0: 0, y1: 2.9 }], 1.8),
+  crusher: grown([{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }], 2),
+  rubble: grown([post(0, 0, 2, 1.5)], 3),
 };
 
 /** Where a hand-placed thing stands, before it is given an id. */
@@ -87,7 +100,7 @@ const JUMP_VARIANTS: Record<string, JumpKind> = {
 };
 
 /** How far a set piece's solid parts can reach from its centre, in metres. */
-const SOLID_REACH = 28;
+const SOLID_REACH = 45;
 
 /**
  * Marrow Field's hand-placed props (#295), as city data.

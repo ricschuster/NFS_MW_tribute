@@ -393,23 +393,25 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
  * `markQuarryDirt`, which are what make each place's own roads findable.
  */
 export function markDirtAccess(nodes: CityNode[], roads: CityRoad[]): void {
+  const unpaved = (road: CityRoad) => road.surface !== 'asphalt';
   const joins = nodes.filter(
-    (node) =>
-      node.roads.some((id) => roads[id].surface === 'dirt') &&
-      node.roads.some((id) => roads[id].surface !== 'dirt'),
+    (node) => node.roads.some((id) => unpaved(roads[id])) && node.roads.some((id) => !unpaved(roads[id])),
   );
   for (const start of joins) {
+    // The way in takes the surface of the place it leads to: gravel to the
+    // quarry, dirt to the airfield.
+    const laid = roads[start.roads.find((id) => unpaved(roads[id]))!].surface;
     for (const first of start.roads) {
       let road = roads[first];
-      if (road.surface === 'dirt') continue;
+      if (unpaved(road)) continue;
       let node = start;
       for (let guard = 0; guard < roads.length; guard++) {
         if (road.bridge || road.class === 'interstate' || road.class === 'ramp') break;
-        road.surface = 'dirt';
+        road.surface = laid;
         node = nodes[road.a === node.id ? road.b : road.a];
         if (node.roads.length !== 2) break;
         const next = node.roads.find((id) => id !== road.id);
-        if (next === undefined || roads[next].surface === 'dirt') break;
+        if (next === undefined || unpaved(roads[next])) break;
         road = roads[next];
       }
     }
@@ -417,7 +419,7 @@ export function markDirtAccess(nodes: CityNode[], roads: CityRoad[]): void {
 }
 
 /**
- * Halloway Quarry's own roads in dirt: the haul road and the rim road (#294).
+ * Halloway Quarry's own roads in gravel: the haul road and the rim road (#327).
  *
  * By distance from the place's centre, for the reason `markAirfieldDirt` gives:
  * the roads come from the hand-traced network and carry no `surface` of their
@@ -435,7 +437,7 @@ export function markQuarryDirt(nodes: CityNode[], roads: CityRoad[]): void {
         x: (nodes[road.a].pos.x + nodes[road.b].pos.x) / 2,
         z: (nodes[road.a].pos.z + nodes[road.b].pos.z) / 2,
       };
-      if (Math.hypot(mid.x - place.at.x, mid.z - place.at.z) <= reach) road.surface = 'dirt';
+      if (Math.hypot(mid.x - place.at.x, mid.z - place.at.z) <= reach) road.surface = 'gravel';
     }
   }
 }
@@ -509,7 +511,7 @@ export function quarryBuildings(
   let anchor: Vec2 | null = null;
   let nearest = Infinity;
   roads.forEach((road, i) => {
-    if (road.surface === 'dirt' || road.bridge) return;
+    if (road.surface !== 'asphalt' || road.bridge) return;
     const [a, b] = segments[i];
     const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
     const d = Math.hypot(mid.x - at.x, mid.z - at.z);

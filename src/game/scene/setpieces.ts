@@ -256,11 +256,11 @@ function excavator(): Part[] {
 
 function cabin(): Part[] {
   return [
-    { geometry: at(box(3, 2.7, 12), 0, 1.4, 0), colour: '#d7d9d6' },
-    { geometry: at(box(3.2, 0.2, 12.2), 0, 2.8, 0), colour: '#b9bcb8' },
-    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, -2), colour: '#3a4a52' },
-    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, 2), colour: '#3a4a52' },
-    { geometry: at(box(0.15, 1.9, 0.9), -1.52, 1.1, 4.5), colour: '#5a4a38' },
+    { geometry: at(box(3, 2.7, 8.4), 0, 1.4, 0), colour: '#d7d9d6' },
+    { geometry: at(box(3.2, 0.2, 8.6), 0, 2.8, 0), colour: '#b9bcb8' },
+    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, -1.6), colour: '#3a4a52' },
+    { geometry: at(box(0.15, 1.1, 1.4), 1.52, 1.5, 1.6), colour: '#3a4a52' },
+    { geometry: at(box(0.15, 1.9, 0.9), -1.52, 1.1, 3), colour: '#5a4a38' },
   ];
 }
 
@@ -286,6 +286,15 @@ function rubble(): Part[] {
   ];
 }
 
+/**
+ * The working quarry's machinery is drawn bigger than life. A car here is
+ * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
+ * thing driving past it: these are built to real proportions and then grown
+ * (`SET_PIECE_SOLIDS` grows the same amounts), so each still looks like itself.
+ */
+const grown = (model: (variant?: string) => Part[], k: number) => (variant?: string) =>
+  model(variant).map((part) => ({ ...part, geometry: part.geometry.scale(k, k, k) }));
+
 const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'plane-belly': cargoPlane,
   'plane-nose': noseBuried,
@@ -301,13 +310,13 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   shed,
   cone,
   tree,
-  stockpile,
-  conveyor,
-  'haul-truck': haulTruck,
-  excavator,
-  cabin,
-  crusher,
-  rubble,
+  stockpile: grown(stockpile, 2),
+  conveyor: grown(conveyor, 2),
+  'haul-truck': grown(haulTruck, 2.5),
+  excavator: grown(excavator, 2.5),
+  cabin: grown(cabin, 1.8),
+  crusher: grown(crusher, 2),
+  rubble: grown(rubble, 3),
 };
 
 /**

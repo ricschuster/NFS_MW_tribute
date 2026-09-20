@@ -1,7 +1,7 @@
 {
  "seed": "0x4b657374",
  "place": "Halloway Quarry",
- "savedAt": "2026-09-19T23:41:12.629Z",
+ "savedAt": "2026-09-19T23:58:56.159Z",
  "props": [
   {
    "id": "seed0",
@@ -375,8 +375,8 @@
   {
    "id": "seed50",
    "kind": "stockpile",
-   "x": -2644,
-   "z": -837,
+   "x": -2634,
+   "z": -832,
    "angle": 0,
    "variant": "grey",
    "note": "Product stockpile"
@@ -384,71 +384,71 @@
   {
    "id": "seed51",
    "kind": "stockpile",
-   "x": -2626,
-   "z": -790,
+   "x": -2789,
+   "z": -772,
    "angle": 1.1,
    "variant": "sand"
   },
   {
    "id": "seed52",
    "kind": "stockpile",
-   "x": -2799,
-   "z": -784,
+   "x": -2664,
+   "z": -912,
    "angle": 2.2,
    "variant": "rust"
   },
   {
    "id": "seed53",
    "kind": "stockpile",
-   "x": -2666,
-   "z": -900,
+   "x": -2514,
+   "z": -752,
    "angle": 3.3,
    "variant": "grey"
   },
   {
    "id": "seed54",
    "kind": "stockpile",
-   "x": -2776,
-   "z": -886,
+   "x": -2896.9,
+   "z": -864.9,
    "angle": 4.4,
    "variant": "sand"
   },
   {
    "id": "seed55",
    "kind": "stockpile",
-   "x": -2591.9,
-   "z": -889.1,
+   "x": -2474,
+   "z": -942,
    "angle": 5.5,
    "variant": "rust"
   },
   {
    "id": "seed56",
    "kind": "conveyor",
-   "x": -2772.3,
-   "z": -836.9,
-   "angle": 1.57,
+   "x": -2745.2,
+   "z": -730.3,
+   "angle": 1.2,
    "note": "Feed belt to the bins"
   },
   {
    "id": "seed57",
    "kind": "conveyor",
-   "x": -2669,
-   "z": -746,
-   "angle": 0.5,
+   "x": -2570.6,
+   "z": -677,
+   "angle": 0.4,
    "note": "Stacker belt"
   },
   {
    "id": "seed58",
    "kind": "crusher",
-   "x": -2784.7,
-   "z": -811.3,
+   "x": -2782,
+   "z": -820,
    "angle": 0.3,
    "note": "Primary crusher hopper"
   },
   {
    "id": "seed59",
    "kind": "haul-truck",
-   "x": -2692,
+   "x": -2684,
    "z": -880,
    "angle": 0.6,
    "note": "Being loaded at the gantry"
@@ -456,80 +456,89 @@
   {
    "id": "seed60",
    "kind": "haul-truck",
-   "x": -2754,
-   "z": -757,
+   "x": -2764,
+   "z": -887,
    "angle": 2.4
   },
   {
    "id": "seed61",
    "kind": "haul-truck",
-   "x": -2499,
-   "z": -852,
+   "x": -2467.5,
+   "z": -866.6,
    "angle": 4.1,
    "note": "Parked on the shooting bench"
   },
   {
    "id": "seed62",
    "kind": "excavator",
-   "x": -2649,
-   "z": -762,
+   "x": -2594,
+   "z": -802,
    "angle": 3.6,
    "note": "Digging the face"
   },
   {
    "id": "seed63",
    "kind": "excavator",
-   "x": -2724,
-   "z": -737,
+   "x": -2699.8,
+   "z": -719.4,
    "angle": 0.2
   },
   {
    "id": "seed64",
    "kind": "excavator",
-   "x": -2484.7,
-   "z": -811.3,
+   "x": -2460,
+   "z": -802,
    "angle": 5.2
   },
   {
    "id": "seed65",
    "kind": "cabin",
-   "x": -2612.6,
-   "z": -775.6,
+   "x": -2605.4,
+   "z": -865.6,
    "angle": 1.57,
    "note": "Site cabins"
   },
   {
    "id": "seed66",
    "kind": "cabin",
-   "x": -2614,
-   "z": -760,
+   "x": -2616,
+   "z": -882,
    "angle": 1.57
   },
   {
    "id": "seed67",
    "kind": "cabin",
-   "x": -1796.5,
-   "z": -572,
+   "x": -1793.9,
+   "z": -563.1,
    "angle": 0,
    "note": "Yard cabins"
   },
   {
    "id": "seed68",
    "kind": "cabin",
-   "x": -1795.7,
-   "z": -557.9,
+   "x": -1786.7,
+   "z": -540.7,
    "angle": 0
   },
   {
    "id": "seed69",
    "kind": "haul-truck",
-   "x": -1865.5,
-   "z": -582,
+   "x": -1890.5,
+   "z": -567,
    "angle": 1.2,
    "note": "Waiting at the weighbridge"
   },
   {
    "id": "seed70",
+   "kind": "stockpile",
+   "x": -1811.9,
+   "z": -520.6,
+   "angle": 0.5,
+   "variant": "grey",
+   "note": "Yard stockpile"
+  },
+  {
+   "id": "seed71",
    "kind": "mast",
    "x": -1822.4,
    "z": -627.9,
@@ -537,7 +546,7 @@
    "note": "Yard floodlight"
   },
   {
-   "id": "seed71",
+   "id": "seed72",
    "kind": "mast",
    "x": -2634,
    "z": -867,
@@ -545,112 +554,112 @@
    "note": "Floodlight over the loading area"
   },
   {
-   "id": "seed72",
-   "kind": "rubble",
-   "x": -2901.1,
-   "z": -946.7,
-   "angle": 1.291
-  },
-  {
    "id": "seed73",
    "kind": "rubble",
-   "x": -2566.9,
-   "z": -913.9,
-   "angle": 2.766
+   "x": -2904,
+   "z": -950.4,
+   "angle": 1.291
   },
   {
    "id": "seed74",
    "kind": "rubble",
-   "x": -2839,
-   "z": -420.4,
-   "angle": 2.424
+   "x": -2571.6,
+   "z": -911.2,
+   "angle": 2.766
   },
   {
    "id": "seed75",
    "kind": "rubble",
-   "x": -2551.2,
-   "z": -1088.3,
+   "x": -2552.6,
+   "z": -1082.9,
    "angle": 1.454
   },
   {
    "id": "seed76",
    "kind": "rubble",
-   "x": -2926.7,
-   "z": -666.5,
+   "x": -2931.2,
+   "z": -663.4,
    "angle": 5.167
   },
   {
    "id": "seed77",
    "kind": "rubble",
-   "x": -2469.2,
-   "z": -636.8,
+   "x": -2465.1,
+   "z": -633.1,
    "angle": 2.736
   },
   {
    "id": "seed78",
    "kind": "rubble",
-   "x": -2704.6,
-   "z": -678.9,
+   "x": -2705.1,
+   "z": -674.4,
    "angle": 5.324
   },
   {
    "id": "seed79",
    "kind": "rubble",
-   "x": -2703.7,
-   "z": -970,
-   "angle": 5.55
+   "x": -2645.4,
+   "z": -383.2,
+   "angle": 5.238
   },
   {
    "id": "seed80",
    "kind": "rubble",
-   "x": -2646.5,
-   "z": -388.9,
-   "angle": 5.238
+   "x": -2795.7,
+   "z": -553.6,
+   "angle": 0.169
   },
   {
    "id": "seed81",
    "kind": "rubble",
-   "x": -2793.9,
-   "z": -557.6,
-   "angle": 0.169
+   "x": -2409.3,
+   "z": -1041.7,
+   "angle": 3.182
   },
   {
    "id": "seed82",
    "kind": "rubble",
-   "x": -3098,
-   "z": -1119.1,
-   "angle": 2.301
+   "x": -2848.2,
+   "z": -1120.3,
+   "angle": 1.474
   },
   {
    "id": "seed83",
    "kind": "rubble",
-   "x": -2413,
-   "z": -1038.2,
-   "angle": 3.182
+   "x": -2695.5,
+   "z": -1095,
+   "angle": 2.71
   },
   {
    "id": "seed84",
+   "kind": "rubble",
+   "x": -2284.5,
+   "z": -1145.2,
+   "angle": 0.958
+  },
+  {
+   "id": "seed85",
    "kind": "cone",
    "x": -2686,
    "z": -694,
    "angle": 0
   },
   {
-   "id": "seed85",
+   "id": "seed86",
    "kind": "cone",
    "x": -2682,
    "z": -694,
    "angle": 0
   },
   {
-   "id": "seed86",
+   "id": "seed87",
    "kind": "cone",
    "x": -2678,
    "z": -694,
    "angle": 0
   },
   {
-   "id": "seed87",
+   "id": "seed88",
    "kind": "cone",
    "x": -2674,
    "z": -694,

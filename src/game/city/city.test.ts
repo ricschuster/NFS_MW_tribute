@@ -233,16 +233,17 @@ describe('the street network', () => {
     }
   });
 
-  // Marrow Field (#295) and Halloway Quarry are dirt now, each in its own
-  // describe block below; everything else on the current seed should still
-  // come out paved.
+  // Marrow Field (#295) is dirt and Halloway Quarry (#327) is gravel, each in
+  // its own describe block below; everything else on the current seed should
+  // still come out paved.
   it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
-      expect(['asphalt', 'dirt']).toContain(road.surface);
+      expect(['asphalt', 'dirt', 'gravel']).toContain(road.surface);
     }
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    const unpaved = city.roads.filter((r) => r.surface !== 'asphalt');
     expect(dirt.length).toBeGreaterThan(0);
-    expect(dirt.length).toBeLessThan(city.roads.length / 8);
+    expect(unpaved.length).toBeLessThan(city.roads.length / 8);
   });
 
   // Roads used to be axis-aligned and this test used to say so. Boulevards
@@ -1601,14 +1602,7 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
   };
 
-  // The quarry's dirt is its own (see its describe block): what these tests
-  // mean by "the field's dirt" is the dirt nearer the runway than the pit.
-  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
-  // The quarry's dirt reaches 2.3 radii out along the way in, so 3 clears it.
-  const isFieldDirt = (r: CityRoad) => {
-    const mid = midOf(r);
-    return r.surface === 'dirt' && Math.hypot(mid.x - pit.at.x, mid.z - pit.at.z) > pit.radius * 3;
-  };
+  const isFieldDirt = (r: CityRoad) => r.surface === 'dirt';
 
   it('marks the runway and taxiway dirt, and leaves the rest of the network paved', () => {
     const dirt = city.roads.filter(isFieldDirt);
@@ -1739,7 +1733,7 @@ describe('Marrow Field, the disused airfield (#295)', () => {
   });
 });
 
-describe('Halloway Quarry, a working quarry (#323)', () => {
+describe('Halloway Quarry, a working quarry (#323, #327)', () => {
   const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
   const away = (p: { x: number; z: number }) => Math.hypot(p.x - pit.at.x, p.z - pit.at.z);
   const midOf = (road: CityRoad) => {
@@ -1749,19 +1743,19 @@ describe('Halloway Quarry, a working quarry (#323)', () => {
   };
   const inPit = city.roads.filter((r) => away(midOf(r)) <= pit.radius * 1.2);
 
-  it('lays the haul road and the rim road in dirt', () => {
+  it('lays the haul road and the rim road in gravel', () => {
     // 6.4 km of haul road and about 4 km of rim: most of the ten-odd km that
     // `QUARRY_DIRT_REACH` was measured against.
     const totalM = inPit.reduce((sum, r) => sum + r.length, 0) / M;
     expect(totalM).toBeGreaterThan(8000);
-    expect(inPit.every((r) => r.surface === 'dirt' || r.bridge)).toBe(true);
+    expect(inPit.every((r) => r.surface === 'gravel' || r.bridge)).toBe(true);
   });
 
-  it('carries the dirt out along the way in, and stops at a junction', () => {
+  it('carries the gravel out along the way in, and stops at a junction', () => {
     // Beyond the reach, dirt is the access road only, and `markDirtAccess`
     // stops at the first real junction: a dirt road out there with a side
     // street off it would be the quarry's dirt leaking onto the network.
-    const past = city.roads.filter((r) => r.surface === 'dirt' && away(midOf(r)) > pit.radius * 1.2);
+    const past = city.roads.filter((r) => r.surface === 'gravel' && away(midOf(r)) > pit.radius * 1.2);
     const near = past.filter((r) => away(midOf(r)) < pit.radius * 3);
     expect(near.length).toBeGreaterThan(0);
     // A node with dirt on both sides is the middle of the chain and has to be a
@@ -1770,8 +1764,8 @@ describe('Halloway Quarry, a working quarry (#323)', () => {
     for (const road of near) {
       for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
         if (away(end.pos) <= pit.radius * 1.3) continue;
-        const dirtSides = end.roads.filter((id) => city.roads[id].surface === 'dirt').length;
-        if (dirtSides >= 2) expect(end.roads.length).toBe(2);
+        const looseSides = end.roads.filter((id) => city.roads[id].surface === 'gravel').length;
+        if (looseSides >= 2) expect(end.roads.length).toBe(2);
       }
     }
   });

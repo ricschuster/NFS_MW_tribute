@@ -56,6 +56,7 @@ import {
   DAMAGE_FREE,
   DAMAGE_SPEED_LOSS,
   DIRT_SPEED_FRAC,
+  GRAVEL_SPEED_FRAC,
   REPAIR_COUNT,
   REPAIR_SPACING,
   REPAIR_RANGE,
@@ -2217,6 +2218,35 @@ describe('driving surfaces (#294)', () => {
     expect(dirt).toBeCloseTo(paved * DIRT_SPEED_FRAC, -2);
   });
 
+  // Gravel (#327) is the middle surface: better than packed earth, worse than
+  // tarmac. The order of the three is the order of how they drive.
+  it('caps the top speed on gravel between dirt and tarmac', () => {
+    const settle = (surface: 'asphalt' | 'dirt' | 'gravel') => {
+      const world = still();
+      const road = world.onRoad!;
+      const original = road.surface;
+      road.surface = surface;
+      try {
+        world.speed = world.maxSpeed;
+        const home = { x: world.x, z: world.z };
+        for (let t = 0; t < 2; t += STEP) {
+          world.x = home.x;
+          world.z = home.z;
+          world.step(STEP, press({ up: true }));
+        }
+        return world.speed;
+      } finally {
+        road.surface = original;
+      }
+    };
+    const paved = settle('asphalt');
+    const gravel = settle('gravel');
+    const dirt = settle('dirt');
+    expect(gravel).toBeLessThan(paved);
+    expect(gravel).toBeGreaterThan(dirt);
+    expect(gravel).toBeCloseTo(paved * GRAVEL_SPEED_FRAC, -2);
+  });
+
   it('takes the steering with it too', () => {
     const turn = (dirt: boolean) => {
       const world = still();
@@ -3295,5 +3325,27 @@ describe('going in the water', () => {
     drive(world, DUNK_HOLD * 1.5, NONE);
 
     expect(world.police.state).not.toBe('clear');
+  });
+});
+
+// The quarry's roads are private (#327): civilian traffic neither spawns on them
+// nor turns onto them.
+describe('quarry roads carry no traffic (#327)', () => {
+  it('never has a civilian car on a gravel road', () => {
+    const world = new CityWorld(undefined, { police: false });
+    const gravel = world.city.roads.filter((r) => r.surface === 'gravel');
+    expect(gravel.length).toBeGreaterThan(0);
+    // Stand on the way in, where the paved roads that lead to it are.
+    const road = gravel.reduce((best, r) => (r.length > best.length ? r : best), gravel[0]);
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = (a.x + b.x) / 2;
+    world.z = (a.z + b.z) / 2;
+    world.y = roadHeightAt(world.city, road, world.x, world.z);
+    world.speed = 0;
+    for (let second = 0; second < 90; second++) {
+      drive(world, 1, NONE);
+      for (const car of world.traffic.cars) expect(car.road.surface).not.toBe('gravel');
+    }
   });
 });
