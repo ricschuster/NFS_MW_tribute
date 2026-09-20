@@ -5,6 +5,8 @@ import {
   REVERSE_SPEED_FRAC,
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
+  GRAVEL_GRIP_FRAC,
+  GRAVEL_SPEED_FRAC,
   OFFROAD_TYRE_LIMIT,
   REP_JUMP_MIN,
   REP_JUMP_DISTANCE,
@@ -819,7 +821,9 @@ export class CityWorld {
     // A road, just a worse one (#294): still `onRoad`, still short of the
     // off-road penalty in `settle`, just less grip and a lower top speed -
     // unless the tyres were made for it.
-    const onDirt = this.onRoad?.surface === 'dirt' && !this.offRoadTyres;
+    const loose = this.offRoadTyres ? null : this.onRoad?.surface;
+    const gripFrac = loose === 'dirt' ? DIRT_GRIP_FRAC : loose === 'gravel' ? GRAVEL_GRIP_FRAC : 1;
+    const speedFrac = loose === 'dirt' ? DIRT_SPEED_FRAC : loose === 'gravel' ? GRAVEL_SPEED_FRAC : 1;
 
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car
@@ -827,7 +831,7 @@ export class CityWorld {
     const authority =
       Math.min(
         TURN_RATE,
-        (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS) * (onDirt ? DIRT_GRIP_FRAC : 1)) /
+        (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS) * gripFrac) /
           Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)),
       ) *
       (this.shredded > 0 ? SHRED_GRIP : 1) *
@@ -883,7 +887,7 @@ export class CityWorld {
     const topSpeed = Math.min(
       (boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed) *
         (1 - this.hurt * DAMAGE_SPEED_LOSS) *
-        (onDirt ? DIRT_SPEED_FRAC : 1) *
+        speedFrac *
         this.hill,
       this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
     );

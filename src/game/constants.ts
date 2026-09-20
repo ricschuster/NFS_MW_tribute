@@ -37,6 +37,13 @@ export const REVERSE_SPEED_FRAC = 0.18;
 export const DIRT_GRIP_FRAC = 0.8;
 export const DIRT_SPEED_FRAC = 0.85;
 /**
+ * Gravel (#327): crushed stone, laid and graded, which is a better road than
+ * packed earth and still a worse one than tarmac. Between the two, so the order
+ * of the three surfaces is the order of how they drive.
+ */
+export const GRAVEL_GRIP_FRAC = 0.9;
+export const GRAVEL_SPEED_FRAC = 0.92;
+/**
  * Off-road tyres (a part, `mods.ts`): on dirt they take nothing off at all,
  * and open ground caps the car at this fraction of its top speed instead of
  * the quarter it is otherwise held to (`offRoadLimit`). Under half, so a

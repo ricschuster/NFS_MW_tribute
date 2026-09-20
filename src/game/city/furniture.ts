@@ -29,11 +29,11 @@ export function furnitureFor(rng: Rng, city: City): StreetProp[] {
     // A ramp is short, sloped and joins two levels; lighting it properly means
     // interpolating height along it, which is not worth it for a 200 m slip road.
     if (road.class === 'ramp') continue;
-    // A dirt road carries no lighting: Marrow Field is the only one today
-    // (#295), and "no lighting implying operation" is in the brief for it -
+    // A dirt or gravel road carries no lighting: Marrow Field's is the dirt
+    // one (#295), and the quarry's is gravel (#327), and "no lighting implying operation" is in the brief for it -
     // a disused runway with a working street lamp down each side reads as
     // staffed.
-    if (road.surface === 'dirt') continue;
+    if (road.surface !== 'asphalt') continue;
     if (road.bridge) barriers(city, road, props);
     else lamps(rng, city, road, props);
   }

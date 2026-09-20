@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   asphaltTexture,
   dirtTexture,
+  gravelTexture,
   BLOCK_TILE,
   blockTexture,
   disposeSurfaces,
@@ -395,7 +396,7 @@ export class Cityscape {
         !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
     );
     const meshes: THREE.InstancedMesh[] = [];
-    for (const surface of ['asphalt', 'dirt'] as const) {
+    for (const surface of ['asphalt', 'dirt', 'gravel'] as const) {
       const roads = drivable.filter((road) => (road.surface ?? 'asphalt') === surface);
       if (roads.length === 0) continue;
       meshes.push(this.carriagewaysFor(city, roads, surface));
@@ -440,8 +441,8 @@ export class Cityscape {
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
     const material = new THREE.MeshLambertMaterial({
-      color: surface === 'dirt' ? '#7a6a52' : '#4a5057',
-      map: surface === 'dirt' ? dirtTexture(1, 1) : asphaltTexture(1, 1),
+      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#b7b0a2' : '#4a5057',
+      map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
     });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
     // by how long each piece happens to be. Computed from the instance scale
@@ -538,14 +539,14 @@ export class Cityscape {
 
     const runs = city.roads
       .filter(
-        // A dirt road carries no paint (#295): Marrow Field's runway and
+        // A dirt or gravel road carries no paint (#295): Marrow Field's runway and
         // taxiway are the only ones today, and a crisp centre line down a
         // strip nobody has resurfaced in years says the opposite of "disused".
         (road) =>
           !road.bridge &&
           road.length > GAP * 3 &&
           road.width >= ROADBLOCK_MIN_WIDTH &&
-          road.surface !== 'dirt',
+          road.surface === 'asphalt',
       )
       .map((road) => {
         const a = city.nodes[road.a].pos;
