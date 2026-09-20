@@ -9,10 +9,14 @@ import {
 } from './surfaces';
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
+import { quarryGround } from './quarryground';
+import { PLAN_PLACES } from '../city/plan';
 import type { City, CityRoad, RoadSurface } from '../city/types';
 import { groundAt } from '../city/terrain';
 import {
   UNITS_PER_METRE,
+  PLACE_BLEND,
+  QUARRY_BENCH,
   INTERSTATE_PILLAR_SPACING,
   ROADBLOCK_MIN_WIDTH,
   TERRAIN_RENDER_STEP,
@@ -221,6 +225,17 @@ export class Cityscape {
       color: '#54703f',
       map: blockTexture('grass'),
     });
+    // The pit is rock and dust rather than green (#328), and only the pit.
+    const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+    if (pit) {
+      quarryGround(material, {
+        at: pit.at,
+        radius: pit.radius,
+        fade: PLACE_BLEND,
+        bench: QUARRY_BENCH,
+        floor: groundAt(city.terrain, pit.at.x, pit.at.z),
+      });
+    }
     this.owned.push(geometry, material);
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -441,7 +456,7 @@ export class Cityscape {
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
     const material = new THREE.MeshLambertMaterial({
-      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#b7b0a2' : '#4a5057',
+      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : '#4a5057',
       map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
     });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
