@@ -3349,3 +3349,23 @@ describe('quarry roads carry no traffic (#327)', () => {
     }
   });
 });
+
+// The quarry's settling ponds are water like any other (#329): drive into one
+// and the car is dunked, which is what makes the floor something to steer round.
+describe('quarry ponds (#329)', () => {
+  it('dunks a car that drives into one', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const pond = world.city.water.find((b) => b.kind === 'pond')!;
+    expect(pond).toBeDefined();
+    const at = {
+      x: pond.outline.reduce((s, p) => s + p.x, 0) / pond.outline.length,
+      z: pond.outline.reduce((s, p) => s + p.z, 0) / pond.outline.length,
+    };
+    world.x = at.x;
+    world.z = at.z;
+    world.y = pond.level!;
+    world.speed = world.maxSpeed * 0.5;
+    drive(world, 0.5, NONE);
+    expect(world.dunked).toBeGreaterThan(0);
+  });
+});

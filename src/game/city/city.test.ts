@@ -9,12 +9,15 @@ import {
   CITY_SEED,
   CITY_STREET_GRID,
   DISTRICTS,
+  POND_LIFT,
+  QUARRY_PONDS,
   TERRAIN_RELIEF,
   TERRAIN_SHORE,
   UNITS_PER_METRE,
 } from '../constants';
 import { makeWater } from './water';
 import { landBodies } from './bodies';
+import { groundAt } from './terrain';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
@@ -438,7 +441,9 @@ describe('water', () => {
   // `isChannel` is what still answers "does this stretch of water divide the
   // city" (see the bridge-spacing test below).
   it('generates one body of water with real coastline detail in its holes', () => {
-    expect(city.water.map((w) => w.kind)).toEqual(['bay']);
+    // The bay, and then the quarry's ponds (#329), which are added to the
+    // finished city and are not part of the coastline.
+    expect(city.water.filter((w) => w.kind !== 'pond').map((w) => w.kind)).toEqual(['bay']);
     const [sea] = city.water;
     expect(sea.holes?.length).toBeGreaterThan(0);
     for (const hole of sea.holes ?? []) {
@@ -1805,5 +1810,62 @@ describe('Halloway Quarry, a working quarry (#323, #327)', () => {
       if (away({ x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 }) > pit.radius * 2) continue;
       expect(city.blocks.some((k) => !k.open && k.bounds.minX <= f.minX && k.bounds.maxX >= f.maxX && k.bounds.minZ <= f.minZ && k.bounds.maxZ >= f.maxZ)).toBe(true);
     }
+  });
+  // Settling ponds on the pit floor and the bench (#329): water bodies on the
+  // finished city, so the sim and the renderer see the same thing, and kept
+  // clear of everything the layout put near them.
+  describe('settling ponds (#329)', () => {
+    const ponds = city.water.filter((b) => b.kind === 'pond');
+    const centre = (ring: { x: number; z: number }[]) => ({
+      x: ring.reduce((s, p) => s + p.x, 0) / ring.length,
+      z: ring.reduce((s, p) => s + p.z, 0) / ring.length,
+    });
+    const reach = (ring: { x: number; z: number }[]) => {
+      const c = centre(ring);
+      return Math.max(...ring.map((p) => Math.hypot(p.x - c.x, p.z - c.z)));
+    };
+
+    it('has one for each site, sitting on the ground it was dug in rather than at sea level', () => {
+      expect(ponds.length).toBe(QUARRY_PONDS.length);
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        expect(pond.level).toBeGreaterThan(m(2));
+        expect(pond.level!).toBeCloseTo(groundAt(city.terrain, c.x, c.z) + POND_LIFT, 6);
+        expect(inWater(city, c.x, c.z)).toBe(true);
+      }
+    });
+
+    it('is clear of every road and building', () => {
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        const r = reach(pond.outline);
+        for (const road of city.roads) {
+          const a = city.nodes[road.a].pos;
+          const b = city.nodes[road.b].pos;
+          expect(distanceToSegment(c.x, c.z, a.x, a.z, b.x, b.z) - road.width / 2).toBeGreaterThan(r);
+        }
+        for (const b of city.buildings) {
+          const f = b.footprint;
+          const nx = Math.max(f.minX, Math.min(c.x, f.maxX));
+          const nz = Math.max(f.minZ, Math.min(c.z, f.maxZ));
+          expect(Math.hypot(c.x - nx, c.z - nz)).toBeGreaterThan(r);
+        }
+      }
+    });
+
+    it('has nothing placed in it', () => {
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        const r = reach(pond.outline);
+        const things = [
+          ...city.setPieces.map((p) => p.at),
+          ...city.breakables.map((p) => p.at),
+          ...city.collectibles.map((p) => p.at),
+          ...city.finds.map((p) => p.at),
+          ...city.jumps.map((p) => p.at),
+        ];
+        for (const at of things) expect(Math.hypot(at.x - c.x, at.z - c.z)).toBeGreaterThan(r);
+      }
+    });
   });
 });
