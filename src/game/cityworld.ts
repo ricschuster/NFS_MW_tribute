@@ -5,6 +5,9 @@ import {
   REVERSE_SPEED_FRAC,
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
+  TRUCK_RADIUS,
+  TRUCK_HURT,
+  TRUCK_SPEED_KEPT,
   GRAVEL_GRIP_FRAC,
   GRAVEL_SPEED_FRAC,
   OFFROAD_TYRE_LIMIT,
@@ -111,6 +114,7 @@ import { accelerate } from './math';
 import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
+import { QuarryTrucks } from './quarrytrucks';
 import { CityPolice } from './citypolice';
 import {
   CityGrid,
@@ -223,6 +227,8 @@ export class CityWorld {
   readonly city: City;
   readonly grid: CityGrid;
   readonly traffic: CityTraffic;
+  /** The quarry's own traffic (#330): trucks on the gravel roads, which civilians are kept off. */
+  readonly trucks: QuarryTrucks;
   readonly police: CityPolice;
 
   /** Where the car is, on the map and above it. */
@@ -427,6 +433,7 @@ export class CityWorld {
     this.city = city;
     this.grid = new CityGrid(city);
     this.traffic = new CityTraffic(city, this.grid, this.rng);
+    this.trucks = new QuarryTrucks(city);
     this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
@@ -785,7 +792,10 @@ export class CityWorld {
         // wherever the bank is above sea level.
         this.recover();
       }
-      if (this.withTraffic) this.traffic.update(dt, this);
+      if (this.withTraffic) {
+        this.traffic.update(dt, this);
+        this.trucks.update(dt);
+      }
       if (this.withPolice && this.race.state === 'idle') {
         this.police.update(dt, this, this.maxSpeed);
       }
@@ -902,7 +912,10 @@ export class CityWorld {
     // After the move, so it reads where the car actually got to rather than
     // where it was aimed.
     this.watchProgress(dt, input);
-    if (this.withTraffic) this.traffic.update(dt, this);
+    if (this.withTraffic) {
+      this.traffic.update(dt, this);
+      this.trucks.update(dt);
+    }
     // No pursuit during a sanctioned event: a race you have to win while
     // being rammed by a heat-six Enforcer is not a race, it is a pursuit with
     // a lap counter on it.
@@ -1333,6 +1346,20 @@ export class CityWorld {
         this.traffic.remove(car);
         this.wreck(car, car.colour, 1, false);
       }
+      return;
+    }
+
+    // A haul truck is a wall (#330), not a shunt: it takes nothing from the
+    // hit and the car takes a good deal more than a civilian car would cost it,
+    // and nearly all its speed.
+    for (const truck of this.trucks.cars) {
+      if (Math.abs(this.y - truck.y) > CAR_RADIUS * 2) continue;
+      if (Math.hypot(this.x - truck.x, this.z - truck.z) >= CAR_RADIUS + TRUCK_RADIUS) continue;
+      // Priced on the speed you hit it at, so before the speed is taken.
+      this.takeDamage(impactDamage(this, truck, this.maxSpeed, null) * TRUCK_HURT);
+      this.speed *= TRUCK_SPEED_KEPT;
+      this.crashFlash = 1;
+      truck.speed *= 0.3;
       return;
     }
 

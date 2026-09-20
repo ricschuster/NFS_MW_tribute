@@ -62,7 +62,7 @@ Measured on `CITY_SEED` on 2026-09-18 (Halloway Quarry, 2026-09-19). Areas are t
 |---|---|---|---|---|---|---|---|---|---|
 | Marrow Field | airfield | ✓ | n/a | ✓ hangar | ✓ dirt, decay | ✓ 108 placed | ✓ Marrow Field Run, jumps, gates, billboards | ✓ | **Done** |
 | Ashford Point | waterfront | ◐ 7 of 40 houses have no road (#293, parked) | ✓ driveways (#268 pilot) | ✓ 40 houses | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | In progress |
-| Halloway Quarry | quarry | ✓ connected, no orphans (#323) | n/a | ✓ plant and shed on the floor, yard on the rim | ✓ gravel roads, no lamps or public traffic (#327), rock and dust (#328), ponds (#329) | ◐ 89 placed, in the editor | ◐ collectibles, breakables and a gate, no event | ✗ | In progress |
+| Halloway Quarry | quarry | ✓ connected, no orphans (#323) | n/a | ✓ plant and shed on the floor, yard on the rim | ✓ gravel roads, no lamps or public traffic (#327), rock and dust (#328), ponds (#329), haul trucks (#330) | ◐ 89 placed, in the editor | ◐ collectibles, breakables and a gate, no event | ✗ | In progress |
 | Sablet Wharf | docks | ✗ | n/a | ✗ | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | Not started |
 | Kestrel Head | lookout | ✗ | n/a | ✗ | ✗ | ✗ | ✗ (0.2 km of road) | ✗ | Not started |
 | Highmoor Park | park | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Not started |
