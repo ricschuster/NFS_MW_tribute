@@ -47,6 +47,8 @@ import {
   QUARRY_HAUL_BLEND,
   QUARRY_HAUL_WIDTH,
   QUARRY_PLANT_DEPTH,
+  QUARRY_PONDS,
+  POND_LIFT,
   QUARRY_PLANT_HEIGHT,
   QUARRY_PLANT_WIDTH,
   QUARRY_RAMP_TURNS,
@@ -60,7 +62,7 @@ import {
 import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
 import { groundAt, type Terrain } from './terrain';
 import type { Rng } from './rng';
-import type { Building, CityNode, CityRoad, RoadSurface, StreetProp, Vec2 } from './types';
+import type { Building, CityNode, CityRoad, RoadSurface, StreetProp, Vec2, WaterBody } from './types';
 import type { Water } from './water';
 
 /** A road a place brings with it, as a polyline to be laid like any other. */
@@ -545,6 +547,25 @@ export function quarryBuildings(
     }
   }
   return built;
+}
+
+/**
+ * Halloway Quarry's settling ponds (#329), as water bodies.
+ *
+ * Each is a `WaterBody` on the finished city so the sim's `inWater` and the
+ * renderer draw the same thing (see `inWater` in `grid.ts`), and a car that
+ * drives into one is dunked like the river. The surface sits at the ground
+ * under the pond's centre plus `POND_LIFT` rather than at sea level: the pit
+ * floor is 8 m up. Added after the roads are laid, so this changes nothing
+ * about how anything else was generated.
+ */
+export function quarryPonds(terrain: Terrain): WaterBody[] {
+  if (!PLAN_PLACES.some((p) => p.kind === 'quarry')) return [];
+  return QUARRY_PONDS.map((pond, i) => ({
+    kind: 'pond' as const,
+    outline: lumpyLoop(pond.at, pond.radius, 18, i * 1.7, 0.14),
+    level: groundAt(terrain, pond.at.x, pond.at.z) + POND_LIFT,
+  }));
 }
 
 /**

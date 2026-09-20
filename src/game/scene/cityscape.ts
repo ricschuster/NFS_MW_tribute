@@ -260,7 +260,9 @@ export class Cityscape {
   /** The bay and the river, as flat polygons sunk below the road surface. */
   private water(city: City): THREE.Mesh[] {
     const material = new THREE.MeshLambertMaterial({ color: '#1d4f63' });
-    this.owned.push(material);
+    // A settling pond is a greyer, greener water than the bay (#329).
+    const pond = new THREE.MeshLambertMaterial({ color: '#3f6f78' });
+    this.owned.push(material, pond);
 
     return city.water.map((body, i) => {
       // A Shape is built in XY facing +Z. Laying it flat the obvious way turns
@@ -276,8 +278,8 @@ export class Cityscape {
       geometry.rotateX(-Math.PI / 2);
       this.owned.push(geometry);
 
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.y = WATER_LEVEL + i * WATER_STACK;
+      const mesh = new THREE.Mesh(geometry, body.kind === 'pond' ? pond : material);
+      mesh.position.y = body.level ?? WATER_LEVEL + i * WATER_STACK;
       mesh.name = `water:${body.kind}`;
       return mesh;
     });

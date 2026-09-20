@@ -160,7 +160,12 @@ export interface CityRoad {
  * and each body of land is a **hole** in it.
  */
 export interface WaterBody {
-  kind: 'bay' | 'river';
+  kind: 'bay' | 'river' | 'pond';
+  /**
+   * The height the surface sits at, for water that is not at sea level: a pond
+   * on a quarry floor (#329). Absent means the sea's own level.
+   */
+  level?: number;
   outline: Vec2[];
   /** Land inside the polygon. Closed loops, each one a body of land. */
   holes?: Vec2[][];

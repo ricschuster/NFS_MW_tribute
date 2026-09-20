@@ -517,6 +517,26 @@ export const QUARRY_PLANT_DEPTH = m(28);
 export const QUARRY_PLANT_HEIGHT = m(26);
 export const QUARRY_YARD_CLEAR = m(40);
 /**
+ * Settling ponds on the pit floor and the first bench (#329), from the
+ * reference photographs of active quarries: standing water between the
+ * workings and the haul road.
+ *
+ * Measured, not derived: found by searching the real generated city for ground
+ * that is level, dry and clear of every road, building and placed prop, for the
+ * reason `HANGAR_CLEAR` gives. One on the floor, three on the bench to the
+ * west. `x`, `z` and `r` are metres from the map's origin. They are additions
+ * to the finished city, so nothing is routed round them by accident: keeping
+ * clear of them is the layout's job, and a test says it did.
+ */
+export const QUARRY_PONDS = [
+  { x: -2724, z: -898, r: 18 },
+  { x: -2850, z: -790, r: 18 },
+  { x: -2826, z: -904, r: 22 },
+  { x: -2814, z: -700, r: 18 },
+].map((p) => ({ at: { x: m(p.x), z: m(p.z) }, radius: m(p.r) }));
+/** How far a pond's surface sits above the ground under it, so the two do not fight for depth. */
+export const POND_LIFT = m(0.12);
+/**
  * Marrow Field's perimeter fence (#295): a line, not a wall around the whole
  * 700 m place radius - the field is the runway and the taxiway, so the fence
  * is drawn off *their* extent rather than off `PlanPlace.radius`, which would

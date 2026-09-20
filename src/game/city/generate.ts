@@ -62,6 +62,7 @@ import {
   markDirtAccess,
   markQuarryDirt,
   quarryBuildings,
+  quarryPonds,
   airfieldHangar,
   markAirfieldDirt,
   placeApproach,
@@ -560,7 +561,9 @@ export function generateCity(seed: number): City {
   const city: City = {
     seed,
     bounds,
-    water: water.bodies,
+    // The quarry's ponds are added to the finished city (#329), not to the
+    // water everything was routed against.
+    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : [])],
     terrain,
     nodes,
     roads,

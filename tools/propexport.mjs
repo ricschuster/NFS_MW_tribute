@@ -68,6 +68,14 @@ const inBox = (p, pad = 0) =>
 // is metres above the sea. The page hill-shades it, and reads it back to say
 // how far the ground falls under a prop - a bunker on a slope is #253's
 // problem arriving early.
+const ringHas = (ring, x, z) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i], b = ring[j];
+    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
+  }
+  return inside;
+};
 const STEP = 4;
 const cols = Math.ceil((box.maxX - box.minX) / STEP);
 const rows = Math.ceil((box.maxZ - box.minZ) / STEP);
@@ -77,7 +85,13 @@ for (let row = 0; row < rows; row++) {
   for (let col = 0; col < cols; col++) {
     const x = (box.minX + col * STEP) * U;
     const z = (box.minZ + row * STEP) * U;
-    cells[row * cols + col] = water.isWater(x, z)
+    // The quarry's ponds are on the finished city rather than in `water`, so
+    // ask the city's own bodies as well: a prop dropped in one is as wrong as
+    // one in the bay.
+    const inPond = city.water.some(
+      (b) => b.kind === 'pond' && ringHas(b.outline, x, z),
+    );
+    cells[row * cols + col] = water.isWater(x, z) || inPond
       ? WATER
       : Math.max(0, Math.min(254, Math.round(toM(groundAt(city.terrain, x, z)))));
   }
