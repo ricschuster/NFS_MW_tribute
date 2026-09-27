@@ -6,7 +6,7 @@ this is where the ones that did not survive are written down so they are not
 tried twice by accident.
 
 Read [ADR-0009](decisions/0009-kestrel-bay-is-an-authored-map.md) first for the
-decision the whole rebuild rests on, and [#269](https://github.com/ricschuster/NFS_MW_tribute/issues/269)
+decision the whole rebuild rests on, and [#269](https://github.com/ricschuster/crosstown/issues/269)
 for the standard it is trying to meet, in the words of the person who wants it.
 
 ## Where it stands
