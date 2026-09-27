@@ -227,6 +227,13 @@ branch like this, not just the file you last edited.
   wiring it into `generate.ts`, and sequence subsystems by what they
   invalidate backward rather than by what they're worth to the player. #268
   is the current live case it applies to.
+- [ADR-0011](decisions/0011-the-reference-games-pace.md) - the game is
+  played at the reference game's pace: a starter car averages about 0.6 of
+  top speed in a race, reached through roads and routes rather than the car,
+  with fast roads where the fastest cars earn their speed. Ladder races bring
+  the police. Measured against a recording of the reference game
+  (`docs/research/`), which the owner treats as authoritative for how the
+  game plays.
 
 ## Architecture
 
