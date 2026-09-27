@@ -127,6 +127,18 @@ what the city is shaped like.
   generator makes? Reproduces #271's audit and reports where the plan and the
   generator disagree; `-- --draw` puts it over the relief. A guard, not a probe:
   a polygon that leaves the land is a failure
+- `npm run mapfit` — does the map carry the reference game's pace? A pace
+  profile of the live network with the game's own physics: what routes allow a
+  careful driver (a median fraction of top speed; ADR-0011 wants about 60%),
+  where a fast car can be fast, widths, crossings, and pursuit geography.
+  `docs/research/map-fit-363.md` is the audit it was written for, and it
+  matches `citylap`'s driver on the Marrow Field Run to within a point. Use it
+  for an area's pace check (`docs/map-areas.md`)
+- `npm run freewayexport` — build the freeway loop editor
+  (`screenshots/freeway-editor.html` from `tools/freewayeditor.html`): the loop,
+  its tunnels and the ramp markers over the relief, with each marker checked.
+  "Copy path (JSON)" goes to `docs/freeway-edited.json`, and `npm run
+  freewaysync` writes it into `city/freeway.ts`
 - `npm run roadexport` — write the road network, the relief and the plan to
   `screenshots/roads.json`, for the road editor to load
 - `npm run propexport` — crop Marrow Field out of the generated city and write

@@ -3,6 +3,34 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Start here (2026-09-27): [#371](https://github.com/ricschuster/NFS_MW_tribute/issues/371),
+  build the freeway.** It is written to be picked up cold: what exists (the
+  loop, 4 tunnels and 7 ramp markers, all committed in
+  `docs/freeway-edited.json`), the five steps (markers into `freeway.ts`, ramps
+  built at the markers, a road from each ramp's foot to the network,
+  `CITY_FREEWAY` on, docs), and the one decision to ask the owner (the
+  connector roads' class). Authored ramps mean the freeway no longer waits for
+  the street grid. After it, the order is "Where the work is" below.
+- **What 2026-09-27 changed**, all merged:
+  - **The reference game:** a 47-minute recording of it was measured
+    (`docs/research/nfs-most-wanted-2012-gameplay.md`, and
+    `docs/research/nfs-mw-2012/tools/` to rerun it). The owner treats it as
+    authoritative for how the game plays. That produced:
+    - [ADR-0011](decisions/0011-the-reference-games-pace.md): the reference
+      pace, and police in ladder races;
+    - `docs/design/01` (decided) and `docs/design/02` (events per car,
+      proposed, to be answered when M12 starts);
+    - issues #338-#362, and milestones M8-M12.
+  - **Acceleration and braking** were measured off the recording (#365). They
+    are gradual now (100 km/h in 4.2 s, braking 55 km/h a second), police
+    accelerate on the same curve, and `npm run pace` drives an endless
+    straight.
+  - **The map audit** (#363, `docs/research/map-fit-363.md`, `npm run mapfit`):
+    the frame fits, and what is short is roads not yet built. Area work
+    resumed, freeway first. Terrain felt on the road is #368.
+  - **The freeway editor** is tracked (`tools/freewayeditor.html`, #369): it
+    loads the markers, draws the tunnels and checks both. Its copy now
+    includes the tunnels, which it used to drop.
 - **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`. PR #273 (the
   map rebuild) merged into `main` already; everything below describes `main`
   itself, not a branch waiting to land. `origin/feat/landmass`, the stale
@@ -423,8 +451,8 @@ twenty-odd issues, grouped into five milestones and done in this order:
    authored map carries the reference pace, fast roads, roadblocks, police in
    races, events per car and the rebuild's new items. **Done**
    (`docs/research/map-fit-363.md`): the frame fits, and what is short is the
-   roads not yet built. M7 area work has resumed, **freeway first** (#261,
-   #301), since fast cars only matter once it is built.
+   roads not yet built. M7 area work has resumed, **freeway first**: #371 is
+   the plan, since fast cars only matter once it is built.
 2. **M9: Pace inputs.** Measure a human's pace and on-screen traffic (#347),
    then thin traffic (#348) and add nitrous from risky driving (#351).
 3. **M10: A pursuit you can read.** No map or race dependency, so it can run
