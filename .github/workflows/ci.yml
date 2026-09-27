@@ -1,8 +1,11 @@
 name: CI
 
+# PRs only. Every change reaches main through a PR that has already passed
+# this, and main is not required to be up to date before a merge, so a second
+# run after the merge would repeat the same checks. Deploy still builds main
+# (typecheck included) on every push, which catches two green PRs that break
+# the build together.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
