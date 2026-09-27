@@ -84,6 +84,29 @@ What the table does not show: the three midtown districts have no names in
 and breakables counted as "partly" are the generator's, placed along whatever
 roads exist today, not chosen for the area.
 
+## What the rebuild should include
+
+Decided 2026-09-27 from the gameplay review
+(`docs/research/nfs-most-wanted-2012-gameplay.md`), as things the map as a whole
+has to end up with. Each lands in whichever area it belongs to:
+
+- **A railway corridor alongside the freeway**, drivable, as an escape route
+  and a shortcut. In the recording it was the whole of one escape: off the
+  freeway past a roadblock, then along the tracks, through a tunnel and over a
+  bridge.
+- **A covered stretch of freeway downtown**, under a deck or through the city,
+  where the pursuit's line of sight keeps breaking (five breaks in a minute in
+  the recording). Downtown is last, so this is recorded for then.
+- **Off-road shortcuts with jumps**, one or more per area, that race routes use
+  (jumps exist since #307).
+- **Security gates that guard shortcuts**, so smashing one opens a way through
+  (an alley, a yard, an off-road link) rather than standing along a road.
+- **More collectibles**, toward the reference's scale (123 cars to find, 66
+  speed cameras, 135 gates, 156 billboards), placed by the density of each area
+  (#266) rather than spread evenly along roads.
+- **Event routes laid for pace** (ADR-0011), and shared between cars' events
+  (`docs/design/02_events_per_car.md`).
+
 ## Suggested order
 
 Not decided; a starting point. The places first - Halloway Quarry, Sablet
