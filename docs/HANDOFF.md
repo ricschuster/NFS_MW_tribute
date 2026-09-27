@@ -421,8 +421,10 @@ twenty-odd issues, grouped into five milestones and done in this order:
    out if the map as we have it now will work with the updates and what we
    have learned. Most important part to me."* A measured audit of whether the
    authored map carries the reference pace, fast roads, roadblocks, police in
-   races, events per car and the rebuild's new items. **M7 area work is paused
-   until it answers**, so do not start the next area in `map-areas.md`.
+   races, events per car and the rebuild's new items. **Done**
+   (`docs/research/map-fit-363.md`): the frame fits, and what is short is the
+   roads not yet built. M7 area work has resumed, **freeway first** (#261,
+   #301), since fast cars only matter once it is built.
 2. **M9: Pace inputs.** Measure a human's pace and on-screen traffic (#347),
    then thin traffic (#348) and add nitrous from risky driving (#351).
 3. **M10: A pursuit you can read.** No map or race dependency, so it can run
