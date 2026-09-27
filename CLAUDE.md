@@ -604,5 +604,6 @@ string is a different cache entry than `./`.
   boxes, though the lamps have arms.
 - Not the online social layer. The 2012 game's social layer is out of scope.
 - Not the mid-2000s template it started as. The old city, the ladder of
-  fifteen, bounty, milestones and impound strikes belong to the other game; see
-  ADR-0004 and ADR-0006.
+  fifteen, bounty, its milestone career and impound strikes belong to the other
+  game; see ADR-0004 and ADR-0006. One-off milestone bonuses popped up while
+  driving are the 2012 game's and are wanted.

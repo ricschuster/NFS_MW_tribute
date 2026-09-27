@@ -60,8 +60,10 @@ Everything shipped is original, generated, or CC0.
   map, the answer is no; if it is *structure* - waterfront, ring road, dense
   core, bridges as chokepoints - that is fair game.
 - Not the online social layer, and not the mid-2000s single-track template it
-  started as: the old city, a ladder of fifteen, bounty, milestones and impound
-  strikes belong to a different game.
+  started as: the old city, a ladder of fifteen, bounty and impound strikes
+  belong to a different game. (Milestones were on this list until 2026-09-27:
+  the 2012 game has them too, as one-off bonuses popped up while driving, and
+  those are wanted. The 2005 game's milestone career is still not.)
 
 ## Open questions
 
