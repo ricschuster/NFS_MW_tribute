@@ -179,7 +179,9 @@ describe('off-road tyres on the field', () => {
     world.z = a.z + uz * 500 * M - ux * across * M;
     world.y = groundAt(city.terrain, world.x, world.z);
     world.heading = Math.atan2(ux, uz);
-    world.speed = 0;
+    // Started fast, so this measures the surface's cap rather than the launch:
+    // since #14 the car takes longer than the runway to reach its top from rest.
+    world.speed = world.maxSpeed * 0.95;
     for (let i = 0; i < 60 * 12; i++) world.step(1 / 60, FLOOR);
     return world.speed / world.maxSpeed;
   }
@@ -190,7 +192,14 @@ describe('off-road tyres on the field', () => {
   });
 
   it('raise how fast the car can cross open ground', () => {
-    expect(flatOut(false, 44)).toBeCloseTo(0.25, 2);
-    expect(flatOut(true, 44)).toBeCloseTo(OFFROAD_TYRE_LIMIT, 2);
+    // Held at the cap, or just under it: the grass beside the runway is not
+    // quite level, and since #14 the pull near a cap is gentle enough that a
+    // slight grade holds the car a point or so short of it.
+    const stock = flatOut(false, 44);
+    expect(stock).toBeLessThanOrEqual(0.25 + 1e-6);
+    expect(stock).toBeGreaterThan(0.23);
+    const tyres = flatOut(true, 44);
+    expect(tyres).toBeLessThanOrEqual(OFFROAD_TYRE_LIMIT + 1e-6);
+    expect(tyres).toBeGreaterThan(OFFROAD_TYRE_LIMIT - 0.02);
   });
 });

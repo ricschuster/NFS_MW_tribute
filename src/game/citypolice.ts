@@ -23,6 +23,9 @@ import {
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
   COP_UNITS,
+  ACCEL_TIME,
+  BRAKE_RATE,
+  REFERENCE_TOP_SPEED,
   SURFACE_REACH,
   ROADBLOCK_MIN_LEVEL,
   ROADBLOCK_MAX,
@@ -233,6 +236,8 @@ export class CityPolice {
   /** 0..1. Rises while a cop is close, and drives the heat *level*. */
   heat = 0;
   busted = false;
+  /** What a chase unit is heading for this step, before its kind's pace (#14). */
+  private chaseSpeed = 0;
   /** True on the step the last cop is shaken off. */
   justEscaped = false;
 
@@ -284,6 +289,7 @@ export class CityPolice {
     if (this.busted) return;
 
     const speed = maxSpeed * this.force.speed;
+    this.chaseSpeed = speed;
     for (const cop of this.cops) {
       // A patrol is not chasing anybody (#177): it cruises the network at the
       // road's own pace and picks junctions the way traffic does, which is
@@ -294,7 +300,18 @@ export class CityPolice {
         advanceAlong(this.city, cop, dt, (c, node) => this.wander(c, node), TRAFFIC_LANE);
         continue;
       }
-      cop.speed = speed * COP_UNITS[cop.kind].pace;
+      // Picking up speed the way the player's car does, not snapping to it
+      // (#14). With the player's pull made gradual, a unit that snapped to
+      // pace would leave every corner at full speed while the car it is after
+      // was still winding up, and "you can outrun them" would stop being true
+      // everywhere except flat out on a straight. Same curve, a lower top.
+      const target = speed * COP_UNITS[cop.kind].pace;
+      if (cop.speed < target) {
+        const reach = Math.max(0.05, 1 - (cop.speed / maxSpeed) ** 2);
+        cop.speed = Math.min(target, cop.speed + (REFERENCE_TOP_SPEED / ACCEL_TIME) * reach * dt);
+      } else {
+        cop.speed = Math.max(target, cop.speed - BRAKE_RATE * dt);
+      }
       // Having caught a car that has stopped, stop (#178).
       //
       // Without this a bust is unreachable for a reason that has nothing to do
@@ -1228,17 +1245,21 @@ export class CityPolice {
 
     // Point it at the player from the start, rather than letting it drive away
     // and turn round at the next junction.
+    const kind = role === 'enforcer' ? this.force.enforcerUnit : this.rng.pick(this.force.units);
     const cop: Cop = {
       road,
       t: nearest,
       forward: true,
-      speed: 0,
+      // Already driving when it arrives: units come in out of sight, and one
+      // starting from a standstill would reach you seconds later than it does
+      // now that units pick up speed rather than snapping to it (#14).
+      speed: this.chaseSpeed * COP_UNITS[kind].pace,
       x: 0,
       z: 0,
       y: 0,
       heading: 0,
       damage: 0,
-      kind: role === 'enforcer' ? this.force.enforcerUnit : this.rng.pick(this.force.units),
+      kind,
       role,
       offRoad: 0,
     };

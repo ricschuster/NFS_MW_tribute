@@ -1,5 +1,8 @@
 import {
   TURN_RATE,
+  ACCEL_TIME,
+  BRAKE_RATE,
+  COAST_RATE,
   LATERAL_GRIP,
   STEP,
   REVERSE_SPEED_FRAC,
@@ -468,9 +471,10 @@ export class CityWorld {
     this.maxSpeed = REFERENCE_TOP_SPEED * profile.topSpeed * mods.topSpeed;
     // Acceleration is written against the reference top speed, not this car's:
     // otherwise a faster car would also be quicker to it for free, twice over.
-    this.accel = (REFERENCE_TOP_SPEED / 5) * profile.accel * mods.accel;
-    this.braking = -this.maxSpeed;
-    this.decel = -this.maxSpeed / 5;
+    // It tapers toward the car's own top speed in `move` (see `ACCEL_TIME`).
+    this.accel = (REFERENCE_TOP_SPEED / ACCEL_TIME) * profile.accel * mods.accel;
+    this.braking = -BRAKE_RATE;
+    this.decel = -COAST_RATE;
     this.offRoadDecel = -this.maxSpeed / 2;
     this.offRoadLimit = this.maxSpeed * (mods.offRoad ? OFFROAD_TYRE_LIMIT : 1 / 4);
     this.maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
@@ -856,9 +860,14 @@ export class CityWorld {
     // The boost fades as the car approaches its top speed (#105): what it buys
     // is the way out of a corner, not another two per cent at the top end.
     const pace = Math.min(1, Math.abs(this.speed) / this.maxSpeed);
-    const throttle = boosting
-      ? this.accel * (1 + (this.nitroAccel - 1) * (1 - pace * NITRO_TAPER))
-      : this.accel;
+    // The pull fades as the car nears the top it is heading for (#14), the
+    // boosted top while boosting, so nitrous still carries it past the normal
+    // one.
+    const top = boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed;
+    const reach = Math.max(0, 1 - (Math.abs(this.speed) / top) ** 2);
+    const throttle =
+      (boosting ? this.accel * (1 + (this.nitroAccel - 1) * (1 - pace * NITRO_TAPER)) : this.accel) *
+      reach;
 
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     // Subtracted, not added. Heading rotates the car's forward from +z toward
