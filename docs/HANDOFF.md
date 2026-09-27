@@ -412,6 +412,33 @@ all yet.
 
 ## Where the work is
 
+**The plan, as of 2026-09-27: M8 to M12, and the map is paused.** A recording
+of the reference game was measured (`docs/research/`), the owner treats it as
+authoritative for how the game plays, and what it changed is ADR-0011 and
+twenty-odd issues, grouped into five milestones and done in this order:
+
+1. **M8: Does the map fit?** (#363) First, and the owner's priority: *"figure
+   out if the map as we have it now will work with the updates and what we
+   have learned. Most important part to me."* A measured audit of whether the
+   authored map carries the reference pace, fast roads, roadblocks, police in
+   races, events per car and the rebuild's new items. **M7 area work is paused
+   until it answers**, so do not start the next area in `map-areas.md`.
+2. **M9: Pace inputs.** Measure a human's pace and on-screen traffic (#347),
+   then thin traffic (#348) and add nitrous from risky driving (#351).
+3. **M10: A pursuit you can read.** No map or race dependency, so it can run
+   beside M8 or M9 in a second session.
+4. **M11: Races with heat.** Event cards and rewards by place (#357) first,
+   then ladder races with the police (#349, #340, #341) and the rest.
+5. **M12: Cars and progress.** Events per car: answer
+   `docs/design/02_events_per_car.md` when M12 starts, then write its issues.
+
+The rebuild's own items (gates guarding shortcuts #361, collectible density
+#266, the railway corridor, shortcuts with jumps, the pace check) ride with M7
+once it resumes. The ladder re-fit still waits for generated circuits (#301).
+
+What follows below was written before this plan. It is still accurate about
+each issue; the order above supersedes it.
+
 **Downtown goes last, and the checklist is [`docs/map-areas.md`](map-areas.md).**
 Decided 2026-09-18: every other area of the map is finished first, one at a
 time, the way Marrow Field was, and #268 comes last. That reverses the

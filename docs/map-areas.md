@@ -4,6 +4,15 @@ The rebuild of Kestrel Bay (ADR-0007 to ADR-0009) is finished one area at a
 time, and this file is the list. Update it in the same PR as the work that
 moves an area on, the way `docs/HANDOFF.md` is kept.
 
+## Paused: does the map fit? (2026-09-27)
+
+**Area work is paused** until #363 answers whether the map as it stands
+carries what the gameplay review and ADR-0011 changed: the reference pace,
+fast roads, roadblocks on race routes, police in races, events per car, and
+the items below under "What the rebuild should include". Do not start the next
+area until #363's report says what, if anything, changes first. The order and
+checklist below stand unless it says otherwise.
+
 ## Downtown goes last
 
 Decided 2026-09-18: **every other area of the map is finished before
