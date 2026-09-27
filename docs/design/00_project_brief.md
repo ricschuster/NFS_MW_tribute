@@ -29,15 +29,17 @@ nothing to license and nothing to download.
 
 ## What it is made of
 
-- **A free-roam city.** 5 x 4 km, generated: a street grid cut against water,
-  curved boulevards, an elevated interstate loop with ramps and a tunnel,
-  buildings extruded per district. Bridges are few on purpose, because they
-  are the chokepoints a pursuit turns on.
+- **A free-roam city.** About 10 x 8 km of land with relief
+  ([ADR-0007](../decisions/0007-relief.md)): an authored plan of districts and
+  places ([ADR-0009](../decisions/0009-kestrel-bay-is-an-authored-map.md)),
+  roads routed over the terrain, an interstate loop that leaves the city.
+  Bridges are few on purpose, because they are the chokepoints a pursuit turns
+  on.
 - **A pursuit worth escaping.** Six heat levels that escalate *within* a
   chase, not across a career: roadblocks, Enforcers that come at you head on,
-  spike strips, and a helicopter that keeps you seen so the answer is cover
-  rather than speed. Plus the one thing the city does back - gates and pallet
-  stacks that come down on whoever is behind you.
+  and spike strips. (A helicopter and cover were built and cut, #183.) Plus
+  the one thing the city does back - gates and pallet stacks that come down on
+  whoever is behind you.
 - **Rep as one currency.** Everything pays, everything pays more while you are
   being chased, and the ladder is a price rather than a queue: a rival takes
   the call at a Rep total, so what moves you up is everything you do.
