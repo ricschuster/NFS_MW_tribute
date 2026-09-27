@@ -413,12 +413,12 @@ describe('nitrous', () => {
   it('spends its charge while boosting', () => {
     const boosted = new CityWorld(undefined, { traffic: false, police: false });
     // The boost will not light below 15% of top speed, so roughly the first
-    // three quarters of a second is spent getting going rather than burning.
-    drive(boosted, 1.5, press({ up: true, nitro: true }));
+    // two seconds are spent getting going rather than burning (#14).
+    drive(boosted, 3, press({ up: true, nitro: true }));
     expect(boosted.nitro).toBeLessThan(0.8);
 
     const saved = new CityWorld(undefined, { traffic: false, police: false });
-    drive(saved, 1.5, press({ up: true }));
+    drive(saved, 3, press({ up: true }));
     expect(saved.nitro).toBe(1);
   });
 });
@@ -1481,10 +1481,13 @@ describe('spike strips', () => {
     drive(world, SHRED_TIME + 0.5, NONE);
     expect(world.shredded).toBe(0);
 
-    // Three seconds of throttle takes the car past the shredded cap, which it
-    // could not have done a moment ago. Three and not twelve: a straight line
-    // from here reaches a building, and that is a different test failing.
-    drive(world, 3, press({ up: true }));
+    // Throttle takes the car past the shredded cap, which it could not have
+    // done a moment ago. Started just under the cap rather than from rest:
+    // since #14 the car needs about five seconds to reach it from a
+    // standstill, and a straight line that long from here reaches a building,
+    // which is a different test failing.
+    world.speed = world.maxSpeed * (SHRED_SPEED_FRAC - 0.05);
+    drive(world, 1.5, press({ up: true }));
     expect(world.speed).toBeGreaterThan(world.maxSpeed * SHRED_SPEED_FRAC);
   });
 
@@ -3319,7 +3322,10 @@ describe('going in the water', () => {
   // running when you come back up, which is what stops the river being a
   // button that cancels one.
   it('does not shake a pursuit', () => {
-    const world = provoke(new CityWorld(undefined, { traffic: false }), 12);
+    // Provoked and straight in: held at speed beside the patrol for longer,
+    // the car now leaves it behind (units pick up speed rather than snapping
+    // to it, #14) and the pursuit is already a search before the river.
+    const world = provoke(new CityWorld(undefined, { traffic: false }));
     expect(world.police.state).toBe('pursuit');
 
     intoTheRiver(world);

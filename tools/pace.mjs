@@ -95,6 +95,33 @@ function placeOnLongestStraight(world) {
   world.y = roadHeightAt(world.city, best, world.x, world.z);
   world.heading = Math.atan2(dx, dz);
   world.onRoad = best;
+  return { road: best, start: { x: world.x, z: world.z, y: world.y } };
+}
+
+/**
+ * Put the car back at the start of its straight once it nears the end, keeping
+ * its speed and heading: an endless straight (#14).
+ *
+ * Needed since acceleration became gradual. The car takes about 22 s and well
+ * over a kilometre to approach its top speed, and the longest clean straight on
+ * the authored map is a few hundred metres, so without this the probe measured
+ * where the straight ran out rather than what the car can do - a clean car read
+ * 73% and CAUGHT at every level with nothing wrong in the physics. The map's
+ * own straights are reported separately, because how fast a car can get on the
+ * roads that exist is a real question too (#363); it is just not this one.
+ */
+function loopStraight(world, placed) {
+  const { road, start } = placed;
+  const a = world.city.nodes[road.a].pos;
+  const b = world.city.nodes[road.b].pos;
+  const along = ((world.x - a.x) * (b.x - a.x) + (world.z - a.z) * (b.z - a.z)) / road.length;
+  if (along > road.length * 0.85) {
+    world.x = start.x;
+    world.z = start.z;
+    world.y = start.y;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.onRoad = road;
+  }
 }
 
 /**
@@ -106,9 +133,9 @@ function placeOnLongestStraight(world) {
  * intent instead of the behaviour, which is the mistake this tool exists to
  * catch. Traffic and police are off, so nothing gets in the way.
  */
-function topSpeed({ damage = 0, shredded = false, nitro = false }) {
+function topSpeed({ damage = 0, shredded = false, nitro = false }, endless = true) {
   const world = new CityWorld(undefined, { traffic: false, police: false });
-  placeOnLongestStraight(world);
+  const placed = placeOnLongestStraight(world);
   world.damage = damage;
   let best = 0;
   for (let t = 0; t < 120; t += K.STEP) {
@@ -117,6 +144,8 @@ function topSpeed({ damage = 0, shredded = false, nitro = false }) {
     if (shredded) world.shredded = K.SHRED_TIME;
     world.step(K.STEP, { ...NONE, up: true, nitro });
     best = Math.max(best, world.speed);
+    if (endless && placed) loopStraight(world, placed);
+    else if (placed && world.onRoad !== placed.road) break;
   }
   return best / K.REFERENCE_TOP_SPEED;
 }
@@ -180,6 +209,16 @@ if (wrecked.mine < slowest) {
   console.log('      speed, and `npm run endings -- --damage 1` measures a wrecked car');
   console.log('      getting away about as often as a clean one. #170 is the question of');
   console.log('      whether that is the design, and it is a decision rather than a bug.\n');
+}
+
+{
+  // Reported, not asserted: how fast a clean car gets on the longest real
+  // straight the map has, before it runs out (#14, #363).
+  const probe = new CityWorld(undefined, { traffic: false, police: false });
+  const placed = placeOnLongestStraight(probe);
+  const metres = placed ? Math.round(placed.road.length / K.UNITS_PER_METRE) : 0;
+  console.log(`on the map: the longest clean straight is ${metres} m, and a clean car reaches`);
+  console.log(`      ${pct(topSpeed({}, false))} of top speed along it before it ends.\n`);
 }
 
 if (broken) {

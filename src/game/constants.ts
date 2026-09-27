@@ -235,6 +235,33 @@ const m = (metres: number) => metres * UNITS_PER_METRE;
 const kmh = (speed: number) => (speed / 3.6) * UNITS_PER_METRE;
 
 /**
+ * How the car picks up speed, brakes and coasts (#14).
+ *
+ * Measured off the reference game rather than chosen
+ * (`docs/research/nfs-most-wanted-2012-gameplay.md`, speed read once a second
+ * over 47 minutes). Its best launches reach 100 km/h in 4-5 s, 150 in 6-9 s and
+ * 200 in about 11 s, and the pull fades as the car gets quicker: about 25 km/h
+ * a second off the line, about 10 near 200. Its hardest braking sheds 40-65
+ * km/h a second. The owner's verdict on the old model, after watching it:
+ * *"way too quick to get to top speed and to brake"*. It was a constant pull
+ * to the top in 5 s and a stop from 320 km/h in one second, about 9 g.
+ *
+ * So acceleration tapers with the square of the fraction of top speed:
+ * `a = (REFERENCE_TOP_SPEED / ACCEL_TIME) * (1 - (v / top)^2)`, which gives
+ * the starter car 100 km/h in about 4 s, 200 in about 9.5 and 300 in about 21,
+ * the same shape as the reference. `profile.accel` still scales it per car.
+ */
+export const ACCEL_TIME = 13;
+/** Braking, in world units per second per second: 55 km/h shed each second. */
+export const BRAKE_RATE = kmh(55);
+/**
+ * Lifting off, in the same units. Not measured - the recording never shows a
+ * clean coast - so chosen gentle: a car rolls on rather than stopping as if
+ * braked, which is what the old `maxSpeed / 5` did.
+ */
+export const COAST_RATE = kmh(20);
+
+/**
  * Overall extent (ADR-0005, sized by ADR-0007 rule 3).
  *
  * It was 5 x 4 km, from a behaviour rather than a number: a pursuit should
