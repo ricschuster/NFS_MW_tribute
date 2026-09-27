@@ -50,7 +50,13 @@ so the next area has the same checklist:
 6. **Content:** collectibles, breakables and repair shops where it has them,
    and an event through it (generated, or laid by hand with
    `placedRoutes`).
-7. **Played:** driven in the game and signed off by the person the map is for.
+7. **Paced** (ADR-0011): the area's event route, driven by a person in the
+   starter car, averages about 0.6 of top speed, and any fast road it has is
+   one where a faster car is measurably quicker. Measured, not judged, with
+   the review's tools (`docs/research/nfs-mw-2012/tools/`). Added
+   2026-09-27, after Marrow Field was signed off; its run is the first one to
+   measure.
+8. **Played:** driven in the game and signed off by the person the map is for.
 
 ## The checklist
 

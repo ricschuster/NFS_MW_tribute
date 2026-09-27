@@ -1,7 +1,8 @@
 # Pace, traffic and the police: what the reference game asks of Crosstown
 
-- Status: **proposed**. Each question below ends in a decision for the
-  project's owner; nothing here is decided until that is answered.
+- Status: **decided** 2026-09-27. All four recommendations were taken; see
+  "Decided" at the end. Questions 1 and 3 are recorded as
+  [ADR-0011](../decisions/0011-the-reference-games-pace.md).
 - Date: 2026-09-27
 - Evidence: [the gameplay review](../research/nfs-most-wanted-2012-gameplay.md)
   and its per-second data.
@@ -343,3 +344,26 @@ the rest become issues.
    provocation-only? (Recommended; other races later.)
 4. **The field:** rivals keep their positions and gain bodies you can take
    down, once races return? (Recommended, and last.)
+
+## Decided
+
+Answered by the project's owner on 2026-09-27. All four recommendations were
+taken, one with an addition:
+
+1. **Pace: the reference game's pace, through roads and routes.** Added by the
+   owner: *"also keep in mind that cars get better/faster in the original. The
+   Koenigsegg can get up to something like 400 km/h."* So the target is not
+   only a fraction of whatever car you are in. Race routes are built so the
+   *starter* car averages about 0.6 of its top speed (around 190 km/h), and
+   the fast roads (the interstate, the periphery) have straights where a
+   400 km/h car is measurably faster, so the cars you find are worth finding.
+   Crosstown's garage already spans 320 to about 390 km/h before parts.
+   Recorded in ADR-0011.
+2. **Traffic: thin it toward the reference's on-screen rate**, measured with
+   the same detector, keeping the variation by district and hour.
+3. **Police in races: ladder races bring heat**, with roadblocks on the route
+   (#340) and the pursuit carried into the claim (#341). Circuits and speed
+   runs stay police-free for now, and free roam stays provocation-only (#177).
+   Recorded in ADR-0011.
+4. **The field: positions with bodies**, once races exist again.
+
