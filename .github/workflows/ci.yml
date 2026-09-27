@@ -1,10 +1,9 @@
 name: CI
 
-# PRs only. Every change reaches main through a PR that has already passed
-# this, and main is not required to be up to date before a merge, so a second
-# run after the merge would repeat the same checks. Deploy still builds main
-# (typecheck included) on every push, which catches two green PRs that break
-# the build together.
+# PRs only. Branch protection requires a PR to be up to date with main before
+# it merges, so what lands on main is exactly what this tested: a second run
+# after the merge would test the same code again. update-branches.yml keeps
+# armed PRs up to date, which is where the re-run happens instead.
 on:
   pull_request:
     branches: [main]
