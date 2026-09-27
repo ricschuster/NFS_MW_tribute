@@ -10,7 +10,7 @@
 // Usage:
 //   npm run freewayexport            # -> screenshots/freeway.json
 import { createServer } from 'vite';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { generateCity } = await server.ssrLoadModule('/src/game/city/generate.ts');
@@ -123,9 +123,21 @@ const out = {
   rampRunMin: round(toM(RAMP_MIN_RUN)),
   rampRunMax: round(toM(RAMP_MAX_RUN)),
   gradeRun: round(toM(GRADE_RUN)),
+  // How far an authored tunnel runs forward from its anchor, so the editor can
+  // draw and check tunnels against the loop as it is being edited.
+  tunnelLength: round(toM(C.TUNNEL_LENGTH)),
+  // The ramp markers from the last saved edit, so they load with the page
+  // rather than having to be placed again.
+  markers: existsSync('docs/freeway-edited.json')
+    ? (JSON.parse(readFileSync('docs/freeway-edited.json', 'utf8')).rampMarkers ?? [])
+    : [],
 };
 
 mkdirSync('screenshots', { recursive: true });
 const json = JSON.stringify(out);
 writeFileSync('screenshots/freeway.json', json);
-console.log(`wrote screenshots/freeway.json  ·  ${roads.length} surface chains  ·  ${(json.length / 1024).toFixed(0)} KB`);
+// And the editor page with the data inlined, from `tools/freewayeditor.html`,
+// the way `propexport` builds its editor.
+const page = readFileSync('tools/freewayeditor.html', 'utf8').replace('__DATA__', () => json.replace(/<\//g, '<\\/'));
+writeFileSync('screenshots/freeway-editor.html', page);
+console.log(`wrote screenshots/freeway.json + freeway-editor.html  ·  ${roads.length} surface chains  ·  ${out.markers.length} ramp markers  ·  ${(json.length / 1024).toFixed(0)} KB`);
