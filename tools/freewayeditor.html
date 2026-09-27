@@ -1,0 +1,863 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Freeway Loop</title>
+<style>
+  :root {
+    --sea: #1a5568;
+    --ink: #0d1a1f;
+    --panel: #10242c;
+    --panel-2: #16303a;
+    --line: #244653;
+    --text: #dae8ec;
+    --dim: #8fb0ba;
+    --loop: #ffb84c;
+    --loop-hot: #ffe08a;
+    --new: #7fd6a2;
+    --warn: #e9615a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    overflow: hidden;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  header { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0 0 4px; font-size: 16px; }
+  #seed { color: var(--dim); font-size: 12px; }
+  section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  section h2 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+  }
+  p { margin: 0 0 8px; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; }
+  button {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--loop); }
+  button.primary { background: var(--loop); color: #2b1a03; border-color: var(--loop); font-weight: 600; }
+  button.primary:hover { background: var(--loop-hot); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .stat { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; }
+  .stat b { color: var(--text); font-weight: 600; }
+  .warn { color: var(--warn); font-size: 12px; margin-top: 6px; }
+  #toast {
+    position: fixed;
+    bottom: 18px;
+    left: 296px;
+    background: var(--panel-2);
+    border: 1px solid var(--loop);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+  main { position: relative; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  #legend {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    background: rgba(16,36,44,0.88);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11.5px;
+    color: var(--dim);
+    line-height: 1.7;
+  }
+  #legend span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+  #coords {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    background: rgba(16,36,44,0.88);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--text);
+  }
+  #addMarker.armed { background: var(--new); color: #06251a; border-color: var(--new); font-weight: 600; }
+  .marker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .marker-row:last-child { border-bottom: none; }
+  .marker-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .marker-row .why { color: var(--dim); flex: 1; }
+  .marker-row button {
+    flex: none;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+</style>
+
+<aside>
+  <header>
+    <h1>Freeway Loop</h1>
+    <div id="seed"></div>
+  </header>
+
+  <section>
+    <h2>What this is</h2>
+    <p>
+      Kestrel Bay's interstate loop, today an authored path instead of a
+      computed rectangle (#261). Drag it into the hills: leave the built city,
+      go round, come back. The relief and grade shading are the same ground
+      the generator drives it against.
+    </p>
+    <p>
+      Drag a point to move it. Click on the loop between two points to add one
+      there. Select a point and press Delete to remove it.
+    </p>
+  </section>
+
+  <section>
+    <h2>Loop</h2>
+    <div class="stat"><span>points</span><b id="stat-points"></b></div>
+    <div class="stat"><span>length</span><b id="stat-length"></b></div>
+    <div class="stat"><span>crosses water</span><b id="stat-water"></b></div>
+    <div id="water-warn" class="warn" style="display:none">
+      One stretch through the water is normal - that's the tunnel. More than
+      one is worth a second look.
+    </div>
+  </section>
+
+  <section>
+    <h2>Ramp markers</h2>
+    <p>
+      Not real junctions - the fine street grid isn't built yet (#271/#272) -
+      just a check of whether a ramp *could* land here: the same
+      <span id="ramp-window-text"></span> window `rampsFor` itself uses, clear
+      of a corner, with a dry way down to it.
+    </p>
+    <div class="row"><button id="addMarker">Place a marker</button></div>
+    <div id="marker-list"></div>
+  </section>
+
+  <section>
+    <div class="row">
+      <button id="reset">Reset to draft</button>
+      <button id="home">Fit view</button>
+    </div>
+    <div class="row">
+      <button id="copy" class="primary">Copy path (JSON)</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Reading the ground</h2>
+    <p>Hill-shaded relief; darker green is higher. Amber/red wash is too steep for a street, the same cap the road generator itself uses.</p>
+    <div class="row"><button id="toggleGrade">Grade: on</button></div>
+  </section>
+</aside>
+
+<main>
+  <canvas id="map"></canvas>
+  <div id="legend">
+    <div><span style="background:var(--loop)"></span>freeway loop</div>
+    <div><span style="background:#0d1a1f"></span>tunnel (700 m on from its anchor)</div>
+    <div><span style="background:#5b7a86"></span>surface roads</div>
+    <div><span style="background:#ffd54f;border-radius:2px"></span>named place</div>
+    <div><span style="background:var(--new)"></span>ramp marker: looks good</div>
+    <div><span style="background:var(--warn)"></span>ramp marker: would not work</div>
+  </div>
+  <div id="coords">x 0, z 0</div>
+</main>
+<div id="toast"></div>
+
+<script id="mapdata" type="application/json">__DATA__</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById('mapdata').textContent);
+  const { bounds, height, places, districts, roads } = DATA;
+  // The authored tunnels (#282): each is an anchor point, and the generator
+  // runs it `tunnelLength` forward along the loop from where the anchor lands
+  // on it (`pickTunnels`). Recomputed live from the loop as it is edited, so a
+  // tunnel follows its own anchor rather than a picture of the old loop.
+  const anchors = (DATA.tunnels ?? []).map((p) => [...p]);
+  const TUNNEL_LENGTH = DATA.tunnelLength ?? 700;
+  const RAMP_RUN_MIN = DATA.rampRunMin;
+  const RAMP_RUN_MAX = DATA.rampRunMax;
+  const GRADE_RUN = DATA.gradeRun;
+
+  let loop = DATA.draft.map((p) => [...p]);
+
+  /** The loop's length, and where a point lands on it as a distance round it. */
+  function whereOnLoop(px, pz) {
+    let best = null;
+    let start = 0;
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i];
+      const b = loop[(i + 1) % loop.length];
+      const dx = b[0] - a[0];
+      const dz = b[1] - a[1];
+      const len = Math.hypot(dx, dz);
+      const t = len < 1 ? 0 : Math.max(0, Math.min(1, ((px - a[0]) * dx + (pz - a[1]) * dz) / (len * len)));
+      const d = Math.hypot(px - (a[0] + dx * t), pz - (a[1] + dz * t));
+      if (!best || d < best.d) best = { d, along: start + t * len };
+      start += len;
+    }
+    return { along: best.along, perimeter: start };
+  }
+
+  /** A point a given distance round the loop. */
+  function pointAlong(along) {
+    let left = along;
+    for (let lap = 0; lap < 2; lap++) {
+      for (let i = 0; i < loop.length; i++) {
+        const a = loop[i];
+        const b = loop[(i + 1) % loop.length];
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (left <= len) {
+          const t = len < 1 ? 0 : left / len;
+          return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        }
+        left -= len;
+      }
+    }
+    return loop[0];
+  }
+
+  /** Each tunnel as a span round the loop, and as a line to draw. */
+  function tunnelSpans() {
+    return anchors.map(([x, z]) => {
+      const { along, perimeter } = whereOnLoop(x, z);
+      const line = [];
+      for (let d = 0; d <= TUNNEL_LENGTH; d += 25) line.push(pointAlong((along + d) % perimeter));
+      return { start: along, end: along + TUNNEL_LENGTH, perimeter, line };
+    });
+  }
+
+  /** Whether a distance round the loop is under a tunnel. */
+  function inTunnel(along, spans) {
+    return spans.some((s) => {
+      const into = (((along - s.start) % s.perimeter) + s.perimeter) % s.perimeter;
+      return into <= s.end - s.start;
+    });
+  }
+  // Candidate ramp spots, checked live against the real constants rather than
+  // built - there is no fine street grid yet for a ramp to actually land on
+  // (#271/#272), so this is "could a ramp work here", not "here is one".
+  let markers = (DATA.markers ?? []).map((p) => [...p]);
+  let armMarker = false;
+  let draggingMarker = -1;
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('map');
+  const ctx = canvas.getContext('2d');
+  $('seed').textContent = `seed ${DATA.seed} · ${(bounds.maxX - bounds.minX) / 1000} × ${(bounds.maxZ - bounds.minZ) / 1000} km`;
+  $('ramp-window-text').textContent = `${RAMP_RUN_MIN}-${RAMP_RUN_MAX} m`;
+
+  // The repo's own convention (scene/mapping.ts, #182): seen from above with
+  // +z up the screen, -x is to the right.
+  const view = { scale: 1, x: 0, y: 0 };
+  const sx = (x) => (bounds.maxX - x) * view.scale + view.x;
+  const sy = (z) => (bounds.maxZ - z) * view.scale + view.y;
+  const wx = (px) => bounds.maxX - (px - view.x) / view.scale;
+  const wz = (py) => bounds.maxZ - (py - view.y) / view.scale;
+
+  const HEIGHTS = (() => {
+    const raw = atob(height.cells);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  })();
+  const isWater = (v) => v === height.water;
+  const cellAt = (wxv, wzv) => {
+    const col = Math.floor((wxv - bounds.minX) / height.step);
+    const row = Math.floor((wzv - bounds.minZ) / height.step);
+    if (col < 0 || col >= height.cols || row < 0 || row >= height.rows) return height.water;
+    return HEIGHTS[row * height.cols + col];
+  };
+
+  const relief = document.createElement('canvas');
+  relief.width = height.cols;
+  relief.height = height.rows;
+  {
+    const rc = relief.getContext('2d');
+    const img = rc.createImageData(height.cols, height.rows);
+    const at = (c, r) => {
+      if (r < 0 || r >= height.rows || c < 0 || c >= height.cols) return height.water;
+      return HEIGHTS[r * height.cols + c];
+    };
+    for (let r = 0; r < height.rows; r++) {
+      for (let c = 0; c < height.cols; c++) {
+        const i = ((height.rows - 1 - r) * height.cols + c) * 4;
+        const h = at(c, r);
+        if (isWater(h)) {
+          img.data[i] = 20; img.data[i + 1] = 65; img.data[i + 2] = 79; img.data[i + 3] = 255;
+          continue;
+        }
+        const t = Math.min(1, h / 120);
+        const west = isWater(at(c - 1, r)) ? h : at(c - 1, r);
+        const east = isWater(at(c + 1, r)) ? h : at(c + 1, r);
+        const south = isWater(at(c, r - 1)) ? h : at(c, r - 1);
+        const north = isWater(at(c, r + 1)) ? h : at(c, r + 1);
+        const grade = ((west - east) * 0.7 + (north - south) * 0.7) / (height.step * 2);
+        const lit = Math.max(-34, Math.min(34, grade * 190));
+        img.data[i] = Math.round(Math.max(0, Math.min(255, 88 + t * 140 + lit)));
+        img.data[i + 1] = Math.round(Math.max(0, Math.min(255, 124 + t * 90 + lit)));
+        img.data[i + 2] = Math.round(Math.max(0, Math.min(255, 86 + t * 58 + lit)));
+        img.data[i + 3] = 255;
+      }
+    }
+    rc.putImageData(img, 0, 0);
+  }
+
+  const STREET_CAP = 0.1;
+  const COUNTRY_CAP = 0.13;
+  const grade = document.createElement('canvas');
+  grade.width = height.cols;
+  grade.height = height.rows;
+  {
+    const gc = grade.getContext('2d');
+    const img = gc.createImageData(height.cols, height.rows);
+    const at = (c, r) => {
+      if (r < 0 || r >= height.rows || c < 0 || c >= height.cols) return height.water;
+      return HEIGHTS[r * height.cols + c];
+    };
+    for (let r = 0; r < height.rows; r++) {
+      for (let c = 0; c < height.cols; c++) {
+        const i = ((height.rows - 1 - r) * height.cols + c) * 4;
+        const h = at(c, r);
+        if (isWater(h)) continue;
+        const dx = (isWater(at(c + 1, r)) ? h : at(c + 1, r)) - (isWater(at(c - 1, r)) ? h : at(c - 1, r));
+        const dz = (isWater(at(c, r + 1)) ? h : at(c, r + 1)) - (isWater(at(c, r - 1)) ? h : at(c, r - 1));
+        const slope = Math.hypot(dx, dz) / (height.step * 2);
+        if (slope <= STREET_CAP) continue;
+        const bad = slope > COUNTRY_CAP;
+        img.data[i] = bad ? 235 : 232;
+        img.data[i + 1] = bad ? 70 : 160;
+        img.data[i + 2] = bad ? 70 : 60;
+        // A wash, not a warning light: this reads the ground for a route, and
+        // a route worth drawing crosses some steep cells on the way to a
+        // lookout on a hill on purpose. Half the strength of roadeditor.html's
+        // own street-scale version, which is read at a much closer zoom.
+        img.data[i + 3] = bad ? 90 : 55;
+      }
+    }
+    gc.putImageData(img, 0, 0);
+  }
+  let showGrade = true;
+
+  const DISTRICT_TINT = {
+    downtown: 'rgba(92,107,192,0.22)',
+    midtown: 'rgba(102,137,122,0.14)',
+    waterfront: 'rgba(63,143,168,0.18)',
+    industrial: 'rgba(138,109,67,0.18)',
+    park: 'rgba(79,138,74,0.14)',
+  };
+
+  function fit() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function home() {
+    const rect = canvas.getBoundingClientRect();
+    const w = bounds.maxX - bounds.minX;
+    const d = bounds.maxZ - bounds.minZ;
+    view.scale = Math.min(rect.width / w, rect.height / d) * 0.92;
+    view.x = (rect.width - w * view.scale) / 2;
+    view.y = (rect.height - d * view.scale) / 2;
+    draw();
+  }
+
+  function zoomBy(factor, px, py) {
+    const before = { x: wx(px), z: wz(py) };
+    view.scale = Math.max(0.02, Math.min(8, view.scale * factor));
+    view.x = px - (bounds.maxX - before.x) * view.scale;
+    view.y = py - (bounds.maxZ - before.z) * view.scale;
+    draw();
+  }
+
+  let selected = -1;
+  let selectedMarker = -1;
+  let dragging = -1;
+  let panning = null;
+
+  function loopLength() {
+    let d = 0;
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i];
+      const b = loop[(i + 1) % loop.length];
+      d += Math.hypot(b[0] - a[0], b[1] - a[1]);
+    }
+    return d;
+  }
+
+  function waterCrossings() {
+    let crossings = 0;
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i];
+      const b = loop[(i + 1) % loop.length];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const steps = Math.max(2, Math.round(len / 40));
+      let wet = false;
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        const x = a[0] + (b[0] - a[0]) * t;
+        const z = a[1] + (b[1] - a[1]) * t;
+        if (isWater(cellAt(x, z))) wet = true;
+      }
+      if (wet) crossings++;
+    }
+    return crossings;
+  }
+
+  function updateStats() {
+    $('stat-points').textContent = loop.length;
+    $('stat-length').textContent = `${(loopLength() / 1000).toFixed(1)} km`;
+    const w = waterCrossings();
+    $('stat-water').textContent = `${w} edge${w === 1 ? '' : 's'}`;
+    $('water-warn').style.display = w > 1 ? 'block' : 'none';
+  }
+
+  /**
+   * Would a ramp actually work here? The same three checks rampsFor makes,
+   * against the loop's nearest point rather than a real junction, since
+   * there is no fine street grid to have one yet.
+   */
+  function checkMarker(mx, mz) {
+    let best = null;
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i];
+      const b = loop[(i + 1) % loop.length];
+      const dx = b[0] - a[0];
+      const dz = b[1] - a[1];
+      const len2 = dx * dx + dz * dz;
+      const edgeLen = Math.sqrt(len2);
+      const t = len2 < 1 ? 0 : Math.max(0, Math.min(1, ((mx - a[0]) * dx + (mz - a[1]) * dz) / len2));
+      const cx = a[0] + dx * t;
+      const cz = a[1] + dz * t;
+      const dist = Math.hypot(mx - cx, mz - cz);
+      if (!best || dist < best.dist) {
+        best = { dist, edgeLen, along: t * edgeLen, closest: [cx, cz] };
+      }
+    }
+    const inWindow = best.dist >= RAMP_RUN_MIN && best.dist <= RAMP_RUN_MAX;
+    // The same edge-scaled corner margin rampsFor itself uses (#279).
+    const margin = Math.min(GRADE_RUN, best.edgeLen * 0.25);
+    const clearOfCorner = best.along > margin && best.along < best.edgeLen - margin;
+    // Dry way down, sampled the same way the real check samples a ramp's descent.
+    const steps = 6;
+    let wet = false;
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const x = best.closest[0] + (mx - best.closest[0]) * t;
+      const z = best.closest[1] + (mz - best.closest[1]) * t;
+      if (isWater(cellAt(x, z))) wet = true;
+    }
+    // A ramp leaves from the deck, and a deck point inside a tunnel is not one
+    // (`addInterstate` only builds ramps from elevated stations).
+    const underground = inTunnel(whereOnLoop(best.closest[0], best.closest[1]).along, tunnelSpans());
+    let why;
+    if (underground) why = `${Math.round(best.dist)} m - its point on the loop is inside a tunnel`;
+    else if (!inWindow) why = best.dist < RAMP_RUN_MIN ? `${Math.round(best.dist)} m - too close to the loop` : `${Math.round(best.dist)} m - too far from the loop`;
+    else if (!clearOfCorner) why = `${Math.round(best.dist)} m - too near a bend in the loop`;
+    else if (wet) why = `${Math.round(best.dist)} m - the way down crosses water`;
+    else why = `${Math.round(best.dist)} m - looks good`;
+    return { ok: inWindow && clearOfCorner && !wet && !underground, why };
+  }
+
+  function renderMarkerList() {
+    const list = $('marker-list');
+    list.innerHTML = '';
+    markers.forEach((m, i) => {
+      const check = checkMarker(m[0], m[1]);
+      const row = document.createElement('div');
+      row.className = 'marker-row';
+      const dot = document.createElement('span');
+      dot.className = 'marker-dot';
+      dot.style.background = check.ok ? 'var(--new)' : 'var(--warn)';
+      const num = document.createElement('b');
+      num.textContent = `#${i + 1}`;
+      const why = document.createElement('span');
+      why.className = 'why';
+      why.textContent = `(${m[0]}, ${m[1]}) - ${check.why}`;
+      const remove = document.createElement('button');
+      remove.textContent = '×';
+      remove.onclick = () => {
+        markers.splice(i, 1);
+        renderMarkerList();
+        draw();
+      };
+      row.append(dot, num, why, remove);
+      row.style.cursor = 'pointer';
+      row.onclick = (e) => {
+        if (e.target === remove) return;
+        selectedMarker = i;
+        selected = -1;
+        draw();
+      };
+      list.append(row);
+    });
+  }
+
+  function draw() {
+    fit();
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = '#1a5568';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // sx(minX) is the screen position of the world's minX edge, which in this
+    // mirrored convention is the RIGHT side of the map, not the left - the
+    // origin this translates to is a top-right corner, not a top-left one.
+    const topRight = { x: sx(bounds.minX), y: sy(bounds.maxZ) };
+    const w = (bounds.maxX - bounds.minX) * view.scale;
+    const h = (bounds.maxZ - bounds.minZ) * view.scale;
+    ctx.save();
+    ctx.translate(topRight.x, topRight.y);
+    ctx.scale(-1, 1); // relief image runs +x rightwards; the map convention is -x right
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(relief, 0, 0, w, h);
+    if (showGrade) ctx.drawImage(grade, 0, 0, w, h);
+    ctx.restore();
+
+    // Districts, lightly.
+    for (const d of districts) {
+      ctx.beginPath();
+      d.poly.forEach((p, i) => {
+        const x = sx(p[0]);
+        const y = sy(p[1]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = DISTRICT_TINT[d.kind] ?? 'rgba(255,255,255,0.05)';
+      ctx.fill();
+    }
+
+    // Surface roads, thin and dim - context, not editable here.
+    ctx.strokeStyle = '#5b7a86';
+    ctx.lineWidth = Math.max(1, 3 * view.scale);
+    for (const r of roads) {
+      ctx.beginPath();
+      r.forEach((p, i) => {
+        const x = sx(p[0]);
+        const y = sy(p[1]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    // Places.
+    for (const p of places) {
+      const x = sx(p.at[0]);
+      const y = sy(p.at[1]);
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffd54f';
+      ctx.fill();
+      ctx.fillStyle = '#eef1ef';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(p.name, x + 7, y - 6);
+    }
+
+    // The loop.
+    ctx.beginPath();
+    loop.forEach((p, i) => {
+      const x = sx(p[0]);
+      const y = sy(p[1]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = '#ffb84c';
+    ctx.lineWidth = Math.max(2.5, 9 * view.scale);
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 0.9;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Tunnels: the same width as the loop, in black with a dashed white
+    // centreline so a tunnel reads as "under" rather than as a different road.
+    for (const span of tunnelSpans()) {
+      const t = span.line;
+      ctx.beginPath();
+      t.forEach((p, i) => {
+        const x = sx(p[0]);
+        const y = sy(p[1]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#0d1a1f';
+      ctx.lineWidth = Math.max(3, 10 * view.scale);
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(1, 2 * view.scale);
+      ctx.setLineDash([Math.max(4, 10 * view.scale), Math.max(4, 8 * view.scale)]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    loop.forEach((p, i) => {
+      const x = sx(p[0]);
+      const y = sy(p[1]);
+      ctx.beginPath();
+      ctx.arc(x, y, i === selected ? 8 : 6, 0, Math.PI * 2);
+      ctx.fillStyle = i === selected ? '#ffe08a' : '#ffb84c';
+      ctx.strokeStyle = '#2b1a03';
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+
+      if (i === selected) {
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#0d1a1f';
+        ctx.strokeText(`(${p[0]}, ${p[1]})`, x, y - 14);
+        ctx.fillStyle = '#eef1ef';
+        ctx.fillText(`(${p[0]}, ${p[1]})`, x, y - 14);
+        ctx.textAlign = 'start';
+      }
+    });
+
+    // Ramp markers: a diamond, green if this spot would work, red if not -
+    // numbered to match the sidebar list, so a marker can be named in
+    // conversation the same way on the map and off it.
+    markers.forEach((m, i) => {
+      const check = checkMarker(m[0], m[1]);
+      const x = sx(m[0]);
+      const y = sy(m[1]);
+      const r = i === selectedMarker ? 9 : 7;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = check.ok ? '#7fd6a2' : '#e9615a';
+      ctx.strokeStyle = '#0d1a1f';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(-r, -r, r * 2, r * 2);
+      ctx.strokeRect(-r, -r, r * 2, r * 2);
+      ctx.restore();
+
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#0d1a1f';
+      ctx.strokeText(String(i + 1), x, y - r - 10);
+      ctx.fillStyle = '#eef1ef';
+      ctx.fillText(String(i + 1), x, y - r - 10);
+      ctx.textAlign = 'start';
+      ctx.textBaseline = 'alphabetic';
+    });
+
+    updateStats();
+    renderMarkerList();
+  }
+
+  function nearestPoint(px, py, tol) {
+    let best = -1;
+    let bestD = tol;
+    loop.forEach((p, i) => {
+      const d = Math.hypot(sx(p[0]) - px, sy(p[1]) - py);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    return best;
+  }
+
+  function nearestMarker(px, py, tol) {
+    let best = -1;
+    let bestD = tol;
+    markers.forEach((m, i) => {
+      const d = Math.hypot(sx(m[0]) - px, sy(m[1]) - py);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    return best;
+  }
+
+  // Nearest point ON the loop (for inserting), and which edge it is on.
+  function nearestOnLoop(px, py, tol) {
+    let best = null;
+    let bestD = tol;
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i];
+      const b = loop[(i + 1) % loop.length];
+      const ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]);
+      const dx = bx - ax, dy = by - ay;
+      const len2 = dx * dx + dy * dy;
+      const t = len2 < 1 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+      const cx = ax + dx * t, cy = ay + dy * t;
+      const d = Math.hypot(px - cx, py - cy);
+      if (d < bestD) { bestD = d; best = { after: i, wx: wx(cx), wz: wz(cy) }; }
+    }
+    return best;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+
+    if (armMarker) {
+      markers.push([Math.round(wx(px)), Math.round(wz(py))]);
+      selectedMarker = markers.length - 1;
+      selected = -1;
+      armMarker = false;
+      $('addMarker').classList.remove('armed');
+      $('addMarker').textContent = 'Place a marker';
+      draw();
+      return;
+    }
+
+    const markerHit = nearestMarker(px, py, 14);
+    if (markerHit >= 0) {
+      selectedMarker = markerHit;
+      selected = -1;
+      draggingMarker = markerHit;
+      canvas.setPointerCapture(e.pointerId);
+      draw();
+      return;
+    }
+
+    const hit = nearestPoint(px, py, 14);
+    if (hit >= 0) {
+      selected = hit;
+      selectedMarker = -1;
+      dragging = hit;
+      canvas.setPointerCapture(e.pointerId);
+      draw();
+      return;
+    }
+    const onEdge = nearestOnLoop(px, py, 10);
+    if (onEdge) {
+      loop.splice(onEdge.after + 1, 0, [Math.round(onEdge.wx), Math.round(onEdge.wz)]);
+      selected = onEdge.after + 1;
+      selectedMarker = -1;
+      dragging = selected;
+      canvas.setPointerCapture(e.pointerId);
+      draw();
+      return;
+    }
+    selected = -1;
+    selectedMarker = -1;
+    panning = { startX: e.clientX, startY: e.clientY, viewX: view.x, viewY: view.y };
+    canvas.setPointerCapture(e.pointerId);
+    draw();
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    // Live world coordinates under the cursor, in the same metres everything
+    // else here is authored in - so any spot on the map can be named exactly,
+    // not just a point already on the loop or a marker.
+    $('coords').textContent = `x ${Math.round(wx(px))}, z ${Math.round(wz(py))}`;
+    if (dragging >= 0) {
+      loop[dragging] = [Math.round(wx(px)), Math.round(wz(py))];
+      draw();
+    } else if (draggingMarker >= 0) {
+      markers[draggingMarker] = [Math.round(wx(px)), Math.round(wz(py))];
+      draw();
+    } else if (panning) {
+      view.x = panning.viewX + (e.clientX - panning.startX);
+      view.y = panning.viewY + (e.clientY - panning.startY);
+      draw();
+    }
+  });
+
+  const endDrag = () => { dragging = -1; draggingMarker = -1; panning = null; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+    if (selectedMarker >= 0) {
+      markers.splice(selectedMarker, 1);
+      selectedMarker = -1;
+      draw();
+    } else if (selected >= 0 && loop.length > 3) {
+      loop.splice(selected, 1);
+      selected = -1;
+      draw();
+    }
+  });
+
+  $('addMarker').onclick = () => {
+    armMarker = !armMarker;
+    $('addMarker').classList.toggle('armed', armMarker);
+    $('addMarker').textContent = armMarker ? 'Click the map…' : 'Place a marker';
+  };
+
+  function toast(message) {
+    const el = $('toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  $('reset').onclick = () => {
+    loop = DATA.draft.map((p) => [...p]);
+    selected = -1;
+    draw();
+    toast('Reset to the starting rectangle');
+  };
+  $('home').onclick = home;
+  $('toggleGrade').onclick = () => {
+    showGrade = !showGrade;
+    $('toggleGrade').textContent = `Grade: ${showGrade ? 'on' : 'off'}`;
+    draw();
+  };
+  $('copy').onclick = async () => {
+    // Tunnels included: `freewaysync` reads them from here, and leaving them
+    // out silently deleted every authored tunnel on the next sync.
+    const payload = JSON.stringify({ seed: DATA.seed, path: loop, tunnels: anchors, rampMarkers: markers }, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast('Copied - paste it back in chat');
+    } catch {
+      toast('Could not copy - select the console output instead');
+      console.log(payload);
+    }
+  };
+
+  window.addEventListener('resize', draw);
+  home();
+})();
+</script>
