@@ -3,7 +3,7 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-09-27): [#371](https://github.com/ricschuster/NFS_MW_tribute/issues/371),
+- **Start here (2026-09-27): [#371](https://github.com/ricschuster/crosstown/issues/371),
   build the freeway.** It is written to be picked up cold: what exists (the
   loop, 4 tunnels and 7 ramp markers, all committed in
   `docs/freeway-edited.json`), the five steps (markers into `freeway.ts`, ramps
@@ -31,7 +31,10 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   - **The freeway editor** is tracked (`tools/freewayeditor.html`, #369): it
     loads the markers, draws the tunnels and checks both. Its copy now
     includes the tunnels, which it used to drop.
-- **Repo:** github.com/ricschuster/NFS_MW_tribute · branch `main`. PR #273 (the
+- **Repo:** github.com/ricschuster/crosstown · branch `main`. Renamed from
+  `NFS_MW_tribute` on 2026-09-27, since the old name carried a third-party
+  name. GitHub redirects old repository links, but not the old Pages address,
+  and the local checkout may still sit in a folder with the old name. PR #273 (the
   map rebuild) merged into `main` already; everything below describes `main`
   itself, not a branch waiting to land. `origin/feat/landmass`, the stale
   leftover branch this used to flag, is gone - deleted.
@@ -92,11 +95,11 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   network's own size, which is always enough to reach the fixed point the
   loop already looks for - and the two previously-skipped embankment tests in
   `city.test.ts` pass along with everything else (441 of 543, 102 skipped).
-- **Play the game:** https://ricschuster.github.io/NFS_MW_tribute/ - this is
+- **Play the game:** https://ricschuster.github.io/crosstown/ - this is
   `main`, which now ships the rebuilt map: real terrain, a landmass, authored
   districts, no street grid and no interstate yet (both are switched off, see
   below).
-- **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
+- **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/crosstown/?renderer=city&view=aerial)
   · the README lists the named viewpoints
 - **Status:** mid-rebuild, and this is the second one. The first rebuild
   (ADR-0004 through ADR-0006) replaced a closed-track racer with a flat,
@@ -492,10 +495,10 @@ until each earns its own pass. Until then there are no street finds, no
 roadside breakables, and `routesFor` cannot find the four-corner circuits and
 speed runs need - which is why an entire slice of the test suite is `it.skip`
 on "zero routes today" rather than failing.
-[#301](https://github.com/ricschuster/NFS_MW_tribute/issues/301) tracks the
+[#301](https://github.com/ricschuster/crosstown/issues/301) tracks the
 specific dependency this creates for the freeway loop's ramps.
 
-**[#268](https://github.com/ricschuster/NFS_MW_tribute/issues/268) - downtown
+**[#268](https://github.com/ricschuster/crosstown/issues/268) - downtown
 should feel grown, not planned.** This is what has to be answered before
 downtown gets its own entry in `CITY_LOCAL_STREETS_KINDS`. Partly landed
 already (the parkland-vs-lot foundation, the traffic-density rescale that now
@@ -508,20 +511,20 @@ this wants a `npm run sketch` pass before another attempt goes into
 once for exactly this reason (`docs/map-exploration.md`, "3. Routing the
 arterials").
 
-**[#266](https://github.com/ricschuster/NFS_MW_tribute/issues/266),
-[#265](https://github.com/ricschuster/NFS_MW_tribute/issues/265),
-[#260](https://github.com/ricschuster/NFS_MW_tribute/issues/260),
-[#259](https://github.com/ricschuster/NFS_MW_tribute/issues/259),
-[#257](https://github.com/ricschuster/NFS_MW_tribute/issues/257),
-[#256](https://github.com/ricschuster/NFS_MW_tribute/issues/256),
-[#253](https://github.com/ricschuster/NFS_MW_tribute/issues/253)** - content
+**[#266](https://github.com/ricschuster/crosstown/issues/266),
+[#265](https://github.com/ricschuster/crosstown/issues/265),
+[#260](https://github.com/ricschuster/crosstown/issues/260),
+[#259](https://github.com/ricschuster/crosstown/issues/259),
+[#257](https://github.com/ricschuster/crosstown/issues/257),
+[#256](https://github.com/ricschuster/crosstown/issues/256),
+[#253](https://github.com/ricschuster/crosstown/issues/253)** - content
 density by district, a beltway ring, a periphery of non-city road, buildings
 you can drive into, a tunnel breaking pursuit line of sight, street tunnels
 and cuttings, and blocks that sit as pads on a hillside rather than boxes. All
 of them are things the generator will want once downtown and the rest have
 real blocks again (#268); none of them are startable before that.
 
-**[#261](https://github.com/ricschuster/NFS_MW_tribute/issues/261) - the
+**[#261](https://github.com/ricschuster/crosstown/issues/261) - the
 freeway loop leaving the city proper.** Further along than the rest of this
 list: the loop itself is drawn (`city/freeway.ts`, PRs #274-284), a 26-point
 path with 4 authored/found tunnel mouths, checked interactively against real
@@ -532,7 +535,7 @@ open until #268 gives downtown (and the rest) a real grid to land ramps on.
 Re-check the ramp count after that, not before - a low count today is the
 known gap, not a regression.
 
-**[#249](https://github.com/ricschuster/NFS_MW_tribute/issues/249) - the land
+**[#249](https://github.com/ricschuster/crosstown/issues/249) - the land
 is lobes joined by channels.** Closed. ADR-0008 is this issue's outcome, and
 today's pinned city has six bodies of land, not a slab. The loose thread
 `npm run plan` found while checking it - the water model's own notion of
@@ -541,7 +544,7 @@ inside the plan's industrial polygon instead - is fixed too (#274): the
 terrain's flat core now centres on the plan's downtown rather than on
 `water.town`.
 
-**[#210](https://github.com/ricschuster/NFS_MW_tribute/issues/210) - the
+**[#210](https://github.com/ricschuster/crosstown/issues/210) - the
 reference driver cannot recover from a wide line.** Closed (PR #297):
 `citylap` now fails the run if a route comes back faster with traffic than
 empty (traffic can only ever cost a lap time, never buy one back) or does
@@ -549,7 +552,7 @@ not finish at all - the guard Foundry Mile needed. Unverified against a real
 bad route so far, because `routesFor` finds none on today's map (see
 directly below); dormant until routes come back.
 
-**[#295](https://github.com/ricschuster/NFS_MW_tribute/issues/295) - Marrow
+**[#295](https://github.com/ricschuster/crosstown/issues/295) - Marrow
 Field should be a disused airfield, not an active one.** Partly landed (PR
 #298): the runway and taxiway are `surface: 'dirt'` now, found by distance
 from `PLAN_RUNWAY` rather than trusted from whichever code path laid the
@@ -561,8 +564,8 @@ weeds, a breached fence, rust, and the access road (routed separately,
 stays asphalt) - closer to the iterative editor workflow than a one-shot
 change, on purpose.
 
-**[#14](https://github.com/ricschuster/NFS_MW_tribute/issues/14) - tune how
-the car feels**, and **[#11](https://github.com/ricschuster/NFS_MW_tribute/issues/11)
+**[#14](https://github.com/ricschuster/crosstown/issues/14) - tune how
+the car feels**, and **[#11](https://github.com/ricschuster/crosstown/issues/11)
 - replace vector-drawn art with sprites** (its title is stale; the live
 reading, per its own comment, is "everything is boxes" - a running asset-pass
 issue, most recently signs and bridge parapets in #198). Both predate this

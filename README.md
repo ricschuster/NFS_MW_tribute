@@ -8,7 +8,7 @@ heat levels. Built with TypeScript + Vite, deploys anywhere as static files.
 Original work. It takes its cues from the open-world street-racing genre, but
 the city, the cars, the rivals and every asset in it are its own.
 
-**[▶ Play it](https://ricschuster.github.io/NFS_MW_tribute/)**
+**[▶ Play it](https://ricschuster.github.io/crosstown/)**
 
 ## Driving
 
@@ -59,7 +59,7 @@ behind the car.
 
 ## Looking at the map
 
-[`?renderer=city`](https://ricschuster.github.io/NFS_MW_tribute/?renderer=city&view=aerial)
+[`?renderer=city`](https://ricschuster.github.io/crosstown/?renderer=city&view=aerial)
 flies a free camera over Kestrel Bay with no car in it, for judging the
 generated city rather than driving it. WASD or arrows to move, **Q**/**E** down
 and up, **drag** the mouse to look, **hold ctrl** for four times the speed.
