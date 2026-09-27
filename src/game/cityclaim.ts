@@ -8,7 +8,7 @@ import {
   CAR_RADIUS,
 } from './constants';
 import { advanceAlong, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
-import { impactDamage, touching } from './impact';
+import { impactDamage, touching, WRECKED } from './impact';
 import type { CityGrid } from './city/grid';
 import type { City, CityRoad } from './city/types';
 import type { Rival } from './rivals';
@@ -134,7 +134,7 @@ export class CityClaim {
       runner.damage = Math.min(1, runner.damage + hurt);
     }
 
-    if (runner.damage >= 1) this.end('won');
+    if (runner.damage >= WRECKED) this.end('won');
     else if (this.left <= 0) this.end('lost');
   }
 

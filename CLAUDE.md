@@ -129,6 +129,10 @@ what the city is shaped like.
   a polygon that leaves the land is a failure
 - `npm run roadexport` — write the road network, the relief and the plan to
   `screenshots/roads.json`, for the road editor to load
+- `npm run propexport` — crop Marrow Field out of the generated city and write
+  `screenshots/propeditor.html`, the prop placement editor with the field
+  inlined; `npm run propsync` writes `city/marrowprops.ts` from the placements
+  saved back into `docs/props-edited.json`
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 
@@ -482,6 +486,10 @@ in - wait on `director.mode === 'chase'`), a cop pushed in with a position and
 a `t` is teleported onto its road on the next step unless the `t` matches, and
 the police sweep up roadblocks the instant the pursuit stops.
 
+**The map is finished one area at a time, downtown last** - the order,
+what "done" means for an area, and which are done is `docs/map-areas.md`; keep
+it current in the same PR as the work.
+
 **The map is being rebuilt, and the log is `docs/map-exploration.md`.** Read it
 with [ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) before
 touching the generator: the districts and the places are *authored data* in
@@ -499,6 +507,26 @@ so far was found that way rather than by the tests, which passed throughout.
 **Physics runs on a fixed timestep** (`STEP = 1/60`) with an accumulator, so
 behaviour is frame-rate independent; rendering happens once per animation frame
 after physics catches up.
+
+**A jump is ground with a shape, and the air is its own state** (issue
+#307). `city/jumps.ts` holds each kind's profile, and the sim rides it exactly
+rather than easing onto it the way it does a deck - at speed the car is on a
+twelve-metre ramp for a fifth of a second. Leaving the lip sets
+`CityWorld.airborne`: no steering, no throttle, gravity only, until the car
+comes down on the ground, a road, a deck or another jump. A landing is priced
+on how *steeply* it comes down (`LAND_SOFT`), not how far it flew, because the
+game's gravity is over twice the real thing. Set pieces are solid in height
+bands (`SET_PIECE_SOLIDS`), which is what lets a car drive under the cargo
+plane's wing and still catch it on a jump that comes up short.
+
+**A hill moves the top speed, not the acceleration** (issue #255). The speed
+model has a hard cap and no drag, so gravity alone could never make a climb
+cost a car at full throttle anything. `slope.ts` shifts the cap by the grade
+(`SLOPE_SPEED`), the cap eases toward it (`SLOPE_EASE`) so the existing
+overspeed bleed follows gently, and gravity pulls along the road on top. Every
+`GraphCar` covers ground at the same factor in `advanceAlong`, which is what
+keeps `HEAT_LEVELS` outrunnable on a climb - a cop that did not feel the hill
+you did would close on you up every one of them.
 
 **Nitrous buys the way out of a corner** (issue #105). It used to be mostly
 top speed, which had nowhere to go once #82 made corners grip-limited.

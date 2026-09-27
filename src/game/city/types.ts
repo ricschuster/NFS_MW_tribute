@@ -49,9 +49,10 @@ export type RoadClass = 'arterial' | 'street' | 'boulevard' | 'interstate' | 'ra
  * class sets its lane count and speed, and its surface is a separate axis - a
  * `street` can be asphalt or dirt, the same way a two-lane road can be a
  * street or a boulevard. Defaults to `asphalt` everywhere until something
- * asks for dirt.
+ * asks for dirt. Gravel is the third: pale crushed stone, what a quarry's own
+ * roads are laid with, and a little better to drive than packed earth.
  */
-export type RoadSurface = 'asphalt' | 'dirt';
+export type RoadSurface = 'asphalt' | 'dirt' | 'gravel';
 
 /**
  * What makes a district read as a place. Block size and how much it varies do
@@ -159,7 +160,12 @@ export interface CityRoad {
  * and each body of land is a **hole** in it.
  */
 export interface WaterBody {
-  kind: 'bay' | 'river';
+  kind: 'bay' | 'river' | 'pond';
+  /**
+   * The height the surface sits at, for water that is not at sea level: a pond
+   * on a quarry floor (#329). Absent means the sea's own level.
+   */
+  level?: number;
   outline: Vec2[];
   /** Land inside the polygon. Closed loops, each one a body of land. */
   holes?: Vec2[][];
@@ -251,6 +257,12 @@ export interface Collectible {
   angle: number;
   /** Which road it belongs to, so a camera knows what road it is clocking. */
   road: number;
+  /**
+   * Placed by hand in the prop editor (#295) rather than by `collectiblesFor`,
+   * whose spacing and kerb rules are about its own picks: four boards stacked
+   * behind a jump's landing are a judgement, not a placement mistake.
+   */
+  placed?: boolean;
 }
 
 /**
@@ -295,6 +307,12 @@ export interface CityRoute {
   /** One lap, in world units. */
   length: number;
   laps: number;
+  /**
+   * Laid by hand through a place (#311) rather than found by `routesFor`'s
+   * search, whose rules - a set of six, a length band, spread apart - are
+   * about its own picks.
+   */
+  placed?: boolean;
 }
 
 /**
@@ -342,6 +360,13 @@ export interface Breakable {
   angle: number;
   /** Half its width, so the sim knows what "through it" means. */
   half: number;
+  /**
+   * Placed by hand in the prop editor (#295) rather than picked by
+   * `breakablesFor`. The generator's rules for where one goes - spaced out, by
+   * a road, off parkland - are for its own picks; a stack of drums in a
+   * scrapyard is a judgement, and the editor checks those instead.
+   */
+  placed?: boolean;
 }
 
 /** A city block: the land between the roads, for #84 to put buildings on. */
@@ -374,6 +399,87 @@ export interface Superblock {
   density: number;
 }
 
+/**
+ * A prop placed by hand in the Marrow Field Props editor (#295), as the editor
+ * saves it: metres, and a heading in the generator's own convention - the
+ * prop's length runs along (sin angle, cos angle) and its span across that.
+ * `w` overrides the kind's span, which only a gate uses, to reach across the
+ * road it was snapped to.
+ */
+export interface AuthoredProp {
+  kind: AuthoredPropKind;
+  x: number;
+  z: number;
+  angle: number;
+  w?: number;
+  variant?: string;
+  note?: string;
+}
+
+/**
+ * Everything the prop editor can place. Gates and stacks become `Breakable`s
+ * and billboards `Collectible`s, which already exist; a jump becomes a `Jump`
+ * (#307); the rest are set pieces.
+ */
+export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump' | 'billboard';
+
+/** The set pieces: things that stand somewhere and are driven round, not through. */
+export type SetPieceKind =
+  | 'plane-belly'
+  | 'plane-nose'
+  | 'fuselage'
+  | 'fuselage-hung'
+  | 'helicopter'
+  | 'silo'
+  | 'water-tower'
+  | 'crane'
+  | 'mast'
+  | 'bunker'
+  | 'blast-wall'
+  | 'shed'
+  | 'cone'
+  | 'tree'
+  | 'stockpile'
+  | 'conveyor'
+  | 'haul-truck'
+  | 'excavator'
+  | 'cabin'
+  | 'crusher'
+  | 'rubble';
+
+/**
+ * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
+ * hand rather than generated, and turned to any angle, which is why it is not
+ * a `Building` - a building's footprint is an axis-aligned `Rect` (#268).
+ */
+export interface SetPiece {
+  kind: SetPieceKind;
+  at: Vec2;
+  /** The ground under it. */
+  y: number;
+  /** Heading, as `AuthoredProp.angle`. */
+  angle: number;
+  /** What the editor saved for it, where a kind has more than one look: a stockpile's rock. */
+  variant?: string;
+}
+
+/** The kinds of jump (#307): built, dug, or a slab of apron that has lifted. */
+export type JumpKind = 'ramp' | 'mound' | 'slab';
+
+/**
+ * Something to launch off (#307). Ground with a shape, not a road: the car
+ * rides its surface up to the lip and leaves it there. Its size and profile
+ * come from its kind (`city/jumps.ts`).
+ */
+export interface Jump {
+  kind: JumpKind;
+  at: Vec2;
+  /** The ground under its centre. */
+  y: number;
+  /** Heading, as `AuthoredProp.angle`: the lip is at the +heading end. */
+  angle: number;
+}
+
 /** A generated city. A pure function of `seed`, and the same one every time. */
 export interface City {
   seed: number;
@@ -394,4 +500,8 @@ export interface City {
   ambushes: AmbushSpot[];
   repairs: RepairShop[];
   breakables: Breakable[];
+  /** Hand-placed set dressing (#295). */
+  setPieces: SetPiece[];
+  /** Things to launch off (#307). */
+  jumps: Jump[];
 }

@@ -7,6 +7,32 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   map rebuild) merged into `main` already; everything below describes `main`
   itself, not a branch waiting to land. `origin/feat/landmass`, the stale
   leftover branch this used to flag, is gone - deleted.
+- **Marrow Field, since:** the airfield went from dressed to playable in one
+  run of PRs. #312 added a prop editor on the road editor's pattern
+  (`npm run propexport`, the **Marrow Field Props** artifact, `npm run
+  propsync` into `city/marrowprops.ts`) and 108 hand-placed props: gates and
+  stacks as `Breakable`s, everything else a new `SetPiece` with a
+  height-banded solid footprint. #313 fixed a bug that surfaced then rather
+  than one it caused: collision measured the car's height from sea level, so
+  26 of 41 buildings and nearly every prop on raised ground were not solid.
+  #314 gave the car a real airborne state (#307 closed): jumps as shaped
+  ground, landings priced on how steeply they come down, and the Cargo Plane
+  Jump laid onto the east taxiway where a run-up can reach the ~150 km/h it
+  takes. #316 pays Rep for a landed jump, #317 made billboards placeable and
+  stacked four behind the Hangar Ramp, #315 added Off-road Tyres as a third
+  set in the tyre slot, and #318 put dirt on the field's access roads up to
+  their bridges, closing #295. #311 then gave the field an event: the
+  Marrow Field Run, a 6 km speed run laid by hand through it
+  (`placedRoutes` in `city/routes.ts`), the first route the rebuilt city has
+  had - which is also what brought the speed-run tests back. Finding its
+  shape found two things about the map: the land past the south-west gate,
+  a sixth of the city's road, reaches everything else only through the
+  airfield; and a gate placed across a road used to pin the car behind its
+  own debris for seven seconds (`Wreck.debris` now lets you through once). Then #255: slope changes the drive
+  (see "the ground has height" below). The lap-time baselines it invalidates
+  (`docs/city-baseline.json`, the rival pace fractions) cannot be re-derived
+  while the city has no routes, so they wait on #268 along with everything
+  else that needs a race.
 - **Since this file was last written:** [ADR-0010](decisions/0010-sketch-shape-before-generating-it.md)
   names a pattern this rebuild kept paying for - roads, the land shape and the
   districts were each built procedurally, tuned for a while, then found wrong
@@ -110,9 +136,11 @@ ADR-0009 built. The gridded, buildinged city ADR-0004 through ADR-0006 built
 
 Underneath that, four things are real and new since the last time this file
 was written. The **ground has height** (ADR-0007): `groundAt` samples a baked
-terrain field, roads are cut and filled into it (`cutfill.ts`, #252), and the
-car's own physics read real grade now - a slope changes drive and grip rather
-than being invisible tarmac. The **water is one sea with the land as holes in
+terrain field, and roads are cut and filled into it (`cutfill.ts`, #252), and
+since #255 the car feels it (`slope.ts`): a climb lowers top speed and a
+descent raises it, gravity pulls along the road, and a crest takes grip away.
+Every car on the graph feels the same hill, so the police's fraction of your
+top speed holds uphill and down. The **water is one sea with the land as holes in
 it** (ADR-0008) rather than a bay-and-river pair drawn over a slab, which is
 what let the coastline stop being an edge-to-edge wall and become six separate
 bodies of land joined by routed river crossings. **Downtown, the harbour, the
@@ -239,10 +267,11 @@ src/game/
                   and breakables build the instanced geometry; worlduv, facades,
                   surfaces, roofs, carshape and daylight are the art pass (#11)
 tools/            citylap + citydriver (the reference driver), citymap,
-                  cityshot, pwacheck, icons, plan, sketch, and two editor
+                  cityshot, pwacheck, icons, plan, sketch, and three editor
                   chains: roadexport/roaddiff/roadcheck/roadfix/roadsync for
                   the surface network, freewayexport/freewaysync for the
-                  interstate loop
+                  interstate loop, propexport/propsync for Marrow Field's
+                  hand-placed props
 ```
 
 **The city is data.** `city/` turns a seed into junctions, roads, blocks,
@@ -288,6 +317,8 @@ npm run plan       # does the authored plan still fit the ground the generator
 npm run roadexport # write the road network + relief + plan for the road editor
 npm run freewayexport # write the freeway loop + tunnel anchors for its editor
 npm run freewaysync   # write src/game/city/freeway.ts from the edited loop
+npm run propexport # write the Marrow Field prop editor page, field inlined
+npm run propsync   # write src/game/city/marrowprops.ts from the placed props
 npm run cityshot   # screenshot the 3D city and the driving views
 npm run citylap    # every route, empty and in traffic, then every rival on the
                    # ladder, clean and boosted; all of it vs. its baseline
@@ -373,6 +404,13 @@ all yet.
   Match the surrounding style by hand.
 
 ## Where the work is
+
+**Downtown goes last, and the checklist is [`docs/map-areas.md`](map-areas.md).**
+Decided 2026-09-18: every other area of the map is finished first, one at a
+time, the way Marrow Field was, and #268 comes last. That reverses the
+ordering the paragraphs below were written under - they call #268 the gate -
+so read them for what each issue is, and `map-areas.md` for the order, what
+"done" means for an area, and which areas are.
 
 **The map rebuild is not finished, and the gate moved.** #271 (districts
 describe streets; places are what streets go to) and #272 (the district plan

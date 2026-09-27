@@ -56,6 +56,9 @@ import {
   DAMAGE_FREE,
   DAMAGE_SPEED_LOSS,
   DIRT_SPEED_FRAC,
+  GRAVEL_SPEED_FRAC,
+  TRUCK_COUNT,
+  TRUCK_RADIUS,
   REPAIR_COUNT,
   REPAIR_SPACING,
   REPAIR_RANGE,
@@ -65,7 +68,8 @@ import { CARS, STARTER_CAR, carById } from './cars';
 import { RIVALS } from './rivals';
 import { placeOnRoad } from './graphcar';
 import { hourly } from './citytraffic';
-import { roadHeightAt, inWater } from './city/grid';
+import { roadHeightAt, inWater, distanceToRoad } from './city/grid';
+import { pointAt } from './city/routes';
 import { groundAt } from './city/terrain';
 import { CITY_FREEWAY, CITY_STREET_GRID } from './constants';
 import type { InputState } from './cityworld';
@@ -100,7 +104,11 @@ const M = UNITS_PER_METRE;
 // circuits and claiming a car, both of which race the player against a
 // rival - returns once the local streets that would give it real candidates
 // are back (#268, #271, #272); see the same finding in cityrace.test.ts.
-const HAS_ROUTES = new CityWorld(undefined, { traffic: false, police: false }).city.routes.length > 0;
+//
+// The generator's own routes, specifically: a route a place asked for (#311)
+// is a speed run, and these teleport round a circuit's gates, which a speed
+// run - scored on real progress along its line - rightly does not pay for.
+const HAS_ROUTES = new CityWorld(undefined, { traffic: false, police: false }).city.routes.some((r) => !r.placed);
 
 /**
  * Put the car on a road wide enough for the police to bother blocking, at
@@ -2212,6 +2220,35 @@ describe('driving surfaces (#294)', () => {
     expect(dirt).toBeCloseTo(paved * DIRT_SPEED_FRAC, -2);
   });
 
+  // Gravel (#327) is the middle surface: better than packed earth, worse than
+  // tarmac. The order of the three is the order of how they drive.
+  it('caps the top speed on gravel between dirt and tarmac', () => {
+    const settle = (surface: 'asphalt' | 'dirt' | 'gravel') => {
+      const world = still();
+      const road = world.onRoad!;
+      const original = road.surface;
+      road.surface = surface;
+      try {
+        world.speed = world.maxSpeed;
+        const home = { x: world.x, z: world.z };
+        for (let t = 0; t < 2; t += STEP) {
+          world.x = home.x;
+          world.z = home.z;
+          world.step(STEP, press({ up: true }));
+        }
+        return world.speed;
+      } finally {
+        road.surface = original;
+      }
+    };
+    const paved = settle('asphalt');
+    const gravel = settle('gravel');
+    const dirt = settle('dirt');
+    expect(gravel).toBeLessThan(paved);
+    expect(gravel).toBeGreaterThan(dirt);
+    expect(gravel).toBeCloseTo(paved * GRAVEL_SPEED_FRAC, -2);
+  });
+
   it('takes the steering with it too', () => {
     const turn = (dirt: boolean) => {
       const world = still();
@@ -2315,6 +2352,67 @@ describe('drive-through repair', () => {
  * do to each other: that winning a race starts one, that the ladder waits for
  * it, and that taking the car is what moves both.
  */
+// Marrow Field asks for its own event (#311): a speed run that runs through
+// the airfield rather than round it, on the ladder like any other.
+describe('the Marrow Field Run', () => {
+  const world = new CityWorld(undefined, { traffic: false, police: false });
+  const run = world.city.routes.find((r) => r.name === 'Marrow Field Run')!;
+
+  it('is a one-lap speed run, laid through the field', () => {
+    expect(run).toBeDefined();
+    expect(run.kind).toBe('speedrun');
+    expect(run.laps).toBe(1);
+    expect(run.placed).toBe(true);
+    // Most of it on the field's dirt, and not all of it: the field is a
+    // section of the route, not the route.
+    const onDirt = run.points.filter((p) => {
+      const road = world.city.roads.reduce((best, r) =>
+        distanceToRoad(world.city, r, p.x, p.z) < distanceToRoad(world.city, best, p.x, p.z) ? r : best,
+      );
+      return road.surface === 'dirt';
+    }).length;
+    expect(onDirt / run.points.length).toBeGreaterThan(0.2);
+    expect(onDirt / run.points.length).toBeLessThan(0.9);
+  });
+
+  it('goes over the Cargo Plane Jump rather than round it', () => {
+    const mound = world.city.jumps.find((j) => j.kind === 'mound')!;
+    // To the line, not to its points: the taxiway is drawn as a few long
+    // straight pieces, and its nearest node is hundreds of metres off.
+    let near = Infinity;
+    for (let i = 0; i < run.points.length; i++) {
+      const a = run.points[i];
+      const b = run.points[(i + 1) % run.points.length];
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((mound.at.x - a.x) * dx + (mound.at.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      near = Math.min(near, Math.hypot(mound.at.x - a.x - dx * t, mound.at.z - a.z - dz * t));
+    }
+    expect(near / M).toBeLessThan(5);
+  });
+
+  // Tied to the ladder like every event: win it, and the rival runs.
+  it('sends the rival running when it is won', () => {
+    const w = new CityWorld(undefined, { traffic: false, police: false });
+    w.x = run.start.x;
+    w.z = run.start.z;
+    w.step(STEP, press({ confirm: true }));
+    drive(w, CITY_COUNTDOWN + 0.2, NONE);
+    expect(w.race.state).toBe('racing');
+    // Carried along the line well above the target pace, a step at a time,
+    // so the race sees real progress rather than a teleport between gates.
+    const pace = w.race.targetAverage * 1.5 * REFERENCE_TOP_SPEED;
+    for (let along = 0; w.race.state === 'racing' && along < run.length * 1.1; along += pace * STEP) {
+      const at = pointAt(run.points, run.length, along);
+      w.x = at.x;
+      w.z = at.z;
+      w.step(STEP, NONE);
+    }
+    expect(w.race.won).toBe(true);
+    expect(w.claim.state).toBe('running');
+  });
+});
+
 describe.skipIf(!HAS_ROUTES)('claiming a car', () => {
   const still = () => new CityWorld(undefined, { traffic: false, police: false });
 
@@ -3229,5 +3327,112 @@ describe('going in the water', () => {
     drive(world, DUNK_HOLD * 1.5, NONE);
 
     expect(world.police.state).not.toBe('clear');
+  });
+});
+
+// The quarry's roads are private (#327): civilian traffic neither spawns on them
+// nor turns onto them.
+describe('quarry roads carry no traffic (#327)', () => {
+  it('never has a civilian car on a gravel road', () => {
+    const world = new CityWorld(undefined, { police: false });
+    const gravel = world.city.roads.filter((r) => r.surface === 'gravel');
+    expect(gravel.length).toBeGreaterThan(0);
+    // Stand on the way in, where the paved roads that lead to it are.
+    const road = gravel.reduce((best, r) => (r.length > best.length ? r : best), gravel[0]);
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = (a.x + b.x) / 2;
+    world.z = (a.z + b.z) / 2;
+    world.y = roadHeightAt(world.city, road, world.x, world.z);
+    world.speed = 0;
+    for (let second = 0; second < 90; second++) {
+      drive(world, 1, NONE);
+      for (const car of world.traffic.cars) expect(car.road.surface).not.toBe('gravel');
+    }
+  });
+});
+
+// The quarry's settling ponds are water like any other (#329): drive into one
+// and the car is dunked, which is what makes the floor something to steer round.
+describe('quarry ponds (#329)', () => {
+  it('dunks a car that drives into one', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const pond = world.city.water.find((b) => b.kind === 'pond')!;
+    expect(pond).toBeDefined();
+    const at = {
+      x: pond.outline.reduce((s, p) => s + p.x, 0) / pond.outline.length,
+      z: pond.outline.reduce((s, p) => s + p.z, 0) / pond.outline.length,
+    };
+    world.x = at.x;
+    world.z = at.z;
+    world.y = pond.level!;
+    world.speed = world.maxSpeed * 0.5;
+    drive(world, 0.5, NONE);
+    expect(world.dunked).toBeGreaterThan(0);
+  });
+});
+
+// The quarry's haul trucks (#330): the traffic that belongs on the gravel roads.
+describe('quarry haul trucks (#330)', () => {
+  it('runs a handful of them, on the quarry\'s own roads and never on top of each other', () => {
+    const world = new CityWorld(undefined, { police: false });
+    expect(world.trucks.cars.length).toBe(TRUCK_COUNT);
+    const start = world.trucks.cars.map((c) => ({ x: c.x, z: c.z }));
+    for (let second = 0; second < 240; second++) {
+      drive(world, 1, NONE);
+      for (const truck of world.trucks.cars) {
+        expect(truck.road.surface).toBe('gravel');
+        expect(world.city.roads).toContain(truck.road);
+      }
+      for (let i = 0; i < world.trucks.cars.length; i++) {
+        for (let j = i + 1; j < world.trucks.cars.length; j++) {
+          const a = world.trucks.cars[i];
+          const b = world.trucks.cars[j];
+          expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(TRUCK_RADIUS);
+        }
+      }
+    }
+    // They work: after four minutes at least some of them have gone somewhere.
+    const moved = world.trucks.cars.filter((c, i) => Math.hypot(c.x - start[i].x, c.z - start[i].z) > 20 * M);
+    expect(moved.length).toBeGreaterThan(0);
+  });
+
+  it('is a wall: a hit at speed costs more than the same hit on a civilian car, and nearly all your speed', () => {
+    const hit = (kind: 'truck' | 'car') => {
+      const world = new CityWorld(undefined, { traffic: false, police: false });
+      const ahead = {
+        x: world.x + Math.sin(world.heading) * 14 * M,
+        z: world.z + Math.cos(world.heading) * 14 * M,
+      };
+      if (kind === 'truck') {
+        const truck = world.trucks.cars[0];
+        truck.x = ahead.x;
+        truck.z = ahead.z;
+        truck.y = world.y;
+        truck.speed = 0;
+        truck.heading = world.heading + Math.PI;
+      } else {
+        world.traffic.cars.push({
+          road: world.onRoad!,
+          t: 0.5,
+          forward: true,
+          speed: 0,
+          damage: 0,
+          colour: '#c94b4b',
+          x: ahead.x,
+          z: ahead.z,
+          y: world.y,
+          heading: world.heading + Math.PI,
+        });
+      }
+      world.speed = world.maxSpeed * 0.7;
+      const before = world.speed;
+      for (let i = 0; i < 90; i++) world.step(STEP, NONE);
+      return { damage: world.damage, kept: world.speed / before };
+    };
+    const truck = hit('truck');
+    const car = hit('car');
+    expect(truck.damage).toBeGreaterThan(car.damage);
+    expect(truck.kept).toBeLessThan(0.3);
   });
 });

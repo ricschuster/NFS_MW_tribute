@@ -34,7 +34,9 @@ const STEP = 1 / 60;
 // needs at least one route to exist, so the whole file returns once the
 // local streets that would give it real candidates are back (#268, #271,
 // #272) - see the same finding in quickwheel.test.ts.
-const HAS_ROUTES = city.routes.length > 0;
+const HAS_ROUTES = city.routes.some((route) => !route.placed);
+// A speed run exists even without the search: Marrow Field asks for one (#311).
+const HAS_SPEEDRUN = city.routes.some((route) => route.kind === 'speedrun');
 
 describe.skipIf(!HAS_ROUTES)('the circuits', () => {
   it('generates a full set of them', () => {
@@ -359,12 +361,17 @@ describe.skipIf(!HAS_ROUTES)('racing one', () => {
  * measured on route progress rather than on distance travelled, and that a lap
  * driven at the target pace passes while one driven slower does not.
  */
-describe.skipIf(!HAS_ROUTES)('a speed run', () => {
+describe.skipIf(!HAS_SPEEDRUN)('a speed run', () => {
   const route = city.routes.find((r) => r.kind === 'speedrun');
   const rival = RIVALS[0];
 
-  /** Drive the line at a fixed fraction of the reference top speed. */
-  function lap(pace: number, seconds = 400) {
+  /**
+   * Drive the line at a fixed fraction of the reference top speed, for as long
+   * as a lap at that pace takes and then some - not a fixed figure, which was
+   * written for the search's laps of under three kilometres and ran out
+   * half-way round a longer one (#311).
+   */
+  function lap(pace: number, seconds = (route!.length / (REFERENCE_TOP_SPEED * pace)) * 1.2 + 10) {
     const race = new CityRace();
     race.begin(route!, rival);
     for (let t = 0; t < CITY_COUNTDOWN + 0.1; t += STEP) {

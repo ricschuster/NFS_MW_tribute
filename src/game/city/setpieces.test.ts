@@ -1,0 +1,206 @@
+import { describe, expect, it } from 'vitest';
+import { CAR_HEIGHT, CAR_RADIUS, UNITS_PER_METRE } from '../constants';
+import { CityWorld } from '../cityworld';
+import { kestrelBay } from './index';
+import { MARROW_PROPS } from './marrowprops';
+import { QUARRY_PROPS } from './quarryprops';
+import { airfieldProps, hitsSetPiece } from './setpieces';
+import { groundAt } from './terrain';
+import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { distanceToSegment } from './grid';
+import type { SetPiece } from './types';
+
+const M = UNITS_PER_METRE;
+const city = kestrelBay();
+
+/** A point `along` and `across` a piece, in metres, in its own frame. */
+function beside(piece: SetPiece, along: number, across: number) {
+  const s = Math.sin(piece.angle);
+  const c = Math.cos(piece.angle);
+  return {
+    x: piece.at.x + (along * s + across * c) * M,
+    z: piece.at.z + (along * c - across * s) * M,
+  };
+}
+
+describe('Marrow Field props (#295)', () => {
+  it('turns every placed prop into a set piece, a breakable, a jump or a billboard', () => {
+    const { pieces, breakables, jumps, billboards } = airfieldProps(city.terrain, 1000);
+    expect(pieces.length + breakables.length + jumps.length + billboards.length).toBe(MARROW_PROPS.length);
+    expect(jumps.length).toBe(MARROW_PROPS.filter((p) => p.kind === 'jump').length);
+    expect(pieces.every((p) => p.kind !== ('jump' as string))).toBe(true);
+    // Numbered on from where they were told to start, so they cannot collide
+    // with the generated breakables' ids.
+    expect(breakables.map((b) => b.id)).toEqual(breakables.map((_, i) => 1000 + i));
+  });
+
+  it('stands every piece on the ground where it was placed', () => {
+    for (const piece of city.setPieces) {
+      expect(piece.y).toBeCloseTo(groundAt(city.terrain, piece.at.x, piece.at.z), 6);
+    }
+  });
+
+  it('sizes a placed gate to the road it was snapped across', () => {
+    const placed = MARROW_PROPS.filter((p) => p.kind === 'gate');
+    const { breakables } = airfieldProps(city.terrain, 0);
+    const gates = breakables.filter((b) => b.kind === 'gate');
+    expect(gates.map((g) => g.half)).toEqual(placed.map((p) => ((p.w ?? 12) / 2) * M));
+  });
+
+  it('numbers placed billboards after the generated ones, so a save still means the same boards', () => {
+    const ids = city.collectibles.map((c) => c.id);
+    expect(ids).toEqual(ids.map((_, i) => i));
+    const placed = city.collectibles.filter((c) => c.placed);
+    expect(placed.length).toBe(MARROW_PROPS.filter((p) => p.kind === 'billboard').length);
+    expect(city.collectibles.slice(-placed.length).every((c) => c.placed)).toBe(true);
+  });
+
+  it('adds to the generated breakables without renumbering them', () => {
+    const ids = city.breakables.map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(ids.map((_, i) => i));
+  });
+});
+
+describe('Halloway Quarry props (#323)', () => {
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+  const away = (x: number, z: number) => Math.hypot(x - pit.at.x, z - pit.at.z);
+  const roadGap = (x: number, z: number) =>
+    Math.min(
+      ...city.roads.map((r) => {
+        const a = city.nodes[r.a].pos;
+        const b = city.nodes[r.b].pos;
+        return distanceToSegment(x, z, a.x, a.z, b.x, b.z) - r.width / 2;
+      }),
+    );
+
+  it('puts every placed prop into the city, after Marrow Field\'s and without renumbering them', () => {
+    const { pieces, breakables, jumps, billboards } = airfieldProps(city.terrain, 0, QUARRY_PROPS);
+    expect(pieces.length + breakables.length + jumps.length + billboards.length).toBe(QUARRY_PROPS.length);
+    const inQuarry = city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3);
+    expect(inQuarry.length).toBe(pieces.length);
+  });
+
+  it('keeps every set piece off the road, off the water and inside the place', () => {
+    for (const piece of city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3)) {
+      // A cone is the one thing that is meant to stand on tarmac.
+      if (piece.kind !== 'cone') expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
+      expect(piece.y).toBeGreaterThan(0);
+    }
+  });
+
+  it('lays each gate across a road it can close', () => {
+    const gates = QUARRY_PROPS.filter((p) => p.kind === 'gate');
+    expect(gates.length).toBeGreaterThan(0);
+    for (const gate of gates) expect(roadGap(gate.x * M, gate.z * M)).toBeLessThan(0);
+  });
+});
+
+describe('hitsSetPiece', () => {
+  const at = { x: 0, z: 0 };
+  const turned = 0.6;
+  const piece = (kind: SetPiece['kind']): SetPiece => ({ kind, at, y: 0, angle: turned });
+
+  it('is solid down a fuselage and not across the far side of it', () => {
+    const hull = piece('fuselage');
+    const along = beside(hull, 8, 0);
+    const across = beside(hull, 0, 8);
+    expect(hitsSetPiece([hull], along.x, along.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([hull], across.x, across.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+  });
+
+  it('lets a car under a cargo plane wing but not into its fuselage', () => {
+    const plane = piece('plane-belly');
+    const wing = beside(plane, 2, 11);
+    const body = beside(plane, -5, 0);
+    expect(hitsSetPiece([plane], wing.x, wing.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece([plane], body.x, body.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+  });
+
+  it('hits a tree at its trunk and nowhere else', () => {
+    const tree = piece('tree');
+    expect(hitsSetPiece([tree], 0, 0, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+    const clear = beside(tree, 0, 0.6 + CAR_RADIUS / M + 0.5);
+    expect(hitsSetPiece([tree], clear.x, clear.z, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+  });
+
+  it('never stops a car for a cone', () => {
+    expect(hitsSetPiece([piece('cone')], 0, 0, 0, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+  });
+
+  it('lets anything well above the ground pass over', () => {
+    expect(hitsSetPiece([piece('bunker')], 0, 0, 12 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+  });
+});
+
+describe('driving into them', () => {
+  const FLOOR = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
+
+  /** Aim the car at a point from `back` metres away and hold the throttle. */
+  function closest(world: CityWorld, target: { x: number; z: number }, back: number) {
+    world.x = target.x - back * M;
+    world.z = target.z;
+    world.y = groundAt(world.city.terrain, world.x, world.z);
+    world.heading = Math.PI / 2;
+    world.speed = 0;
+    let gap = Infinity;
+    for (let i = 0; i < 240; i++) {
+      world.step(1 / 60, FLOOR);
+      gap = Math.min(gap, Math.hypot(world.x - target.x, world.z - target.z) / M);
+    }
+    return gap;
+  }
+
+  // Marrow Field stands ten metres above the sea. Collision used to ask how
+  // high the car was above *sea level*, and above four metres nothing on the
+  // ground was solid - the car drove through the silos and the hangar.
+  it('stops at a silo on raised ground rather than driving through it', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const silo = world.city.setPieces.find((p) => p.kind === 'silo')!;
+    expect(silo.y / M).toBeGreaterThan(4.4);
+    expect(closest(world, silo.at, 12)).toBeGreaterThan(4);
+  });
+
+  it('stops at the hangar wall', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const hangar = world.city.buildings.find((b) => b.derelict)!;
+    const f = hangar.footprint;
+    const centre = { x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 };
+    // From the -x side, so the wall in the way is `minX`.
+    const halfWidth = (f.maxX - f.minX) / 2 / M;
+    expect(closest(world, centre, halfWidth + 12)).toBeGreaterThan(halfWidth);
+  });
+});
+
+// "Dirt on the access road" (#295): the roads that exist only to reach the
+// field, found by the network's own structure rather than by where they were
+// drawn.
+describe('the roads to Marrow Field', () => {
+  const dirt = city.roads.filter((r) => r.surface === 'dirt');
+
+  it('are dirt right up to where they meet somebody else\'s road', () => {
+    for (const node of city.nodes) {
+      const here = node.roads.map((id) => city.roads[id]);
+      if (!here.some((r) => r.surface === 'dirt') || !here.some((r) => r.surface !== 'dirt')) continue;
+      // Where dirt meets paving, the paving is a bridge or a real junction.
+      const paved = here.filter((r) => r.surface !== 'dirt');
+      expect(paved.every((r) => r.bridge) || node.roads.length >= 3).toBe(true);
+    }
+  });
+
+  it('leave every bridge paved', () => {
+    expect(dirt.some((r) => r.bridge)).toBe(false);
+  });
+
+  it('reach past the runway and taxiways', () => {
+    const [a, b] = PLAN_RUNWAY;
+    const far = dirt.filter((road) => {
+      const p = city.nodes[road.a].pos;
+      const along = ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / Math.hypot(b.x - a.x, b.z - a.z) ** 2;
+      const t = Math.max(0, Math.min(1, along));
+      const away = Math.hypot(p.x - (a.x + (b.x - a.x) * t), p.z - (a.z + (b.z - a.z) * t));
+      return away > 150 * M;
+    });
+    expect(far.length).toBeGreaterThan(0);
+  });
+});

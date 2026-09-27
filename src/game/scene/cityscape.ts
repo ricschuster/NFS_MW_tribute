@@ -2,16 +2,21 @@ import * as THREE from 'three';
 import {
   asphaltTexture,
   dirtTexture,
+  gravelTexture,
   BLOCK_TILE,
   blockTexture,
   disposeSurfaces,
 } from './surfaces';
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
+import { quarryGround } from './quarryground';
+import { PLAN_PLACES } from '../city/plan';
 import type { City, CityRoad, RoadSurface } from '../city/types';
 import { groundAt } from '../city/terrain';
 import {
   UNITS_PER_METRE,
+  PLACE_BLEND,
+  QUARRY_BENCH,
   INTERSTATE_PILLAR_SPACING,
   ROADBLOCK_MIN_WIDTH,
   TERRAIN_RENDER_STEP,
@@ -20,6 +25,8 @@ import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
 import { CityCollectibles } from './collectibles';
 import { CityBreakables } from './breakables';
+import { CitySetPieces } from './setpieces';
+import { CityJumps } from './jumps';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
@@ -80,6 +87,8 @@ export class Cityscape {
   readonly collectibles: CityCollectibles;
   /** Gates and stacks (#57). Public for the same reason. */
   readonly breakables: CityBreakables;
+  readonly setPieces: CitySetPieces;
+  readonly jumps: CityJumps;
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
@@ -108,6 +117,10 @@ export class Cityscape {
 
     this.breakables = new CityBreakables(city.breakables);
     for (const mesh of this.breakables.meshes) this.group.add(mesh);
+    this.setPieces = new CitySetPieces(city.setPieces);
+    for (const mesh of this.setPieces.meshes) this.group.add(mesh);
+    this.jumps = new CityJumps(city.jumps);
+    for (const mesh of this.jumps.meshes) this.group.add(mesh);
   }
 
   /**
@@ -212,6 +225,17 @@ export class Cityscape {
       color: '#54703f',
       map: blockTexture('grass'),
     });
+    // The pit is rock and dust rather than green (#328), and only the pit.
+    const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+    if (pit) {
+      quarryGround(material, {
+        at: pit.at,
+        radius: pit.radius,
+        fade: PLACE_BLEND,
+        bench: QUARRY_BENCH,
+        floor: groundAt(city.terrain, pit.at.x, pit.at.z),
+      });
+    }
     this.owned.push(geometry, material);
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -236,7 +260,9 @@ export class Cityscape {
   /** The bay and the river, as flat polygons sunk below the road surface. */
   private water(city: City): THREE.Mesh[] {
     const material = new THREE.MeshLambertMaterial({ color: '#1d4f63' });
-    this.owned.push(material);
+    // A settling pond is a greyer, greener water than the bay (#329).
+    const pond = new THREE.MeshLambertMaterial({ color: '#3f6f78' });
+    this.owned.push(material, pond);
 
     return city.water.map((body, i) => {
       // A Shape is built in XY facing +Z. Laying it flat the obvious way turns
@@ -252,8 +278,8 @@ export class Cityscape {
       geometry.rotateX(-Math.PI / 2);
       this.owned.push(geometry);
 
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.y = WATER_LEVEL + i * WATER_STACK;
+      const mesh = new THREE.Mesh(geometry, body.kind === 'pond' ? pond : material);
+      mesh.position.y = body.level ?? WATER_LEVEL + i * WATER_STACK;
       mesh.name = `water:${body.kind}`;
       return mesh;
     });
@@ -387,7 +413,7 @@ export class Cityscape {
         !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
     );
     const meshes: THREE.InstancedMesh[] = [];
-    for (const surface of ['asphalt', 'dirt'] as const) {
+    for (const surface of ['asphalt', 'dirt', 'gravel'] as const) {
       const roads = drivable.filter((road) => (road.surface ?? 'asphalt') === surface);
       if (roads.length === 0) continue;
       meshes.push(this.carriagewaysFor(city, roads, surface));
@@ -432,8 +458,8 @@ export class Cityscape {
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
     const material = new THREE.MeshLambertMaterial({
-      color: surface === 'dirt' ? '#7a6a52' : '#4a5057',
-      map: surface === 'dirt' ? dirtTexture(1, 1) : asphaltTexture(1, 1),
+      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : '#4a5057',
+      map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
     });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
     // by how long each piece happens to be. Computed from the instance scale
@@ -530,14 +556,14 @@ export class Cityscape {
 
     const runs = city.roads
       .filter(
-        // A dirt road carries no paint (#295): Marrow Field's runway and
+        // A dirt or gravel road carries no paint (#295): Marrow Field's runway and
         // taxiway are the only ones today, and a crisp centre line down a
         // strip nobody has resurfaced in years says the opposite of "disused".
         (road) =>
           !road.bridge &&
           road.length > GAP * 3 &&
           road.width >= ROADBLOCK_MIN_WIDTH &&
-          road.surface !== 'dirt',
+          road.surface === 'asphalt',
       )
       .map((road) => {
         const a = city.nodes[road.a].pos;
@@ -755,6 +781,8 @@ export class Cityscape {
     this.furniture.dispose();
     this.collectibles.dispose();
     this.breakables.dispose();
+    this.setPieces.dispose();
+    this.jumps.dispose();
     for (const thing of this.owned) thing.dispose();
     disposeSurfaces();
     this.group.clear();

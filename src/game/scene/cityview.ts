@@ -12,6 +12,7 @@ import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
+import { CityTrucks } from './trucks';
 import { carById } from '../cars';
 import type { CityWorld, InputState } from '../cityworld';
 import {
@@ -26,6 +27,7 @@ import {
   BLOOM_RADIUS,
   BLOOM_THRESHOLD,
   BLOOM_SCALE,
+  TRUCK_COUNT,
 } from '../constants';
 
 const M = UNITS_PER_METRE;
@@ -140,6 +142,7 @@ export class CityView {
   /** Which profile the player's mesh is currently painted as (#67). */
   private wearing = '';
   private readonly trafficCars: CarPool;
+  private readonly haulTrucks: CityTrucks;
   private readonly copCars: CarPool;
   private readonly wreckCars: CarPool;
   private readonly parkedCars: CarPool;
@@ -228,6 +231,8 @@ export class CityView {
     this.car.visible = false;
     this.scene.add(this.car);
     this.trafficCars = new CarPool(this.scene);
+    this.haulTrucks = new CityTrucks(TRUCK_COUNT);
+    this.scene.add(this.haulTrucks.group);
     this.copCars = new CarPool(this.scene, true);
     // Wrecks come out of their own pool rather than the one they were in: a
     // wrecked cruiser has stopped being a cop car, lightbar included.
@@ -566,7 +571,12 @@ export class CityView {
     }
 
     this.car.position.set(world.x, world.y, world.z);
+    // Yaw, then pitch about the car's own axle (#307): nose up the ramp, and
+    // along its line of flight once it leaves it. Negative because a positive
+    // turn about x tips the nose down.
+    this.car.rotation.order = 'YXZ';
     this.car.rotation.y = world.heading;
+    this.car.rotation.x = -world.pitch;
     // Repaint and resize only when the car actually changed. A Street Find
     // swaps the profile mid-drive, and the mesh has to follow it.
     // Repainted when the car changes, and dulled as it gets beaten up (#95):
@@ -594,6 +604,7 @@ export class CityView {
       this.trafficCars.place(car.x, car.y, car.z, car.colour).rotation.y = car.heading;
     }
     this.trafficCars.end();
+    this.haulTrucks.update(world.trucks.cars);
 
     this.copCars.begin();
     // Patrols first, so everything placed after them is a car with its lights
@@ -922,6 +933,7 @@ export class CityView {
 
   dispose(): void {
     this.cityscape.dispose();
+    this.haulTrucks.dispose();
     this.renderer.dispose();
   }
 }

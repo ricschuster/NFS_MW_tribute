@@ -36,6 +36,22 @@ export const REVERSE_SPEED_FRAC = 0.18;
  */
 export const DIRT_GRIP_FRAC = 0.8;
 export const DIRT_SPEED_FRAC = 0.85;
+/**
+ * Gravel (#327): crushed stone, laid and graded, which is a better road than
+ * packed earth and still a worse one than tarmac. Between the two, so the order
+ * of the three surfaces is the order of how they drive.
+ */
+export const GRAVEL_GRIP_FRAC = 0.9;
+export const GRAVEL_SPEED_FRAC = 0.92;
+/**
+ * Off-road tyres (a part, `mods.ts`): on dirt they take nothing off at all,
+ * and open ground caps the car at this fraction of its top speed instead of
+ * the quarter it is otherwise held to (`offRoadLimit`). Under half, so a
+ * park is still slower than the road round it - a shortcut, not a second
+ * road network - and cutting across one in a pursuit gains a lot rather than
+ * everything; the police are held to `COP_OFF_ROAD` either way.
+ */
+export const OFFROAD_TYRE_LIMIT = 0.45;
 
 /**
  * Nitrous (#45, #48, #105).
@@ -478,6 +494,65 @@ export const HANGAR_WIDTH = m(55);
 export const HANGAR_DEPTH = m(35);
 export const HANGAR_HEIGHT = m(11);
 export const HANGAR_CLEAR = m(150);
+/**
+ * Halloway Quarry, a working one: the opposite call from Marrow Field's
+ * disused airfield, so the two places do not read as the same place twice.
+ *
+ * `QUARRY_DIRT_REACH` is how far out, as a multiple of the place's radius, a
+ * road counts as the quarry's own. Measured on `CITY_SEED`: the haul road and
+ * the rim road end 701 m from the centre (1.17 x the 600 m radius), and the
+ * next thing that is not the access road is past 850 m, so 1.2 sits in the gap.
+ * The access road itself is found by `markDirtAccess` rather than by reach, for
+ * the reason `markAirfieldDirt` says.
+ *
+ * The plant stands on the pit floor - the one place the haul road goes to -
+ * and the yard on the rim beside the road in. `QUARRY_YARD_CLEAR` is the
+ * clearance the yard's ground has to have from every road, measured against the
+ * real hand-traced network rather than derived, for the reason `HANGAR_CLEAR`
+ * gives.
+ */
+export const QUARRY_DIRT_REACH = 1.2;
+export const QUARRY_PLANT_WIDTH = m(46);
+export const QUARRY_PLANT_DEPTH = m(28);
+export const QUARRY_PLANT_HEIGHT = m(26);
+export const QUARRY_YARD_CLEAR = m(40);
+/**
+ * Settling ponds on the pit floor and the first bench (#329), from the
+ * reference photographs of active quarries: standing water between the
+ * workings and the haul road.
+ *
+ * Measured, not derived: found by searching the real generated city for ground
+ * that is level, dry and clear of every road, building and placed prop, for the
+ * reason `HANGAR_CLEAR` gives. One on the floor, three on the bench to the
+ * west. `x`, `z` and `r` are metres from the map's origin. They are additions
+ * to the finished city, so nothing is routed round them by accident: keeping
+ * clear of them is the layout's job, and a test says it did.
+ */
+export const QUARRY_PONDS = [
+  { x: -2724, z: -898, r: 18 },
+  { x: -2850, z: -790, r: 18 },
+  { x: -2826, z: -904, r: 22 },
+  { x: -2814, z: -700, r: 18 },
+].map((p) => ({ at: { x: m(p.x), z: m(p.z) }, radius: m(p.r) }));
+/** How far a pond's surface sits above the ground under it, so the two do not fight for depth. */
+export const POND_LIFT = m(0.12);
+/**
+ * The quarry's haul trucks (#330): a few of them, running the haul road and the
+ * rim road all day, much bigger and slower than a car.
+ *
+ * `TRUCK_RADIUS` is the size of the thing you hit: about 16 m by 25 m drawn, so
+ * a circle of 10 m round its middle. `TRUCK_GAP` is how far behind another truck
+ * one holds, wide enough that a truck's own length is not the gap. A hit is a
+ * wall rather than a shunt: it costs the car `TRUCK_HURT` times what the same
+ * closing speed costs against a civilian car, and nearly all its speed
+ * (`TRUCK_SPEED_KEPT`), while the truck itself takes nothing from it.
+ */
+export const TRUCK_COUNT = 4;
+export const TRUCK_SPEED = kmh(30);
+export const TRUCK_RADIUS = m(10);
+export const TRUCK_GAP = m(70);
+export const TRUCK_HURT = 3;
+export const TRUCK_SPEED_KEPT = 0.15;
 /**
  * Marrow Field's perimeter fence (#295): a line, not a wall around the whole
  * 700 m place radius - the field is the runway and the taxiway, so the fence
@@ -1116,12 +1191,47 @@ export const GRADE_RUN = m(430);
 export const CITY_GRID_CELL = m(120);
 /** The car's collision radius, from its centre. */
 export const CAR_RADIUS = m(2.2);
+/**
+ * How tall the car is, from its wheels. Only matters for what it can pass
+ * under or over (#307): a wing four and a half metres up is clear, a
+ * fuselage is not.
+ */
+export const CAR_HEIGHT = m(1.5);
 /** Speed kept after hitting a building, as a fraction. */
 export const HIT_SPEED_KEPT = 0.25;
 /** How quickly the car settles onto the height of the road it is on. */
 export const RIDE_RATE = 8;
 /** Fall acceleration when the car leaves the deck, in world units per second squared. */
 export const GRAVITY = m(22);
+
+/**
+ * Relief you can feel (#255, `slope.ts`).
+ *
+ * `SLOPE_SPEED` is how far a grade moves top speed: at 2.5, a 6% climb - the
+ * steepest an arterial or boulevard is allowed (ADR-0007 rule 7) - tops out at
+ * 85% and the same descent runs on to 115%, and `SLOPE_SPEED_MAX` caps it for
+ * the few steeper stretches (the map's worst is 16%). Measured on `CITY_SEED`,
+ * a fifth of the network is steeper than 2% and a tenth steeper than 4%, so
+ * this is felt on a real drive without deciding every one.
+ *
+ * `SLOPE_EASE` is how fast the cap follows a change of grade, per second. The
+ * cap moves and the existing overspeed bleed follows it, so a climb takes the
+ * speed off over a second or so rather than like a wall - and the bleed after
+ * a boost, which #105 depends on, is untouched.
+ *
+ * The grade is sampled `SLOPE_SAMPLE` either side of the car, and a crest over
+ * `CREST_SAMPLE`: long enough that the kink where two road pieces meet does
+ * not read as a crest at every junction, short enough that a real brow does.
+ */
+export const SLOPE_SPEED = 2.5;
+export const SLOPE_SPEED_MAX = 0.3;
+export const SLOPE_EASE = 0.15;
+export const SLOPE_SAMPLE = m(6);
+export const CREST_SAMPLE = m(15);
+/** The least grip a car keeps going light over a crest. */
+export const CREST_GRIP_MIN = 0.35;
+/** Below this speed a car on a hill stays put rather than rolling. */
+export const SLOPE_HOLD = m(2);
 /**
  * How far above or below a road the car can be and still count as on it.
  * Without this, standing in the street under an overpass reports the deck 12 m
@@ -1177,6 +1287,26 @@ export const DUNK_DEPTH = m(2.4);
  * far less than the twelve-metre deck a fall is meant to be about.
  */
 export const FALL_CLEARANCE = m(1.5);
+
+/**
+ * Landing a jump (#307).
+ *
+ * Priced on how *steeply* the car comes down - its vertical speed squared
+ * over its whole speed - rather than on how fast it falls. The game's gravity
+ * is over twice the real thing, so a jump taken quickly comes down hard in
+ * absolute terms however well it is flown; what separates a good landing
+ * from a bad one is the angle. A fast, flat landing carries on with
+ * `LAND_SPEED_KEPT` of its speed; rolling off something tall and dropping
+ * nearly straight down is what `DAMAGE_FALL` is for, reached in full at
+ * `LAND_HARD`.
+ *
+ * Measured on Marrow Field's jumps: every one lands soft from 40 to 240
+ * km/h on flat ground, and a car dropped from a standstill off four metres
+ * does not.
+ */
+export const LAND_SOFT = m(11);
+export const LAND_HARD = m(22);
+export const LAND_SPEED_KEPT = 0.94;
 
 /**
  * Parkland on the land the street grid never claimed (#185).
@@ -2235,6 +2365,16 @@ export const BREAKER_BLAST = m(24);
 export const BREAKER_BLAST_DAMAGE = 1.6;
 /** Rep for property damage, and the heat it brings. */
 export const REP_BREAKER = 120;
+/**
+ * Rep for a jump (#307), paid by the metre like a speed camera is paid by
+ * the km/h: `REP_JUMP` for a jump of `REP_JUMP_DISTANCE`, in proportion
+ * either side of it. Nothing under `REP_JUMP_MIN`, or a lifted slab taken
+ * back and forth at walking pace would be the best-paid thing in the game,
+ * and nothing for a hard landing - a jump you did not land is a crash.
+ */
+export const REP_JUMP = 200;
+export const REP_JUMP_DISTANCE = m(100);
+export const REP_JUMP_MIN = m(20);
 export const BREAKER_HEAT = 0.02;
 /** How long the wreckage lies there. */
 export const BREAKER_DEBRIS = 7;

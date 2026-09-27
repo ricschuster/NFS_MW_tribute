@@ -41,10 +41,13 @@ import { furnitureFor } from './furniture';
 import { collectiblesFor } from './collectibles';
 import { parksFor } from './parks';
 import { findsFor } from './streetfinds';
-import { routesFor } from './routes';
+import { placedRoutes, routesFor } from './routes';
 import { ambushesFor } from './ambushes';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
+import { airfieldProps } from './setpieces';
+import { MARROW_PROPS } from './marrowprops';
+import { QUARRY_PROPS } from './quarryprops';
 import { addInterstate } from './interstate';
 import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
@@ -56,6 +59,10 @@ import { inArea, PLAN_DISTRICTS, PLAN_PLACES, planDensityAt, planDistrictAt } fr
 import { localStreetsFor } from './localstreets';
 import {
   airfieldFurniture,
+  markDirtAccess,
+  markQuarryDirt,
+  quarryBuildings,
+  quarryPonds,
   airfieldHangar,
   markAirfieldDirt,
   placeApproach,
@@ -530,8 +537,20 @@ export function generateCity(seed: number): City {
   // right on top of the hangar. `anyWater` is the same guard the block loop
   // above uses: `levelRunway` flattens the ground here but does not reclaim
   // any water already in it.
-  if (PLAN_PLACES.some((p) => p.kind === 'airfield')) {
-    markAirfieldDirt(nodes, roads);
+  const hasAirfield = PLAN_PLACES.some((p) => p.kind === 'airfield');
+  const hasQuarry = PLAN_PLACES.some((p) => p.kind === 'quarry');
+  if (hasAirfield) markAirfieldDirt(nodes, roads);
+  // Halloway Quarry, a working one: dirt inside, and its plant and yard found
+  // against the roads as they are before the way in is turned to dirt too.
+  if (hasQuarry) {
+    markQuarryDirt(nodes, roads);
+    for (const building of quarryBuildings(terrain, water, nodes, roads)) {
+      buildings.push(building);
+      blocks.push({ district: building.district, bounds: building.footprint, open: false });
+    }
+  }
+  if (hasAirfield || hasQuarry) markDirtAccess(nodes, roads);
+  if (hasAirfield) {
     const hangar = airfieldHangar(rng);
     if (!anyWater(hangar.footprint, water)) {
       buildings.push(hangar);
@@ -542,7 +561,9 @@ export function generateCity(seed: number): City {
   const city: City = {
     seed,
     bounds,
-    water: water.bodies,
+    // The quarry's ponds are added to the finished city (#329), not to the
+    // water everything was routed against.
+    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : [])],
     terrain,
     nodes,
     roads,
@@ -556,6 +577,8 @@ export function generateCity(seed: number): City {
     ambushes: [],
     repairs: [],
     breakables: [],
+    setPieces: [],
+    jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
@@ -584,9 +607,36 @@ export function generateCity(seed: number): City {
   // survived the water-clipping and the connectivity repair, not of ones that
   // were laid out and then pruned.
   city.routes = routesFor(city);
+  // Then the ones a place asked for (#311), numbered after the search's own.
+  city.routes.push(...placedRoutes(city, city.routes.length));
   city.ambushes = ambushesFor(city);
   city.repairs = repairsFor(city);
   city.breakables = breakablesFor(rng, city);
+  // Marrow Field's hand-placed props (#295), last and off no stream at all:
+  // they are data, so placing them draws nothing from `rng` and cannot move
+  // anything generated before them. Their gates and stacks number on from
+  // the generated breakables, which keeps those ids where they were.
+  // Marrow Field's, then Halloway Quarry's: appended in that order so the ids
+  // and the save-remembered billboards of the first do not move.
+  const placed = [...(hasAirfield ? MARROW_PROPS : []), ...(hasQuarry ? QUARRY_PROPS : [])];
+  if (placed.length > 0) {
+    const authored = airfieldProps(terrain, city.breakables.length, placed);
+    city.setPieces = authored.pieces;
+    city.jumps = authored.jumps;
+    // Billboards number on from the generated ones, the same way the
+    // breakables do: a save remembers smashed boards by id, and appending is
+    // the one change that cannot make an old save point at the wrong board.
+    for (const board of authored.billboards) {
+      city.collectibles.push({
+        id: city.collectibles.length,
+        kind: 'billboard',
+        ...board,
+        road: nearestRoadTo(roads, nodes, board.at),
+        placed: true,
+      });
+    }
+    city.breakables.push(...authored.breakables);
+  }
   return city;
 }
 
@@ -1392,4 +1442,23 @@ function prune(graph: Graph): { nodes: CityNode[]; roads: CityRoad[] } {
   }
 
   return { nodes, roads };
+}
+
+/** The id of the road whose centreline passes closest to a point. */
+function nearestRoadTo(roads: CityRoad[], nodes: CityNode[], at: Vec2): number {
+  let best = -1;
+  let gap = Infinity;
+  for (const road of roads) {
+    const a = nodes[road.a].pos;
+    const b = nodes[road.b].pos;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const t = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const d = Math.hypot(at.x - a.x - dx * t, at.z - a.z - dz * t);
+    if (d < gap) {
+      gap = d;
+      best = road.id;
+    }
+  }
+  return best;
 }

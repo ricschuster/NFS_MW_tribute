@@ -5,6 +5,18 @@ import {
   REVERSE_SPEED_FRAC,
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
+  TRUCK_RADIUS,
+  TRUCK_HURT,
+  TRUCK_SPEED_KEPT,
+  GRAVEL_GRIP_FRAC,
+  GRAVEL_SPEED_FRAC,
+  OFFROAD_TYRE_LIMIT,
+  REP_JUMP_MIN,
+  REP_JUMP_DISTANCE,
+  SLOPE_EASE,
+  SLOPE_HOLD,
+  SLOPE_SAMPLE,
+  CREST_SAMPLE,
   ESCAPED_FLASH,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
@@ -14,6 +26,11 @@ import {
   NITRO_BLEED_FRAC,
   NITRO_TAPER,
   CAR_RADIUS,
+  UNITS_PER_METRE,
+  CAR_HEIGHT,
+  LAND_SOFT,
+  LAND_HARD,
+  LAND_SPEED_KEPT,
   HIT_SPEED_KEPT,
   SHUNT_SPEED_KEPT,
   SIM_SEED,
@@ -97,6 +114,7 @@ import { accelerate } from './math';
 import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
+import { QuarryTrucks } from './quarrytrucks';
 import { CityPolice } from './citypolice';
 import {
   CityGrid,
@@ -106,11 +124,15 @@ import {
   inWater,
   distanceToRoad,
 } from './city/grid';
+import { hitsSetPiece } from './city/setpieces';
+import { JUMP_SHAPES, jumpProfile, jumpUnder, lipSlope } from './city/jumps';
+import type { OnJump } from './city/jumps';
+import { crestGrip, slopePull, slopeSpeed } from './slope';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { planCentre } from './city/plan';
 import type { DistrictKind } from './city/types';
-import { impactDamage, touching } from './impact';
+import { impactDamage, touching, WRECKED } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
 import type { City, CityRoad, CityRoute } from './city/types';
@@ -156,6 +178,14 @@ export interface Wreck {
   roll: number;
   /** Seconds since it was wrecked. Cleared away at `WRECK_LINGER`. */
   age: number;
+  /**
+   * What is left of something the player brought down (#57), rather than a
+   * car: passable to the player until they have driven through it once, then
+   * solid like any other wreck. See `contacts`.
+   */
+  debris?: boolean;
+  /** Set once the player is in the debris on that first pass through. */
+  entered?: boolean;
 }
 
 /**
@@ -197,6 +227,8 @@ export class CityWorld {
   readonly city: City;
   readonly grid: CityGrid;
   readonly traffic: CityTraffic;
+  /** The quarry's own traffic (#330): trucks on the gravel roads, which civilians are kept off. */
+  readonly trucks: QuarryTrucks;
   readonly police: CityPolice;
 
   /** Where the car is, on the map and above it. */
@@ -216,6 +248,18 @@ export class CityWorld {
   onRoad: CityRoad | null = null;
   /** Set while the car is off a deck with nothing under it. */
   falling = false;
+  /**
+   * In the air off a jump (#307). Not `falling`, which is dropping off the side
+   * of a deck: a jump goes *up* first, carries the car over whatever is under
+   * it, and ends in a landing that is priced rather than always punished.
+   */
+  airborne = false;
+  /** Nose-up angle to draw the car at: the slope of a jump, or its line of flight. */
+  pitch = 0;
+  /** The grade under the car along its direction of travel, rise over run: uphill positive (#255). */
+  grade = 0;
+  /** The last jump landed: how far it went, how high over its lip, and how it came down. */
+  lastJump: { distance: number; height: number; airtime: number; hard: boolean } | null = null;
   /** Frozen in the BUSTED state, holding the overlay before the pursuit resets. */
   busted = false;
   /** Seconds left on the ESCAPED banner. */
@@ -350,7 +394,17 @@ export class CityWorld {
   private nitroAccel = NITRO_ACCEL_MULT;
   /** Tyres that come back up: a spike strip is a moment, not the pursuit (#68). */
   private reinflating = false;
+  /** Fitted with off-road tyres, which take the sting out of dirt and open ground. */
+  private offRoadTyres = false;
   private fallSpeed = 0;
+  /** Vertical speed while airborne, up positive (#307). */
+  private climb = 0;
+  /** Top speed's multiplier for the hill, easing toward `slopeSpeed` of the grade (#255). */
+  private hill = 1;
+  /** Where the car left the ground, the highest it got, and for how long, for `lastJump`. */
+  private flight = { x: 0, z: 0, y: 0, peak: 0, time: 0 };
+  /** The jump under the car last step, so leaving it can be told from never being on one. */
+  private ramp: OnJump | null = null;
 
   /** Everything that moves draws from here, so a scripted drive repeats exactly. */
   private readonly rng = new Rng(SIM_SEED);
@@ -379,6 +433,7 @@ export class CityWorld {
     this.city = city;
     this.grid = new CityGrid(city);
     this.traffic = new CityTraffic(city, this.grid, this.rng);
+    this.trucks = new QuarryTrucks(city);
     this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
     this.withPolice = options.police ?? true;
@@ -417,7 +472,7 @@ export class CityWorld {
     this.braking = -this.maxSpeed;
     this.decel = -this.maxSpeed / 5;
     this.offRoadDecel = -this.maxSpeed / 2;
-    this.offRoadLimit = this.maxSpeed / 4;
+    this.offRoadLimit = this.maxSpeed * (mods.offRoad ? OFFROAD_TYRE_LIMIT : 1 / 4);
     this.maxReverse = -this.maxSpeed * REVERSE_SPEED_FRAC;
     this.grip = LATERAL_GRIP * profile.grip * mods.grip;
     // Only the *excess* is scaled. `NITRO_SPEED_MULT` has to stay under 2 or
@@ -425,6 +480,7 @@ export class CityWorld {
     this.nitroSpeed = 1 + (NITRO_SPEED_MULT - 1) * profile.nitro * mods.nitro;
     this.nitroAccel = 1 + (NITRO_ACCEL_MULT - 1) * profile.nitro * mods.nitro;
     this.reinflating = mods.reinflating;
+    this.offRoadTyres = mods.offRoad;
   }
 
   /** Put the car on a surface street in **Ashford Point**, pointing along it. */
@@ -478,6 +534,7 @@ export class CityWorld {
     this.y = roadHeightAt(this.city, best, this.x, this.z);
     this.heading = Math.atan2(b.x - a.x, b.z - a.z);
     this.speed = 0;
+    this.grounded();
     this.onRoad = best;
     this.markProgress();
   }
@@ -538,6 +595,7 @@ export class CityWorld {
     this.speed = 0;
     this.falling = false;
     this.fallSpeed = 0;
+    this.grounded();
     this.crashFlash = 0;
     this.markProgress();
   }
@@ -734,7 +792,10 @@ export class CityWorld {
         // wherever the bank is above sea level.
         this.recover();
       }
-      if (this.withTraffic) this.traffic.update(dt, this);
+      if (this.withTraffic) {
+        this.traffic.update(dt, this);
+        this.trucks.update(dt);
+      }
       if (this.withPolice && this.race.state === 'idle') {
         this.police.update(dt, this, this.maxSpeed);
       }
@@ -755,9 +816,24 @@ export class CityWorld {
       return;
     }
 
+    // Relief (#255): how steep the ground is along the way the car is going,
+    // and whether it is going light over a brow. Not on a jump or in the air,
+    // which have a shape of their own (#307). Signed by the direction of
+    // travel, so reversing up a hill is climbing it.
+    const lie = this.airborne || this.ramp ? { grade: 0, bend: 0 } : this.lie();
+    const travel = Math.sign(this.speed || 1);
+    this.grade = lie.grade * travel;
+    const crest = crestGrip(this.speed, lie.bend);
+    // The cap follows the grade rather than jumping to it: see `SLOPE_EASE`.
+    const hill = slopeSpeed(this.grade);
+    this.hill += Math.max(-SLOPE_EASE * dt, Math.min(SLOPE_EASE * dt, hill - this.hill));
+
     // A road, just a worse one (#294): still `onRoad`, still short of the
-    // off-road penalty in `settle`, just less grip and a lower top speed.
-    const onDirt = this.onRoad?.surface === 'dirt';
+    // off-road penalty in `settle`, just less grip and a lower top speed -
+    // unless the tyres were made for it.
+    const loose = this.offRoadTyres ? null : this.onRoad?.surface;
+    const gripFrac = loose === 'dirt' ? DIRT_GRIP_FRAC : loose === 'gravel' ? GRAVEL_GRIP_FRAC : 1;
+    const speedFrac = loose === 'dirt' ? DIRT_SPEED_FRAC : loose === 'gravel' ? GRAVEL_SPEED_FRAC : 1;
 
     // Yaw is limited by grip rather than by the wheel: turning at rate w while
     // travelling at v costs v*w of lateral acceleration, so the faster the car
@@ -765,12 +841,14 @@ export class CityWorld {
     const authority =
       Math.min(
         TURN_RATE,
-        (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS) * (onDirt ? DIRT_GRIP_FRAC : 1)) /
+        (this.grip * (1 - this.hurt * DAMAGE_GRIP_LOSS) * gripFrac) /
           Math.max(this.maxSpeed * 0.05, Math.abs(this.speed)),
-      ) * (this.shredded > 0 ? SHRED_GRIP : 1);
+      ) *
+      (this.shredded > 0 ? SHRED_GRIP : 1) *
+      crest;
 
     const charged = this.boosting ? this.nitro > 0 : this.nitro >= NITRO_MIN_ENGAGE;
-    const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15;
+    const boosting = input.nitro && charged && this.speed > this.maxSpeed * 0.15 && !this.airborne;
     this.boosting = boosting;
     this.nitro = boosting
       ? Math.max(0, this.nitro - dt * NITRO_DRAIN)
@@ -788,12 +866,16 @@ export class CityWorld {
     // right-handed cross product of forward and up. Adding here steers the car
     // the opposite way from the one the wheel is turned, which is exactly how
     // it felt: A went right and D went left.
-    this.heading -= steer * authority * dt * Math.sign(this.speed || 1);
+    // Nothing to steer or drive against in the air (#307): the wheels are
+    // off the ground, so the car goes where the jump threw it.
+    if (!this.airborne) this.heading -= steer * authority * dt * Math.sign(this.speed || 1);
     // No limit on heading any more. On a track the car could only ever be
     // pointed roughly along it; here it can be turned round, which is the
     // whole point of free roam.
 
-    if (input.up) {
+    if (this.airborne) {
+      // Held: no throttle, no brakes, no rolling resistance.
+    } else if (input.up) {
       this.speed = accelerate(this.speed, throttle, dt);
     } else if (input.down) {
       this.speed = accelerate(this.speed, this.braking, dt);
@@ -803,12 +885,20 @@ export class CityWorld {
       this.speed = Math.min(0, accelerate(this.speed, -this.decel, dt));
     }
 
+    // Gravity along the road: a climb pulls the car back and a descent pushes
+    // it on. A car standing on a hill stays standing - rolling away from a
+    // standstill is realistic and not a thing anybody wants from this game.
+    if (!this.airborne && Math.abs(this.speed) > SLOPE_HOLD) {
+      this.speed -= travel * slopePull(this.grade) * dt;
+    }
+
     // Shredded tyres cap the top speed under everything, nitrous included:
     // lighting the boost on four ruined tyres does not make them work.
     const topSpeed = Math.min(
       (boosting ? this.maxSpeed * this.nitroSpeed : this.maxSpeed) *
         (1 - this.hurt * DAMAGE_SPEED_LOSS) *
-        (onDirt ? DIRT_SPEED_FRAC : 1),
+        speedFrac *
+        this.hill,
       this.shredded > 0 ? this.maxSpeed * SHRED_SPEED_FRAC : Infinity,
     );
     if (this.speed > topSpeed) {
@@ -822,7 +912,10 @@ export class CityWorld {
     // After the move, so it reads where the car actually got to rather than
     // where it was aimed.
     this.watchProgress(dt, input);
-    if (this.withTraffic) this.traffic.update(dt, this);
+    if (this.withTraffic) {
+      this.traffic.update(dt, this);
+      this.trucks.update(dt);
+    }
     // No pursuit during a sanctioned event: a race you have to win while
     // being rammed by a heat-six Enforcer is not a race, it is a pursuit with
     // a lap counter on it.
@@ -1147,6 +1240,7 @@ export class CityWorld {
       police: false,
       roll: this.rng.range(-0.9, 0.9),
       age: WRECK_LINGER - BREAKER_DEBRIS,
+      debris: true,
     });
   }
 
@@ -1217,7 +1311,23 @@ export class CityWorld {
     // Wrecks first: they are already dead, so they only cost you speed. A
     // wreck you can drive through is a strange reward for having made it.
     for (const wreck of this.wrecks) {
-      if (!touching(this, wreck)) continue;
+      const touch = touching(this, wreck);
+      // The debris of something you just drove through is not a wall in front
+      // of you. It comes down while the car is still short of it - within
+      // `BREAKER_RANGE` of its edge, and a gate across a road is twenty metres
+      // wide - so it used to land in the car's path and hold it there for the
+      // whole of `BREAKER_DEBRIS`: measured, a lap of the Marrow Field Run
+      // (#311) spent fourteen seconds pinned at its two gates. It lets you
+      // through once, and is solid from the moment you are out the far side.
+      if (wreck.debris) {
+        if (touch) {
+          wreck.entered = true;
+          continue;
+        }
+        if (wreck.entered) wreck.debris = false;
+        continue;
+      }
+      if (!touch) continue;
       this.speed *= SHUNT_SPEED_KEPT;
       this.crashFlash = 1;
       return;
@@ -1232,10 +1342,24 @@ export class CityWorld {
       // though: `impactDamage` is zero below a real closing speed, and being
       // gently nudged from behind is not something you did.
       if (hurt > 0 && this.droveInto(car)) this.police.witness(this, 'crashed');
-      if (car.damage >= 1) {
+      if (car.damage >= WRECKED) {
         this.traffic.remove(car);
         this.wreck(car, car.colour, 1, false);
       }
+      return;
+    }
+
+    // A haul truck is a wall (#330), not a shunt: it takes nothing from the
+    // hit and the car takes a good deal more than a civilian car would cost it,
+    // and nearly all its speed.
+    for (const truck of this.trucks.cars) {
+      if (Math.abs(this.y - truck.y) > CAR_RADIUS * 2) continue;
+      if (Math.hypot(this.x - truck.x, this.z - truck.z) >= CAR_RADIUS + TRUCK_RADIUS) continue;
+      // Priced on the speed you hit it at, so before the speed is taken.
+      this.takeDamage(impactDamage(this, truck, this.maxSpeed, null) * TRUCK_HURT);
+      this.speed *= TRUCK_SPEED_KEPT;
+      this.crashFlash = 1;
+      truck.speed *= 0.3;
       return;
     }
 
@@ -1259,7 +1383,7 @@ export class CityWorld {
       // takedown is for, and a flat bump per frame saturates the whole curve
       // in three seconds of grinding along a wing.
       if (hurt > 0 && this.droveInto(cop)) this.police.rammed(this);
-      if (cop.damage >= 1) {
+      if (cop.damage >= WRECKED) {
         this.police.remove(cop);
         this.wreck(cop, unit.colour, unit.scale, true);
       }
@@ -1486,6 +1610,9 @@ export class CityWorld {
    * is drivable and the river beside it is not.
    */
   private afloat(): boolean {
+    // Over the water is not in it: a jump can clear a creek (#307), and one
+    // that does not is caught by the landing, which comes down on the bed.
+    if (this.airborne) return false;
     if (!inWater(this.city, this.x, this.z)) return false;
     return surfaceAt(this.city, this.grid, this.x, this.z, this.y).road === null;
   }
@@ -1495,8 +1622,40 @@ export class CityWorld {
    * are not, and bleed speed over open ground.
    */
   private settle(dt: number): void {
+    if (this.airborne) {
+      this.fly(dt);
+      return;
+    }
     const surface = surfaceAt(this.city, this.grid, this.x, this.z, this.y);
     this.onRoad = surface.road;
+
+    // A jump is ground with a shape (#307), ridden exactly rather than eased
+    // onto the way a deck is: at speed the car is on a twelve-metre ramp for a
+    // fifth of a second, and easing would leave it a metre short of the lip.
+    const base = surface.road ? surface.y : groundAt(this.city.terrain, this.x, this.z);
+    const on = jumpUnder(this.city.jumps, this.x, this.z);
+    if (on) {
+      const { l } = JUMP_SHAPES[on.jump.kind];
+      const t = (on.v + l / 2) / l;
+      const slope = (jumpProfile(on.jump.kind, t + 0.01) - jumpProfile(on.jump.kind, t - 0.01)) / (0.02 * l);
+      this.y = base + on.height;
+      this.pitch = Math.atan(slope) * Math.cos(this.heading - on.jump.angle);
+      this.falling = false;
+      this.fallSpeed = 0;
+      this.ramp = on;
+      return;
+    }
+    if (this.ramp) {
+      const left = this.ramp;
+      this.ramp = null;
+      // Still up where the jump was, with the ground gone from under it.
+      if (this.y > base + 0.05 * UNITS_PER_METRE) {
+        this.takeOff(left);
+        this.fly(dt);
+        return;
+      }
+    }
+    this.pitch = 0;
 
     // Off the side of a deck with nothing under it at this height: fall.
     //
@@ -1535,19 +1694,126 @@ export class CityWorld {
     }
   }
 
-  /** Does the car overlap a building footprint? Buildings are solid. */
+  /**
+   * The lie of the ground along the car's heading (#255): its grade from
+   * `SLOPE_SAMPLE` either side, and its vertical curvature from `CREST_SAMPLE`
+   * either side - negative over a brow. Read off whatever the car would drive
+   * on at each point, a road at this height if there is one and the ground if
+   * not, so a deck is flat however the hill under it runs.
+   */
+  private lie(): { grade: number; bend: number } {
+    const sx = Math.sin(this.heading);
+    const sz = Math.cos(this.heading);
+    const at = (d: number): number => {
+      const x = this.x + sx * d;
+      const z = this.z + sz * d;
+      const surface = surfaceAt(this.city, this.grid, x, z, this.y);
+      return surface.road ? surface.y : groundAt(this.city.terrain, x, z);
+    };
+    const here = at(0);
+    return {
+      grade: (at(SLOPE_SAMPLE) - at(-SLOPE_SAMPLE)) / (2 * SLOPE_SAMPLE),
+      bend: (at(CREST_SAMPLE) - 2 * here + at(-CREST_SAMPLE)) / (CREST_SAMPLE * CREST_SAMPLE),
+    };
+  }
+
+  /**
+   * Leave a jump (#307). Over the lip and going forwards, the car is thrown
+   * along the lip's slope - its speed split into how fast it climbs and how
+   * fast it carries on; off a side or back down the way it came, the ground
+   * simply ends and it drops.
+   */
+  private takeOff(from: OnJump): void {
+    const { jump } = from;
+    const { l } = JUMP_SHAPES[jump.kind];
+    const v = ((this.x - jump.at.x) * Math.sin(jump.angle) + (this.z - jump.at.z) * Math.cos(jump.angle)) / UNITS_PER_METRE;
+    const along = Math.cos(this.heading - jump.angle);
+    const overLip = v > l / 2 && this.speed > 0 && along > 0;
+    const angle = overLip ? Math.atan(lipSlope(jump.kind)) * along : 0;
+    this.climb = this.speed * Math.sin(angle);
+    this.speed *= Math.cos(angle);
+    this.airborne = true;
+    this.flight = { x: this.x, z: this.z, y: this.y, peak: this.y, time: 0 };
+  }
+
+  /**
+   * In the air: gravity and nothing else, until the car comes down on
+   * whatever is under it - the ground, a road or a deck, or another jump.
+   */
+  private fly(dt: number): void {
+    this.climb -= GRAVITY * dt;
+    this.y += this.climb * dt;
+    this.flight.peak = Math.max(this.flight.peak, this.y);
+    this.flight.time += dt;
+    this.pitch = Math.atan2(this.climb, Math.max(Math.abs(this.speed), 1));
+
+    const surface = surfaceAt(this.city, this.grid, this.x, this.z, this.y);
+    const on = jumpUnder(this.city.jumps, this.x, this.z);
+    let floor = groundAt(this.city.terrain, this.x, this.z) + (on ? on.height : 0);
+    if (surface.road && surface.y > floor) floor = surface.y;
+    if (this.y > floor || this.climb > 0) return;
+
+    // Down. What it costs is how steeply the car came down, not how far it
+    // flew: see `LAND_SOFT`.
+    const impact = (this.climb * this.climb) / Math.max(Math.hypot(this.climb, this.speed), 1);
+    const hard = impact > LAND_SOFT;
+    this.lastJump = {
+      distance: Math.hypot(this.x - this.flight.x, this.z - this.flight.z),
+      height: this.flight.peak - this.flight.y,
+      airtime: this.flight.time,
+      hard,
+    };
+    this.y = floor;
+    this.onRoad = surface.road;
+    this.grounded();
+    this.ramp = on;
+    if (hard) {
+      const t = Math.min(1, (impact - LAND_SOFT) / (LAND_HARD - LAND_SOFT));
+      this.takeDamage(DAMAGE_FALL * t);
+      this.speed *= LAND_SPEED_KEPT - (LAND_SPEED_KEPT - HIT_SPEED_KEPT) * t;
+      this.crashFlash = t;
+    } else {
+      this.speed *= LAND_SPEED_KEPT;
+      const distance = this.lastJump.distance;
+      if (distance >= REP_JUMP_MIN) {
+        this.rep.award('jump', this.level, distance / REP_JUMP_DISTANCE, `JUMP ${Math.round(distance / UNITS_PER_METRE)} M`);
+      }
+    }
+  }
+
+  /** Wheels on the ground, whatever put them there. */
+  private grounded(): void {
+    this.airborne = false;
+    this.climb = 0;
+    this.pitch = 0;
+    this.ramp = null;
+  }
+
+  /** Does the car overlap a building footprint or a set piece? Both are solid. */
   private hitsBuilding(): boolean {
     // Only what is on the ground can be hit: the interstate flies over the
     // rooftops, and a deck at 12 m does not collide with a block at street level.
-    if (this.y > CAR_RADIUS * 2) return false;
+    //
+    // Measured from the ground under the car, not from sea level. This was
+    // written for a flat city (#113), where the two were the same number; once
+    // the ground had height (#251) anything standing more than four metres
+    // above the sea stopped being solid, which was most of Marrow Field and
+    // over half the buildings in the city. Either side of the ground, so a
+    // tunnel passes under what stands on top of it.
+    const above = this.y - groundAt(this.city.terrain, this.x, this.z);
+    if (!this.airborne && Math.abs(above) > CAR_RADIUS * 2) return false;
 
     for (const building of this.grid.buildingsNear(this.x, this.z)) {
+      // In the air, a roof is somewhere a jump can clear (#307).
+      if (above > building.height) continue;
       const f = building.footprint;
       const nearestX = Math.max(f.minX, Math.min(this.x, f.maxX));
       const nearestZ = Math.max(f.minZ, Math.min(this.z, f.maxZ));
       if (Math.hypot(this.x - nearestX, this.z - nearestZ) < CAR_RADIUS) return true;
     }
-    return false;
+    // A crashed plane or a silo is as solid as a wall (#295), though it is
+    // turned to any angle and so is not in the grid's axis-aligned buildings.
+    return hitsSetPiece(this.city.setPieces, this.x, this.z, this.y, CAR_RADIUS, CAR_HEIGHT);
   }
 
   /**

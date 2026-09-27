@@ -78,7 +78,7 @@ function placeOnLongestStraight(world) {
   let best = null;
   for (const road of world.city.roads) {
     if (road.bridge || road.class === 'interstate' || road.class === 'ramp') continue;
-    if (road.surface === 'dirt') continue;
+    if (road.surface !== 'asphalt') continue;
     if (!best || road.length > best.length) {
       if (nearShop(road)) continue;
       best = road;

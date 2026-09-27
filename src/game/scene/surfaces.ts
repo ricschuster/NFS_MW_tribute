@@ -148,6 +148,42 @@ function dirtTile(): HTMLCanvasElement {
 }
 
 /**
+ * Crushed stone for a gravel road (#327): pale, and made of pieces rather than
+ * of patches. Many more stones than the dirt tile has, in a range of sizes and
+ * a range of greys, with dark gaps between them, so it reads as stone at the
+ * distance a road is seen from and not as a lighter mud.
+ */
+function gravelTile(): HTMLCanvasElement {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Wide, faint dust drifts under everything, so the stones do not sit on a flat colour.
+  speckle(size, 14, 211, (x, y, i) => {
+    ctx.fillStyle = hash(i * 7.1) > 0.5 ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * (0.08 + hash(i * 2.3) * 0.16), size * (0.05 + hash(i * 4.9) * 0.12), hash(i) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // The stones: small, angular-ish (short ellipses at random angles), light and dark.
+  speckle(size, 1100, 251, (x, y, i) => {
+    const r = 0.7 + hash(i * 3.9) * 2.6;
+    const light = hash(i * 6.7);
+    ctx.fillStyle = light > 0.55 ? `rgba(255,255,255,${0.16 + light * 0.2})` : `rgba(0,0,0,${0.14 + (1 - light) * 0.2})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * (0.55 + hash(i * 1.7) * 0.4), hash(i * 9.1) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  return canvas;
+}
+
+/**
  * How many times the tile repeats over a ground plane of this size.
  *
  * Pulled out and exported because it is the part that fails quietly. The
@@ -264,6 +300,7 @@ export function blockTexture(kind: 'paving' | 'grass'): THREE.CanvasTexture {
 
 let asphaltCached: THREE.CanvasTexture | null = null;
 let dirtCached: THREE.CanvasTexture | null = null;
+let gravelCached: THREE.CanvasTexture | null = null;
 
 function roadTexture(
   cached: THREE.CanvasTexture | null,
@@ -304,12 +341,20 @@ export function dirtTexture(width: number, depth: number): THREE.CanvasTexture {
   return dirtCached;
 }
 
+/** The crushed-stone texture for a gravel road (#327), tiled the same way. */
+export function gravelTexture(width: number, depth: number): THREE.CanvasTexture {
+  gravelCached = roadTexture(gravelCached, gravelTile, width, depth);
+  return gravelCached;
+}
+
 /** Drop the shared textures. For a scene teardown that means all of them. */
 export function disposeSurfaces(): void {
   asphaltCached?.dispose();
   asphaltCached = null;
   dirtCached?.dispose();
   dirtCached = null;
+  gravelCached?.dispose();
+  gravelCached = null;
   for (const texture of blockCache.values()) texture.dispose();
   blockCache.clear();
 }

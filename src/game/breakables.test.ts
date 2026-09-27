@@ -17,6 +17,8 @@ import {
 const city = kestrelBay();
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const M = UNITS_PER_METRE;
+/** The ones `breakablesFor` picked, which its placement rules are about. */
+const generated = city.breakables.filter((b) => !b.placed);
 
 describe('what there is to break', () => {
   it('puts stacks on the industrial kerbs', () => {
@@ -33,11 +35,11 @@ describe('what there is to break', () => {
   });
 
   it('keeps them apart, so a corner is not four of them', () => {
-    for (let i = 0; i < city.breakables.length; i++) {
-      for (let j = i + 1; j < city.breakables.length; j++) {
+    for (let i = 0; i < generated.length; i++) {
+      for (let j = i + 1; j < generated.length; j++) {
         const gap = Math.hypot(
-          city.breakables[i].at.x - city.breakables[j].at.x,
-          city.breakables[i].at.z - city.breakables[j].at.z,
+          generated[i].at.x - generated[j].at.x,
+          generated[i].at.z - generated[j].at.z,
         );
         expect(gap).toBeGreaterThanOrEqual(BREAKER_SPACING - 1);
       }
@@ -53,7 +55,7 @@ describe('what there is to break', () => {
     // Every road, not the spatial index: a thing standing just outside a
     // road's cells is exactly the case being checked, and the index would
     // report nothing rather than a distance.
-    for (const thing of city.breakables) {
+    for (const thing of generated) {
       const near = city.roads.reduce(
         (best, road) => Math.min(best, distanceToRoad(city, road, thing.at.x, thing.at.z)),
         Infinity,
@@ -114,6 +116,36 @@ describe('breaking one', () => {
     const before = world.speed;
     world.step(STEP, NONE);
     expect(world.speed).toBeGreaterThan(before * BREAKER_SPEED_KEPT * 0.95);
+  });
+
+  // "Barely slows you down" measured over one step, and the next half second
+  // is where it went wrong: the debris came down in front of the car and held
+  // it there for the whole time it lay in the road.
+  it('lets you out the far side, not pinned behind its own debris', () => {
+    const world = still();
+    const thing = world.city.breakables.find((b) => b.kind === 'gate' && b.placed) ?? world.city.breakables[0];
+    // Head-on, from twenty metres out along the way the gate faces.
+    world.heading = thing.angle;
+    world.x = thing.at.x - Math.sin(thing.angle) * 20 * M;
+    world.z = thing.at.z - Math.cos(thing.angle) * 20 * M;
+    world.y = thing.y;
+    world.speed = world.maxSpeed * 0.5;
+    const drive = { ...NONE, up: true };
+    for (let i = 0; i < 90; i++) world.step(STEP, drive);
+    expect(world.broken.has(thing.id)).toBe(true);
+    const past = (world.x - thing.at.x) * Math.sin(thing.angle) + (world.z - thing.at.z) * Math.cos(thing.angle);
+    expect(past / M).toBeGreaterThan(20);
+    expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.4);
+
+    // Once through, it is wreckage like any other: turn round into it and it
+    // is solid.
+    const debris = world.wrecks.find((w) => w.debris === false || w.entered)!;
+    world.heading = thing.angle + Math.PI;
+    world.x = debris.x + Math.sin(thing.angle) * 8 * M;
+    world.z = debris.z + Math.cos(thing.angle) * 8 * M;
+    world.speed = world.maxSpeed * 0.3;
+    for (let i = 0; i < 30; i++) world.step(STEP, drive);
+    expect(Math.hypot(world.x - debris.x, world.z - debris.z) / M).toBeGreaterThan(3);
   });
 
   it('stays down once it is down', () => {

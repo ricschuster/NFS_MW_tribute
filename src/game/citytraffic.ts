@@ -234,7 +234,8 @@ export class CityTraffic {
    */
   private nextRoad(car: TrafficCar, node: number): CityRoad | null {
     const heading = this.direction(car);
-    const options = exitsFrom(this.city, car, node);
+    // A car that reaches a gravel road turns round instead of driving in.
+    const options = exitsFrom(this.city, car, node).filter((road) => road.surface !== 'gravel');
     if (options.length === 0) return null;
 
     let best: CityRoad | null = null;
@@ -275,7 +276,11 @@ export class CityTraffic {
     const x = at.x + Math.sin(angle) * distance;
     const z = at.z + Math.cos(angle) * distance;
 
-    const nearby = this.grid.roadsNear(x, z).filter((road) => road.length > road.width * 2);
+    // Never a gravel road (#327): the quarry's roads are private, and the
+    // trucks that belong on them are their own thing (#330).
+    const nearby = this.grid
+      .roadsNear(x, z)
+      .filter((road) => road.length > road.width * 2 && road.surface !== 'gravel');
     if (nearby.length === 0) return null;
 
     const road = nearby[this.rng.int(nearby.length)];

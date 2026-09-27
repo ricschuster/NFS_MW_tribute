@@ -9,12 +9,15 @@ import {
   CITY_SEED,
   CITY_STREET_GRID,
   DISTRICTS,
+  POND_LIFT,
+  QUARRY_PONDS,
   TERRAIN_RELIEF,
   TERRAIN_SHORE,
   UNITS_PER_METRE,
 } from '../constants';
 import { makeWater } from './water';
 import { landBodies } from './bodies';
+import { groundAt } from './terrain';
 import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
@@ -233,15 +236,17 @@ describe('the street network', () => {
     }
   });
 
-  // Marrow Field is dirt now (#295, see its own describe block below);
-  // everything else on the current seed should still come out paved.
+  // Marrow Field (#295) is dirt and Halloway Quarry (#327) is gravel, each in
+  // its own describe block below; everything else on the current seed should
+  // still come out paved.
   it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
-      expect(['asphalt', 'dirt']).toContain(road.surface);
+      expect(['asphalt', 'dirt', 'gravel']).toContain(road.surface);
     }
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    const unpaved = city.roads.filter((r) => r.surface !== 'asphalt');
     expect(dirt.length).toBeGreaterThan(0);
-    expect(dirt.length).toBeLessThan(city.roads.length / 20);
+    expect(unpaved.length).toBeLessThan(city.roads.length / 8);
   });
 
   // Roads used to be axis-aligned and this test used to say so. Boulevards
@@ -436,7 +441,9 @@ describe('water', () => {
   // `isChannel` is what still answers "does this stretch of water divide the
   // city" (see the bridge-spacing test below).
   it('generates one body of water with real coastline detail in its holes', () => {
-    expect(city.water.map((w) => w.kind)).toEqual(['bay']);
+    // The bay, and then the quarry's ponds (#329), which are added to the
+    // finished city and are not part of the coastline.
+    expect(city.water.filter((w) => w.kind !== 'pond').map((w) => w.kind)).toEqual(['bay']);
     const [sea] = city.water;
     expect(sea.holes?.length).toBeGreaterThan(0);
     for (const hole of sea.holes ?? []) {
@@ -1356,7 +1363,9 @@ describe('open land', () => {
     for (const find of city.finds) {
       expect(parks.some((p) => inside(p.bounds, find.at.x, find.at.z))).toBe(false);
     }
-    for (const thing of city.breakables) {
+    // Hand-placed ones are exempt (#295): Marrow Field is parkland to the
+    // generator, and a gate across its entrance was put there on purpose.
+    for (const thing of city.breakables.filter((b) => !b.placed)) {
       expect(parks.some((p) => inside(p.bounds, thing.at.x, thing.at.z))).toBe(false);
     }
   });
@@ -1598,8 +1607,10 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
   };
 
+  const isFieldDirt = (r: CityRoad) => r.surface === 'dirt';
+
   it('marks the runway and taxiway dirt, and leaves the rest of the network paved', () => {
-    const dirt = city.roads.filter((r) => r.surface === 'dirt');
+    const dirt = city.roads.filter(isFieldDirt);
     // The runway is 2300 m, the taxiway runs beside it for most of that
     // length twice, plus two short end caps: a few km, not a few hundred
     // metres and not a meaningful share of a 70+ km network either.
@@ -1609,16 +1620,23 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     expect(city.roads.length - dirt.length).toBeGreaterThan(dirt.length * 10);
   });
 
-  it('keeps every dirt road within the runway/taxiway envelope', () => {
+  it('keeps dirt to the runway, the taxiways and the junction-free roads to them', () => {
     // RUNWAY_WIDTH/2 + TAXIWAY_OFFSET is ~87 m, and `markAirfieldDirt` allows
     // 15% past that; a generous round-number ceiling here keeps this test
     // from having to import the constants just to recompute the same sum.
+    //
+    // Past it, dirt is the field's access roads (`markDirtAccess`), and
+    // those run without a junction: a dirt road out there with a side street
+    // off it would be the airfield's dirt leaking onto the network, which is
+    // what this test was written to catch.
     const ceiling = m(110);
-    for (const road of city.roads.filter((r) => r.surface === 'dirt')) {
-      const mid = midOf(road);
-      expect(distanceToSegment(mid.x, mid.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z)).toBeLessThan(
-        ceiling,
-      );
+    const away = (p: { x: number; z: number }) =>
+      distanceToSegment(p.x, p.z, runwayA.x, runwayA.z, runwayB.x, runwayB.z);
+    for (const road of city.roads.filter(isFieldDirt)) {
+      if (away(midOf(road)) < ceiling) continue;
+      for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
+        if (away(end.pos) >= ceiling) expect(end.roads.length).toBeLessThanOrEqual(2);
+      }
     }
   });
 
@@ -1717,5 +1735,137 @@ describe('Marrow Field, the disused airfield (#295)', () => {
       ).toBeLessThan(ceiling);
       expect(water.isWater(weed.at.x, weed.at.z)).toBe(false);
     }
+  });
+});
+
+describe('Halloway Quarry, a working quarry (#323, #327)', () => {
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+  const away = (p: { x: number; z: number }) => Math.hypot(p.x - pit.at.x, p.z - pit.at.z);
+  const midOf = (road: CityRoad) => {
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+  };
+  const inPit = city.roads.filter((r) => away(midOf(r)) <= pit.radius * 1.2);
+
+  it('lays the haul road and the rim road in gravel', () => {
+    // 6.4 km of haul road and about 4 km of rim: most of the ten-odd km that
+    // `QUARRY_DIRT_REACH` was measured against.
+    const totalM = inPit.reduce((sum, r) => sum + r.length, 0) / M;
+    expect(totalM).toBeGreaterThan(8000);
+    expect(inPit.every((r) => r.surface === 'gravel' || r.bridge)).toBe(true);
+  });
+
+  it('carries the gravel out along the way in, and stops at a junction', () => {
+    // Beyond the reach, dirt is the access road only, and `markDirtAccess`
+    // stops at the first real junction: a dirt road out there with a side
+    // street off it would be the quarry's dirt leaking onto the network.
+    const past = city.roads.filter((r) => r.surface === 'gravel' && away(midOf(r)) > pit.radius * 1.2);
+    const near = past.filter((r) => away(midOf(r)) < pit.radius * 3);
+    expect(near.length).toBeGreaterThan(0);
+    // A node with dirt on both sides is the middle of the chain and has to be a
+    // plain through point; one with dirt on one side is where the chain ends,
+    // and that is allowed to be the junction it stopped at.
+    for (const road of near) {
+      for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
+        if (away(end.pos) <= pit.radius * 1.3) continue;
+        const looseSides = end.roads.filter((id) => city.roads[id].surface === 'gravel').length;
+        if (looseSides >= 2) expect(end.roads.length).toBe(2);
+      }
+    }
+  });
+
+  it('has no lamps in the pit', () => {
+    const lamps = city.furniture.filter((p) => p.kind === 'lamp' && away(p.at) < pit.radius * 1.2);
+    expect(lamps.length).toBe(0);
+  });
+
+  it('puts a plant on the floor and a yard on the rim, clear of every road and the water', () => {
+    const built = city.buildings.filter((b) => {
+      const f = b.footprint;
+      return away({ x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 }) < pit.radius * 2;
+    });
+    // Plant and workshop on the floor, office and weighbridge on the rim.
+    expect(built.length).toBe(4);
+    const floor = built.filter((b) => away({ x: (b.footprint.minX + b.footprint.maxX) / 2, z: (b.footprint.minZ + b.footprint.maxZ) / 2 }) < pit.radius * 0.5);
+    expect(floor.length).toBe(2);
+    for (const b of built) {
+      expect(touchesWater(b.footprint)).toBe(false);
+      // Working, not abandoned: that is the whole point of this place.
+      expect(b.derelict).toBeFalsy();
+      const cx = (b.footprint.minX + b.footprint.maxX) / 2;
+      const cz = (b.footprint.minZ + b.footprint.maxZ) / 2;
+      const half = Math.max(b.footprint.maxX - b.footprint.minX, b.footprint.maxZ - b.footprint.minZ) / 2;
+      for (const road of city.roads) {
+        const a = city.nodes[road.a].pos;
+        const c = city.nodes[road.b].pos;
+        expect(distanceToSegment(cx, cz, a.x, a.z, c.x, c.z)).toBeGreaterThan(half);
+      }
+    }
+  });
+
+  it('keeps every building on a block, or parkland paves over it', () => {
+    for (const b of city.buildings) {
+      const f = b.footprint;
+      if (away({ x: (f.minX + f.maxX) / 2, z: (f.minZ + f.maxZ) / 2 }) > pit.radius * 2) continue;
+      expect(city.blocks.some((k) => !k.open && k.bounds.minX <= f.minX && k.bounds.maxX >= f.maxX && k.bounds.minZ <= f.minZ && k.bounds.maxZ >= f.maxZ)).toBe(true);
+    }
+  });
+  // Settling ponds on the pit floor and the bench (#329): water bodies on the
+  // finished city, so the sim and the renderer see the same thing, and kept
+  // clear of everything the layout put near them.
+  describe('settling ponds (#329)', () => {
+    const ponds = city.water.filter((b) => b.kind === 'pond');
+    const centre = (ring: { x: number; z: number }[]) => ({
+      x: ring.reduce((s, p) => s + p.x, 0) / ring.length,
+      z: ring.reduce((s, p) => s + p.z, 0) / ring.length,
+    });
+    const reach = (ring: { x: number; z: number }[]) => {
+      const c = centre(ring);
+      return Math.max(...ring.map((p) => Math.hypot(p.x - c.x, p.z - c.z)));
+    };
+
+    it('has one for each site, sitting on the ground it was dug in rather than at sea level', () => {
+      expect(ponds.length).toBe(QUARRY_PONDS.length);
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        expect(pond.level).toBeGreaterThan(m(2));
+        expect(pond.level!).toBeCloseTo(groundAt(city.terrain, c.x, c.z) + POND_LIFT, 6);
+        expect(inWater(city, c.x, c.z)).toBe(true);
+      }
+    });
+
+    it('is clear of every road and building', () => {
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        const r = reach(pond.outline);
+        for (const road of city.roads) {
+          const a = city.nodes[road.a].pos;
+          const b = city.nodes[road.b].pos;
+          expect(distanceToSegment(c.x, c.z, a.x, a.z, b.x, b.z) - road.width / 2).toBeGreaterThan(r);
+        }
+        for (const b of city.buildings) {
+          const f = b.footprint;
+          const nx = Math.max(f.minX, Math.min(c.x, f.maxX));
+          const nz = Math.max(f.minZ, Math.min(c.z, f.maxZ));
+          expect(Math.hypot(c.x - nx, c.z - nz)).toBeGreaterThan(r);
+        }
+      }
+    });
+
+    it('has nothing placed in it', () => {
+      for (const pond of ponds) {
+        const c = centre(pond.outline);
+        const r = reach(pond.outline);
+        const things = [
+          ...city.setPieces.map((p) => p.at),
+          ...city.breakables.map((p) => p.at),
+          ...city.collectibles.map((p) => p.at),
+          ...city.finds.map((p) => p.at),
+          ...city.jumps.map((p) => p.at),
+        ];
+        for (const at of things) expect(Math.hypot(at.x - c.x, at.z - c.z)).toBeGreaterThan(r);
+      }
+    });
   });
 });
