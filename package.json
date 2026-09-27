@@ -39,7 +39,8 @@
     "drivers": "node tools/drivers.mjs",
     "nitro": "node tools/nitro.mjs",
     "ramps": "node tools/ramps.mjs",
-    "grades": "node tools/grades.mjs"
+    "grades": "node tools/grades.mjs",
+    "mapfit": "node tools/mapfit.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
