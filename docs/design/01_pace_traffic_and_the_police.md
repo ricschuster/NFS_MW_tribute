@@ -6,6 +6,7 @@
 - Evidence: [the gameplay review](../research/nfs-most-wanted-2012-gameplay.md)
   and its per-second data.
 - Touches: [ADR-0005](../decisions/0005-the-shape-of-kestrel-bay.md),
+  [`docs/map-areas.md`](../map-areas.md),
   [ADR-0007](../decisions/0007-relief.md), #14, #70, #177, #180, #204, #210.
 
 ## Why this document exists
@@ -31,6 +32,7 @@ section explains how.
 ## What was surveyed
 
 The project brief; ADRs 0001-0010; `docs/HANDOFF.md`; `docs/map-exploration.md`;
+`docs/map-areas.md` (the order the map is finished in);
 #269 (the map's goal, in the owner's words); the issues that set pursuit, traffic,
 race and feel behaviour (#14, #70, #72, #166, #177, #180, #204, #210); and the
 code those decisions live in (`constants.ts`, `cityworld.ts`, `citypolice.ts`,
@@ -105,10 +107,14 @@ driver.
   being *"chased along at top speed"*. Nothing about the map's extent needs to
   move, but the reasoning behind it should be restated at the pace the game is
   actually played at.
-- **What #268 and the race routes are built for.** Downtown is being rebuilt
-  (#268), and `routesFor` finds no routes at all on the authored map yet
-  (`docs/HANDOFF.md`, "Known problems"). Both are going to be decided in the
-  next stretch of work, and both decide pace.
+- **What the areas and their routes are built for.** The map is being
+  finished one area at a time, and `docs/map-areas.md` records that downtown
+  (#268) goes **last**, by decision on 2026-09-18. Until then the generator's
+  circuits have no streets to run on (`routesFor` finds none on the authored
+  map; `docs/HANDOFF.md`, "Known problems"), so each finished area gets its
+  event from a route laid by hand (`placedRoutes`, the Marrow Field Run,
+  #311). Every one of those, and every major road an area adds, decides pace
+  now, long before downtown does.
 - **Nitrous.** #204's finding is a consequence of pace. On roads that can be
   driven at 75% of top, the boost has somewhere to go again.
 
@@ -119,9 +125,11 @@ driver.
 - **B. Make the reference pace the target, and get there through roads and
   routes, not the car.** Race routes run along arterials, boulevards and the
   interstate, with long legs and few forced stops; a route is judged by its
-  average pace, not only its length. Downtown's main streets are wide enough
-  to be driven fast, as #268's "grown, not planned" allows: a grown city still
-  has main streets. The ladder is re-fitted afterwards.
+  average pace, not only its length. This applies first to the hand-laid
+  routes each area gets, and later to the generator's circuits. When downtown's
+  turn comes, its main streets are wide enough to be driven fast, as #268's
+  "grown, not planned" allows: a grown city still has main streets. The
+  ladder is re-fitted afterwards.
 - **C. Get there through the car:** more grip, more top speed. This is
   cheaper, but it does not work on its own. The limit is not the car, and a
   faster car on the same roads meets the same traffic and the same corners
@@ -129,20 +137,25 @@ driver.
 
 ### Recommendation: B, starting with a measurement
 
-1. **Measure a human, not only the bot.** Record a person driving the
-   existing routes and read their pace the way the review read the reference
+1. **Measure a human, not only the bot.** Record a person driving what
+   exists today (the Marrow Field Run, and free roam across the finished
+   areas) and read their pace the way the review read the reference
    game's (the tools are in `docs/research/nfs-mw-2012/tools/`). Until that
    number exists, "Crosstown is half the reference pace" is partly a claim
    about `citydriver`.
 2. **Set a target as a fraction of top speed for a human in a race**, around
    0.6-0.7, and give `citylap` a corresponding bot target once the bot has
    been checked against the human.
-3. **Build the race routes to the target**, as the network returns (#268,
-   #301). Following ADR-0010: sketch candidate routes over the authored map
-   and measure them with the grip model before wiring anything into
-   `routesFor`.
-4. **Re-fit the ladder last**, as ADR-0007 already expected (*"one sweep, one
-   re-tune"*).
+3. **Build to the target area by area.** Add a pace check to what "done"
+   means for an area in `docs/map-areas.md`: its hand-laid event route is
+   driven, and its average is measured against the target. The same target
+   applies to the generator's circuits when they return (#301), and to
+   downtown last. Following ADR-0010, a route is sketched and measured before
+   it is wired in.
+4. **Re-fit the ladder last.** Re-deriving the rival pace fractions is already
+   owed (since #255) and waits for a city full of routes, as ADR-0007 expected
+   (*"one sweep, one re-tune"*). The target set here is what that re-fit aims
+   at.
 
 ## Question 2: how much traffic?
 
@@ -307,9 +320,12 @@ outwait.**
    traffic rate with the review's detector. Cheap, and it turns two of these
    questions from judgement into numbers.
 2. **Traffic (Q2).** A constants change and a re-recorded baseline.
-3. **Police in ladder races (Q3), with #340 and #341.** Independent of the map.
-4. **Pace through routes and roads (Q1)**, as part of #268 and the route
-   rebuild, sketched first under ADR-0010. Then re-fit the ladder.
+3. **Police in ladder races (Q3), with #340 and #341.** This needs races,
+   not a finished map: it can be built and played on a hand-laid route.
+4. **Pace through routes and roads (Q1), area by area** in the order
+   `docs/map-areas.md` sets, with a pace check in each area's definition of
+   done. Downtown comes last there, and so it does here. Then re-fit the
+   ladder, when the city has its circuits back.
 5. **Bodies for the field (Q4)**, once races exist again.
 
 Q1 and Q3 change recorded decisions (ADR-0005's sizing rationale; #70's
