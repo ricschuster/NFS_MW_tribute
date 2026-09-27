@@ -4,14 +4,19 @@ The rebuild of Kestrel Bay (ADR-0007 to ADR-0009) is finished one area at a
 time, and this file is the list. Update it in the same PR as the work that
 moves an area on, the way `docs/HANDOFF.md` is kept.
 
-## Paused: does the map fit? (2026-09-27)
+## Resumed 2026-09-27: the frame fits, and the freeway comes first
 
-**Area work is paused** until #363 answers whether the map as it stands
-carries what the gameplay review and ADR-0011 changed: the reference pace,
-fast roads, roadblocks on race routes, police in races, events per car, and
-the items below under "What the rebuild should include". Do not start the next
-area until #363's report says what, if anything, changes first. The order and
-checklist below stand unless it says otherwise.
+Area work was paused for #363, which found that the map's frame (land,
+districts, main roads, the freeway sketch) carries everything the gameplay
+review and ADR-0011 asked for; what is short is the fill
+(`docs/research/map-fit-363.md`). Area work resumes, with two changes decided
+by the owner the same day:
+
+- **The freeway comes first.** Fast cars only matter once the freeway is
+  built, not drawn (the audit's question 2), so #261 and #301 go ahead of the
+  next area.
+- **The pace check has a tool.** `npm run mapfit` measures a route; an area's
+  event route should reach about 60% of top speed on its careful line.
 
 ## Downtown goes last
 
