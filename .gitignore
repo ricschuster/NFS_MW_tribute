@@ -5,3 +5,5 @@ screenshots/
 *.local
 .DS_Store
 *.log
+# Third-party reference footage: studied, never committed
+reference/

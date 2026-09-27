@@ -24,6 +24,10 @@ it names as its own influences, Boston and Pittsburgh, one of which gave us the
 number for how tall a hill should be. Where those ADRs say "the reference city",
 that is what they mean; they were written under an earlier reading of this rule
 that treated the two things as one.
+The game itself was later studied from a recorded playthrough -
+speeds, traffic, pursuits, radio - in
+[docs/research/nfs-most-wanted-2012-gameplay.md](docs/research/nfs-most-wanted-2012-gameplay.md);
+the footage lives in `reference/`, which is git-ignored.
 
 Studying a map is not copying one. The test is whether anything third-party is
 *in* what we ship, and the answer stays no.
