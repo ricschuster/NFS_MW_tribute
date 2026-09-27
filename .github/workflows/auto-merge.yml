@@ -1,0 +1,34 @@
+name: Enable auto-merge
+
+# Arms GitHub's auto-merge on any PR opened by ricschuster, so a PR merges
+# itself as soon as the required check (ci.yml's "build") and branch
+# protection are satisfied, with no `gh pr merge --auto` step after opening
+# it. Scoped to this one author on purpose: a PR from anyone or anything else
+# (a future collaborator, Dependabot) still merges by hand. A draft is not
+# armed (GitHub refuses it); it is when it is marked ready for review.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    if: github.actor == 'ricschuster' && !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Enable auto-merge
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+        env:
+          # Auto-merge merges as whoever armed it. Armed with the built-in
+          # GITHUB_TOKEN that is github-actions, and GitHub fires no
+          # follow-on events for its actions: "Closes #N" would not close the
+          # issue, and the push to main would not start deploy.yml or
+          # update-branches.yml. AUTO_MERGE_TOKEN (the fine-grained PAT
+          # update-branches.yml uses) makes the merge ricschuster's.
+          # Falls back to GITHUB_TOKEN if the secret is ever removed.
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
