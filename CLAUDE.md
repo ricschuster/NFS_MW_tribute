@@ -506,11 +506,14 @@ it current in the same PR as the work.
 with [ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) before
 touching the generator: the districts and the places are *authored data* in
 `city/plan.ts` now, the landmass and the terrain are frozen (`CITY_LAND_STREAM`),
-and `CITY_STREET_GRID` and `CITY_FREEWAY` are both **off** while the map is
-rebuilt from the routed roads outward. Those two are switches rather than
-deletions because `fillSuperblock` and `interstate.ts` are the only things that
-know how a district becomes blocks and how a deck is built, and both are wanted
-back - just not laid with a ruler.
+and `CITY_STREET_GRID` is **off** while the map is rebuilt from the routed
+roads outward. It is a switch rather than a deletion because `fillSuperblock`
+is the only thing that knows how a district becomes blocks, and that is wanted
+back - just not laid with a ruler. `CITY_FREEWAY` is **on** again (#371): the
+loop, its tunnels and its ramps are all authored (`city/freeway.ts`), each
+ramp's foot is joined to the drawn roads by a boulevard
+(`city/rampconnectors.ts`), and the old rolled spurs are off
+(`FREEWAY_SPURS`).
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it

@@ -402,9 +402,10 @@ for (const car of [starter, fastest]) {
 out.runs = { longest: runs.slice(0, 20), over1km: runs.filter((r) => r > 1000).length };
 log('');
 
-// The freeway loop, as authored (it is not built while CITY_FREEWAY is off).
+// The freeway loop, as authored: its polyline rather than the built deck, so
+// this reads the same with CITY_FREEWAY on or off.
 const loopPts = FREEWAY_LOOP.map((p) => ({ x: p.x / U, z: p.z / U, w: 24, surface: 'asphalt', flat: true }));
-log('2b. THE FREEWAY LOOP (authored, not built today), one flying lap:');
+log(`2b. THE FREEWAY LOOP (authored, ${K.CITY_FREEWAY ? 'built' : 'not built while CITY_FREEWAY is off'}), one flying lap:`);
 out.freeway = {};
 for (const car of [starter, fastest]) {
   for (const [mode, m] of Object.entries(MODES)) {

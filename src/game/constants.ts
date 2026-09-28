@@ -474,18 +474,17 @@ export const ROAD_CUT_MARGIN = 0.88;
 /**
  * Whether the elevated freeway is built.
  *
- * Off, with the grid. It is a rectangle inset from the map bounds - a shape
- * chosen by two numbers and no landscape - and at 21 km it was the largest and
- * straightest thing in every picture of the city. ADR-0008 rule 6 wants a ring
- * round the whole city and a beltway round downtown, both following the ground
- * (#261, #265); neither of those is what this is, and shrinking its inset and
- * halving its ramps did not make it one.
+ * It was switched off with the grid, when it was a rectangle inset from the
+ * map bounds - a shape chosen by two numbers and no landscape, and at 21 km the
+ * largest and straightest thing in every picture of the city. ADR-0008 rule 6
+ * wanted a ring following the ground instead (#261, #265).
  *
- * A switch rather than a deletion for the same reason as the grid: `interstate.ts`
- * knows how a deck, its ramps, its pillars and its tunnel are built, and all of
- * that is wanted. What is not wanted is a rectangle.
+ * On again since #371, because nothing about it is chosen by a number any more:
+ * the loop and its tunnels were drawn (#261, `city/freeway.ts`), and so were its
+ * ramps, as markers joined to the drawn roads by `rampconnectors.ts`. Still a
+ * switch, so the generator can be looked at without it.
  */
-export const CITY_FREEWAY = false;
+export const CITY_FREEWAY = true;
 
 /**
  * How far a piece of leftover parkland (#185) will reach for a quarter to belong
@@ -1109,8 +1108,16 @@ export const INTERSTATE_SEGMENT = m(60);
  * every long fast line in the city is the same line. Spurs run off it to the
  * map edges, which gives the network ends as well as a middle - and an end is
  * somewhere a pursuit can be pushed towards.
+ *
+ * **None, while the loop is authored** (#371). They were rolled, not drawn:
+ * three straight decks at a flat 12 m in random directions from the loop to
+ * the coast, with no ramps and a dead end at the shore. Switched on against
+ * the authored map, one ran through Halloway Quarry with a tree's canopy up
+ * through its deck and 20 m of hillside over it a little further on, and none
+ * had ever been seen in the freeway editor, which only shows the loop. A spur
+ * worth having is one somebody drew; the mechanism stays for when one is.
  */
-export const FREEWAY_SPURS = 3;
+export const FREEWAY_SPURS = 0;
 /** A spur leaves the loop at a corner-ish point and heads for the nearest edge. */
 export const FREEWAY_SPUR_MIN = m(700);
 
