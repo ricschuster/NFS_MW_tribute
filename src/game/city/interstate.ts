@@ -75,6 +75,17 @@ import type { CityNode, CityRoad, NodeLevel, Rect, Vec2 } from './types';
  * because an authored choice is not a roll to be overruled by one. Only the
  * remaining `TUNNEL_COUNT - tunnelAnchors.length` tunnels are still found by
  * search, kept `TUNNEL_SPACING` clear of the authored ones same as any other.
+ *
+ * **So can ramps** (#371). `rampsFor` lands a ramp only on a surface junction
+ * that already exists 190-320 m to the side of the deck, and the authored
+ * network has about one of those along the whole loop. `rampAnchors` are where
+ * ramps come down instead: each gets a station on the deck at its nearest
+ * point and a ramp from there to a new surface node on the ground at the
+ * anchor, which is the ramp's foot and is left for the caller to join to the
+ * streets. Unlike a tunnel anchor, a ramp anchor *is* checked, and a bad one
+ * throws rather than being skipped: a ramp that silently is not there is a
+ * way onto the freeway nobody finds out is missing until they drive to it.
+ * With anchors, `rampsFor` is not asked at all; it stays for a loop without.
  */
 export function addInterstate(
   rng: Rng,
@@ -85,8 +96,10 @@ export function addInterstate(
   terrain: Terrain,
   path: Vec2[],
   tunnelAnchors: Vec2[] = [],
+  rampAnchors: Vec2[] = [],
 ): void {
   const edges = buildEdges(path);
+  const authored = authoredRamps(nodes, edges, path, tunnelAnchors, rampAnchors, water, terrain);
   const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
   const anchoredAlong = tunnelAnchors.map((p) => nearestAlong(edges, p));
   const profile = heightProfile(
@@ -111,7 +124,7 @@ export function addInterstate(
   const built: { node: CityNode; edge: Edge }[] = [];
 
   for (const edge of edges) {
-    const ramps = rampsFor(rng, edge, surface, water);
+    const ramps = rampAnchors.length > 0 ? authored.get(edge) ?? [] : rampsFor(rng, edge, surface, water);
     const stations = stationsAlong(edge, ramps);
 
     for (const station of stations) {
@@ -124,7 +137,12 @@ export function addInterstate(
       built.push({ node, edge });
 
       // A ramp only makes sense where the deck is actually above the street.
-      if (station.ramp && node.level === 'elevated') {
+      // An authored one has already been held to that (`rampMarkerProblem`),
+      // and its foot is a new node rather than a junction with a street
+      // running through it, so there is nothing to set it aside from (#212).
+      if (station.ramp && authored.size > 0) {
+        link(roads, nodes, node, station.ramp, 'ramp');
+      } else if (station.ramp && node.level === 'elevated') {
         link(roads, nodes, node, footFor(nodes, roads, node, station.ramp), 'ramp');
       }
     }
@@ -136,6 +154,38 @@ export function addInterstate(
   if (previous && first) link(roads, nodes, previous, first, 'interstate');
 
   addSpurs(rng, bounds, path, built, nodes, roads, water);
+}
+
+/**
+ * The authored ramps' feet, by the edge of the loop each leaves from.
+ *
+ * Every anchor is held to `rampMarkerProblem` first and throws if it fails,
+ * since by then it has passed the editor and `freeway.test.ts` both and
+ * something has moved underneath it. The foot is on the ground at the anchor,
+ * explicitly `surface` for the same reason `footFor`'s is: on a hillside its
+ * height is above zero, and `make` would call that elevated.
+ */
+function authoredRamps(
+  nodes: CityNode[],
+  edges: Edge[],
+  path: Vec2[],
+  tunnelAnchors: Vec2[],
+  rampAnchors: Vec2[],
+  water: Water,
+  terrain: Terrain,
+): Map<Edge, { at: number; node: CityNode }[]> {
+  const byEdge = new Map<Edge, { at: number; node: CityNode }[]>();
+  for (const anchor of rampAnchors) {
+    const problem = rampMarkerProblem(path, tunnelAnchors, anchor, water);
+    if (problem) {
+      const at = `(${Math.round(anchor.x / UNITS_PER_METRE)}, ${Math.round(anchor.z / UNITS_PER_METRE)})`;
+      throw new Error(`ramp marker ${at} cannot take a ramp: ${problem}`);
+    }
+    const [edge, at] = whereAlong(edges, nearestAlong(edges, anchor));
+    const foot = make(nodes, anchor, groundAt(terrain, anchor.x, anchor.z), 'surface');
+    byEdge.set(edge, [...(byEdge.get(edge) ?? []), { at, node: foot }]);
+  }
+  return byEdge;
 }
 
 /**
