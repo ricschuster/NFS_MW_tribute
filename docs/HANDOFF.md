@@ -11,6 +11,26 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   the editor and in `freeway.test.ts` alike. The rolled spurs are off
   (`FREEWAY_SPURS = 0`): nobody drew them, and one ran through the quarry.
   Next is "Where the work is" below.
+- **What 2026-09-28 changed after that**, the owner away and every PR merged
+  on its own: M10 is done (#342 minimap sight rim, #356 banners, #355 heat
+  falling in a search, #354 results card, #339 radio names the car and knows
+  a race, #338 respray); from M9, #351 (nitrous from four risky sources;
+  drifting left open, the car has no slip angle); from M11, #357 (pay by
+  place, event card) and #358 (ambush target time); #360 (burnout start);
+  #353 (milestones); #257 (a tunnel breaks line of sight); and three bugs
+  found on the way: #377 (the airfield carried traffic through the cargo
+  plane - dirt roads are private now, and `citylap` passes and has a baseline
+  again), #385 (a car rocking in a box was never offered the reset) and #389
+  (units that stepped off the road rejoined it the next step, so a stopped
+  car beside a boulevard was never busted - 100% stalemate at heat 6).
+  **Calls made for the owner, each said in its PR and easy to undo:** the
+  spurs off; no civilian traffic on Marrow Field; a respray lasts (the
+  reference keeps it); 2nd and 3rd pay two thirds and a third of a win, and
+  4th and below keep the old consolation; nitrous and milestone amounts;
+  ambush targets of 75 s plus 15 s a level (2:30 at heat 6).
+  **Still waiting on the owner:** #347 (a recording of them driving) and so
+  #348; #349-#350, #340-#341, #359 (need circuit routes, which the authored
+  map does not have yet); M12's design questions; the map areas.
 - **What 2026-09-27 changed**, all merged:
   - **The reference game:** a 47-minute recording of it was measured
     (`docs/research/nfs-most-wanted-2012-gameplay.md`, and
