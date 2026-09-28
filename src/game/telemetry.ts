@@ -79,7 +79,7 @@ export const TELEMETRY_DETECTABLE = 0.025;
 export const TELEMETRY_KEPT = 0.005;
 
 /** A vehicle's drawn box: width, length and height to the roof, in world units. */
-interface Box {
+export interface Box {
   w: number;
   l: number;
   h: number;
@@ -89,7 +89,7 @@ interface Box {
  * The box a car is drawn in, from `carParts`'s own proportions: 1.9 times as
  * long as it is wide, and its roof is the glasshouse sitting on the body.
  */
-const CAR_BOX: Box = (() => {
+export const CAR_BOX: Box = (() => {
   const w = CAR_WIDTH_WORLD;
   const body = w * CAR_ASPECT * 0.62;
   const floor = w * 0.175 * 0.66;
@@ -97,7 +97,7 @@ const CAR_BOX: Box = (() => {
 })();
 
 /** A haul truck, from the solid it collides as. */
-const TRUCK_BOX: Box = (() => {
+export const TRUCK_BOX: Box = (() => {
   const solid = SET_PIECE_SOLIDS['haul-truck'][0];
   const m = UNITS_PER_METRE;
   return 'w' in solid ? { w: solid.w * m, l: solid.l * m, h: solid.y1 * m } : CAR_BOX;

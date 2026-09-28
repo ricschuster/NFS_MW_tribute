@@ -3276,7 +3276,7 @@ describe('the coast road', () => {
  *
  * Traffic used to be exactly constant: the same seventy-five cars in a
  * downtown canyon and on an industrial back street. That is a large thing to
- * have flat, because traffic roughly halves the pace a good driver can hold.
+ * have flat, because traffic decides much of the pace a good driver can hold.
  *
  * A number rather than a picture, and deliberately tested rather than
  * photographed: ninety-four cars spread through a 360 m bubble put one or two
