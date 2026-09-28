@@ -107,7 +107,7 @@ import {
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
 import { Garage } from './garage';
-import { STARTER_CAR, type CarProfile } from './cars';
+import { STARTER_CAR, colourName, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
@@ -802,6 +802,16 @@ export class CityWorld {
       takedowns: this.takedowns,
       broken: this.broken.size,
       reason: this.police.startedBy,
+      car: this.car.name,
+      colour: colourName(this.car.colour),
+      event:
+        this.race.state === 'racing' || this.race.state === 'countdown'
+          ? 'race'
+          : this.ambush.state === 'running'
+            ? 'ambush'
+            : this.claim.state === 'running'
+              ? 'claim'
+              : null,
     });
     this.clearWrecks(dt);
 

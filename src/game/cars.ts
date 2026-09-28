@@ -281,3 +281,40 @@ export const STARTER_CAR = CARS[0];
 
 export const carById = (id: string): CarProfile =>
   CARS.find((car) => car.id === id) ?? STARTER_CAR;
+
+/**
+ * What a colour is called over the radio (#339).
+ *
+ * Dispatch describes a car the way a witness would, and a witness does not
+ * say `#3a8fd8`. The nearest of a dozen plain names, by distance in RGB, which
+ * is crude and is enough: the palette above is a handful of saturated colours
+ * a long way apart, and a name only has to be the one a person would pick.
+ */
+const COLOUR_NAMES: [string, number, number, number][] = [
+  ['red', 205, 50, 45],
+  ['orange', 225, 110, 50],
+  ['yellow', 225, 195, 55],
+  ['green', 60, 200, 130],
+  ['blue', 60, 130, 210],
+  ['purple', 140, 60, 210],
+  ['pink', 205, 60, 100],
+  ['white', 232, 228, 215],
+  ['silver', 150, 155, 165],
+  ['grey', 90, 98, 112],
+  ['black', 29, 32, 40],
+];
+
+export function colourName(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  let best = COLOUR_NAMES[0];
+  let gap = Infinity;
+  for (const named of COLOUR_NAMES) {
+    const d = (named[1] - r) ** 2 + (named[2] - g) ** 2 + (named[3] - b) ** 2;
+    if (d < gap) {
+      gap = d;
+      best = named;
+    }
+  }
+  return best[0];
+}
