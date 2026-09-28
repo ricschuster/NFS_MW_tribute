@@ -3530,10 +3530,10 @@ describe('going in the water', () => {
 
 // The quarry's roads are private (#327): civilian traffic neither spawns on them
 // nor turns onto them.
-describe('quarry roads carry no traffic (#327)', () => {
-  it('never has a civilian car on a gravel road', () => {
+describe('place roads carry no traffic (#327, #377)', () => {
+  it.each(['gravel', 'dirt'] as const)('never has a civilian car on a %s road', (surface) => {
     const world = new CityWorld(undefined, { police: false });
-    const gravel = world.city.roads.filter((r) => r.surface === 'gravel');
+    const gravel = world.city.roads.filter((r) => r.surface === surface);
     expect(gravel.length).toBeGreaterThan(0);
     // Stand on the way in, where the paved roads that lead to it are.
     const road = gravel.reduce((best, r) => (r.length > best.length ? r : best), gravel[0]);
@@ -3545,7 +3545,7 @@ describe('quarry roads carry no traffic (#327)', () => {
     world.speed = 0;
     for (let second = 0; second < 90; second++) {
       drive(world, 1, NONE);
-      for (const car of world.traffic.cars) expect(car.road.surface).not.toBe('gravel');
+      for (const car of world.traffic.cars) expect(car.road.surface).not.toBe(surface);
     }
   });
 });
