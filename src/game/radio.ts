@@ -50,9 +50,29 @@ export interface PursuitReport {
    * difference between a rule and a mood.
    */
   reason: string | null;
+  /**
+   * What they are chasing, as a witness would put it (#339): the car's name
+   * and its colour's. A radio that says what you are driving is about *you*,
+   * and a description is what a respray (#338) has to be able to update.
+   */
+  car: string;
+  colour: string;
+  /**
+   * The event running, if any (#339). A pursuit through a race is the police
+   * working out that you are on a route, not stumbling on a speeder, and the
+   * radio should sound like it knows which.
+   */
+  event: 'race' | 'ambush' | 'claim' | null;
 }
 
 type Callout = { from: RadioVoice; lines: string[] };
+
+/**
+ * A callout can have a variant per event, `key:event`, tried before the plain
+ * one: `lost:race` is what dispatch says on losing a racer, and anything
+ * without one falls back to what it says about anybody. Lines may name the car
+ * with `{car}` and `{colour}`, filled in from the report when they are said.
+ */
 
 /**
  * What gets said, and who says it.
@@ -103,6 +123,58 @@ const CALLOUTS: Record<string, Callout> = {
       'Criminal damage in progress. Nearest unit respond.',
       'They are wrecking the place. Get on them.',
       'Property damage witnessed. All units, engage.',
+    ],
+  },
+  // Right after the opener, from dispatch: the description every later
+  // update to it (#338) is an update *to*.
+  described: {
+    from: 'dispatch',
+    lines: [
+      'Suspect vehicle is a {colour} {car}.',
+      'Be advised, they are in a {colour} {car}.',
+      'Looking for a {colour} {car}. All units.',
+    ],
+  },
+  // The event variants (#339). Original lines on the pattern the reference
+  // game's dispatch follows: a race is a route, and the police say so.
+  'opened:race': {
+    from: 'unit',
+    lines: [
+      'They are racing. Whole pack of them. Engaging.',
+      'Street race in progress, I am on the tail of it.',
+      'Got racers through here, going after them.',
+    ],
+  },
+  'escalated:race': {
+    from: 'command',
+    lines: [
+      'They are on a route. Get ahead of them.',
+      'These drivers are good. More units.',
+      'Somebody work out where this race goes.',
+    ],
+  },
+  'lost:race': {
+    from: 'dispatch',
+    lines: [
+      'Lost the racers. They have to come back round - watch the route.',
+      'No visual. A race goes somewhere; find the finish.',
+      'They are gone for now. Cover the roads ahead of them.',
+    ],
+  },
+  'opened:ambush': {
+    from: 'command',
+    lines: [
+      'That is them. Close it up, nobody gets out.',
+      'Suspect is in the trap. Box them in.',
+      'All units, move now. They are surrounded.',
+    ],
+  },
+  'opened:claim': {
+    from: 'unit',
+    lines: [
+      'Two of them, one running from the other. Engaging both.',
+      'Somebody is chasing somebody. Going after them.',
+      'A pair of racers, one on the other. In pursuit.',
     ],
   },
   joined: {
@@ -190,6 +262,8 @@ export class Radio {
   /** Which line of each callout comes next, so a repeat is not the same words. */
   private readonly rotation = new Map<string, number>();
   private was: PursuitReport | null = null;
+  /** The latest report, which is what `{car}` and `{colour}` are filled from. */
+  private now: PursuitReport | null = null;
 
   /** Clear everything: a new pursuit does not carry the last one's traffic. */
   reset(): void {
@@ -207,6 +281,7 @@ export class Radio {
       if (this.recent[i].age > RADIO_HOLD) this.recent.splice(i, 1);
     }
 
+    this.now = now;
     this.watch(now);
     this.was = { ...now };
 
@@ -222,23 +297,39 @@ export class Radio {
     if (!was) return;
 
     if (was.state !== 'pursuit' && now.state === 'pursuit') {
-      // The generic line is the fallback for a pursuit nobody triggered: an
-      // ambush you drove onto, or the heat a ladder rival brings with them.
-      const key = `opened:${now.reason}`;
-      this.call(now.reason && CALLOUTS[key] ? key : 'opened');
+      // The event first, since it is what the pursuit is about; then the
+      // trigger; the generic line is the fallback for a pursuit nobody
+      // triggered - an ambush you drove onto, or the heat a ladder rival
+      // brings with them.
+      const trigger = `opened:${now.reason}`;
+      const opener =
+        now.event && CALLOUTS[`opened:${now.event}`]
+          ? `opened:${now.event}`
+          : now.reason && CALLOUTS[trigger]
+            ? trigger
+            : 'opened';
+      this.call(opener);
+      // Described once, when it starts: a search that finds you again is the
+      // same pursuit, and they already know what they are looking for.
+      if (was.state === 'clear') this.call('described');
     }
     else if (now.cops > was.cops && now.state === 'pursuit') this.call('joined');
 
-    if (now.level > was.level && now.state === 'pursuit') this.call('escalated');
+    if (now.level > was.level && now.state === 'pursuit') this.call(this.variant('escalated', now));
     if (now.roadblocks > was.roadblocks) this.call('roadblock');
     if (now.spikes > was.spikes) this.call('spikes');
     if (now.enforcers > was.enforcers) this.call('enforcer');
     if (now.takedowns > was.takedowns) this.call('unitDown');
     if (now.broken > was.broken && now.state === 'pursuit') this.call('debris');
 
-    if (was.state === 'pursuit' && now.state === 'cooldown') this.call('lost');
+    if (was.state === 'pursuit' && now.state === 'cooldown') this.call(this.variant('lost', now));
     if (was.state !== 'clear' && now.state === 'clear') this.call('clear');
     if (!was.busted && now.busted) this.call('busted');
+  }
+
+  /** The event's own version of a callout, where it has one. */
+  private variant(key: string, now: PursuitReport): string {
+    return now.event && CALLOUTS[`${key}:${now.event}`] ? `${key}:${now.event}` : key;
   }
 
   /** Queue a line, and drop the back of the queue rather than let it grow. */
@@ -256,9 +347,14 @@ export class Radio {
     const callout = CALLOUTS[key];
     if (!callout) return;
 
+    const line = callout.lines[index % callout.lines.length];
     this.recent.push({
       from: callout.from,
-      text: callout.lines[index % callout.lines.length],
+      text: line
+        .replace('{car}', this.now?.car ?? 'car')
+        .replace('{colour}', this.now?.colour ?? '')
+        // "a orange Emberline" is the one way this reads as a machine talking.
+        .replace(/\ba ([aeiou])/gi, 'an $1'),
       age: 0,
     });
     while (this.recent.length > RADIO_LINES) this.recent.shift();

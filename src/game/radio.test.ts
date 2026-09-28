@@ -15,6 +15,9 @@ const quiet = (): PursuitReport => ({
   takedowns: 0,
   broken: 0,
   reason: null,
+  car: 'Kestrel',
+  colour: 'red',
+  event: null,
 });
 
 /** Hold a state for a while, so anything queued gets a chance to be said. */
@@ -43,8 +46,10 @@ describe('the police radio', () => {
     const radio = new Radio();
     hold(radio, quiet(), 0.1);
     hold(radio, { ...quiet(), state: 'pursuit', cops: 1 });
-    expect(radio.recent.length).toBe(1);
+    // The opener, then the description of the car (#339).
+    expect(radio.recent.length).toBe(2);
     expect(radio.recent[0].from).toBe('dispatch');
+    expect(radio.recent[1].text).toContain('red Kestrel');
   });
 
   // The point of it: the hazards are called before they can be seen.
@@ -147,5 +152,56 @@ describe('the police radio', () => {
 
     radio.reset();
     expect(radio.recent.length).toBe(0);
+  });
+
+  // #339: the radio is about you. The opener is followed by a description of
+  // the car, from the report rather than a fixed line.
+  it('names the car it is chasing when a pursuit opens', () => {
+    const radio = new Radio();
+    hold(radio, { ...quiet(), car: 'Ridgeback', colour: 'purple' }, 0.1);
+    hold(radio, { ...quiet(), state: 'pursuit', cops: 1, car: 'Ridgeback', colour: 'purple' }, RADIO_GAP * 3);
+    const said = radio.recent.map((line) => line.text).join(' ');
+    expect(said).toContain('purple Ridgeback');
+  });
+
+  it('says an orange car, not a orange one', () => {
+    const radio = new Radio();
+    hold(radio, { ...quiet(), car: 'Emberline', colour: 'orange' }, 0.1);
+    hold(radio, { ...quiet(), state: 'pursuit', cops: 1, car: 'Emberline', colour: 'orange' }, RADIO_GAP * 3);
+    const said = radio.recent.map((line) => line.text).join(' ');
+    expect(said).toContain('orange Emberline');
+    expect(said).not.toMatch(/\ba orange/);
+  });
+
+  it('does not describe the car again when a search finds it', () => {
+    const radio = new Radio();
+    const running: PursuitReport = { ...quiet(), state: 'pursuit', cops: 1, car: 'Kite', colour: 'yellow' };
+    hold(radio, quiet(), 0.1);
+    hold(radio, running, RADIO_HOLD + RADIO_GAP * 3);
+    hold(radio, { ...running, state: 'cooldown' }, RADIO_HOLD + RADIO_GAP * 3);
+    hold(radio, running, RADIO_GAP * 3);
+    expect(radio.recent.map((line) => line.text).join(' ')).not.toContain('Kite');
+  });
+
+  // A pursuit through a race sounds like the police know it is a race.
+  it('draws from the race lines when a race is running', () => {
+    const race = (change: Partial<PursuitReport>, from: Partial<PursuitReport> = {}) => {
+      const radio = new Radio();
+      const running: PursuitReport = { ...quiet(), state: 'pursuit', cops: 2, event: 'race', ...from };
+      hold(radio, { ...quiet(), event: 'race' }, 0.1);
+      hold(radio, running, RADIO_GAP * 3);
+      radio.recent.length = 0;
+      hold(radio, { ...running, ...change }, RADIO_GAP * 2);
+      return radio.recent.map((line) => line.text).join(' ').toLowerCase();
+    };
+    const opened = (() => {
+      const radio = new Radio();
+      hold(radio, { ...quiet(), event: 'race' }, 0.1);
+      hold(radio, { ...quiet(), state: 'pursuit', cops: 1, event: 'race' });
+      return radio.recent[0].text.toLowerCase();
+    })();
+    expect(opened).toMatch(/rac/);
+    expect(race({ state: 'cooldown' })).toMatch(/race|route|finish|round/);
+    expect(race({ level: 2 })).toMatch(/route|race|good/);
   });
 });

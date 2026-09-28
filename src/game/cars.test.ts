@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CARS, STARTER_CAR, carById } from './cars';
+import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { kestrelBay } from './city/index';
 import { NITRO_SPEED_MULT, FIND_SPACING, CITY_STREET_GRID } from './constants';
 
@@ -101,5 +101,23 @@ describe('where they are parked', () => {
       );
       expect(lot).toBeDefined();
     }
+  });
+});
+
+// #339: dispatch describes a car the way a witness would.
+describe('colour names', () => {
+  it('calls each car in the roster what a person would', () => {
+    const named = Object.fromEntries(CARS.map((car) => [car.id, colourName(car.colour)]));
+    expect(named.kestrel).toBe('red');
+    for (const car of CARS) {
+      expect(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'white', 'silver', 'grey', 'black']).toContain(
+        colourName(car.colour),
+      );
+    }
+    expect(colourName('#1d2028')).toBe('black');
+    expect(colourName('#e8e2d2')).toBe('white');
+    expect(colourName('#3a8fd8')).toBe('blue');
+    expect(colourName('#c93a5a')).toBe('pink');
+    expect(colourName('#d8663a')).toBe('orange');
   });
 });
