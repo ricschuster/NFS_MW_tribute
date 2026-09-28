@@ -78,7 +78,29 @@ export const NITRO_ACCEL_MULT = 3.4; // acceleration multiplier while boosting, 
  */
 export const NITRO_TAPER = 0.8;
 export const NITRO_DRAIN = 0.5; // charge/sec spent while boosting (~2s from full)
-export const NITRO_RECHARGE = 0.16; // charge/sec regained while not boosting
+/**
+ * Charge per second regained while not boosting, by waiting.
+ *
+ * Down from 0.16 (#351): the reference game fills most of its bar from driving
+ * dangerously, and a passive rate that fills the bar in six seconds leaves
+ * nothing for the risky line to buy. Ten seconds to full now, and the rest
+ * comes from the sources below.
+ */
+export const NITRO_RECHARGE = 0.1;
+/**
+ * What driving dangerously refills (#351), each on top of the passive rate:
+ * per near miss, and per second in the air, on the wrong side of the road, or
+ * tucked in behind a car. A near miss is worth most because it is one moment
+ * rather than a stretch; three of them are most of a boost.
+ */
+export const NITRO_FROM_NEAR_MISS = 0.08;
+export const NITRO_FROM_AIR = 0.3;
+export const NITRO_FROM_ONCOMING = 0.22;
+export const NITRO_FROM_SLIPSTREAM = 0.18;
+/** The least speed, as a fraction of top, at which oncoming and slipstreaming count. The near miss's own. */
+export const NITRO_RISK_SPEED = 0.35;
+/** Seconds a refill counter stays on the HUD after its source last counted. */
+export const NITRO_COUNTER_HOLD = 1.6;
 export const NITRO_MIN_ENGAGE = 0.25; // charge needed to light the boost again once it runs dry
 export const NITRO_BLEED_FRAC = 0.6; // overspeed shed per second (× maxSpeed) once boost ends
 
@@ -2032,6 +2054,10 @@ export const REP_HEAT_BONUS = 0.3;
  */
 export const REP_NEAR_MISS_RANGE = CAR_RADIUS * 4;
 export const REP_NEAR_MISS_SPEED = 0.35;
+/** How far left of the centreline is "on the wrong side" for nitrous (#351): clear of it, not straddling it. */
+export const NITRO_ONCOMING_MARGIN = m(1.5);
+/** How close behind a car, in line with it, is a slipstream for nitrous (#351). */
+export const NITRO_SLIPSTREAM_RANGE = m(16);
 
 /**
  * What a race win is worth (#91).

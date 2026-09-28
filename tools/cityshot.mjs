@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card',
+  'unseen', 'banner', 'card', 'nitro',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card',
+      'unseen', 'banner', 'card', 'nitro',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -229,6 +229,27 @@ for (const view of VIEWS) {
       world.banners.current = { kind: 'escaped', text: 'PURSUIT EVADED', left: 30 };
       world.lastPursuit = { outcome: 'escaped', rep: 3050, seconds: 122.35, takedowns: 1, roadblocks: 2, peakLevel: 4 };
       world.cardLeft = 30;
+    });
+    await page.waitForTimeout(250);
+  }
+
+  if (view === 'nitro') {
+    // The refill counters beside the speedometer (#351), put up rather than
+    // driven for: which driving fills the bar is the playtests' to assert.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.crashFlash = 0;
+      world.nitro = 0.7;
+      world.nitroCounters.add('oncoming', 2.4);
+      world.nitroCounters.add('nearMiss', 3);
+      world.nitroCounters.add('slipstream', 1.1);
+      for (const c of world.nitroCounters.active) c.idle = -30;
     });
     await page.waitForTimeout(250);
   }
