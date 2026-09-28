@@ -26,6 +26,13 @@ import {
   NITRO_ACCEL_MULT,
   NITRO_DRAIN,
   NITRO_RECHARGE,
+  NITRO_FROM_NEAR_MISS,
+  NITRO_FROM_AIR,
+  NITRO_FROM_ONCOMING,
+  NITRO_FROM_SLIPSTREAM,
+  NITRO_RISK_SPEED,
+  NITRO_ONCOMING_MARGIN,
+  NITRO_SLIPSTREAM_RANGE,
   NITRO_MIN_ENGAGE,
   NITRO_BLEED_FRAC,
   NITRO_TAPER,
@@ -112,6 +119,7 @@ import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
+import { NitroCounters, leftOfCentre, type NitroSource } from './nitrofill';
 import { Banners, type Banner } from './banners';
 import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
@@ -397,6 +405,8 @@ export class CityWorld {
   readonly claim: CityClaim;
   /** What the police are saying to each other about you (#76). */
   readonly radio = new Radio();
+  /** What has been refilling the nitrous lately, for the HUD (#351). */
+  readonly nitroCounters = new NitroCounters();
   /** The line across the top when the pursuit changes (#356). */
   readonly banners = new Banners();
 
@@ -1145,6 +1155,7 @@ export class CityWorld {
     this.repairs();
     this.breakThings();
     this.nearMisses();
+    this.risks(dt);
     this.speeding(dt);
     const smashed = this.collectibles.smashed.size;
     this.collectibles.update(
@@ -1244,7 +1255,54 @@ export class CityWorld {
       if (gap > REP_NEAR_MISS_RANGE || gap < CAR_RADIUS * 2.2) continue;
       this.grazed.add(car);
       this.rep.award('nearMiss', this.level);
+      this.refill('nearMiss', NITRO_FROM_NEAR_MISS, 1);
     }
+  }
+
+  /**
+   * The stretches of dangerous driving that refill the nitrous (#351): time
+   * in the air, on the wrong side of the road, and tucked in behind a car.
+   * The near miss, the fourth, is counted where it is scored.
+   */
+  private risks(dt: number): void {
+    this.nitroCounters.step(dt);
+    if (this.airborne) {
+      this.refill('air', NITRO_FROM_AIR * dt, dt);
+      return;
+    }
+    if (Math.abs(this.speed) < this.maxSpeed * NITRO_RISK_SPEED) return;
+
+    const road = this.onRoad;
+    if (road && road.class !== 'ramp') {
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const heading = this.speed >= 0 ? this.heading : this.heading + Math.PI;
+      if (leftOfCentre(a, b, this, heading) > NITRO_ONCOMING_MARGIN) {
+        this.refill('oncoming', NITRO_FROM_ONCOMING * dt, dt);
+      }
+    }
+
+    // Close behind a car going the same way, and in line with it. Traffic
+    // only: sitting on a cruiser's bumper is a pursuit, not a slipstream.
+    const fx = Math.sin(this.heading);
+    const fz = Math.cos(this.heading);
+    for (const car of this.traffic.cars) {
+      if (Math.abs(car.y - this.y) > CAR_RADIUS * 2) continue;
+      const dx = car.x - this.x;
+      const dz = car.z - this.z;
+      const ahead = dx * fx + dz * fz;
+      if (ahead <= CAR_RADIUS * 2 || ahead > NITRO_SLIPSTREAM_RANGE) continue;
+      if (Math.abs(dx * fz - dz * fx) > CAR_RADIUS * 1.5) continue;
+      if (Math.cos(car.heading - this.heading) < 0.8) continue;
+      this.refill('slipstream', NITRO_FROM_SLIPSTREAM * dt, dt);
+      return;
+    }
+  }
+
+  /** Charge from driving dangerously, and the counter that says so. */
+  private refill(source: NitroSource, charge: number, count: number): void {
+    this.nitro = Math.min(1, this.nitro + charge);
+    this.nitroCounters.add(source, count);
   }
 
   /**

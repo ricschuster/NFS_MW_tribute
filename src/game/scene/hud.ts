@@ -17,6 +17,7 @@ import {
   ROUTE_START_RANGE,
   HEAT_LEVEL_COUNT,
   LOSE_CONTACT_TIME,
+  NITRO_COUNTER_HOLD,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
 } from '../constants';
@@ -24,6 +25,7 @@ import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
 import { FIND_COLOUR, HAZARD, MAP_LEGEND, SIGHT_COLOUR } from './legend';
+import { NITRO_LABELS } from '../nitrofill';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
 
@@ -182,6 +184,20 @@ export class Hud {
     // whether the boost is available rather than only how full it is.
     ctx.fillStyle = world.boosting ? '#7fe3ff' : '#3f7f97';
     ctx.fillRect(x, y, width * world.nitro, 9);
+
+    // What is filling it (#351), stacked up from the bar's right-hand end: the
+    // reference game keeps these beside the speedometer, and they are how a
+    // player learns that the risky line is the one that pays for the boost.
+    ctx.textAlign = 'left';
+    world.nitroCounters.active.forEach((counter, i) => {
+      const fresh = counter.idle < 0.2;
+      ctx.globalAlpha = Math.min(1, (NITRO_COUNTER_HOLD - counter.idle) * 2);
+      ctx.fillStyle = fresh ? '#7fe3ff' : 'rgba(127, 227, 255, 0.7)';
+      ctx.font = '700 12px system-ui, sans-serif';
+      const value = counter.source === 'nearMiss' ? `x${counter.value}` : `${counter.value.toFixed(1)}s`;
+      ctx.fillText(`${NITRO_LABELS[counter.source]}  ${value}`, x + width + 14, y + 9 - i * 17);
+    });
+    ctx.globalAlpha = 1;
   }
 
   /**

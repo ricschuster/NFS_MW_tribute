@@ -64,6 +64,9 @@ import {
   REPAIR_SPACING,
   REPAIR_RANGE,
   type CopKind,
+  NITRO_RECHARGE,
+  NITRO_FROM_NEAR_MISS,
+  NITRO_SLIPSTREAM_RANGE,
 } from './constants';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS } from './rivals';
@@ -472,6 +475,117 @@ describe.skipIf(!CITY_FREEWAY)('two levels', () => {
 
 
 // Traffic is what makes the city somewhere rather than a model of somewhere.
+// What refills the nitrous besides waiting (#351). Each is measured against
+// the passive rate over the same time, because that is the claim: driving
+// this way fills the bar faster than not.
+describe('nitrous from risky driving (#351)', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+  const passive = (seconds: number) => NITRO_RECHARGE * seconds;
+
+  /** Hold the car on its road, `left` metres left of the centreline, at speed, for `seconds`. */
+  const hold = (world: CityWorld, left: number, seconds: number) => {
+    const road = world.onRoad!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.nitro = 0;
+    for (let t = 0; t < seconds; t += STEP) {
+      // Left of the way it is facing is (cos h, -sin h): right is -x facing +z.
+      world.x = mid.x + Math.cos(world.heading) * left * M;
+      world.z = mid.z - Math.sin(world.heading) * left * M;
+      world.y = roadHeightAt(world.city, road, world.x, world.z);
+      world.speed = world.maxSpeed * 0.6;
+      world.step(STEP, NONE);
+    }
+  };
+
+  it('refills from a stretch on the wrong side of the road, and not the right one', () => {
+    const wrong = still();
+    hold(wrong, 4, 1);
+    expect(wrong.nitro).toBeGreaterThan(passive(1) + 0.15);
+    expect(wrong.nitroCounters.active.some((c) => c.source === 'oncoming')).toBe(true);
+
+    const right = still();
+    hold(right, -4, 1);
+    expect(right.nitro).toBeCloseTo(passive(1), 1);
+    expect(right.nitroCounters.active.some((c) => c.source === 'oncoming')).toBe(false);
+  });
+
+  it('refills from a near miss', () => {
+    const world = still();
+    world.speed = world.maxSpeed * 0.5;
+    world.nitro = 0;
+    world.traffic.cars.push({
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      colour: '#c94b4b',
+      x: world.x + Math.cos(world.heading) * REP_NEAR_MISS_RANGE * 0.85,
+      z: world.z - Math.sin(world.heading) * REP_NEAR_MISS_RANGE * 0.85,
+      y: world.y,
+      heading: world.heading,
+    });
+    world.step(STEP, NONE);
+    expect(world.nitro).toBeGreaterThanOrEqual(NITRO_FROM_NEAR_MISS);
+    expect(world.nitroCounters.active.find((c) => c.source === 'nearMiss')?.value).toBe(1);
+  });
+
+  it('refills from tucking in behind a car going the same way', () => {
+    const world = still();
+    const ahead: TrafficCar = {
+      road: world.onRoad!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      colour: '#c94b4b',
+      x: 0,
+      z: 0,
+      y: world.y,
+      heading: world.heading,
+    };
+    world.traffic.cars.push(ahead);
+    world.nitro = 0;
+    for (let t = 0; t < 1; t += STEP) {
+      ahead.x = world.x + Math.sin(world.heading) * NITRO_SLIPSTREAM_RANGE * 0.6;
+      ahead.z = world.z + Math.cos(world.heading) * NITRO_SLIPSTREAM_RANGE * 0.6;
+      ahead.y = world.y;
+      ahead.heading = world.heading;
+      world.speed = world.maxSpeed * 0.6;
+      world.step(STEP, NONE);
+    }
+    expect(world.nitro).toBeGreaterThan(passive(1) + 0.1);
+    expect(world.nitroCounters.active.some((c) => c.source === 'slipstream')).toBe(true);
+  });
+
+  it('refills from time in the air', () => {
+    const world = still();
+    const jump = world.city.jumps.find((j) => j.kind === 'ramp')!;
+    world.x = jump.at.x - Math.sin(jump.angle) * 12 * M;
+    world.z = jump.at.z - Math.cos(jump.angle) * 12 * M;
+    world.y = groundAt(world.city.terrain, world.x, world.z);
+    world.heading = jump.angle;
+    world.nitro = 0;
+    let flying = 0;
+    let before = 0;
+    for (let t = 0; t < 6; t += STEP) {
+      if (!world.airborne && flying === 0) world.speed = world.maxSpeed * 0.45;
+      const was = world.nitro;
+      world.step(STEP, press({ up: true }));
+      if (world.airborne) {
+        flying += STEP;
+        before += world.nitro - was;
+      } else if (flying > 0) break;
+    }
+    expect(flying).toBeGreaterThan(0.3);
+    expect(before).toBeGreaterThan(passive(flying) * 2);
+    expect(world.nitroCounters.active.some((c) => c.source === 'air')).toBe(true);
+  });
+});
+
 describe('traffic', () => {
   // 20 was set when 360 m of Kestrel Bay held a dense street grid. Traffic
   // now scales with the road actually there (`TRAFFIC_ROAD_FULL`), and the
