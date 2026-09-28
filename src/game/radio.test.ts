@@ -164,6 +164,25 @@ describe('the police radio', () => {
     expect(said).toContain('purple Ridgeback');
   });
 
+  // #338: dispatch described the car, so dispatch updates the description.
+  it('calls in a respray during a pursuit, and not a car swap', () => {
+    const radio = new Radio();
+    const searching: PursuitReport = { ...quiet(), state: 'cooldown', cops: 1, car: 'Kestrel', colour: 'red' };
+    hold(radio, searching, 0.1);
+    hold(radio, { ...searching, state: 'clear', colour: 'blue' }, RADIO_GAP * 3);
+    expect(radio.recent.map((line) => line.text).join(' ')).toMatch(/now blue|blue now|Now blue/);
+
+    const swapped = new Radio();
+    hold(swapped, searching, 0.1);
+    hold(swapped, { ...searching, car: 'Verso', colour: 'blue' }, RADIO_GAP * 3);
+    expect(swapped.recent.map((line) => line.text).join(' ')).not.toMatch(/blue/);
+
+    const idle = new Radio();
+    hold(idle, quiet(), 0.1);
+    hold(idle, { ...quiet(), colour: 'blue' }, RADIO_GAP * 3);
+    expect(idle.recent.length).toBe(0);
+  });
+
   it('says an orange car, not a orange one', () => {
     const radio = new Radio();
     hold(radio, { ...quiet(), car: 'Emberline', colour: 'orange' }, 0.1);

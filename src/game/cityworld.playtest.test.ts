@@ -65,7 +65,7 @@ import {
   REPAIR_RANGE,
   type CopKind,
 } from './constants';
-import { CARS, STARTER_CAR, carById } from './cars';
+import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS } from './rivals';
 import { placeOnRoad } from './graphcar';
 import { hourly } from './citytraffic';
@@ -2479,6 +2479,43 @@ describe('drive-through repair', () => {
 
     expect(world.police.state).toBe('clear');
     expect(world.damage).toBe(0);
+  });
+
+  // And it comes out a different colour (#338), which the radio hears about.
+  it('resprays the car when it ends a search, and keeps it', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const was = world.paint;
+    expect(was).toBe(world.car.colour);
+    world.police.state = 'cooldown';
+    world.police.search = { x: world.x, z: world.z, radius: 1000 };
+    atAShop(world);
+    world.step(STEP, NONE);
+
+    expect(world.police.state).toBe('clear');
+    expect(world.paint).not.toBe(was);
+    expect(colourName(world.paint)).not.toBe(colourName(was));
+    // One of the colours a car in the game actually comes in.
+    expect(CARS.map((car) => car.colour)).toContain(world.paint);
+
+    // Dispatch has the new description within a line or two.
+    const painted = world.paint;
+    for (let t = 0; t < 2; t += STEP) world.step(STEP, NONE);
+    expect(world.radio.recent.map((line) => line.text).join(' ')).toContain(colourName(painted));
+
+    // Kept: through the next while, and into the save.
+    for (let t = 0; t < 10; t += STEP) world.step(STEP, NONE);
+    expect(world.paint).toBe(painted);
+    expect(new CityWorld(undefined, { traffic: false, police: false }).paint).toBe(painted);
+  });
+
+  it('does not respray a car they can still see', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const was = world.paint;
+    world.police.state = 'pursuit';
+    world.damage = 0.5;
+    atAShop(world);
+    world.step(STEP, NONE);
+    expect(world.paint).toBe(was);
   });
 
   // ...but it is not a button that cancels a pursuit. While they still have
