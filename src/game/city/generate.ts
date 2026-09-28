@@ -49,7 +49,7 @@ import { airfieldProps } from './setpieces';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { addInterstate } from './interstate';
-import { FREEWAY_LOOP, FREEWAY_TUNNELS } from './freeway';
+import { FREEWAY_LOOP, FREEWAY_RAMPS, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes, markEmbankment } from './embankment';
 import { makeWater, nearWater, type Water } from './water';
@@ -370,13 +370,12 @@ export function generateCity(seed: number): City {
   // repair above: the surface city has to stand up without it.
   // FREEWAY_LOOP is the hand-routed path #261 asked for, drawn over the real
   // terrain and grade the same way the surface roads were (ADR-0009);
-  // FREEWAY_TUNNELS is where two of its dives are authored rather than found.
-  // With CITY_STREET_GRID still off, `rampsFor` finds a real junction near
-  // only a handful of the loop's edges, so most of this 13.6 km loop has
-  // nowhere to get on or off it yet - expected to open up once the grid comes
-  // back (#271/#272), not a bug in the loop or in rampsFor itself.
+  // FREEWAY_TUNNELS is where two of its dives are authored rather than found,
+  // and FREEWAY_RAMPS where its ramps come down (#371): with CITY_STREET_GRID
+  // off, `rampsFor` found a junction near only a handful of the loop's edges,
+  // so the ramps are placed by hand the way the tunnels are.
   if (CITY_FREEWAY) {
-    addInterstate(rng, bounds, nodes, roads, water, terrain, FREEWAY_LOOP, FREEWAY_TUNNELS);
+    addInterstate(rng, bounds, nodes, roads, water, terrain, FREEWAY_LOOP, FREEWAY_TUNNELS, FREEWAY_RAMPS);
   }
 
   // A boulevard runs through ground the grid had already parcelled up, so the
