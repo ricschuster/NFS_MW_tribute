@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen',
+  'unseen', 'banner',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen',
+      'unseen', 'banner',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -190,6 +190,25 @@ for (const view of VIEWS) {
       world.police.heat = 0.4;
       world.police.unseen = 1.6;
       world.crashFlash = 0;
+    });
+    await page.waitForTimeout(250);
+  }
+
+  if (view === 'banner') {
+    // A pursuit banner (#356), put up rather than waited for: when one fires
+    // is the playtest's to assert, and this is whether it reads over a street.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.4;
+      world.crashFlash = 0;
+      world.banners.current = { kind: 'heatUp', text: 'HEAT LEVEL 3', left: 30 };
     });
     await page.waitForTimeout(250);
   }

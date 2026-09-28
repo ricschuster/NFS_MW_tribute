@@ -124,6 +124,13 @@ export const BUST_TIME = 3.5;
 export const BUST_SPEED_FRAC = 0.22;
 /** Seconds the ESCAPED banner lingers. */
 export const ESCAPED_FLASH = 2.5;
+/**
+ * Seconds a pursuit banner holds (#356), and how many can wait behind it.
+ * Long enough to read at speed without looking away from the road for it;
+ * short enough that three queued behind each other are gone in five seconds.
+ */
+export const BANNER_TIME = 1.6;
+export const BANNER_QUEUE = 3;
 
 /* ------------------------------------------------------------------ */
 /* The ladder. What a rival is worth chasing at.                       */

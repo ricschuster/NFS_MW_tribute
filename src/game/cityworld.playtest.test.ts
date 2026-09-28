@@ -731,6 +731,85 @@ describe('cooldown and the search area', () => {
     expect(world.police.sight).toBe('searching');
   });
 
+  // Each change of state puts a line across the top (#356). Read off the
+  // world, which is where the HUD reads it: the banner module's own rules are
+  // unit-tested in `banners.test.ts`, and this is whether the world feeds it.
+  it('raises a banner when the pursuit opens, when the search begins, and on escape', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const texts: string[] = [];
+    const note = () => {
+      const text = world.banner?.text;
+      if (text && texts[texts.length - 1] !== text) texts.push(text);
+    };
+    world.step(STEP, NONE);
+    tail(world);
+    for (let t = 0; t < 0.5; t += STEP) {
+      world.speed = world.maxSpeed * 0.5;
+      world.step(STEP, NONE);
+      note();
+    }
+    expect(texts[0]).toBe('LOSE THE COPS');
+
+    world.x += CITY_COP_LOSE * 3;
+    expect(
+      stepUntil(world, () => {
+        note();
+        return texts.includes('ENTERED COOLDOWN');
+      }),
+    ).toBe(true);
+
+    // Out of the area and away, until they give up.
+    const area = world.police.search;
+    if (area) world.x = area.x + area.radius * 4;
+    expect(
+      stepUntil(
+        world,
+        () => {
+          world.police.cops.length = 0;
+          note();
+          return texts.includes('PURSUIT EVADED');
+        },
+        120,
+      ),
+    ).toBe(true);
+  });
+
+  // Hiding pays off where you can see it (#355). The level is derived from
+  // heat and heat decays through a search, so the level already fell; what
+  // was missing was anything saying so. A search that finds you again picks
+  // up at the lower level, not the peak.
+  it('lets the heat level fall during a search, says so, and resumes there', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const home = { x: world.x, z: world.z, y: world.y, heading: world.heading };
+    hunt(world, 0.55, 0.5);
+    const peak = world.police.level;
+
+    world.x += CITY_COP_LOSE * 3;
+    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+    const area = world.police.search;
+    if (area) world.x = area.x + area.radius * 4;
+
+    let said = false;
+    for (let t = 0; t < 10; t += STEP) {
+      world.police.cops.length = 0;
+      world.step(STEP, NONE);
+      if (world.banner?.text === 'HEAT LEVEL DECREASED') said = true;
+    }
+    expect(world.police.state).toBe('cooldown');
+    expect(world.police.level).toBeLessThan(peak);
+    expect(said).toBe(true);
+
+    // Found again, back on the street it started on.
+    const cooled = world.police.level;
+    Object.assign(world, home);
+    world.step(STEP, NONE);
+    expect(world.onRoad).not.toBeNull();
+    tail(world);
+    world.step(STEP, NONE);
+    expect(world.police.state).toBe('pursuit');
+    expect(world.police.level).toBe(cooled);
+  });
+
   // The area is where they lost you. It does not follow you around, which is
   // the difference between a search and a tracking device.
   it('searches a fixed place, not wherever you have got to', () => {
