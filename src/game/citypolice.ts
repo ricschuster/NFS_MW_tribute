@@ -864,7 +864,15 @@ export class CityPolice {
       // leash runs out - whichever comes first. Either way it rejoins at the
       // nearest road rather than teleporting: `nearestRoad` is the same
       // question the player's own stuck reset asks (#179).
-      if (onRoad(cop.x, cop.z, cop.y) || cop.offRoad > COP_LEASH) {
+      //
+      // Road underneath only counts once the unit has crossed its own road's
+      // width (#389). Its first steps are still on the carriageway it left, so
+      // without that it rejoined the step after leaving, left again, and rocked
+      // between the two for ever - eight units parked 40 m from a car stopped
+      // beside a boulevard, the bust never in reach, and 100% of stopped heat-6
+      // pursuits ending in nothing.
+      const left = cop.offRoad > cop.road.width;
+      if ((left && onRoad(cop.x, cop.z, cop.y)) || cop.offRoad > COP_LEASH) {
         cop.offRoad = 0;
         this.rejoin(cop);
       }
