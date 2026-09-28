@@ -1158,6 +1158,19 @@ export const RAMP_MAX_RUN = m(320);
  */
 export const RAMP_OFFSET = m(14);
 /**
+ * The least angle an authored ramp's connector may leave its foot at, measured
+ * from the ramp itself (#371).
+ *
+ * The connector runs from the foot to the nearest vertex of a drawn road, and
+ * nearest is sometimes almost straight back under the ramp: two of the first
+ * seven left at 18 and 21 degrees. That is #212's shared footprint again in a
+ * new place, a flat road and a rising one side by side for their first fifty
+ * metres. Thirty re-picks those two and leaves every other connector on the
+ * vertex it had; sixty was tried and threw out the 45- and 57-degree ones as
+ * well, sending one of them 1.1 km across the water instead.
+ */
+export const RAMP_CONNECTOR_ANGLE = Math.PI / 6;
+/**
  * How much room a ramp needs cleared of blocks where it is still low enough to
  * hit (#212).
  *

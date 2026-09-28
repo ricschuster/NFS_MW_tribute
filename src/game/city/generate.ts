@@ -49,6 +49,7 @@ import { airfieldProps } from './setpieces';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { addInterstate } from './interstate';
+import { rampConnectors } from './rampconnectors';
 import { FREEWAY_LOOP, FREEWAY_RAMPS, FREEWAY_TUNNELS } from './freeway';
 import { boulevardRoutes } from './boulevards';
 import { embankmentRoutes, markEmbankment } from './embankment';
@@ -150,7 +151,11 @@ export function generateCity(seed: number): City {
   // to the quarry is graded against the quarry and not the hill it replaced;
   // before anything is laid, so the network, the blocks and the sim's own
   // `groundAt` all see the shelf rather than the hillside.
-  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, AUTHORED_ROADS);
+  //
+  // The freeway's ramp connectors (#371) are graded with them, since each one
+  // ends on a drawn road and the two have to agree about the height they meet at.
+  const connectors = CITY_FREEWAY && CITY_AUTHORED_ROADS ? rampConnectors(FREEWAY_LOOP, FREEWAY_RAMPS, AUTHORED_ROADS) : [];
+  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, [...AUTHORED_ROADS, ...connectors]);
 
   // Which body of land each point is on. Wanted in three places now - the roads
   // between the bodies, the blocks that must not cross a channel, and the places.
@@ -230,6 +235,11 @@ export function generateCity(seed: number): City {
     const authoredStart = laid.length;
     for (const road of AUTHORED_ROADS) {
       layRoute(road.points, water, laid, road.kind, road.district, true);
+    }
+    // A boulevard from each ramp's foot to the road it joins, laid with the
+    // roads so it is split and repaired by the same code (`rampconnectors.ts`).
+    for (const connector of connectors) {
+      layRoute(connector.points, water, laid, 'boulevard', connector.district, true);
     }
     // The quay, found rather than trusted (#241): `AuthoredRoad` carries no
     // `embankment` of its own once synced, so the code that would have tagged
