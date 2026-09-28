@@ -2500,6 +2500,20 @@ export const CLAIM_TOUGHNESS = 2.6;
 export const CLAIM_SPEED = 0.9;
 /** How much heat a ladder rival brings with them. They draw the police too. */
 export const CLAIM_HEAT = 0.45;
+/**
+ * Ladder races bring the police (#349, ADR-0011 decision 6). In the reference
+ * game the Most Wanted race opens a pursuit two seconds in; the chase cannot
+ * keep up at race pace, and the pressure is what it puts on the route and
+ * what it leaves for after the finish.
+ *
+ * Called `RACE_CHASE_DELAY` after the lights, at a heat level that rises with
+ * the rival: `RACE_CHASE_LEVEL` for the bottom of the ladder, plus
+ * `RACE_CHASE_LEVEL_PER_DIFFICULTY` times their difficulty, so #10 opens at
+ * level 2 and the boss at 4.
+ */
+export const RACE_CHASE_DELAY = 2;
+export const RACE_CHASE_LEVEL = 1.7;
+export const RACE_CHASE_LEVEL_PER_DIFFICULTY = 2.3;
 /** Seconds the result holds before control comes back. */
 export const CLAIM_RESULT_HOLD = 5;
 /** Rep for taking one. It is the biggest single payment in the game. */

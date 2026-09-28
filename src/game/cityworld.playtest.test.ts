@@ -40,6 +40,7 @@ import {
   REFERENCE_TOP_SPEED,
   FIND_RANGE,
   CITY_COUNTDOWN,
+  RACE_CHASE_DELAY,
   CITY_EDGE_MARGIN,
   ROUTE_START_RANGE,
   STUCK_TIME,
@@ -4201,5 +4202,63 @@ describe('a stopped car on the start line', () => {
     };
     expect(start(false)).toBe('countdown');
     expect(start(true)).toBe('idle');
+  });
+});
+
+// Ladder races bring the police (#349, ADR-0011): a chase called two seconds
+// after the lights, running through the race and past its finish into the
+// claim, and a bust mid-race is the race lost.
+describe('a ladder race and the police', () => {
+  const onTheGrid = (kind: 'circuit' | 'speedrun') => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const route = world.city.routes.find((r) => r.kind === kind)!;
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.state).toBe('countdown');
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    return { world, route };
+  };
+
+  it('opens a pursuit two seconds after the lights, at a level set by the rival', () => {
+    const { world } = onTheGrid('circuit');
+    expect(world.police.state).toBe('clear');
+    drive(world, RACE_CHASE_DELAY + 0.5, NONE);
+    expect(world.police.state).not.toBe('clear');
+    expect(world.police.startedBy).toBe('racing');
+    // The bottom of the ladder opens at level 2.
+    expect(world.police.level).toBe(2);
+  });
+
+  it('leaves a speed run alone', () => {
+    const { world } = onTheGrid('speedrun');
+    drive(world, RACE_CHASE_DELAY + 3, NONE);
+    expect(world.police.state).toBe('clear');
+  });
+
+  it('carries the pursuit past the finish and into the claim', () => {
+    const { world, route } = onTheGrid('circuit');
+    drive(world, RACE_CHASE_DELAY + 0.5, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.race.won).toBe(true);
+    expect(world.police.state).not.toBe('clear');
+    expect(world.claim.state).toBe('running');
+  });
+
+  it('is lost if you are busted in it', () => {
+    const { world } = onTheGrid('circuit');
+    drive(world, RACE_CHASE_DELAY + 0.5, NONE);
+    world.police.busted = true;
+    world.step(STEP, NONE);
+    expect(world.busted).toBe(true);
+    expect(world.rep.recent.some((a) => a.reason === 'raceLoss')).toBe(true);
+    world.step(STEP, NONE);
+    expect(world.race.state).toBe('idle');
   });
 });

@@ -432,6 +432,11 @@ export function carAheadLimit(world, K) {
   const cars = [
     ...(world.traffic?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
     ...(world.trucks?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 1.2 + K.TRUCK_RADIUS })),
+    // And police (#349): a race now runs through a pursuit, and its search
+    // sweeps the lap. Blind to them, the driver met a searching unit head-on,
+    // slowed to walking pace beside it and was busted - a crash no person
+    // racing would have driven into.
+    ...(world.police?.cops ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
   ];
   if (cars.length === 0) return Infinity;
 
