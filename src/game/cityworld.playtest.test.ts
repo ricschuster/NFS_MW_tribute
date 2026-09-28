@@ -4112,3 +4112,65 @@ describe('quarry haul trucks (#330)', () => {
     expect(truck.kept).toBeLessThan(0.3);
   });
 });
+
+// Found in the owner's recorded drive (#347): traffic drove into a car stopped
+// at the start line, and a race started with the car under the water.
+describe('a stopped car on the start line', () => {
+  it('is not driven into by the traffic behind it', () => {
+    const world = new CityWorld(undefined, { police: false });
+    // A long straight public road, so "in its lane, ahead of it" is a place.
+    const road = world.city.roads.find(
+      (r) =>
+        r.length > 120 * M &&
+        !r.bridge &&
+        r.class !== 'interstate' &&
+        r.class !== 'ramp' &&
+        (r.surface ?? 'asphalt') === 'asphalt' &&
+        world.city.nodes[r.a].level === 'surface',
+    )!;
+    const car: TrafficCar = {
+      road,
+      t: 0.1,
+      forward: true,
+      speed: road.speed,
+      damage: 0,
+      colour: '#c94b4b',
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+    };
+    // Where the car will be 40 m on, in its own lane: the player waits there.
+    const mark = { ...car, t: 0.1 + (40 * M) / road.length };
+    placeOnRoad(world.city, mark, TRAFFIC_LANE);
+    placeOnRoad(world.city, car, TRAFFIC_LANE);
+    world.traffic.cars.length = 0;
+    world.traffic.cars.push(car);
+    world.x = mark.x;
+    world.z = mark.z;
+    world.y = mark.y;
+    world.heading = mark.heading;
+    world.speed = 0;
+    world.damage = 0;
+
+    drive(world, 6, NONE);
+    expect(world.traffic.cars).toContain(car);
+    expect(Math.hypot(car.x - world.x, car.z - world.z)).toBeGreaterThan(CAR_RADIUS * 2);
+    expect(car.speed).toBeLessThan(road.speed * 0.2);
+    expect(world.damage).toBe(0);
+  });
+
+  it('cannot start a race from under the water', () => {
+    const start = (dunked: boolean) => {
+      const world = new CityWorld(undefined, { traffic: false, police: false });
+      const route = world.city.routes[0];
+      world.x = route.start.x;
+      world.z = route.start.z;
+      if (dunked) world.dunked = 1;
+      world.step(STEP, press({ confirm: true }));
+      return world.race.state;
+    };
+    expect(start(false)).toBe('countdown');
+    expect(start(true)).toBe('idle');
+  });
+});

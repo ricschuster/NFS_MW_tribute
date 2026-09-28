@@ -979,7 +979,16 @@ export class CityWorld {
     // to be unwedged, not one lining up for a race they cannot drive to.
     if (confirmPressed && this.canRecover) {
       this.recover();
-    } else if ((confirmPressed || burnedIn) && this.race.state === 'idle' && this.ambush.state === 'idle') {
+    } else if (
+      (confirmPressed || burnedIn) &&
+      this.race.state === 'idle' &&
+      this.ambush.state === 'idle' &&
+      // Not from under the water. The start line is beside the river, and a
+      // car dunked within reach of it could be put on the grid mid-dunk: the
+      // countdown ran over IN THE DRINK with the car two metres under and no
+      // road beneath it.
+      this.dunked <= 0
+    ) {
       const route = this.atStartLine;
       const spot = this.atAmbush;
       if (route && rival && this.challengeReady) this.startRace(route, rival);
