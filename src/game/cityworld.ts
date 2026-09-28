@@ -49,6 +49,7 @@ import {
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
+  SEA_SHEET,
   SPAWN_LEAD,
   CITY_EDGE_MARGIN,
   DUNK_HOLD,
@@ -1977,7 +1978,10 @@ export class CityWorld {
     // Over the water is not in it: a jump can clear a creek (#307), and one
     // that does not is caught by the landing, which comes down on the bed.
     if (this.airborne) return false;
-    if (!inWater(this.city, this.x, this.z)) return false;
+    // Or on land that is drawn as sea (#403): below `SEA_SHEET`, off the road,
+    // the car is under the surface the player can see.
+    const sea = groundAt(this.city.terrain, this.x, this.z) < SEA_SHEET;
+    if (!sea && !inWater(this.city, this.x, this.z)) return false;
     return surfaceAt(this.city, this.grid, this.x, this.z, this.y).road === null;
   }
 

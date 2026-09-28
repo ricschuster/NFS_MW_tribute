@@ -3,6 +3,7 @@ import { CityWorld, SPAWN_DISTRICT } from './cityworld';
 import {
   STEP,
   CAR_RADIUS,
+  SEA_SHEET,
   COP_LEASH,
   TRAFFIC_RADIUS,
   HEAT_LEVELS,
@@ -3966,6 +3967,34 @@ describe('going in the water', () => {
     expect(world.dunked).toBeGreaterThan(0);
     expect(world.speed).toBe(0);
     expect(world.damage).toBeGreaterThan(0);
+  });
+
+  // #403: the coast ramps below sea level before the water's outline starts,
+  // and the sea is drawn over it. Off the road there, the car is in the sea.
+  it('takes a car off the road on land that is drawn as sea', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const { bounds } = world.city;
+    let found: { x: number; z: number } | null = null;
+    for (let z = bounds.minZ; z <= bounds.maxZ && !found; z += 20 * M) {
+      for (let x = bounds.minX; x <= bounds.maxX && !found; x += 20 * M) {
+        // Clear of the water's own outline, which is only a few metres off:
+        // the strip is at most about twelve metres wide.
+        const near = [-6, 0, 6].flatMap((dx) => [-6, 0, 6].map((dz) => [x + dx * M, z + dz * M]));
+        if (near.some(([nx, nz]) => inWater(world.city, nx, nz))) continue;
+        if (groundAt(world.city.terrain, x, z) >= SEA_SHEET) continue;
+        if (world.city.roads.some((r) => distanceToRoad(world.city, r, x, z) < 15 * M)) continue;
+        found = { x, z };
+      }
+    }
+    if (!found) throw new Error('no dry land below the sea: the city changed');
+    world.x = found.x;
+    world.z = found.z;
+    world.y = groundAt(world.city.terrain, found.x, found.z);
+    // Stopped, so it cannot reach the water's own outline in the step.
+    world.speed = 0;
+    world.step(STEP, NONE);
+
+    expect(world.dunked).toBeGreaterThan(0);
   });
 
   it('puts it back on a road it can drive away from', () => {
