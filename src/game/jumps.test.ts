@@ -57,8 +57,8 @@ describe('what a jump is (#307)', () => {
     expect(lipSlope('mound')).toBeGreaterThan(rise / l);
   });
 
-  it("builds Marrow Field's jumps from what the editor placed", () => {
-    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'ramp', 'slab', 'slab']);
+  it('builds the jumps the editors placed: four on Marrow Field, one in Halloway Quarry', () => {
+    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'ramp', 'slab', 'slab', 'slab']);
   });
 });
 
@@ -123,6 +123,32 @@ describe('the Cargo Plane Jump', () => {
     const { world } = launch(mound, kmh(110));
     expect(along(world.x, world.z)).toBeLessThan(along(plane.at.x, plane.at.z));
     expect(world.damage).toBeGreaterThan(0);
+  });
+});
+
+// The Crest Kicker: a lifted slab on the Halloway Rim's line where the rim
+// tops out on its north side, so a car taken over it flat out lands on the
+// downslope. Measured before placing it: at race pace it flies 60-70 m and
+// lands clean, where a mound on the same spot flew 135 m and came down hard.
+describe('the Crest Kicker', () => {
+  const rim = city.routes.find((route) => route.name === 'Halloway Rim')!;
+  const kicker = city.jumps.find(
+    (jump) => jump.kind === 'slab' && Math.hypot(jump.at.x / M + 2820, jump.at.z / M + 1386) < 5,
+  )!;
+
+  it("sits on the Halloway Rim's line, facing the way the race runs", () => {
+    const i = rim.points.findIndex((p) => Math.hypot(p.x - kicker.at.x, p.z - kicker.at.z) < 3 * M);
+    expect(i).toBeGreaterThanOrEqual(0);
+    const next = rim.points[(i + 1) % rim.points.length];
+    const along = Math.atan2(next.x - kicker.at.x, next.z - kicker.at.z);
+    expect(Math.cos(along - kicker.angle)).toBeGreaterThan(0.99);
+  });
+
+  it('is landed clean at race pace, and pays for it', () => {
+    const { world } = launch(kicker, kmh(240));
+    expect(world.lastJump!.hard).toBe(false);
+    expect(world.lastJump!.distance).toBeGreaterThan(50 * M);
+    expect(world.rep.recent.some((a) => a.reason === 'jump')).toBe(true);
   });
 });
 

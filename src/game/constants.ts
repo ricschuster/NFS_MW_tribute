@@ -196,9 +196,11 @@ export const BANNER_QUEUE = 3;
  * gridded streets and Harbour Loop are gone; the only circuit is the Halloway
  * Rim (#398), gravel with no traffic, where an expert holds 59% of top speed.
  * Left at 27.5-34% the field was beaten by more than three kilometres, and the
- * owner, driving it wrecked, held 66%. At 0.483 and 0.14 the field runs 50%
- * for #10 to 62% for the boss; the expert takes #10 through #4 (#4 by 135 m)
- * and loses #3 (by 41 m), #2 and the boss. One rank is about 176 m here.
+ * owner, driving it wrecked, held 66%. At 0.495 and 0.14 the field runs 51%
+ * for #10 to 63.5% for the boss; the expert takes #10 through #4 (#4 by
+ * 140 m) and loses #3 (by 33 m), #2 and the boss. One rank is about 175 m
+ * here. (0.483 before the Crest Kicker went on the rim's line (#323): taken
+ * flat out it saves the expert a second and a half, and #3 fell to it.)
  * This is fitted to one circuit without traffic. When the map has street
  * circuits again, measure first: traffic is thinner than it was (#348), so
  * the old quarter-of-top-speed figure will not come back either.
@@ -233,7 +235,7 @@ export const BANNER_QUEUE = 3;
  * empty road the same policy is worth eight points. Nitrous is a free-roam
  * mechanic that a race cannot use, which is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.483;
+export const RIVAL_BASE_SPEED_FRAC = 0.495;
 /**
  * Extra rival pace at difficulty 1 (#48, #105, #204).
  *

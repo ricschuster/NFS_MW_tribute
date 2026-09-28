@@ -664,6 +664,15 @@
    "x": -2674,
    "z": -694,
    "angle": 0
+  },
+  {
+   "id": "crest-kicker",
+   "kind": "jump",
+   "x": -2820,
+   "z": -1386,
+   "angle": 1.626,
+   "variant": "lifted slab",
+   "note": "Crest Kicker - on the Halloway Rim's line at the top of the north crest; lands on the downslope"
   }
  ]
 }
