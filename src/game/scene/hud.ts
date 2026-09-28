@@ -16,13 +16,14 @@ import {
   FIND_FLASH,
   ROUTE_START_RANGE,
   HEAT_LEVEL_COUNT,
+  LOSE_CONTACT_TIME,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
 } from '../constants';
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
-import { FIND_COLOUR, HAZARD, MAP_LEGEND } from './legend';
+import { FIND_COLOUR, HAZARD, MAP_LEGEND, SIGHT_COLOUR } from './legend';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
 
@@ -689,13 +690,43 @@ export class Hud {
     ctx.fill();
     ctx.restore();
 
+    this.rim(world, cx, cy, radius);
+    this.marker(world, cx, cy, radius);
+  }
+
+  /**
+   * Whether they can see you, on the minimap's edge (#342).
+   *
+   * Between being seen and the search there are `LOSE_CONTACT_TIME` seconds
+   * in which nothing on screen used to change, and that is when a player is
+   * deciding whether to commit to a side street. Red while a unit has you,
+   * blue with the time left draining round it once none has, amber when the
+   * search begins - the same amber as the area they are searching.
+   */
+  private rim(world: CityWorld, cx: number, cy: number, radius: number): void {
+    const { ctx } = this;
+    const sight = world.police.sight;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = sight ? SIGHT_COLOUR[sight] : 'rgba(255, 255, 255, 0.22)';
+    ctx.lineWidth = sight ? 3 : 2;
+    if (sight === 'hidden') ctx.globalAlpha = 0.35;
     ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (sight !== 'hidden') return;
 
-    this.marker(world, cx, cy, radius);
+    // What is left before the search, drained from the top clockwise, and the
+    // number under it: the arc says "hurry" at a glance, the number says how much.
+    const left = world.police.searchIn / LOSE_CONTACT_TIME;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * left);
+    ctx.strokeStyle = SIGHT_COLOUR.hidden;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = SIGHT_COLOUR.hidden;
+    ctx.font = '700 11px system-ui, sans-serif';
+    ctx.fillText(`OUT OF SIGHT  ${world.police.searchIn.toFixed(1)}`, cx, cy + radius * 0.62);
   }
 
   /** Roads within the minimap's reach, via the spatial index rather than all of them. */
@@ -1683,6 +1714,12 @@ export class Hud {
         ctx.beginPath();
         ctx.arc(x, y, 2, 0, Math.PI * 2);
         ctx.fill();
+      } else if (shape === 'rim') {
+        // A piece of the minimap's edge: a thick arc, which nothing else is.
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.arc(x, y + 6, 8, -Math.PI * 0.85, -Math.PI * 0.15);
+        ctx.stroke();
       } else if (shape === 'line') {
         ctx.beginPath();
         ctx.moveTo(x - 7, y);

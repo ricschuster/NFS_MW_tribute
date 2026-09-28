@@ -19,6 +19,9 @@
  * - **amber** is worth points - billboards and speed cameras - and rings the
  *   car you have been sent to run down, which is the one thing on the map you
  *   are actively hunting.
+ * - The minimap's **rim** borrows the pursuit's colours for what the police
+ *   can see (#342): red, they have you; blue, they have lost you for now;
+ *   amber, they are searching. A shape of its own, so it clashes with nothing.
  * - **violet** is the interstate and the ramps that are the only way onto it.
  * - **pink** is a car waiting to be taken.
  *
@@ -27,10 +30,22 @@
  * them exists for the two minutes an event lasts and the first is a ring rather
  * than a dot.
  */
-export type LegendShape = 'dot' | 'line' | 'cross' | 'ring' | 'target';
+export type LegendShape = 'dot' | 'line' | 'cross' | 'ring' | 'target' | 'rim';
 
 /** Anything the police have laid across the road. */
 export const HAZARD = '#ffffff';
+
+/**
+ * The minimap's rim during a pursuit (#342): whether they can see you. Its own
+ * shape, `rim`, because the colours are the pursuit's own - the police's blue,
+ * the Enforcer's red, the search area's amber - and it is the same idea each
+ * time: this is what the police are doing about you.
+ */
+export const SIGHT_COLOUR = {
+  seen: '#ff5a45',
+  hidden: '#4d8bff',
+  searching: 'rgba(255, 210, 90, 0.85)',
+} as const;
 
 /** A car still parked out there, on both maps. */
 export const FIND_COLOUR = '#ff6ec7';
@@ -41,6 +56,9 @@ export const MAP_LEGEND: [string, string, LegendShape][] = [
   ['Enforcer - comes head on', '#ff5a45', 'dot'],
   ['roadblock or spikes', HAZARD, 'line'],
   ['they are searching here', 'rgba(255, 210, 90, 0.85)', 'ring'],
+  ['minimap rim: they see you', SIGHT_COLOUR.seen, 'rim'],
+  ['rim: out of sight, for now', SIGHT_COLOUR.hidden, 'rim'],
+  ['rim: they are searching', SIGHT_COLOUR.searching, 'rim'],
   ['repair shop - drive through', '#5adc82', 'cross'],
   ['car parked - go and take it', FIND_COLOUR, 'dot'],
   ['billboard', '#ff9f45', 'dot'],

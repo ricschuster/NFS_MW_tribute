@@ -9,6 +9,7 @@ import {
   HEAT_LEVEL_COUNT,
   COP_UNITS,
   CITY_COP_LOSE,
+  LOSE_CONTACT_TIME,
   SEARCH_TIME_PER_LEVEL,
   UNITS_PER_METRE,
   WRECK_LINGER,
@@ -704,6 +705,30 @@ describe('cooldown and the search area', () => {
     expect(world.police.state).toBe('cooldown');
     expect(world.police.search).not.toBeNull();
     expect(world.police.searchLeft).toBeGreaterThan(0);
+  });
+
+  // The seconds between losing them and the search starting used to show
+  // nothing at all, and that is when a player decides whether to commit to a
+  // side street (#342). The HUD draws `sight` and `searchIn`; this is what it
+  // is reading.
+  it('says whether they can see you, and how long until the search', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    hunt(world, 0.3, 0.5);
+    expect(world.police.sight).toBe('seen');
+    expect(world.police.searchIn).toBe(LOSE_CONTACT_TIME);
+
+    world.x += CITY_COP_LOSE * 3;
+    world.step(STEP, NONE);
+    expect(world.police.sight).toBe('hidden');
+    const first = world.police.searchIn;
+    expect(first).toBeLessThan(LOSE_CONTACT_TIME);
+
+    stepUntil(world, () => false, 1);
+    expect(world.police.sight).toBe('hidden');
+    expect(first - world.police.searchIn).toBeCloseTo(1, 1);
+
+    expect(stepUntil(world, () => world.police.state === 'cooldown')).toBe(true);
+    expect(world.police.sight).toBe('searching');
   });
 
   // The area is where they lost you. It does not follow you around, which is
