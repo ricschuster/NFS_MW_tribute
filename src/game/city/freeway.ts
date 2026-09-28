@@ -18,6 +18,13 @@
  * search and kept because they were good finds: the highest ground the loop
  * crosses on its western and northern stretches.
  *
+ * `FREEWAY_RAMPS` are where the ramps come down (#371): each marks a ramp's
+ * foot, 190-320 m out from its nearest point on the loop, placed by hand
+ * because `rampsFor` can only land a ramp on a surface junction that already
+ * exists and the authored network has almost none near the deck. The rules a
+ * marker has to meet are `rampMarkerProblem`'s in `interstate.ts`, and
+ * `freeway.test.ts` holds every marker to them.
+ *
  * Points are **world metres**, laid out as x,z pairs, against the frozen
  * landmass (`CITY_LAND_STREAM`) - the same convention `roads.ts` and
  * `plan.ts` use, for the same reason: a loop pinned to a coastline that
@@ -27,7 +34,7 @@
  * `docs/freeway-edited.json`, which is what the freeway loop editor saves.
  * Editing here instead means the next sync silently reverts you.
  *
- * 26 points · 15.0 km · 4 tunnel anchors
+ * 26 points · 15.0 km · 4 tunnel anchors · 7 ramp markers
  */
 import { UNITS_PER_METRE } from '../constants';
 import type { Vec2 } from './types';
@@ -49,4 +56,8 @@ export const FREEWAY_LOOP: Vec2[] = points([
 
 export const FREEWAY_TUNNELS: Vec2[] = points([
     100, -2650, 1975, 1226, -478, 1254, 777, 2700,
+]);
+
+export const FREEWAY_RAMPS: Vec2[] = points([
+    -430, -2191, -790, -1095, 2442, -2442, 1317, -2720, -892, 85, 1658, 2466, 2399, 839,
 ]);

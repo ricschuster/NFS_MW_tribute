@@ -4,7 +4,8 @@
 // editor as a closed polyline plus a handful of tunnel anchors, checked
 // against the real grade and water rules along the way (#261), and this is
 // the step that makes `generate.ts` actually build it instead of the
-// rectangle `draftLoop` stands in with.
+// rectangle `draftLoop` stands in with. The ramp markers come along with it
+// (#371), so where a ramp comes down is source rather than an editor save.
 //
 // Usage:
 //   npm run freewaysync                          # docs/freeway-edited.json -> src/game/city/freeway.ts
@@ -16,6 +17,7 @@ const raw = JSON.parse(readFileSync(source, 'utf8'));
 
 const path = raw.path ?? [];
 const tunnels = raw.tunnels ?? [];
+const ramps = raw.rampMarkers ?? [];
 
 const perimeter = (() => {
   let d = 0;
@@ -65,6 +67,13 @@ const file = `/**
  * search and kept because they were good finds: the highest ground the loop
  * crosses on its western and northern stretches.
  *
+ * \`FREEWAY_RAMPS\` are where the ramps come down (#371): each marks a ramp's
+ * foot, 190-320 m out from its nearest point on the loop, placed by hand
+ * because \`rampsFor\` can only land a ramp on a surface junction that already
+ * exists and the authored network has almost none near the deck. The rules a
+ * marker has to meet are \`rampMarkerProblem\`'s in \`interstate.ts\`, and
+ * \`freeway.test.ts\` holds every marker to them.
+ *
  * Points are **world metres**, laid out as x,z pairs, against the frozen
  * landmass (\`CITY_LAND_STREAM\`) - the same convention \`roads.ts\` and
  * \`plan.ts\` use, for the same reason: a loop pinned to a coastline that
@@ -74,7 +83,7 @@ const file = `/**
  * \`docs/freeway-edited.json\`, which is what the freeway loop editor saves.
  * Editing here instead means the next sync silently reverts you.
  *
- * ${path.length} points · ${(perimeter / 1000).toFixed(1)} km · ${tunnels.length} tunnel anchors
+ * ${path.length} points · ${(perimeter / 1000).toFixed(1)} km · ${tunnels.length} tunnel anchors · ${ramps.length} ramp markers
  */
 import { UNITS_PER_METRE } from '../constants';
 import type { Vec2 } from './types';
@@ -94,10 +103,14 @@ ${flat(path)}
 export const FREEWAY_TUNNELS: Vec2[] = points([
 ${flat(tunnels)}
 ]);
+
+export const FREEWAY_RAMPS: Vec2[] = points([
+${flat(ramps)}
+]);
 `;
 
 writeFileSync(out, file);
 console.log(
   `wrote ${out}  ·  ${path.length} points  ·  ${(perimeter / 1000).toFixed(1)} km  ·  ` +
-    `${tunnels.length} tunnel anchors  ·  ${(file.length / 1024).toFixed(0)} KB`,
+    `${tunnels.length} tunnel anchors  ·  ${ramps.length} ramp markers  ·  ${(file.length / 1024).toFixed(0)} KB`,
 );
