@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TyreSmoke } from './smoke';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
@@ -139,6 +140,8 @@ export class CityView {
   private world: CityWorld | null = null;
   private hud: Hud | null = null;
   private readonly car = makeCar('#d8442f');
+  /** Off the rear tyres while they spin on the spot (#360). */
+  private readonly smoke = new TyreSmoke();
   /** Which profile the player's mesh is currently painted as (#67). */
   private wearing = '';
   private readonly trafficCars: CarPool;
@@ -230,6 +233,7 @@ export class CityView {
 
     this.car.visible = false;
     this.scene.add(this.car);
+    this.scene.add(this.smoke.group);
     this.trafficCars = new CarPool(this.scene);
     this.haulTrucks = new CityTrucks(TRUCK_COUNT);
     this.scene.add(this.haulTrucks.group);
@@ -585,6 +589,7 @@ export class CityView {
     }
 
     this.car.position.set(world.x, world.y, world.z);
+    this.smoke.update(dt, world);
     // Yaw, then pitch about the car's own axle (#307): nose up the ramp, and
     // along its line of flight once it leaves it. Negative because a positive
     // turn about x tips the nose down.

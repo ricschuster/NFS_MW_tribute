@@ -81,6 +81,8 @@ import {
   AMBUSH_RANGE,
   AMBUSH_CARS,
   AMBUSH_RING,
+  BURNOUT_TIME,
+  BURNOUT_SPEED_FRAC,
   DAMAGE_PER_WALL,
   DAMAGE_SHARE,
   DAMAGE_ROADBLOCK,
@@ -354,6 +356,12 @@ export class CityWorld {
    * is the clock that notices, and `canRecover` is what it earns.
    */
   stuckFor = 0;
+  /**
+   * Seconds of burnout (#360): stopped with throttle and brake both held. The
+   * renderer smokes the rear tyres off it, and on an event's marker
+   * `BURNOUT_TIME` of it starts the event.
+   */
+  burnout = 0;
   /** The slower clock (#385): asked to move without leaving a box `STUCK_ROOM` across. */
   trappedFor = 0;
 
@@ -732,7 +740,8 @@ export class CityWorld {
    * nowhere - which is precisely the state this exists to notice.
    */
   private watchProgress(dt: number, input: InputState): void {
-    const asked = input.up || input.down;
+    // Both at once is a burnout (#360), which is standing still on purpose.
+    const asked = (input.up || input.down) && !(input.up && input.down);
     // The box first, and on its own terms: a swing that resets the short clock
     // below is still inside it (#385).
     if (Math.hypot(this.x - this.roomX, this.z - this.roomZ) > STUCK_ROOM) {
@@ -902,13 +911,23 @@ export class CityWorld {
       return;
     }
 
+    // Spinning the wheels on the spot (#360). Read before anything moves the
+    // car this step, so "stopped" is the speed it arrived at.
+    const spinning =
+      input.up && input.down && !this.airborne && Math.abs(this.speed) < this.maxSpeed * BURNOUT_SPEED_FRAC;
+    this.burnout = spinning ? this.burnout + dt : 0;
+    // A burnout on a marker is the other way into the event, and only into the
+    // event: the reset stays on confirm, which is a question a burnout does
+    // not answer.
+    const burnedIn = this.burnout >= BURNOUT_TIME && (this.atStartLine !== null || this.atAmbush !== null);
+
     const rival = this.currentRival;
     // Ahead of everything else confirm can mean (#179). A car that has been
     // wedged for three seconds on a start line is a car whose driver is asking
     // to be unwedged, not one lining up for a race they cannot drive to.
     if (confirmPressed && this.canRecover) {
       this.recover();
-    } else if (confirmPressed && this.race.state === 'idle' && this.ambush.state === 'idle') {
+    } else if ((confirmPressed || burnedIn) && this.race.state === 'idle' && this.ambush.state === 'idle') {
       const route = this.atStartLine;
       const spot = this.atAmbush;
       if (route && rival && this.challengeReady) this.startRace(route, rival);
@@ -1022,6 +1041,9 @@ export class CityWorld {
 
     if (this.airborne) {
       // Held: no throttle, no brakes, no rolling resistance.
+    } else if (this.burnout > 0) {
+      // The wheels spin and the car stays where it is: the brake is holding it.
+      this.speed = 0;
     } else if (input.up) {
       this.speed = accelerate(this.speed, throttle, dt);
     } else if (input.down) {

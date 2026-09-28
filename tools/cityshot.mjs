@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro', 'startline',
+      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -527,6 +527,22 @@ for (const view of VIEWS) {
       world.speed = 0;
     });
     await page.waitForTimeout(600);
+  }
+
+  if (view === 'burnout') {
+    // Wheels spinning on the spot (#360), away from any marker so it smokes
+    // and starts nothing. The frames are real time here, so the keys are held
+    // for real time too.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      globalThis.crosstown.world.speed = 0;
+      globalThis.crosstown.world.crashFlash = 0;
+    });
+    await page.keyboard.down('ArrowUp');
+    await page.keyboard.down('ArrowDown');
+    await page.waitForTimeout(1500);
   }
 
   if (view === 'race' || view === 'speedrun') {
@@ -1041,6 +1057,7 @@ for (const view of VIEWS) {
     if (view === 'wheel') await page.keyboard.up('q');
     await page.keyboard.up('ArrowUp');
     if (view === 'pursuit') await page.keyboard.up('b');
+    if (view === 'burnout') await page.keyboard.up('ArrowDown');
   }
   console.log(`captured ${OUT}/city-${view}.png`);
 }
