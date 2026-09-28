@@ -135,6 +135,16 @@ const CALLOUTS: Record<string, Callout> = {
       'Looking for a {colour} {car}. All units.',
     ],
   },
+  // A workshop during a search (#338): the car they described is not the
+  // car on the road any more, and dispatch says so.
+  resprayed: {
+    from: 'dispatch',
+    lines: [
+      'Vehicle description update: suspect is now {colour}.',
+      'Update on the suspect vehicle - it is {colour} now.',
+      'All units, the {car} has been resprayed. Now {colour}.',
+    ],
+  },
   // The event variants (#339). Original lines on the pattern the reference
   // game's dispatch follows: a race is a route, and the police say so.
   'opened:race': {
@@ -323,6 +333,9 @@ export class Radio {
     if (now.broken > was.broken && now.state === 'pursuit') this.call('debris');
 
     if (was.state === 'pursuit' && now.state === 'cooldown') this.call(this.variant('lost', now));
+    // The same car, a different colour, with a pursuit on (#338). The same car,
+    // because driving off in a different one is a swap, not a respray.
+    if (was.state !== 'clear' && now.car === was.car && now.colour !== was.colour) this.call('resprayed');
     if (was.state !== 'clear' && now.state === 'clear') this.call('clear');
     if (!was.busted && now.busted) this.call('busted');
   }

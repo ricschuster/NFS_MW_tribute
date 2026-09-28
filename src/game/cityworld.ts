@@ -107,7 +107,7 @@ import {
 import { RepLedger } from './rep';
 import { Collectibles } from './collectibles';
 import { Garage } from './garage';
-import { STARTER_CAR, colourName, type CarProfile } from './cars';
+import { CARS, STARTER_CAR, colourName, type CarProfile } from './cars';
 import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
@@ -370,6 +370,21 @@ export class CityWorld {
   damage = 0;
   /** Seconds left on the REPAIRED banner. */
   repairFlash = 0;
+
+  /**
+   * The resprays (#338): car id to the colour a workshop put on it. Kept, as
+   * the reference game keeps one, and saved with the rest of the car.
+   */
+  private readonly resprays = new Map<string, string>();
+
+  /**
+   * The colour the car is now: its own, or whatever a workshop resprayed it.
+   * State here rather than on the profile, so the sim owns it, the radio can
+   * describe it and the renderer only draws it.
+   */
+  get paint(): string {
+    return this.resprays.get(this.car.id) ?? this.car.colour;
+  }
   /** Billboards and speed cameras: what is left to find (#93). */
   readonly collectibles: Collectibles;
   /** The cars parked around the city, and the one being driven (#67). */
@@ -486,6 +501,7 @@ export class CityWorld {
     this.collectibles.load(saved.smashed, saved.clocked, saved.known);
     this.finds.load(saved.cars, saved.car);
     this.finds.loadParts(saved.parts, saved.fitted);
+    for (const [id, colour] of saved.paint) this.resprays.set(id, colour);
     this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
@@ -803,7 +819,7 @@ export class CityWorld {
       broken: this.broken.size,
       reason: this.police.startedBy,
       car: this.car.name,
-      colour: colourName(this.car.colour),
+      colour: colourName(this.paint),
       event:
         this.race.state === 'racing' || this.race.state === 'countdown'
           ? 'race'
@@ -1351,9 +1367,29 @@ export class CityWorld {
 
       this.damage = 0;
       this.repairFlash = REPAIR_FLASH;
-      if (this.police.state === 'cooldown') this.police.giveUp();
+      if (this.police.state === 'cooldown') {
+        // The other half of "not the car they are looking for" (#338): it
+        // comes out a different colour, and the radio hears about it.
+        this.respray();
+        this.police.giveUp();
+      }
       return;
     }
+  }
+
+  /**
+   * A new colour, from the roster's own palette and never the one it had.
+   *
+   * Chosen off the sim's seeded stream, so a scripted drive repaints the same
+   * way twice, and from colours a player has already seen on a car rather
+   * than any colour at all: a respray is a paint shop, not a random number.
+   */
+  private respray(): void {
+    const was = colourName(this.paint);
+    const options = [...new Set(CARS.map((car) => car.colour))].filter((c) => colourName(c) !== was);
+    if (options.length === 0) return;
+    this.resprays.set(this.car.id, this.rng.pick(options));
+    this.savedAt = -1;
   }
 
   /** The heat level everything is scored at: 1 when nothing is chasing you. */
@@ -1378,6 +1414,7 @@ export class CityWorld {
       car: this.car.id,
       parts: this.finds.partsSave,
       fitted: this.finds.fittedSave,
+      paint: [...this.resprays],
       beaten: this.beaten,
     });
   }

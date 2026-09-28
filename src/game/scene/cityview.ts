@@ -597,12 +597,14 @@ export class CityView {
     // the damage bar says how bad it is and the paint says it without being
     // read. Both are rounded, so a steady drive is not a repaint every frame.
     const wear = Math.round(world.damage * 10) / 10;
-    if (this.wearing !== world.car.id || this.wearingDamage !== wear) {
-      this.wearing = world.car.id;
+    if (this.wearing !== `${world.car.id}${world.paint}` || this.wearingDamage !== wear) {
+      this.wearing = `${world.car.id}${world.paint}`;
       this.wearingDamage = wear;
       const body = this.car.children[0] as THREE.Mesh;
       const paint = (body.material as THREE.MeshLambertMaterial).color;
-      paint.set(world.car.colour);
+      // What it is painted now, which after a workshop in a search (#338) is
+      // not the colour it was found in.
+      paint.set(world.paint);
       const hurt = Math.max(0, (wear - DAMAGE_FREE) / (1 - DAMAGE_FREE));
       paint.lerp(new THREE.Color('#4a4038'), hurt * 0.7);
       this.car.scale.setScalar(world.car.scale);

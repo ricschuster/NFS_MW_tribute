@@ -23,11 +23,21 @@ const filled = (): Progress => ({
   car: 'kite',
   parts: [['kite', ['block', 'track-tyres']]],
   fitted: [['kite', ['block']]],
+  paint: [['kite', '#3a8fd8']],
 });
 
 describe('the save format', () => {
   it('round-trips everything a player has', () => {
     expect(decodeProgress(encodeProgress(filled()))).toEqual(filled());
+  });
+
+  // A save from before resprays existed (#338) is a save with no paint, not
+  // a broken one, and a colour that is not a colour is dropped, not trusted.
+  it('reads a save with no paint, and drops paint that is not a colour', () => {
+    const { paint: _paint, ...before } = filled();
+    expect(decodeProgress(JSON.stringify(before)).paint).toEqual([]);
+    const odd = { ...filled(), paint: [['kite', 'blue'], ['kite', 7], ['verso', '#3a8fd8']] };
+    expect(decodeProgress(JSON.stringify(odd)).paint).toEqual([['verso', '#3a8fd8']]);
   });
 
   it('stamps whatever it writes with the current version', () => {

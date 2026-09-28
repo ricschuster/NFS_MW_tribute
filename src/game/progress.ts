@@ -37,6 +37,11 @@ export interface Progress {
   /** Parts earned per car, and the ones fitted to each (#68). */
   parts: [string, string[]][];
   fitted: [string, string[]][];
+  /**
+   * Car id to the colour a workshop resprayed it (#338). Kept, the way the
+   * reference game keeps one: the car you come out in is the car you have.
+   */
+  paint: [string, string][];
 }
 
 /** A player who has just arrived. */
@@ -52,6 +57,7 @@ export function freshProgress(): Progress {
     car: '',
     parts: [],
     fitted: [],
+    paint: [],
   };
 }
 
@@ -111,6 +117,12 @@ export function decodeProgress(raw: string | null): Progress {
     car: typeof parsed.car === 'string' ? parsed.car : '',
     parts: perCar(parsed.parts),
     fitted: perCar(parsed.fitted),
+    paint: Array.isArray(parsed.paint)
+      ? parsed.paint.filter(
+          (row): row is [string, string] =>
+            Array.isArray(row) && typeof row[0] === 'string' && typeof row[1] === 'string' && /^#[0-9a-f]{6}$/i.test(row[1]),
+        )
+      : [],
   };
 }
 
