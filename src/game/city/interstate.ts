@@ -19,6 +19,7 @@ import {
   GRADE_RUN,
   FREEWAY_SPURS,
   FREEWAY_SPUR_MIN,
+  UNITS_PER_METRE,
 } from '../constants';
 import type { Rng } from './rng';
 import { nearWater, type Water } from './water';
@@ -384,8 +385,11 @@ function heightProfile(
   terrain: Terrain,
   anchoredAlong: number[],
 ): (along: number) => number {
-  const tunnels = pickTunnels(rng, perimeter, at, water, terrain, anchoredAlong);
+  return profileOver(pickTunnels(rng, perimeter, at, water, terrain, anchoredAlong), perimeter);
+}
 
+/** `heightProfile` once its tunnels are settled, which is all `rampMarkerProblem` needs of it. */
+function profileOver(tunnels: { start: number; end: number }[], perimeter: number): (along: number) => number {
   return (along: number) => {
     let height = INTERSTATE_HEIGHT;
     for (const { start, end } of tunnels) {
@@ -536,6 +540,45 @@ function pickTunnels(
     if (best) tunnels.push(best);
   }
   return tunnels;
+}
+
+/**
+ * Why an authored ramp marker (#371) cannot take a ramp, or `null` if it can.
+ *
+ * The same rules the freeway editor checks a marker against as it is dragged
+ * (`checkMarker` in `tools/freewayeditor.html`), asked of the real loop, the
+ * real water and the real height profile instead: 190-320 m out from its
+ * nearest point on the loop, clear of that edge's ends by the margin
+ * `rampsFor` uses, a way down that stays off the water (#244), and a deck
+ * point that is actually a deck. The last one is stricter than the editor's
+ * "not inside a tunnel": a point on a tunnel's approach grade is above the
+ * street but not by much, and a ramp from it is the deck already coming down.
+ *
+ * Only the authored tunnels are counted, which is every tunnel whenever there
+ * are at least `TUNNEL_COUNT` anchors - the search in `pickTunnels` then owes
+ * none, and the profile is the one `addInterstate` builds.
+ */
+export function rampMarkerProblem(path: Vec2[], tunnelAnchors: Vec2[], marker: Vec2, water: Water): string | null {
+  const edges = buildEdges(path);
+  const perimeter = edges.reduce((sum, edge) => sum + edge.length, 0);
+  const along = nearestAlong(edges, marker);
+  const [edge, at] = whereAlong(edges, along);
+  const deck = point(edge, at);
+  const run = Math.hypot(marker.x - deck.x, marker.z - deck.z);
+  const metres = (v: number) => `${Math.round(v / UNITS_PER_METRE)} m`;
+
+  if (run < RAMP_MIN_RUN) return `${metres(run)} from the loop, closer than ${metres(RAMP_MIN_RUN)}`;
+  if (run > RAMP_MAX_RUN) return `${metres(run)} from the loop, further than ${metres(RAMP_MAX_RUN)}`;
+  const margin = Math.min(GRADE_RUN, edge.length * 0.25);
+  if (at <= margin || at >= edge.length - margin) return `${metres(at)} along a ${metres(edge.length)} edge, too near a bend`;
+  if (!dryRun(water, deck, marker)) return 'the way down crosses water';
+  const tunnels = tunnelAnchors.map((p) => {
+    const start = nearestAlong(edges, p);
+    return { start, end: start + TUNNEL_LENGTH };
+  });
+  const height = profileOver(tunnels, perimeter)(along);
+  if (height < INTERSTATE_HEIGHT) return `the deck there is ${metres(height)} up, on or near a tunnel`;
+  return null;
 }
 
 /**

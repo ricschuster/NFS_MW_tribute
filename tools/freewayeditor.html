@@ -261,11 +261,17 @@
     });
   }
 
-  /** Whether a distance round the loop is under a tunnel. */
-  function inTunnel(along, spans) {
+  /**
+   * Whether a distance round the loop is under a tunnel or on the grade into
+   * or out of one. The deck takes GRADE_RUN either side of a tunnel to come
+   * down and climb back, and a ramp leaves only from a deck at full height
+   * (`rampMarkerProblem` in interstate.ts, #371) - checking the tunnel alone
+   * passed three markers that were on those grades, two of them below street.
+   */
+  function offDeck(along, spans) {
     return spans.some((s) => {
-      const into = (((along - s.start) % s.perimeter) + s.perimeter) % s.perimeter;
-      return into <= s.end - s.start;
+      const into = (((along - s.start + GRADE_RUN) % s.perimeter) + s.perimeter) % s.perimeter;
+      return into < s.end - s.start + 2 * GRADE_RUN;
     });
   }
   // Candidate ramp spots, checked live against the real constants rather than
@@ -484,11 +490,11 @@
       const z = best.closest[1] + (mz - best.closest[1]) * t;
       if (isWater(cellAt(x, z))) wet = true;
     }
-    // A ramp leaves from the deck, and a deck point inside a tunnel is not one
-    // (`addInterstate` only builds ramps from elevated stations).
-    const underground = inTunnel(whereOnLoop(best.closest[0], best.closest[1]).along, tunnelSpans());
+    // A ramp leaves from the deck at full height, and a point in a tunnel or on
+    // the grade either side of one is not that.
+    const underground = offDeck(whereOnLoop(best.closest[0], best.closest[1]).along, tunnelSpans());
     let why;
-    if (underground) why = `${Math.round(best.dist)} m - its point on the loop is inside a tunnel`;
+    if (underground) why = `${Math.round(best.dist)} m - its point on the loop is in or near a tunnel`;
     else if (!inWindow) why = best.dist < RAMP_RUN_MIN ? `${Math.round(best.dist)} m - too close to the loop` : `${Math.round(best.dist)} m - too far from the loop`;
     else if (!clearOfCorner) why = `${Math.round(best.dist)} m - too near a bend in the loop`;
     else if (wet) why = `${Math.round(best.dist)} m - the way down crosses water`;
