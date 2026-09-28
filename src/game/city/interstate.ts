@@ -156,12 +156,16 @@ export function addInterstate(
   addSpurs(rng, bounds, path, built, nodes, roads, water);
 }
 
+/** How near an existing surface node has to be to an anchor to be its foot: a snapped node, not a neighbour. */
+const FOOT_SNAP = UNITS_PER_METRE;
+
 /**
  * The authored ramps' feet, by the edge of the loop each leaves from.
  *
  * Every anchor is held to `rampMarkerProblem` first and throws if it fails,
  * since by then it has passed the editor and `freeway.test.ts` both and
- * something has moved underneath it. The foot is on the ground at the anchor,
+ * something has moved underneath it. The foot is the end of the anchor's
+ * connector where one was laid, and otherwise a new node on the ground there,
  * explicitly `surface` for the same reason `footFor`'s is: on a hillside its
  * height is above zero, and `make` would call that elevated.
  */
@@ -182,7 +186,11 @@ function authoredRamps(
       throw new Error(`ramp marker ${at} cannot take a ramp: ${problem}`);
     }
     const [edge, at] = whereAlong(edges, nearestAlong(edges, anchor));
-    const foot = make(nodes, anchor, groundAt(terrain, anchor.x, anchor.z), 'surface');
+    // The connector (`rampconnectors.ts`) was laid from here with the rest of
+    // the streets, so its end is the foot; a new node only when there is none.
+    const foot =
+      nodes.find((n) => n.level === 'surface' && Math.hypot(n.pos.x - anchor.x, n.pos.z - anchor.z) < FOOT_SNAP) ??
+      make(nodes, anchor, groundAt(terrain, anchor.x, anchor.z), 'surface');
     byEdge.set(edge, [...(byEdge.get(edge) ?? []), { at, node: foot }]);
   }
   return byEdge;
@@ -389,6 +397,12 @@ function whereAlong(edges: Edge[], along: number): [Edge, number] {
   }
   const last = edges[edges.length - 1];
   return [last, last.length];
+}
+
+/** The point on a closed loop nearest `at`: where a ramp anchor's deck is. */
+export function nearestOnLoop(path: Vec2[], at: Vec2): Vec2 {
+  const edges = buildEdges(path);
+  return point(...whereAlong(edges, nearestAlong(edges, at)));
 }
 
 /**
