@@ -192,6 +192,17 @@ export const BANNER_QUEUE = 3;
  * being a boundary rather than a number needing another decimal place - moving
  * it only moves which pair is the coin-flip.
  *
+ * **Refitted after #347 and #348 (2026-09-28), to the same design.** The
+ * gridded streets and Harbour Loop are gone; the only circuit is the Halloway
+ * Rim (#398), gravel with no traffic, where an expert holds 59% of top speed.
+ * Left at 27.5-34% the field was beaten by more than three kilometres, and the
+ * owner, driving it wrecked, held 66%. At 0.483 and 0.14 the field runs 50%
+ * for #10 to 62% for the boss; the expert takes #10 through #4 (#4 by 135 m)
+ * and loses #3 (by 41 m), #2 and the boss. One rank is about 176 m here.
+ * This is fitted to one circuit without traffic. When the map has street
+ * circuits again, measure first: traffic is thinner than it was (#348), so
+ * the old quarter-of-top-speed figure will not come back either.
+ *
  * **Both figures move whenever the routes do**, and not only when
  * `ROUTE_RADIUS` changes. A route is four corner junctions joined over the
  * street graph, so *any* change to the network redraws it: the expert went from
@@ -222,7 +233,7 @@ export const BANNER_QUEUE = 3;
  * empty road the same policy is worth eight points. Nitrous is a free-roam
  * mechanic that a race cannot use, which is #204.
  */
-export const RIVAL_BASE_SPEED_FRAC = 0.2635;
+export const RIVAL_BASE_SPEED_FRAC = 0.483;
 /**
  * Extra rival pace at difficulty 1 (#48, #105, #204).
  *
@@ -243,7 +254,7 @@ export const RIVAL_BASE_SPEED_FRAC = 0.2635;
  * against an expert whose own laps move by two or three depending on what the
  * traffic does.
  */
-export const RIVAL_DIFF_SPEED_FRAC = 0.0765;
+export const RIVAL_DIFF_SPEED_FRAC = 0.14;
 
 /* ------------------------------------------------------------------ */
 /* Kestrel Bay (ADR-0004). The city is generated, so these are the map. */
@@ -2342,9 +2353,16 @@ export const FIELD_GRID = m(7);
  * Re-derived against the traffic column, which is the one that describes a
  * game somebody plays: the easiest is a lap a competent driver completes, the
  * hardest wants a committed line and the boost.
+ *
+ * **And again after #347 (2026-09-28).** The owner averaged 192 km/h round the
+ * Marrow Field Run against a target of 68 km/h, in a wrecked car: 0.44-0.50 of
+ * top speed, where `citylap`'s perfect driver holds 0.41 in traffic. Now 0.347
+ * for #10 - a clean lap by that driver clears it comfortably - rising to 0.50
+ * for the boss, which is the owner's pace wrecked and so wants a committed
+ * line in a car that is not.
  */
-export const SPEEDRUN_TARGET = 0.2;
-export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.08;
+export const SPEEDRUN_TARGET = 0.32;
+export const SPEEDRUN_TARGET_PER_DIFFICULTY = 0.18;
 /** The average is meaningless in the first instants; hold it back until then. */
 export const SPEEDRUN_SETTLE = 0.75;
 
