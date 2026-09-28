@@ -130,6 +130,12 @@ export const ESCAPED_FLASH = 2.5;
  * short enough that three queued behind each other are gone in five seconds.
  */
 export const BANNER_TIME = 1.6;
+/**
+ * Seconds the card after a pursuit holds (#354). Longer than a banner: it is
+ * four numbers rather than two words, and it is read on a straight after the
+ * pursuit rather than in the middle of one.
+ */
+export const PURSUIT_CARD_TIME = 5;
 export const BANNER_QUEUE = 3;
 
 /* ------------------------------------------------------------------ */

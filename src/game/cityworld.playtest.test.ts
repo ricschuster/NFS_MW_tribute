@@ -810,6 +810,49 @@ describe('cooldown and the search area', () => {
     expect(world.police.level).toBe(cooled);
   });
 
+  // What the card after a pursuit shows (#354): read off the world, the
+  // way the HUD reads it, against a pursuit whose numbers are known.
+  it('keeps a summary of the pursuit and puts it up when you get away', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    world.step(STEP, NONE);
+    const before = world.rep.total;
+    tail(world);
+    let wanted = 0;
+    for (let t = 0; t < 3; t += STEP) {
+      world.speed = world.maxSpeed * 0.5;
+      world.step(STEP, NONE);
+      if (world.police.state !== 'clear') wanted += STEP;
+    }
+
+    world.x += CITY_COP_LOSE * 3;
+    expect(
+      stepUntil(
+        world,
+        () => {
+          world.police.cops.length = 0;
+          if (world.police.state !== 'clear') wanted += STEP;
+          const area = world.police.search;
+          if (area && Math.hypot(world.x - area.x, world.z - area.z) < area.radius * 2) {
+            world.x = area.x + area.radius * 4;
+          }
+          return world.lastPursuit !== null;
+        },
+        120,
+      ),
+    ).toBe(true);
+
+    const card = world.lastPursuit!;
+    expect(card.outcome).toBe('escaped');
+    expect(card.rep).toBe(world.rep.total - before);
+    expect(card.rep).toBeGreaterThan(0);
+    expect(card.seconds).toBeCloseTo(wanted, 0);
+    // Whatever this drive took down, it took down in this pursuit.
+    expect(card.takedowns).toBe(world.takedowns);
+    expect(card.roadblocks).toBe(0);
+    expect(card.peakLevel).toBeGreaterThanOrEqual(1);
+    expect(world.cardLeft).toBeGreaterThan(0);
+  });
+
   // The area is where they lost you. It does not follow you around, which is
   // the difference between a search and a tracking device.
   it('searches a fixed place, not wherever you have got to', () => {
@@ -3142,7 +3185,9 @@ describe('the end of a pursuit', () => {
     // stake is what it earned, and a bust three seconds in takes nothing
     // because nothing was won yet.
     const cop = onTheBumper(world);
+    let ran = 0;
     for (let t = 0; t < 40; t += STEP) {
+      ran = t;
       holdBeside(world, cop);
       cop.y = world.y;
       // Going along for the first twenty seconds, then stopped.
@@ -3163,6 +3208,12 @@ describe('the end of a pursuit', () => {
     expect(world.bustCost).toBeGreaterThan(0);
     expect(world.rep.total).toBe(banked);
     expect(world.rep.recent.some((a) => a.amount < 0)).toBe(true);
+
+    // And the card says the same thing the overlay does (#354).
+    expect(world.lastPursuit?.outcome).toBe('busted');
+    expect(world.lastPursuit?.rep).toBe(-world.bustCost);
+    expect(world.lastPursuit?.seconds).toBeCloseTo(ran, 0);
+    expect(world.cardLeft).toBeGreaterThan(0);
   });
 
   it('resets the heat it was earned at', () => {

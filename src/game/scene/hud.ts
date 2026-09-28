@@ -133,6 +133,7 @@ export class Hud {
     this.shredded(world);
     this.cooldown(world);
     this.pursuitBanner(world);
+    this.pursuitCard(world);
     this.collection(world);
     this.radio(world);
     this.event(world);
@@ -1959,6 +1960,56 @@ export class Hud {
       ctx.globalAlpha = 1;
     }
 
+  }
+
+  /**
+   * How the pursuit went, once it is over (#354).
+   *
+   * Under the banner rather than over the car, for a few seconds: what it paid
+   * or what the bust took back, how long it ran, how hot it got and what was
+   * put out of it. The Rep popups said all of this a line at a time while it
+   * was happening, which is when nobody was reading them.
+   */
+  private pursuitCard(world: CityWorld): void {
+    const card = world.lastPursuit;
+    if (!card || world.cardLeft <= 0 || world.busted) return;
+    const { ctx } = this;
+    const escaped = card.outcome === 'escaped';
+    const colour = escaped ? '#7fe3ff' : SIGHT_COLOUR.seen;
+    const minutes = Math.floor(card.seconds / 60);
+    const seconds = (card.seconds % 60).toFixed(1).padStart(4, '0');
+    const rep = `${card.rep >= 0 ? '+' : '-'}${Math.abs(card.rep).toLocaleString('en-US')}`;
+    const cells: [string, string][] = [
+      ['REP', rep],
+      ['TIME', `${minutes}:${seconds}`],
+      ['PEAK HEAT', `${card.peakLevel}`],
+      ['TAKEDOWNS', `${card.takedowns}`],
+      ['ROADBLOCKS', `${card.roadblocks}`],
+    ];
+
+    const cell = 92;
+    const width = cell * cells.length + 24;
+    const x = WIDTH / 2 - width / 2;
+    const y = 126;
+    ctx.globalAlpha = Math.min(1, world.cardLeft * 2);
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.8)';
+    ctx.fillRect(x, y, width, 84);
+    ctx.fillStyle = colour;
+    ctx.fillRect(x, y, width, 3);
+    ctx.textAlign = 'center';
+    ctx.font = '700 12px system-ui, sans-serif';
+    // The banner above already says how it ended on an escape; the card says how it went.
+    ctx.fillText(escaped ? 'THE PURSUIT' : 'BUSTED  ·  WHAT IT COST', WIDTH / 2, y + 22);
+    cells.forEach(([label, value], i) => {
+      const cx = x + 12 + cell * i + cell / 2;
+      ctx.fillStyle = i === 0 ? colour : '#ffffff';
+      ctx.font = '800 22px system-ui, sans-serif';
+      ctx.fillText(value, cx, y + 52);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.fillText(label, cx, y + 70);
+    });
+    ctx.globalAlpha = 1;
   }
 
   /**
