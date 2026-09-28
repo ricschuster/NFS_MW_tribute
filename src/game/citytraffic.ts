@@ -14,7 +14,7 @@ import {
 } from './constants';
 import type { CityGrid } from './city/grid';
 import type { Rng } from './city/rng';
-import type { City, CityRoad, DistrictKind } from './city/types';
+import type { City, CityRoad, DistrictKind, RoadSurface } from './city/types';
 import {
   advanceAlong,
   directionOf,
@@ -40,6 +40,21 @@ export function hourly(hour: number): number {
   }
   return TRAFFIC_BY_HOUR[TRAFFIC_BY_HOUR.length - 1][1];
 }
+
+/**
+ * Roads that belong to a place rather than to the city, which civilian traffic
+ * is kept off: the quarry's gravel (#327), and Marrow Field's dirt (#377).
+ *
+ * The airfield joined the quarry for the same reason and a sharper one. Its
+ * longest road has the cargo plane's belly across it - solid, so a car either
+ * jumps it off the mound in front or stops against it - and traffic, which does
+ * not collide with set pieces, drove straight through the fuselage. It also
+ * slowed the reference driver to its own pace on the run-up, so the driver
+ * came off the mound too slow and wedged under the plane for the rest of the
+ * lap: the Marrow Field Run could not be lapped with traffic at all.
+ */
+const PRIVATE_SURFACES: ReadonlySet<RoadSurface> = new Set<RoadSurface>(['gravel', 'dirt']);
+const isPublic = (road: CityRoad) => !PRIVATE_SURFACES.has(road.surface);
 
 /** One car going about its business on the street network. */
 export interface TrafficCar extends GraphCar {
@@ -234,8 +249,8 @@ export class CityTraffic {
    */
   private nextRoad(car: TrafficCar, node: number): CityRoad | null {
     const heading = this.direction(car);
-    // A car that reaches a gravel road turns round instead of driving in.
-    const options = exitsFrom(this.city, car, node).filter((road) => road.surface !== 'gravel');
+    // A car that reaches a place's own road turns round instead of driving in.
+    const options = exitsFrom(this.city, car, node).filter(isPublic);
     if (options.length === 0) return null;
 
     let best: CityRoad | null = null;
@@ -276,11 +291,12 @@ export class CityTraffic {
     const x = at.x + Math.sin(angle) * distance;
     const z = at.z + Math.cos(angle) * distance;
 
-    // Never a gravel road (#327): the quarry's roads are private, and the
-    // trucks that belong on them are their own thing (#330).
+    // Never a place's own road (#327, #377): the quarry's are private and the
+    // trucks that belong on them are their own thing (#330), and the
+    // airfield's have a plane parked across one.
     const nearby = this.grid
       .roadsNear(x, z)
-      .filter((road) => road.length > road.width * 2 && road.surface !== 'gravel');
+      .filter((road) => road.length > road.width * 2 && isPublic(road));
     if (nearby.length === 0) return null;
 
     const road = nearby[this.rng.int(nearby.length)];
