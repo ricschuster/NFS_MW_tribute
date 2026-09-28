@@ -279,6 +279,28 @@ export class CityPolice {
     return Math.min(HEAT_LEVEL_COUNT, 1 + Math.floor(this.heat * HEAT_LEVEL_COUNT));
   }
 
+  /**
+   * Whether they can see you, for the HUD (#342): `seen` while a unit chasing
+   * you has line of sight, `hidden` once none has but the search has not begun
+   * yet, `searching` through the cooldown, and null outside a pursuit.
+   *
+   * `hidden` is the state the minimap used to have no way of showing. It lasts
+   * `LOSE_CONTACT_TIME` and it is exactly when a player is deciding whether to
+   * commit to the side street, so it is read here rather than worked out again
+   * in the renderer (ADR-0003).
+   */
+  get sight(): 'seen' | 'hidden' | 'searching' | null {
+    if (this.busted) return null;
+    if (this.state === 'cooldown') return 'searching';
+    if (this.state !== 'pursuit') return null;
+    return this.seenNow ? 'seen' : 'hidden';
+  }
+
+  /** Seconds until the search begins if they go on not seeing you: the whole of `LOSE_CONTACT_TIME` while they can. */
+  get searchIn(): number {
+    return Math.max(0, LOSE_CONTACT_TIME - this.unseen);
+  }
+
   /** The units, speed and cop count this level brings. */
   private get force() {
     return HEAT_LEVELS[this.level - 1];

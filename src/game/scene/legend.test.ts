@@ -41,7 +41,7 @@ describe('the map legend', () => {
     for (const [label, colour, shape] of MAP_LEGEND) {
       expect(label.length).toBeGreaterThan(2);
       expect(colour).toMatch(/^(#[0-9a-f]{6}|rgba\()/i);
-      expect(['dot', 'line', 'cross', 'ring', 'target']).toContain(shape);
+      expect(['dot', 'line', 'cross', 'ring', 'target', 'rim']).toContain(shape);
     }
   });
 

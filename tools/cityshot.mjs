@@ -30,6 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
+  'unseen',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -38,6 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
+      'unseen',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -167,6 +169,29 @@ for (const view of VIEWS) {
     });
     // Inside the cut, which runs on the director's own clock.
     await page.waitForTimeout(1200);
+  }
+
+  if (view === 'unseen') {
+    // The seconds between losing them and the search starting (#342): a
+    // pursuit with no unit that can see the car, part-way through
+    // LOSE_CONTACT_TIME, so the rim is blue with some of its arc drained. Set
+    // rather than driven into, for the same reason the roadblock is: whether
+    // the state happens is the playtest's job, and this is whether it reads.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.police.cops.length = 0;
+      world.police.state = 'pursuit';
+      world.police.heat = 0.4;
+      world.police.unseen = 1.6;
+      world.crashFlash = 0;
+    });
+    await page.waitForTimeout(250);
   }
 
   if (view === 'roadblock') {
