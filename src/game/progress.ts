@@ -42,6 +42,8 @@ export interface Progress {
    * reference game keeps one: the car you come out in is the car you have.
    */
   paint: [string, string][];
+  /** Ids of the one-off milestones already paid (#353), so each pays once for good. */
+  milestones: string[];
 }
 
 /** A player who has just arrived. */
@@ -58,6 +60,7 @@ export function freshProgress(): Progress {
     parts: [],
     fitted: [],
     paint: [],
+    milestones: [],
   };
 }
 
@@ -123,6 +126,7 @@ export function decodeProgress(raw: string | null): Progress {
             Array.isArray(row) && typeof row[0] === 'string' && typeof row[1] === 'string' && /^#[0-9a-f]{6}$/i.test(row[1]),
         )
       : [],
+    milestones: strings(parsed.milestones),
   };
 }
 

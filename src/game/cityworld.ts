@@ -123,6 +123,7 @@ import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
 import { NitroCounters, leftOfCentre, type NitroSource } from './nitrofill';
+import { newlyReached } from './milestones';
 import { Banners, type Banner } from './banners';
 import { RIVALS, difficultyLabel, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
@@ -408,6 +409,13 @@ export class CityWorld {
    */
   private readonly resprays = new Map<string, string>();
 
+  /** The one-off milestones already paid (#353), saved so each pays once for good. */
+  readonly milestones = new Set<string>();
+  /** Every car driven this session, for the "driven" milestones. */
+  private readonly driven = new Set<string>();
+  /** Pursuits got away from this session, for the first-escape milestone. */
+  private escapes = 0;
+
   /**
    * The colour the car is now: its own, or whatever a workshop resprayed it.
    * State here rather than on the profile, so the sim owns it, the radio can
@@ -538,6 +546,7 @@ export class CityWorld {
     this.finds.load(saved.cars, saved.car);
     this.finds.loadParts(saved.parts, saved.fitted);
     for (const [id, colour] of saved.paint) this.resprays.set(id, colour);
+    for (const id of saved.milestones) this.milestones.add(id);
     this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
@@ -552,6 +561,7 @@ export class CityWorld {
    */
   drive(profile: CarProfile): void {
     this.car = profile;
+    this.driven.add(profile.id);
     // Parts multiply the profile rather than replacing anything in it (#68),
     // so a tuned Kestrel is still recognisably a Kestrel and the roster stays
     // the thing that decides what a car is.
@@ -1119,6 +1129,7 @@ export class CityWorld {
         // Paid at the level the pursuit reached, so shaking a heat-six chase
         // is worth what it cost to survive one.
         this.rep.award('escape', this.peakLevel);
+        this.escapes++;
         this.peakLevel = 1;
         this.endPursuit('escaped', this.rep.total - this.repAtLarge, 0);
       }
@@ -1243,6 +1254,7 @@ export class CityWorld {
     this.breakThings();
     this.nearMisses();
     this.risks(dt);
+    this.milestoneCheck();
     this.speeding(dt);
     const smashed = this.collectibles.smashed.size;
     this.collectibles.update(
@@ -1383,6 +1395,32 @@ export class CityWorld {
       if (Math.cos(car.heading - this.heading) < 0.8) continue;
       this.refill('slipstream', NITRO_FROM_SLIPSTREAM * dt, dt);
       return;
+    }
+  }
+
+  /**
+   * Pay any milestone just reached (#353), once. Checked every step, which is
+   * cheap - a couple of dozen comparisons - and means a milestone lands on the
+   * step that earned it rather than on some later tick.
+   */
+  private milestoneCheck(): void {
+    let gates = 0;
+    for (const thing of this.city.breakables) if (thing.kind === 'gate' && this.broken.has(thing.id)) gates++;
+    const reached = newlyReached(
+      {
+        cameras: this.collectibles.clocked.size,
+        billboards: this.collectibles.smashed.size,
+        gates,
+        escapes: this.escapes,
+        beaten: this.beaten,
+        driven: this.driven,
+      },
+      this.milestones,
+    );
+    for (const milestone of reached) {
+      this.milestones.add(milestone.id);
+      this.rep.award('milestone', 1, milestone.rep, milestone.label);
+      this.savedAt = -1;
     }
   }
 
@@ -1560,6 +1598,7 @@ export class CityWorld {
       parts: this.finds.partsSave,
       fitted: this.finds.fittedSave,
       paint: [...this.resprays],
+      milestones: [...this.milestones],
       beaten: this.beaten,
     });
   }

@@ -56,6 +56,7 @@ export type RepReason =
   | 'claim'
   | 'breaker'
   | 'jump'
+  | 'milestone'
   /** Not an award: what a bust takes back (#178). Only `forfeit` uses it. */
   | 'busted';
 
@@ -82,7 +83,8 @@ const KINDS: Record<RepReason, RepKind> = {
   ambush: { value: REP_AMBUSH, label: 'AMBUSH SURVIVED' },
   claim: { value: REP_CLAIM, label: 'CAR CLAIMED' },
   breaker: { value: REP_BREAKER, label: 'PURSUIT BREAKER' },
-  jump: { value: REP_JUMP, label: 'JUMP' }, // scaled by the caller, by distance
+  jump: { value: REP_JUMP, label: 'JUMP' },
+  milestone: { value: 1, label: 'MILESTONE' }, // valued and labelled by the table (#353) // scaled by the caller, by distance
   busted: { value: 0, label: 'BUSTED' }, // taken, not paid: see `forfeit`
 };
 

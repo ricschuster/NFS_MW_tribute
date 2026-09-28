@@ -24,6 +24,7 @@ const filled = (): Progress => ({
   parts: [['kite', ['block', 'track-tyres']]],
   fitted: [['kite', ['block']]],
   paint: [['kite', '#3a8fd8']],
+  milestones: ['camera-1', 'drove-kite'],
 });
 
 describe('the save format', () => {

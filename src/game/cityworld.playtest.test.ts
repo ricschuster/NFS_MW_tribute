@@ -69,6 +69,7 @@ import {
   NITRO_SLIPSTREAM_RANGE,
   STUCK_TRAPPED_TIME,
   BURNOUT_TIME,
+  REP_SAVE_INTERVAL,
 } from './constants';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS, difficultyLabel } from './rivals';
@@ -996,6 +997,10 @@ describe('cooldown and the search area', () => {
   // way the HUD reads it, against a pursuit whose numbers are known.
   it('keeps a summary of the pursuit and puts it up when you get away', () => {
     const world = new CityWorld(undefined, { traffic: false });
+    // The first escape is also a milestone (#353), paid the same step. It is
+    // not something the pursuit earned, so the card rightly leaves it out;
+    // already reached here, so the total and the card can be compared.
+    world.milestones.add('escape-1');
     world.step(STEP, NONE);
     const before = world.rep.total;
     tail(world);
@@ -2251,6 +2256,39 @@ describe.skipIf(!CITY_STREET_GRID)('street finds', () => {
  * on the line. These are about the wiring: getting into one, what it does to
  * the pursuit, and what winning it moves.
  */
+// One-off milestones (#353): paid once, in the Rep feed, and saved.
+describe('milestones', () => {
+  it('pays the first speed camera once, and remembers it across a reload', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const camera = world.collectibles.cameras[0];
+    world.collectibles.clocked.set(camera.id, 0.5);
+    world.step(STEP, NONE);
+    const paid = world.rep.recent.filter((a) => a.reason === 'milestone');
+    expect(paid.map((a) => a.label)).toEqual(['FIRST SPEED CAMERA']);
+    expect(paid[0].amount).toBe(250);
+    expect(world.milestones.has('camera-1')).toBe(true);
+
+    // Not again, however long it goes on being true.
+    const total = world.rep.total;
+    drive(world, REP_SAVE_INTERVAL + 1, NONE);
+    expect(world.rep.total).toBe(total);
+
+    // And not again after a reload either: the save has it.
+    const again = new CityWorld(undefined, { traffic: false, police: false });
+    expect(again.milestones.has('camera-1')).toBe(true);
+    again.collectibles.clocked.set(camera.id, 0.5);
+    again.step(STEP, NONE);
+    expect(again.rep.recent.some((a) => a.reason === 'milestone' && a.label === 'FIRST SPEED CAMERA')).toBe(false);
+  });
+
+  it('marks the first time behind the wheel of a car', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    world.drive(carById('kite'));
+    world.step(STEP, NONE);
+    expect(world.rep.recent.some((a) => a.label === 'KITE DRIVEN')).toBe(true);
+  });
+});
+
 // A burnout on the marker starts the event (#360), and a burnout anywhere
 // else is only smoke.
 describe('starting an event with a burnout (#360)', () => {
