@@ -67,6 +67,7 @@ import {
   NITRO_RECHARGE,
   NITRO_FROM_NEAR_MISS,
   NITRO_SLIPSTREAM_RANGE,
+  STUCK_TRAPPED_TIME,
 } from './constants';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS, difficultyLabel } from './rivals';
@@ -3581,6 +3582,59 @@ describe('the end of a pursuit', () => {
  */
 // Wedging the car needs a building to wedge it in, and there are none while
 // the street grid is off (ADR-0009, no `fillSuperblock`).
+// The second way of being stuck (#385): not a step the car cannot take but a
+// box it cannot leave. Positions are set by hand, so this is about the clock
+// and not about finding a corner on today's map to wedge a car in.
+describe('a car trapped in a box', () => {
+  const still = () => new CityWorld(undefined, { traffic: false, police: false });
+  const UP = press({ up: true });
+
+  it('is offered the reset while it rocks back and forth and gets nowhere', () => {
+    const world = still();
+    const home = { x: world.x, z: world.z };
+    let peak = 0;
+    // Swinging between two spots 15 m apart - more than the short clock's
+    // 12 m, so it restarts on every swing, as it did under the plane.
+    for (let t = 0; t < STUCK_TRAPPED_TIME + 1; t += STEP) {
+      const out = Math.floor(t / 0.6) % 2 === 1;
+      world.x = home.x + (out ? 15 * M : 0);
+      world.z = home.z;
+      world.step(STEP, UP);
+      peak = Math.max(peak, world.stuckFor);
+    }
+    expect(peak).toBeLessThan(STUCK_TIME);
+    expect(world.canRecover).toBe(true);
+  });
+
+  it('is not offered one while it is crawling somewhere, however slowly', () => {
+    const world = still();
+    const home = { x: world.x, z: world.z };
+    let offered = false;
+    // 6 m/s: slow, but out of any box in under seven seconds.
+    for (let t = 0; t < STUCK_TRAPPED_TIME * 2; t += STEP) {
+      world.x = home.x + 6 * M * t;
+      world.z = home.z;
+      world.step(STEP, UP);
+      offered ||= world.canRecover;
+    }
+    expect(offered).toBe(false);
+  });
+
+  it('starts counting again once it has been put back on a road', () => {
+    const world = still();
+    const home = { x: world.x, z: world.z };
+    for (let t = 0; t < STUCK_TRAPPED_TIME + 1; t += STEP) {
+      world.x = home.x + (Math.floor(t / 0.6) % 2 === 1 ? 15 * M : 0);
+      world.z = home.z;
+      world.step(STEP, UP);
+    }
+    expect(world.canRecover).toBe(true);
+    world.recover();
+    expect(world.trappedFor).toBe(0);
+    expect(world.canRecover).toBe(false);
+  });
+});
+
 describe.skipIf(!CITY_STREET_GRID)('a stuck car', () => {
   /** Wedge the car where it cannot move: inside a building, which is solid. */
   function wedge(world: CityWorld) {

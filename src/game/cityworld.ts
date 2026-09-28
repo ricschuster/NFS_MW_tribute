@@ -102,6 +102,8 @@ import {
   BREAKER_DEBRIS,
   STUCK_TIME,
   STUCK_PROGRESS,
+  STUCK_ROOM,
+  STUCK_TRAPPED_TIME,
   MARKER_STRAY,
   MARKER_REDRAW,
   DAY_START,
@@ -352,6 +354,8 @@ export class CityWorld {
    * is the clock that notices, and `canRecover` is what it earns.
    */
   stuckFor = 0;
+  /** The slower clock (#385): asked to move without leaving a box `STUCK_ROOM` across. */
+  trappedFor = 0;
 
   /** Cars taken out of play, still sitting in the street (#94). */
   readonly wrecks: Wreck[] = [];
@@ -496,6 +500,9 @@ export class CityWorld {
   private bustHold = 0;
   /** Where the car last put real ground behind it, for the stuck clock (#179). */
   private progressX = 0;
+  /** Where the box the trapped clock is watching is centred. */
+  private roomX = 0;
+  private roomZ = 0;
   private progressZ = 0;
   /** Seconds spent well over the limit on the road under the car (#177). */
   private overLimit = 0;
@@ -624,12 +631,16 @@ export class CityWorld {
    * the offer is asking the car to move and it not moving, for `STUCK_TIME`.
    */
   get canRecover(): boolean {
-    if (this.busted || this.stuckFor < STUCK_TIME) return false;
+    if (this.busted) return false;
     // Still where it got stuck. Anything that puts the car somewhere else -
     // lining up on a grid, a shot set up by hand - has already answered the
     // question, and an offer left standing from a minute ago would eat the
     // confirm that was meant to start the race.
-    return Math.hypot(this.x - this.progressX, this.z - this.progressZ) <= STUCK_PROGRESS;
+    const wedged =
+      this.stuckFor >= STUCK_TIME && Math.hypot(this.x - this.progressX, this.z - this.progressZ) <= STUCK_PROGRESS;
+    const trapped =
+      this.trappedFor >= STUCK_TRAPPED_TIME && Math.hypot(this.x - this.roomX, this.z - this.roomZ) <= STUCK_ROOM;
+    return wedged || trapped;
   }
 
   /**
@@ -706,6 +717,9 @@ export class CityWorld {
     this.progressX = this.x;
     this.progressZ = this.z;
     this.stuckFor = 0;
+    this.roomX = this.x;
+    this.roomZ = this.z;
+    this.trappedFor = 0;
   }
 
   /**
@@ -718,11 +732,23 @@ export class CityWorld {
    * nowhere - which is precisely the state this exists to notice.
    */
   private watchProgress(dt: number, input: InputState): void {
+    const asked = input.up || input.down;
+    // The box first, and on its own terms: a swing that resets the short clock
+    // below is still inside it (#385).
+    if (Math.hypot(this.x - this.roomX, this.z - this.roomZ) > STUCK_ROOM) {
+      this.roomX = this.x;
+      this.roomZ = this.z;
+      this.trappedFor = 0;
+    } else if (asked) {
+      this.trappedFor += dt;
+    }
     if (Math.hypot(this.x - this.progressX, this.z - this.progressZ) > STUCK_PROGRESS) {
-      this.markProgress();
+      this.progressX = this.x;
+      this.progressZ = this.z;
+      this.stuckFor = 0;
       return;
     }
-    if (input.up || input.down) this.stuckFor += dt;
+    if (asked) this.stuckFor += dt;
   }
 
   /**
