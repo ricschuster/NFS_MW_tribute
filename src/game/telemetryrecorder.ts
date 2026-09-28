@@ -52,7 +52,7 @@ export function recordOnF9(world: CityWorld, view: CityView, stage: HTMLElement)
     began = performance.now();
     badge.style.display = 'block';
     timer = window.setInterval(() => {
-      current.sample(world, (performance.now() - began) / 1000, (x, y, z) => view.sees(x, y, z));
+      current.sample(world, (performance.now() - began) / 1000, (...box) => view.screenHeight(...box));
       badge.textContent = `REC ${Math.floor(current.length / 60)}:${String(current.length % 60).padStart(2, '0')}`;
     }, 1000);
   });
