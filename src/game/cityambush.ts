@@ -1,4 +1,4 @@
-import { AMBUSH_RESULT_HOLD } from './constants';
+import { AMBUSH_RESULT_HOLD, AMBUSH_TARGET, AMBUSH_TARGET_PER_LEVEL } from './constants';
 
 /**
  * An ambush (#92).
@@ -11,6 +11,10 @@ import { AMBUSH_RESULT_HOLD } from './constants';
  * is the whole reason it is worth having: the pursuit is the best thing the
  * city has, and every other event asks you to stop being chased in order to
  * play it.
+ *
+ * It has a target time (#358): out inside it and the event is won, out after
+ * it and the pursuit is still over - that is the pursuit's to say, not the
+ * event's - but the event is not.
  */
 export type AmbushState = 'idle' | 'running' | 'escaped' | 'busted';
 
@@ -20,6 +24,10 @@ export class CityAmbush {
   level = 0;
   /** Seconds since it sprang, which is the score. */
   elapsed = 0;
+  /** Seconds to get out inside, for this one's heat (#358). */
+  target = 0;
+  /** Whether the escape came inside the target. Meaningful once it has ended. */
+  inTime = false;
   /** Seconds the result banner has left. */
   hold = 0;
   /** True on the step it ends, so the world pays for it once. */
@@ -29,6 +37,8 @@ export class CityAmbush {
     this.state = 'running';
     this.level = level;
     this.elapsed = 0;
+    this.target = AMBUSH_TARGET + AMBUSH_TARGET_PER_LEVEL * (level - 1);
+    this.inTime = false;
     this.justEnded = false;
   }
 
@@ -60,6 +70,7 @@ export class CityAmbush {
 
   private end(how: 'escaped' | 'busted'): void {
     this.state = how;
+    this.inTime = how === 'escaped' && this.elapsed <= this.target;
     this.hold = AMBUSH_RESULT_HOLD;
     this.justEnded = true;
   }

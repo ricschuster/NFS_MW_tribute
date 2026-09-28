@@ -1136,8 +1136,12 @@ export class CityWorld {
 
   /** Pay for an ambush that has ended, one way or the other. */
   private settleAmbush(): void {
-    if (this.ambush.state !== 'escaped') return;
-    this.rep.award('ambush', this.ambush.level);
+    // Out, but late (#358): the pursuit paid its own escape, and the event
+    // pays nothing.
+    if (this.ambush.state !== 'escaped' || !this.ambush.inTime) return;
+    // By margin: the award at the buzzer, up to double for getting out at once.
+    const margin = Math.max(0, this.ambush.target - this.ambush.elapsed) / this.ambush.target;
+    this.rep.award('ambush', this.ambush.level, 1 + margin);
     this.savedAt = -1;
   }
 

@@ -6,6 +6,8 @@ import {
   AMBUSH_SPACING,
   AMBUSH_FIRST_LEVEL,
   AMBUSH_RESULT_HOLD,
+  AMBUSH_TARGET,
+  AMBUSH_TARGET_PER_LEVEL,
   HEAT_LEVEL_COUNT,
 } from './constants';
 
@@ -103,5 +105,41 @@ describe('running one', () => {
     ambush.update(STEP, true, false);
     run(ambush, AMBUSH_RESULT_HOLD + 0.5, true);
     expect(ambush.state).toBe('idle');
+  });
+});
+
+describe('the target time (#358)', () => {
+  it('gives a hotter ambush longer, up to the reference two and a half minutes', () => {
+    const at = (level: number) => {
+      const run = new CityAmbush();
+      run.begin(level);
+      return run.target;
+    };
+    expect(at(1)).toBe(AMBUSH_TARGET);
+    expect(at(3)).toBe(AMBUSH_TARGET + 2 * AMBUSH_TARGET_PER_LEVEL);
+    expect(at(HEAT_LEVEL_COUNT)).toBe(150);
+  });
+
+  it('is in time up to the target and not after', () => {
+    const run = new CityAmbush();
+    run.begin(2);
+    run.update(run.target - 0.1, false, false);
+    run.update(0.05, true, false);
+    expect(run.inTime).toBe(true);
+
+    const late = new CityAmbush();
+    late.begin(2);
+    late.update(late.target + 1, false, false);
+    late.update(0.05, true, false);
+    expect(late.state).toBe('escaped');
+    expect(late.inTime).toBe(false);
+  });
+
+  it('is never in time when it ends in a bust', () => {
+    const run = new CityAmbush();
+    run.begin(2);
+    run.update(0.05, false, true);
+    expect(run.state).toBe('busted');
+    expect(run.inTime).toBe(false);
   });
 });
