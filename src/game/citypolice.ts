@@ -115,7 +115,7 @@ export interface Cop extends GraphCar {
  * is half the issue: a pursuit that begins for a reason you cannot name is not
  * meaningfully different from one that begins on a timer.
  */
-export type Provocation = 'speeding' | 'rammed' | 'crashed' | 'damage';
+export type Provocation = 'speeding' | 'rammed' | 'crashed' | 'damage' | 'racing';
 
 /**
  * Escaping is two stages, not one (#63).
@@ -1044,6 +1044,17 @@ export class CityPolice {
    */
   rammed(player: Chased, heat = 0): void {
     if (this.state === 'clear' && this.cooldown <= 0) this.open(player, 'rammed');
+    if (heat > 0) this.provoke(heat);
+  }
+
+  /**
+   * A pursuit nobody had to witness: a ladder race (#349, ADR-0011). The race
+   * is known about before it starts - the reference opens a chase two seconds
+   * in - so it is called rather than seen, and built from whatever units are
+   * on the street and whatever `recruit` sends after them.
+   */
+  call(player: Chased, reason: Provocation, heat = 0): void {
+    if (this.state === 'clear') this.open(player, reason);
     if (heat > 0) this.provoke(heat);
   }
 

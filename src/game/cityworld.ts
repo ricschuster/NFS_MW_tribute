@@ -96,6 +96,10 @@ import {
   REPAIR_RANGE,
   REPAIR_FLASH,
   CLAIM_HEAT,
+  HEAT_LEVEL_COUNT,
+  RACE_CHASE_DELAY,
+  RACE_CHASE_LEVEL,
+  RACE_CHASE_LEVEL_PER_DIFFICULTY,
   BREAKER_RANGE,
   BREAKER_MIN_SPEED,
   BREAKER_SPEED_KEPT,
@@ -419,6 +423,8 @@ export class CityWorld {
   private readonly driven = new Set<string>();
   /** Pursuits got away from this session, for the first-escape milestone. */
   private escapes = 0;
+  /** Seconds until a ladder race calls the police (#349); negative when it will not. */
+  private raceChase = -1;
 
   /**
    * The colour the car is now: its own, or whatever a workshop resprayed it.
@@ -1016,7 +1022,7 @@ export class CityWorld {
         this.traffic.update(dt, this);
         this.trucks.update(dt);
       }
-      if (this.withPolice && this.race.state === 'idle') {
+      if (this.withPolice && (this.race.state === 'idle' || this.chasedRace)) {
         // The pursuit carries on while you are fished out, and so does its
         // clock: the card's time is how long they were after you (#354).
         if (this.police.state !== 'clear') this.tally.seconds += dt;
@@ -1147,10 +1153,18 @@ export class CityWorld {
       this.traffic.update(dt, this);
       this.trucks.update(dt);
     }
-    // No pursuit during a sanctioned event: a race you have to win while
-    // being rammed by a heat-six Enforcer is not a race, it is a pursuit with
-    // a lap counter on it.
-    if (this.withPolice && this.race.state === 'idle') {
+    // No pursuit during a speed run, and none from a patrol during any race:
+    // the police in a race are the ones the race calls (#349). A ladder race
+    // used to be police-free, on the worry that a race you have to win while
+    // being rammed is a pursuit with a lap counter on it. ADR-0011 answers it
+    // rather than dismissing it: at race pace the chase cannot keep up with a
+    // clean car (`npm run pace`), so the pressure is what it puts on the route
+    // and what it leaves for after the finish, not contact.
+    if (this.raceChase >= 0 && this.race.state === 'racing') {
+      this.raceChase -= dt;
+      if (this.raceChase < 0) this.callRaceChase();
+    }
+    if (this.withPolice && (this.race.state === 'idle' || this.chasedRace)) {
       // What the pursuit has paid so far is what it has to lose (#178).
       // Recorded on the step it opens, before anything is earned in it.
       const wanted = this.police.state !== 'clear';
@@ -1163,6 +1177,10 @@ export class CityWorld {
       }
       this.police.update(dt, this, this.maxSpeed);
       if (this.police.busted && !this.busted) {
+        // Busted mid-race is the race lost (#349), and then the pursuit's
+        // stake on top, like any other bust.
+        if (this.race.state === 'racing') this.rep.award('raceLoss');
+        this.raceChase = -1;
         this.busted = true;
         this.bustHold = CITY_BUST_HOLD;
         this.speed = 0;
@@ -1238,6 +1256,26 @@ export class CityWorld {
     this.z = route.start.z;
     this.police.reset();
     this.escapedFlash = 0;
+    // A ladder race brings the police (#349); a speed run is a question about
+    // your own lap and stays yours.
+    this.raceChase = route.kind === 'circuit' ? RACE_CHASE_DELAY : -1;
+  }
+
+  /**
+   * Is the pursuit running through this race? Only a ladder circuit, and
+   * through the finish: the chase outlives the race and carries into the
+   * claim, as it does in the reference game (ADR-0011).
+   */
+  private get chasedRace(): boolean {
+    return this.race.route?.kind === 'circuit' && (this.race.state === 'racing' || this.race.state === 'finished');
+  }
+
+  /** Call the chase a ladder race brings, at a level that rises with the rival. */
+  private callRaceChase(): void {
+    const difficulty = this.race.challenger?.difficulty ?? 0;
+    const level = Math.round(RACE_CHASE_LEVEL + RACE_CHASE_LEVEL_PER_DIFFICULTY * difficulty);
+    this.police.call(this, 'racing');
+    this.police.heat = Math.max(this.police.heat, (level - 0.5) / HEAT_LEVEL_COUNT);
   }
 
   /**
@@ -1247,6 +1285,15 @@ export class CityWorld {
    * a reload must not put a rival back at the bottom of it.
    */
   private settleRace(): void {
+    // What the race pays is the race's, not the pursuit's (#349): a bust later
+    // in the same pursuit takes back what the pursuit paid, and a purse won
+    // while being chased is not that.
+    const before = this.rep.total;
+    this.settleRaceResult();
+    if (this.police.state !== 'clear') this.repAtLarge += this.rep.total - before;
+  }
+
+  private settleRaceResult(): void {
     const rival = this.race.challenger;
     const place = this.race.place;
     // A part for a good result, in the car that got it (#68). Second counts:
