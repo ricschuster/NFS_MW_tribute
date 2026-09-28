@@ -73,7 +73,7 @@ import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS, difficultyLabel } from './rivals';
 import { racePurse } from './rep';
 import { kestrelBay } from './city/index';
-import type { CityRoute } from './city/types';
+import type { CityRoad, CityRoute } from './city/types';
 import { placeOnRoad } from './graphcar';
 import { hourly } from './citytraffic';
 import { roadHeightAt, inWater, distanceToRoad } from './city/grid';
@@ -1680,6 +1680,60 @@ describe('a pursuit over open ground', () => {
     // Never stepped off: the whole mechanism is for a car that has actually
     // left the network, and clipping a kerb is not that.
     expect(cop.offRoad).toBe(0);
+  });
+
+  // #389. A unit's first steps off the road are still on the carriageway it
+  // left, and "road underneath" used to send it straight back - so it rocked
+  // on the kerb 40 m from a car stopped beside a boulevard, and a stopped
+  // pursuit at heat 6 never ended. Built from scratch rather than from
+  // `offTheRoad`, which starts at the spawn and only steps over one kerb.
+  it('crosses open ground to a car stopped beside a boulevard, and busts it', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    world.step(STEP, NONE);
+    let road: CityRoad | null = null;
+    for (const candidate of world.city.roads) {
+      if (candidate.class !== 'boulevard' || candidate.surface !== 'asphalt' || candidate.length < 200 * M) continue;
+      const a = world.city.nodes[candidate.a].pos;
+      const b = world.city.nodes[candidate.b].pos;
+      const length = Math.hypot(b.x - a.x, b.z - a.z);
+      const x = (a.x + b.x) / 2 - ((b.z - a.z) / length) * 40 * M;
+      const z = (a.z + b.z) / 2 + ((b.x - a.x) / length) * 40 * M;
+      if (inWater(world.city, x, z)) continue;
+      world.x = x;
+      world.z = z;
+      world.y = groundAt(world.city.terrain, x, z);
+      world.speed = 0;
+      world.step(STEP, NONE);
+      // Open ground: no road under it, and nothing stopped it being put there.
+      if (world.onRoad !== null || Math.hypot(world.x - x, world.z - z) > M) continue;
+      road = candidate;
+      break;
+    }
+    expect(road).not.toBeNull();
+
+    const cop: Cop = {
+      road: road!,
+      t: 0.5,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      kind: 'cruiser',
+      role: 'chase',
+      offRoad: 0,
+    };
+    placeOnRoad(world.city, cop, 0);
+    world.police.cops.push(cop);
+    world.police.state = 'pursuit';
+    world.police.heat = 0.9;
+    for (let t = 0; t < 12 && !world.police.busted; t += STEP) {
+      world.speed = 0;
+      world.police.update(STEP, world, world.maxSpeed);
+    }
+    expect(world.police.busted).toBe(true);
   });
 
   it('comes back to the network rather than roaming', () => {
