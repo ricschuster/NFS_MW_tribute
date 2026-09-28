@@ -33,6 +33,7 @@
     "pwa": "node tools/pwacheck.mjs",
     "citylap": "node tools/citylap.mjs",
     "telemetry": "node tools/telemetry.mjs",
+    "trafficview": "node tools/trafficview.mjs",
     "pace": "node tools/pace.mjs",
     "patrol": "node tools/patrol.mjs",
     "endings": "node tools/endings.mjs",

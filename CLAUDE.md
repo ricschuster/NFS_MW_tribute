@@ -63,9 +63,9 @@ what the city is shaped like.
   rivals, clean and with the boost (#166). Compare against `docs/city-baseline.json`
   after touching `constants.ts`, and re-record with
   `-- --out docs/city-baseline.json`. The empty lap says what the road allows;
-  the traffic lap says what the drive is like, and traffic roughly halves the
-  pace, so tuning against the empty number alone is tuning against a game
-  nobody plays. This is the only driving baseline; the track's `npm run feel`
+  the traffic lap says what the drive is like - traffic costs the Marrow Field
+  Run about a fifth of its pace (#348 thinned it; it used to be half) - so
+  tuning against the empty number alone is tuning against a game nobody plays. This is the only driving baseline; the track's `npm run feel`
   retired with the track. It is also a guard (#210): traffic can only ever
   cost a lap time, never buy one back, so a route that comes back *faster*
   with traffic than empty is not a hard route, it is the driver thrashing on
@@ -90,6 +90,12 @@ what the city is shaped like.
   `npm run ramps` instead; so are Ashford Point's driveways (#287), since
   `cutAndFill` runs before `localStreetsFor` ever lays one and never promised
   them anything - their grades are reported, not gated
+- `npm run trafficview` — how much traffic is on screen (#348), headless: a
+  stand-in drives the public roads with the real traffic around it, and a
+  chase camera counts civilians the way the telemetry recorder does. Compare
+  against the reference game's 0.60 a second and 60% of seconds with none;
+  `TRAFFIC_IN_CITY` was set with it. The stand-in never stops or crashes, so a
+  person sees a little more
 - `npm run pace` — can the police be outrun? Compares your real top speed
   against the quickest unit at every heat level, in every condition. Exits
   non-zero if an *undamaged* car cannot outrun a level, which is an invariant

@@ -1478,14 +1478,21 @@ export const BOULEVARD_CLEARANCE = m(5);
  * How many cars are kept around the player, before the district and the hour
  * have their say.
  *
- * Down from 75. A playtest said there was too much traffic in general, and the
- * numbers agree with the feeling: a good driver holds a quarter of top speed
- * in traffic against half on an empty road, so traffic is not a hazard among
- * others - it is the single biggest thing deciding how fast the game is. It is
- * also now multiplied twice, by district and by hour, and 75 was set when it
- * was multiplied by neither.
+ * Down from 52, and before that 75. Traffic is something you thread and score
+ * off, not the thing that sets the pace (ADR-0011, #348): in the reference
+ * game no other vehicle is on screen in 60% of driving seconds and three or
+ * more in at most a tenth. The owner's recorded drive (#347) had about the
+ * same share of empty seconds but twice as many cars when there were any -
+ * 2.9 at a time against 1.5, three or more in 22% of seconds - and the owner's
+ * word for it was "way too many cars on the road".
+ *
+ * Set with `npm run trafficview`, which counts what a chase camera sees the
+ * way the telemetry recorder does. At 52 it read 1.27 vehicles on screen a
+ * second and 36% empty; at 24, 0.58 and 59%, 1.4 at a time when there are
+ * any and three or more in 3% of seconds, against the reference's 0.60, 60%,
+ * 1.5 and at most 10%.
  */
-export const TRAFFIC_IN_CITY = 52;
+export const TRAFFIC_IN_CITY = 24;
 export const TRAFFIC_RADIUS = m(360);
 /**
  * How much road within `TRAFFIC_RADIUS` counts as a full neighbourhood, so
@@ -1505,7 +1512,7 @@ export const TRAFFIC_ROAD_FULL = m(6000);
  *
  * It used to be exactly constant: the same seventy-five cars in a downtown
  * canyon and on an industrial back street, which is a large thing to have flat
- * given traffic roughly halves the pace a good driver can hold. A playtest
+ * given how much traffic decides the pace a good driver can hold. A playtest
  * asked both halves of the question in one breath - "traffic is too dense; is
  * it constant across the map?" - so these are centred a little under 1 rather
  * than on it: downtown gets more than it had, everywhere else gets less, and
