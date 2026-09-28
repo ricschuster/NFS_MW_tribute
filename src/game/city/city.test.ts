@@ -3,6 +3,7 @@ import { generateCity } from './generate';
 import { kestrelBay } from './index';
 import { Rng } from './rng';
 import {
+  ROAD_ABOVE_WATER,
   CITY_BRIDGE_SPACING,
   CITY_FREEWAY,
   CITY_LOCAL_STREETS_KINDS,
@@ -433,6 +434,20 @@ describe('districts', () => {
 });
 
 describe('water', () => {
+  // Every bridge had its deck under the water, and every road ending at a bank
+  // ended in it: the ground goes below sea level before `inWater` says the
+  // water starts, and a node took the ground's height. `ROAD_ABOVE_WATER`.
+  it('puts no surface road under the water, bridges included', () => {
+    const under = city.nodes.filter((n) => n.level === 'surface' && n.roads.length > 0 && n.y < 0);
+    expect(under).toEqual([]);
+    const bridges = city.roads.filter((r) => r.bridge);
+    expect(bridges.length).toBeGreaterThan(0);
+    for (const bridge of bridges) {
+      expect(city.nodes[bridge.a].y).toBeGreaterThan(0);
+      expect(city.nodes[bridge.b].y).toBeGreaterThan(0);
+    }
+  });
+
   // The holes are the land now (ADR-0008, #249): the sea stopped being a bay
   // along one edge and became everywhere the land is not, so there is one
   // water body and its `outline` is just the map rectangle. What used to be
@@ -806,7 +821,8 @@ describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
       if (road.class === 'interstate' || road.class === 'ramp') continue;
       for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
         expect(end.level).toBe('surface');
-        expect(end.y).toBeCloseTo(groundAt(city.terrain, end.pos.x, end.pos.z));
+        // On the ground, or on a causeway where the ground is under the water.
+        expect(end.y).toBeCloseTo(Math.max(groundAt(city.terrain, end.pos.x, end.pos.z), ROAD_ABOVE_WATER));
       }
     }
   });

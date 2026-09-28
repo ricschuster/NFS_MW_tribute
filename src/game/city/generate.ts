@@ -15,6 +15,7 @@ import {
   CITY_AIRFIELD_STREAM,
   CITY_BRIDGES,
   CITY_MAX_BRIDGE,
+  ROAD_ABOVE_WATER,
   CITY_BRIDGE_SPACING,
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
@@ -1229,8 +1230,13 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
       //
       // `level` is what says which network a node is on (#250), so this does
       // not muddle the two the way `y === 0` used to.
+      //
+      // Never under the water, though (`ROAD_ABOVE_WATER`): the ground near a
+      // bank is below sea level before the water starts, and a road that
+      // followed it down was drawn under the surface.
       const pos = { x: snap(x), z: snap(z) };
-      node = { id: nodes.length, pos, y: groundAt(terrain, pos.x, pos.z), level: 'surface', roads: [] };
+      const y = Math.max(groundAt(terrain, pos.x, pos.z), ROAD_ABOVE_WATER);
+      node = { id: nodes.length, pos, y, level: 'surface', roads: [] };
       at.set(k, node);
       nodes.push(node);
     }

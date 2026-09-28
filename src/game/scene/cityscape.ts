@@ -646,13 +646,18 @@ export class Cityscape {
    * Bridge decks. These are the one piece of road that has to be drawn: there
    * is no ground under them to show through, and they are the chokepoints the
    * city is designed around, so they should read as structures.
+   *
+   * On the road's own line and at its own height, turned and pitched the way
+   * the interstate's decks are. They used to be drawn flat at street level and
+   * only ever square to the map, from before the ground had height: a diagonal
+   * bridge came out as a box skewed off its road, at a height no car drove at.
    */
   private bridges(city: City): THREE.InstancedMesh | null {
     const spans = city.roads.filter((road) => road.bridge);
     if (spans.length === 0) return null;
 
     const geometry = new THREE.BoxGeometry(1, 1, 1);
-    geometry.translate(0, -0.5, 0);
+    geometry.translate(0, -0.5, 0); // the top face is the road
     const material = new THREE.MeshLambertMaterial({ color: '#54585e' });
     this.owned.push(geometry, material);
 
@@ -662,16 +667,21 @@ export class Cityscape {
     mesh.receiveShadow = true;
 
     const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const pitch = new THREE.Quaternion();
+    const euler = new THREE.Euler();
+    const scale = new THREE.Vector3();
+    const position = new THREE.Vector3();
+    const across = new THREE.Vector3(1, 0, 0);
     spans.forEach((road, i) => {
-      const a = city.nodes[road.a].pos;
-      const b = city.nodes[road.b].pos;
-      const alongX = Math.abs(b.x - a.x) > Math.abs(b.z - a.z);
-      matrix.makeScale(
-        alongX ? road.length : road.width,
-        BRIDGE_HEIGHT,
-        alongX ? road.width : road.length,
-      );
-      matrix.setPosition((a.x + b.x) / 2, PAVEMENT_HEIGHT, (a.z + b.z) / 2);
+      const a = city.nodes[road.a];
+      const b = city.nodes[road.b];
+      const rise = b.y - a.y;
+      euler.set(0, Math.atan2(b.pos.x - a.pos.x, b.pos.z - a.pos.z), 0, 'YXZ');
+      quaternion.setFromEuler(euler).multiply(pitch.setFromAxisAngle(across, -Math.atan2(rise, road.length)));
+      scale.set(road.width, BRIDGE_HEIGHT, Math.hypot(road.length, rise));
+      position.set((a.pos.x + b.pos.x) / 2, (a.y + b.y) / 2 + ROAD_LIFT, (a.pos.z + b.pos.z) / 2);
+      matrix.compose(position, quaternion, scale);
       mesh.setMatrixAt(i, matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;

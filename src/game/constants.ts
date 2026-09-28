@@ -931,6 +931,21 @@ export const CITY_BRIDGES = 6;
  * river, not how wide it is where they do.
  */
 export const CITY_MAX_BRIDGE = m(700);
+
+/**
+ * The lowest a surface road sits: this far above the water, whatever the
+ * ground under it does.
+ *
+ * The terrain goes below sea level before `inWater` says the water has begun -
+ * the shore ramps down to the bed - and the renderer draws the water over any
+ * ground under zero. A road node took the ground's height, so every road ending
+ * at a bank ended under the water, and a bridge, which is a straight run
+ * between two such ends, was a road along the river bed: all seven bridges had
+ * their decks 0.8 m to 2.7 m under the surface. Cars drove along it looking as
+ * though they were on the water, and the deck drawn above them was nowhere any
+ * car was. A road over low ground is a causeway instead.
+ */
+export const ROAD_ABOVE_WATER = m(0.5);
 /**
  * Bridges are kept this far apart, so they are separate decisions to make.
  *
