@@ -1,6 +1,7 @@
 import {
   QUARRY_DIRT_REACH,
   TRAFFIC_LANE,
+  TRUCK_RADIUS,
   TRUCK_COUNT,
   TRUCK_GAP,
   TRUCK_SPEED,
@@ -16,10 +17,16 @@ import { advanceAlong, directionOf, exitsFrom, placeOnRoad, type GraphCar } from
  * A handful of `GraphCar`s, not a crowd, and not tied to where the player is:
  * four trucks cost nothing to keep running, and a pit that is only busy while
  * you are looking at it is a set, not a workplace. They live on the graph like
- * every other car here, confined to the quarry's own gravel roads - the haul
- * spiral and the rim loop - so a truck that reaches the way in turns round
- * rather than driving out into the city. At the dead end on the pit floor
- * `advanceAlong` turns them round too, which is the loading point.
+ * every other car here, confined to the haul road: the spiral from the
+ * loading point on the pit floor up to its junction with the rim loop, where a
+ * truck turns round rather than going on. At the dead end on the pit floor
+ * `advanceAlong` turns them round too.
+ *
+ * Not the rim loop, though it is gravel too. The Halloway Rim is raced, and a
+ * truck at this scale fills the rim road: measured, 0.7 m to spare beside one
+ * for a car 4.4 m across, so a race that met one was a race spent following
+ * it at 30 km/h while the field, on its fixed line, drove through it. From the
+ * rim you watch them work the pit below.
  *
  * Nothing here knows about the player, the police or the renderer. What a hit
  * costs is `CityWorld.contacts`'s to say, and what one looks like is
@@ -30,16 +37,7 @@ export class QuarryTrucks {
   private readonly roads: CityRoad[];
 
   constructor(private readonly city: City) {
-    const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
-    const reach = pit ? pit.radius * QUARRY_DIRT_REACH : 0;
-    this.roads = pit
-      ? city.roads.filter((road) => {
-          if (road.surface !== 'gravel' || road.bridge) return false;
-          const a = city.nodes[road.a].pos;
-          const b = city.nodes[road.b].pos;
-          return Math.hypot((a.x + b.x) / 2 - pit.at.x, (a.z + b.z) / 2 - pit.at.z) <= reach;
-        })
-      : [];
+    this.roads = haulRoad(city);
     // Spread along the road list rather than at random: it is ordered along
     // the haul, so an even stride puts the trucks on different turns of it.
     for (let i = 0; i < TRUCK_COUNT && this.roads.length > 0; i++) {
@@ -103,4 +101,60 @@ export class QuarryTrucks {
     }
     return best;
   }
+}
+
+/**
+ * The haul road, in order from the loading point up: the chain of gravel road
+ * that starts at the quarry's one dead end and runs until it first meets a
+ * junction. Found by the network's shape rather than by a radius, because the
+ * rim loop and the spiral's outer turn are a hundred metres apart and a
+ * distance that told them apart would be a number tuned to one map.
+ */
+export function haulRoad(city: City): CityRoad[] {
+  const pit = PLAN_PLACES.find((p) => p.kind === 'quarry');
+  if (!pit) return [];
+  const reach = pit.radius * QUARRY_DIRT_REACH;
+  const gravel = city.roads.filter((road) => {
+    if (road.surface !== 'gravel' || road.bridge) return false;
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    return Math.hypot((a.x + b.x) / 2 - pit.at.x, (a.z + b.z) / 2 - pit.at.z) <= reach;
+  });
+  const at = new Map<number, CityRoad[]>();
+  for (const road of city.roads) {
+    for (const node of [road.a, road.b]) {
+      const list = at.get(node);
+      if (list) list.push(road);
+      else at.set(node, [road]);
+    }
+  }
+  // The loading point: the gravel dead end nearest the middle of the pit.
+  let node = -1;
+  let nearest = Infinity;
+  for (const road of gravel) {
+    for (const end of [road.a, road.b]) {
+      if (at.get(end)!.length !== 1) continue;
+      const pos = city.nodes[end].pos;
+      const gap = Math.hypot(pos.x - pit.at.x, pos.z - pit.at.z);
+      if (gap < nearest) {
+        nearest = gap;
+        node = end;
+      }
+    }
+  }
+  const chain: CityRoad[] = [];
+  let road: CityRoad | undefined = node < 0 ? undefined : at.get(node)![0];
+  while (road && gravel.includes(road) && !chain.includes(road)) {
+    chain.push(road);
+    node = road.a === node ? road.b : road.a;
+    const next = at.get(node)!;
+    if (next.length !== 2) break;
+    road = next.find((r) => r !== road);
+  }
+  // Turn round short of the rim rather than in its junction, which the
+  // Halloway Rim runs through: a truck swinging round there sat on the racing
+  // line. Two truck lengths of the top of the haul road are left empty.
+  let spare = TRUCK_RADIUS * 3;
+  while (chain.length > 1 && spare > 0) spare -= chain.pop()!.length;
+  return chain;
 }

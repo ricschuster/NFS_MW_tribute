@@ -29,8 +29,13 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   4th and below keep the old consolation; nitrous and milestone amounts;
   ambush targets of 75 s plus 15 s a level (2:30 at heat 6).
   **Still waiting on the owner:** #347 (a recording of them driving) and so
-  #348; #349-#350, #340-#341, #359 (need circuit routes, which the authored
-  map does not have yet); M12's design questions; the map areas.
+  #348; M12's design questions; the map areas. #349-#350, #340-#341 and #359
+  needed a circuit, and the Halloway Rim is the first (#323): 4.1 km of the
+  quarry's rim loop, two laps. Its ladder is not balanced - an expert holds
+  59% of top speed on a road with no traffic and beats every rival by 3.5 km,
+  because the rivals' pace (27-34%) was set against streets traffic halves.
+  That is #347's number to fix, not the route's. The haul trucks keep to the
+  spiral now, since one fills the rim road.
 - **What 2026-09-27 changed**, all merged:
   - **The reference game:** a 47-minute recording of it was measured
     (`docs/research/nfs-most-wanted-2012-gameplay.md`, and

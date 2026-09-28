@@ -241,6 +241,16 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
  * one of its own: measured, the reference driver averages 35% of top speed
  * round it in traffic, at the fast end of the 24-35% the ladder was balanced
  * on, so it is one of the easier speed runs rather than a special case.
+ *
+ * **Halloway Rim.** Two laps of the gravel loop round the rim of Halloway
+ * Quarry, 4.1 km a lap, starting on the short link where the road in arrives.
+ * The rim and not the pit because the pit is a dead end: the haul road spirals
+ * down to the loading point and stops, a quarry has one way down, and a lap
+ * cannot use a road twice. The descent wants a sprint, which is its own event
+ * type (#397). The haul trucks keep to the spiral (`haulRoad`), so from the rim
+ * you watch them work the pit rather than follow one round it. The way points
+ * sit on the outer ring, a hundred metres clear of the spiral's top turn, so
+ * the nearest node is always the rim's.
  */
 const PLACED_ROUTES: { name: string; kind: RouteKind; via: [number, number][] }[] = [
   {
@@ -252,6 +262,17 @@ const PLACED_ROUTES: { name: string; kind: RouteKind; via: [number, number][] }[
       [-766, 2964],
       [-1414, 1360],
       [-866, 1100],
+    ],
+  },
+  {
+    name: 'Halloway Rim',
+    kind: 'circuit',
+    via: [
+      [-2230, -440],
+      [-2800, -160],
+      [-3480, -650],
+      [-2700, -1395],
+      [-2000, -810],
     ],
   },
 ];

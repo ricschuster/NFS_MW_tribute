@@ -425,8 +425,15 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
  * matters.
  */
 export function carAheadLimit(world, K) {
-  const cars = world.traffic?.cars;
-  if (!cars || cars.length === 0) return Infinity;
+  // The quarry's haul trucks too (#330): they are traffic on the only roads
+  // civilians are kept off, and a driver blind to them rammed every one on the
+  // Halloway Rim and finished each race a wreck. Wider than a car, so the cone
+  // is widened by the difference.
+  const cars = [
+    ...(world.traffic?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
+    ...(world.trucks?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 1.2 + K.TRUCK_RADIUS })),
+  ];
+  if (cars.length === 0) return Infinity;
 
   // Look as far ahead as it would take to stop, plus a car's length of room.
   const reach = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * world.maxSpeed));
@@ -434,14 +441,14 @@ export function carAheadLimit(world, K) {
   const fz = Math.cos(world.heading);
 
   let limit = Infinity;
-  for (const car of cars) {
+  for (const { car, width } of cars) {
     const dx = car.x - world.x;
     const dz = car.z - world.z;
     const ahead = dx * fx + dz * fz;
     if (ahead <= 0 || ahead > reach) continue;
     // How far off our line it is. A car in the next lane is not in the way.
     const across = Math.abs(dx * fz - dz * fx);
-    if (across > K.CAR_RADIUS * 2.2) continue;
+    if (across > width) continue;
     // Close the gap to a following distance, not to a touch.
     const room = ahead - K.TRAFFIC_GAP;
     if (room <= 0) return Math.min(limit, car.speed * 0.6);

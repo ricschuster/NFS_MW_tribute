@@ -534,6 +534,11 @@ export class CityWorld {
     this.trucks = new QuarryTrucks(city);
     this.police = new CityPolice(city, this.grid, this.rng);
     this.withTraffic = options.traffic ?? true;
+    // The trucks are traffic, so an empty city has none. They only move with
+    // traffic on, and left in a city without it they were four parked walls:
+    // the empty lap of the Halloway Rim ran into one on the rim road and
+    // ground against it for four minutes.
+    if (!this.withTraffic) this.trucks.cars.length = 0;
     this.withPolice = options.police ?? true;
     this.collectibles = new Collectibles(city);
     this.finds = new Garage(city);
