@@ -57,6 +57,15 @@ on you and you are busted, and a bust takes back everything that pursuit paid.
 All of that is off under `prefers-reduced-motion`, which leaves a plain camera
 behind the car.
 
+## Recording a drive
+
+[`?debug`](https://ricschuster.github.io/crosstown/?debug) turns on the
+telemetry recorder (it is always on under `npm run dev`). **F9** starts and
+stops it; a red REC badge shows while it runs, and stopping saves a JSON file
+with a sample a second of your speed, what you were doing and how much traffic
+was on screen. `npm run telemetry -- <file>` reads it back as a pace and
+traffic report (#347).
+
 ## Looking at the map
 
 [`?renderer=city`](https://ricschuster.github.io/crosstown/?renderer=city&view=aerial)
