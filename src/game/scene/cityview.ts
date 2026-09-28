@@ -503,18 +503,38 @@ export class CityView {
   }
 
   /**
-   * Is this world point inside the camera's view as last drawn? For the
-   * telemetry recorder's on-screen traffic count (#347); a metre up, because a
-   * car's position is where its wheels meet the road.
+   * How much of the screen's height a vehicle takes up, as a fraction of it,
+   * with the camera as last drawn: 0 when it is out of view. For the telemetry
+   * recorder (#347), which counts a vehicle as on screen only once it is as big
+   * as the smallest one the reference game's detector found. The box is
+   * `w` wide, `l` long and `h` tall, standing on `y` and turned to `heading`;
+   * corners behind the camera are dropped, and what is left is clipped to the
+   * frame, so a car half off the edge counts for the half that is on it.
    */
-  sees(x: number, y: number, z: number): boolean {
-    this.viewed.setFromProjectionMatrix(
-      this.seen.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse),
-    );
-    return this.viewed.containsPoint(this.point.set(x, y + M, z));
+  screenHeight(x: number, y: number, z: number, heading: number, w: number, l: number, h: number): number {
+    const fx = Math.sin(heading);
+    const fz = Math.cos(heading);
+    let top = -Infinity;
+    let bottom = Infinity;
+    let left = Infinity;
+    let right = -Infinity;
+    for (const along of [-l / 2, l / 2]) {
+      for (const across of [-w / 2, w / 2]) {
+        for (const up of [0, h]) {
+          const p = this.point.set(x + fx * along + fz * across, y + up, z + fz * along - fx * across);
+          p.applyMatrix4(this.camera.matrixWorldInverse);
+          if (p.z > -this.camera.near) continue;
+          p.applyMatrix4(this.camera.projectionMatrix);
+          top = Math.max(top, p.y);
+          bottom = Math.min(bottom, p.y);
+          left = Math.min(left, p.x);
+          right = Math.max(right, p.x);
+        }
+      }
+    }
+    if (top < -1 || bottom > 1 || right < -1 || left > 1 || top === -Infinity) return 0;
+    return (Math.min(1, top) - Math.max(-1, bottom)) / 2;
   }
-  private readonly viewed = new THREE.Frustum();
-  private readonly seen = new THREE.Matrix4();
   private readonly point = new THREE.Vector3();
 
   resize(width: number, height: number): void {

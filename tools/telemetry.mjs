@@ -9,11 +9,17 @@
 //
 // Recordings come from the game: F9 in dev, or in a built game with `?debug`.
 //
+// A recording keeps every vehicle's on-screen size, so it can be counted again
+// at another threshold with `--detectable 0.03` (a fraction of screen height).
+//
 // Usage:
-//   npm run telemetry -- crosstown-telemetry-*.json
+//   npm run telemetry -- crosstown-telemetry-*.json [--detectable 0.025]
 import { readFileSync } from 'node:fs';
 
-const files = process.argv.slice(2);
+const args = process.argv.slice(2);
+const at = args.indexOf('--detectable');
+const override = at < 0 ? null : Number(args.splice(at, 2)[1]);
+const files = args;
 if (files.length === 0) {
   console.error('usage: npm run telemetry -- <recording.json> [more.json ...]');
   process.exit(1);
@@ -25,12 +31,23 @@ const pct = (n) => `${Math.round(n * 100)}%`;
 const mean = (xs) => (xs.length === 0 ? 0 : xs.reduce((a, b) => a + b, 0) / xs.length);
 
 const samples = [];
-let range = null;
+let counting = null;
 for (const file of files) {
   const data = JSON.parse(readFileSync(file, 'utf8'));
-  if (data.version !== 1) throw new Error(`${file}: unknown telemetry version ${data.version}`);
-  range = data.range;
-  samples.push(...data.samples.map((s) => ({ ...s, file })));
+  if (data.version === 1) {
+    // The first recordings counted everything in view within a range.
+    if (override !== null) throw new Error(`${file}: a version 1 recording has no sizes to count again`);
+    counting = `in the camera's view within ${data.range} m (a version 1 recording)`;
+    samples.push(...data.samples.map((s) => ({ ...s, file })));
+  } else if (data.version === 2) {
+    const floor = override ?? data.detectable;
+    counting = `at ${(floor * 100).toFixed(1)}% of screen height or bigger`;
+    for (const s of data.samples) {
+      const traffic = override === null ? s.traffic : s.sizes.traffic.filter((h) => h >= floor).length;
+      const police = override === null ? s.police : s.sizes.police.filter((h) => h >= floor).length;
+      samples.push({ ...s, traffic, police, file });
+    }
+  } else throw new Error(`${file}: unknown telemetry version ${data.version}`);
 }
 
 console.log('TELEMETRY (#347)');
@@ -79,5 +96,5 @@ console.log('ON-SCREEN TRAFFIC');
 console.log(`  vehicles in view  ${mean(seen).toFixed(2)} a sample (civilian ${mean(samples.map((s) => s.traffic)).toFixed(2)}, police ${mean(samples.map((s) => s.police)).toFixed(2)})`);
 console.log(`  samples with none ${pct(seen.filter((n) => n === 0).length / Math.max(1, seen.length))}`);
 console.log('  reference game    0.60 a frame, 60% of frames with none');
-console.log(`  Counted in the camera's view within ${range} m, through buildings: occlusion`);
-console.log('  is not tested, so this leans high against a detector that needs to see a car.');
+console.log(`  Counted ${counting}.`);
+console.log('  Nothing tests whether a vehicle is hidden behind something, which a detector would miss.');
