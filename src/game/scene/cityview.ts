@@ -425,8 +425,10 @@ export class CityView {
   private underAnOverpass(): Shot | null {
     const { nodes, roads } = this.city;
     const deck = roads.filter((r) => r.class === 'interstate' && nodes[r.a].y > 4 * M);
+    // Boulevards too: the authored network is almost all boulevard (ADR-0009),
+    // and a shot that only looks under streets and arterials finds nothing.
     const streets = roads.filter(
-      (r) => (r.class === 'street' || r.class === 'arterial') && r.length > 120 * M,
+      (r) => (r.class === 'street' || r.class === 'arterial' || r.class === 'boulevard') && r.length > 120 * M,
     );
 
     for (const span of deck) {
@@ -437,16 +439,28 @@ export class CityView {
         const rb = nodes[road.b].pos;
         const cross = segmentIntersection(ia, ib, ra, rb);
         if (!cross) continue;
+        // The deck is 12 m above sea level, not above the ground (ADR-0007
+        // rule 11), so on a hillside it can be at the street's own height or
+        // under it. An overpass needs room under it to be one.
+        if (nodes[span.a].y - this.groundY(cross.x, cross.z) < 6 * M) continue;
 
-        // Stand back down the street, far enough that the deck is in frame.
-        const back = Math.min(150 * M, road.length * 0.8);
+        // Stand back down the street, far enough that the deck is in frame, and
+        // toward whichever end has more of it: past its end is off the road,
+        // which by a bank is in the river.
         const len = Math.max(1, Math.hypot(rb.x - ra.x, rb.z - ra.z));
         const dir = { x: (rb.x - ra.x) / len, z: (rb.z - ra.z) / len };
-        const away = (cross.x - ra.x) * dir.x + (cross.z - ra.z) * dir.z > 0 ? -1 : 1;
+        const along = (cross.x - ra.x) * dir.x + (cross.z - ra.z) * dir.z;
+        const away = along > len / 2 ? -1 : 1;
+        const back = Math.min(150 * M, (away < 0 ? along : len - along) * 0.9);
+        if (back < 60 * M || road.bridge) continue;
 
+        // Eye height on the ground where it stands, not a fixed height: a fixed
+        // one is under the hill as often as it is over the road.
+        const eye = { x: cross.x + dir.x * back * away, z: cross.z + dir.z * back * away };
+        const ground = this.groundY(cross.x, cross.z);
         return {
-          position: new THREE.Vector3(cross.x + dir.x * back * away, 6 * M, cross.z + dir.z * back * away),
-          target: new THREE.Vector3(cross.x, nodes[span.a].y * 0.65, cross.z),
+          position: new THREE.Vector3(eye.x, this.groundY(eye.x, eye.z) + 3 * M, eye.z),
+          target: new THREE.Vector3(cross.x, ground + (nodes[span.a].y - ground) * 0.65, cross.z),
         };
       }
     }

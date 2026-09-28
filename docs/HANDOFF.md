@@ -3,14 +3,14 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-09-27): [#371](https://github.com/ricschuster/crosstown/issues/371),
-  build the freeway.** It is written to be picked up cold: what exists (the
-  loop, 4 tunnels and 7 ramp markers, all committed in
-  `docs/freeway-edited.json`), the five steps (markers into `freeway.ts`, ramps
-  built at the markers, a road from each ramp's foot to the network,
-  `CITY_FREEWAY` on, docs), and the one decision to ask the owner (the
-  connector roads' class). Authored ramps mean the freeway no longer waits for
-  the street grid. After it, the order is "Where the work is" below.
+- **The freeway is built (2026-09-28, [#371](https://github.com/ricschuster/crosstown/issues/371)).**
+  `CITY_FREEWAY` is on: the authored loop, 4 tunnels, and 7 ramps at the
+  owner's markers (`FREEWAY_RAMPS`), each foot joined to the nearest drawn road
+  by a boulevard (`rampconnectors.ts`, the class the owner chose). A marker is
+  held to `rampMarkerProblem` (full 12 m deck, off every tunnel's grade), in
+  the editor and in `freeway.test.ts` alike. The rolled spurs are off
+  (`FREEWAY_SPURS = 0`): nobody drew them, and one ran through the quarry.
+  Next is "Where the work is" below.
 - **What 2026-09-27 changed**, all merged:
   - **The reference game:** a 47-minute recording of it was measured
     (`docs/research/nfs-most-wanted-2012-gameplay.md`, and
@@ -186,11 +186,9 @@ too now** (#261, `city/freeway.ts`): a hand-drawn 26-point path and 4 tunnel
 anchors (downtown, a water crossing, west, north), worked out interactively
 against the real terrain/grade/water rules and written by `npm run
 freewaysync` from `docs/freeway-edited.json`, replacing the old computed
-rectangle. It is real, merged, and still switched off - `rampsFor` finds a
-real surface junction near only a handful of this 13.6 km loop's edges while
-the grid is off, so flipping `CITY_FREEWAY` on today gets the loop and its
-tunnels but almost nowhere to get on or off it. That is expected to open up
-once #268 brings the grid back, not a bug in the loop.
+rectangle. It is built since #371: its ramps are authored too (seven markers
+placed in the freeway editor), because `rampsFor` needs a surface junction
+beside the deck and with the grid off there was about one.
 
 ## How this went wrong twice, and will again
 

@@ -14,7 +14,8 @@ by the owner the same day:
 
 - **The freeway comes first.** Fast cars only matter once the freeway is
   built, not drawn (the audit's question 2), so #261 and #301 go ahead of the
-  next area.
+  next area. **Built 2026-09-28 (#371):** `CITY_FREEWAY` is on, with seven
+  authored ramps, each joined to the drawn roads by a boulevard.
 - **The pace check has a tool.** `npm run mapfit` measures a route; an area's
   event route should reach about 60% of top speed on its careful line.
 
@@ -41,9 +42,9 @@ used to call #268 the gate, and several issues (#253, #256, #260, #265,
   still needs the generator's circuits, and those need streets across the map.
   Hand-laid routes like the Marrow Field Run (`placedRoutes`, #311) are how an
   area gets its event in the meantime.
-- The freeway (#261, #301) still needs surface junctions to land its ramps
-  on. Areas finished before downtown are where those junctions will come from
-  first.
+- The freeway (#261, #301) no longer waits for surface junctions: its ramps
+  are authored markers with a boulevard from each foot to the nearest drawn
+  road (#371). More ramps are more markers in the freeway editor.
 
 ## What "done" means for an area
 

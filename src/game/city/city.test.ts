@@ -713,11 +713,9 @@ describe.skipIf(!CITY_STREET_GRID)('buildings', () => {
 // The whole reason ADR-0004 exists. A projected ribbon or a ground plane can
 // hold one surface per map position; these tests are what that buys.
 //
-// Off with the grid (`CITY_FREEWAY`, `generate.ts`): the old deck was a
-// rectangle inset from the map bounds and read as the straightest, most
-// artificial thing in every picture of the city. ADR-0008 rule 6 wants a ring
-// following the ground instead (#261, #265), which `interstate.ts` does not
-// build yet, so there is no elevated network to test until it does.
+// Only while `CITY_FREEWAY` is on, which it is again since the loop and its
+// ramps were authored (#261, #371); the authored ramps themselves are held to
+// their markers in `freeway.test.ts`.
 describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
   const interstate = () => city.roads.filter((r) => r.class === 'interstate');
   const ramps = () => city.roads.filter((r) => r.class === 'ramp');
@@ -799,11 +797,17 @@ describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
     expect(joined).toEqual([]);
   });
 
-  it('leaves the streets flat', () => {
+  // Written as "every street is at y = 0" before the ground had height
+  // (ADR-0007), which it has not been since; what it guards is still the same
+  // thing - the deck lifts nothing but itself, so a street's ends stay on the
+  // surface and on the ground.
+  it('leaves the streets on the ground', () => {
     for (const road of city.roads) {
-      if (road.class !== 'street' && road.class !== 'arterial') continue;
-      expect(city.nodes[road.a].y).toBe(0);
-      expect(city.nodes[road.b].y).toBe(0);
+      if (road.class === 'interstate' || road.class === 'ramp') continue;
+      for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
+        expect(end.level).toBe('surface');
+        expect(end.y).toBeCloseTo(groundAt(city.terrain, end.pos.x, end.pos.z));
+      }
     }
   });
 
