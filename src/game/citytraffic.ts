@@ -10,6 +10,7 @@ import {
   TRAFFIC_SPEED_MAX,
   TRAFFIC_LANE,
   TRAFFIC_GAP,
+  CAR_RADIUS,
   CAR_COLORS,
 } from './constants';
 import type { CityGrid } from './city/grid';
@@ -151,12 +152,15 @@ export class CityTraffic {
     return Math.round(TRAFFIC_IN_CITY * road * TRAFFIC_DENSITY[this.district] * hourly(this.hour));
   }
 
-  update(dt: number, at: { x: number; z: number; onRoad?: CityRoad | null; hour?: number }): void {
+  update(
+    dt: number,
+    at: { x: number; z: number; y?: number; onRoad?: CityRoad | null; hour?: number },
+  ): void {
     if (at.onRoad) this.district = at.onRoad.district;
     this.wanted = this.wantedNear(at);
     if (at.hour !== undefined) this.hour = at.hour;
 
-    for (const car of this.cars) this.follow(car);
+    for (const car of this.cars) this.follow(car, at);
     for (const car of this.cars) this.advance(car, dt);
 
     // Drop what has fallen behind, with hysteresis: cars are kept a little
@@ -201,11 +205,29 @@ export class CityTraffic {
    * junctions, which is nearly none of them, and the rest drive through each
    * other.
    */
-  private follow(car: TrafficCar): void {
+  private follow(car: TrafficCar, player: { x: number; z: number; y?: number }): void {
     const pace = this.paceLimit(car);
     const heading = this.direction(car);
 
     let gap = Infinity;
+    // The player's car too, which traffic used to drive straight into: a car
+    // waiting on the start line, or stopped anywhere, was rear-ended by every
+    // civilian behind it in turn - half the damage of the owner's first drive
+    // before the first race had started. Whichever way it points, because a
+    // stopped car is in the way either way round; but only in this lane, and
+    // only at this height, or a car on the viaduct overhead or in the
+    // oncoming lane would stop the street.
+    if (player.y === undefined || Math.abs(player.y - car.y) < CAR_RADIUS * 2) {
+      const dx = player.x - car.x;
+      const dz = player.z - car.z;
+      const ahead = dx * heading.x + dz * heading.z;
+      const across = Math.abs(dx * heading.z - dz * heading.x);
+      // Measured to the bumper, with a car's length to spare, not to the
+      // middle: the easing below only reaches a stop at no gap at all, and
+      // two cars touch at two radii - where the contact pushed the civilian
+      // straight through to the far side of the car it had slowed for.
+      if (ahead > 0 && ahead < TRAFFIC_GAP * 2 && across < CAR_RADIUS * 2) gap = Math.max(0, ahead - CAR_RADIUS * 3);
+    }
     for (const other of this.cars) {
       if (other === car) continue;
       const dx = other.x - car.x;
