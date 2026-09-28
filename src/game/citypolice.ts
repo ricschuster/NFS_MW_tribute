@@ -11,6 +11,7 @@ import {
   CITY_BUST_DISTANCE,
   CITY_PURSUIT_RANGE,
   SEEN_RANGE,
+  TUNNEL_COVER,
   LOSE_CONTACT_TIME,
   SEARCH_TIME,
   SEARCH_TIME_PER_LEVEL,
@@ -156,6 +157,26 @@ export interface Chased {
    * network unless something tells them the car has genuinely left it.
    */
   onRoad?: unknown | null;
+}
+
+/**
+ * Whether a car on this road is in a tunnel (#257): on the freeway, and under
+ * the ground by more than a car's height.
+ *
+ * Only the freeway, and that is not a shortcut. A surface road's height is
+ * interpolated between its two ends while the ground is sampled at every
+ * point, so over a long road across rolling ground the terrain rises metres
+ * above the carriageway between its nodes - and the first version of this,
+ * asking the height alone, hid a car on an ordinary street from a unit right
+ * behind it. The freeway is the only road that goes under anything.
+ */
+export function underground(
+  city: City,
+  at: { x: number; y: number; z: number },
+  road: CityRoad | null | undefined,
+): boolean {
+  if (road?.class !== 'interstate') return false;
+  return at.y < groundAt(city.terrain, at.x, at.z) - TUNNEL_COVER;
 }
 
 /** One parked cruiser in a roadblock, for the renderer to put a car on. */
@@ -742,7 +763,22 @@ export class CityPolice {
     return false;
   }
 
+  /**
+   * Is there anything between them? A building, or the ground (#257).
+   *
+   * A tunnel is the cover #183 said the game needed a new thing to mean: a
+   * unit on the street cannot see a car under it, and one in the tunnel
+   * cannot see out. Both underground, nothing is in the way but the range -
+   * a tunnel is a tube, and whoever followed you into it has you. That also
+   * covers the freeway where the hills rise through its deck (ADR-0007 rule
+   * 11), which is a tunnel nobody had to write.
+   */
   private blocked(cop: Cop, player: Chased): boolean {
+    const below = underground(this.city, player, player.onRoad as CityRoad | null | undefined);
+    // A unit that has stepped off its road (#220) is put on the ground, so its
+    // own height already says it is not in a tunnel.
+    if (below !== underground(this.city, cop, cop.road)) return true;
+    if (below) return false;
     return lineBlocked(this.grid, cop, player);
   }
 

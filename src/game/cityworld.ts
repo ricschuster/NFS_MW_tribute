@@ -127,7 +127,7 @@ import { kestrelBay } from './city/index';
 import { Rng } from './city/rng';
 import { CityTraffic } from './citytraffic';
 import { QuarryTrucks } from './quarrytrucks';
-import { CityPolice } from './citypolice';
+import { CityPolice, underground } from './citypolice';
 import {
   CityGrid,
   surfaceAt,
@@ -857,6 +857,7 @@ export class CityWorld {
       reason: this.police.startedBy,
       car: this.car.name,
       colour: colourName(this.paint),
+      underground: underground(this.city, this, this.onRoad),
       event:
         this.race.state === 'racing' || this.race.state === 'countdown'
           ? 'race'

@@ -1731,6 +1731,14 @@ export const CITY_HEAT_DECAY = 0.045;
  */
 /** How close a cop has to be, with nothing between you, to have you in sight. */
 export const SEEN_RANGE = m(150);
+/**
+ * How much ground has to be over a car for it to be underground, and out of
+ * sight of anything that is not (#257). A car's height and a roof: 2.5 m.
+ * Measured on the freeway: 67 of its 73 tunnel nodes have more than 3 m over
+ * them, the river tunnel has exactly 3 m of riverbed, and the mouths have 2 m
+ * or less - so the mouths are open and everything past them is not.
+ */
+export const TUNNEL_COVER = m(2.5);
 
 /**
  * Patrols, and what starts a pursuit (#177).
