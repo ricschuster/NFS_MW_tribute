@@ -15,6 +15,7 @@ import type { City, CityRoad, RoadSurface } from '../city/types';
 import { groundAt } from '../city/terrain';
 import {
   UNITS_PER_METRE,
+  SEA_SHEET,
   PLACE_BLEND,
   QUARRY_BENCH,
   INTERSTATE_PILLAR_SPACING,
@@ -142,7 +143,7 @@ export class Cityscape {
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(
       (city.bounds.minX + city.bounds.maxX) / 2,
-      -1.5 * UNITS_PER_METRE,
+      SEA_SHEET,
       (city.bounds.minZ + city.bounds.maxZ) / 2,
     );
     mesh.name = 'sea';
