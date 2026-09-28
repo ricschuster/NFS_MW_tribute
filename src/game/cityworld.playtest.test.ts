@@ -4069,12 +4069,17 @@ describe('quarry haul trucks (#330)', () => {
         z: world.z + Math.cos(world.heading) * 14 * M,
       };
       if (kind === 'truck') {
-        const truck = world.trucks.cars[0];
-        truck.x = ahead.x;
-        truck.z = ahead.z;
-        truck.y = world.y;
-        truck.speed = 0;
-        truck.heading = world.heading + Math.PI;
+        world.trucks.cars.push({
+          road: world.onRoad!,
+          t: 0.5,
+          forward: true,
+          speed: 0,
+          damage: 0,
+          x: ahead.x,
+          z: ahead.z,
+          y: world.y,
+          heading: world.heading + Math.PI,
+        });
       } else {
         world.traffic.cars.push({
           road: world.onRoad!,
