@@ -327,8 +327,11 @@ strip is wide.
 
 **There is no helicopter** (issue #183, and #62 before it). One existed and
 was cut, along with cover - `constants.ts` carries a standalone note with the
-full reasoning for both. Nothing in the game watches you from above; if cover
-should mean something, it needs a new thing to mean it against.
+full reasoning for both. Nothing in the game watches you from above. Cover means something
+again, against a tunnel (#257): `CityPolice.blocked` holds that nothing on
+the street sees a car on the freeway under the ground, and nothing in a tunnel
+sees out - `underground()` in `citypolice.ts` has why it asks about the
+freeway only.
 
 **Every map goes through `scene/mapping.ts`** (a playtest, after #182). One
 conversion (`toMap`) for the minimap, the full map and `npm run city`, because
