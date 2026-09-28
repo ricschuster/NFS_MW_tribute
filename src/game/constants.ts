@@ -1426,6 +1426,17 @@ export const SPAWN_SEARCH = m(180);
  */
 export const STUCK_TIME = 3;
 export const STUCK_PROGRESS = m(12);
+/**
+ * The other way of being stuck (#385): a box the car cannot leave, rather
+ * than a step it cannot take. Rocking between an obstacle and whatever is
+ * behind it covers more than `STUCK_PROGRESS` on every swing, so the clock
+ * above restarts every few seconds and never offers anything - measured under
+ * Marrow Field's cargo plane, it peaked at 2.7 s of 3 across four minutes and
+ * 330 impacts. Asked to move for `STUCK_TRAPPED_TIME` without once getting
+ * `STUCK_ROOM` from where it started is at best 18 km/h of going nowhere.
+ */
+export const STUCK_ROOM = m(40);
+export const STUCK_TRAPPED_TIME = 8;
 
 /**
  * Boulevards (#115): the roads that bend. Laid over the finished grid and
