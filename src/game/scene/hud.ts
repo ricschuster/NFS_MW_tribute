@@ -887,7 +887,7 @@ export class Hud {
         ctx.fillText(`AMBUSH  ·  HEAT ${spot.level}`, WIDTH / 2, HEIGHT - 150);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.font = '600 15px system-ui, sans-serif';
-        ctx.fillText('ENTER  -  surrounded, engine off, get out', WIDTH / 2, HEIGHT - 126);
+        ctx.fillText('ENTER or BURNOUT  -  surrounded, engine off, get out', WIDTH / 2, HEIGHT - 126);
         return;
       }
 
@@ -937,8 +937,8 @@ export class Hud {
           : '#ffd166';
       const invite =
         route.kind === 'speedrun'
-          ? `ENTER  -  one lap, on average speed, for #${rival?.rank} ${rival?.name}`
-          : `ENTER  -  ${route.laps} laps against #${rival?.rank} ${rival?.name}`;
+          ? `ENTER or BURNOUT  -  one lap, on average speed, for #${rival?.rank} ${rival?.name}`
+          : `ENTER or BURNOUT  -  ${route.laps} laps against #${rival?.rank} ${rival?.name}`;
       ctx.fillText(
         !rival
           ? 'RIVALS CLEARED'
@@ -1706,6 +1706,7 @@ export class Hud {
       ['ARROWS / WASD', 'drive'],
       ['SHIFT', 'nitrous'],
       ['ENTER', 'start what you are parked on'],
+      ['UP + DOWN', 'burnout: starts it too'],
       ['HOLD Q', 'Quick Wheel: E, R, 1-9'],
       ['TAB', 'this map'],
       ['B', 'look back'],

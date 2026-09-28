@@ -2359,6 +2359,15 @@ export const AMBUSH_RESULT_HOLD = 5;
  * escape is well inside the target at every level and a clean one has room.
  */
 export const AMBUSH_TARGET = 75;
+/**
+ * A burnout (#360): stopped, throttle and brake held together. Held this long
+ * on an event's marker, it starts the event - the reference game's "pull up
+ * to the checkpoint and spin your wheels". Long enough not to happen by
+ * accident while braking hard onto a start line, short enough to be a gesture
+ * rather than a wait. Stopped means under this fraction of top speed.
+ */
+export const BURNOUT_TIME = 1;
+export const BURNOUT_SPEED_FRAC = 0.04;
 export const AMBUSH_TARGET_PER_LEVEL = 15;
 
 /**

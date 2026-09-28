@@ -68,6 +68,7 @@ import {
   NITRO_FROM_NEAR_MISS,
   NITRO_SLIPSTREAM_RANGE,
   STUCK_TRAPPED_TIME,
+  BURNOUT_TIME,
 } from './constants';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS, difficultyLabel } from './rivals';
@@ -2250,6 +2251,48 @@ describe.skipIf(!CITY_STREET_GRID)('street finds', () => {
  * on the line. These are about the wiring: getting into one, what it does to
  * the pursuit, and what winning it moves.
  */
+// A burnout on the marker starts the event (#360), and a burnout anywhere
+// else is only smoke.
+describe('starting an event with a burnout (#360)', () => {
+  const BURN = press({ up: true, down: true });
+
+  it('starts the race on the line you are spinning your wheels on', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const route = world.city.routes[0];
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.speed = 0;
+    expect(world.challengeReady).toBe(true);
+    drive(world, BURNOUT_TIME * 0.5, BURN);
+    expect(world.race.state).toBe('idle');
+    expect(world.speed).toBe(0);
+    drive(world, BURNOUT_TIME * 0.7, BURN);
+    expect(world.race.state).toBe('countdown');
+  });
+
+  it('springs the ambush you are spinning your wheels on', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const spot = world.city.ambushes[2];
+    world.x = spot.at.x;
+    world.z = spot.at.z;
+    world.speed = 0;
+    drive(world, BURNOUT_TIME * 1.2, BURN);
+    expect(world.ambush.state).toBe('running');
+  });
+
+  it('is only smoke anywhere else: the car stays put, nothing starts, and it is not stuck', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const at = { x: world.x, z: world.z };
+    expect(world.atStartLine).toBeNull();
+    expect(world.atAmbush).toBeNull();
+    drive(world, STUCK_TRAPPED_TIME + 1, BURN);
+    expect(world.burnout).toBeGreaterThan(BURNOUT_TIME);
+    expect(Math.hypot(world.x - at.x, world.z - at.z)).toBeLessThan(M);
+    expect(world.race.state).toBe('idle');
+    expect(world.canRecover).toBe(false);
+  });
+});
+
 // Paid by place (#357). The generator finds no circuits on the authored map
 // yet, so this lends the world one: the Marrow Field Run's own line, as a
 // one-lap circuit, on a copy of the city so no other test sees it.
