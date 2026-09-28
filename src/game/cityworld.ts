@@ -111,6 +111,7 @@ import { CityRace } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
+import { Banners, type Banner } from './banners';
 import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
@@ -353,6 +354,13 @@ export class CityWorld {
   readonly claim: CityClaim;
   /** What the police are saying to each other about you (#76). */
   readonly radio = new Radio();
+  /** The line across the top when the pursuit changes (#356). */
+  readonly banners = new Banners();
+
+  /** The pursuit banner on screen now, if any: what the HUD draws and a playtest reads. */
+  get banner(): Banner | null {
+    return this.banners.current;
+  }
   /**
    * Somewhere the player has asked to be pointed at (#90).
    *
@@ -737,6 +745,14 @@ export class CityWorld {
     // world is frozen on a bust, because a bust is three seconds of a day.
     this.hour = (this.hour + (dt / 60 / DAY_MINUTES) * 24) % 24;
     this.rep.step(dt);
+    // The pursuit's banners (#356), watched the same way the radio is and
+    // before the same early return, so a bust is one of the things they see.
+    this.banners.update(dt, {
+      state: this.police.state,
+      level: this.police.level,
+      busted: this.busted,
+      escaped: this.police.justEscaped,
+    });
     // Before the BUSTED early return, because being busted is one of the two
     // ways an ambush ends and the frozen world still has to notice it.
     this.ambush.update(dt, this.police.state === 'clear', this.busted);

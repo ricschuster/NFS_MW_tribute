@@ -132,6 +132,7 @@ export class Hud {
     this.roadblock(world);
     this.shredded(world);
     this.cooldown(world);
+    this.pursuitBanner(world);
     this.collection(world);
     this.radio(world);
     this.event(world);
@@ -1958,12 +1959,37 @@ export class Hud {
       ctx.globalAlpha = 1;
     }
 
-    if (world.escapedFlash > 0) {
-      ctx.globalAlpha = Math.min(1, world.escapedFlash);
-      ctx.fillStyle = '#7fe3ff';
-      ctx.font = '800 60px system-ui, sans-serif';
-      ctx.fillText('ESCAPED', WIDTH / 2, HEIGHT / 2 - 40);
-      ctx.globalAlpha = 1;
-    }
+  }
+
+  /**
+   * The pursuit's state changes, one line at a time across the top (#356).
+   *
+   * Under the cooldown's own label and bar rather than in the middle of the
+   * screen, because the middle is the car - and PURSUIT EVADED took the place
+   * of the ESCAPED that used to be drawn there. Red is the pursuit getting
+   * worse, amber the search, cyan getting away: the same families the minimap
+   * rim uses for the same things.
+   */
+  private pursuitBanner(world: CityWorld): void {
+    const banner = world.banner;
+    if (!banner || world.busted) return;
+    const { ctx } = this;
+    const colour =
+      banner.kind === 'cooldown'
+        ? SIGHT_COLOUR.searching
+        : banner.kind === 'heatDown' || banner.kind === 'escaped'
+          ? '#7fe3ff'
+          : SIGHT_COLOUR.seen;
+    ctx.globalAlpha = Math.min(1, banner.left * 4);
+    ctx.font = '800 26px system-ui, sans-serif';
+    const width = ctx.measureText(banner.text).width + 44;
+    const y = 76;
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.72)';
+    ctx.fillRect(WIDTH / 2 - width / 2, y, width, 40);
+    ctx.fillStyle = colour;
+    ctx.fillRect(WIDTH / 2 - width / 2, y, width, 3);
+    ctx.textAlign = 'center';
+    ctx.fillText(banner.text, WIDTH / 2, y + 30);
+    ctx.globalAlpha = 1;
   }
 }
