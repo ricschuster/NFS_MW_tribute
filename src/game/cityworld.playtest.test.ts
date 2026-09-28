@@ -963,6 +963,7 @@ describe('cooldown and the search area', () => {
   // up at the lower level, not the peak.
   it('lets the heat level fall during a search, says so, and resumes there', () => {
     const world = new CityWorld(undefined, { traffic: false });
+    world.spawnIn(SPAWN_DISTRICT);
     const home = { x: world.x, z: world.z, y: world.y, heading: world.heading };
     hunt(world, 0.55, 0.5);
     const peak = world.police.level;
@@ -1417,7 +1418,12 @@ describe('roadblocks', () => {
  * question it happened to survive long enough to reach.
  */
 describe('enforcers', () => {
-  const parked = () => new CityWorld(undefined, { traffic: false, police: false });
+  const parked = () => {
+    // On ordinary streets, not at the event's start (see `spawnIn`).
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    world.spawnIn(SPAWN_DISTRICT);
+    return world;
+  };
 
   /** Hold a pursuit for a while and hand back whatever Enforcers it sent. */
   const hunted = (world: CityWorld, heat: number, seconds: number): Cop[] => {
@@ -3550,6 +3556,7 @@ describe('the end of a pursuit', () => {
    */
   const wanted = (level: number, banked = 0) => {
     const world = new CityWorld(undefined, { traffic: false });
+    world.spawnIn(SPAWN_DISTRICT);
     world.rep.total = banked;
     world.step(STEP, NONE);
     world.police.heat = Math.min(1, (level - 0.5) / HEAT_LEVEL_COUNT);

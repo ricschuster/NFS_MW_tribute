@@ -1410,6 +1410,8 @@ export const PARK_ROAD_CLEAR = m(2);
 
 /** Where a new car is put: on the interstate ring is wrong, so a street it is. */
 export const SPAWN_SEARCH = m(180);
+/** How far short of the first event's start line a new game begins. */
+export const SPAWN_LEAD = m(200);
 
 /**
  * Getting unstuck (#179).
