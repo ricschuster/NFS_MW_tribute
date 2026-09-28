@@ -28,7 +28,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   reference keeps it); 2nd and 3rd pay two thirds and a third of a win, and
   4th and below keep the old consolation; nitrous and milestone amounts;
   ambush targets of 75 s plus 15 s a level (2:30 at heat 6).
-  **Still waiting on the owner:** #347 (a recording of them driving) and so
+  **Still waiting on the owner:** #347 (a recording of them driving: F9 with
+  `?debug` or in dev, then `npm run telemetry`) and so
   #348; M12's design questions; the map areas. #349-#350, #340-#341 and #359
   needed a circuit, and the Halloway Rim is the first (#323): 4.1 km of the
   quarry's rim loop, two laps. Its ladder is not balanced - an expert holds

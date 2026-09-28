@@ -18,7 +18,8 @@ canvas.height = HEIGHT;
  * query string to know about. `?renderer=city` is the one thing that survives
  * the switch: it flies a free camera over the map with no car in it, which is
  * how the generator gets looked at rather than played. `&view=...` picks one
- * of the named viewpoints the screenshot tool uses.
+ * of the named viewpoints the screenshot tool uses. `?debug` is for tools, not
+ * for playing: it turns on the telemetry recorder in a built game.
  *
  * The WebGL canvas is inserted *behind* the 2D one, which stays as the HUD
  * layer and as the surface the touch controls are hit-tested against (#89).
@@ -62,6 +63,14 @@ async function boot(): Promise<void> {
     // things, not an API, and it is not in the built bundle.
     if (import.meta.env.DEV) {
       (globalThis as Record<string, unknown>).crosstown = { world, view, city };
+    }
+    // The telemetry recorder (#347): F9 to start and stop. Always there in dev,
+    // and in a built game behind `?debug`, so a recording can be made of the
+    // build people actually play. Loaded only when asked for, so nobody else
+    // downloads it.
+    if (import.meta.env.DEV || params.has('debug')) {
+      const { recordOnF9 } = await import('./game/telemetryrecorder');
+      recordOnF9(world, view, stage);
     }
   }
 

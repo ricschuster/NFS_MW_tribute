@@ -483,9 +483,12 @@ The lines are a table because they are content: the tone of a pursuit is in
 them as much as it is in the heat curve. Subtitles and a synthesized squelch,
 never recorded speech.
 
-**`?renderer=city` is the only query string left** (ADR-0006). It flies a free
-camera over the city with no car in it, and `&view=aerial|downtown|bridge|street|overpass`
-picks a fixed viewpoint. Looking at the generator is a different job from
+**`?renderer=city` is the only query string for looking** (ADR-0006). It flies
+a free camera over the city with no car in it, and `&view=aerial|downtown|bridge|street|overpass`
+picks a fixed viewpoint. `?debug` is the other one, and it is for tools: it
+turns on the telemetry recorder (#347, F9 to start and stop, always on in dev),
+which saves a sample a second of the car's speed and the traffic on screen as
+JSON for `npm run telemetry`. Looking at the generator is a different job from
 playing the game, and `npm run cityshot` depends on it. The README lists the
 viewpoints - keep it current, since it is the only place a person is told the
 URL exists.

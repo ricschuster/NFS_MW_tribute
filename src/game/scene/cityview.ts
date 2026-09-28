@@ -502,6 +502,21 @@ export class CityView {
     });
   }
 
+  /**
+   * Is this world point inside the camera's view as last drawn? For the
+   * telemetry recorder's on-screen traffic count (#347); a metre up, because a
+   * car's position is where its wheels meet the road.
+   */
+  sees(x: number, y: number, z: number): boolean {
+    this.viewed.setFromProjectionMatrix(
+      this.seen.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse),
+    );
+    return this.viewed.containsPoint(this.point.set(x, y + M, z));
+  }
+  private readonly viewed = new THREE.Frustum();
+  private readonly seen = new THREE.Matrix4();
+  private readonly point = new THREE.Vector3();
+
   resize(width: number, height: number): void {
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
