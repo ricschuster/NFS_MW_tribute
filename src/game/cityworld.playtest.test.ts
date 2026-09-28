@@ -1624,7 +1624,10 @@ describe('a pursuit over open ground', () => {
     let road = world.city.roads[0];
     let best = Infinity;
     for (const candidate of world.city.roads) {
-      if (world.city.nodes[candidate.a].y !== 0) continue;
+      // The surface, by level rather than by height: since the ground has had
+      // height (ADR-0007) almost no surface node is at y = 0, and this used to
+      // skip nearly every road and fall back to the first one in the city.
+      if (world.city.nodes[candidate.a].level !== 'surface') continue;
       const a = world.city.nodes[candidate.a].pos;
       const b = world.city.nodes[candidate.b].pos;
       const gap = Math.hypot((a.x + b.x) / 2 - world.x, (a.z + b.z) / 2 - world.z);
@@ -1653,11 +1656,9 @@ describe('a pursuit over open ground', () => {
     return cop;
   };
 
-  // Depends on `parked()`/`offTheRoad()`, both of which start from the
-  // spawn point - Ashford Point (`SPAWN_DISTRICT`) rather than downtown
-  // while its own local streets (#268) are being driven and judged. Not a
-  // bug in the pilot; move `SPAWN_DISTRICT` back and this passes again.
-  it.skipIf(SPAWN_DISTRICT !== 'downtown')('leaves the road to follow a car that has left it', () => {
+  // Skipped while the spawn was in Ashford Point, and it was never the spawn:
+  // `chaserNear` was picking the city's first road rather than the nearest.
+  it('leaves the road to follow a car that has left it', () => {
     const world = offTheRoad(parked());
     expect(world.onRoad).toBe(null);
     const cop = chaserNear(world);
