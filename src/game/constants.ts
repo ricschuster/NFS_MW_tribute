@@ -946,6 +946,18 @@ export const CITY_MAX_BRIDGE = m(700);
  * car was. A road over low ground is a causeway instead.
  */
 export const ROAD_ABOVE_WATER = m(0.5);
+
+/**
+ * The height the open sea is drawn at, under the whole map (#403).
+ *
+ * Wherever the ground is lower than this, what shows is the sea, whatever
+ * `inWater` says: the terrain ramps below sea level along the coast before the
+ * water's own outline begins, so a strip of the map is land to the water test
+ * and sea to the eye. A car off the road there drove along under the drawn
+ * surface. The sim reads the same number the renderer draws at, so the two
+ * cannot disagree about where the sea is.
+ */
+export const SEA_SHEET = m(-1.5);
 /**
  * Bridges are kept this far apart, so they are separate decisions to make.
  *
