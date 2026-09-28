@@ -1127,23 +1127,33 @@ export class Hud {
     ctx.textAlign = 'center';
 
     if (run.state === 'running') {
+      // The clock against the target (#358): the reference puts the target
+      // top-left and your time top-right; here they share the top, the target
+      // small and the time big, and the time turns from white to red once the
+      // target has gone.
+      const over = run.elapsed > run.target;
       ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
       ctx.font = '600 13px system-ui, sans-serif';
-      ctx.fillText('AMBUSH', WIDTH / 2, 34);
-      ctx.fillStyle = '#ff5a45';
+      ctx.fillText(`AMBUSH  ·  TARGET ${run.target.toFixed(1)}`, WIDTH / 2, 34);
+      ctx.fillStyle = over ? '#ff5a45' : '#ffffff';
       ctx.font = '700 44px ui-monospace, "SF Mono", Menlo, monospace';
       ctx.fillText(run.elapsed.toFixed(1), WIDTH / 2, 76);
       return;
     }
 
     const escaped = run.state === 'escaped';
-    ctx.fillStyle = escaped ? '#5adc82' : '#ff5a5a';
+    const won = escaped && run.inTime;
+    ctx.fillStyle = won ? '#5adc82' : escaped ? '#ffd166' : '#ff5a5a';
     ctx.font = '800 60px system-ui, sans-serif';
-    ctx.fillText(escaped ? 'CLEAR' : 'CAUGHT', WIDTH / 2, HEIGHT / 2 - 40);
+    ctx.fillText(won ? 'CLEAR' : escaped ? 'OUT, TOO LATE' : 'CAUGHT', WIDTH / 2, HEIGHT / 2 - 40);
     if (!escaped) return;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.font = '500 20px system-ui, sans-serif';
-    ctx.fillText(`out in ${run.elapsed.toFixed(1)}s at heat ${run.level}`, WIDTH / 2, HEIGHT / 2 - 6);
+    ctx.fillText(
+      `out in ${run.elapsed.toFixed(1)}s of ${run.target.toFixed(1)} at heat ${run.level}`,
+      WIDTH / 2,
+      HEIGHT / 2 - 6,
+    );
   }
 
   /**

@@ -2349,6 +2349,17 @@ export const AMBUSH_CARS = 4;
 export const REP_AMBUSH = 900;
 /** How long the result holds before control comes back. */
 export const AMBUSH_RESULT_HOLD = 5;
+/**
+ * The time to get out inside (#358), at heat one, and what each level adds.
+ *
+ * The reference game's ambush gives two and a half minutes; that is the top
+ * of this range, at heat six. The floor is set by the pursuit itself: breaking
+ * contact takes `LOSE_CONTACT_TIME` and a search at heat L lasts
+ * `SEARCH_TIME + SEARCH_TIME_PER_LEVEL * (L - 1)`, so the quickest possible
+ * escape is well inside the target at every level and a clean one has room.
+ */
+export const AMBUSH_TARGET = 75;
+export const AMBUSH_TARGET_PER_LEVEL = 15;
 
 /**
  * Car damage and repair (#95).

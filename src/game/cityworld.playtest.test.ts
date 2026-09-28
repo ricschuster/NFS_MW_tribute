@@ -2484,6 +2484,30 @@ describe('ambushes', () => {
     expect(world.rep.recent.some((a) => a.reason === 'ambush')).toBe(true);
   });
 
+  // #358: the event is won inside the target, and only the pursuit is over
+  // outside it.
+  it('wins inside the target time, and only clears the pursuit outside it', () => {
+    const escapeAfter = (seconds: number) => {
+      const world = new CityWorld(undefined, { traffic: false });
+      atATrap(world);
+      world.step(STEP, press({ confirm: true }));
+      world.ambush.elapsed = seconds;
+      world.police.reset();
+      drive(world, 0.2, NONE);
+      return world;
+    };
+    const quick = escapeAfter(10);
+    expect(quick.ambush.state).toBe('escaped');
+    expect(quick.ambush.inTime).toBe(true);
+    expect(quick.rep.recent.some((a) => a.reason === 'ambush')).toBe(true);
+
+    const slow = escapeAfter(quick.ambush.target + 5);
+    expect(slow.ambush.state).toBe('escaped');
+    expect(slow.ambush.inTime).toBe(false);
+    expect(slow.police.state).toBe('clear');
+    expect(slow.rep.recent.some((a) => a.reason === 'ambush')).toBe(false);
+  });
+
   it('pays more for a hotter one', () => {
     const escape = (which: number) => {
       const world = new CityWorld(undefined, { traffic: false });
