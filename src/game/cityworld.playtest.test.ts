@@ -80,7 +80,7 @@ import { pointAt } from './city/routes';
 import { groundAt } from './city/terrain';
 import { CITY_FREEWAY, CITY_STREET_GRID } from './constants';
 import type { InputState } from './cityworld';
-import type { Cop } from './citypolice';
+import { underground, type Cop } from './citypolice';
 import type { TrafficCar } from './citytraffic';
 
 const NONE: InputState = {
@@ -247,7 +247,7 @@ function provoke(world: CityWorld, seconds = SPEEDING_TIME + 0.5): CityWorld {
  * The tail is re-placed every step because, left to itself, it closes and
  * busts you, which ends the pursuit the test is trying to observe.
  */
-function hunt(world: CityWorld, heat: number, seconds: number): void {
+function hunt(world: CityWorld, heat: number, seconds: number, each?: () => void): void {
   const cop = tail(world);
   for (let t = 0; t < seconds; t += STEP) {
     cop.x = world.x - Math.sin(world.heading) * 35 * M;
@@ -261,6 +261,7 @@ function hunt(world: CityWorld, heat: number, seconds: number): void {
     world.speed = world.maxSpeed * 0.5;
     world.police.heat = heat;
     world.police.update(STEP, world, world.maxSpeed);
+    each?.();
   }
 }
 
@@ -796,6 +797,68 @@ describe('heat levels', () => {
 // Escaping is two stages (#63). These drive the sim into each one directly
 // rather than hoping a scripted lap happens to wander far enough, which is the
 // difference between testing the mechanic and testing the route.
+// A tunnel is cover (#257): nothing on the street sees into one, and nothing
+// in one sees out. The unit is put on the tunnel's own road, because the
+// pursuit re-derives a unit's place from its road each step.
+describe.skipIf(!CITY_FREEWAY)('a tunnel breaks the line of sight (#257)', () => {
+  const setup = () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const city = world.city;
+    const cover = (n: { pos: { x: number; z: number }; y: number }) => groundAt(city.terrain, n.pos.x, n.pos.z) - n.y;
+    const road = city.roads.find(
+      (r) => r.class === 'interstate' && cover(city.nodes[r.a]) > M * 6 && cover(city.nodes[r.b]) > M * 6,
+    )!;
+    const a = city.nodes[road.a];
+    const b = city.nodes[road.b];
+    const cop: Cop = {
+      road,
+      t: 0.25,
+      forward: true,
+      speed: 0,
+      damage: 0,
+      x: a.pos.x + (b.pos.x - a.pos.x) * 0.25,
+      z: a.pos.z + (b.pos.z - a.pos.z) * 0.25,
+      y: a.y,
+      heading: Math.atan2(b.pos.x - a.pos.x, b.pos.z - a.pos.z),
+      kind: 'cruiser',
+      role: 'chase',
+      offRoad: 0,
+    };
+    world.police.cops.push(cop);
+    world.police.state = 'pursuit';
+    const mid = { x: (a.pos.x + b.pos.x) / 2, z: (a.pos.z + b.pos.z) / 2 };
+    const look = (y: number) => {
+      // On the tunnel's road when down in it, on a street when up top: off
+      // any road, the unit would cut across to it (#220) instead of chasing.
+      const street = city.roads.find((r) => r.class === 'boulevard');
+      const player = { x: mid.x, z: mid.z, y, speed: world.maxSpeed * 0.5, heading: cop.heading, onRoad: y < groundAt(city.terrain, mid.x, mid.z) ? road : street };
+      world.police.update(STEP, player, world.maxSpeed);
+      return world.police.sight;
+    };
+    return { world, road, look, tunnelY: (a.y + b.y) / 2, groundY: groundAt(city.terrain, mid.x, mid.z) };
+  };
+
+  it('cannot see a car on the street from inside the tunnel', () => {
+    const { look, groundY } = setup();
+    expect(look(groundY)).toBe('hidden');
+  });
+
+  it('sees a car in the tunnel with it', () => {
+    const { look, tunnelY } = setup();
+    expect(look(tunnelY)).toBe('seen');
+  });
+
+  it('knows which of the two is underground, and that only the freeway goes under', () => {
+    const { world, road, tunnelY, groundY } = setup();
+    const at = world.police.cops[0];
+    expect(underground(world.city, { x: at.x, z: at.z, y: tunnelY }, road)).toBe(true);
+    expect(underground(world.city, { x: at.x, z: at.z, y: groundY }, road)).toBe(false);
+    // The same depth on a street is a road across rolling ground, not a tunnel.
+    const street = world.city.roads.find((r) => r.class === 'boulevard')!;
+    expect(underground(world.city, { x: at.x, z: at.z, y: tunnelY }, street)).toBe(false);
+  });
+});
+
 describe('cooldown and the search area', () => {
   /** Step until `done`, or give up. Returns whether it happened. */
   const stepUntil = (world: CityWorld, done: () => boolean, limit = 60) => {
@@ -1763,22 +1826,32 @@ describe('spike strips', () => {
     expect(world.police.spikes.length).toBe(0);
   });
 
+  // Over the whole hunt rather than at its last step: `hunt`'s tail is
+  // re-derived onto its road before the pursuit looks, so contact comes and
+  // goes, and strips are cleared whenever a search starts. Which state the
+  // ninetieth second lands in is luck - it moved when a patrol in a tunnel
+  // stopped seeing the car through the ground (#257).
   it('turns up once the heat is high enough, and not without limit', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    hunt(world, 0.75, 90);
+    let most = 0;
+    hunt(world, 0.75, 90, () => (most = Math.max(most, world.police.spikes.length)));
     expect(world.police.level).toBeGreaterThanOrEqual(SPIKE_MIN_LEVEL);
-    expect(world.police.spikes.length).toBeGreaterThan(0);
-    expect(world.police.spikes.length).toBeLessThanOrEqual(SPIKE_MAX);
+    expect(most).toBeGreaterThan(0);
+    expect(most).toBeLessThanOrEqual(SPIKE_MAX);
   });
 
   it('gives up on them when the pursuit does', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
-    hunt(world, 0.75, 90);
-    expect(world.police.spikes.length).toBeGreaterThan(0);
-    world.police.reset();
-    expect(world.police.spikes.length).toBe(0);
+    let laid = false;
+    hunt(world, 0.75, 90, () => {
+      if (laid || world.police.spikes.length === 0) return;
+      laid = true;
+      world.police.reset();
+      expect(world.police.spikes.length).toBe(0);
+    });
+    expect(laid).toBe(true);
   });
 });
 

@@ -18,6 +18,7 @@ const quiet = (): PursuitReport => ({
   car: 'Kestrel',
   colour: 'red',
   event: null,
+  underground: false,
 });
 
 /** Hold a state for a while, so anything queued gets a chance to be said. */
@@ -222,5 +223,16 @@ describe('the police radio', () => {
     expect(opened).toMatch(/rac/);
     expect(race({ state: 'cooldown' })).toMatch(/race|route|finish|round/);
     expect(race({ level: 2 })).toMatch(/route|race|good/);
+  });
+
+  // #257: losing them in a tunnel is something the player did on purpose,
+  // and the radio says so.
+  it('says it lost you in the tunnel when that is where it lost you', () => {
+    const radio = new Radio();
+    const running: PursuitReport = { ...quiet(), state: 'pursuit', cops: 2 };
+    hold(radio, running, RADIO_GAP * 3);
+    radio.recent.length = 0;
+    hold(radio, { ...running, state: 'cooldown', underground: true }, RADIO_GAP * 2);
+    expect(radio.recent.map((line) => line.text).join(' ').toLowerCase()).toMatch(/tunnel|underground/);
   });
 });

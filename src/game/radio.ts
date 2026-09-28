@@ -63,6 +63,8 @@ export interface PursuitReport {
    * radio should sound like it knows which.
    */
   event: 'race' | 'ambush' | 'claim' | null;
+  /** Whether the car is in a tunnel (#257), which is the way they lost it if they did. */
+  underground: boolean;
 }
 
 type Callout = { from: RadioVoice; lines: string[] };
@@ -143,6 +145,16 @@ const CALLOUTS: Record<string, Callout> = {
       'Vehicle description update: suspect is now {colour}.',
       'Update on the suspect vehicle - it is {colour} now.',
       'All units, the {car} has been resprayed. Now {colour}.',
+    ],
+  },
+  // Lost into a tunnel (#257): the one kind of losing them the player can
+  // aim for, so the radio says what happened rather than that it did.
+  'lost:tunnel': {
+    from: 'unit',
+    lines: [
+      'They have gone into the tunnel. I have no visual.',
+      'Lost them underground. Cover both ends.',
+      'Suspect is in the tunnel. Somebody get to the far mouth.',
     ],
   },
   // The event variants (#339). Original lines on the pattern the reference
@@ -332,7 +344,9 @@ export class Radio {
     if (now.takedowns > was.takedowns) this.call('unitDown');
     if (now.broken > was.broken && now.state === 'pursuit') this.call('debris');
 
-    if (was.state === 'pursuit' && now.state === 'cooldown') this.call(this.variant('lost', now));
+    if (was.state === 'pursuit' && now.state === 'cooldown') {
+      this.call(now.underground ? 'lost:tunnel' : this.variant('lost', now));
+    }
     // The same car, a different colour, with a pursuit on (#338). The same car,
     // because driving off in a different one is a swap, not a respray.
     if (was.state !== 'clear' && now.car === was.car && now.colour !== was.colour) this.call('resprayed');
