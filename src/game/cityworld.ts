@@ -49,6 +49,7 @@ import {
   RIDE_RATE,
   GRAVITY,
   SPAWN_SEARCH,
+  SPAWN_LEAD,
   CITY_EDGE_MARGIN,
   DUNK_HOLD,
   DUNK_DAMAGE,
@@ -147,6 +148,7 @@ import type { OnJump } from './city/jumps';
 import { crestGrip, slopePull, slopeSpeed } from './slope';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
+import { pointAt } from './city/routes';
 import { planCentre } from './city/plan';
 import type { DistrictKind, RouteKind } from './city/types';
 import { impactDamage, touching, WRECKED } from './impact';
@@ -260,7 +262,8 @@ export interface CityWorldOptions {
 }
 
 /**
- * Where `spawn()` puts the car. `'waterfront'` (Ashford Point) while its own
+ * Where `spawn()` puts the car if the city has no hand-laid event to start at.
+ * `'waterfront'` (Ashford Point) while its own
  * local streets (#268) are being judged by eye and driven, not `'downtown'` -
  * a handful of playtests that assume the default downtown spawn are skipped
  * for exactly as long as this says something other than `'downtown'`. Move
@@ -590,8 +593,42 @@ export class CityWorld {
     this.offRoadTyres = mods.offRoad;
   }
 
-  /** Put the car on a surface street in **Ashford Point**, pointing along it. */
+  /**
+   * Put the car on the road into the first hand-laid event, short of its start
+   * line and facing it.
+   *
+   * A new game used to begin in the middle of Ashford Point, with nothing
+   * within a kilometre but collectibles: no event, no ambush, no jump, and the
+   * nearest of each two to three kilometres off. The Marrow Field Run's start
+   * is the busiest ground on the map - an event and an ambush on the same
+   * spot, four jumps, two workshops and seventeen collectibles within a
+   * kilometre - so the first thing in front of a new player is something to
+   * do. Short of the line rather than on it by `SPAWN_LEAD`, so the first
+   * press of confirm is not a race nobody asked to start.
+   */
   spawn(): void {
+    const event = this.city.routes.find((route) => route.placed);
+    if (event) {
+      const from = pointAt(event.points, event.length, event.length - SPAWN_LEAD);
+      this.x = from.x;
+      this.z = from.z;
+      this.y = groundAt(this.city.terrain, from.x, from.z);
+      this.heading = Math.atan2(event.start.x - from.x, event.start.z - from.z);
+      // Onto the nearest road, facing along it whichever way is closer to the
+      // line: the same question a stuck car asks.
+      this.recover();
+      if (this.onRoad) return;
+    }
+    this.spawnIn(SPAWN_DISTRICT);
+  }
+
+  /**
+   * Put the car on a surface street in `district`, pointing along it. Public
+   * for the playtests that need a pursuit on ordinary streets: the event's
+   * start faces the bridge into Marrow Field, whose dirt roads the police
+   * cannot use, so nothing can be put in front of a car held there.
+   */
+  spawnIn(district: DistrictKind): void {
     // The middle of the map is not the middle of the city and never was: it is
     // a point in a rectangle, and Kestrel Bay is five bodies of land with the
     // town on one corner of the biggest. Starting there put the car in open
@@ -599,7 +636,7 @@ export class CityWorld {
     // ten seconds of a game about a city.
     //
     // The plan knows where an area is (ADR-0009), so ask it.
-    const middle = planCentre(SPAWN_DISTRICT);
+    const middle = planCentre(district);
 
     let best: CityRoad | null = null;
     let bestGap = Infinity;
