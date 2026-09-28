@@ -96,4 +96,5 @@ export const QUARRY_PROPS: AuthoredProp[] = [
   { kind: 'cone', x: -2682, z: -694, angle: 0 },
   { kind: 'cone', x: -2678, z: -694, angle: 0 },
   { kind: 'cone', x: -2674, z: -694, angle: 0 },
+  { kind: 'jump', x: -2820, z: -1386, angle: 1.626, variant: 'lifted slab', note: 'Crest Kicker - on the Halloway Rim\'s line at the top of the north crest; lands on the downslope' },
 ];
