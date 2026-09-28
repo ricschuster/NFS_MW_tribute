@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner',
+  'unseen', 'banner', 'card',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner',
+      'unseen', 'banner', 'card',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -209,6 +209,26 @@ for (const view of VIEWS) {
       world.police.heat = 0.4;
       world.crashFlash = 0;
       world.banners.current = { kind: 'heatUp', text: 'HEAT LEVEL 3', left: 30 };
+    });
+    await page.waitForTimeout(250);
+  }
+
+  if (view === 'card') {
+    // The card after an escape (#354), with the banner that goes with it. Its
+    // numbers are the playtest's to assert; this is whether it reads.
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(7000);
+    await page.keyboard.up('ArrowUp');
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.police.reset();
+      world.crashFlash = 0;
+      world.banners.current = { kind: 'escaped', text: 'PURSUIT EVADED', left: 30 };
+      world.lastPursuit = { outcome: 'escaped', rep: 3050, seconds: 122.35, takedowns: 1, roadblocks: 2, peakLevel: 4 };
+      world.cardLeft = 30;
     });
     await page.waitForTimeout(250);
   }

@@ -21,6 +21,7 @@ import {
   SLOPE_SAMPLE,
   CREST_SAMPLE,
   ESCAPED_FLASH,
+  PURSUIT_CARD_TIME,
   NITRO_SPEED_MULT,
   NITRO_ACCEL_MULT,
   NITRO_DRAIN,
@@ -211,6 +212,22 @@ export interface Wreck {
  * Headless, and deliberately so (ADR-0003): the playtests drive it with
  * scripted input and assert on where it ends up, with no renderer in the room.
  */
+/**
+ * How a pursuit went, for the card shown after it ends (#354).
+ *
+ * `rep` is what it paid on an escape - every second evaded, takedown and
+ * roadblock, and the escape itself - and on a bust it is what the bust took
+ * back, as a negative, which is the same number the BUSTED overlay prints.
+ */
+export interface PursuitSummary {
+  outcome: 'escaped' | 'busted';
+  rep: number;
+  seconds: number;
+  takedowns: number;
+  roadblocks: number;
+  peakLevel: number;
+}
+
 export interface CityWorldOptions {
   /** Populate the city with traffic (default true). Turn off for a still world. */
   traffic?: boolean;
@@ -285,6 +302,17 @@ export class CityWorld {
    * that reads as a bug in the Rep counter.
    */
   bustCost = 0;
+
+  /**
+   * How the last pursuit went (#354): what it paid or cost, how long it ran,
+   * and what was put out of it on the way. Set when one ends, by an escape or
+   * a bust, and shown as a card for `cardLeft` seconds.
+   */
+  lastPursuit: PursuitSummary | null = null;
+  /** Seconds left on the pursuit card. */
+  cardLeft = 0;
+  /** The running tally for the pursuit in progress, started when it opens. */
+  private tally = { seconds: 0, takedowns: 0, roadblocks: 0, peak: 1 };
 
   /**
    * The time of day, in hours (#180).
@@ -740,6 +768,7 @@ export class CityWorld {
     this.takedownFlash = Math.max(0, this.takedownFlash - dt);
     this.shredded = Math.max(0, this.shredded - dt);
     this.repairFlash = Math.max(0, this.repairFlash - dt);
+    this.cardLeft = Math.max(0, this.cardLeft - dt);
     this.sinceHurt += dt;
     // The clock, which runs whatever else is happening - including while the
     // world is frozen on a bust, because a bust is three seconds of a day.
@@ -817,6 +846,9 @@ export class CityWorld {
         this.trucks.update(dt);
       }
       if (this.withPolice && this.race.state === 'idle') {
+        // The pursuit carries on while you are fished out, and so does its
+        // clock: the card's time is how long they were after you (#354).
+        if (this.police.state !== 'clear') this.tally.seconds += dt;
         this.police.update(dt, this, this.maxSpeed);
       }
       return;
@@ -948,7 +980,13 @@ export class CityWorld {
       // What the pursuit has paid so far is what it has to lose (#178).
       // Recorded on the step it opens, before anything is earned in it.
       const wanted = this.police.state !== 'clear';
-      if (!wanted) this.repAtLarge = this.rep.total;
+      if (!wanted) {
+        this.repAtLarge = this.rep.total;
+        this.tally = { seconds: 0, takedowns: 0, roadblocks: 0, peak: 1 };
+      } else {
+        this.tally.seconds += dt;
+        this.tally.peak = Math.max(this.tally.peak, this.police.level);
+      }
       this.police.update(dt, this, this.maxSpeed);
       if (this.police.busted && !this.busted) {
         this.busted = true;
@@ -960,6 +998,9 @@ export class CityWorld {
         // able to re-lock a rival that was already earned.
         this.bustCost = this.rep.forfeit(this.rep.total - this.repAtLarge);
         this.savedAt = -1;
+        // Held through the BUSTED overlay, so the card is still there to read
+        // once the world lets go of the car.
+        this.endPursuit('busted', -this.bustCost, CITY_BUST_HOLD);
       }
       if (this.police.justEscaped) {
         this.escapedFlash = ESCAPED_FLASH;
@@ -967,6 +1008,7 @@ export class CityWorld {
         // is worth what it cost to survive one.
         this.rep.award('escape', this.peakLevel);
         this.peakLevel = 1;
+        this.endPursuit('escaped', this.rep.total - this.repAtLarge, 0);
       }
     }
     // After both have moved, so a contact is judged where the cars actually
@@ -979,6 +1021,19 @@ export class CityWorld {
     this.earn(dt);
     this.aim(dt);
     this.persist(dt);
+  }
+
+  /** Close the pursuit's books, and put the card up (#354). */
+  private endPursuit(outcome: PursuitSummary['outcome'], rep: number, hold: number): void {
+    this.lastPursuit = {
+      outcome,
+      rep,
+      seconds: this.tally.seconds,
+      takedowns: this.tally.takedowns,
+      roadblocks: this.tally.roadblocks,
+      peakLevel: this.tally.peak,
+    };
+    this.cardLeft = PURSUIT_CARD_TIME + hold;
   }
 
   /** Spring the trap: stopped, surrounded, and already at heat (#92). */
@@ -1445,6 +1500,7 @@ export class CityWorld {
       this.scatter(block, along);
       this.police.breach(block);
       this.rep.award('roadblock', this.level);
+      this.tally.roadblocks++;
       return true;
     }
     return false;
@@ -1554,6 +1610,7 @@ export class CityWorld {
       return;
     }
     this.takedowns++;
+    this.tally.takedowns++;
     this.rep.award('takedown', this.level);
     this.takedownFlash = TAKEDOWN_FLASH;
     this.lastTakedown = { x: car.x, y: car.y, z: car.z };
