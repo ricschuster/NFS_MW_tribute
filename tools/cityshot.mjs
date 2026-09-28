@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro',
+  'unseen', 'banner', 'card', 'nitro', 'startline',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro',
+      'unseen', 'banner', 'card', 'nitro', 'startline',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -509,6 +509,24 @@ for (const view of VIEWS) {
     // Long enough for the chase camera to catch up with the teleport: it eases
     // rather than cutting, and headless gives it about two frames a second.
     await page.waitForTimeout(2600);
+  }
+
+  if (view === 'startline') {
+    // Parked on an event's start, not started (#357): the invite, and under it
+    // the difficulty and what each place pays.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const route = world.city.routes[0];
+      if (!route) return;
+      world.x = route.start.x;
+      world.z = route.start.z;
+      world.crashFlash = 0;
+      world.speed = 0;
+    });
+    await page.waitForTimeout(600);
   }
 
   if (view === 'race' || view === 'speedrun') {

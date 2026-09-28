@@ -131,6 +131,17 @@ export class CityRace {
     return 1 + this.field.reduce((n, car) => n + (car.dist > this.playerDist ? 1 : 0), 0);
   }
 
+  /**
+   * Where you finished, once you have (#357): your position in a circuit, and
+   * in a speed run - which has no field, so its position is always 1 - first
+   * for a win and nowhere for anything else. Null before the finish.
+   */
+  get place(): number | null {
+    if (this.state !== 'finished') return null;
+    if (this.isSpeedRun) return this.won ? 1 : null;
+    return this.position;
+  }
+
   /** How many cars are in the race, you included. */
   get runners(): number {
     return this.field.length + 1;

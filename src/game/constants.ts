@@ -2069,8 +2069,15 @@ export const NITRO_SLIPSTREAM_RANGE = m(16);
  */
 export const REP_RACE_WIN = 900;
 export const REP_RACE_WIN_PER_DIFFICULTY = 1800;
-/** Finishing second still pays: the ladder should never be a hard wall. */
+/** Finishing outside the places still pays a little: the ladder should never be a hard wall. */
 export const REP_RACE_LOSS = 200;
+/**
+ * What 1st, 2nd and 3rd pay, as fractions of a win (#357). The reference
+ * game's purse is 12,000 / 8,000 / 4,000, and this is its shape: a place is
+ * worth having without being worth settling for. A speed run has no field, so
+ * only the first of these applies to one.
+ */
+export const REP_RACE_PLACES = [1, 2 / 3, 1 / 3];
 
 /** How long an award stays on screen, and how many stack up at once. */
 export const REP_POPUP_TIME = 2.6;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { RIVALS, nextRival, unlocked } from './rivals';
+import { RIVALS, difficultyLabel, nextRival, unlocked } from './rivals';
 import { RIVAL_BASE_SPEED_FRAC, RIVAL_DIFF_SPEED_FRAC } from './constants';
 
 describe('the ladder of ten', () => {
@@ -52,5 +52,17 @@ describe('the ladder of ten', () => {
     expect(unlocked(cinder, cinder.rep - 1)).toBe(false);
     expect(unlocked(cinder, cinder.rep)).toBe(true);
     expect(unlocked(null, Infinity)).toBe(false);
+  });
+});
+
+describe('what an event card calls a rival (#357)', () => {
+  it('starts the ladder easy and ends it hard, never going back down', () => {
+    const labels = RIVALS.map((rival) => difficultyLabel(rival.difficulty));
+    expect(labels[0]).toBe('EASY');
+    expect(labels[labels.length - 1]).toBe('HARD');
+    const order = ['EASY', 'MEDIUM', 'HARD'];
+    for (let i = 1; i < labels.length; i++) {
+      expect(order.indexOf(labels[i])).toBeGreaterThanOrEqual(order.indexOf(labels[i - 1]));
+    }
   });
 });

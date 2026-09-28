@@ -875,7 +875,12 @@ export class Hud {
     }
 
     if (race.state === 'idle') {
-      const spot = world.atAmbush;
+      // The same order ENTER is read in: a race the rival will take beats an
+      // ambush on the same spot. The HUD used to ask the other way round, and
+      // on the Marrow Field Run's start - where an ambush spot sits on the
+      // line - it offered the ambush while ENTER started the race.
+      const racing = world.atStartLine !== null && world.currentRival !== null && world.challengeReady;
+      const spot = racing ? null : world.atAmbush;
       if (spot) {
         ctx.fillStyle = '#ff5a45';
         ctx.font = '700 22px system-ui, sans-serif';
@@ -943,6 +948,15 @@ export class Hud {
         WIDTH / 2,
         HEIGHT - 126,
       );
+      // How hard, and what each place pays (#357), before you commit to it.
+      const card = world.eventCard;
+      if (card) {
+        const places = card.purse.map((rep, i) => `${['1ST', '2ND', '3RD'][i]} ${rep.toLocaleString('en-US')}`);
+        ctx.fillStyle =
+          card.difficulty === 'EASY' ? '#5adc82' : card.difficulty === 'MEDIUM' ? '#ffd166' : '#ff5a45';
+        ctx.font = '700 13px system-ui, sans-serif';
+        ctx.fillText(`${card.difficulty}   ·   ${places.join('   ')}  REP`, WIDTH / 2, HEIGHT - 104);
+      }
       return;
     }
 

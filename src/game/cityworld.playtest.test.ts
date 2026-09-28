@@ -69,7 +69,10 @@ import {
   NITRO_SLIPSTREAM_RANGE,
 } from './constants';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
-import { RIVALS } from './rivals';
+import { RIVALS, difficultyLabel } from './rivals';
+import { racePurse } from './rep';
+import { kestrelBay } from './city/index';
+import type { CityRoute } from './city/types';
 import { placeOnRoad } from './graphcar';
 import { hourly } from './citytraffic';
 import { roadHeightAt, inWater, distanceToRoad } from './city/grid';
@@ -2118,6 +2121,68 @@ describe.skipIf(!CITY_STREET_GRID)('street finds', () => {
  * on the line. These are about the wiring: getting into one, what it does to
  * the pursuit, and what winning it moves.
  */
+// Paid by place (#357). The generator finds no circuits on the authored map
+// yet, so this lends the world one: the Marrow Field Run's own line, as a
+// one-lap circuit, on a copy of the city so no other test sees it.
+describe('placing in a circuit (#357)', () => {
+  const run = kestrelBay().routes.find((r) => r.kind === 'speedrun')!;
+  const circuit: CityRoute = { ...run, id: 99, name: 'Test Circuit', kind: 'circuit', laps: 1, placed: false };
+  const world = () => {
+    const w = new CityWorld({ ...kestrelBay(), routes: [circuit] }, { traffic: false, police: false });
+    w.x = circuit.start.x;
+    w.z = circuit.start.z;
+    w.y = 0;
+    return w;
+  };
+
+  /** Race it, with `ahead` of the field over the line before you. */
+  const finish = (ahead: number) => {
+    const w = world();
+    w.step(STEP, press({ confirm: true }));
+    drive(w, CITY_COUNTDOWN + 0.2, NONE);
+    expect(w.race.state).toBe('racing');
+    const gates = circuit.checkpoints;
+    gates.forEach((gate, i) => {
+      if (i === gates.length - 1) {
+        for (let n = 0; n < w.race.field.length; n++) w.race.field[n].dist = n < ahead ? circuit.length * 5 : 0;
+      }
+      w.x = gate.x;
+      w.z = gate.z;
+      w.step(STEP, NONE);
+    });
+    expect(w.race.state).toBe('finished');
+    return w;
+  };
+
+  it('shows the event, its difficulty and its purse at the start line', () => {
+    const w = world();
+    const rival = w.currentRival!;
+    expect(w.eventCard).toEqual({
+      name: 'Test Circuit',
+      kind: 'circuit',
+      difficulty: difficultyLabel(rival.difficulty),
+      purse: racePurse(rival.difficulty, 'circuit'),
+    });
+  });
+
+  it.each([2, 3])('pays for finishing %i', (place) => {
+    const w = finish(place - 1);
+    expect(w.race.place).toBe(place);
+    expect(w.race.won).toBe(false);
+    const purse = racePurse(w.race.challenger!.difficulty, 'circuit');
+    const award = w.rep.recent.find((a) => a.reason === 'racePlace');
+    expect(award?.amount).toBe(purse[place - 1]);
+    expect(award?.label).toBe(`${place === 2 ? '2ND' : '3RD'} PLACE`);
+  });
+
+  it('pays the old consolation outside the places', () => {
+    const w = finish(3);
+    expect(w.race.place).toBe(4);
+    expect(w.rep.recent.some((a) => a.reason === 'raceLoss')).toBe(true);
+    expect(w.rep.recent.some((a) => a.reason === 'racePlace')).toBe(false);
+  });
+});
+
 describe.skipIf(!HAS_ROUTES)('circuits', () => {
   const still = () => new CityWorld(undefined, { traffic: false, police: false });
 

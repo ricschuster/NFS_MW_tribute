@@ -5,6 +5,8 @@ import {
   REP_NEAR_MISS,
   REP_ESCAPE,
   REP_RACE_WIN,
+  REP_RACE_WIN_PER_DIFFICULTY,
+  REP_RACE_PLACES,
   REP_RACE_LOSS,
   REP_BILLBOARD,
   REP_CAMERA,
@@ -45,6 +47,7 @@ export type RepReason =
   | 'pursuit'
   | 'escape'
   | 'raceWin'
+  | 'racePlace'
   | 'raceLoss'
   | 'billboard'
   | 'camera'
@@ -71,6 +74,7 @@ const KINDS: Record<RepReason, RepKind> = {
   pursuit: { value: 0, label: 'EVADING' }, // valued by the caller, per second
   escape: { value: REP_ESCAPE, label: 'ESCAPED' },
   raceWin: { value: REP_RACE_WIN, label: 'RACE WON' },
+  racePlace: { value: REP_RACE_WIN, label: 'PLACED' }, // valued by the caller, from the purse
   raceLoss: { value: REP_RACE_LOSS, label: 'RACE FINISHED' },
   billboard: { value: REP_BILLBOARD, label: 'BILLBOARD' },
   camera: { value: REP_CAMERA, label: 'SPEED CAMERA' },
@@ -160,4 +164,17 @@ export class RepLedger {
       if (this.recent[i].age > REP_POPUP_TIME) this.recent.splice(i, 1);
     }
   }
+}
+
+/**
+ * What a race pays by place (#357): 1st, 2nd and 3rd for a circuit, 1st only
+ * for a speed run. The win is today's win - the base plus the challenger's
+ * difficulty bonus - and the places are the reference game's fractions of it.
+ * On the card before the start and in the ledger after it, from one function,
+ * so the two cannot disagree.
+ */
+export function racePurse(difficulty: number, kind: 'circuit' | 'speedrun'): number[] {
+  const win = REP_RACE_WIN + Math.round(REP_RACE_WIN_PER_DIFFICULTY * difficulty);
+  const places = kind === 'speedrun' ? REP_RACE_PLACES.slice(0, 1) : REP_RACE_PLACES;
+  return places.map((share) => Math.round(win * share));
 }
