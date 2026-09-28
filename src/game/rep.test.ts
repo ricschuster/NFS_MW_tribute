@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { RepLedger } from './rep';
+import { RepLedger, racePurse } from './rep';
 import {
   REP_TAKEDOWN,
   REP_ESCAPE,
@@ -7,6 +7,8 @@ import {
   REP_HEAT_BONUS,
   REP_POPUP_TIME,
   REP_POPUPS,
+  REP_RACE_WIN,
+  REP_RACE_WIN_PER_DIFFICULTY,
 } from './constants';
 
 describe('the Rep ledger', () => {
@@ -84,5 +86,20 @@ describe('the Rep ledger', () => {
     expect(rep.earnedThisStep).toBe(0);
     rep.award('takedown');
     expect(rep.earnedThisStep).toBe(REP_TAKEDOWN);
+  });
+});
+
+// #357: what a race pays by place, shown on the card and paid in the ledger
+// from the same function.
+describe('the race purse', () => {
+  it('pays a win what a win always paid, and the places the reference shape of it', () => {
+    const [first, second, third] = racePurse(0.42, 'circuit');
+    expect(first).toBe(REP_RACE_WIN + Math.round(REP_RACE_WIN_PER_DIFFICULTY * 0.42));
+    expect(second).toBe(Math.round((first * 2) / 3));
+    expect(third).toBe(Math.round(first / 3));
+  });
+
+  it('has only a first for a speed run, which is driven alone', () => {
+    expect(racePurse(0.42, 'speedrun')).toEqual([racePurse(0.42, 'circuit')[0]]);
   });
 });

@@ -78,7 +78,6 @@ import {
   REFERENCE_TOP_SPEED,
   ROUTE_START_RANGE,
   REP_RACE_WIN,
-  REP_RACE_WIN_PER_DIFFICULTY,
   AMBUSH_RANGE,
   AMBUSH_CARS,
   AMBUSH_RING,
@@ -111,7 +110,7 @@ import {
   SPEEDING_TIME,
   TAKEDOWN_MIN_CLOSING,
 } from './constants';
-import { RepLedger } from './rep';
+import { RepLedger, racePurse } from './rep';
 import { Collectibles } from './collectibles';
 import { Garage } from './garage';
 import { CARS, STARTER_CAR, colourName, type CarProfile } from './cars';
@@ -121,7 +120,7 @@ import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
 import { NitroCounters, leftOfCentre, type NitroSource } from './nitrofill';
 import { Banners, type Banner } from './banners';
-import { RIVALS, nextRival, unlocked, type Rival } from './rivals';
+import { RIVALS, difficultyLabel, nextRival, unlocked, type Rival } from './rivals';
 import { loadProgress, saveProgress } from './progress';
 import { accelerate } from './math';
 import { kestrelBay } from './city/index';
@@ -144,7 +143,7 @@ import { crestGrip, slopePull, slopeSpeed } from './slope';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { planCentre } from './city/plan';
-import type { DistrictKind } from './city/types';
+import type { DistrictKind, RouteKind } from './city/types';
 import { impactDamage, touching, WRECKED } from './impact';
 import type { Roadblock } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -235,6 +234,18 @@ export interface PursuitSummary {
   roadblocks: number;
   peakLevel: number;
 }
+
+/** What the start line shows before you commit to an event (#357). */
+export interface EventCard {
+  name: string;
+  kind: RouteKind;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  /** What 1st, 2nd and 3rd pay; only 1st for a speed run. */
+  purse: number[];
+}
+
+/** 1ST, 2ND, 3RD, for what a place is called in the Rep feed. */
+const ORDINAL = ['', '1ST', '2ND', '3RD'];
 
 export interface CityWorldOptions {
   /** Populate the city with traffic (default true). Turn off for a still world. */
@@ -775,6 +786,22 @@ export class CityWorld {
     return null;
   }
 
+  /**
+   * The card for the event you are parked on (#357): what it is, how hard, and
+   * what each place pays - from the same purse the race is settled with.
+   */
+  get eventCard(): EventCard | null {
+    const route = this.atStartLine;
+    const rival = this.currentRival;
+    if (!route || !rival) return null;
+    return {
+      name: route.name,
+      kind: route.kind,
+      difficulty: difficultyLabel(rival.difficulty),
+      purse: racePurse(rival.difficulty, route.kind),
+    };
+  }
+
   /** The circuit whose start line the car is sitting on, if any (#70). */
   get atStartLine() {
     for (const route of this.city.routes) {
@@ -1105,15 +1132,22 @@ export class CityWorld {
    */
   private settleRace(): void {
     const rival = this.race.challenger;
+    const place = this.race.place;
     // A part for a good result, in the car that got it (#68). Second counts:
-    // the point is to reward driving the car, not only winning in it.
-    if (this.race.won || this.race.position <= 2) this.finds.earn(this.car.id);
+    // the point is to reward driving the car, not only winning in it. By
+    // place, not position: a lost speed run's position is 1, because it has
+    // nobody else in it, and it used to earn a part for that.
+    if (place !== null && place <= 2) this.finds.earn(this.car.id);
+    // Paid by place (#357), from the purse the start line showed.
+    const purse = racePurse(rival?.difficulty ?? 0, this.race.isSpeedRun ? 'speedrun' : 'circuit');
+    const paid = place !== null ? purse[place - 1] : undefined;
     if (this.race.won) {
-      const bonus = rival ? Math.round(REP_RACE_WIN_PER_DIFFICULTY * rival.difficulty) : 0;
-      this.rep.award('raceWin', 1, (REP_RACE_WIN + bonus) / REP_RACE_WIN);
+      this.rep.award('raceWin', 1, purse[0] / REP_RACE_WIN);
       // Winning the race is the first half (#66). They run, and the ladder
       // does not move until the car is actually taken off them.
       if (rival) this.startClaim(rival);
+    } else if (paid !== undefined && place !== null) {
+      this.rep.award('racePlace', 1, paid / REP_RACE_WIN, `${ORDINAL[place]} PLACE`);
     } else {
       this.rep.award('raceLoss');
     }

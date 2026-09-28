@@ -147,3 +147,14 @@ export const nextRival = (beaten: number): Rival | null => RIVALS[beaten] ?? nul
 /** Will they take the call at this Rep total? */
 export const unlocked = (rival: Rival | null, rep: number): boolean =>
   rival !== null && rep >= rival.rep;
+
+/**
+ * What an event card calls a challenge (#357). The reference labels every
+ * event before you start it; the ladder's difficulty runs 0.15 to about 1, and
+ * these split it where the pace a rival holds stops being forgiving.
+ */
+export function difficultyLabel(difficulty: number): 'EASY' | 'MEDIUM' | 'HARD' {
+  if (difficulty < 0.35) return 'EASY';
+  if (difficulty < 0.65) return 'MEDIUM';
+  return 'HARD';
+}
