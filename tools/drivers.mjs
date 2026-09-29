@@ -114,7 +114,7 @@ const QUALITY_FLOOR = 0.5;
 for (const route of routes) {
   for (const traffic of conditions) {
     for (const driver of drivers) {
-      const world = new CityWorld(undefined, { traffic, police: false });
+      const world = new CityWorld(undefined, { traffic, police: false, drift: false });
       let damage = 0;
       // Seeded off the route as well as the driver, so two routes are not the
       // same mistakes in the same order.

@@ -36,7 +36,7 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     route's plus 1.5 times the car's top-speed margin; event names.
   - **Waiting on the owner:** Sablet Wharf (#410, decided: container port,
     a jump out, a full quay loop) and #368's hill roads are map work for the
-    editor and screenshot loop; #351's drifting needs a slip model; the
+    editor and screenshot loop; the
     quarry's props edits and sign-off (#323).
 - **What 2026-09-28 changed after that**, the owner away and every PR merged
   on its own: M10 is done (#342 minimap sight rim, #356 banners, #355 heat

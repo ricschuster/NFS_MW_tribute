@@ -77,9 +77,14 @@ for (const route of city.routes) {
   // Twice: an empty city says what the *road* allows, and a populated one says
   // what the drive is actually like. Traffic is on in the real game every
   // second of every session, and until #171 nothing had ever driven with it.
+  // Driven on grip, with drifting off (#351): the driver brakes for a corner
+  // while it is still steering, which in the game is how a drift starts, and
+  // it has no policy for ending one - with drifting on, the ladder's expert
+  // held 44% of top instead of 62% and lost every race. The rival pace is
+  // calibrated against a grip line, which is also what a careful player drives.
   const runs = {};
   for (const traffic of [false, true]) {
-    const world = new CityWorld(undefined, { traffic, police: false });
+    const world = new CityWorld(undefined, { traffic, police: false, drift: false });
     // A sprint down the haul road is raced with the trucks stood aside (#397),
     // and a lap of it outside a race would be a lap spent ramming them.
     if (route.kind === 'sprint') world.trucks.keptOff = true;
@@ -209,7 +214,7 @@ if (!proving) {
     // the empty-road number describes a game nobody plays (#171). The field as
     // ghosts, though (#350): this table balances their pace along the line,
     // and a driver that cannot overtake a body would be measuring a queue.
-    const world = new CityWorld(undefined, { traffic: true, police: false, fieldBodies: false });
+    const world = new CityWorld(undefined, { traffic: true, police: false, fieldBodies: false, drift: false });
     // Standing at the front of the ladder with the Rep to be taken seriously.
     world.beaten = index;
     world.rep.total = Math.max(world.rep.total, rival.rep);

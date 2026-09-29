@@ -283,7 +283,7 @@ export interface CityWorldOptions {
    * its driver cannot overtake, so with bodies it measures a queue, not a race.
    */
   fieldBodies?: boolean;
-  /** Drifting (#351), off by default with `DRIFT_ENABLED`; `?drift` in the URL turns it on to try. */
+  /** Drifting (#351), on by default with `DRIFT_ENABLED`. */
   drift?: boolean;
 }
 

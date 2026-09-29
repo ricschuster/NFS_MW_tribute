@@ -54,7 +54,7 @@ const K = await server.ssrLoadModule('/src/game/constants.ts');
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const M = K.UNITS_PER_METRE;
 
-const world = new CityWorld();
+const world = new CityWorld(undefined, { drift: false });
 const wanted = flag('--route');
 const route = wanted
   ? world.city.routes.find((r) => r.name.toLowerCase() === wanted.toLowerCase())
