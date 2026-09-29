@@ -555,6 +555,10 @@ export class CityWorld {
     this.traffic = new CityTraffic(city, this.grid, this.rng);
     this.trucks = new QuarryTrucks(city);
     this.police = new CityPolice(city, this.grid, this.rng);
+    // Roadblocks go on a rival race's route (#340). Asked through a closure
+    // so the pursuit knows nothing about races beyond "where does it go".
+    this.police.course = (minLead, maxLead, lead, beforeGate) =>
+      this.chasedRace ? this.race.roadAhead(minLead, maxLead, lead, beforeGate) : null;
     this.withTraffic = options.traffic ?? true;
     // The trucks are traffic, so an empty city has none. They only move with
     // traffic on, and left in a city without it they were four parked walls:

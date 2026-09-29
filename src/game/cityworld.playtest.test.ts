@@ -4504,3 +4504,60 @@ describe('rival races', () => {
     expect(world.claim.rival).toBe(RIVALS[0]);
   });
 });
+
+// Roadblocks on the race route (#340): in a rival's race the pursuit puts
+// them where the race goes, from heat 3, and always with a way through.
+describe('roadblocks in a rival race', () => {
+  /** Race the rival and carry the car round their route at half pace, heat held at `level`. */
+  const raceAt = (level: number, seconds: number) => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const route = onRivalLine(world);
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + RACE_CHASE_DELAY + 0.5, NONE);
+    expect(world.police.state).not.toBe('clear');
+    const pace = world.maxSpeed * 0.5;
+    let along = 0;
+    for (let t = 0; t < seconds && world.police.roadblocks.length === 0; t += STEP) {
+      along += pace * STEP;
+      const at = pointAt(route.points, route.length, along);
+      const next = pointAt(route.points, route.length, along + 200);
+      world.x = at.x;
+      world.z = at.z;
+      world.heading = Math.atan2(next.x - at.x, next.z - at.z);
+      world.speed = pace;
+      world.police.heat = (level - 0.5) / HEAT_LEVEL_COUNT;
+      world.step(STEP, NONE);
+    }
+    return { world, route };
+  };
+
+  /** How far a point is from the route's line. */
+  const offRoute = (route: CityRoute, x: number, z: number) => {
+    let near = Infinity;
+    for (let i = 0; i < route.points.length; i++) {
+      const a = route.points[i];
+      const b = route.points[(i + 1) % route.points.length];
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      near = Math.min(near, Math.hypot(x - a.x - dx * t, z - a.z - dz * t));
+    }
+    return near;
+  };
+
+  it('go on the route ahead of the car, with a gap', () => {
+    const { world, route } = raceAt(4, 40);
+    expect(world.police.roadblocks.length).toBeGreaterThan(0);
+    const block = world.police.roadblocks[0];
+    expect(offRoute(route, block.x, block.z)).toBeLessThan(block.road.width);
+    expect(block.gap).not.toBeNull();
+    // Ahead of the car, not behind it.
+    const ahead = (block.x - world.x) * Math.sin(world.heading) + (block.z - world.z) * Math.cos(world.heading);
+    expect(ahead).toBeGreaterThan(0);
+  });
+
+  it('are not laid below heat 3', () => {
+    const { world } = raceAt(2, 25);
+    expect(world.police.roadblocks.length).toBe(0);
+  });
+});

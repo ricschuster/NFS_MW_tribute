@@ -2009,6 +2009,18 @@ export const ROADBLOCK_SPACING = m(420);
 export const ROADBLOCK_FORGET = m(800);
 /** How straight-on the road has to run to your heading to be worth blocking. */
 export const ROADBLOCK_ALIGN = 0.7;
+/**
+ * Roadblocks on the race route (#340). The reference's Most Wanted race puts
+ * them on the course, often just short of a gate, because the chase cars
+ * cannot keep up at race pace: the player has to go that way, so each one is a
+ * question of how to get through rather than whether to turn off. In a rival's
+ * race they go on the route ahead rather than on whatever road the car is
+ * pointing down, only from `RACE_ROADBLOCK_MIN_LEVEL`, and always with a gap:
+ * a race walled off is a race nobody can finish. `RACE_ROADBLOCK_BEFORE_GATE`
+ * is how far short of the gate one sits, when a gate is in reach.
+ */
+export const RACE_ROADBLOCK_MIN_LEVEL = 3;
+export const RACE_ROADBLOCK_BEFORE_GATE = m(40);
 /** Narrower than this and a block is a wall with no gap in it. */
 export const ROADBLOCK_MIN_WIDTH = m(16);
 /** How deep the barrier is, and how wide the gap is when there is one. */

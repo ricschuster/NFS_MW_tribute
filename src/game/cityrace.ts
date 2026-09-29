@@ -339,6 +339,36 @@ export class CityRace {
     if (this.tookOut) this.finish(true);
   }
 
+  /**
+   * A spot on the route between `minLead` and `maxLead` ahead of the player,
+   * `lead` ahead unless a gate falls in that window, when it is just short of
+   * the gate (#340). With the way the route runs there, for lining a barrier
+   * up across it. Null outside a race.
+   */
+  roadAhead(
+    minLead: number,
+    maxLead: number,
+    lead: number,
+    beforeGate: number,
+  ): { x: number; z: number; dx: number; dz: number } | null {
+    const route = this.route;
+    if (!route || this.state !== 'racing') return null;
+    const here = this.playerDist;
+    let along = here + Math.min(maxLead, Math.max(minLead, lead));
+    // The next gate that is far enough ahead to be a warning, and near enough
+    // to be in reach.
+    for (let i = 1; i <= route.checkpoints.length; i++) {
+      const gate = Math.floor(here / this.spacing + i) * this.spacing - beforeGate;
+      if (gate - here < minLead) continue;
+      if (gate - here <= maxLead) along = gate;
+      break;
+    }
+    const at = pointAt(route.points, route.length, along);
+    const next = pointAt(route.points, route.length, along + 200);
+    const length = Math.max(1, Math.hypot(next.x - at.x, next.z - at.z));
+    return { x: at.x, z: at.z, dx: (next.x - at.x) / length, dz: (next.z - at.z) / length };
+  }
+
   /** Gates passed, plus how far it is to the next one. */
   private advancePlayer(route: CityRoute, player: Racer): void {
     const gate = route.checkpoints[this.checkpoint];
