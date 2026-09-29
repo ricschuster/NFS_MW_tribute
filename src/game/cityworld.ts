@@ -96,6 +96,7 @@ import {
   REPAIR_RANGE,
   REPAIR_FLASH,
   CLAIM_HEAT,
+  CLAIM_TOUGHNESS,
   HEAT_LEVEL_COUNT,
   RACE_CHASE_DELAY,
   RACE_CHASE_LEVEL,
@@ -157,7 +158,7 @@ import { pointAt } from './city/routes';
 import { planCentre } from './city/plan';
 import type { DistrictKind, RouteKind } from './city/types';
 import { impactDamage, touching, WRECKED } from './impact';
-import type { Roadblock } from './citypolice';
+import type { Roadblock, SpikeStrip } from './citypolice';
 import type { GraphCar } from './graphcar';
 import type { City, CityRoad, CityRoute } from './city/types';
 
@@ -1209,6 +1210,7 @@ export class CityWorld {
     this.contacts();
     this.race.update(dt, this, this.maxSpeed);
     if (this.race.justFinished) this.settleRace();
+    this.runnerMeetsPolice();
     this.claim.update(dt, this, this.maxSpeed);
     if (this.claim.justEnded) this.settleClaim();
     this.earn(dt);
@@ -1814,15 +1816,8 @@ export class CityWorld {
    */
   private roadblock(): boolean {
     for (const block of this.police.roadblocks) {
-      if (Math.abs(block.y - this.y) > CAR_RADIUS * 2) continue;
-
-      const dx = this.x - block.x;
-      const dz = this.z - block.z;
-      // Along the barrier, and through it.
-      const along = dx * block.ax + dz * block.az;
-      const through = dx * block.az - dz * block.ax;
-      if (Math.abs(through) > ROADBLOCK_REACH || Math.abs(along) > block.half) continue;
-      if (block.gap !== null && Math.abs(along - block.gap) < ROADBLOCK_GAP - CAR_RADIUS) continue;
+      const along = intoBlock(block, this);
+      if (along === null) continue;
 
       this.speed *= ROADBLOCK_SPEED_KEPT;
       this.takeDamage(DAMAGE_ROADBLOCK);
@@ -1845,21 +1840,53 @@ export class CityWorld {
    */
   private spikes(): void {
     for (const strip of this.police.spikes) {
-      if (Math.abs(strip.y - this.y) > CAR_RADIUS * 2) continue;
-
-      const dx = this.x - strip.x;
-      const dz = this.z - strip.z;
-      const along = dx * strip.ax + dz * strip.az;
-      const through = dx * strip.az - dz * strip.ax;
-      // Swept by how far the car travels in a step, not just by how deep the
-      // strip is drawn. At top speed the car covers more ground in one step
-      // than the strip is wide, and a hazard you can step over is not one.
-      if (Math.abs(through) > SPIKE_REACH + Math.abs(this.speed) * STEP) continue;
-      if (along < strip.from - CAR_RADIUS || along > strip.to + CAR_RADIUS) continue;
+      if (!overStrip(strip, this)) continue;
 
       this.shredded = SHRED_TIME * (this.reinflating ? SHRED_REINFLATE : 1);
       this.police.shred(strip);
       return;
+    }
+  }
+
+  /**
+   * The rival you are running down meets the police too (#341).
+   *
+   * In the reference game the runner goes into the race's own roadblock and is
+   * wrecked, fifteen seconds after the finish. The police are not after it -
+   * they are after you - but a car fleeing down the road they have closed is
+   * caught in it the same way you would be, and that turns the pursuit into a
+   * tool in the ladder fight rather than only an obstacle to it.
+   *
+   * A roadblock costs it what running into a parked car head-on at its speed
+   * costs anyone, through `impact.ts`, and a wreck there is the takedown: the
+   * claim sees the damage on its next step and the car is yours. A spike strip
+   * slows it the way it slows you.
+   */
+  private runnerMeetsPolice(): void {
+    const runner = this.claim.runner;
+    if (!runner || this.claim.state !== 'running') return;
+    for (const block of this.police.roadblocks) {
+      const along = intoBlock(block, runner);
+      if (along === null) continue;
+      // The parked car it ran into: dead ahead of it, standing still.
+      const parked = {
+        x: runner.x + Math.sin(runner.heading) * CAR_RADIUS,
+        z: runner.z + Math.cos(runner.heading) * CAR_RADIUS,
+        y: runner.y,
+        heading: runner.heading,
+        speed: 0,
+      };
+      const hurt = impactDamage(runner, { ...runner, ...parked, damage: 0 }, this.maxSpeed, null, CLAIM_TOUGHNESS);
+      runner.damage = Math.min(1, runner.damage + hurt);
+      this.scatter(block, along);
+      this.police.breach(block);
+      break;
+    }
+    for (const strip of this.police.spikes) {
+      if (!overStrip(strip, runner)) continue;
+      runner.shredded = SHRED_TIME;
+      this.police.shred(strip);
+      break;
     }
   }
 
@@ -2258,3 +2285,37 @@ export class CityWorld {
 }
 
 export { carriageway, roadHeightAt };
+
+/**
+ * Where along a roadblock a car is going through it, or null if it is not
+ * (#59). The barrier is a line with a hole in it: a car within
+ * `ROADBLOCK_REACH` of the line, inside its length and not in the hole, is
+ * hitting it. The player and the runner (#341) ask the same question.
+ */
+function intoBlock(block: Roadblock, car: { x: number; z: number; y: number }): number | null {
+  if (Math.abs(block.y - car.y) > CAR_RADIUS * 2) return null;
+  const dx = car.x - block.x;
+  const dz = car.z - block.z;
+  // Along the barrier, and through it.
+  const along = dx * block.ax + dz * block.az;
+  const through = dx * block.az - dz * block.ax;
+  if (Math.abs(through) > ROADBLOCK_REACH || Math.abs(along) > block.half) return null;
+  if (block.gap !== null && Math.abs(along - block.gap) < ROADBLOCK_GAP - CAR_RADIUS) return null;
+  return along;
+}
+
+/**
+ * Is a car over a spike strip this step (#60)? Swept by how far the car
+ * travels in a step, not just by how deep the strip is drawn: at top speed a
+ * car covers more ground in one step than the strip is wide, and a hazard you
+ * can step over is not one.
+ */
+function overStrip(strip: SpikeStrip, car: { x: number; z: number; y: number; speed: number }): boolean {
+  if (Math.abs(strip.y - car.y) > CAR_RADIUS * 2) return false;
+  const dx = car.x - strip.x;
+  const dz = car.z - strip.z;
+  const along = dx * strip.ax + dz * strip.az;
+  const through = dx * strip.az - dz * strip.ax;
+  if (Math.abs(through) > SPIKE_REACH + Math.abs(car.speed) * STEP) return false;
+  return along >= strip.from - CAR_RADIUS && along <= strip.to + CAR_RADIUS;
+}
