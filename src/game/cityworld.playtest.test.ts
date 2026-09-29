@@ -41,6 +41,7 @@ import {
   REFERENCE_TOP_SPEED,
   FIND_RANGE,
   CITY_COUNTDOWN,
+  STORY_GAP,
   CITY_RESULT_HOLD,
   RACE_CHASE_DELAY,
   CITY_EDGE_MARGIN,
@@ -4727,5 +4728,25 @@ describe("a car's events", () => {
     const theirs = world.eventOn(route)!;
     expect(theirs.id).not.toBe(mine.id);
     expect(theirs.name).not.toBe(mine.name);
+  });
+});
+
+// The story's lines are told once for good (#362), across a save and reload.
+describe('the story in the world', () => {
+  it('tells the first rival once, and not again after a reload', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    world.step(STEP, NONE);
+    world.rep.total = RIVALS[0].rep;
+    world.step(STEP, NONE);
+    expect(world.story.current?.text).toContain('map');
+    drive(world, REP_SAVE_INTERVAL + 1, NONE);
+
+    const again = new CityWorld(undefined, { traffic: false, police: false });
+    expect(again.story.seen.has('first-rival')).toBe(true);
+    again.rep.total = 0;
+    again.step(STEP, NONE);
+    again.rep.total = RIVALS[0].rep;
+    drive(again, STORY_GAP + 0.5, NONE);
+    expect(again.story.current).toBeNull();
   });
 });

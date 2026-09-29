@@ -2733,6 +2733,13 @@ export const BLOOM_SCALE = 0.5;
 export const RADIO_GAP = 2.2;
 /** How long a line stays on screen, and how many are shown at once. */
 export const RADIO_HOLD = 7;
+/**
+ * The story's captions (#362): how long one stays up, and the least time
+ * between two, so a claim that also finishes the ladder reads as two lines
+ * rather than one replacing the other before it is read.
+ */
+export const STORY_HOLD = 6;
+export const STORY_GAP = 1.5;
 export const RADIO_LINES = 3;
 /** Anything still queued after this is stale news and is dropped. */
 export const RADIO_QUEUE = 4;
