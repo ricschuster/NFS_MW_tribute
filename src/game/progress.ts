@@ -44,6 +44,8 @@ export interface Progress {
   paint: [string, string][];
   /** Ids of the one-off milestones already paid (#353), so each pays once for good. */
   milestones: string[];
+  /** Car event id to the best place got in it (M12). */
+  events: [string, number][];
 }
 
 /** A player who has just arrived. */
@@ -61,6 +63,7 @@ export function freshProgress(): Progress {
     fitted: [],
     paint: [],
     milestones: [],
+    events: [],
   };
 }
 
@@ -127,6 +130,12 @@ export function decodeProgress(raw: string | null): Progress {
         )
       : [],
     milestones: strings(parsed.milestones),
+    events: Array.isArray(parsed.events)
+      ? parsed.events.filter(
+          (row): row is [string, number] =>
+            Array.isArray(row) && typeof row[0] === 'string' && typeof row[1] === 'number' && row[1] >= 1,
+        )
+      : [],
   };
 }
 

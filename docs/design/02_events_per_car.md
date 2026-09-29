@@ -1,8 +1,10 @@
 # Events per car
 
-- Status: **proposed**. The direction was decided on 2026-09-27 (each car you
-  find comes with its own events); the questions below are the shape of it,
-  and each ends in a recommendation for the owner.
+- Status: **decided**, 2026-09-29. The direction was decided on 2026-09-27
+  (each car you find comes with its own events); on 2026-09-29 the owner
+  adopted all seven recommendations below as they stand. Steps 1 and 3 of
+  the order are built (`carevents.ts`; jump to car is #352); step 2 was
+  #357.
 - Evidence: [the gameplay review](../research/nfs-most-wanted-2012-gameplay.md).
 - Touches: #66, #67, #68, #90, #91, #311, `docs/map-areas.md`,
   [ADR-0011](../decisions/0011-the-reference-games-pace.md).
@@ -131,6 +133,8 @@ Car events use both kinds. Nothing about the ladder changes.
 4. Each finished area adds routes, and cars get events on them.
 
 ## Decisions for the owner
+
+All seven adopted as recommended, 2026-09-29.
 
 1. Three to five events per car, starting at three?
 2. Routes shared between cars, contributed area by area?
