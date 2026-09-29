@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { CityRace, fieldFor } from './cityrace';
+import { CityRace, fieldFor, ordinaryPace } from './cityrace';
+import { carById } from './cars';
 import { pointAt } from './city/routes';
 import { kestrelBay } from './city/index';
 import { RIVALS } from './rivals';
@@ -545,5 +546,22 @@ describe.skipIf(!city.routes.some((route) => route.kind === 'circuit'))('the fie
     const far = pointAt(route.points, route.length, route.length / 2);
     for (let t = 0; t < 4; t += STEP) race.update(STEP, far, REFERENCE_TOP_SPEED);
     expect(Math.abs(race.field[0].lane)).toBeCloseTo(FIELD_LANE);
+  });
+});
+
+// An ordinary race is raced by street cars, not the ladder's (#419, #434).
+describe('an ordinary field', () => {
+  it('is six different street cars, quicker for a harder event', () => {
+    const easy = fieldFor(ordinaryPace(0.12), true);
+    const hard = fieldFor(ordinaryPace(0.55), true);
+    for (const field of [easy, hard]) {
+      expect(field.length).toBe(FIELD_SIZE);
+      expect(new Set(field.map((r) => r.carId)).size).toBe(FIELD_SIZE);
+      for (const racer of field) expect(carById(racer.carId).source).toBe('street');
+    }
+    const top = (field: typeof easy) => Math.max(...field.map((r) => carById(r.carId).topSpeed));
+    expect(top(hard)).toBeGreaterThan(top(easy));
+    // The pace is unchanged: the first car carries the event's difficulty.
+    expect(hard[0].difficulty).toBeCloseTo(0.55);
   });
 });
