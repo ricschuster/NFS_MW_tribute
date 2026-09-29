@@ -1373,6 +1373,11 @@ describe('roadblocks', () => {
   it('turns up once the heat is high enough', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
+    // A unit on the road beside the car keeps it in sight: `tail`'s is placed
+    // by coordinates and snapped back onto its road, and with one patrol in
+    // the city (`PATROL_IN_CITY`) nothing else was there to keep the pursuit
+    // from dropping into a search, where no roadblock goes down.
+    patrolBeside(world);
     hunt(world, 0.6, 40);
     expect(world.police.roadblocks.length).toBeGreaterThan(0);
   });
@@ -1380,6 +1385,11 @@ describe('roadblocks', () => {
   it('places them ahead of you, on a road worth blocking', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
+    // A unit on the road beside the car keeps it in sight: `tail`'s is placed
+    // by coordinates and snapped back onto its road, and with one patrol in
+    // the city (`PATROL_IN_CITY`) nothing else was there to keep the pursuit
+    // from dropping into a search, where no roadblock goes down.
+    patrolBeside(world);
     hunt(world, 0.6, 40);
     expect(world.police.roadblocks.length).toBeGreaterThan(0);
 
@@ -1396,6 +1406,11 @@ describe('roadblocks', () => {
   it('gives up on them when the pursuit does', () => {
     const world = onAnArterial();
     world.speed = world.maxSpeed * 0.4;
+    // A unit on the road beside the car keeps it in sight: `tail`'s is placed
+    // by coordinates and snapped back onto its road, and with one patrol in
+    // the city (`PATROL_IN_CITY`) nothing else was there to keep the pursuit
+    // from dropping into a search, where no roadblock goes down.
+    patrolBeside(world);
     hunt(world, 0.6, 40);
     expect(world.police.roadblocks.length).toBeGreaterThan(0);
 
