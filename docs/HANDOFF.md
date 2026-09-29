@@ -122,9 +122,9 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   loop already looks for - and the two previously-skipped embankment tests in
   `city.test.ts` pass along with everything else (441 of 543, 102 skipped).
 - **Play the game:** https://ricschuster.github.io/crosstown/ - this is
-  `main`, which now ships the rebuilt map: real terrain, a landmass, authored
-  districts, no street grid and no interstate yet (both are switched off, see
-  below).
+  `main` as of the last deploy, which is **by hand** since 2026-09-28
+  (Actions > Deploy > Run workflow); it used to follow every merge. Play the
+  latest with `npm run dev`.
 - **Look at the map:** [`?renderer=city&view=aerial`](https://ricschuster.github.io/crosstown/?renderer=city&view=aerial)
   · the README lists the named viewpoints
 - **Status:** mid-rebuild, and this is the second one. The first rebuild
