@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies', 'guide',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies',
+      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies', 'guide',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -584,6 +584,46 @@ for (const view of VIEWS) {
       world.crashFlash = 0;
     });
     await page.waitForTimeout(1500);
+  }
+
+  if (view === 'guide') {
+    // In a race, stopped on the route and facing along it, so the lines on
+    // the road (#443) run away from the camera the way they do while racing.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      const route = world.city.routes.find((r) => r.kind === 'circuit');
+      if (!route) return;
+      world.x = route.start.x;
+      world.z = route.start.z;
+      world.step(1 / 60, { ...none, confirm: true });
+      for (let t = 0; t < 3.2; t += 1 / 60) world.step(1 / 60, none);
+      // Driven a little way round by the route itself, so the car is on the
+      // road and pointed along it, then held there.
+      const along = (d) => {
+        let left = d;
+        for (let i = 0; i < route.points.length; i++) {
+          const p = route.points[i], q = route.points[(i + 1) % route.points.length];
+          const span = Math.hypot(q.x - p.x, q.z - p.z);
+          if (left <= span) return { x: p.x + (q.x - p.x) * (left / span), z: p.z + (q.z - p.z) * (left / span), h: Math.atan2(q.x - p.x, q.z - p.z) };
+          left -= span;
+        }
+        return { x: route.start.x, z: route.start.z, h: 0 };
+      };
+      for (let d = 0; d < 400 * 135; d += 60 * 135 / 60) {
+        const at = along(d);
+        world.x = at.x;
+        world.z = at.z;
+        world.heading = at.h;
+        world.speed = 0;
+        world.step(1 / 60, none);
+      }
+      world.crashFlash = 0;
+    });
+    await page.waitForTimeout(2500);
   }
 
   if (view === 'burnout') {
