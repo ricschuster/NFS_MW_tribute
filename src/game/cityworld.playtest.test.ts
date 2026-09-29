@@ -4750,3 +4750,51 @@ describe('the story in the world', () => {
     expect(again.story.current).toBeNull();
   });
 });
+
+// Drifting (#351): off by default, and with it on a tap of the brake while
+// steering at speed breaks the back loose.
+describe('drifting', () => {
+  /** Up to speed on the long boulevard the #422 tests use, pointed down it. */
+  const atSpeed = (drift: boolean) => {
+    const world = new CityWorld(undefined, { traffic: false, police: false, drift });
+    const road = world.city.roads.find(
+      (r) => r.class === 'boulevard' && r.surface !== 'dirt' && r.length > 300 * M,
+    )!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = a.x + (b.x - a.x) * 0.2;
+    world.z = a.z + (b.z - a.z) * 0.2;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.step(STEP, NONE);
+    world.speed = world.maxSpeed * 0.6;
+    world.nitro = 0;
+    return world;
+  };
+  const tap = (world: CityWorld) => {
+    world.step(STEP, press({ up: true, right: true, down: true }));
+    drive(world, 0.8, press({ up: true, right: true }));
+  };
+
+  it('is off unless asked for: the car goes where it points', () => {
+    const world = atSpeed(false);
+    tap(world);
+    expect(world.drifting).toBe(false);
+    expect(world.slip).toBeCloseTo(0);
+  });
+
+  it('slides on a tap of the brake while steering, and fills the nitrous', () => {
+    const world = atSpeed(true);
+    tap(world);
+    expect(world.drifting).toBe(true);
+    expect(Math.abs(world.slip)).toBeGreaterThan(0.1);
+    expect(world.nitro).toBeGreaterThan(0);
+  });
+
+  it('straightens up once the steering is let go', () => {
+    const world = atSpeed(true);
+    tap(world);
+    drive(world, 2, press({ up: true }));
+    expect(world.drifting).toBe(false);
+    expect(world.slip).toBeCloseTo(0);
+  });
+});

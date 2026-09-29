@@ -10,17 +10,18 @@ import type { Vec2 } from './city/types';
  * you to. Crosstown's is passive only until this, at a rate that made the
  * risky line and the safe one cost the same.
  *
- * Drifting is the reference's fifth source and is not here, because it is not
- * a thing this car does: velocity always resolves along the heading (#82), so
- * there is no slip angle to be sustaining. It needs a slip model first.
+ * Drifting is the reference's fifth source. It needed a slip model first,
+ * since velocity always resolved along the heading (#82); `CityWorld.travel`
+ * is that model, and it is off behind `DRIFT_ENABLED` until it has been driven.
  */
-export type NitroSource = 'nearMiss' | 'oncoming' | 'air' | 'slipstream';
+export type NitroSource = 'nearMiss' | 'oncoming' | 'air' | 'slipstream' | 'drift';
 
 export const NITRO_LABELS: Record<NitroSource, string> = {
   nearMiss: 'NEAR MISS',
   oncoming: 'ONCOMING',
   air: 'AIR',
   slipstream: 'SLIPSTREAM',
+  drift: 'DRIFT',
 };
 
 /** A counter the HUD shows: how much of this has been done in the current run of it. */
