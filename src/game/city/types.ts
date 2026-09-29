@@ -308,6 +308,11 @@ export interface CityRoute {
   length: number;
   laps: number;
   /**
+   * How hard its ordinary race is, 0..1 on the ladder's scale (#419), when it
+   * has been chosen. A rival race brings the rival's own instead.
+   */
+  difficulty?: number;
+  /**
    * Laid by hand through a place (#311) rather than found by `routesFor`'s
    * search, whose rules - a set of six, a length band, spread apart - are
    * about its own picks.

@@ -2320,6 +2320,14 @@ export const ROUTE_MAX_TURN = 2.1;
 export const ROUTE_SPACING = m(850);
 /** How close you have to be to a start line for the event to be offered. */
 export const ROUTE_START_RANGE = m(28);
+/**
+ * Rival races (#419). A generated circuit has no difficulty of its own, so its
+ * ordinary race gets this, a little above the first rival's. And a rival's
+ * start line is this far round their circuit from its ordinary one, so the
+ * two are different places on the map when they share the loop.
+ */
+export const ORDINARY_RACE_DIFFICULTY = 0.2;
+export const RIVAL_START_ALONG = 0.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);
 /** How far apart the checkpoints are laid along the route. */

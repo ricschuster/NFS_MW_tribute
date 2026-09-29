@@ -63,6 +63,11 @@ export interface PursuitReport {
    * radio should sound like it knows which.
    */
   event: 'race' | 'ambush' | 'claim' | null;
+  /**
+   * The rival who will race you now, if one will (#419), by name. The street
+   * hears about it before you do, so dispatch says so.
+   */
+  rival?: string | null;
   /** Whether the car is in a tunnel (#257), which is the way they lost it if they did. */
   underground: boolean;
 }
@@ -267,6 +272,15 @@ const CALLOUTS: Record<string, Callout> = {
       'Suspect is gone. Stand down.',
     ],
   },
+  // A rival will race you now (#419). {rival} is their name.
+  rivalReady: {
+    from: 'dispatch',
+    lines: [
+      'Word on the street is {rival} is looking for a race. Keep your eyes open.',
+      'All units, a racer calling themselves {rival} has been asking around. Heads up.',
+      '{rival} is out and wants a race. Nobody gives them one.',
+    ],
+  },
   busted: {
     from: 'dispatch',
     lines: ['Suspect is stopped. Good work.', 'We have them. Pursuit over.'],
@@ -352,6 +366,7 @@ export class Radio {
     if (was.state !== 'clear' && now.car === was.car && now.colour !== was.colour) this.call('resprayed');
     if (was.state !== 'clear' && now.state === 'clear') this.call('clear');
     if (!was.busted && now.busted) this.call('busted');
+    if (now.rival && now.rival !== was.rival) this.call('rivalReady');
   }
 
   /** The event's own version of a callout, where it has one. */
@@ -380,6 +395,7 @@ export class Radio {
       text: line
         .replace('{car}', this.now?.car ?? 'car')
         .replace('{colour}', this.now?.colour ?? '')
+        .replace('{rival}', this.now?.rival ?? 'somebody')
         // "a orange Emberline" is the one way this reads as a machine talking.
         .replace(/\ba ([aeiou])/gi, 'an $1'),
       age: 0,

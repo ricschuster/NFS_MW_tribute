@@ -22,8 +22,11 @@ export interface Rival {
   /**
    * Rep needed before they will take the call.
    *
-   * The first is zero: a ladder whose bottom rung is locked is a game that
-   * starts by refusing to start.
+   * The first is not zero any more (#419). It was, when every race was a
+   * ladder race and a locked bottom rung was a game that started by refusing
+   * to start; now the start lines are ordinary races open to anyone, and a
+   * rival is somebody you earn a race with. 1,500 is about one ordinary win
+   * and one escape.
    */
   rep: number;
   /** How they drive, in a line. Shown when the challenge is offered. */
@@ -45,7 +48,7 @@ export const RIVALS: Rival[] = [
     car: 'Tuned Hatch',
     color: '#4b7bc9',
     difficulty: 0.15,
-    rep: 0,
+    rep: 1500,
     character: 'Quick off the line and nowhere near quick enough after it.',
     carId: 'hatchling',
   },

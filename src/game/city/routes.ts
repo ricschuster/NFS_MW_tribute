@@ -252,10 +252,12 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
  * sit on the outer ring, a hundred metres clear of the spiral's top turn, so
  * the nearest node is always the rim's.
  */
-const PLACED_ROUTES: { name: string; kind: RouteKind; via: [number, number][] }[] = [
+const PLACED_ROUTES: { name: string; kind: RouteKind; difficulty: number; via: [number, number][] }[] = [
   {
     name: 'Marrow Field Run',
     kind: 'speedrun',
+    // Vex's, which set its target before rivals had their own races (#419).
+    difficulty: 0.15,
     via: [
       [-804, 1525],
       [-666, 2978],
@@ -267,6 +269,7 @@ const PLACED_ROUTES: { name: string; kind: RouteKind; via: [number, number][] }[
   {
     name: 'Halloway Rim',
     kind: 'circuit',
+    difficulty: 0.2,
     via: [
       [-2230, -440],
       [-2800, -160],
@@ -318,6 +321,7 @@ export function placedRoutes(city: City, firstId: number): CityRoute[] {
       start: points[0],
       length,
       laps: def.kind === 'circuit' ? ROUTE_LAPS : 1,
+      difficulty: def.difficulty,
       placed: true,
     });
   }
@@ -453,6 +457,29 @@ function checkpointsAlong(points: Vec2[], length: number): Vec2[] {
     checkpoints.push(pointAt(points, length, (length * i) / count));
   }
   return checkpoints;
+}
+
+/**
+ * The same loop, started `fraction` of the way round (#419).
+ *
+ * A rival's race runs a circuit that already has an ordinary start line, and
+ * needs a line of its own so the two are different places on the map. Same
+ * roads, same length, same laps; the gates are laid again from the new start.
+ */
+export function startingAt(route: CityRoute, fraction: number): CityRoute {
+  const { points, length } = route;
+  let left = ((fraction % 1) + 1) % 1 * length;
+  let at = 0;
+  for (; at < points.length - 1; at++) {
+    const a = points[at];
+    const b = points[at + 1];
+    const span = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= span) break;
+    left -= span;
+  }
+  const start = pointAt(points, length, fraction * length);
+  const rotated = [start, ...points.slice(at + 1), ...points.slice(0, at + 1)];
+  return { ...route, points: rotated, start, checkpoints: checkpointsAlong(rotated, length) };
 }
 
 /** The point `along` world units into the loop, wrapping at the end. */

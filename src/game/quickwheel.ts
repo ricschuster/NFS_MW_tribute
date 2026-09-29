@@ -36,6 +36,8 @@ export interface Marker {
   x: number;
   z: number;
   label: string;
+  /** Listed first however far away it is (#419). */
+  pinned?: boolean;
 }
 
 /** A multiplier as a round two- or three-figure number, for a stat line. */
@@ -211,6 +213,13 @@ export class QuickWheel {
   /** Everywhere worth being pointed at, nearest first. */
   private destinations(world: CityWorld): Marker[] {
     const places: Marker[] = [];
+    // The rival who will race you (#419), first whatever the distance: it is
+    // the one destination the game has just told you about.
+    const rivalRoute = world.rivalRoute;
+    const rival = world.currentRival;
+    if (rivalRoute && rival) {
+      places.push({ x: rivalRoute.start.x, z: rivalRoute.start.z, label: `Rival #${rival.rank} ${rival.name}`, pinned: true });
+    }
     for (const route of world.city.routes) {
       places.push({
         x: route.start.x,
@@ -230,11 +239,11 @@ export class QuickWheel {
 
     // Nearest first: the wheel is used at speed, and the thing you want is
     // almost always the one you could still get to.
-    return places
-      .sort(
-        (a, b) =>
-          Math.hypot(a.x - world.x, a.z - world.z) - Math.hypot(b.x - world.x, b.z - world.z),
-      );
+    return places.sort(
+      (a, b) =>
+        Number(b.pinned ?? false) - Number(a.pinned ?? false) ||
+        Math.hypot(a.x - world.x, a.z - world.z) - Math.hypot(b.x - world.x, b.z - world.z),
+    );
   }
 
   private places(world: CityWorld): WheelEntry[] {

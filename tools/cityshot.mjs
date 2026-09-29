@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover',
+      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -525,6 +525,30 @@ for (const view of VIEWS) {
       world.z = route.start.z;
       world.crashFlash = 0;
       world.speed = 0;
+    });
+    await page.waitForTimeout(600);
+  }
+
+  if (view === 'rivalstart') {
+    // Parked on a rival's own line (#419), with the Rep to be taken seriously:
+    // their invite and card, and their amber target on the minimap.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      world.rep.total = 1500;
+      const route = world.rivalRoute;
+      if (!route) return;
+      world.x = route.start.x;
+      world.z = route.start.z;
+      world.heading = Math.atan2(route.points[1].x - route.start.x, route.points[1].z - route.start.z);
+      world.crashFlash = 0;
+      world.speed = 0;
+      // A second of stepping to settle onto the rim road: dropped in at the
+      // height it was spawned at, the car sits under the ground.
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      for (let i = 0; i < 60; i++) world.step(1 / 60, none);
     });
     await page.waitForTimeout(600);
   }

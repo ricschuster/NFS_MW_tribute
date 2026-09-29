@@ -47,6 +47,12 @@ export const SIGHT_COLOUR = {
   searching: 'rgba(255, 210, 90, 0.85)',
 } as const;
 
+/**
+ * A rival who will race you, on both maps (#419): amber, because amber is the
+ * one you are hunting, and a target, because an event start is a target.
+ */
+export const RIVAL_COLOUR = '#ffd166';
+
 /** A car still parked out there, on both maps. */
 export const FIND_COLOUR = '#ff6ec7';
 
@@ -66,6 +72,7 @@ export const MAP_LEGEND: [string, string, LegendShape][] = [
   ['ambush - number is the heat', '#ff5a45', 'ring'],
   ['race route; orange = sprint', '#7fe3ff', 'line'],
   ['event start - press ENTER', '#7fe3ff', 'target'],
+  ['rival race - press ENTER', RIVAL_COLOUR, 'target'],
   ['a rival, racing or running', '#ffffff', 'dot'],
   ['the one you are chasing down', '#ffd166', 'ring'],
   ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],

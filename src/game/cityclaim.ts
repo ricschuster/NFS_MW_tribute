@@ -66,11 +66,16 @@ export class CityClaim {
    * chase begins where the race ended, not with a two-hundred-metre head start
    * that has to be closed before anything can happen.
    */
-  begin(rival: Rival, at: Rammer): boolean {
+  begin(rival: Rival, at: Rammer, onRoad: CityRoad | null = null): boolean {
     const roads = this.grid.roadsNear(at.x, at.z).filter((road) => road.length > road.width * 2);
-    if (roads.length === 0) return false;
 
-    const road = nearestRoad(this.city, roads, at.x, at.z);
+    // The road the race ended on, when there is one (#419). Nearest in plan is
+    // not nearest in height: at the quarry that was the haul road down in the
+    // pit, and the runner started somewhere the owner could not find on a
+    // road at all.
+    const own = onRoad && onRoad.length > onRoad.width * 2 ? onRoad : null;
+    if (!own && roads.length === 0) return false;
+    const road = own ?? nearestRoad(this.city, roads, at.x, at.z);
     const runner: Runner = {
       rival,
       road,

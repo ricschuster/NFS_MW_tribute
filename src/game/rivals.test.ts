@@ -29,10 +29,11 @@ describe('the ladder of ten', () => {
     }
   });
 
-  // A ladder whose bottom rung is locked is a game that starts by refusing to
-  // start.
-  it('asks for nothing to face the first one', () => {
-    expect(RIVALS[0].rep).toBe(0);
+  // Not at the start (#419): the ordinary races are what a new game starts
+  // with, and the first rival is earned - but by about one of them, not a grind.
+  it('asks for a little Rep to face the first one', () => {
+    expect(RIVALS[0].rep).toBeGreaterThan(0);
+    expect(RIVALS[0].rep).toBeLessThanOrEqual(2000);
   });
 
   it('asks for more Rep the further up it goes', () => {

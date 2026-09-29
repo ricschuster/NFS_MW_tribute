@@ -368,8 +368,11 @@ the renderer, storage or the pursuit. Its own doc comment has the reasoning,
 including why the table counts as a design document and not just code.
 
 **The ladder is a price, not a queue** (issue #91). `rivals.ts` has the
-reasoning for unlocking by Rep total rather than by beating the rival below;
-`CityWorld` gates a race start on `challengeReady`.
+reasoning for unlocking by Rep total rather than by beating the rival below.
+A rival race is its own event (#419): the start lines are ordinary races open
+to anyone, which end at the finish, and the next rival races you from a line
+of their own (`CityWorld.rivalRoute`) that only exists once `challengeReady`.
+Only a rival race calls the police at the lights and ends in the claim.
 
 **Collectibles are city data, and the collection is not** (issue #93).
 `city/collectibles.ts` places billboards and speed cameras against the finished
