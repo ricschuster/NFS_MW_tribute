@@ -1,8 +1,9 @@
 name: Deploy
 
+# By hand only (Actions > Deploy > Run workflow). It used to run on every push
+# to main, which this early in development meant a deployment per merged PR -
+# 237 of them by 2026-09-28 - for a site nobody needed updated that often.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # Allow the workflow to publish to GitHub Pages.
