@@ -577,7 +577,8 @@ export class Hud {
       for (const point of route.points.slice(1)) {
         ctx.lineTo(toMap(point, world).x * scale, toMap(point, world).y * scale);
       }
-      ctx.closePath();
+      // A sprint does not come back to its start (#397).
+      if (route.kind !== 'sprint') ctx.closePath();
       ctx.strokeStyle = 'rgba(127, 227, 255, 0.9)';
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -964,7 +965,7 @@ export class Hud {
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 22px system-ui, sans-serif';
       ctx.fillText(
-        `${route.name.toUpperCase()}   ${route.kind === 'speedrun' ? 'SPEED RUN' : 'CIRCUIT'}`,
+        `${route.name.toUpperCase()}   ${route.kind === 'speedrun' ? 'SPEED RUN' : route.kind === 'sprint' ? 'SPRINT' : 'CIRCUIT'}`,
         WIDTH / 2,
         HEIGHT - 150,
       );
@@ -974,7 +975,9 @@ export class Hud {
       ctx.fillText(
         route.kind === 'speedrun'
           ? 'ENTER or BURNOUT  -  one lap, on average speed'
-          : `ENTER or BURNOUT  -  ${route.laps} laps against a field of ${FIELD_SIZE + 1}`,
+          : route.kind === 'sprint'
+            ? `ENTER or BURNOUT  -  ${(route.length / UNITS_PER_METRE / 1000).toFixed(1)} km to the finish against a field of ${FIELD_SIZE + 1}`
+            : `ENTER or BURNOUT  -  ${route.laps} laps against a field of ${FIELD_SIZE + 1}`,
         WIDTH / 2,
         HEIGHT - 126,
       );
@@ -1083,10 +1086,18 @@ export class Hud {
     ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
     ctx.font = '600 13px system-ui, sans-serif';
-    ctx.fillText('LAP', WIDTH / 2 - 90, 40);
+    // A sprint has no laps (#397): how far is left is the number that matters.
+    const sprint = route.kind === 'sprint';
+    ctx.fillText(sprint ? 'KM' : 'LAP', WIDTH / 2 - 90, 40);
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
-    ctx.fillText(`${Math.min(route.laps, race.lap + 1)}/${route.laps}`, WIDTH / 2 - 50, 42);
+    ctx.fillText(
+      sprint
+        ? (Math.max(0, route.length - race.playerDist) / UNITS_PER_METRE / 1000).toFixed(1)
+        : `${Math.min(route.laps, race.lap + 1)}/${route.laps}`,
+      WIDTH / 2 - 50,
+      42,
+    );
 
     const place = race.position;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
@@ -1612,7 +1623,7 @@ export class Hud {
       ctx.beginPath();
       ctx.moveTo(px(route.points[0].x), py(route.points[0].z));
       for (const point of route.points.slice(1)) ctx.lineTo(px(point.x), py(point.z));
-      ctx.closePath();
+      if (route.kind !== 'sprint') ctx.closePath();
       ctx.stroke();
 
       // The start, and it has to be unmistakable. A 4 px dot in the route's own

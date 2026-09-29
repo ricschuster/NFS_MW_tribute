@@ -10,6 +10,7 @@ import {
   UNITS_PER_METRE,
 } from '../constants';
 import type { City, CityRoute, RouteKind, Vec2 } from './types';
+import { haulRoad } from './haulroad';
 
 /**
  * Circuit routes through Kestrel Bay (#70).
@@ -325,6 +326,8 @@ export function placedRoutes(city: City, firstId: number): CityRoute[] {
       placed: true,
     });
   }
+  const sprint = haulSprint(city, firstId + routes.length);
+  if (sprint) routes.push(sprint);
   return routes;
 }
 
@@ -433,9 +436,9 @@ function sharpestTurn(points: Vec2[]): number {
   return worst;
 }
 
-function lengthOf(points: Vec2[]): number {
+function lengthOf(points: Vec2[], open = false): number {
   let total = 0;
-  for (let i = 0; i < points.length; i++) {
+  for (let i = 0; i < points.length - (open ? 1 : 0); i++) {
     const a = points[i];
     const b = points[(i + 1) % points.length];
     total += Math.hypot(b.x - a.x, b.z - a.z);
@@ -450,13 +453,59 @@ function lengthOf(points: Vec2[]): number {
  * junction every eighty metres, and a checkpoint every eighty metres is a lap
  * spent driving between gates rather than driving.
  */
-function checkpointsAlong(points: Vec2[], length: number): Vec2[] {
+function checkpointsAlong(points: Vec2[], length: number, open = false): Vec2[] {
   const checkpoints: Vec2[] = [];
   const count = Math.max(4, Math.round(length / CHECKPOINT_SPACING));
   for (let i = 1; i <= count; i++) {
-    checkpoints.push(pointAt(points, length, (length * i) / count));
+    // An open route's last gate is its finish, not a lap back at the start.
+    const along = (length * i) / count;
+    checkpoints.push(pointAt(points, length, open ? Math.min(along, length - 1) : along));
   }
   return checkpoints;
+}
+
+/**
+ * The point `along` a route, whatever kind it is. A loop wraps; a sprint
+ * (#397) stops at its finish, because the far side of its finish is not the
+ * start but a road it never takes.
+ */
+export function routeAt(route: CityRoute, along: number): Vec2 {
+  const open = route.kind === 'sprint';
+  return pointAt(route.points, route.length, open ? Math.max(0, Math.min(route.length - 1, along)) : along);
+}
+
+/**
+ * The Halloway Drop (#397): a sprint down the quarry's haul road, from the top
+ * of the spiral to the loading point on the pit floor. A quarry has one way
+ * down, so it is the one event that cannot be a loop - `placedRoutes` never
+ * uses a road twice, and the haul road is a dead end. Down, as the owner chose
+ * on 2026-09-29: fast, loose and falling. Found by the same walk the trucks
+ * use, so the event and the trucks agree on where the road is.
+ */
+function haulSprint(city: City, id: number): CityRoute | null {
+  const chain = haulRoad(city);
+  if (chain.length < 3) return null;
+  // The loading point is the end of the first road that the second does not share.
+  let node = chain[1].a === chain[0].a || chain[1].b === chain[0].a ? chain[0].b : chain[0].a;
+  const nodes = [node];
+  for (const road of chain) {
+    node = road.a === node ? road.b : road.a;
+    nodes.push(node);
+  }
+  const points = nodes.reverse().map((n) => city.nodes[n].pos);
+  const length = lengthOf(points, true);
+  return {
+    id,
+    name: 'Halloway Drop',
+    kind: 'sprint',
+    points,
+    checkpoints: checkpointsAlong(points, length, true),
+    start: points[0],
+    length,
+    laps: 1,
+    difficulty: 0.2,
+    placed: true,
+  };
 }
 
 /**

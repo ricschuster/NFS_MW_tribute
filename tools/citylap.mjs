@@ -80,6 +80,9 @@ for (const route of city.routes) {
   const runs = {};
   for (const traffic of [false, true]) {
     const world = new CityWorld(undefined, { traffic, police: false });
+    // A sprint down the haul road is raced with the trucks stood aside (#397),
+    // and a lap of it outside a race would be a lap spent ramming them.
+    if (route.kind === 'sprint') world.trucks.keptOff = true;
     let damage = 0;
     const run = driveRoute(world, route, K, {
       seconds: 300,

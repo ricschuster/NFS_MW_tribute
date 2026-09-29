@@ -18,7 +18,7 @@ import {
   SPEEDRUN_SETTLE,
   REFERENCE_TOP_SPEED,
 } from './constants';
-import { pointAt } from './city/routes';
+import { routeAt } from './city/routes';
 import type { CityRoute } from './city/types';
 import { RIVALS, type Rival } from './rivals';
 
@@ -363,8 +363,8 @@ export class CityRace {
       if (gate - here <= maxLead) along = gate;
       break;
     }
-    const at = pointAt(route.points, route.length, along);
-    const next = pointAt(route.points, route.length, along + 200);
+    const at = routeAt(route, along);
+    const next = routeAt(route, along + 200);
     const length = Math.max(1, Math.hypot(next.x - at.x, next.z - at.z));
     return { x: at.x, z: at.z, dx: (next.x - at.x) / length, dz: (next.z - at.z) / length };
   }
@@ -405,10 +405,10 @@ export class CityRace {
     const was = { x: car.x, z: car.z };
     car.dist += pace * dt;
 
-    const at = pointAt(route.points, route.length, car.dist);
+    const at = routeAt(route, car.dist);
     // A little way ahead on the line, so the offset is taken across the road
     // rather than across whatever direction the last step happened to be.
-    const ahead = pointAt(route.points, route.length, car.dist + 200);
+    const ahead = routeAt(route, car.dist + 200);
     const dirX = ahead.x - at.x;
     const dirZ = ahead.z - at.z;
     const length = Math.max(1, Math.hypot(dirX, dirZ));

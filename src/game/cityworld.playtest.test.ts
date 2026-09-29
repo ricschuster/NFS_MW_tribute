@@ -41,6 +41,7 @@ import {
   REFERENCE_TOP_SPEED,
   FIND_RANGE,
   CITY_COUNTDOWN,
+  CITY_RESULT_HOLD,
   RACE_CHASE_DELAY,
   CITY_EDGE_MARGIN,
   ROUTE_START_RANGE,
@@ -4624,5 +4625,67 @@ describe('a unit that has got ahead of you', () => {
     const was = cop.forward;
     world.step(STEP, NONE);
     expect(cop.forward).toBe(!was);
+  });
+});
+
+// A sprint (#397): the quarry's haul road, rim to pit floor, raced once.
+describe('the Halloway Drop', () => {
+  const world = () => new CityWorld(undefined, { police: false });
+  const drop = () => world().city.routes.find((r) => r.name === 'Halloway Drop')!;
+
+  it('runs down the haul road, from the top to a finish somewhere else', () => {
+    const route = drop();
+    expect(route).toBeDefined();
+    expect(route.kind).toBe('sprint');
+    expect(route.laps).toBe(1);
+    const w = world();
+    const start = route.points[0];
+    const finish = route.points[route.points.length - 1];
+    // Somewhere else, and a long way down: it is a descent.
+    expect(Math.hypot(finish.x - start.x, finish.z - start.z) / M).toBeGreaterThan(100);
+    const top = groundAt(w.city.terrain, start.x, start.z);
+    const bottom = groundAt(w.city.terrain, finish.x, finish.z);
+    expect((top - bottom) / M).toBeGreaterThan(30);
+    // The last gate is the finish, not a lap back at the start.
+    const last = route.checkpoints[route.checkpoints.length - 1];
+    expect(Math.hypot(last.x - finish.x, last.z - finish.z) / M).toBeLessThan(5);
+  });
+
+  it('is won at the finish, and the trucks are off the road while it runs', () => {
+    const w = world();
+    const route = w.city.routes.find((r) => r.name === 'Halloway Drop')!;
+    expect(w.trucks.cars.length).toBeGreaterThan(0);
+    w.x = route.start.x;
+    w.z = route.start.z;
+    w.step(STEP, press({ confirm: true }));
+    expect(w.race.state).toBe('countdown');
+    expect(w.race.field.length).toBeGreaterThan(0);
+    drive(w, CITY_COUNTDOWN + 0.2, NONE);
+    expect(w.trucks.cars.length).toBe(0);
+    for (const gate of route.checkpoints) {
+      w.x = gate.x;
+      w.z = gate.z;
+      w.step(STEP, NONE);
+    }
+    expect(w.race.won).toBe(true);
+    // An ordinary race: nobody runs.
+    expect(w.claim.state).toBe('idle');
+    drive(w, CITY_RESULT_HOLD + 0.5, NONE);
+    expect(w.race.state).toBe('idle');
+    expect(w.trucks.cars.length).toBeGreaterThan(0);
+  });
+
+  it('keeps the field on the road to the finish, not wrapped back to the top', () => {
+    const w = world();
+    const route = w.city.routes.find((r) => r.name === 'Halloway Drop')!;
+    w.x = route.start.x;
+    w.z = route.start.z;
+    w.step(STEP, press({ confirm: true }));
+    drive(w, CITY_COUNTDOWN + 0.2, NONE);
+    const car = w.race.field[0];
+    car.dist = route.length * 1.5;
+    w.step(STEP, NONE);
+    const finish = route.points[route.points.length - 1];
+    expect(Math.hypot(car.x - finish.x, car.z - finish.z) / M).toBeLessThan(15);
   });
 });
