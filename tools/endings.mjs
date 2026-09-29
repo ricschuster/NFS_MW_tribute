@@ -75,7 +75,7 @@ const NONE = { left: false, right: false, up: false, down: false, confirm: false
  * ends.
  */
 function pursuit(route, level, seed, stopAfter = Infinity) {
-  const world = new CityWorld();
+  const world = new CityWorld(undefined, { drift: false });
   const driver = routeDriver(route, K, { seed });
   const start = driver.at(0);
   const facing = driver.at(400);
