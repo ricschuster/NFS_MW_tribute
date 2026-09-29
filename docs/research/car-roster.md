@@ -71,7 +71,7 @@ corners", is the featherweight; the Ridgeback, "all engine", the muscle car).
 | Kestrel (`kestrel`) | start | Sports | Porsche 911 Carrera S (991, 2012) | 304 | 4.5 | 400 | 1395 | RWD | 1 | 1 | 1 | 1 | 1 |  |
 | Kite (`kite`) | parked | Race | Caterham Superlight R500 (2008) | 241 | 2.9 | 263 | 506 | RWD | 0.9 | 1.25 | 1.35 | 1.25 | 0.88 | 0-60 2.88 s |
 | Verso (`verso`) | parked | Muscle | BMW M3 Coupe (E92, 2008) | 250 | 4.6 | 420 | 1580 | RWD | 0.91 | 0.99 | 0.94 | 0.97 | 1.05 | limited |
-| Ridgeback (`ridgeback`) | parked | Muscle | Dodge Challenger SRT8 392 (2011) | 290 | 4.5 | 477 | 1887 | RWD | 0.98 | 1.0 | 0.94 | 0.96 | 1.05 | top speed and 0-100 unverified |
+| Ridgeback (`ridgeback`) | parked | Muscle | Dodge Challenger SRT8 392 (2011) | 290 | 4.7 | 477 | 1887 | RWD | 0.98 | 0.98 | 0.94 | 0.96 | 1.05 | maker's "more than 180 mph"; 0-60 4.5 s (Edmunds) |
 | Sable (`sable`) | parked | Grand Tourer | Bentley Continental Supersports Convertible ISR (2011) | 325 | 4.0 | 640 | 2395 | AWD | 1.03 | 1.06 | 0.98 | 0.98 | 1.06 |  |
 | Ardent (`ardent`) | parked | Sports | Aston Martin V12 Vantage (2009) | 305 | 4.2 | 517 | 1680 | RWD | 1.0 | 1.04 | 1.06 | 1.03 | 1.0 |  |
 | Halcyon (`halcyon`) | parked | Sports | Lamborghini Countach 5000 QV (1985) | 298 | 5.0 | 455 | 1490 | RWD | 0.99 | 0.95 | 1.06 | 1.02 | 1.0 |  |
@@ -87,10 +87,10 @@ corners", is the featherweight; the Ridgeback, "all engine", the muscle car).
 | Sparrow (`sparrow`) | parked | Everyday | Ford Focus ST (2012) | 248 | 6.1 | 256 | 1362 | FWD | 0.91 | 0.86 | 1.02 | 0.88 | 0.95 |  |
 | Enduro (`enduro`) | parked | Exotic | Ford GT (2005) | 330 | 3.5 | 558 | 1520 | RWD | 1.04 | 1.13 | 1.15 | 1.1 | 1.02 | 0-60 3.3 s |
 | Outrider (`outrider`) | parked | Muscle | Ford Mustang Boss 302 (2012) | 250 | 4.5 | 450 | 1663 | RWD | 0.91 | 1.0 | 0.94 | 0.98 | 1.05 | 0-60 4.3 s |
-| Bulwark (`bulwark`) | parked | SUV | Hummer H1 Alpha (2006) | 164 | 14.0 | 305 | 3600 | 4WD | 0.82 | 0.72 | 0.84 | 0.88 | 1.14 | 0-60 13.5 s; weight approximate |
-| Velvet (`velvet`) | parked | Sports | Jaguar XKR (2010) | 250 | 4.8 | 510 | 1753 | RWD | 0.91 | 0.97 | 1.06 | 1.01 | 1.0 | unverified |
+| Bulwark (`bulwark`) | parked | SUV | Hummer H1 Alpha (2006) | 164 | 14.0 | 305 | 3680 | 4WD | 0.82 | 0.72 | 0.84 | 0.88 | 1.14 | 0-60 13.5 s; 8,113 lb |
+| Velvet (`velvet`) | parked | Sports | Jaguar XKR (2010) | 250 | 4.8 | 510 | 1595 | RWD | 0.91 | 0.97 | 1.06 | 1.04 | 1.0 | limited; 0-60 4.6 s |
 | Tempest (`tempest`) | parked | Sports | Lamborghini Gallardo LP570-4 Spyder Performante (2011) | 324 | 3.9 | 570 | 1485 | AWD | 1.03 | 1.07 | 1.1 | 1.12 | 1.0 | dry weight |
-| Sideways (`sideways`) | parked | Everyday | Lancia Delta HF Integrale Evoluzione II (1993) | 220 | 5.7 | 215 | 1340 | AWD | 0.86 | 0.89 | 1.06 | 0.88 | 0.95 | weight approximate |
+| Sideways (`sideways`) | parked | Everyday | Lancia Delta HF Integrale Evoluzione II (1993) | 220 | 5.7 | 215 | 1357 | AWD | 0.86 | 0.89 | 1.06 | 0.88 | 0.95 | |
 | Aria (`aria`) | parked | Grand Tourer | Maserati GranTurismo MC Stradale (2011) | 297 | 4.6 | 450 | 1670 | RWD | 0.99 | 0.99 | 0.98 | 0.98 | 1.06 | 0-100 approximate |
 | Upswing (`upswing`) | parked | Grand Tourer | Mercedes-Benz SLS AMG (2010) | 317 | 3.8 | 571 | 1620 | RWD | 1.02 | 1.09 | 0.98 | 1.08 | 1.06 |  |
 | Switchback (`switchback`) | parked | Everyday | Mitsubishi Lancer Evolution X (2008) | 242 | 5.0 | 295 | 1545 | AWD | 0.9 | 0.95 | 1.06 | 0.88 | 0.95 | 0-100 approximate |
@@ -113,9 +113,12 @@ corners", is the featherweight; the Ridgeback, "all engine", the muscle car).
 | Apparition (`apparition`) | rival #2 | Exotic | Pagani Huayra (2012) | 383 | 2.8 | 730 | 1350 | RWD | 1.13 | 1.27 | 1.15 | 1.25 | 1.02 |  |
 | Nightfall (`nightfall`) | rival #1 | Exotic | Koenigsegg Agera R (2011) | 439 | 2.8 | 960 | 1330 | RWD | 1.22 | 1.27 | 1.15 | 1.25 | 1.02 | claimed |
 
-**To verify:** the Jaguar XKR and the Challenger SRT8 392's top speed and
-0-100 came back from a search that had hit its quota and answered from memory
-rather than a page; the H1's and the Integrale's weights are approximate.
+**Verified 2026-09-29:** the four figures first marked "to verify" - the
+XKR's, the Challenger's top speed and 0-100, and the H1's and the Integrale's
+weights - were checked against sources and corrected (XKR 1,595 kg, not 1,753;
+Challenger 0-100 about 4.7 s; H1 3,680 kg; Integrale 1,357 kg). Through the
+rule that moved the Velvet's nitro to 1.04 and the Ridgeback's acceleration to
+0.98; the H1 and the Integrale were already at the nitro floor.
 
 ## What changed for the ladder
 
