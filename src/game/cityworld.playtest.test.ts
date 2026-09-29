@@ -4689,3 +4689,40 @@ describe('the Halloway Drop', () => {
     expect(Math.hypot(car.x - finish.x, car.z - finish.z) / M).toBeLessThan(15);
   });
 });
+
+// A car's events (M12): a start line runs the event the car you are in has
+// there, and the list keeps the best you did in it.
+describe("a car's events", () => {
+  it('runs the event this car has on the line, and keeps the best result', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const route = world.city.routes.find((r) => r.kind === 'circuit')!;
+    const event = world.eventOn(route)!;
+    expect(event).not.toBeNull();
+    world.x = route.start.x;
+    world.z = route.start.z;
+    expect(world.eventCard?.name).toBe(event.name);
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.challenge?.difficulty).toBeCloseTo(event.difficulty);
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.race.won).toBe(true);
+    expect(world.results.get(event.id)).toBe(1);
+  });
+
+  it('is a different event in a different car', () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const route = world.city.routes.find((r) => r.kind === 'circuit')!;
+    const mine = world.eventOn(route)!;
+    world.finds.claim('nightfall');
+    world.drive(carById('nightfall'));
+    const theirs = world.eventOn(route)!;
+    expect(theirs.id).not.toBe(mine.id);
+    expect(theirs.name).not.toBe(mine.name);
+  });
+});

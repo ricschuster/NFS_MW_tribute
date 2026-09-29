@@ -1,7 +1,7 @@
 import { WHEEL_ENTRIES } from './constants';
 import { CARS, carById, type CarProfile } from './cars';
 import { MODS } from './mods';
-import { routeDifficulty, type CityWorld } from './cityworld';
+import type { CityWorld } from './cityworld';
 import type { StreetFind } from './city/types';
 import { racePurse } from './rep';
 import { difficultyLabel } from './rivals';
@@ -97,6 +97,7 @@ export interface MenuView {
 const pct = (value: number) => Math.round(value * 100);
 
 const METRE = 135;
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 
 export class QuickWheel {
   open = false;
@@ -387,15 +388,21 @@ export class QuickWheel {
       );
     }
 
+    // The car you are in's events (M12): its own names, its own difficulty,
+    // and the best you have done in each, the way the reference lists them.
     return near([
-      ...world.city.routes.map((route) => ({
-        place: {
-          x: route.start.x,
-          z: route.start.z,
-          label: `${route.name} (${route.kind === 'speedrun' ? 'speed run' : route.kind})`,
-        },
-        detail: `${difficultyLabel(routeDifficulty(route))}  ·  ${racePurse(routeDifficulty(route), route.kind)[0].toLocaleString('en-US')} REP`,
-      })),
+      ...world.events.map((event) => {
+        const best = world.results.get(event.id);
+        return {
+          place: { x: event.route.start.x, z: event.route.start.z, label: event.name },
+          detail: [
+            difficultyLabel(event.difficulty),
+            best === undefined
+              ? `${racePurse(event.difficulty, event.route.kind)[0].toLocaleString('en-US')} REP`
+              : `best ${ORDINALS[best] ?? best}`,
+          ].join('  ·  '),
+        };
+      }),
       ...world.city.ambushes.map((spot) => ({
         place: { x: spot.at.x, z: spot.at.z, label: `Ambush, heat ${spot.level}` },
         detail: '',

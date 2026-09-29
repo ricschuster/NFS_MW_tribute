@@ -962,13 +962,28 @@ export class Hud {
         );
         return;
       }
+      // This car's event here (M12), under its own name. A car without one
+      // on this route says so rather than offering a race that will not start.
+      const event = world.eventOn(route);
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 22px system-ui, sans-serif';
       ctx.fillText(
-        `${route.name.toUpperCase()}   ${route.kind === 'speedrun' ? 'SPEED RUN' : route.kind === 'sprint' ? 'SPRINT' : 'CIRCUIT'}`,
+        `${(event?.name ?? route.name).toUpperCase()}   ${route.kind === 'speedrun' ? 'SPEED RUN' : route.kind === 'sprint' ? 'SPRINT' : 'CIRCUIT'}`,
         WIDTH / 2,
         HEIGHT - 150,
       );
+      if (!event) {
+        ctx.font = '600 15px system-ui, sans-serif';
+        ctx.fillStyle = '#ffd166';
+        ctx.fillText(`No event here for the ${world.car.name}`, WIDTH / 2, HEIGHT - 126);
+        return;
+      }
+      const best = world.results.get(event.id);
+      if (best !== undefined) {
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.fillStyle = best === 1 ? '#5adc82' : 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText(`${route.name.toUpperCase()}  ·  BEST ${ORDINALS[best]?.toUpperCase() ?? best}`, WIDTH / 2, HEIGHT - 176);
+      }
       // An ordinary race (#419): open to anyone, and over at the finish.
       ctx.font = '600 15px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';

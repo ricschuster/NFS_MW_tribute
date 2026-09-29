@@ -80,7 +80,6 @@ import {
   REFERENCE_TOP_SPEED,
   ROUTE_START_RANGE,
   FIND_RANGE,
-  ORDINARY_RACE_DIFFICULTY,
   RIVAL_START_ALONG,
   REP_RACE_WIN,
   AMBUSH_RANGE,
@@ -130,6 +129,7 @@ import { Collectibles } from './collectibles';
 import { Garage } from './garage';
 import { CARS, STARTER_CAR, colourName, type CarProfile } from './cars';
 import { CityRace, ordinaryPace, type RaceRival } from './cityrace';
+import { eventsFor, type CarEvent } from './carevents';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
@@ -428,6 +428,15 @@ export class CityWorld {
    */
   private readonly resprays = new Map<string, string>();
 
+  /**
+   * The best place got in each car event (M12), by event id. Saved: a list
+   * that forgot what you had won would be a list you could not finish.
+   */
+  readonly results = new Map<string, number>();
+  /** The car event being run, if the race is one; null for a rival's race. */
+  private running: CarEvent | null = null;
+  private eventsOf: { car: string; list: CarEvent[] } | null = null;
+
   /** The one-off milestones already paid (#353), saved so each pays once for good. */
   readonly milestones = new Set<string>();
   /** Every car driven this session, for the "driven" milestones. */
@@ -580,6 +589,7 @@ export class CityWorld {
     this.finds.loadParts(saved.parts, saved.fitted);
     for (const [id, colour] of saved.paint) this.resprays.set(id, colour);
     for (const id of saved.milestones) this.milestones.add(id);
+    for (const [id, place] of saved.events) this.results.set(id, place);
     this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
@@ -939,13 +949,29 @@ export class CityWorld {
     const rivalStart = this.atRivalStart;
     const route = rivalStart ?? this.atStartLine;
     if (!route) return null;
-    const difficulty = rivalStart && this.currentRival ? this.currentRival.difficulty : routeDifficulty(route);
+    // Not a rival's line: this car's event here, if it has one (M12).
+    const event = rivalStart ? null : this.eventOn(route);
+    if (!rivalStart && !event) return null;
+    const difficulty = rivalStart && this.currentRival ? this.currentRival.difficulty : event!.difficulty;
     return {
-      name: route.name,
+      name: event?.name ?? route.name,
       kind: route.kind,
       difficulty: difficultyLabel(difficulty),
       purse: racePurse(difficulty, route.kind),
     };
+  }
+
+  /** The car you are in's events (M12), in the order its list shows them. */
+  get events(): CarEvent[] {
+    if (this.eventsOf?.car !== this.car.id) {
+      this.eventsOf = { car: this.car.id, list: eventsFor(this.car, this.city.routes) };
+    }
+    return this.eventsOf.list;
+  }
+
+  /** This car's event on `route`, if it has one there. */
+  eventOn(route: CityRoute): CarEvent | null {
+    return this.events.find((event) => event.route === route) ?? null;
   }
 
   /**
@@ -1089,8 +1115,16 @@ export class CityWorld {
       const rivalStart = this.atRivalStart;
       const route = this.atStartLine;
       const spot = this.atAmbush;
-      if (rivalStart && rival) this.startRace(rivalStart, rival, true);
-      else if (route) this.startRace(route, ordinaryPace(routeDifficulty(route)), false);
+      // Anywhere else, the event this car has on that route (M12): its own
+      // name, and a field at its own difficulty.
+      const event = route ? this.eventOn(route) : null;
+      if (rivalStart && rival) {
+        this.running = null;
+        this.startRace(rivalStart, rival, true);
+      } else if (route && event) {
+        this.running = event;
+        this.startRace(route, ordinaryPace(event.difficulty), false);
+      }
       // An ambush asks nothing of the ladder. It is the pursuit, and the
       // pursuit is available to anyone who can drive.
       else if (spot) this.startAmbush(spot.level);
@@ -1408,6 +1442,11 @@ export class CityWorld {
     // place, not position: a lost speed run's position is 1, because it has
     // nobody else in it, and it used to earn a part for that.
     if (place !== null && place <= 2) this.finds.earn(this.car.id);
+    // The car's event list keeps its best (M12).
+    if (this.running && place !== null) {
+      const best = this.results.get(this.running.id);
+      if (best === undefined || place < best) this.results.set(this.running.id, place);
+    }
     // Paid by place (#357), from the purse the start line showed.
     const purse = racePurse(this.race.challenge?.difficulty ?? 0, this.race.isSpeedRun ? 'speedrun' : 'circuit');
     const paid = place !== null ? purse[place - 1] : undefined;
@@ -1811,6 +1850,7 @@ export class CityWorld {
       fitted: this.finds.fittedSave,
       paint: [...this.resprays],
       milestones: [...this.milestones],
+      events: [...this.results],
       beaten: this.beaten,
     });
   }
@@ -2480,9 +2520,4 @@ function overStrip(strip: SpikeStrip, car: { x: number; z: number; y: number; sp
   const through = dx * strip.az - dz * strip.ax;
   if (Math.abs(through) > SPIKE_REACH + Math.abs(car.speed) * STEP) return false;
   return along >= strip.from - CAR_RADIUS && along <= strip.to + CAR_RADIUS;
-}
-
-/** How hard a route's ordinary race is (#419). */
-export function routeDifficulty(route: CityRoute): number {
-  return route.difficulty ?? ORDINARY_RACE_DIFFICULTY;
 }

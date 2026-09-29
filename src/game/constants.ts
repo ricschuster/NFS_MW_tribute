@@ -2366,6 +2366,14 @@ export const ROUTE_START_RANGE = m(28);
  */
 export const ORDINARY_RACE_DIFFICULTY = 0.2;
 export const RIVAL_START_ALONG = 0.5;
+/**
+ * Events per car (M12). A car gets one event per route, up to this many, and
+ * the design starts it at three; its field is the route's difficulty moved by
+ * how much faster than the reference car it is, so a quick car on the same
+ * roads is a harder event (`carevents.ts`).
+ */
+export const CAR_EVENTS_MAX = 5;
+export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);
 /** How far apart the checkpoints are laid along the route. */
