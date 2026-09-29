@@ -34,7 +34,7 @@ const { planDistrictAt } = await server.ssrLoadModule('/src/game/city/plan.ts');
 const { FREEWAY_LOOP } = await server.ssrLoadModule('/src/game/city/freeway.ts');
 const { groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { inWater } = await server.ssrLoadModule('/src/game/city/grid.ts');
-const { slopeSpeed, slopePull } = await server.ssrLoadModule('/src/game/slope.ts');
+const { slopeSpeed, slopePull, crestGrip } = await server.ssrLoadModule('/src/game/slope.ts');
 
 const U = K.UNITS_PER_METRE;
 const flag = (name) => {
@@ -543,6 +543,65 @@ const bridges = driveable.filter((r) => r.bridge);
 const tunnels = city.roads.filter((r) => city.nodes[r.a].level === 'tunnel' || city.nodes[r.b].level === 'tunnel');
 log(`6. GEOGRAPHY: ${bridges.length} bridge segments (${km(bridges.reduce((s, r) => s + r.length / U, 0))} km), ${tunnels.length} tunnel segments on the live network`);
 out.geography = { bridgeSegments: bridges.length, tunnelSegments: tunnels.length };
+
+log('');
+
+// ---- relief on the road (#368)
+//
+// Is the terrain felt from the car? A grade share says how steep the roads are;
+// what the owner asked about is whether they rise and fall under you. So this
+// walks every surface road and every event route every 5 m over the graded
+// ground (`groundAt`, which is what the sim drives on after cut and fill) and
+// asks the game's own `crestGrip` what a car at the ADR-0011 pace - 60% of the
+// reference top speed - feels: a crest is a run of samples where it goes light
+// (keeps under 90% of its grip), and air is where it would leave the ground.
+// Counted per kilometre, and as the share of length spent light.
+const RELIEF_STEP = 5 * U;
+const reliefPace = 0.6 * K.REFERENCE_TOP_SPEED;
+function relief(points, loop) {
+  const walked = [];
+  const n = loop ? points.length : points.length - 1;
+  for (let i = 0; i < n; i++) {
+    const a = points[i], b = points[(i + 1) % points.length];
+    const span = Math.hypot(b.x - a.x, b.z - a.z);
+    const steps = Math.max(1, Math.round(span / RELIEF_STEP));
+    for (let k = 0; k < steps; k++) {
+      const t = k / steps;
+      const x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+      walked.push(groundAt(city.terrain, x, z));
+    }
+  }
+  let light = 0, crests = 0, air = 0, inCrest = false, steepest = 0;
+  for (let i = 1; i < walked.length - 1; i++) {
+    const bend = (walked[i + 1] - 2 * walked[i] + walked[i - 1]) / (RELIEF_STEP * RELIEF_STEP);
+    const grip = crestGrip(reliefPace, bend);
+    steepest = Math.max(steepest, Math.abs(walked[i + 1] - walked[i]) / RELIEF_STEP);
+    const isLight = grip < 0.9;
+    if (isLight) light++;
+    if (isLight && !inCrest) crests++;
+    if (reliefPace * reliefPace * Math.max(0, -bend) >= K.GRAVITY) air++;
+    inCrest = isLight;
+  }
+  const lengthM = (walked.length * RELIEF_STEP) / U;
+  return { lengthM, crestsPerKm: crests / Math.max(1e-6, lengthM / 1000), lightFrac: light / Math.max(1, walked.length), airSpots: air, steepest };
+}
+log('7. RELIEF ON THE ROAD (#368): what a car at 60% of top feels, over the graded ground');
+let tot = { lengthM: 0, crests: 0, light: 0, air: 0 };
+for (const road of driveable) {
+  if (road.bridge) continue;
+  const r = relief([P(road.a), P(road.b)], false);
+  tot.lengthM += r.lengthM;
+  tot.crests += (r.crestsPerKm * r.lengthM) / 1000;
+  tot.light += r.lightFrac * r.lengthM;
+  tot.air += r.airSpots;
+}
+log(`   surface roads, ${km(tot.lengthM)} km: ${(tot.crests / (tot.lengthM / 1000)).toFixed(2)} crests per km, light for ${pct(tot.light / tot.lengthM)} of the length, ${tot.air} spots that would leave the ground`);
+out.relief = { roads: { km: tot.lengthM / 1000, crestsPerKm: tot.crests / (tot.lengthM / 1000), lightFrac: tot.light / tot.lengthM, airSpots: tot.air }, routes: {} };
+for (const route of city.routes) {
+  const r = relief(route.points, route.kind !== 'sprint');
+  log(`   ${route.name.padEnd(20)} ${r.crestsPerKm.toFixed(2)} crests per km, light for ${pct(r.lightFrac)}, ${r.airSpots} air, steepest ${pct(r.steepest)}`);
+  out.relief.routes[route.name] = r;
+}
 
 if (jsonOut) {
   writeFileSync(jsonOut, JSON.stringify(out, null, 1));
