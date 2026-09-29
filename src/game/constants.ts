@@ -97,6 +97,26 @@ export const NITRO_FROM_NEAR_MISS = 0.08;
 export const NITRO_FROM_AIR = 0.3;
 export const NITRO_FROM_ONCOMING = 0.22;
 export const NITRO_FROM_SLIPSTREAM = 0.18;
+/**
+ * Drifting (#351): the fifth nitrous source, and the slip model it needs.
+ * **Off** (`DRIFT_ENABLED`) until the owner has driven it: it changes how every
+ * car turns, which is a handling decision and not a tidy-up.
+ *
+ * The reference's rule is "tap brake to drift". With it on, a tap of the brake
+ * while steering above `DRIFT_MIN_SPEED` of top starts one: the car turns
+ * `DRIFT_YAW` times as fast as its grip allows, the way it is actually going
+ * swings round after it at no more than `DRIFT_CATCH` radians a second, and
+ * the angle between them - the slip - scrubs `DRIFT_SCRUB` of the speed per
+ * radian per second. Letting go of the steering straightens it. Above
+ * `DRIFT_MIN_SLIP` the slide fills the bar at `NITRO_FROM_DRIFT` a second.
+ */
+export const DRIFT_ENABLED = false;
+export const DRIFT_MIN_SPEED = 0.35;
+export const DRIFT_YAW = 1.7;
+export const DRIFT_CATCH = 1.1;
+export const DRIFT_SCRUB = 0.35;
+export const DRIFT_MIN_SLIP = 0.15;
+export const NITRO_FROM_DRIFT = 0.16;
 /** The least speed, as a fraction of top, at which oncoming and slipstreaming count. The near miss's own. */
 export const NITRO_RISK_SPEED = 0.35;
 /** Seconds a refill counter stays on the HUD after its source last counted. */

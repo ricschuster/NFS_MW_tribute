@@ -30,6 +30,13 @@ import {
   NITRO_FROM_AIR,
   NITRO_FROM_ONCOMING,
   NITRO_FROM_SLIPSTREAM,
+  DRIFT_ENABLED,
+  DRIFT_MIN_SPEED,
+  DRIFT_YAW,
+  DRIFT_CATCH,
+  DRIFT_SCRUB,
+  DRIFT_MIN_SLIP,
+  NITRO_FROM_DRIFT,
   NITRO_RISK_SPEED,
   NITRO_ONCOMING_MARGIN,
   NITRO_SLIPSTREAM_RANGE,
@@ -276,6 +283,8 @@ export interface CityWorldOptions {
    * its driver cannot overtake, so with bodies it measures a queue, not a race.
    */
   fieldBodies?: boolean;
+  /** Drifting (#351), off by default with `DRIFT_ENABLED`; `?drift` in the URL turns it on to try. */
+  drift?: boolean;
 }
 
 /**
@@ -540,6 +549,18 @@ export class CityWorld {
   private readonly grazed = new WeakSet<GraphCar>();
   private pursuitRep = 0;
   private prevConfirm = false;
+  /**
+   * The way the car is actually going, which is its heading unless it is
+   * drifting (#351). Equal to the heading whenever `DRIFT_ENABLED` is off.
+   */
+  travel = 0;
+  /** In a drift (#351): started by a tap of the brake while steering at speed. */
+  drifting = false;
+  private prevBrake = false;
+  /** The angle between where the car points and where it is going. */
+  get slip(): number {
+    return Math.atan2(Math.sin(this.heading - this.travel), Math.cos(this.heading - this.travel));
+  }
   /** The hottest this pursuit got, which is what getting away is worth. */
   private peakLevel = 1;
   private sinceSave = 0;
@@ -547,6 +568,8 @@ export class CityWorld {
   private readonly withTraffic: boolean;
   /** Whether the race field can be hit (#350); see `CityWorldOptions`. */
   readonly fieldBodies: boolean;
+  /** Whether a tap of the brake can start a drift (#351). */
+  readonly drift: boolean;
   private readonly withPolice: boolean;
   private bustHold = 0;
   /** Where the car last put real ground behind it, for the stuck clock (#179). */
@@ -580,6 +603,7 @@ export class CityWorld {
     if (!this.withTraffic) this.trucks.cars.length = 0;
     this.withPolice = options.police ?? true;
     this.fieldBodies = options.fieldBodies ?? true;
+    this.drift = options.drift ?? DRIFT_ENABLED;
     this.collectibles = new Collectibles(city);
     this.finds = new Garage(city);
     this.claim = new CityClaim(city, this.grid);
@@ -1241,7 +1265,31 @@ export class CityWorld {
     // it felt: A went right and D went left.
     // Nothing to steer or drive against in the air (#307): the wheels are
     // off the ground, so the car goes where the jump threw it.
-    if (!this.airborne) this.heading -= steer * authority * dt * Math.sign(this.speed || 1);
+    // Drifting (#351): a tap of the brake while steering at speed breaks the
+    // back loose. The car turns past what its grip allows, and the way it is
+    // going follows at its own rate; `DRIFT_ENABLED` has the rest.
+    const brakeTapped = input.down && !this.prevBrake;
+    this.prevBrake = input.down;
+    if (this.drift && !this.airborne) {
+      if (!this.drifting && brakeTapped && steer !== 0 && this.speed > this.maxSpeed * DRIFT_MIN_SPEED) {
+        this.drifting = true;
+      }
+      if (this.drifting && (this.speed < this.maxSpeed * DRIFT_MIN_SPEED * 0.6 || (steer === 0 && Math.abs(this.slip) < 0.05))) {
+        this.drifting = false;
+      }
+    } else {
+      this.drifting = false;
+    }
+    if (!this.airborne) {
+      this.heading -= steer * authority * (this.drifting ? DRIFT_YAW : 1) * dt * Math.sign(this.speed || 1);
+    }
+    if (this.drifting) {
+      const catchUp = DRIFT_CATCH * dt;
+      this.travel += Math.max(-catchUp, Math.min(catchUp, this.slip));
+      this.speed -= this.speed * DRIFT_SCRUB * Math.abs(this.slip) * dt;
+    } else {
+      this.travel = this.heading;
+    }
     // No limit on heading any more. On a track the car could only ever be
     // pointed roughly along it; here it can be turned round, which is the
     // whole point of free roam.
@@ -1632,6 +1680,7 @@ export class CityWorld {
       return;
     }
     if (Math.abs(this.speed) < this.maxSpeed * NITRO_RISK_SPEED) return;
+    if (this.drifting && Math.abs(this.slip) > DRIFT_MIN_SLIP) this.refill('drift', NITRO_FROM_DRIFT * dt, dt);
 
     const road = this.onRoad;
     if (road && road.class !== 'ramp') {
@@ -2204,8 +2253,10 @@ export class CityWorld {
     const wasX = this.x;
     const wasZ = this.z;
 
-    this.x += Math.sin(this.heading) * this.speed * dt;
-    this.z += Math.cos(this.heading) * this.speed * dt;
+    // Along the way the car is going, which is the heading unless it is
+    // sliding (#351).
+    this.x += Math.sin(this.travel) * this.speed * dt;
+    this.z += Math.cos(this.travel) * this.speed * dt;
 
     if (this.hitsBuilding()) {
       // Back out of it rather than resolving the overlap: a car that has stopped

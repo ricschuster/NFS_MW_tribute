@@ -52,7 +52,8 @@ async function boot(): Promise<void> {
       import('./game/scene/hud'),
     ]);
     const hud = new Hud(canvas.getContext('2d') as CanvasRenderingContext2D);
-    const world = new CityWorld(city);
+    // `?drift` turns on the drift model to try it (#351); it is off by default.
+    const world = new CityWorld(city, params.has('drift') ? { drift: true } : {});
     // The HUD canvas doubles as the touch layer: it is where the on-screen
     // controls are drawn, and hit-testing has to happen in the same
     // coordinates as the drawing (#89).
