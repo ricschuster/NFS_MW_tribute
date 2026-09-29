@@ -132,6 +132,7 @@ import { CityRace, ordinaryPace, type RaceRival } from './cityrace';
 import { eventsFor, type CarEvent } from './carevents';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
+import { Story } from './story';
 import { Radio } from './radio';
 import { NitroCounters, leftOfCentre, type NitroSource } from './nitrofill';
 import { newlyReached } from './milestones';
@@ -466,6 +467,8 @@ export class CityWorld {
   readonly claim: CityClaim;
   /** What the police are saying to each other about you (#76). */
   readonly radio = new Radio();
+  /** The story's captions (#362), watched like the radio. */
+  readonly story = new Story();
   /** What has been refilling the nitrous lately, for the HUD (#351). */
   readonly nitroCounters = new NitroCounters();
   /** The line across the top when the pursuit changes (#356). */
@@ -590,6 +593,7 @@ export class CityWorld {
     for (const [id, colour] of saved.paint) this.resprays.set(id, colour);
     for (const id of saved.milestones) this.milestones.add(id);
     for (const [id, place] of saved.events) this.results.set(id, place);
+    for (const id of saved.story) this.story.seen.add(id);
     this.beaten = saved.beaten;
     this.drive(this.finds.car);
     this.spawn();
@@ -1044,6 +1048,13 @@ export class CityWorld {
     // ways an ambush ends and the frozen world still has to notice it.
     this.ambush.update(dt, this.police.state === 'clear', this.busted);
     if (this.ambush.justEnded) this.settleAmbush();
+    this.story.update(dt, {
+      cars: this.finds.owned.size,
+      ready: this.readyRival,
+      beaten: this.beaten,
+      rivals: RIVALS.length,
+      lastBeaten: this.beaten > 0 ? RIVALS[this.beaten - 1].name : null,
+    });
     // Watched rather than told (#76): every system that could raise a callout
     // already says what it is doing, and asking them here is one place that
     // can be wrong instead of eight places that can forget to speak.
@@ -1851,6 +1862,7 @@ export class CityWorld {
       paint: [...this.resprays],
       milestones: [...this.milestones],
       events: [...this.results],
+      story: [...this.story.seen],
       beaten: this.beaten,
     });
   }
