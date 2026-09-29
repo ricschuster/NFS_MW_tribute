@@ -1,7 +1,7 @@
 import { BANNER_QUEUE, BANNER_TIME } from './constants';
 import type { PursuitState } from './citypolice';
 
-export type BannerKind = 'pursuit' | 'cooldown' | 'heatUp' | 'heatDown' | 'escaped' | 'busted';
+export type BannerKind = 'pursuit' | 'cooldown' | 'heatUp' | 'heatDown' | 'escaped' | 'busted' | 'rival';
 
 export interface Banner {
   kind: BannerKind;
@@ -17,6 +17,12 @@ export interface PursuitSnapshot {
   busted: boolean;
   /** True on the step the pursuit is shaken off, which `state` alone cannot tell from a reset. */
   escaped: boolean;
+  /**
+   * The rival who will race you now, if one will (#419): "#10 VEX", or null
+   * while the ladder is locked. A change to a name is a rival becoming
+   * available, which is the one banner that is not about the police.
+   */
+  rival?: string | null;
 }
 
 /**
@@ -75,6 +81,7 @@ export class Banners {
       this.raise('escaped', 'PURSUIT EVADED');
       return;
     }
+    if (now.rival && now.rival !== was.rival) this.raise('rival', `RIVAL AVAILABLE  ·  ${now.rival}`);
     if (was.state === 'clear' && now.state !== 'clear') this.raise('pursuit', 'LOSE THE COPS');
     if (was.state === 'pursuit' && now.state === 'cooldown') this.raise('cooldown', 'ENTERED COOLDOWN');
 

@@ -91,6 +91,18 @@ export interface RaceRival {
  * would make the first event on the ladder a race against five people you have
  * not earned yet.
  */
+/**
+ * The pace of an ordinary race (#419): no ladder rival, just a car to set the
+ * field's speed at the route's difficulty. It borrows the looks of whichever
+ * rival drives nearest that pace, so the field is not a row of blanks.
+ */
+export function ordinaryPace(difficulty: number): Rival {
+  const donor = RIVALS.reduce((best, rival) =>
+    Math.abs(rival.difficulty - difficulty) < Math.abs(best.difficulty - difficulty) ? rival : best,
+  );
+  return { ...donor, difficulty };
+}
+
 export function fieldFor(challenge: Rival): Rival[] {
   const from = Math.max(0, RIVALS.indexOf(challenge));
   const field: Rival[] = [challenge];
@@ -113,8 +125,18 @@ export class CityRace {
    * Everyone else on the road. Empty in a speed run, which is driven alone.
    */
   readonly field: RaceRival[] = [];
-  /** Whose challenge this is. Held separately, because a speed run has no field. */
+  /**
+   * Who sets the pace: the quickest car in the field, or in a speed run the
+   * target. Held separately, because a speed run has no field. In an ordinary
+   * race this is a stand-in with the route's difficulty (#419).
+   */
   challenge: Rival | null = null;
+  /**
+   * Whether this is a rival's race (#419): the ladder moves on it, the police
+   * come out for it, and winning it is followed by running them down. An
+   * ordinary race ends at the finish line.
+   */
+  ladder = false;
 
   countdown = 0;
   /** Laps completed. */
@@ -141,9 +163,9 @@ export class CityRace {
     return this.route.checkpoints[this.checkpoint] ?? null;
   }
 
-  /** The rival whose defeat moves the ladder: the quickest car in the field. */
+  /** The rival whose defeat moves the ladder. Null in an ordinary race (#419). */
   get challenger(): Rival | null {
-    return this.challenge;
+    return this.ladder ? this.challenge : null;
   }
 
   /** Where you are running, 1 for the lead. */
@@ -199,7 +221,7 @@ export class CityRace {
 
   /** The average a speed run has to beat. Zero outside one. */
   get targetAverage(): number {
-    const challenge = this.challenger;
+    const challenge = this.challenge;
     if (!this.isSpeedRun || !challenge) return 0;
     return SPEEDRUN_TARGET + SPEEDRUN_TARGET_PER_DIFFICULTY * challenge.difficulty;
   }
@@ -210,9 +232,13 @@ export class CityRace {
     return route ? route.length / route.checkpoints.length : 1;
   }
 
-  /** Line up for a lap of `route` against `rival`. */
-  begin(route: CityRoute, rival: Rival): void {
+  /**
+   * Line up for a lap of `route` against `rival`: a rival's race when
+   * `ladder`, and otherwise an ordinary one with `rival` as the pace (#419).
+   */
+  begin(route: CityRoute, rival: Rival, ladder = true): void {
     this.route = route;
+    this.ladder = ladder;
     this.state = 'countdown';
     this.countdown = CITY_COUNTDOWN;
     this.lap = 0;
@@ -259,6 +285,7 @@ export class CityRace {
     this.route = null;
     this.field.length = 0;
     this.challenge = null;
+    this.ladder = false;
     this.justFinished = false;
   }
 
@@ -306,7 +333,9 @@ export class CityRace {
     if (car.out || this.state !== 'racing') return;
     car.out = true;
     car.speed = 0;
-    this.tookOut = car.rival.name === this.challenge?.name;
+    // Only in a rival's race. In an ordinary one the quickest car is a pace,
+    // not a person, and taking it out is a takedown rather than a win.
+    this.tookOut = this.ladder && car.rival.name === this.challenge?.name;
     if (this.tookOut) this.finish(true);
   }
 

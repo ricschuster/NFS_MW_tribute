@@ -210,8 +210,11 @@ if (!proving) {
     // Standing at the front of the ladder with the Rep to be taken seriously.
     world.beaten = index;
     world.rep.total = Math.max(world.rep.total, rival.rep);
-    world.x = proving.start.x;
-    world.z = proving.start.z;
+    // From the rival's own line (#419): the ordinary one starts an ordinary
+    // race, with nobody on the ladder in it.
+    const line = world.rivalRoute ?? proving;
+    world.x = line.start.x;
+    world.z = line.start.z;
     world.y = 0;
 
     world.step(K.STEP, { ...NONE, confirm: true });
@@ -291,7 +294,7 @@ if (!proving) {
     let laps = 0;
     while (!result && world.race.state !== 'idle' && laps < K.ROUTE_LAPS + 2) {
       laps++;
-      driveRoute(world, proving, K, {
+      driveRoute(world, line, K, {
         seconds: 300,
         none: NONE,
         hold: watch,

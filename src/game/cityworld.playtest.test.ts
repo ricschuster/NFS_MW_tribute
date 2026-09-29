@@ -270,6 +270,16 @@ function hunt(world: CityWorld, heat: number, seconds: number, each?: () => void
   }
 }
 
+
+/** Rep enough for the first rival, and the car parked on their line (#419). */
+function onRivalLine(world: CityWorld): CityRoute {
+  world.rep.total = RIVALS[0].rep;
+  const route = world.rivalRoute!;
+  world.x = route.start.x;
+  world.z = route.start.z;
+  return route;
+}
+
 describe('a car in Kestrel Bay', () => {
   it('starts on a street, at street level, pointing along it', () => {
     const world = new CityWorld(undefined, { traffic: false, police: false });
@@ -2323,7 +2333,7 @@ describe('starting an event with a burnout (#360)', () => {
     world.x = route.start.x;
     world.z = route.start.z;
     world.speed = 0;
-    expect(world.challengeReady).toBe(true);
+    expect(world.atStartLine).not.toBeNull();
     drive(world, BURNOUT_TIME * 0.5, BURN);
     expect(world.race.state).toBe('idle');
     expect(world.speed).toBe(0);
@@ -2389,12 +2399,13 @@ describe('placing in a circuit (#357)', () => {
 
   it('shows the event, its difficulty and its purse at the start line', () => {
     const w = world();
-    const rival = w.currentRival!;
+    // The route's own difficulty: an ordinary race is nobody's (#419).
+    const difficulty = circuit.difficulty!;
     expect(w.eventCard).toEqual({
       name: 'Test Circuit',
       kind: 'circuit',
-      difficulty: difficultyLabel(rival.difficulty),
-      purse: racePurse(rival.difficulty, 'circuit'),
+      difficulty: difficultyLabel(difficulty),
+      purse: racePurse(difficulty, 'circuit'),
     });
   });
 
@@ -2402,7 +2413,7 @@ describe('placing in a circuit (#357)', () => {
     const w = finish(place - 1);
     expect(w.race.place).toBe(place);
     expect(w.race.won).toBe(false);
-    const purse = racePurse(w.race.challenger!.difficulty, 'circuit');
+    const purse = racePurse(w.race.challenge!.difficulty, 'circuit');
     const award = w.rep.recent.find((a) => a.reason === 'racePlace');
     expect(award?.amount).toBe(purse[place - 1]);
     expect(award?.label).toBe(`${place === 2 ? '2ND' : '3RD'} PLACE`);
@@ -3014,8 +3025,8 @@ describe('the Marrow Field Run', () => {
     expect(near / M).toBeLessThan(5);
   });
 
-  // Tied to the ladder like every event: win it, and the rival runs.
-  it('sends the rival running when it is won', () => {
+  // An ordinary race now (#419): won at the line, and nobody runs.
+  it('ends at the finish when it is won', () => {
     const w = new CityWorld(undefined, { traffic: false, police: false });
     w.x = run.start.x;
     w.z = run.start.z;
@@ -3032,7 +3043,8 @@ describe('the Marrow Field Run', () => {
       w.step(STEP, NONE);
     }
     expect(w.race.won).toBe(true);
-    expect(w.claim.state).toBe('running');
+    expect(w.claim.state).toBe('idle');
+    expect(w.beaten).toBe(0);
   });
 });
 
@@ -3042,9 +3054,8 @@ describe.skipIf(!HAS_ROUTES)('claiming a car', () => {
   /** Win a race by teleporting round its gates, and hand back the world. */
   function afterWinning(): CityWorld {
     const world = still();
-    const route = world.city.routes[0];
-    world.x = route.start.x;
-    world.z = route.start.z;
+    // Their own line (#419): a race from an ordinary one sends nobody running.
+    const route = onRivalLine(world);
     world.y = 0;
     world.step(STEP, press({ confirm: true }));
     drive(world, CITY_COUNTDOWN + 0.2, NONE);
@@ -3074,9 +3085,8 @@ describe.skipIf(!HAS_ROUTES)('claiming a car', () => {
 
   it('brings the police out for both of you', () => {
     const world = new CityWorld(undefined, { traffic: false });
-    const route = world.city.routes[0];
-    world.x = route.start.x;
-    world.z = route.start.z;
+    // Their own line (#419): a race from an ordinary one sends nobody running.
+    const route = onRivalLine(world);
     world.y = 0;
     world.step(STEP, press({ confirm: true }));
     drive(world, CITY_COUNTDOWN + 0.2, NONE);
@@ -4224,11 +4234,16 @@ describe('a stopped car on the start line', () => {
 // after the lights, running through the race and past its finish into the
 // claim, and a bust mid-race is the race lost.
 describe('a ladder race and the police', () => {
-  const onTheGrid = (kind: 'circuit' | 'speedrun') => {
+  /** A rival's race for a circuit (#419), an ordinary one for a speed run. */
+  const onTheGrid = (kind: 'circuit' | 'speedrun' | 'ordinary') => {
     const world = new CityWorld(undefined, { traffic: false });
-    const route = world.city.routes.find((r) => r.kind === kind)!;
-    world.x = route.start.x;
-    world.z = route.start.z;
+    let route: CityRoute;
+    if (kind === 'circuit') route = onRivalLine(world);
+    else {
+      route = world.city.routes.find((r) => r.kind === (kind === 'ordinary' ? 'circuit' : kind))!;
+      world.x = route.start.x;
+      world.z = route.start.z;
+    }
     world.step(STEP, press({ confirm: true }));
     expect(world.race.state).toBe('countdown');
     drive(world, CITY_COUNTDOWN + 0.2, NONE);
@@ -4243,6 +4258,15 @@ describe('a ladder race and the police', () => {
     expect(world.police.startedBy).toBe('racing');
     // The bottom of the ladder opens at level 2.
     expect(world.police.level).toBe(2);
+  });
+
+  // Only a rival's race calls them (#419). An ordinary one is chased the way
+  // anything else is: if somebody sees it.
+  it('leaves an ordinary circuit alone', () => {
+    const { world } = onTheGrid('ordinary');
+    expect(world.race.challenger).toBeNull();
+    drive(world, RACE_CHASE_DELAY + 3, NONE);
+    expect(world.police.state).toBe('clear');
   });
 
   it('leaves a speed run alone', () => {
@@ -4345,11 +4369,14 @@ describe('a runner and the police', () => {
 
 // The race field gains bodies (#350): the reference's SLAM TAKEDOWN.
 describe('the field as bodies', () => {
-  const racing = () => {
+  const racing = (ladder = true) => {
     const world = new CityWorld(undefined, { traffic: false, police: false });
-    const route = world.city.routes.find((r) => r.kind === 'circuit')!;
-    world.x = route.start.x;
-    world.z = route.start.z;
+    if (ladder) onRivalLine(world);
+    else {
+      const route = world.city.routes.find((r) => r.kind === 'circuit')!;
+      world.x = route.start.x;
+      world.z = route.start.z;
+    }
     world.step(STEP, press({ confirm: true }));
     drive(world, CITY_COUNTDOWN + 3, NONE);
     expect(world.race.state).toBe('racing');
@@ -4395,5 +4422,85 @@ describe('the field as bodies', () => {
     expect(world.race.won).toBe(true);
     expect(world.claim.state).toBe('idle');
     expect(world.beaten).toBe(1);
+  });
+
+  // The quickest car in an ordinary race is a pace, not a person (#419).
+  it('takes down the leader of an ordinary race without winning it', () => {
+    const world = racing(false);
+    const car = world.race.field[0];
+    car.damage = 0.99;
+    ram(world, car);
+    expect(car.out).toBe(true);
+    expect(world.race.state).toBe('racing');
+    expect(world.beaten).toBe(0);
+  });
+});
+
+// Rival races are their own events (#419): ordinary races at the start lines,
+// and a rival on a line of their own once the Rep says they will race you.
+describe('rival races', () => {
+  const circuit = () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    return { world, route: world.city.routes.find((r) => r.kind === 'circuit')! };
+  };
+
+  it('has no rival to race at the start, and says so when there is one', () => {
+    const { world } = circuit();
+    expect(world.rep.total).toBeLessThan(RIVALS[0].rep);
+    expect(world.rivalRoute).toBeNull();
+    world.step(STEP, NONE);
+    world.rep.total = RIVALS[0].rep;
+    world.step(STEP, NONE);
+    expect(world.rivalRoute).not.toBeNull();
+    expect(world.banner?.kind).toBe('rival');
+    expect(world.banner?.text).toContain(RIVALS[0].name.toUpperCase());
+  });
+
+  it('puts the rival on a line of their own, away from the ordinary one', () => {
+    const { world, route } = circuit();
+    const theirs = onRivalLine(world);
+    expect(theirs.length).toBeCloseTo(route.length);
+    expect(Math.hypot(theirs.start.x - route.start.x, theirs.start.z - route.start.z)).toBeGreaterThan(
+      ROUTE_START_RANGE * 4,
+    );
+  });
+
+  it('races an ordinary field from an ordinary line, and winning ends it there', () => {
+    const { world, route } = circuit();
+    world.rep.total = RIVALS[0].rep;
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.state).toBe('countdown');
+    expect(world.race.ladder).toBe(false);
+    expect(world.race.challenger).toBeNull();
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.race.won).toBe(true);
+    expect(world.claim.state).toBe('idle');
+  });
+
+  it('sends the rival running when their race is won', () => {
+    const { world } = circuit();
+    const route = onRivalLine(world);
+    world.step(STEP, press({ confirm: true }));
+    expect(world.race.challenger).toBe(RIVALS[0]);
+    drive(world, CITY_COUNTDOWN + 0.2, NONE);
+    for (let lap = 0; lap < route.laps; lap++) {
+      for (const gate of route.checkpoints) {
+        world.x = gate.x;
+        world.z = gate.z;
+        world.step(STEP, NONE);
+      }
+    }
+    expect(world.race.won).toBe(true);
+    expect(world.claim.state).toBe('running');
+    expect(world.claim.rival).toBe(RIVALS[0]);
   });
 });

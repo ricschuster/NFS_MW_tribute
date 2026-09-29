@@ -257,7 +257,8 @@ if (want('events')) {
       console.log(`\n${route.name.toUpperCase()}: would not start (state ${world.race.state})`);
       continue;
     }
-    const rival = world.race.challenger;
+    // The pace: an ordinary race has no challenger of its own (#419).
+    const rival = world.race.challenge;
     for (let t = 0; t < K.CITY_COUNTDOWN + 1 && world.race.state === 'countdown'; t += K.STEP) {
       world.step(K.STEP, NONE);
     }

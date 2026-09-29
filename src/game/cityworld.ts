@@ -79,6 +79,8 @@ import {
   REP_SAVE_INTERVAL,
   REFERENCE_TOP_SPEED,
   ROUTE_START_RANGE,
+  ORDINARY_RACE_DIFFICULTY,
+  RIVAL_START_ALONG,
   REP_RACE_WIN,
   AMBUSH_RANGE,
   AMBUSH_CARS,
@@ -126,7 +128,7 @@ import { RepLedger, racePurse } from './rep';
 import { Collectibles } from './collectibles';
 import { Garage } from './garage';
 import { CARS, STARTER_CAR, colourName, type CarProfile } from './cars';
-import { CityRace, type RaceRival } from './cityrace';
+import { CityRace, ordinaryPace, type RaceRival } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
@@ -155,7 +157,7 @@ import type { OnJump } from './city/jumps';
 import { crestGrip, slopePull, slopeSpeed } from './slope';
 import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
-import { pointAt } from './city/routes';
+import { pointAt, startingAt } from './city/routes';
 import { planCentre } from './city/plan';
 import type { DistrictKind, RouteKind } from './city/types';
 import { impactDamage, touching, WRECKED } from './impact';
@@ -893,18 +895,53 @@ export class CityWorld {
 
   /**
    * The card for the event you are parked on (#357): what it is, how hard, and
-   * what each place pays - from the same purse the race is settled with.
+   * what each place pays - from the same purse the race is settled with. A
+   * rival's start line is theirs and carries their difficulty; any other is an
+   * ordinary race at the route's own (#419).
    */
   get eventCard(): EventCard | null {
-    const route = this.atStartLine;
-    const rival = this.currentRival;
-    if (!route || !rival) return null;
+    const rivalStart = this.atRivalStart;
+    const route = rivalStart ?? this.atStartLine;
+    if (!route) return null;
+    const difficulty = rivalStart && this.currentRival ? this.currentRival.difficulty : routeDifficulty(route);
     return {
       name: route.name,
       kind: route.kind,
-      difficulty: difficultyLabel(rival.difficulty),
-      purse: racePurse(rival.difficulty, route.kind),
+      difficulty: difficultyLabel(difficulty),
+      purse: racePurse(difficulty, route.kind),
     };
+  }
+
+  /**
+   * Where the next rival will race you, once they will (#419): their own start
+   * line, on a circuit picked by their place on the ladder and set round it
+   * from the ordinary one. Null while the ladder is locked or cleared, which
+   * is also what keeps their marker off the map until it means something.
+   */
+  get rivalRoute(): CityRoute | null {
+    const rival = this.currentRival;
+    if (!rival || !this.challengeReady) return null;
+    const circuits = this.city.routes.filter((route) => route.kind === 'circuit');
+    if (circuits.length === 0) return null;
+    const base = circuits[RIVALS.indexOf(rival) % circuits.length];
+    if (this.rivalRouteFor?.base !== base) {
+      this.rivalRouteFor = { base, route: startingAt(base, RIVAL_START_ALONG) };
+    }
+    return this.rivalRouteFor.route;
+  }
+  private rivalRouteFor: { base: CityRoute; route: CityRoute } | null = null;
+
+  /** The rival who will race you now, for the banner: "#10 VEX" (#419). */
+  private get readyRival(): string | null {
+    const rival = this.currentRival;
+    return rival && this.challengeReady ? `#${rival.rank} ${rival.name.toUpperCase()}` : null;
+  }
+
+  /** The rival's start line, if the car is sitting on it (#419). */
+  get atRivalStart(): CityRoute | null {
+    const route = this.rivalRoute;
+    if (!route) return null;
+    return Math.hypot(route.start.x - this.x, route.start.z - this.z) < ROUTE_START_RANGE ? route : null;
   }
 
   /** The circuit whose start line the car is sitting on, if any (#70). */
@@ -939,6 +976,7 @@ export class CityWorld {
       level: this.police.level,
       busted: this.busted,
       escaped: this.police.justEscaped,
+      rival: this.readyRival,
     });
     // Before the BUSTED early return, because being busted is one of the two
     // ways an ambush ends and the frozen world still has to notice it.
@@ -963,6 +1001,7 @@ export class CityWorld {
       car: this.car.name,
       colour: colourName(this.paint),
       underground: underground(this.city, this, this.onRoad),
+      rival: this.currentRival && this.challengeReady ? this.currentRival.name : null,
       event:
         this.race.state === 'racing' || this.race.state === 'countdown'
           ? 'race'
@@ -989,7 +1028,9 @@ export class CityWorld {
     // A burnout on a marker is the other way into the event, and only into the
     // event: the reset stays on confirm, which is a question a burnout does
     // not answer.
-    const burnedIn = this.burnout >= BURNOUT_TIME && (this.atStartLine !== null || this.atAmbush !== null);
+    const burnedIn =
+      this.burnout >= BURNOUT_TIME &&
+      (this.atRivalStart !== null || this.atStartLine !== null || this.atAmbush !== null);
 
     const rival = this.currentRival;
     // Ahead of everything else confirm can mean (#179). A car that has been
@@ -1007,9 +1048,13 @@ export class CityWorld {
       // road beneath it.
       this.dunked <= 0
     ) {
+      // A rival's line first: it is the one place that is theirs, and when it
+      // sits near an ordinary start the rival is the one you came for (#419).
+      const rivalStart = this.atRivalStart;
       const route = this.atStartLine;
       const spot = this.atAmbush;
-      if (route && rival && this.challengeReady) this.startRace(route, rival);
+      if (rivalStart && rival) this.startRace(rivalStart, rival, true);
+      else if (route) this.startRace(route, ordinaryPace(routeDifficulty(route)), false);
       // An ambush asks nothing of the ladder. It is the pursuit, and the
       // pursuit is available to anyone who can drive.
       else if (spot) this.startAmbush(spot.level);
@@ -1265,9 +1310,9 @@ export class CityWorld {
     this.savedAt = -1;
   }
 
-  /** Line up for a circuit. No pursuit during a sanctioned event. */
-  private startRace(route: CityRoute, rival: Rival): void {
-    this.race.begin(route, rival);
+  /** Line up for a race: a rival's when `ladder`, an ordinary one otherwise (#419). */
+  private startRace(route: CityRoute, rival: Rival, ladder: boolean): void {
+    this.race.begin(route, rival, ladder);
     this.speed = 0;
     this.x = route.start.x;
     this.z = route.start.z;
@@ -1275,7 +1320,8 @@ export class CityWorld {
     this.escapedFlash = 0;
     // A ladder race brings the police (#349); a speed run is a question about
     // your own lap and stays yours.
-    this.raceChase = route.kind === 'circuit' ? RACE_CHASE_DELAY : -1;
+    // An ordinary race is only chased if somebody sees it (#419).
+    this.raceChase = ladder && route.kind === 'circuit' ? RACE_CHASE_DELAY : -1;
   }
 
   /**
@@ -1284,7 +1330,11 @@ export class CityWorld {
    * claim, as it does in the reference game (ADR-0011).
    */
   private get chasedRace(): boolean {
-    return this.race.route?.kind === 'circuit' && (this.race.state === 'racing' || this.race.state === 'finished');
+    return (
+      this.race.ladder &&
+      this.race.route?.kind === 'circuit' &&
+      (this.race.state === 'racing' || this.race.state === 'finished')
+    );
   }
 
   /** Call the chase a ladder race brings, at a level that rises with the rival. */
@@ -1319,7 +1369,7 @@ export class CityWorld {
     // nobody else in it, and it used to earn a part for that.
     if (place !== null && place <= 2) this.finds.earn(this.car.id);
     // Paid by place (#357), from the purse the start line showed.
-    const purse = racePurse(rival?.difficulty ?? 0, this.race.isSpeedRun ? 'speedrun' : 'circuit');
+    const purse = racePurse(this.race.challenge?.difficulty ?? 0, this.race.isSpeedRun ? 'speedrun' : 'circuit');
     const paid = place !== null ? purse[place - 1] : undefined;
     if (this.race.won) {
       this.rep.award('raceWin', 1, purse[0] / REP_RACE_WIN);
@@ -1338,7 +1388,7 @@ export class CityWorld {
 
   /** They run for it, and the police come out for both of you. */
   private startClaim(rival: Rival): void {
-    if (!this.claim.begin(rival, this)) return;
+    if (!this.claim.begin(rival, this, this.onRoad)) return;
     // A ladder rival draws heat of their own. Running one down while being
     // chased yourself is the point of the second half.
     this.police.heat = Math.max(this.police.heat, CLAIM_HEAT);
@@ -2390,4 +2440,9 @@ function overStrip(strip: SpikeStrip, car: { x: number; z: number; y: number; sp
   const through = dx * strip.az - dz * strip.ax;
   if (Math.abs(through) > SPIKE_REACH + Math.abs(car.speed) * STEP) return false;
   return along >= strip.from - CAR_RADIUS && along <= strip.to + CAR_RADIUS;
+}
+
+/** How hard a route's ordinary race is (#419). */
+function routeDifficulty(route: CityRoute): number {
+  return route.difficulty ?? ORDINARY_RACE_DIFFICULTY;
 }

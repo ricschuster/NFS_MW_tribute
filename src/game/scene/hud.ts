@@ -15,6 +15,7 @@ import {
   REFERENCE_TOP_SPEED,
   FIND_FLASH,
   ROUTE_START_RANGE,
+  FIELD_SIZE,
   HEAT_LEVEL_COUNT,
   LOSE_CONTACT_TIME,
   NITRO_COUNTER_HOLD,
@@ -24,7 +25,7 @@ import {
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
-import { FIND_COLOUR, HAZARD, MAP_LEGEND, SIGHT_COLOUR } from './legend';
+import { FIND_COLOUR, HAZARD, MAP_LEGEND, RIVAL_COLOUR, SIGHT_COLOUR } from './legend';
 import { NITRO_LABELS } from '../nitrofill';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
@@ -605,6 +606,20 @@ export class Hud {
       ctx.stroke();
     }
 
+    // The rival's line (#419), held on the rim when it is out of range: it is
+    // the one place on the map you were just told to go, so it always points.
+    const rivalRoute = world.rivalRoute;
+    if (rivalRoute && world.race.state === 'idle') {
+      let tx = toMap(rivalRoute.start, world).x * scale;
+      let tz = toMap(rivalRoute.start, world).y * scale;
+      const out = Math.hypot(tx, tz);
+      if (out > radius - 6) {
+        tx *= (radius - 6) / out;
+        tz *= (radius - 6) / out;
+      }
+      this.target(tx, tz, RIVAL_COLOUR);
+    }
+
     for (const find of world.finds.spotted) {
       const fx = toMap(find.at, world).x * scale;
       const fz = toMap(find.at, world).y * scale;
@@ -882,7 +897,7 @@ export class Hud {
       // ambush on the same spot. The HUD used to ask the other way round, and
       // on the Marrow Field Run's start - where an ambush spot sits on the
       // line - it offered the ambush while ENTER started the race.
-      const racing = world.atStartLine !== null && world.currentRival !== null && world.challengeReady;
+      const racing = world.atRivalStart !== null || world.atStartLine !== null;
       const spot = racing ? null : world.atAmbush;
       if (spot) {
         ctx.fillStyle = '#ff5a45';
@@ -891,6 +906,28 @@ export class Hud {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.font = '600 15px system-ui, sans-serif';
         ctx.fillText('ENTER or BURNOUT  -  surrounded, engine off, get out', WIDTH / 2, HEIGHT - 126);
+        return;
+      }
+
+      // A rival's own line (#419): who, and what they drive.
+      const rivalStart = world.atRivalStart;
+      const challenger = world.currentRival;
+      if (rivalStart && challenger) {
+        ctx.fillStyle = RIVAL_COLOUR;
+        ctx.font = '700 22px system-ui, sans-serif';
+        ctx.fillText(
+          `RIVAL  ·  #${challenger.rank} ${challenger.name.toUpperCase()}  ·  ${rivalStart.name.toUpperCase()}`,
+          WIDTH / 2,
+          HEIGHT - 150,
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = '600 15px system-ui, sans-serif';
+        ctx.fillText(
+          `ENTER or BURNOUT  -  ${rivalStart.laps} laps, then wreck the ${challenger.car} to take it`,
+          WIDTH / 2,
+          HEIGHT - 126,
+        );
+        this.eventCard(world);
         return;
       }
 
@@ -923,8 +960,6 @@ export class Hud {
         );
         return;
       }
-      const rival = world.currentRival;
-
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 22px system-ui, sans-serif';
       ctx.fillText(
@@ -932,34 +967,17 @@ export class Hud {
         WIDTH / 2,
         HEIGHT - 150,
       );
+      // An ordinary race (#419): open to anyone, and over at the finish.
       ctx.font = '600 15px system-ui, sans-serif';
-      ctx.fillStyle = !rival
-        ? '#5adc82'
-        : world.challengeReady
-          ? 'rgba(255, 255, 255, 0.8)'
-          : '#ffd166';
-      const invite =
-        route.kind === 'speedrun'
-          ? `ENTER or BURNOUT  -  one lap, on average speed, for #${rival?.rank} ${rival?.name}`
-          : `ENTER or BURNOUT  -  ${route.laps} laps against #${rival?.rank} ${rival?.name}`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.fillText(
-        !rival
-          ? 'RIVALS CLEARED'
-          : world.challengeReady
-            ? invite
-            : `#${rival.rank} ${rival.name} - ${world.repToNext.toLocaleString('en-US')} REP to go`,
+        route.kind === 'speedrun'
+          ? 'ENTER or BURNOUT  -  one lap, on average speed'
+          : `ENTER or BURNOUT  -  ${route.laps} laps against a field of ${FIELD_SIZE + 1}`,
         WIDTH / 2,
         HEIGHT - 126,
       );
-      // How hard, and what each place pays (#357), before you commit to it.
-      const card = world.eventCard;
-      if (card) {
-        const places = card.purse.map((rep, i) => `${['1ST', '2ND', '3RD'][i]} ${rep.toLocaleString('en-US')}`);
-        ctx.fillStyle =
-          card.difficulty === 'EASY' ? '#5adc82' : card.difficulty === 'MEDIUM' ? '#ffd166' : '#ff5a45';
-        ctx.font = '700 13px system-ui, sans-serif';
-        ctx.fillText(`${card.difficulty}   ·   ${places.join('   ')}  REP`, WIDTH / 2, HEIGHT - 104);
-      }
+      this.eventCard(world);
       return;
     }
 
@@ -1550,16 +1568,7 @@ export class Hud {
       // map uses - and it carries the route's name.
       const sx = px(route.start.x);
       const sy = py(route.start.z);
-      const colour = route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff';
-      ctx.strokeStyle = colour;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, 7, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = colour;
-      ctx.fill();
+      this.target(sx, sy, route.kind === 'speedrun' ? '#ff9f45' : '#7fe3ff');
 
       // Named, because "drive to the cyan ring" is a worse instruction than
       // "drive to Harbour Loop" - and the Quick Wheel lists them by name, so
@@ -1574,6 +1583,23 @@ export class Hud {
       const flip = sx + 11 + ctx.measureText(label).width > room;
       ctx.textAlign = flip ? 'right' : 'left';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText(label, sx + (flip ? -11 : 11), sy + 3.5);
+      ctx.textAlign = 'center';
+    }
+
+    // The rival who will race you, on their own line (#419). Only once they
+    // will: a marker for a race you cannot start is a marker that lies.
+    const rivalRoute = world.rivalRoute;
+    const rival = world.currentRival;
+    if (rivalRoute && rival) {
+      const sx = px(rivalRoute.start.x);
+      const sy = py(rivalRoute.start.z);
+      this.target(sx, sy, RIVAL_COLOUR);
+      ctx.font = '700 10px system-ui, sans-serif';
+      const label = `#${rival.rank} ${rival.name.toUpperCase()}`;
+      const flip = sx + 11 + ctx.measureText(label).width > originX + width * scale;
+      ctx.textAlign = flip ? 'right' : 'left';
+      ctx.fillStyle = RIVAL_COLOUR;
       ctx.fillText(label, sx + (flip ? -11 : 11), sy + 3.5);
       ctx.textAlign = 'center';
     }
@@ -1877,8 +1903,8 @@ export class Hud {
       ctx.fillText('billboards, cameras, outrunning police.', kx + 12, ry + 94);
     } else if (rival) {
       ctx.fillStyle = 'rgba(90, 220, 130, 0.9)';
-      ctx.fillText('Ready. Drive to any ringed event', kx + 12, ry + 60);
-      ctx.fillText('start and press ENTER to race them.', kx + 12, ry + 78);
+      ctx.fillText('Ready. Their start is the amber', kx + 12, ry + 60);
+      ctx.fillText('target on the map: race, then wreck.', kx + 12, ry + 78);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.fillText(`${world.beaten} of ${RIVALS.length} beaten.`, kx + 12, ry + 94);
     }
@@ -2077,6 +2103,32 @@ export class Hud {
     ctx.globalAlpha = 1;
   }
 
+  /** An event start's mark: a ring with a filled centre, a shape nothing else uses. */
+  private target(x: number, y: number, colour: string): void {
+    const { ctx } = this;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = colour;
+    ctx.fill();
+  }
+
+  /** How hard, and what each place pays (#357), before you commit to it. */
+  private eventCard(world: CityWorld): void {
+    const { ctx } = this;
+    const card = world.eventCard;
+    if (!card) return;
+    const places = card.purse.map((rep, i) => `${['1ST', '2ND', '3RD'][i]} ${rep.toLocaleString('en-US')}`);
+    ctx.fillStyle =
+      card.difficulty === 'EASY' ? '#5adc82' : card.difficulty === 'MEDIUM' ? '#ffd166' : '#ff5a45';
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText(`${card.difficulty}   ·   ${places.join('   ')}  REP`, WIDTH / 2, HEIGHT - 104);
+  }
+
   /**
    * The pursuit's state changes, one line at a time across the top (#356).
    *
@@ -2091,11 +2143,13 @@ export class Hud {
     if (!banner || world.busted) return;
     const { ctx } = this;
     const colour =
-      banner.kind === 'cooldown'
-        ? SIGHT_COLOUR.searching
-        : banner.kind === 'heatDown' || banner.kind === 'escaped'
-          ? '#7fe3ff'
-          : SIGHT_COLOUR.seen;
+      banner.kind === 'rival'
+        ? RIVAL_COLOUR
+        : banner.kind === 'cooldown'
+          ? SIGHT_COLOUR.searching
+          : banner.kind === 'heatDown' || banner.kind === 'escaped'
+            ? '#7fe3ff'
+            : SIGHT_COLOUR.seen;
     ctx.globalAlpha = Math.min(1, banner.left * 4);
     ctx.font = '800 26px system-ui, sans-serif';
     const width = ctx.measureText(banner.text).width + 44;
