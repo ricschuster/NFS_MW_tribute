@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { kestrelBay } from './city/index';
-import { NITRO_SPEED_MULT, FIND_SPACING, CITY_STREET_GRID } from './constants';
+import { NITRO_SPEED_MULT, FIND_SPACING, CITY_STREET_GRID, FIND_KERB_GAP, UNITS_PER_METRE } from './constants';
+import { distanceToRoad } from './city/grid';
+
+const M = UNITS_PER_METRE;
 
 describe('the roster', () => {
   it('gives every car a unique id', () => {
@@ -39,10 +42,12 @@ describe('the roster', () => {
     expect(ridgeback.topSpeed).toBeGreaterThan(kite.topSpeed);
     expect(ridgeback.grip).toBeLessThan(kite.grip);
 
-    const sable = carById('sable');
-    const halcyon = carById('halcyon');
-    expect(halcyon.accel).toBeGreaterThan(sable.accel);
-    expect(sable.grip).toBeGreaterThan(halcyon.grip);
+    // Quick off the line and short of breath at the top, against a heavy
+    // 4x4 with a big engine (#434): the same trade from the other end.
+    const current = carById('current');
+    const trailbreaker = carById('trailbreaker');
+    expect(current.accel).toBeGreaterThan(trailbreaker.accel);
+    expect(trailbreaker.topSpeed).toBeGreaterThan(current.topSpeed);
   });
 
   it('falls back to the starter for an id it does not know', () => {
@@ -89,8 +94,14 @@ describe('where they are parked', () => {
   });
 
   // A car parked in a live carriageway is a car the traffic drives through.
+  // In a lot, or on the verge beside a road (#434): never on the carriageway.
   it('parks them on open ground rather than in the road', () => {
     for (const find of city.finds) {
+      const road = city.roads.reduce(
+        (best, r) => Math.min(best, distanceToRoad(city, r, find.at.x, find.at.z) - r.width / 2),
+        Infinity,
+      );
+      if (road > 0 && road <= FIND_KERB_GAP + M) continue;
       const lot = city.blocks.find(
         (block) =>
           block.open &&

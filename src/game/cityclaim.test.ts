@@ -45,22 +45,27 @@ describe('the ladder cars', () => {
     for (const id of ids) expect(carById(id).source).toBe('rival');
   });
 
-  // They are the prize at the top of a ladder, so they have to be worth the
-  // climb: nothing parked in a lot should out-run the thing you took off Ghost.
-  it('makes them better than anything parked in the city', () => {
-    const street = CARS.filter((car) => car.source === 'street');
-    const bestStreet = Math.max(...street.map((car) => car.topSpeed));
+  // The prize at the top of the ladder is the fastest thing in the game, and
+  // nothing parked out-runs it. Not everything else: since #434 each ladder
+  // car stands in for one in the reference's list, where the bottom rung is a
+  // light sports car slower than plenty that are parked, and the featherweights
+  // out-grip everything.
+  it('makes the boss the fastest car in the game', () => {
     const boss = carById(RIVALS[RIVALS.length - 1].carId);
-    expect(boss.topSpeed).toBeGreaterThan(bestStreet);
-    expect(boss.grip).toBeGreaterThan(Math.max(...street.map((c) => c.grip)));
+    for (const car of CARS) {
+      if (car !== boss) expect(boss.topSpeed).toBeGreaterThan(car.topSpeed);
+    }
   });
 
-  it('makes them better the further up the ladder they are', () => {
-    for (let i = 1; i < RIVALS.length; i++) {
-      const under = carById(RIVALS[i - 1].carId);
-      const over = carById(RIVALS[i].carId);
-      expect(over.topSpeed).toBeGreaterThan(under.topSpeed);
-    }
+  // Better up the ladder, taken in halves: the reference's own order is not
+  // strictly faster at every rung (its #3 out-runs its #2 flat out).
+  it('makes the top of the ladder better than the bottom', () => {
+    const speed = (cars: typeof RIVALS) =>
+      cars.reduce((sum, rival) => sum + carById(rival.carId).topSpeed, 0) / cars.length;
+    expect(speed(RIVALS.slice(5))).toBeGreaterThan(speed(RIVALS.slice(0, 5)));
+    const street = CARS.filter((car) => car.source === 'street');
+    const streetSpeed = street.reduce((sum, car) => sum + car.topSpeed, 0) / street.length;
+    expect(speed(RIVALS)).toBeGreaterThan(streetSpeed);
   });
 
   // The police run at fractions of the player's top speed, so this has to hold

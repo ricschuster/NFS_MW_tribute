@@ -193,7 +193,7 @@ describe('the Quick Menu', () => {
 
     it('scrolls with the cursor, so the last one can be reached', () => {
       const { w, wheel } = full();
-      for (let i = 0; i < 40; i++) wheel.move(w, 1);
+      for (let i = 0; i < CARS.length * 2; i++) wheel.move(w, 1);
       const view = wheel.view(w);
       expect(view.from + view.cursor).toBe(view.total - 1);
       expect(view.rows[view.cursor].label).toBe(wheel.entries(w)[view.total - 1].label);
