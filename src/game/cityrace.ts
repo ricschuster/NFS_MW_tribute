@@ -10,6 +10,9 @@ import {
   FIELD_GRID,
   FIELD_WOBBLE,
   FIELD_LANE,
+  FIELD_LANE_EASE,
+  FIELD_LANE_OPEN,
+  FIELD_YIELD_RANGE,
   SPEEDRUN_TARGET,
   SPEEDRUN_TARGET_PER_DIFFICULTY,
   SPEEDRUN_SETTLE,
@@ -60,6 +63,8 @@ export interface RaceRival {
   rate: number;
   /** How far off the route line it runs, so a pack reads as a pack. */
   lane: number;
+  /** The lane it keeps when nobody is coming through: its side of the grid. */
+  home: number;
   /** How far back its row of the grid sits. Drawing only (#217). */
   back: number;
   /**
@@ -237,6 +242,7 @@ export class CityRace {
         // Two abreast, in rows: a grid rather than a wall. Six across is wider
         // than the road (#217).
         lane: (i % 2 === 0 ? -1 : 1) * FIELD_LANE,
+        home: (i % 2 === 0 ? -1 : 1) * FIELD_LANE,
         back: Math.floor(i / 2) * FIELD_GRID,
         y: 0,
         speed: 0,
@@ -277,7 +283,7 @@ export class CityRace {
 
     this.elapsed += dt;
     this.advancePlayer(route, player);
-    for (const car of this.field) this.advanceRival(route, car, dt, maxSpeed);
+    for (const car of this.field) this.advanceRival(route, car, dt, maxSpeed, player);
 
     const finishLine = route.length * route.laps;
     if (this.playerDist >= finishLine) {
@@ -327,7 +333,7 @@ export class CityRace {
       this.lap * route.length + this.checkpoint * this.spacing + partial * this.spacing;
   }
 
-  private advanceRival(route: CityRoute, car: RaceRival, dt: number, maxSpeed: number): void {
+  private advanceRival(route: CityRoute, car: RaceRival, dt: number, maxSpeed: number, player: Racer): void {
     if (car.out) return;
     const base = maxSpeed * (RIVAL_BASE_SPEED_FRAC + car.rival.difficulty * RIVAL_DIFF_SPEED_FRAC);
     // Wandering pace, so positions actually change: without it every place is
@@ -347,6 +353,15 @@ export class CityRace {
     const dirX = ahead.x - at.x;
     const dirZ = ahead.z - at.z;
     const length = Math.max(1, Math.hypot(dirX, dirZ));
+
+    // Out to its own side while you are coming up behind it, so a pair leaves
+    // you the middle (FIELD_LANE_OPEN). Measured from where it is now, in
+    // world space: `dist` is scored on the line and says nothing about where
+    // the player's car actually is.
+    const behind = ((car.x - player.x) * dirX + (car.z - player.z) * dirZ) / length;
+    const target = behind > 0 && behind < FIELD_YIELD_RANGE ? Math.sign(car.home) * FIELD_LANE_OPEN : car.home;
+    const step = FIELD_LANE_EASE * dt;
+    car.lane += Math.max(-step, Math.min(step, target - car.lane));
     // Across for the lane, and back along the road for the row it is in. The
     // row is drawing only: `dist` is what the race is scored on and it is not
     // touched here, so a car three rows back is not three rows behind.
