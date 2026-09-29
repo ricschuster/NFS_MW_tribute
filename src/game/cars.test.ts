@@ -59,9 +59,9 @@ describe('the roster', () => {
 describe('where they are parked', () => {
   const city = kestrelBay();
 
-  // A find goes on an open, non-park lot, and every block is parkland today:
-  // there is no street grid to leave a graded lot behind (ADR-0009).
-  it.skipIf(!CITY_STREET_GRID)('parks every car that is meant to be found, and no others', () => {
+  // Every one of them, now that a car with no lot to go to is parked at the
+  // kerb instead (#434): it used to wait on a street grid that is off.
+  it('parks every car that is meant to be found, and no others', () => {
     const street = CARS.filter((car) => car.source === 'street');
     expect(city.finds.length).toBe(street.length);
     expect(city.finds.some((f) => f.car === STARTER_CAR.id)).toBe(false);
@@ -94,6 +94,21 @@ describe('where they are parked', () => {
   });
 
   // A car parked in a live carriageway is a car the traffic drives through.
+  // The further out, the better (#434): the worst parked car is nearer the
+  // start than the best one, taking the roster's own order as better.
+  it('parks the better cars further from the start', () => {
+    const airfield = { x: -1269 * M, z: 2012 * M };
+    const away = (id: string) => {
+      const find = city.finds.find((f) => f.car === id)!;
+      return Math.hypot(find.at.x - airfield.x, find.at.z - airfield.z);
+    };
+    const street = CARS.filter((car) => car.source === 'street');
+    expect(away(street[0].id)).toBeLessThan(away(street[street.length - 1].id));
+    const half = Math.floor(street.length / 2);
+    const mean = (cars: typeof street) => cars.reduce((sum, car) => sum + away(car.id), 0) / cars.length;
+    expect(mean(street.slice(0, half))).toBeLessThan(mean(street.slice(half)));
+  });
+
   // In a lot, or on the verge beside a road (#434): never on the carriageway.
   it('parks them on open ground rather than in the road', () => {
     for (const find of city.finds) {
