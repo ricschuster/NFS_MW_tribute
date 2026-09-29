@@ -29,6 +29,7 @@ import { RIVALS } from '../rivals';
 import { MODS } from '../mods';
 import { FIND_COLOUR, HAZARD, MAP_LEGEND, RIVAL_COLOUR, SIGHT_COLOUR } from './legend';
 import { NITRO_LABELS } from '../nitrofill';
+import { guideLeft } from '../guide';
 import type { CityWorld } from '../cityworld';
 import type { CityRoute } from '../city/types';
 
@@ -1108,13 +1109,21 @@ export class Hud {
     ctx.fillText(sprint ? 'KM' : 'LAP', WIDTH / 2 - 90, 40);
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 26px ui-monospace, "SF Mono", Menlo, monospace';
+    const left = (guideLeft(world) ?? 0) / UNITS_PER_METRE / 1000;
     ctx.fillText(
-      sprint
-        ? (Math.max(0, route.length - race.playerDist) / UNITS_PER_METRE / 1000).toFixed(1)
-        : `${Math.min(route.laps, race.lap + 1)}/${route.laps}`,
+      sprint ? left.toFixed(1) : `${Math.min(route.laps, race.lap + 1)}/${route.laps}`,
       WIDTH / 2 - 50,
       42,
     );
+    // And how far to the flag over every lap still to run, the owner's ask on
+    // the route line (#443): the lap count says where you are, not how far.
+    if (!sprint) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.font = '600 14px system-ui, sans-serif';
+      ctx.fillText(`${left.toFixed(1)} km to the finish`, WIDTH / 2, 66);
+      ctx.textAlign = 'left';
+    }
 
     const place = race.position;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
@@ -1532,7 +1541,8 @@ export class Hud {
    *
    * A chevron on the rim of the minimap and a distance under it, so a
    * destination two kilometres away is still a direction rather than a dot off
-   * the edge of a 280 m circle.
+   * the edge of a 280 m circle. The distance is by road when there is a way
+   * worked out (`guideLeft`), since that is what the line on the road follows.
    */
   private marker(world: CityWorld, cx: number, cy: number, radius: number): void {
     const { ctx } = this;
@@ -1564,7 +1574,7 @@ export class Hud {
     ctx.fillStyle = 'rgba(127, 227, 255, 0.85)';
     ctx.font = '600 12px system-ui, sans-serif';
     ctx.fillText(
-      `${(Math.round(gap / UNITS_PER_METRE / 100) / 10).toFixed(1)} km  ${marker.label}`,
+      `${(Math.round((guideLeft(world) ?? gap) / UNITS_PER_METRE / 100) / 10).toFixed(1)} km  ${marker.label}`,
       cx,
       cy + radius + 18,
     );

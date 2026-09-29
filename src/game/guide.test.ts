@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CityWorld } from './cityworld';
 import { kestrelBay } from './city/index';
-import { guidePath } from './guide';
+import { guideLeft, guidePath } from './guide';
 import { CITY_COUNTDOWN, GUIDE_AHEAD, GUIDE_STEP, UNITS_PER_METRE } from './constants';
 
 const M = UNITS_PER_METRE;
@@ -10,14 +10,14 @@ const NONE = { up: false, down: false, left: false, right: false, nitro: false, 
 const lengthOf = (points: { x: number; z: number }[]) =>
   points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - points[i].x, p.z - points[i].z), 0);
 
-// The lines on the road (#443) are drawn along whatever this returns.
+// The line on the road (#443) are drawn along whatever this returns.
 describe('the way ahead', () => {
   it('is nothing with no race and nowhere to go', () => {
     const world = new CityWorld(city, { traffic: false, police: false });
     expect(guidePath(world)).toEqual([]);
   });
 
-  it('follows the race route from the car, for the length the lines run', () => {
+  it('follows the race route from the car, for the length the line runs', () => {
     const world = new CityWorld(city, { traffic: false, police: false });
     const route = world.city.routes.find((r) => r.kind === 'circuit')!;
     world.x = route.start.x;
@@ -41,5 +41,26 @@ describe('the way ahead', () => {
     const nearest = Math.min(...world.markerPath.map((p) => Math.hypot(p.x - world.x, p.z - world.z)));
     expect(Math.hypot(path[0].x - world.x, path[0].z - world.z)).toBeLessThanOrEqual(nearest + 1);
     expect(lengthOf(path)).toBeLessThanOrEqual(GUIDE_AHEAD + GUIDE_STEP);
+  });
+
+  it('says how far is left along the road, to the flag or the destination', () => {
+    const world = new CityWorld(city, { traffic: false, police: false });
+    expect(guideLeft(world)).toBeNull();
+
+    const repair = world.city.repairs[0];
+    world.aimAt({ x: repair.at.x, z: repair.at.z, label: 'Repair shop' });
+    // Never shorter than as the crow flies, and all of the path from the car.
+    const crow = Math.hypot(repair.at.x - world.x, repair.at.z - world.z);
+    expect(guideLeft(world)!).toBeGreaterThanOrEqual(crow - 20 * M);
+    expect(guideLeft(world)!).toBeLessThanOrEqual(lengthOf(world.markerPath) + 1);
+
+    const route = world.city.routes.find((r) => r.kind === 'circuit')!;
+    const racer = new CityWorld(city, { traffic: false, police: false });
+    racer.x = route.start.x;
+    racer.z = route.start.z;
+    racer.step(1 / 60, { ...NONE, confirm: true });
+    for (let t = 0; t < CITY_COUNTDOWN + 0.2; t += 1 / 60) racer.step(1 / 60, NONE);
+    expect(guideLeft(racer)!).toBeCloseTo(route.length * route.laps - racer.race.playerDist);
+    expect(guideLeft(racer)!).toBeGreaterThan(route.length * (route.laps - 1));
   });
 });
