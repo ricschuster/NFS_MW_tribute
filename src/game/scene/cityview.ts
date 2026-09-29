@@ -15,7 +15,7 @@ import { daylightAt } from './daylight';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { CityTrucks } from './trucks';
-import { carById } from '../cars';
+import { carById, type CarBody } from '../cars';
 import type { CityWorld, InputState } from '../cityworld';
 import {
   STEP,
@@ -140,7 +140,9 @@ export class CityView {
   /** When set, the camera chases this car instead of flying free. */
   private world: CityWorld | null = null;
   private hud: Hud | null = null;
-  private readonly car = makeCar('#d8442f');
+  private car = makeCar('#d8442f');
+  /** The body the player's car mesh was built as, so a change of car rebuilds it (#434). */
+  private carStyle: CarBody = 'coupe';
   /** Off the rear tyres while they spin on the spot (#360). */
   private readonly smoke = new TyreSmoke();
   /** Which profile the player's mesh is currently painted as (#67). */
@@ -599,6 +601,16 @@ export class CityView {
       this.accumulator -= STEP;
     }
 
+    // A car with a different body is a different mesh, not a repaint (#434).
+    if (world.car.body !== this.carStyle) {
+      const was = this.car;
+      this.car = makeCar(world.car.colour, false, world.car.body);
+      this.car.visible = was.visible;
+      this.scene.remove(was);
+      this.scene.add(this.car);
+      this.carStyle = world.car.body;
+      this.wearing = '';
+    }
     this.car.position.set(world.x, world.y, world.z);
     this.smoke.update(dt, world);
     // Yaw, then pitch about the car's own axle (#307): nose up the ramp, and
@@ -685,6 +697,8 @@ export class CityView {
         find.at.z,
         profile.colour,
         profile.scale,
+        1,
+        profile.body,
       );
       parked.rotation.y = find.angle;
     }
@@ -695,7 +709,7 @@ export class CityView {
       for (const racer of world.race.field) {
         // A car taken out is its wreck now (#350), and the wreck is drawn.
         if (racer.out) continue;
-        this.rivalCars.place(racer.x, racer.y, racer.z, racer.rival.color, 1).rotation.y =
+        this.rivalCars.place(racer.x, racer.y, racer.z, racer.rival.color, 1, 1, carById(racer.rival.carId).body).rotation.y =
           racer.heading;
       }
     }
@@ -704,7 +718,7 @@ export class CityView {
     const runner = world.claim.runner;
     if (runner) {
       const prize = carById(runner.rival.carId);
-      this.rivalCars.place(runner.x, runner.y, runner.z, prize.colour, prize.scale).rotation.y =
+      this.rivalCars.place(runner.x, runner.y, runner.z, prize.colour, prize.scale, 1, prize.body).rotation.y =
         runner.heading;
     }
     this.rivalCars.end();
