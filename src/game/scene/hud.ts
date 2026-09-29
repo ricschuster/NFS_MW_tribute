@@ -25,6 +25,7 @@ import {
 import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
+import { MODS } from '../mods';
 import { FIND_COLOUR, HAZARD, MAP_LEGEND, RIVAL_COLOUR, SIGHT_COLOUR } from './legend';
 import { NITRO_LABELS } from '../nitrofill';
 import type { CityWorld } from '../cityworld';
@@ -84,7 +85,7 @@ export class Hud {
   showMap = false;
   /** While the camera flies the course before a circuit (#359). Set by the view. */
   flyover = false;
-  /** The Quick Wheel while it is held open (#90), or null. */
+  /** The Quick Menu while it is open (#90, #420), or null. */
   wheel: QuickWheel | null = null;
   /** On-screen controls, when there are any (#89). */
   touch: TouchControls | null = null;
@@ -398,7 +399,7 @@ export class Hud {
     ctx.fillText(found.blurb, WIDTH / 2, y + 92);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
     ctx.font = '500 12px system-ui, sans-serif';
-    ctx.fillText('you are driving it now  ·  hold Q to change back', WIDTH / 2, y + 108);
+    ctx.fillText('you are driving it now  ·  L, then CHANGE CAR, to change back', WIDTH / 2, y + 108);
     ctx.globalAlpha = 1;
   }
 
@@ -1271,12 +1272,14 @@ export class Hud {
   }
 
   /**
-   * The Quick Wheel, drawn over the running game (#90).
+   * The Quick Menu, drawn over the running game (#90, #420).
    *
    * Over and not instead of: the world keeps moving underneath, which is the
-   * entire point of it. A panel down one side rather than an actual wheel,
-   * because what is being read is nine lines of text and a wheel is a worse
-   * shape for that than a list.
+   * entire point of it. Drawn the way the reference's in-drive menu is, from a
+   * frame of it the owner supplied: a stack of slanted dark bars in the top
+   * left, reading as a path - QUICK MENU, then the branch, then its rows - the
+   * row under the cursor lit, a tick on what is fitted and a padlock on what is
+   * not earned, and the car's fitted parts down the right while customising.
    */
   private quickWheel(world: CityWorld): void {
     const { ctx } = this;
@@ -1287,76 +1290,128 @@ export class Hud {
       return;
     }
 
-    const entries = wheel.entries(world);
-    const width = 470;
-    const height = 54 + entries.length * 30;
-    const x = WIDTH / 2 - width / 2;
-    const y = HEIGHT / 2 - height / 2;
+    const view = wheel.view(world);
+    const x = 34;
+    const width = 440;
+    const top = 88;
+    const row = 27;
+    const first = top + view.path.length * row + 6;
 
-    // Published for touch (#89): this is the only place that knows how many
-    // rows there are and where they ended up, and the wheel's length changes
-    // with what is in it.
+    // Published for touch (#89): the path at the top is the way back, and each
+    // row is a tap on it. Only this knows where they ended up.
     if (this.touch) {
-      // The header is two targets when the branch pages: the left half switches
-      // branch, the right half shows the next nine.
       this.touch.regions = [
-        { id: 'wheel:branch', x, y, w: wheel.pages(world) > 1 ? width / 2 : width, h: 44 },
-        ...(wheel.pages(world) > 1
-          ? [{ id: 'wheel:more', x: x + width / 2, y, w: width / 2, h: 44 }]
-          : []),
-        ...entries.map((_, i) => ({ id: `wheel:${i}`, x, y: y + 42 + i * 30, w: width, h: 30 })),
+        { id: 'wheel:branch', x, y: top, w: width, h: view.path.length * row },
+        ...view.rows.map((_, i) => ({ id: `wheel:${i}`, x, y: first + i * row, w: width, h: row })),
       ];
     }
 
-    ctx.fillStyle = 'rgba(8, 12, 18, 0.82)';
-    ctx.fillRect(x, y, width, height);
-    ctx.strokeStyle = 'rgba(127, 227, 255, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width, height);
+    /** A slanted bar, the reference's one shape. */
+    const bar = (bx: number, by: number, w: number, fill: string) => {
+      const lean = 10;
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(bx + lean, by);
+      ctx.lineTo(bx + w, by);
+      ctx.lineTo(bx + w - lean, by + row - 4);
+      ctx.lineTo(bx, by + row - 4);
+      ctx.closePath();
+      ctx.fill();
+    };
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#7fe3ff';
-    ctx.font = '700 15px system-ui, sans-serif';
-    const total = wheel.count(world);
-    const pages = wheel.pages(world);
-    const from = wheel.page * 9 + 1;
-    ctx.fillText(
-      pages > 1 ? `${wheel.title}   ${from}-${from + entries.length - 1} of ${total}` : wheel.title,
-      x + 16,
-      y + 30,
-    );
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.font = '500 12px system-ui, sans-serif';
-    // Only offered when there is a page to go to. A list that says nothing
-    // about being cut is how an event a kilometre away stopped existing (#214).
-    ctx.fillText(
-      pages > 1 ? 'E switch · R more · 1-9 pick' : 'E to switch  ·  1-9 to pick',
-      x + width - 16,
-      y + 30,
-    );
-
-    ctx.textAlign = 'left';
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
-      const line = y + 56 + i * 30;
-      ctx.globalAlpha = entry.available ? 1 : 0.4;
-
-      ctx.fillStyle = '#ffd166';
-      ctx.font = '700 15px ui-monospace, "SF Mono", Menlo, monospace';
-      ctx.fillText(String(i + 1), x + 16, line);
-
+    // The path: the menu's name, then each level you have gone into.
+    view.path.forEach((step, i) => {
+      const y = top + i * row;
+      const last = i === view.path.length - 1;
+      bar(x, y, i === 0 ? 190 : 300, i === 0 ? 'rgba(40, 120, 190, 0.92)' : 'rgba(8, 12, 18, 0.85)');
       ctx.fillStyle = '#ffffff';
-      ctx.font = '600 14px system-ui, sans-serif';
-      ctx.fillText(entry.label, x + 40, line);
+      ctx.font = i === 0 ? 'italic 800 15px system-ui, sans-serif' : '800 13px system-ui, sans-serif';
+      const count = last && view.total > view.rows.length
+        ? `   ${view.from + 1}-${view.from + view.rows.length} of ${view.total}`
+        : '';
+      ctx.fillText(step.toUpperCase() + count, x + 22, y + 17);
+    });
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-      ctx.font = '500 12px system-ui, sans-serif';
+    for (let i = 0; i < view.rows.length; i++) {
+      const entry = view.rows[i];
+      const y = first + i * row;
+      const on = i === view.cursor;
+      ctx.globalAlpha = entry.available ? 1 : 0.55;
+      // The row under the cursor is lit, as the reference lights it.
+      bar(x + 16, y, width - 16, on ? 'rgba(245, 248, 250, 0.95)' : 'rgba(12, 22, 32, 0.82)');
+
+      ctx.fillStyle = on ? '#0c1620' : '#ffffff';
+      ctx.font = '700 13px system-ui, sans-serif';
+      ctx.fillText(entry.label.toUpperCase(), x + 36, y + 16);
+
       ctx.textAlign = 'right';
-      ctx.fillText(entry.detail, x + width - 16, line);
+      ctx.fillStyle = on ? 'rgba(12, 22, 32, 0.7)' : 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '500 11px system-ui, sans-serif';
+      ctx.fillText(entry.detail, x + width - 44, y + 16);
       ctx.textAlign = 'left';
+
+      if (entry.mark === 'fitted') {
+        ctx.strokeStyle = '#3fbf6a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + width - 34, y + 11);
+        ctx.lineTo(x + width - 28, y + 17);
+        ctx.lineTo(x + width - 18, y + 5);
+        ctx.stroke();
+      } else if (entry.mark === 'locked') {
+        ctx.strokeStyle = on ? '#0c1620' : 'rgba(255, 255, 255, 0.8)';
+        ctx.fillStyle = on ? '#0c1620' : 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x + width - 26, y + 9, 4, Math.PI, 0);
+        ctx.stroke();
+        ctx.fillRect(x + width - 32, y + 9, 12, 8);
+      } else if (on && entry.opens) {
+        // Right does something here.
+        ctx.fillStyle = '#2878be';
+        ctx.beginPath();
+        ctx.moveTo(x + width - 32, y + 5);
+        ctx.lineTo(x + width - 22, y + 11);
+        ctx.lineTo(x + width - 32, y + 17);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
+
+    const hintY = first + view.rows.length * row + 12;
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.7)';
+    ctx.fillRect(x + 16, hintY - 13, 250, 19);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.fillText('L select   J back   I / K move', x + 26, hintY);
+
+    if (wheel.branch === 'mods' && wheel.depth === 1) this.loadout(world);
+  }
+
+  /** The car's fitted parts, down the right while customising it (#420). */
+  private loadout(world: CityWorld): void {
+    const { ctx } = this;
+    const fitted = MODS.filter((mod) => world.finds.isFitted(world.car.id, mod.id));
+    const w = 300;
+    const x = WIDTH - w - 30;
+    const y = HEIGHT - 60 - (fitted.length + 1) * 32;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.85)';
+    ctx.fillRect(x, y, w, 28);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 14px system-ui, sans-serif';
+    ctx.fillText(world.car.name, x + 12, y + 19);
+    const lines = fitted.length > 0 ? fitted.map((mod) => mod.name.toUpperCase()) : ['STOCK'];
+    lines.forEach((line, i) => {
+      const ly = y + 32 + i * 32;
+      ctx.fillStyle = 'rgba(12, 22, 32, 0.8)';
+      ctx.fillRect(x + 20, ly, w - 20, 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 12px system-ui, sans-serif';
+      ctx.fillText(line, x + 34, ly + 17);
+    });
   }
 
   /**
@@ -1757,7 +1812,7 @@ export class Hud {
       ['SHIFT', 'nitrous'],
       ['ENTER', 'start what you are parked on'],
       ['UP + DOWN', 'burnout: starts it too'],
-      ['HOLD Q', 'Quick Wheel: E, R, 1-9'],
+      ['I J K L', 'Quick Menu: L opens and selects'],
       ['TAB', 'this map'],
       ['B', 'look back'],
       ['F', 'fullscreen'],

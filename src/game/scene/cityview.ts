@@ -913,24 +913,19 @@ export class CityView {
   }
 
   /**
-   * The Quick Wheel (#90): held open with Q, picked from with the number row.
+   * The Quick Menu (#90, #420), driven like a D-pad on I J K L: L opens, goes
+   * deeper and selects, J backs out and closes, I and K move the cursor.
    *
-   * The numbers are the whole reason it can exist while driving. Navigating a
-   * menu needs a cursor and a cursor needs direction keys, and the direction
-   * keys are busy steering; a number goes straight to the thing.
+   * Its own four keys rather than the arrows, because the arrows and WASD are
+   * steering, and the point of the menu is that it is used without letting go
+   * of the car. It stays open until it is backed out of, as the reference's
+   * does, rather than being held.
    */
   private quickWheel(
     world: CityWorld,
     held: (id: ControlId | null, ...keys: string[]) => boolean,
   ): void {
-    this.wheel.open = held('wheel', 'q');
-    if (this.hud) this.hud.wheel = this.wheel.open ? this.wheel : null;
-    if (!this.wheel.open) {
-      this.wasDown.clear();
-      return;
-    }
-
-    // Edges, not levels: a key held for a fifth of a second is one choice.
+    // Edges, not levels: a key held for a fifth of a second is one press.
     const edge = (name: string, down: boolean) => {
       const was = this.wasDown.has(name);
       if (down) this.wasDown.add(name);
@@ -938,24 +933,26 @@ export class CityView {
       return down && !was;
     };
 
-    if (edge('e', held(null, 'e'))) this.wheel.cycle();
-    // R pages a branch that has more than nine things on it (#214). A separate
-    // key rather than a cursor, for #90's reason: navigating needs direction
-    // keys and the direction keys are driving.
-    if (edge('r', held(null, 'r'))) this.wheel.more(world);
-    for (let i = 1; i <= 9; i++) {
-      if (edge(String(i), held(null, String(i)))) this.wheel.choose(world, i - 1);
+    if (edge('l', held(null, 'l'))) this.wheel.right(world);
+    if (edge('j', held(null, 'j'))) this.wheel.left();
+    if (edge('i', held(null, 'i'))) this.wheel.move(world, -1);
+    if (edge('k', held(null, 'k'))) this.wheel.move(world, 1);
+
+    // By thumb (#89): the menu button opens and closes it, a row is a tap on
+    // it, and the path at the top is the way back. The HUD publishes where it
+    // drew each of them, because only it knows.
+    if (this.touch) {
+      if (edge('touch-menu', this.touch.on('wheel'))) {
+        if (this.wheel.open) this.wheel.open = false;
+        else this.wheel.right(world);
+      }
+      if (edge('touch-back', this.touch.on('wheel:branch'))) this.wheel.left();
+      for (let i = 0; i < 9; i++) {
+        if (edge(`touch-row-${i}`, this.touch.on(`wheel:${i}`))) this.wheel.tap(world, i);
+      }
     }
 
-    // The same choices by thumb (#89). The HUD publishes a rectangle per row
-    // and one for the heading, because it is the thing that knows where it
-    // drew them - the wheel's length changes with what is in it.
-    if (!this.touch) return;
-    if (edge('touch-branch', this.touch.on('wheel:branch'))) this.wheel.cycle();
-    if (edge('touch-more', this.touch.on('wheel:more'))) this.wheel.more(world);
-    for (let i = 0; i < 9; i++) {
-      if (edge(`touch-row-${i}`, this.touch.on(`wheel:${i}`))) this.wheel.choose(world, i);
-    }
+    if (this.hud) this.hud.wheel = this.wheel.open ? this.wheel : null;
   }
 
   start(): void {

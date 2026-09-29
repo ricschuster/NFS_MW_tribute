@@ -439,12 +439,14 @@ you in it: being teleported into a different car mid-pursuit, having just
 wrecked somebody, would be absurd, and #90 is where changing car on purpose
 belongs.
 
-**The Quick Wheel never pauses** (issue #90). It is held open with a key while
-the world keeps running underneath, and entries are picked by *number* rather
-than navigated to - navigating needs a cursor, a cursor needs direction keys,
-and the direction keys are busy driving. Its "go to" branch sets a marker
-rather than teleporting: quick travel that moved the car would make the pursuit
-a formality and the city a menu of places rather than a place.
+**The Quick Menu never pauses** (issues #90, #420). The world keeps running
+underneath it. It is laid out and driven the way the reference's in-drive menu
+is: a path of branches you walk down on a D-pad of its own, I J K L, because
+the arrows and WASD are busy driving - L opens, goes in and selects, J backs
+out. `quickwheel.ts` (the class is still `QuickWheel`) has the reasoning. The
+reference's name for its menu ships nowhere. A place is a marker, never a
+teleport: quick travel that moved the car would make the pursuit a formality
+and the city a menu of places rather than a place.
 
 **Parts are progress; a profile is content** (issue #68). `mods.ts` and
 `garage.ts` have the reasoning - why parts live on the garage rather than on
