@@ -175,7 +175,7 @@ export class RepLedger {
  * On the card before the start and in the ledger after it, from one function,
  * so the two cannot disagree.
  */
-export function racePurse(difficulty: number, kind: 'circuit' | 'speedrun'): number[] {
+export function racePurse(difficulty: number, kind: 'circuit' | 'speedrun' | 'sprint'): number[] {
   const win = REP_RACE_WIN + Math.round(REP_RACE_WIN_PER_DIFFICULTY * difficulty);
   const places = kind === 'speedrun' ? REP_RACE_PLACES.slice(0, 1) : REP_RACE_PLACES;
   return places.map((share) => Math.round(win * share));

@@ -294,7 +294,13 @@ export interface StreetFind {
  * A circuit is three laps against a field, won on position. A speed run is one
  * lap alone, won on the average speed you held over it.
  */
-export type RouteKind = 'circuit' | 'speedrun';
+/**
+ * A circuit is laps of a loop against a field; a speed run is one lap of a
+ * loop on average speed; a sprint (#397) is one run from a start to a finish
+ * somewhere else, against a field, and its points do not close back on
+ * themselves.
+ */
+export type RouteKind = 'circuit' | 'speedrun' | 'sprint';
 
 export interface CityRoute {
   id: number;
