@@ -437,6 +437,10 @@ export function carAheadLimit(world, K) {
     // slowed to walking pace beside it and was busted - a crash no person
     // racing would have driven into.
     ...(world.police?.cops ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
+    // And the race field, now that it has bodies (#350).
+    ...(world.fieldBodies === false ? [] : (world.race?.field ?? []))
+      .filter((car) => !car.out)
+      .map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
   ];
   if (cars.length === 0) return Infinity;
 

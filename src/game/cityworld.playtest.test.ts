@@ -4342,3 +4342,58 @@ describe('a runner and the police', () => {
     expect(world.police.spikes).toHaveLength(0);
   });
 });
+
+// The race field gains bodies (#350): the reference's SLAM TAKEDOWN.
+describe('the field as bodies', () => {
+  const racing = () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    const route = world.city.routes.find((r) => r.kind === 'circuit')!;
+    world.x = route.start.x;
+    world.z = route.start.z;
+    world.step(STEP, press({ confirm: true }));
+    drive(world, CITY_COUNTDOWN + 3, NONE);
+    expect(world.race.state).toBe('racing');
+    return world;
+  };
+  /** Put the car right behind `car` and driving into it. */
+  const ram = (world: CityWorld, car: CityWorld['race']['field'][number]) => {
+    world.x = car.x - Math.sin(car.heading) * CAR_RADIUS * 1.5;
+    world.z = car.z - Math.cos(car.heading) * CAR_RADIUS * 1.5;
+    world.y = car.y;
+    world.heading = car.heading;
+    world.speed = world.maxSpeed * 0.9;
+    world.step(STEP, NONE);
+  };
+
+  it('is hit when you drive into it, and loses pace for it', () => {
+    const world = racing();
+    const car = world.race.field[1];
+    ram(world, car);
+    expect(car.damage).toBeGreaterThan(0);
+    expect(car.shaken).toBeGreaterThan(0);
+  });
+
+  it('leaves the finishing order when it is taken down, and pays for it', () => {
+    const world = racing();
+    const car = world.race.field[1];
+    car.damage = 0.99;
+    ram(world, car);
+    expect(car.out).toBe(true);
+    // Still ahead of you on the road, and not counted: out of the order.
+    car.dist = world.race.playerDist + 50 * M;
+    const ahead = world.race.field.filter((c) => !c.out && c.dist > world.race.playerDist).length;
+    expect(world.race.position).toBe(1 + ahead);
+    expect(world.rep.recent.some((a) => a.reason === 'takedown')).toBe(true);
+  });
+
+  it('wins the race by taking down the rival you challenged, and the car is yours', () => {
+    const world = racing();
+    const car = world.race.field[0];
+    expect(car.rival.name).toBe(world.race.challenger!.name);
+    car.damage = 0.99;
+    ram(world, car);
+    expect(world.race.won).toBe(true);
+    expect(world.claim.state).toBe('idle');
+    expect(world.beaten).toBe(1);
+  });
+});

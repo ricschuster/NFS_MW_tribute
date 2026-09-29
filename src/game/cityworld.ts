@@ -97,6 +97,7 @@ import {
   REPAIR_FLASH,
   CLAIM_HEAT,
   CLAIM_TOUGHNESS,
+  FIELD_SHAKEN_TIME,
   HEAT_LEVEL_COUNT,
   RACE_CHASE_DELAY,
   RACE_CHASE_LEVEL,
@@ -125,7 +126,7 @@ import { RepLedger, racePurse } from './rep';
 import { Collectibles } from './collectibles';
 import { Garage } from './garage';
 import { CARS, STARTER_CAR, colourName, type CarProfile } from './cars';
-import { CityRace } from './cityrace';
+import { CityRace, type RaceRival } from './cityrace';
 import { CityAmbush } from './cityambush';
 import { CityClaim } from './cityclaim';
 import { Radio } from './radio';
@@ -265,6 +266,12 @@ export interface CityWorldOptions {
   traffic?: boolean;
   /** Run the police pursuit (default true). */
   police?: boolean;
+  /**
+   * The race field as bodies you can hit (default true, #350). Off only for
+   * `citylap`'s ladder table, which balances the field's pace along its line:
+   * its driver cannot overtake, so with bodies it measures a queue, not a race.
+   */
+  fieldBodies?: boolean;
 }
 
 /**
@@ -523,6 +530,8 @@ export class CityWorld {
   private sinceSave = 0;
   private savedAt = 0;
   private readonly withTraffic: boolean;
+  /** Whether the race field can be hit (#350); see `CityWorldOptions`. */
+  readonly fieldBodies: boolean;
   private readonly withPolice: boolean;
   private bustHold = 0;
   /** Where the car last put real ground behind it, for the stuck clock (#179). */
@@ -551,6 +560,7 @@ export class CityWorld {
     // ground against it for four minutes.
     if (!this.withTraffic) this.trucks.cars.length = 0;
     this.withPolice = options.police ?? true;
+    this.fieldBodies = options.fieldBodies ?? true;
     this.collectibles = new Collectibles(city);
     this.finds = new Garage(city);
     this.claim = new CityClaim(city, this.grid);
@@ -1209,6 +1219,11 @@ export class CityWorld {
     // are this step rather than where they were before one of them drove off.
     this.contacts();
     this.race.update(dt, this, this.maxSpeed);
+    // The field's height, from the ground it is on: a body has to be at the
+    // height it is drawn and hit at (#350).
+    for (const car of this.race.field) {
+      if (!car.out) car.y = surfaceAt(this.city, this.grid, car.x, car.z, car.y || this.y).y;
+    }
     if (this.race.justFinished) this.settleRace();
     this.runnerMeetsPolice();
     this.claim.update(dt, this, this.maxSpeed);
@@ -1309,8 +1324,10 @@ export class CityWorld {
     if (this.race.won) {
       this.rep.award('raceWin', 1, purse[0] / REP_RACE_WIN);
       // Winning the race is the first half (#66). They run, and the ladder
-      // does not move until the car is actually taken off them.
-      if (rival) this.startClaim(rival);
+      // does not move until the car is actually taken off them - unless it
+      // was taken off them in the race (#350), and there is nothing to run in.
+      if (rival && this.race.tookOut) this.claimCar(rival);
+      else if (rival) this.startClaim(rival);
     } else if (paid !== undefined && place !== null) {
       this.rep.award('racePlace', 1, paid / REP_RACE_WIN, `${ORDINAL[place]} PLACE`);
     } else {
@@ -1336,7 +1353,11 @@ export class CityWorld {
   private settleClaim(): void {
     const rival = this.claim.rival;
     if (this.claim.state !== 'won' || !rival) return;
+    this.claimCar(rival);
+  }
 
+  /** The car is yours and the ladder moves: the end of a ladder fight. */
+  private claimCar(rival: Rival): void {
     this.beaten = Math.min(RIVALS.length, this.beaten + 1);
     this.rep.award('claim', this.level);
     this.finds.claim(rival.carId);
@@ -1745,6 +1766,28 @@ export class CityWorld {
       return;
     }
 
+    // The race field (#350): bodies now, not ghosts on a line. A hit is priced
+    // through `impact.ts` like any other, against a ladder car's toughness,
+    // with a share back to you; theirs loses pace for a moment and is shoved
+    // on along its line, so the two separate as a shunted car does.
+    for (const car of this.fieldBodies ? this.race.field : []) {
+      if (car.out || !touching(this, car)) continue;
+      // Only a car you drove into. They run a fixed line and cannot steer
+      // round you, so one catching you from behind - the whole grid, at the
+      // start - passes as it always has rather than shunting you off yours.
+      if (!this.droveInto(car)) continue;
+      const body = { ...car, road: this.onRoad ?? this.city.roads[0], t: 0, forward: true };
+      const hurt = impactDamage(this, body, this.maxSpeed, this.grid, CLAIM_TOUGHNESS);
+      this.speed *= SHUNT_SPEED_KEPT;
+      this.takeDamage(impactDamage(this, body, this.maxSpeed, null, CLAIM_TOUGHNESS) * DAMAGE_SHARE);
+      this.crashFlash = 1;
+      car.damage = Math.min(1, car.damage + hurt);
+      car.shaken = FIELD_SHAKEN_TIME;
+      car.dist += CAR_RADIUS * 2;
+      if (car.damage >= WRECKED) this.takeDownRival(car);
+      return;
+    }
+
     for (const car of this.traffic.cars) {
       if (!touching(this, car)) continue;
       const hurt = impactDamage(this, car, this.maxSpeed, this.grid);
@@ -1939,6 +1982,35 @@ export class CityWorld {
     car.damage = Math.min(1, car.damage + damage);
     car.speed *= 0.4;
     car.t = Math.min(1, car.t + (CAR_RADIUS * 2) / Math.max(1, car.road.length));
+  }
+
+  /**
+   * A car in the race field taken down (#350): the reference's SLAM TAKEDOWN.
+   * It pays and gets the cut like a police takedown, because it is one you
+   * did on purpose, and it leaves the race. If it was the rival being
+   * challenged, the race is won there and then - and their car is wrecked, so
+   * there is no running for it: it is claimed on the spot.
+   */
+  private takeDownRival(car: RaceRival): void {
+    this.wrecks.push({
+      x: car.x,
+      y: car.y,
+      z: car.z,
+      heading: car.heading,
+      colour: car.rival.color,
+      scale: 1,
+      police: false,
+      roll: this.rng.range(-0.5, 0.5),
+      age: 0,
+    });
+    this.takedowns++;
+    this.rep.award('takedown', this.level);
+    this.takedownFlash = TAKEDOWN_FLASH;
+    this.lastTakedown = { x: car.x, y: car.y, z: car.z };
+    this.race.takeDown(car);
+    // Settled here rather than left to `justFinished`: the race's own update,
+    // which runs after the contacts, clears it before anything reads it.
+    if (this.race.justFinished) this.settleRace();
   }
 
   /**

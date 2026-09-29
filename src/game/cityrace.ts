@@ -4,6 +4,7 @@ import {
   CITY_RESULT_HOLD,
   RIVAL_BASE_SPEED_FRAC,
   RIVAL_DIFF_SPEED_FRAC,
+  FIELD_SHAKEN_PACE,
   FIELD_SIZE,
   FIELD_SPREAD,
   FIELD_GRID,
@@ -61,6 +62,18 @@ export interface RaceRival {
   lane: number;
   /** How far back its row of the grid sits. Drawing only (#217). */
   back: number;
+  /**
+   * A body as well as a position (#350): the height the world puts it at, the
+   * pace it is doing, how beaten up it is, and whether it has been taken out
+   * of the race. It still runs the route at its tuned pace - its difficulty
+   * stays a number - but you can hit it.
+   */
+  y: number;
+  speed: number;
+  damage: number;
+  out: boolean;
+  /** Seconds of lost pace left from being hit. */
+  shaken: number;
 }
 
 /**
@@ -109,6 +122,8 @@ export class CityRace {
   won = false;
   /** Seconds the result banner has left. */
   resultHold = 0;
+  /** True once the challenged rival has been taken down in the race (#350). */
+  tookOut = false;
   /** True on the step a race finishes, so the world can pay for it once. */
   justFinished = false;
 
@@ -128,7 +143,8 @@ export class CityRace {
 
   /** Where you are running, 1 for the lead. */
   get position(): number {
-    return 1 + this.field.reduce((n, car) => n + (car.dist > this.playerDist ? 1 : 0), 0);
+    // A car taken out is out of the finishing order (#350).
+    return 1 + this.field.reduce((n, car) => n + (!car.out && car.dist > this.playerDist ? 1 : 0), 0);
   }
 
   /**
@@ -199,6 +215,7 @@ export class CityRace {
     this.playerDist = 0;
     this.won = false;
     this.justFinished = false;
+    this.tookOut = false;
     this.elapsed = 0;
 
     this.field.length = 0;
@@ -221,6 +238,11 @@ export class CityRace {
         // than the road (#217).
         lane: (i % 2 === 0 ? -1 : 1) * FIELD_LANE,
         back: Math.floor(i / 2) * FIELD_GRID,
+        y: 0,
+        speed: 0,
+        damage: 0,
+        out: false,
+        shaken: 0,
       });
     }
   }
@@ -265,7 +287,21 @@ export class CityRace {
     }
     // A circuit is over once the whole field has finished, which is you last.
     // A speed run has nobody to lose to, so it runs until you finish it.
-    if (!this.isSpeedRun && this.field.every((car) => car.dist >= finishLine)) this.finish(false);
+    if (!this.isSpeedRun && this.field.every((car) => car.out || car.dist >= finishLine)) this.finish(false);
+  }
+
+  /**
+   * A car in the field taken down (#350). It stops where it is and drops out
+   * of the finishing order. The rival being challenged is the one that
+   * matters: take them out and the race is won, which is a legitimate way to
+   * win it, as it is in the reference game.
+   */
+  takeDown(car: RaceRival): void {
+    if (car.out || this.state !== 'racing') return;
+    car.out = true;
+    car.speed = 0;
+    this.tookOut = car.rival.name === this.challenge?.name;
+    if (this.tookOut) this.finish(true);
   }
 
   /** Gates passed, plus how far it is to the next one. */
@@ -292,10 +328,15 @@ export class CityRace {
   }
 
   private advanceRival(route: CityRoute, car: RaceRival, dt: number, maxSpeed: number): void {
+    if (car.out) return;
     const base = maxSpeed * (RIVAL_BASE_SPEED_FRAC + car.rival.difficulty * RIVAL_DIFF_SPEED_FRAC);
     // Wandering pace, so positions actually change: without it every place is
     // settled in the first corner and the rest of the race is a procession.
-    const pace = base * (1 + FIELD_WOBBLE * Math.sin(this.elapsed * car.rate + car.phase));
+    // And less of it for a moment after being hit (#350).
+    car.shaken = Math.max(0, car.shaken - dt);
+    const pace =
+      base * (1 + FIELD_WOBBLE * Math.sin(this.elapsed * car.rate + car.phase)) * (car.shaken > 0 ? FIELD_SHAKEN_PACE : 1);
+    car.speed = pace;
     const was = { x: car.x, z: car.z };
     car.dist += pace * dt;
 
