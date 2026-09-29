@@ -37,25 +37,35 @@ export interface CarEvent {
 }
 
 /**
- * Names, by the route they run. Content, like the Rep table: which car gets
- * which is the car's place in `CARS`, so a car's list reads the same every
- * time and two cars on one route are two different events.
+ * Names, by the route they run. Content, like the Rep table. A name is a word
+ * about the route and a word about the drive, so every car on a route gets
+ * its own - six by eight is forty-eight, which covers the roster (#434), and
+ * two cars on one route are two different events rather than the same name
+ * seven cars apart. Which car gets which is its place in `CARS`, so a car's
+ * list reads the same every time.
  */
-const EVENT_NAMES: Record<string, string[]> = {
-  'Marrow Field Run': ['Runway Clear', 'Tailwind', 'Crosswind', 'Last Call', 'Wheels Up', 'Holding Pattern'],
-  'Halloway Rim': ['Rim Shot', 'Quarry Lines', 'Dust Circle', 'Edge Work', 'Blast Radius', 'Overburden'],
-  'Halloway Drop': ['Down the Hole', 'Loose Gravel', 'Haul Day', 'Spiral Staircase', 'Pit Stop', 'Bedrock'],
+const ROUTE_WORDS: Record<string, string[]> = {
+  'Marrow Field Run': ['Runway', 'Hangar', 'Tailwind', 'Crosswind', 'Apron', 'Control'],
+  'Halloway Rim': ['Rim', 'Quarry', 'Dust', 'Edge', 'Blast', 'Bench'],
+  'Halloway Drop': ['Haul', 'Spiral', 'Gravel', 'Pit', 'Bedrock', 'Tipper'],
 };
+const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
+
+function eventName(route: CityRoute, index: number): string {
+  const words = ROUTE_WORDS[route.name];
+  if (!words) return route.name;
+  const n = index % (words.length * DRIVE_WORDS.length);
+  return `${words[n % words.length]} ${DRIVE_WORDS[Math.floor(n / words.length)]}`;
+}
 
 /** The events the car has, in the order its list shows them. */
 export function eventsFor(car: CarProfile, routes: CityRoute[]): CarEvent[] {
   const index = Math.max(0, CARS.findIndex((c) => c.id === car.id));
   return routes.slice(0, CAR_EVENTS_MAX).map((route) => {
-    const names = EVENT_NAMES[route.name];
     const base = route.difficulty ?? ORDINARY_RACE_DIFFICULTY;
     return {
       id: `${car.id}:${route.name}`,
-      name: names ? names[index % names.length] : route.name,
+      name: eventName(route, index),
       route,
       difficulty: Math.max(0.1, Math.min(0.9, base + (car.topSpeed - 1) * EVENT_DIFFICULTY_PER_TOP_SPEED)),
     };

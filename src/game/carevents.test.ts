@@ -23,6 +23,15 @@ describe('events per car', () => {
     expect(a.id).not.toBe(b.id);
   });
 
+  // Every car, not only the first two: a small pool repeated every few cars
+  // was the same name on the same route for cars seven apart.
+  it('gives every car its own name on each route', () => {
+    for (const route of routes) {
+      const names = CARS.map((car) => eventsFor(car, routes).find((e) => e.route === route)!.name);
+      expect(new Set(names).size).toBe(CARS.length);
+    }
+  });
+
   it('puts a faster car against a faster field', () => {
     const quickest = CARS.reduce((best, car) => (car.topSpeed > best.topSpeed ? car : best));
     const mine = eventsFor(STARTER_CAR, routes);
