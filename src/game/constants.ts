@@ -1666,6 +1666,16 @@ export const CHASE_BACK = m(15);
 export const CHASE_HEIGHT = m(6);
 /** How quickly the camera catches up. Lower lags more, which reads as weight. */
 export const CHASE_LAG = 5;
+/**
+ * The lines on the road along the route ahead (#443): how far ahead they run,
+ * how finely they are sampled, how far apart the pair are (a lane either side
+ * of the line, so the car drives between them) and how wide each is. The
+ * reference draws two, glowing, on the tarmac during a race.
+ */
+export const GUIDE_AHEAD = m(320);
+export const GUIDE_STEP = m(6);
+export const GUIDE_HALF = m(3.2);
+export const GUIDE_WIDTH = m(0.5);
 export const CHASE_FOV = 58;
 export const CHASE_FOV_FAST = 74;
 

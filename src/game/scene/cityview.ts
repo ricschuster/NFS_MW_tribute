@@ -15,6 +15,7 @@ import { daylightAt } from './daylight';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { CityTrucks } from './trucks';
+import { RouteLines } from './routelines';
 import { carById, type CarBody } from '../cars';
 import type { CityWorld, InputState } from '../cityworld';
 import {
@@ -155,6 +156,8 @@ export class CityView {
   private readonly rivalCars: CarPool;
   /** The next gate, as a pair of posts. Reused: there is only ever one. */
   private readonly gate = makeGate();
+  /** The route ahead, on the road (#443). */
+  private readonly routeLines = new RouteLines();
   /** How beaten up the mesh is currently painted, so a frame is not a repaint. */
   private wearingDamage = -1;
   /** Spike strips, reused frame to frame: they come and go with the pursuit. */
@@ -252,6 +255,7 @@ export class CityView {
     this.rivalCars = new CarPool(this.scene);
     this.gate.visible = false;
     this.scene.add(this.gate);
+    this.scene.add(this.routeLines.mesh);
     // Honour the same preference the Canvas game does: no orbit, no cuts, no
     // shake, just a camera behind the car.
     this.director = new CameraDirector(
@@ -738,6 +742,7 @@ export class CityView {
     // The gate stands at the next checkpoint, so the route is something you
     // drive at rather than something you read off the minimap (#70).
     const gate = world.race.target;
+    this.routeLines.update(world);
     this.gate.visible = gate !== null;
     if (gate) {
       this.gate.position.set(gate.x, world.y, gate.z);
