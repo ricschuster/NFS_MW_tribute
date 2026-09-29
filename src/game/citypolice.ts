@@ -61,6 +61,10 @@ import {
   PATROL_SPAWN_MIN,
   COP_LEASH,
   COP_OFF_ROAD,
+  COP_PASSED,
+  COP_HOLD_RANGE,
+  COP_HOLD_PACE,
+  COP_TURN_KEPT,
   PATROL_PACE,
   type CopKind,
 } from './constants';
@@ -389,6 +393,10 @@ export class CityPolice {
       // An Enforcer aims at the line you are on rather than sitting in the
       // lane beside it. Everything else keeps right, so oncoming traffic and
       // oncoming police pass on the correct side.
+      // Past you, and not an Enforcer, whose whole job is to come at you head
+      // on (#422). Only while it can see you: in a search it is going where it
+      // was sent, not after a car.
+      if (cop.role === 'chase' && this.state === 'pursuit' && cop.offRoad === 0) this.holdAhead(cop, player);
       // Off the road after you, if that is where you went (#220).
       if (this.cutsCorner(cop, player, dt)) continue;
 
@@ -1337,6 +1345,25 @@ export class CityPolice {
     const offset = (player.x - centreX) * -heading.z + (player.z - centreZ) * heading.x;
     const limit = cop.road.width / 2;
     return Math.max(-limit, Math.min(limit, offset));
+  }
+
+  /**
+   * A unit that has got ahead of the car it is chasing holds station, or turns
+   * round if the car has gone the other way (#422). `COP_PASSED` has the
+   * reasoning.
+   */
+  private holdAhead(cop: Cop, player: Chased): void {
+    const way = directionOf(this.city, cop);
+    const ahead = (cop.x - player.x) * way.x + (cop.z - player.z) * way.z;
+    if (ahead < COP_PASSED) return;
+    const same = Math.sin(player.heading) * way.x + Math.cos(player.heading) * way.z;
+    if (same > 0.3 && ahead < COP_HOLD_RANGE) {
+      cop.speed = Math.min(cop.speed, Math.abs(player.speed) * COP_HOLD_PACE);
+      return;
+    }
+    cop.forward = !cop.forward;
+    cop.t = 1 - cop.t;
+    cop.speed *= COP_TURN_KEPT;
   }
 
   private gapTo(cop: Cop, player: Chased): number {
