@@ -2657,6 +2657,18 @@ export const WHEEL_ENTRIES = 9;
  * than a convenience.
  */
 export const GATE_COUNT = 40;
+/**
+ * Where a gate goes (#361): the mouth of a shortcut. Two roads pass between
+ * `GATE_GAP_MIN` (kerb to kerb) and `GATE_GAP_MAX` apart across dry, unbuilt
+ * ground no steeper than `GATE_GRADE`, and the way round by road is at least
+ * `GATE_DETOUR` times as far. Roads are sampled every `GATE_SAMPLE` to find
+ * them. `breakables.ts` has the reasoning.
+ */
+export const GATE_GAP_MIN = m(12);
+export const GATE_GAP_MAX = m(90);
+export const GATE_GRADE = 0.2;
+export const GATE_DETOUR = 3;
+export const GATE_SAMPLE = m(40);
 export const STACK_COUNT = 60;
 /** Kept apart, so a corner is not four of them. */
 export const BREAKER_SPACING = m(160);

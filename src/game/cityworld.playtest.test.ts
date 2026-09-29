@@ -348,11 +348,14 @@ describe('a car in Kestrel Bay', () => {
   // Open ground is drivable but slow. That is what makes cutting across a
   // block a decision rather than either a wall or a free shortcut.
   it('runs slower off the road than on it', () => {
-    // Short enough to still be on the street it started on: held longer the
-    // car reaches a junction, hits something and bounces into reverse, which
-    // makes it a slower baseline than the off-road car it is meant to beat.
+    // Five seconds: long enough for the off-road cap to bite, which at three
+    // it did not once acceleration was made gradual (#365) - the test passed
+    // only because the off-road car happened to hit a breakable, and failed
+    // when #361 moved the stacks. Short enough to still be on the street it
+    // started on: held much longer the car reaches a junction and hits
+    // something, a slower baseline than the off-road car it is meant to beat.
     const onRoad = new CityWorld(undefined, { traffic: false, police: false });
-    drive(onRoad, 3, press({ up: true }));
+    drive(onRoad, 5, press({ up: true }));
     expect(onRoad.onRoad).not.toBeNull();
 
     // Stood in the middle of an open block, so this is a test of open ground
@@ -364,7 +367,7 @@ describe('a car in Kestrel Bay', () => {
       offRoad.x = (open.bounds.minX + open.bounds.maxX) / 2;
       offRoad.z = (open.bounds.minZ + open.bounds.maxZ) / 2;
     }
-    drive(offRoad, 3, press({ up: true }));
+    drive(offRoad, 5, press({ up: true }));
 
     expect(offRoad.speed).toBeLessThan(onRoad.speed);
   });
