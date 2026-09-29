@@ -99,8 +99,8 @@ export const NITRO_FROM_ONCOMING = 0.22;
 export const NITRO_FROM_SLIPSTREAM = 0.18;
 /**
  * Drifting (#351): the fifth nitrous source, and the slip model it needs.
- * **Off** (`DRIFT_ENABLED`) until the owner has driven it: it changes how every
- * car turns, which is a handling decision and not a tidy-up.
+ * On since the owner drove it; it changes how every car turns, so switching
+ * it off (`DRIFT_ENABLED`) is a handling decision and not a tidy-up.
  *
  * The reference's rule is "tap brake to drift". With it on, a tap of the brake
  * while steering above `DRIFT_MIN_SPEED` of top starts one: the car turns
@@ -110,7 +110,7 @@ export const NITRO_FROM_SLIPSTREAM = 0.18;
  * radian per second. Letting go of the steering straightens it. Above
  * `DRIFT_MIN_SLIP` the slide fills the bar at `NITRO_FROM_DRIFT` a second.
  */
-export const DRIFT_ENABLED = false;
+export const DRIFT_ENABLED = true;
 export const DRIFT_MIN_SPEED = 0.35;
 export const DRIFT_YAW = 1.7;
 export const DRIFT_CATCH = 1.1;

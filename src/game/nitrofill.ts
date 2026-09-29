@@ -12,7 +12,7 @@ import type { Vec2 } from './city/types';
  *
  * Drifting is the reference's fifth source. It needed a slip model first,
  * since velocity always resolved along the heading (#82); `CityWorld.travel`
- * is that model, and it is off behind `DRIFT_ENABLED` until it has been driven.
+ * is that model, switched by `DRIFT_ENABLED`.
  */
 export type NitroSource = 'nearMiss' | 'oncoming' | 'air' | 'slipstream' | 'drift';
 
