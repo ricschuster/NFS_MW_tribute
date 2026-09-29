@@ -4262,3 +4262,68 @@ describe('a ladder race and the police', () => {
     expect(world.race.state).toBe('idle');
   });
 });
+
+// The rival you are running down meets the police too (#341): their
+// roadblocks and spike strips are across its road as much as yours.
+describe('a runner and the police', () => {
+  const running = () => {
+    const world = new CityWorld(undefined, { traffic: false, police: false });
+    expect(world.claim.begin(RIVALS[0], world)).toBe(true);
+    world.step(STEP, NONE);
+    return { world, runner: world.claim.runner! };
+  };
+  /** A barrier straight across the runner's road, where it is now. */
+  const blockOn = (world: CityWorld, runner: NonNullable<CityWorld['claim']['runner']>) => {
+    const block = {
+      road: runner.road,
+      x: runner.x,
+      z: runner.z,
+      y: runner.y,
+      ax: Math.cos(runner.heading),
+      az: -Math.sin(runner.heading),
+      half: runner.road.width,
+      gap: null,
+      cars: [],
+    };
+    world.police.roadblocks.push(block);
+    return block;
+  };
+
+  it('is damaged going through a roadblock, and the roadblock is breached', () => {
+    const { world, runner } = running();
+    blockOn(world, runner);
+    world.step(STEP, NONE);
+    expect(runner.damage).toBeGreaterThan(0.2);
+    expect(world.police.roadblocks).toHaveLength(0);
+    expect(world.claim.state).toBe('running');
+  });
+
+  it('is wrecked by one if it is already beaten up, and that is the car claimed', () => {
+    const { world, runner } = running();
+    runner.damage = 0.8;
+    blockOn(world, runner);
+    drive(world, 0.1, NONE);
+    expect(world.claim.state).toBe('won');
+    expect(world.beaten).toBe(1);
+  });
+
+  it('runs on flat tyres after a spike strip', () => {
+    const { world, runner } = running();
+    world.police.spikes.push({
+      road: runner.road,
+      x: runner.x,
+      z: runner.z,
+      y: runner.y,
+      ax: Math.cos(runner.heading),
+      az: -Math.sin(runner.heading),
+      from: -runner.road.width,
+      to: runner.road.width,
+    });
+    const before = runner.speed;
+    world.step(STEP, NONE);
+    world.step(STEP, NONE);
+    expect(runner.shredded).toBeGreaterThan(0);
+    expect(runner.speed).toBeLessThan(before * 0.5);
+    expect(world.police.spikes).toHaveLength(0);
+  });
+});

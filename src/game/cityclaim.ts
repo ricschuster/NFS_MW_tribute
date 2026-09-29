@@ -6,6 +6,7 @@ import {
   CLAIM_RESULT_HOLD,
   TRAFFIC_LANE,
   CAR_RADIUS,
+  SHRED_SPEED_FRAC,
 } from './constants';
 import { advanceAlong, exitsFrom, placeOnRoad, type GraphCar } from './graphcar';
 import { impactDamage, touching, WRECKED } from './impact';
@@ -32,6 +33,8 @@ export type ClaimState = 'idle' | 'running' | 'won' | 'lost';
 
 export interface Runner extends GraphCar {
   rival: Rival;
+  /** Seconds left on flat tyres from a spike strip it ran over (#341). */
+  shredded: number;
 }
 
 export class CityClaim {
@@ -75,6 +78,7 @@ export class CityClaim {
       forward: true,
       speed: 0,
       damage: 0,
+      shredded: 0,
       x: 0,
       z: 0,
       y: 0,
@@ -121,7 +125,9 @@ export class CityClaim {
     if (this.state !== 'running' || !this.runner) return;
 
     const runner = this.runner;
-    runner.speed = maxSpeed * CLAIM_SPEED;
+    // On flat tyres from a spike strip, as slow as you would be on them (#341).
+    runner.shredded = Math.max(0, runner.shredded - dt);
+    runner.speed = maxSpeed * CLAIM_SPEED * (runner.shredded > 0 ? SHRED_SPEED_FRAC : 1);
     advanceAlong(this.city, runner, dt, (car, node) => this.away(car, node, player), TRAFFIC_LANE);
 
     const gap = Math.hypot(runner.x - player.x, runner.z - player.z);
