@@ -83,7 +83,7 @@ Measured on `CITY_SEED` on 2026-09-18 (Halloway Quarry, 2026-09-19). Areas are t
 |---|---|---|---|---|---|---|---|---|---|
 | Marrow Field | airfield | ✓ | n/a | ✓ hangar | ✓ dirt, decay | ✓ 108 placed | ✓ Marrow Field Run, jumps, gates, billboards | ✓ | **Done** |
 | Ashford Point | waterfront | ◐ 7 of 40 houses have no road (#293, parked) | ✓ driveways (#268 pilot) | ✓ 40 houses | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | In progress |
-| Halloway Quarry | quarry | ✓ connected, no orphans (#323) | n/a | ✓ plant and shed on the floor, yard on the rim | ✓ gravel roads, no lamps or public traffic (#327), rock and dust (#328), ponds (#329), haul trucks (#330) | ◐ 89 placed, in the editor | ◐ the Halloway Rim circuit and its Crest Kicker jump; collectibles, breakables and a gate; the descent sprint is #397 | ✗ | In progress |
+| Halloway Quarry | quarry | ✓ connected, no orphans (#323) | n/a | ✓ plant and shed on the floor, yard on the rim | ✓ gravel roads, no lamps or public traffic (#327), rock and dust (#328), ponds (#329), haul trucks (#330) | ◐ 89 placed, in the editor | ✓ the Halloway Rim circuit and its Crest Kicker jump, the Halloway Drop sprint down the haul road (#397, 67% of top on `citylap`); collectibles, breakables and a gate | ✗ | In progress |
 | Sablet Wharf | docks | ✓ connected; a peninsula with one way in (a bridge), three dead ends, the south half and west shore unroaded (#410) | n/a | ✗ | ✗ | ✗ | ◐ collectibles and breakables, no event | ✗ | In progress |
 | Kestrel Head | lookout | ✗ | n/a | ✗ | ✗ | ✗ | ✗ (0.2 km of road) | ✗ | Not started |
 | Highmoor Park | park | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Not started |

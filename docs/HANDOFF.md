@@ -11,6 +11,33 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   the editor and in `freeway.test.ts` alike. The rolled spurs are off
   (`FREEWAY_SPURS = 0`): nobody drew them, and one ran through the quarry.
   Next is "Where the work is" below.
+- **What 2026-09-29 changed** (the owner played two ladder races, answered a
+  round of questions, then left the rest to run on its own; every PR merged):
+  - **Races:** the field leaves you the middle of the road (#418); start
+    lines are ordinary races and each rival races you from a line of their
+    own once the Rep allows, Vex at 1,500 (#419, #421); roadblocks go on the
+    race route in a rival race (#340); a flyover of the course before a
+    circuit (#359); a new event type, the **sprint**, and the first one, the
+    Halloway Drop down the quarry's haul road (#397); **events per car**, with
+    `docs/design/02` decided (M12).
+  - **The Quick Menu** (#420): laid out and driven like the reference's
+    in-drive menu, on I J K L; jump to a parked car you have found (#352).
+    The reference's name for its menu ships nowhere.
+  - **Police:** a unit that gets past you holds station or turns round
+    (#422). **`npm run endings` reads heat 6 as busted every time for its
+    driver** (half before): its driver never overtakes and follows any car in
+    its line. Worth a feel at heat 5-6.
+  - **Also:** story captions (#362); gates guard real shortcuts (#361);
+    `mapfit` measures relief on the road, 1.5 crests per km today (#368's
+    measure; the undulation itself is map work for the review loop).
+  - **Calls made for the owner, each said in its PR:** the trucks stand aside
+    during the Drop; the flyover is 12 s and circuits only; a held unit
+    matches your speed rather than slowing you; event difficulty is the
+    route's plus 1.5 times the car's top-speed margin; event names.
+  - **Waiting on the owner:** Sablet Wharf (#410, decided: container port,
+    a jump out, a full quay loop) and #368's hill roads are map work for the
+    editor and screenshot loop; #351's drifting needs a slip model; the
+    quarry's props edits and sign-off (#323).
 - **What 2026-09-28 changed after that**, the owner away and every PR merged
   on its own: M10 is done (#342 minimap sight rim, #356 banners, #355 heat
   falling in a search, #354 results card, #339 radio names the car and knows
