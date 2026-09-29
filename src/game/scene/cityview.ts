@@ -687,7 +687,9 @@ export class CityView {
     this.rivalCars.begin();
     if (world.race.state !== 'idle') {
       for (const racer of world.race.field) {
-        this.rivalCars.place(racer.x, world.y, racer.z, racer.rival.color, 1).rotation.y =
+        // A car taken out is its wreck now (#350), and the wreck is drawn.
+        if (racer.out) continue;
+        this.rivalCars.place(racer.x, racer.y, racer.z, racer.rival.color, 1).rotation.y =
           racer.heading;
       }
     }

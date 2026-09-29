@@ -645,6 +645,7 @@ export class Hud {
     // The cars you are racing, which is the single most useful thing to know
     // while racing them and appeared on neither map (#217).
     for (const car of world.race.field) {
+      if (car.out) continue;
       const rx = toMap(car, world).x * scale;
       const rz = toMap(car, world).y * scale;
       if (Math.hypot(rx, rz) > radius) continue;
@@ -1572,6 +1573,7 @@ export class Hud {
     // can share white with the things that are always there: for the two
     // minutes these exist, a white dot on the map is a car you are racing.
     for (const car of world.race.field) {
+      if (car.out) continue;
       ctx.beginPath();
       ctx.arc(px(car.x), py(car.z), 4, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';

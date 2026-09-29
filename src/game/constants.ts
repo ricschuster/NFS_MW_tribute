@@ -2330,6 +2330,13 @@ export const FIELD_SIZE = 6;
  */
 export const FIELD_SPREAD = 0.07;
 /**
+ * A rival that has been hit (#350) runs at this share of its pace for
+ * `FIELD_SHAKEN_TIME`: contact shunts both cars, and theirs loses ground the
+ * way yours loses speed. Its difficulty is still the number it was.
+ */
+export const FIELD_SHAKEN_PACE = 0.5;
+export const FIELD_SHAKEN_TIME = 1.5;
+/**
  * How much a car's pace wanders over the race.
  *
  * Without it every position is settled in the first corner and the rest of the

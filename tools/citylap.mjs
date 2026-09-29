@@ -203,8 +203,10 @@ if (!proving) {
    */
   function race(rival, index, boost) {
     // With traffic, because that is what a race is: nothing turns it off, and
-    // the empty-road number describes a game nobody plays (#171).
-    const world = new CityWorld(undefined, { traffic: true, police: false });
+    // the empty-road number describes a game nobody plays (#171). The field as
+    // ghosts, though (#350): this table balances their pace along the line,
+    // and a driver that cannot overtake a body would be measuring a queue.
+    const world = new CityWorld(undefined, { traffic: true, police: false, fieldBodies: false });
     // Standing at the front of the ladder with the Rep to be taken seriously.
     world.beaten = index;
     world.rep.total = Math.max(world.rep.total, rival.rep);
