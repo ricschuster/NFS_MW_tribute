@@ -718,18 +718,12 @@ describe('the police', () => {
   // drove straight through and away, and the bust timer was reset by their own
   // cars sailing past the suspect. Now they arrive and stop (#178).
   //
-  // Skipped on a real finding rather than a shrug: on the pinned city today
-  // the nearest cop closes to a stable 50-52 m from the stationary car and
-  // then holds there indefinitely - checked out to 180 s, not just this
-  // test's 60 - never reaching `CITY_BUST_DISTANCE` (11 m) and never letting
-  // the pursuit clear either. That is inside `COP_LEASH` (70 m), which is
-  // the off-road "drive straight at them" reach, so this smells like
-  // navigation stalling at a junction near the target rather than covering
-  // the last stretch to the target's actual position - but that is a
-  // hypothesis, not a diagnosis, and this wants real investigation in
-  // `citypolice.ts`/`graphcar.ts` rather than a change made under time
-  // pressure to a mechanism this codebase depends on ending every pursuit.
-  it.skip('closes on a car that is standing still, and ends it', () => {
+  // It was skipped for a while on a real finding: the nearest cop closed to a
+  // stable 50-52 m and held there, inside `COP_LEASH`, never reaching
+  // `CITY_BUST_DISTANCE`. That was #389 - a unit that stepped off the road
+  // rejoined it the next step, so the last stretch to a car parked beside a
+  // boulevard was never covered - and with that fixed this passes again.
+  it('closes on a car that is standing still, and ends it', () => {
     const world = provoke(new CityWorld(undefined, { traffic: false }));
     expect(world.police.pursuers).toBeGreaterThan(0);
 
@@ -2773,16 +2767,23 @@ describe('damage', () => {
     expect(turn(1)).toBeLessThan(turn(0));
   });
 
-  // The same fragility `npm run pace` hit: driving straight with no
-  // steering from the downtown spawn used to mean an empty arterial and now
-  // means running into the organic network's first bend or junction within
-  // a few seconds, which caps the speed this measures regardless of damage.
-  // Not a damage regression - a probe built for a road that is not there any
-  // more.
-  it.skip('never stops the car outright', () => {
+  // On the long boulevard with a running start, so what this measures is
+  // damage and not the spawn's first bend: from the spawn, driving straight
+  // ran into the organic network within seconds whatever the damage.
+  it('never stops the car outright', () => {
     const world = still();
+    const road = world.city.roads.find(
+      (r) => r.class === 'boulevard' && r.surface !== 'dirt' && r.length > 300 * M,
+    )!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    world.x = a.x + (b.x - a.x) * 0.1;
+    world.z = a.z + (b.z - a.z) * 0.1;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.step(STEP, NONE);
     world.damage = 1;
-    drive(world, 6, press({ up: true }));
+    world.speed = world.maxSpeed * 0.3;
+    drive(world, 4, press({ up: true }));
     expect(world.speed).toBeGreaterThan(world.maxSpeed * 0.5);
   });
 });
