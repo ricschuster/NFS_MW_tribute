@@ -26,6 +26,7 @@ const filled = (): Progress => ({
   paint: [['kite', '#3a8fd8']],
   milestones: ['camera-1', 'drove-kite'],
   events: [['kite:Halloway Rim', 2]],
+  story: ['first-find'],
 });
 
 describe('the save format', () => {

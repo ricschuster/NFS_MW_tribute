@@ -46,6 +46,8 @@ export interface Progress {
   milestones: string[];
   /** Car event id to the best place got in it (M12). */
   events: [string, number][];
+  /** The story's moments already told (#362), so none is told twice. */
+  story: string[];
 }
 
 /** A player who has just arrived. */
@@ -64,6 +66,7 @@ export function freshProgress(): Progress {
     paint: [],
     milestones: [],
     events: [],
+    story: [],
   };
 }
 
@@ -136,6 +139,7 @@ export function decodeProgress(raw: string | null): Progress {
             Array.isArray(row) && typeof row[0] === 'string' && typeof row[1] === 'number' && row[1] >= 1,
         )
       : [],
+    story: strings(parsed.story),
   };
 }
 

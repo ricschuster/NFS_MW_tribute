@@ -7,6 +7,7 @@ import {
   ROADBLOCK_MAX_LEAD,
   SHRED_TIME,
   RADIO_HOLD,
+  STORY_HOLD,
   DAMAGE_FREE,
   CLAIM_LOSE_RANGE,
   UNITS_PER_METRE,
@@ -142,6 +143,7 @@ export class Hud {
     this.pursuitCard(world);
     this.collection(world);
     this.radio(world);
+    this.storyCaption(world);
     this.event(world);
     this.stuck(world);
     this.hint(world);
@@ -1438,6 +1440,29 @@ export class Hud {
       ctx.font = '700 12px system-ui, sans-serif';
       ctx.fillText(line, x + 34, ly + 17);
     });
+  }
+
+  /**
+   * The story's line (#362), under the action and over it at once: centred in
+   * the lower third where a subtitle goes, on a band dark enough to read over
+   * a lit street, and faded in and out so it arrives rather than appears.
+   */
+  private storyCaption(world: CityWorld): void {
+    const line = world.story.current;
+    if (!line) return;
+    const { ctx } = this;
+    const fade = Math.min(1, line.left * 1.5, (STORY_HOLD - line.left) * 3);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, fade);
+    ctx.font = 'italic 600 17px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    const width = Math.min(WIDTH - 80, ctx.measureText(line.text).width + 48);
+    const y = HEIGHT - 238;
+    ctx.fillStyle = 'rgba(8, 12, 18, 0.62)';
+    ctx.fillRect(WIDTH / 2 - width / 2, y - 22, width, 32);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(line.text, WIDTH / 2, y);
+    ctx.restore();
   }
 
   /**
