@@ -15,11 +15,12 @@ import {
   TERRAIN_RELIEF,
   TERRAIN_SHORE,
   UNITS_PER_METRE,
+  FIND_KERB_GAP,
 } from '../constants';
 import { makeWater } from './water';
 import { landBodies } from './bodies';
 import { groundAt } from './terrain';
-import { CityGrid, lineBlocked, inWater, surfaceAt } from './grid';
+import { CityGrid, lineBlocked, inWater, surfaceAt, distanceToRoad } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
 import { layRoute, type Span } from './spans';
@@ -1380,7 +1381,13 @@ describe('open land', () => {
     const inside = (r: Rect, x: number, z: number) =>
       x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 
+    // Except on the verge beside a road through one (#434): a car left at the
+    // kerb is parked, where one in the middle of a lawn is litter.
     for (const find of city.finds) {
+      const kerb = city.roads.some(
+        (r) => distanceToRoad(city, r, find.at.x, find.at.z) <= r.width / 2 + FIND_KERB_GAP + UNITS_PER_METRE,
+      );
+      if (kerb) continue;
       expect(parks.some((p) => inside(p.bounds, find.at.x, find.at.z))).toBe(false);
     }
     // Hand-placed ones are exempt (#295): Marrow Field is parkland to the

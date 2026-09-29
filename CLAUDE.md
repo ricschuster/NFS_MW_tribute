@@ -385,7 +385,10 @@ save file mean anything.
 **A car is a set of multipliers, not a set of numbers** (issue #67). Every
 figure in `cars.ts` is written against the reference car, which is what keeps
 the police, the speedometer and the feel work honest across a change of car.
-`cars.ts` and `maxSpeed`'s doc comment in `cityworld.ts` have the reasoning.
+`cars.ts` and `maxSpeed`'s doc comment in `cityworld.ts` have the reasoning. The
+roster (#434) is forty-four cars, each an original stand-in for one in the
+reference game's roster; `docs/research/car-roster.md` has the real figures and
+the one rule that turns them into multipliers, so change the rule, not a car.
 
 **A race is checkpoints for you and a distance for the field** (issues #70,
 #71, #72). `CityRace` scores the player on gates passed in order, because a

@@ -45,7 +45,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 10,
     name: 'Vex',
-    car: 'Tuned Hatch',
+    car: 'Featherweight',
     color: '#4b7bc9',
     difficulty: 0.15,
     rep: 1500,
@@ -55,7 +55,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 9,
     name: 'Cinder',
-    car: 'Hot Coupe',
+    car: 'Old Roadster',
     color: '#d8663a',
     difficulty: 0.24,
     rep: 2000,
@@ -65,7 +65,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 8,
     name: 'Halo',
-    car: 'Street GT',
+    car: 'Black Roadster',
     color: '#d8b23a',
     difficulty: 0.33,
     rep: 5000,
@@ -75,7 +75,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 7,
     name: 'Nyx',
-    car: 'Widebody',
+    car: 'Front-Engined Supercar',
     color: '#3ac9a0',
     difficulty: 0.42,
     rep: 9000,
@@ -85,7 +85,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 6,
     name: 'Rook',
-    car: 'Sport Sedan',
+    car: 'Carbon Coupe',
     color: '#c93a5a',
     difficulty: 0.51,
     rep: 14000,
@@ -95,7 +95,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 5,
     name: 'Blitz',
-    car: 'Turbo Coupe',
+    car: 'Hybrid Hypercar',
     color: '#3a9ec9',
     difficulty: 0.6,
     rep: 20000,
@@ -105,7 +105,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 4,
     name: 'Volt',
-    car: 'Prototype',
+    car: 'Wedge',
     color: '#5ad86a',
     difficulty: 0.69,
     rep: 28000,
@@ -115,7 +115,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 3,
     name: 'Onyx',
-    car: 'Blacked Coupe',
+    car: 'Hypercar',
     color: '#6a6f7a',
     difficulty: 0.78,
     rep: 38000,
@@ -125,7 +125,7 @@ export const RIVALS: Rival[] = [
   {
     rank: 2,
     name: 'Ghost',
-    car: 'Phantom GT',
+    car: 'Winged Hypercar',
     color: '#dcdfe6',
     difficulty: 0.89,
     rep: 50000,

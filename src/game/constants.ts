@@ -2280,6 +2280,8 @@ export const MARKER_REDRAW = 2;
 export const FIND_SPACING = m(900);
 /** How close you have to get. Generous: this is a reward, not a test of aim. */
 export const FIND_RANGE = m(9);
+/** How far off the carriageway a car parked by the road stands (#434). */
+export const FIND_KERB_GAP = m(6);
 /** Rep for finding one. */
 export const REP_STREET_FIND = 800;
 /** Seconds the "you have a new car" banner holds. */
