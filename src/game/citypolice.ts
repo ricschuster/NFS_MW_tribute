@@ -29,6 +29,8 @@ import {
   REFERENCE_TOP_SPEED,
   SURFACE_REACH,
   ROADBLOCK_MIN_LEVEL,
+  RACE_ROADBLOCK_MIN_LEVEL,
+  RACE_ROADBLOCK_BEFORE_GATE,
   ROADBLOCK_MAX,
   ROADBLOCK_INTERVAL,
   ROADBLOCK_LEAD_TIME,
@@ -273,6 +275,17 @@ export class CityPolice {
 
   private sinceSpawn = 0;
   private sinceBlock = 0;
+  /**
+   * The race the pursuit is running through, if it is a rival's (#340): where
+   * its route goes ahead of the car. Set by the world, which knows whether
+   * one is on; `CityRace.roadAhead` has the arguments.
+   */
+  course: ((minLead: number, maxLead: number, lead: number, beforeGate: number) => {
+    x: number;
+    z: number;
+    dx: number;
+    dz: number;
+  } | null) | null = null;
   private sinceEnforcer = 0;
   private sinceSpike = 0;
   private cooldown = 0;
@@ -434,6 +447,9 @@ export class CityPolice {
 
     this.sinceBlock += dt;
     if (this.level < ROADBLOCK_MIN_LEVEL) return;
+    // On a rival's race route, from a higher heat (#340).
+    const racing = this.course !== null && this.course(0, 0, 0, 0) !== null;
+    if (racing && this.level < RACE_ROADBLOCK_MIN_LEVEL) return;
     if (this.roadblocks.length >= ROADBLOCK_MAX) return;
     if (this.sinceBlock < ROADBLOCK_INTERVAL) return;
 
@@ -573,15 +589,57 @@ export class CityPolice {
     return { road: best, x, z, y: this.city.nodes[best.a].y, ax: -dz / length, az: dx / length };
   }
 
+  /**
+   * The road under a spot on the race route (#340), lined up across it. The
+   * route is a polyline through the graph, so the road is the nearest one at
+   * the car's level running the route's way there; the same width rule as any
+   * roadblock, so a narrow stretch of course gets none.
+   */
+  private onRoute(at: { x: number; z: number; dx: number; dz: number }): { road: CityRoad; x: number; z: number; y: number; ax: number; az: number } | null {
+    let best: CityRoad | null = null;
+    let bestGap = Infinity;
+    const ground = groundAt(this.city.terrain, at.x, at.z);
+    for (const road of this.grid.roadsNear(at.x, at.z)) {
+      if (road.width < ROADBLOCK_MIN_WIDTH || road.bridge) continue;
+      // On the ground there, not the deck over it: the route is a surface route.
+      if (Math.abs(this.city.nodes[road.a].y - ground) > SURFACE_REACH) continue;
+      const a = this.city.nodes[road.a].pos;
+      const b = this.city.nodes[road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const length = Math.max(1, Math.hypot(dx, dz));
+      if (Math.abs((dx / length) * at.dx + (dz / length) * at.dz) < ROADBLOCK_ALIGN) continue;
+      const t = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (length * length)));
+      const gap = Math.hypot(a.x + dx * t - at.x, a.z + dz * t - at.z);
+      if (gap < bestGap && gap < road.width) {
+        bestGap = gap;
+        best = road;
+      }
+    }
+    if (!best) return null;
+    const a = this.city.nodes[best.a];
+    const b = this.city.nodes[best.b];
+    const dx = b.pos.x - a.pos.x;
+    const dz = b.pos.z - a.pos.z;
+    const length = Math.max(1, Math.hypot(dx, dz));
+    const t = Math.max(0, Math.min(1, ((at.x - a.pos.x) * dx + (at.z - a.pos.z) * dz) / (length * length)));
+    return {
+      road: best,
+      x: a.pos.x + dx * t,
+      z: a.pos.z + dz * t,
+      y: a.y + (b.y - a.y) * t,
+      ax: -dz / length,
+      az: dx / length,
+    };
+  }
+
   /** Build a barrier on a road wide enough for the gap to be a real choice. */
   private setUp(player: Chased): Roadblock | null {
-    const spot = this.aheadOfThem(
-      player,
-      ROADBLOCK_LEAD_TIME,
-      ROADBLOCK_MIN_LEAD,
-      ROADBLOCK_MAX_LEAD,
-      ROADBLOCK_MIN_WIDTH,
-    );
+    const lead = Math.abs(player.speed) * ROADBLOCK_LEAD_TIME;
+    const onCourse = this.course?.(ROADBLOCK_MIN_LEAD, ROADBLOCK_MAX_LEAD, lead, RACE_ROADBLOCK_BEFORE_GATE) ?? null;
+    const spot = onCourse
+      ? this.onRoute(onCourse)
+      : this.aheadOfThem(player, ROADBLOCK_LEAD_TIME, ROADBLOCK_MIN_LEAD, ROADBLOCK_MAX_LEAD, ROADBLOCK_MIN_WIDTH);
     if (!spot) return null;
 
     for (const other of this.roadblocks) {
@@ -592,7 +650,8 @@ export class CityPolice {
     const chance = ROADBLOCK_GAP_CHANCE - ROADBLOCK_GAP_FALLOFF * (this.level - ROADBLOCK_MIN_LEVEL);
     const half = spot.road.width / 2;
     const room = half - ROADBLOCK_GAP;
-    const gap = room > 0 && this.rng.chance(chance) ? this.rng.range(-room, room) : null;
+    // Always a way through on a race route (#340).
+    const gap = room > 0 && (onCourse || this.rng.chance(chance)) ? this.rng.range(-room, room) : null;
 
     const block: Roadblock = {
       road: spot.road,
