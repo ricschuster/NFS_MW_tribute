@@ -152,7 +152,7 @@ export const CITY_BUTTONS = (): TouchButton[] => [
   { id: 'down', x: WIDTH - 88, y: HEIGHT - 78, r: 50, label: '▮', down: false },
   { id: 'nitro', x: WIDTH - 152, y: HEIGHT - 176, r: 42, label: 'N2O', down: false },
   { id: 'confirm', x: WIDTH / 2, y: HEIGHT - 78, r: 42, label: '⏎', down: false },
-  { id: 'wheel', x: WIDTH - 52, y: HEIGHT - 268, r: 34, label: 'Q', down: false },
+  { id: 'wheel', x: WIDTH - 52, y: HEIGHT - 268, r: 34, label: 'MENU', down: false },
   { id: 'map', x: WIDTH - 52, y: HEIGHT - 196, r: 34, label: 'MAP', down: false },
   // Up the left edge, mirroring the wheel and the map on the right, and low
   // enough to still be a thumb's reach from the steering.

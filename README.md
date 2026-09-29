@@ -14,9 +14,10 @@ the city, the cars, the rivals and every asset in it are its own.
 
 WASD or arrows to drive, **shift** for nitrous, **Enter** to start an event you
 are parked on, **B** to glance behind, **Tab** to hold the collection map open,
-**Q** to hold the Quick Wheel open (**E** switches branch, **1**-**9** picks),
+**I J K L** for the Quick Menu (**L** opens, goes in and selects, **J** backs
+out and closes, **I**/**K** move),
 **M** to mute. On a phone, on-screen controls appear as soon as you touch the
-screen: steering, throttle, brake, nitrous, enter, the map, the Quick Wheel and
+screen: steering, throttle, brake, nitrous, enter, the map, the Quick Menu and
 a glance behind. None of that has to be read here: **Tab** holds the map open,
 and the map carries a legend for every marker and the same list of keys.
 
@@ -41,7 +42,7 @@ searching for you ends the search. The gates and pallet stacks around the city
 come down on whoever is on your bumper. Each of the ten ladder rivals is two
 fights: beat them in the race, then run them down and wreck the car to take it.
 Finishing first or second in a car earns it a part - engine, tyres, gearing,
-aero, each one a trade - and the Quick Wheel changes car, fits parts and sets a
+aero, each one a trade - and the Quick Menu changes car, fits parts and sets a
 destination without ever stopping the world.
 
 The camera opens on a pass around the car, chases it with a field of view that

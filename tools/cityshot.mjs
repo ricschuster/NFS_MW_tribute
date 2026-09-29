@@ -926,13 +926,16 @@ for (const view of VIEWS) {
       world.finds.toggle(world.car.id, 'track-tyres');
       world.drive(world.car);
     });
-    await page.keyboard.down('q');
-    await page.waitForTimeout(1000);
-    // On to the parts branch, which is the new one.
-    await page.keyboard.down('e');
-    await page.waitForTimeout(500);
-    await page.keyboard.up('e');
-    await page.waitForTimeout(900);
+    // Open the Quick Menu, down to CUSTOMIZE CAR and into it (#420): the
+    // parts branch has both states in it, and the fitted panel beside it.
+    for (const key of ['l', 'k', 'l']) {
+      // A frame is about half a second headless, so each press is held for
+      // more than one or its edge can fall between frames.
+      await page.keyboard.down(key);
+      await page.waitForTimeout(1100);
+      await page.keyboard.up(key);
+      await page.waitForTimeout(1100);
+    }
   }
 
   if (view === 'touch') {
@@ -1102,7 +1105,6 @@ for (const view of VIEWS) {
   await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
   if (DRIVING.has(view)) {
     if (view === 'collection') await page.keyboard.up('Tab');
-    if (view === 'wheel') await page.keyboard.up('q');
     await page.keyboard.up('ArrowUp');
     if (view === 'pursuit') await page.keyboard.up('b');
     if (view === 'burnout') await page.keyboard.up('ArrowDown');

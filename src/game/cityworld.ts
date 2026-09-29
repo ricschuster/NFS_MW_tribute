@@ -2443,6 +2443,6 @@ function overStrip(strip: SpikeStrip, car: { x: number; z: number; y: number; sp
 }
 
 /** How hard a route's ordinary race is (#419). */
-function routeDifficulty(route: CityRoute): number {
+export function routeDifficulty(route: CityRoute): number {
   return route.difficulty ?? ORDINARY_RACE_DIFFICULTY;
 }
