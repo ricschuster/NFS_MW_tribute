@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart',
+      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -551,6 +551,39 @@ for (const view of VIEWS) {
       for (let i = 0; i < 60; i++) world.step(1 / 60, none);
     });
     await page.waitForTimeout(600);
+  }
+
+  if (view === 'bodies') {
+    // One parked car of each body style in a row across the road ahead (#434),
+    // so the shapes can be judged side by side.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      for (let i = 0; i < 30; i++) world.step(1 / 60, none);
+      const styles = ['frame', 'roadster', 'hatch', 'coupe', 'wedge', 'saloon', 'suv', 'pickup'];
+      const pick = {
+        frame: 'wisp', roadster: 'tempest', hatch: 'sparrow', coupe: 'harrier',
+        wedge: 'enduro', saloon: 'longhaul', suv: 'bulwark', pickup: 'bighorn',
+      };
+      const fx = Math.sin(world.heading), fz = Math.cos(world.heading);
+      const m = 135;
+      world.city.finds.length = 0;
+      styles.forEach((style, i) => {
+        const across = (i - 3.5) * 9 * m;
+        world.city.finds.push({
+          car: pick[style],
+          at: { x: world.x + fx * 38 * m + fz * across, z: world.z + fz * 38 * m - fx * across },
+          y: world.y,
+          angle: world.heading + Math.PI / 2 + 0.5,
+        });
+      });
+      world.speed = 0;
+      world.crashFlash = 0;
+    });
+    await page.waitForTimeout(1500);
   }
 
   if (view === 'burnout') {

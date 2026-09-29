@@ -20,6 +20,9 @@
  *
  * Names and shapes are original, per the project's non-goals.
  */
+/** The body styles a car can be drawn with (#434). */
+export type CarBody = 'coupe' | 'hatch' | 'saloon' | 'roadster' | 'frame' | 'wedge' | 'suv' | 'pickup';
+
 export interface CarProfile {
   /** Stable across saves: it is what a save file records. */
   id: string;
@@ -35,6 +38,12 @@ export interface CarProfile {
   nitro: number;
   /** How big it is drawn against the reference car. */
   scale: number;
+  /**
+   * The shape it is drawn with (#434): what class of car it stands in for, so
+   * a pickup reads as a pickup and a featherweight as a frame with wheels on.
+   * Drawing only; nothing in the sim reads it.
+   */
+  body: CarBody;
   /**
    * How you get it: the one you start in, one parked in the city (#67), or one
    * taken off a ladder rival (#66).
@@ -65,6 +74,7 @@ export const CARS: CarProfile[] = [
     grip: 1,
     nitro: 1,
     scale: 1,
+    body: 'coupe',
     source: 'start',
   },
   {
@@ -77,6 +87,7 @@ export const CARS: CarProfile[] = [
     grip: 0.84,
     nitro: 0.88,
     scale: 1.14,
+    body: 'suv',
     source: 'street',
   },
   {
@@ -89,6 +100,7 @@ export const CARS: CarProfile[] = [
     grip: 0.84,
     nitro: 0.88,
     scale: 1.22,
+    body: 'pickup',
     source: 'street',
   },
   {
@@ -101,6 +113,7 @@ export const CARS: CarProfile[] = [
     grip: 0.88,
     nitro: 0.88,
     scale: 1.14,
+    body: 'suv',
     source: 'street',
   },
   {
@@ -113,6 +126,7 @@ export const CARS: CarProfile[] = [
     grip: 0.84,
     nitro: 0.9,
     scale: 1.14,
+    body: 'suv',
     source: 'street',
   },
   {
@@ -125,6 +139,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 0.88,
     scale: 0.95,
+    body: 'hatch',
     source: 'street',
   },
   {
@@ -137,6 +152,7 @@ export const CARS: CarProfile[] = [
     grip: 1.02,
     nitro: 0.88,
     scale: 0.95,
+    body: 'hatch',
     source: 'street',
   },
   {
@@ -149,6 +165,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 0.97,
     scale: 1.05,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -161,6 +178,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 0.98,
     scale: 1.05,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -173,6 +191,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 0.92,
     scale: 1.0,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -185,6 +204,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 0.95,
     scale: 1.0,
+    body: 'roadster',
     source: 'street',
   },
   {
@@ -197,6 +217,7 @@ export const CARS: CarProfile[] = [
     grip: 1.02,
     nitro: 0.94,
     scale: 0.95,
+    body: 'hatch',
     source: 'street',
   },
   {
@@ -209,6 +230,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 0.88,
     scale: 0.95,
+    body: 'saloon',
     source: 'street',
   },
   {
@@ -221,6 +243,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 1.01,
     scale: 1.0,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -233,6 +256,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 0.96,
     scale: 1.05,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -245,6 +269,7 @@ export const CARS: CarProfile[] = [
     grip: 0.98,
     nitro: 0.98,
     scale: 1.06,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -257,6 +282,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 0.97,
     scale: 0.95,
+    body: 'saloon',
     source: 'street',
   },
   {
@@ -269,6 +295,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 1.03,
     scale: 1.05,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -281,6 +308,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 1.09,
     scale: 0.95,
+    body: 'hatch',
     source: 'street',
   },
   {
@@ -293,6 +321,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 1.02,
     scale: 1.0,
+    body: 'wedge',
     source: 'street',
   },
   {
@@ -305,6 +334,7 @@ export const CARS: CarProfile[] = [
     grip: 0.98,
     nitro: 0.98,
     scale: 1.06,
+    body: 'roadster',
     source: 'street',
   },
   {
@@ -317,6 +347,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 1.03,
     scale: 1.0,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -329,6 +360,7 @@ export const CARS: CarProfile[] = [
     grip: 0.98,
     nitro: 1.08,
     scale: 1.06,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -341,6 +373,7 @@ export const CARS: CarProfile[] = [
     grip: 1.02,
     nitro: 0.99,
     scale: 1.06,
+    body: 'saloon',
     source: 'street',
   },
   {
@@ -353,6 +386,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 1.16,
     scale: 1.05,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -365,6 +399,7 @@ export const CARS: CarProfile[] = [
     grip: 1.06,
     nitro: 1.12,
     scale: 1.0,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -377,6 +412,7 @@ export const CARS: CarProfile[] = [
     grip: 1.1,
     nitro: 1.07,
     scale: 1.0,
+    body: 'roadster',
     source: 'street',
   },
   {
@@ -389,6 +425,7 @@ export const CARS: CarProfile[] = [
     grip: 1.1,
     nitro: 1.12,
     scale: 1.0,
+    body: 'roadster',
     source: 'street',
   },
   {
@@ -401,6 +438,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.17,
     scale: 1.02,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -413,6 +451,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.1,
     scale: 1.02,
+    body: 'wedge',
     source: 'street',
   },
   {
@@ -425,6 +464,7 @@ export const CARS: CarProfile[] = [
     grip: 1.1,
     nitro: 1.02,
     scale: 1.0,
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -437,6 +477,7 @@ export const CARS: CarProfile[] = [
     grip: 1.35,
     nitro: 1.25,
     scale: 0.88,
+    body: 'frame',
     source: 'street',
   },
   {
@@ -449,6 +490,7 @@ export const CARS: CarProfile[] = [
     grip: 1.35,
     nitro: 1.25,
     scale: 0.88,
+    body: 'frame',
     source: 'street',
   },
   {
@@ -461,6 +503,7 @@ export const CARS: CarProfile[] = [
     grip: 1.35,
     nitro: 1.25,
     scale: 0.88,
+    body: 'frame',
     source: 'street',
   },
 
@@ -479,6 +522,7 @@ export const CARS: CarProfile[] = [
     grip: 1.11,
     nitro: 0.96,
     scale: 1.0,
+    body: 'coupe',
     source: 'rival',
   },
   {
@@ -491,6 +535,7 @@ export const CARS: CarProfile[] = [
     grip: 0.99,
     nitro: 1.2,
     scale: 1.05,
+    body: 'roadster',
     source: 'rival',
   },
   {
@@ -503,6 +548,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 1.09,
     scale: 1.05,
+    body: 'coupe',
     source: 'rival',
   },
   {
@@ -515,6 +561,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.08,
     scale: 1.02,
+    body: 'coupe',
     source: 'rival',
   },
   {
@@ -527,6 +574,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.16,
     scale: 1.02,
+    body: 'wedge',
     source: 'rival',
   },
   {
@@ -539,6 +587,7 @@ export const CARS: CarProfile[] = [
     grip: 1.19,
     nitro: 1.25,
     scale: 1.02,
+    body: 'roadster',
     source: 'rival',
   },
   {
@@ -551,6 +600,7 @@ export const CARS: CarProfile[] = [
     grip: 1.19,
     nitro: 1.19,
     scale: 1.02,
+    body: 'wedge',
     source: 'rival',
   },
   {
@@ -563,6 +613,7 @@ export const CARS: CarProfile[] = [
     grip: 1.19,
     nitro: 1.25,
     scale: 1.02,
+    body: 'wedge',
     source: 'rival',
   },
   {
@@ -575,6 +626,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.25,
     scale: 1.02,
+    body: 'wedge',
     source: 'rival',
   },
   {
@@ -587,6 +639,7 @@ export const CARS: CarProfile[] = [
     grip: 1.15,
     nitro: 1.25,
     scale: 1.02,
+    body: 'wedge',
     source: 'rival',
   },
 ];

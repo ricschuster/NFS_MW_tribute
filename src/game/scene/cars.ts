@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CAR_WIDTH_WORLD, CAR_ASPECT } from '../constants';
 import { carParts } from './carshape';
+import type { CarBody } from '../cars';
 import { lampGlowTexture } from './signage';
 
 const BODY_W = CAR_WIDTH_WORLD;
@@ -14,9 +15,12 @@ const BODY_L = CAR_WIDTH_WORLD * 1.9;
  * `children[0]` every frame for every car on screen, and a name lookup there
  * would be a scene-graph walk per car per frame for no gain.
  */
-export function makeCar(color: string, cop = false): THREE.Group {
+export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): THREE.Group {
   const car = new THREE.Group();
-  const parts = carParts(BODY_W, CAR_ASPECT);
+  const parts = carParts(BODY_W, CAR_ASPECT, style);
+  // The lights sit on the body this is, not the coupe's (#434).
+  const bodyH = parts.height;
+  const bodyL = parts.length;
 
   const body = parts.body;
   (body.material as THREE.MeshLambertMaterial).color.set(
@@ -52,7 +56,7 @@ export function makeCar(color: string, cop = false): THREE.Group {
       new THREE.BoxGeometry(BODY_W * 0.18, BODY_H * 0.2, BODY_L * 0.04),
       new THREE.MeshBasicMaterial({ color: '#ff4433' }),
     );
-    light.position.set(side * BODY_W * 0.33, BODY_H * 0.75, -BODY_L * 0.49);
+    light.position.set(side * BODY_W * 0.33, parts.floor + bodyH * 0.45, -bodyL * 0.49);
     car.add(light);
 
     // And the other end (#221). There were tail lights and no headlights, so
@@ -64,7 +68,7 @@ export function makeCar(color: string, cop = false): THREE.Group {
       new THREE.MeshBasicMaterial({ color: HEADLIGHT_OFF }),
     );
     lamp.name = 'headlight';
-    lamp.position.set(side * BODY_W * 0.32, BODY_H * 0.7, BODY_L * 0.49);
+    lamp.position.set(side * BODY_W * 0.32, parts.floor + bodyH * 0.4, bodyL * 0.49);
     car.add(lamp);
   }
 
@@ -113,8 +117,11 @@ const HEADLIGHT_ON = '#fff2cf';
  * player moves, and allocating meshes per frame would churn the heap.
  */
 export class CarPool {
-  private readonly pool: THREE.Group[] = [];
-  private used = 0;
+  /** Every mesh made, with the body it was made as (#434). */
+  private readonly pool: { car: THREE.Group; style: CarBody }[] = [];
+  /** This frame's cars, in the order they were placed. */
+  private placed: THREE.Group[] = [];
+  private readonly taken = new Set<THREE.Group>();
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -134,13 +141,18 @@ export class CarPool {
     color: string,
     scale = 1,
     dim = 1,
+    style: CarBody = 'coupe',
   ): THREE.Group {
-    let car = this.pool[this.used];
+    // A free mesh of the same body, or a new one: a pickup cannot be repainted
+    // into a coupe, so the pool keeps them apart.
+    let car = this.pool.find((entry) => entry.style === style && !this.taken.has(entry.car))?.car;
     if (!car) {
-      car = makeCar(color, this.cop);
-      this.pool.push(car);
+      car = makeCar(color, this.cop, style);
+      this.pool.push({ car, style });
       this.scene.add(car);
     }
+    this.taken.add(car);
+    this.placed.push(car);
     car.visible = true;
     car.position.set(x, y, z);
     car.scale.setScalar(scale);
@@ -150,19 +162,18 @@ export class CarPool {
     const paint = (body.material as THREE.MeshLambertMaterial).color;
     paint.set(color);
     if (dim !== 1) paint.multiplyScalar(dim);
-    this.used++;
     return car;
   }
 
   /** Call before placing this frame's cars. */
   begin(): void {
-    this.used = 0;
+    this.placed = [];
+    this.taken.clear();
   }
 
   /** Hide whatever was not used this frame. */
   end(): void {
-    for (let i = this.used; i < this.pool.length; i++)
-      this.pool[i].visible = false;
+    for (const entry of this.pool) if (!this.taken.has(entry.car)) entry.car.visible = false;
   }
 
   /**
@@ -177,8 +188,7 @@ export class CarPool {
    */
   setNight(amount: number): void {
     const lit = Math.max(0, Math.min(1, amount));
-    for (let i = 0; i < this.used; i++) {
-      const car = this.pool[i];
+    for (const car of this.placed) {
       const beam = car.getObjectByName('beam') as THREE.Mesh | undefined;
       if (beam) {
         const material = beam.material as THREE.MeshBasicMaterial;
@@ -207,8 +217,8 @@ export class CarPool {
    */
   flashLightbars(phase: number, from = 0): void {
     const blue = Math.floor(phase * 6) % 2 === 0;
-    for (let i = from; i < this.used; i++) {
-      const bar = this.pool[i].getObjectByName('lightbar') as
+    for (let i = from; i < this.placed.length; i++) {
+      const bar = this.placed[i].getObjectByName('lightbar') as
         THREE.Mesh | undefined;
       if (bar)
         (bar.material as THREE.MeshBasicMaterial).color.set(
