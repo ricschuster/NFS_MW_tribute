@@ -1,5 +1,6 @@
 import { FIND_KERB_GAP, FIND_SPACING } from '../constants';
 import { distanceToRoad, inWater } from './grid';
+import { PLAN_PLACES } from './plan';
 import { groundAt } from './terrain';
 import { CARS } from '../cars';
 import type { Rng } from './rng';
@@ -109,5 +110,15 @@ export function findsFor(rng: Rng, city: City): StreetFind[] {
     }
   }
 
-  return finds;
+  // The further from the start, the better the car (#434): the spots stay
+  // where they were found, but the cars are handed out worst nearest, in the
+  // order `CARS` lists them, so driving further out is how you find better.
+  // The start is Marrow Field, where the game puts you (`CityWorld.spawn`).
+  const start = PLAN_PLACES.find((place) => place.kind === 'airfield')?.at ?? {
+    x: (city.bounds.minX + city.bounds.maxX) / 2,
+    z: (city.bounds.minZ + city.bounds.maxZ) / 2,
+  };
+  const away = (f: StreetFind) => Math.hypot(f.at.x - start.x, f.at.z - start.z);
+  const spots = finds.slice().sort((p, q) => away(p) - away(q));
+  return spots.map((spot, i) => ({ ...spot, car: wanted[i].id }));
 }
