@@ -1112,6 +1112,8 @@ export class CityWorld {
       }
       if (this.withTraffic) {
         this.traffic.update(dt, this);
+        // Off the haul road while it is raced (#397).
+        this.trucks.standAside(this.race.route?.kind === 'sprint' && this.race.state !== 'idle');
         this.trucks.update(dt);
       }
       if (this.withPolice && (this.race.state === 'idle' || this.chasedRace)) {
@@ -1243,6 +1245,8 @@ export class CityWorld {
     this.watchProgress(dt, input);
     if (this.withTraffic) {
       this.traffic.update(dt, this);
+      // Off the haul road while it is raced (#397).
+      this.trucks.standAside(this.race.route?.kind === 'sprint' && this.race.state !== 'idle');
       this.trucks.update(dt);
     }
     // No pursuit during a speed run, and none from a patrol during any race:

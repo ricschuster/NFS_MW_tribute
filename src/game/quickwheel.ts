@@ -392,7 +392,7 @@ export class QuickWheel {
         place: {
           x: route.start.x,
           z: route.start.z,
-          label: `${route.name} (${route.kind === 'speedrun' ? 'speed run' : 'circuit'})`,
+          label: `${route.name} (${route.kind === 'speedrun' ? 'speed run' : route.kind})`,
         },
         detail: `${difficultyLabel(routeDifficulty(route))}  ·  ${racePurse(routeDifficulty(route), route.kind)[0].toLocaleString('en-US')} REP`,
       })),
