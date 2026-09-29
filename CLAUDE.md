@@ -444,9 +444,11 @@ underneath it. It is laid out and driven the way the reference's in-drive menu
 is: a path of branches you walk down on a D-pad of its own, I J K L, because
 the arrows and WASD are busy driving - L opens, goes in and selects, J backs
 out. `quickwheel.ts` (the class is still `QuickWheel`) has the reasoning. The
-reference's name for its menu ships nowhere. A place is a marker, never a
+reference's name for its menu ships nowhere. A place is a marker, not a
 teleport: quick travel that moved the car would make the pursuit a formality
-and the city a menu of places rather than a place.
+and the city a menu of places rather than a place. The one jump is to a
+parked car you have found (#352), and it is refused while you are wanted,
+cooldown included, and during any event (`CityWorld.jumpRefused`).
 
 **Parts are progress; a profile is content** (issue #68). `mods.ts` and
 `garage.ts` have the reasoning - why parts live on the garage rather than on

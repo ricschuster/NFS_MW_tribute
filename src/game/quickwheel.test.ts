@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { QuickWheel, MENU_TITLE, type WheelBranch } from './quickwheel';
 import { CityWorld } from './cityworld';
 import { CARS, STARTER_CAR } from './cars';
-import { WHEEL_ENTRIES } from './constants';
+import { FIND_RANGE, WHEEL_ENTRIES } from './constants';
 import { RIVALS } from './rivals';
 import { kestrelBay } from './city/index';
 
@@ -238,5 +238,58 @@ describe('the Quick Menu', () => {
     expect(wheel.tap(w, 4)).toBe(false);
     expect(wheel.branch).toBe('places');
     expect(wheel.depth).toBe(1);
+  });
+
+  // Jump to a car found parked (#352): from free roam, never while wanted.
+  describe('jumping to a parked car', () => {
+    /** A world that has driven past one parked car, and the menu open on it. */
+    const spottedOne = () => {
+      const w = world();
+      const find = w.finds.waiting[0];
+      w.finds.seen.add(find.car);
+      const wheel = into(w, 'cars');
+      const index = wheel.entries(w).findIndex((e) => e.label.endsWith(', parked'));
+      for (let i = 0; i < index; i++) wheel.move(w, 1);
+      wheel.right(w);
+      expect(wheel.depth).toBe(2);
+      return { w, wheel, find };
+    };
+
+    it('lists only the parked cars you have driven past', () => {
+      const w = world();
+      const wheel = into(w, 'cars');
+      expect(wheel.entries(w).some((e) => e.label.endsWith(', parked'))).toBe(false);
+      w.finds.seen.add(w.finds.waiting[0].car);
+      expect(wheel.entries(w).some((e) => e.label.endsWith(', parked'))).toBe(true);
+    });
+
+    it('puts you in the car, where it is parked', () => {
+      const { w, wheel, find } = spottedOne();
+      expect(wheel.view(w).rows.map((r) => r.label)).toEqual(['Jump to car', 'Set destination']);
+      expect(wheel.right(w)).toBe(true);
+      expect(wheel.open).toBe(false);
+      expect(Math.hypot(w.x - find.at.x, w.z - find.at.z)).toBeLessThan(FIND_RANGE);
+      w.step(1 / 60, { left: false, right: false, up: false, down: false, nitro: false, confirm: false });
+      expect(w.car.id).toBe(find.car);
+    });
+
+    it('is refused while wanted, and says so', () => {
+      const { w, wheel } = spottedOne();
+      w.police.state = 'cooldown';
+      const [jump] = wheel.view(w).rows;
+      expect(jump.available).toBe(false);
+      expect(jump.detail).toBe('not while wanted');
+      const was = { x: w.x, z: w.z };
+      expect(wheel.right(w)).toBe(false);
+      expect(w.x).toBe(was.x);
+      expect(w.z).toBe(was.z);
+    });
+
+    it('still sets a destination instead', () => {
+      const { w, wheel } = spottedOne();
+      wheel.move(w, 1);
+      expect(wheel.right(w)).toBe(true);
+      expect(w.marker).not.toBeNull();
+    });
   });
 });

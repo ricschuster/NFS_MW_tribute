@@ -2,6 +2,7 @@ import { WHEEL_ENTRIES } from './constants';
 import { CARS, carById, type CarProfile } from './cars';
 import { MODS } from './mods';
 import { routeDifficulty, type CityWorld } from './cityworld';
+import type { StreetFind } from './city/types';
 import { racePurse } from './rep';
 import { difficultyLabel } from './rivals';
 
@@ -75,6 +76,8 @@ export interface Marker {
 interface Item extends WheelEntry {
   /** Somewhere to go: selecting it opens its actions. */
   place?: Marker;
+  /** A car found parked, which can be jumped to as well as driven to (#352). */
+  find?: StreetFind;
   /** Done straight away on select: a car to get into, a part to toggle. */
   act?: (world: CityWorld) => void;
 }
@@ -106,8 +109,10 @@ export class QuickWheel {
   branch: WheelBranch = 'races';
   /** The row within the branch. */
   cursor = 0;
+  /** The row within a place's actions. */
+  action = 0;
   /** The place whose actions are open, held so it does not move under you. */
-  private chosen: Marker | null = null;
+  private chosen: (Marker & { find?: StreetFind }) | null = null;
 
   /** Right: open, go deeper, or select. Returns true when something happened to the world. */
   right(world: CityWorld): boolean {
@@ -129,14 +134,21 @@ export class QuickWheel {
         return true;
       }
       if (item.place) {
-        this.chosen = item.place;
+        this.chosen = { ...item.place, find: item.find };
         this.depth = 2;
+        this.action = 0;
       }
       return false;
     }
-    // The one action a place has today: be pointed at it. Jumping to a parked
-    // car you own is #352's, and joins it here.
     if (!this.chosen) return false;
+    // A parked car's first action is to jump to it (#352), refused while you
+    // are wanted; the row says why.
+    if (this.chosen.find && this.action === 0) {
+      if (!world.jumpTo(this.chosen.find)) return false;
+      this.open = false;
+      this.depth = 0;
+      return true;
+    }
     // Through `aimAt`, which also works out the way there: an arrow across a
     // city with a river in it points at plenty of places you cannot reach
     // from where you are standing.
@@ -161,7 +173,18 @@ export class QuickWheel {
     } else if (this.depth === 1) {
       const count = this.items(world).length;
       this.cursor = Math.max(0, Math.min(count - 1, this.cursor + step));
+    } else {
+      const count = this.actions(world).length;
+      this.action = Math.max(0, Math.min(count - 1, this.action + step));
     }
+  }
+
+  /** What can be done with the place that is open. */
+  private actions(world: CityWorld): WheelEntry[] {
+    const go = { label: 'Set destination', detail: '', available: true, opens: true };
+    if (!this.chosen?.find) return [go];
+    const refused = world.jumpRefused;
+    return [{ label: 'Jump to car', detail: refused ?? '', available: refused === null, opens: true }, go];
   }
 
   /** Select row `index` of what is on screen, for a thumb (#89): cursor there, then right. */
@@ -171,6 +194,7 @@ export class QuickWheel {
     const at = view.from + index;
     if (this.depth === 0) this.branch = BRANCHES[at];
     else if (this.depth === 1) this.cursor = at;
+    else this.action = at;
     return this.right(world);
   }
 
@@ -188,10 +212,10 @@ export class QuickWheel {
     if (this.depth === 2 && this.chosen) {
       return {
         path: [MENU_TITLE, BRANCH_TITLES[this.branch], this.chosen.label],
-        rows: [{ label: 'Set destination', detail: '', available: true, opens: true }],
-        cursor: 0,
+        rows: this.actions(world),
+        cursor: this.action,
         from: 0,
-        total: 1,
+        total: this.actions(world).length,
       };
     }
     const items = this.items(world);
@@ -256,10 +280,13 @@ export class QuickWheel {
       available: !busy && car.id !== world.car.id,
       act: (w) => w.drive(car),
     }));
-    const parked: Item[] = world.finds.waiting
-      .map((find) => ({ x: find.at.x, z: find.at.z, label: `${carById(find.car).name}, parked` }))
-      .sort((a, b) => this.away(world, a) - this.away(world, b))
-      .map((place) => ({ label: place.label, detail: this.km(world, place), available: true, opens: true, place }));
+    // Only the ones you have driven past, as on the maps: a list of every
+    // parked car from the first second of a new save is finding one turned
+    // into reading about it.
+    const parked: Item[] = world.finds.spotted
+      .map((find) => ({ find, place: { x: find.at.x, z: find.at.z, label: `${carById(find.car).name}, parked` } }))
+      .sort((a, b) => this.away(world, a.place) - this.away(world, b.place))
+      .map(({ find, place }) => ({ label: place.label, detail: this.km(world, place), available: true, opens: true, place, find }));
     return [...owned, ...parked];
   }
 

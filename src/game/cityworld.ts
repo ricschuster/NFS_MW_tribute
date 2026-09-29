@@ -79,6 +79,7 @@ import {
   REP_SAVE_INTERVAL,
   REFERENCE_TOP_SPEED,
   ROUTE_START_RANGE,
+  FIND_RANGE,
   ORDINARY_RACE_DIFFICULTY,
   RIVAL_START_ALONG,
   REP_RACE_WIN,
@@ -159,7 +160,7 @@ import { routeTo, offRoute } from './city/navigate';
 import { groundAt } from './city/terrain';
 import { pointAt, startingAt } from './city/routes';
 import { planCentre } from './city/plan';
-import type { DistrictKind, RouteKind } from './city/types';
+import type { DistrictKind, RouteKind, StreetFind } from './city/types';
 import { impactDamage, touching, WRECKED } from './impact';
 import type { Roadblock, SpikeStrip } from './citypolice';
 import type { GraphCar } from './graphcar';
@@ -843,6 +844,37 @@ export class CityWorld {
    * it has to be recomputed as you drive: a line from where you *were* is a
    * line to nowhere as soon as you take a different road.
    */
+  /**
+   * Why a jump to a parked car would be refused right now, or null if it would
+   * not be (#352). Refused while wanted - a cooldown included, because a jump
+   * out of a search is the pursuit made a formality, which is what #90 kept
+   * quick travel out of the game to avoid - and during any event.
+   */
+  get jumpRefused(): string | null {
+    if (this.police.state !== 'clear') return 'not while wanted';
+    if (this.race.state !== 'idle' || this.claim.state !== 'idle' || this.ambush.state !== 'idle') {
+      return 'not during an event';
+    }
+    return null;
+  }
+
+  /**
+   * Jump to a car found parked (#352): put the car beside it, stopped, and the
+   * next step takes it the way driving up to it would (`Garage.update`). The
+   * reference's in-drive menu has "jump to car"; the owner decided it is
+   * allowed from free roam and refused while wanted.
+   */
+  jumpTo(find: StreetFind): boolean {
+    if (this.jumpRefused || this.finds.owned.has(find.car)) return false;
+    this.x = find.at.x - Math.sin(find.angle) * FIND_RANGE * 0.5;
+    this.z = find.at.z - Math.cos(find.angle) * FIND_RANGE * 0.5;
+    this.y = find.y;
+    this.heading = find.angle;
+    this.speed = 0;
+    this.aimAt(null);
+    return true;
+  }
+
   aimAt(place: { x: number; z: number; label: string } | null): void {
     this.marker = place;
     this.markerPath = place ? routeTo(this.city, this, place) : [];
