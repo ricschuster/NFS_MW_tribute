@@ -10,7 +10,7 @@ const NONE = { up: false, down: false, left: false, right: false, nitro: false, 
 const lengthOf = (points: { x: number; z: number }[]) =>
   points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - points[i].x, p.z - points[i].z), 0);
 
-// The line on the road (#443) are drawn along whatever this returns.
+// The line on the road (#443) is drawn along whatever this returns.
 describe('the way ahead', () => {
   it('is nothing with no race and nowhere to go', () => {
     const world = new CityWorld(city, { traffic: false, police: false });

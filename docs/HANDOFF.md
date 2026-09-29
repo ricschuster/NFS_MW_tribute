@@ -11,6 +11,24 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   the editor and in `freeway.test.ts` alike. The rolled spurs are off
   (`FREEWAY_SPURS = 0`): nobody drew them, and one ran through the quarry.
   Next is "Where the work is" below.
+- **Start here (2026-09-29, end of day).** Everything is merged and main is
+  green; no open PRs, no worktrees. The owner's checkout is at main. The
+  owner played this afternoon and signed two things off:
+  - **Drifting is on** (#444, closing #351): tap the brake while steering at
+    speed. The probe drivers (`citylap`, `drivers`, `playtest`, `endings`,
+    `patrol`) build their worlds with `drift: false`, because they brake for
+    corners while still steering and have no way out of a drift - with it on,
+    the ladder's expert fell from 62% of top to 44% and lost every race. A
+    human who brakes mid-corner drifts too; if races start to feel harder,
+    look there first. The lap baseline was re-recorded; what moved had moved
+    on main already.
+  - **The route line** (#445, after #443): one cyan line down the middle of
+    the route, the owner's call over the reference's two. `guideLeft` gives
+    the distance left *along the road*: "km to the finish" under LAP and POS
+    in a circuit, a sprint's KM, and the Quick Menu destination under the
+    minimap (by road now, not as the crow flies).
+  - **Next, offered and not yet answered:** Sablet Wharf (#410) first, then
+    #368's hill roads. Both are map work for the screenshot-and-sign-off loop.
 - **What 2026-09-29 changed** (the owner played two ladder races, answered a
   round of questions, then left the rest to run on its own; every PR merged):
   - **Races:** the field leaves you the middle of the road (#418); start
@@ -494,31 +512,25 @@ all yet.
 
 ## Where the work is
 
-**The plan, as of 2026-09-27: M8 to M12, and the map is paused.** A recording
-of the reference game was measured (`docs/research/`), the owner treats it as
-authoritative for how the game plays, and what it changed is ADR-0011 and
-twenty-odd issues, grouped into five milestones and done in this order:
+**The plan now (2026-09-29): the map, area by area.** M8 to M12, the plan set
+on 2026-09-27 after the reference recording was measured, is done: the map
+fits (#363), pace was measured and traffic thinned (#347, #348), nitrous and
+drifting (#351), the pursuit reads (M10), races carry heat (M11), and events
+per car are decided and built (M12, `docs/design/02`). What is left is the map:
 
-1. **M8: Does the map fit?** (#363) First, and the owner's priority: *"figure
-   out if the map as we have it now will work with the updates and what we
-   have learned. Most important part to me."* A measured audit of whether the
-   authored map carries the reference pace, fast roads, roadblocks, police in
-   races, events per car and the rebuild's new items. **Done**
-   (`docs/research/map-fit-363.md`): the frame fits, and what is short is the
-   roads not yet built. M7 area work has resumed, **freeway first**: #371 is
-   the plan, since fast cars only matter once it is built.
-2. **M9: Pace inputs.** Measure a human's pace and on-screen traffic (#347),
-   then thin traffic (#348) and add nitrous from risky driving (#351).
-3. **M10: A pursuit you can read.** No map or race dependency, so it can run
-   beside M8 or M9 in a second session.
-4. **M11: Races with heat.** Event cards and rewards by place (#357) first,
-   then ladder races with the police (#349, #340, #341) and the rest.
-5. **M12: Cars and progress.** Events per car: answer
-   `docs/design/02_events_per_car.md` when M12 starts, then write its issues.
+1. **Sablet Wharf (#410).** Decided by the owner: a working container port, a
+   second way out by a jump across a channel, and a quay that is a full loop
+   and the race route. Build it in a worktree and show the owner screenshots.
+2. **Terrain on the road (#368).** Gentle undulation plus two or three hill
+   roads within `npm run grades`' caps. `mapfit` measures it (1.5 crests per
+   km today).
+3. **The other areas** in the order and to the standard in
+   [`docs/map-areas.md`](map-areas.md): Halloway Quarry's sign-off (#323),
+   Kestrel Head, Ashford Point (#293 is parked - never pick it up), parks,
+   midtown, industrial. **Downtown (#268) is last.**
 
-The rebuild's own items (gates guarding shortcuts #361, collectible density
-#266, the railway corridor, shortcuts with jumps, the pace check) ride with M7
-once it resumes. The ladder re-fit still waits for generated circuits (#301).
+Ride-alongs: collectible density (#266), the railway corridor, and shortcuts
+with jumps go with whichever area they land in.
 
 What follows below was written before this plan. It is still accurate about
 each issue; the order above supersedes it.
@@ -733,11 +745,9 @@ first, because a generator change is far easier to judge as a picture than as
 a test; then `npm run dev` and drive it, because playing has found more real
 defects than every probe and test combined, on both rebuilds.
 
-Then read "Where the work is" above: #268 is where a session should start if
-it wants to move the map forward - sketch it first, per ADR-0010 - and the
-remaining unresolved probe finding (the stationary bust) is where a session
-should start if it wants to make the current branch trustworthy before
-anything is built on top of it further.
+Then read "Where the work is" above and start at its first item. Downtown
+(#268) is the last area, not the first: sketch it (ADR-0010) when every other
+area is done.
 
 ## The probes, and what each is for
 
