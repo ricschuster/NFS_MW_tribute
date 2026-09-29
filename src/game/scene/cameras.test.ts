@@ -4,6 +4,8 @@ import {
   CHASE_FOV,
   CHASE_FOV_FAST,
   CRASH_HOLD,
+  FLYOVER_SETTLE,
+  FLYOVER_TIME,
   INTRO_HOLD,
   TAKEDOWN_HOLD,
   TAKEDOWN_SLOWMO,
@@ -180,6 +182,71 @@ describe('the camera director', () => {
     it('honours reduced motion: no cut, and no slow motion', () => {
       const calm = new CameraDirector(true);
       calm.update(1 / 60, wrecked());
+      expect(calm.mode).toBe('chase');
+      expect(calm.timeScale).toBe(1);
+    });
+  });
+
+  describe('the flyover before a circuit (#359)', () => {
+    const square = [
+      { x: 0, z: 0 },
+      { x: 4000, z: 0 },
+      { x: 4000, z: 4000 },
+      { x: 0, z: 4000 },
+    ];
+    const racing = (state: string, kind = 'circuit') =>
+      fakeWorld({ race: { state, route: { kind, points: square } } } as unknown as Partial<CityWorld>);
+    const settled = () => {
+      const director = new CameraDirector();
+      run(director, INTRO_HOLD + 0.2, racing('idle'));
+      return director;
+    };
+
+    it('flies the course on the lights, holding the world still, then hands back', () => {
+      const director = settled();
+      director.update(1 / 60, racing('countdown'));
+      expect(director.mode).toBe('flyover');
+      expect(director.timeScale).toBe(0);
+
+      run(director, FLYOVER_TIME + FLYOVER_SETTLE + 0.2, racing('countdown'));
+      expect(director.mode).toBe('chase');
+      expect(director.timeScale).toBe(1);
+    });
+
+    it('goes over the course, not round the car', () => {
+      const director = settled();
+      director.update(1 / 60, racing('countdown'));
+      run(director, FLYOVER_TIME / 2, racing('countdown'));
+      const shot = director.update(1 / 60, racing('countdown'));
+      // Halfway round a square lap from the origin is its far corner.
+      expect(Math.hypot(shot.position.x, shot.position.z)).toBeGreaterThan(3000);
+      expect(shot.position.y).toBeGreaterThan(0);
+    });
+
+    it('skips straight to the chase camera', () => {
+      const director = settled();
+      director.update(1 / 60, racing('countdown'));
+      director.skipFlyover();
+      director.update(1 / 60, racing('countdown'));
+      expect(director.mode).toBe('chase');
+      expect(director.timeScale).toBe(1);
+    });
+
+    it('plays once per start, not again for the same countdown', () => {
+      const director = settled();
+      director.update(1 / 60, racing('countdown'));
+      director.skipFlyover();
+      run(director, 1, racing('countdown'));
+      expect(director.mode).toBe('chase');
+    });
+
+    it('is not flown before a speed run, or with reduced motion', () => {
+      const director = settled();
+      director.update(1 / 60, racing('countdown', 'speedrun'));
+      expect(director.mode).toBe('chase');
+
+      const calm = new CameraDirector(true);
+      calm.update(1 / 60, racing('countdown'));
       expect(calm.mode).toBe('chase');
       expect(calm.timeScale).toBe(1);
     });

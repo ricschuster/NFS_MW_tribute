@@ -175,6 +175,8 @@ export class CityView {
   private readonly audio = new GameAudio();
   private readonly director: CameraDirector;
   private accumulator = 0;
+  /** Confirm as of last frame, so a flyover skips on a press and not on the hold that started the race (#359). */
+  private confirmWas = false;
 
   constructor(canvas: HTMLCanvasElement, city: City) {
     this.city = city;
@@ -585,6 +587,9 @@ export class CityView {
       confirm: held('confirm', 'enter', ' '),
     };
 
+    if (input.confirm && !this.confirmWas) this.director.skipFlyover();
+    this.confirmWas = input.confirm;
+
     // Slow motion is a multiplier on how much time the accumulator is fed, not
     // a change to the timestep: physics still runs at STEP, there is just less
     // of it per frame (#94).
@@ -624,6 +629,7 @@ export class CityView {
     // Tab holds the collection map open: what has been found, and where the
     // rest of it is. Held rather than toggled, so it cannot be left up.
     if (this.hud) this.hud.showMap = held('map', 'tab');
+    if (this.hud) this.hud.flyover = this.director.mode === 'flyover';
     this.quickWheel(world, held);
 
     this.trafficCars.begin();
