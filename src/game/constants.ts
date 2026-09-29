@@ -2371,6 +2371,23 @@ export const FIELD_WOBBLE = 0.06;
  */
 export const FIELD_LANE = m(3.2);
 /**
+ * The field gives a car coming through the middle of the road (#350's
+ * playtest). Their lanes used to be fixed for the whole race, and two cars
+ * `FIELD_LANE` either side of the line are closer together than two contact
+ * circles (`CAR_RADIUS` each), so a pair running abreast was a wall: the owner
+ * could not get past on the road and was busted leaving it.
+ *
+ * With the player within `FIELD_YIELD_RANGE` behind, a rival eases out to
+ * `FIELD_LANE_OPEN` on its own side at `FIELD_LANE_EASE`, and back once they
+ * are past. Open is wide enough that a pair leaves more than two contact
+ * circles between them, and narrow enough to stay on the Halloway Rim, which
+ * is 20 m kerb to kerb. They move out rather than over: a rival that moved
+ * away from you could move into the car beside it.
+ */
+export const FIELD_LANE_OPEN = m(6);
+export const FIELD_YIELD_RANGE = m(45);
+export const FIELD_LANE_EASE = m(4);
+/**
  * How far back each row of the field sits from the one in front (#217).
  *
  * The field used to be six cars *abreast*, `FIELD_LANE` apart, which is 19 m

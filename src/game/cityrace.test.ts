@@ -19,6 +19,10 @@ import {
   SPEEDRUN_SETTLE,
   FIELD_SIZE,
   FIELD_WOBBLE,
+  FIELD_LANE,
+  FIELD_LANE_OPEN,
+  FIELD_YIELD_RANGE,
+  CAR_RADIUS,
   RIVAL_BASE_SPEED_FRAC,
   RIVAL_DIFF_SPEED_FRAC,
 } from './constants';
@@ -499,5 +503,47 @@ describe.skipIf(!HAS_SPEEDRUN)('a speed run', () => {
       );
     }
     expect(race.average).toBe(0);
+  });
+});
+
+/**
+ * A pair running abreast used to be a wall (#350's playtest): lanes fixed for
+ * the race, and closer together than two contact circles. Coming up behind
+ * them opens the middle.
+ */
+describe.skipIf(!city.routes.some((route) => route.kind === 'circuit'))('the field lets you through', () => {
+  const route = city.routes.find((r) => r.kind === 'circuit')!;
+  const racing = () => {
+    const race = new CityRace();
+    race.begin(route, RIVALS[0]);
+    const start = route.points[0];
+    for (let t = 0; t < CITY_COUNTDOWN + 0.2; t += STEP) race.update(STEP, start, REFERENCE_TOP_SPEED);
+    return race;
+  };
+  const gap = (race: CityRace) => {
+    const [a, b] = race.field;
+    return Math.hypot(a.x - b.x, a.z - b.z);
+  };
+
+  it('opens the middle for a car close behind', () => {
+    const race = racing();
+    // A few seconds in, then sit just behind the front pair.
+    for (let t = 0; t < 4; t += STEP) {
+      const front = Math.max(race.field[0].dist, race.field[1].dist);
+      race.update(STEP, pointAt(route.points, route.length, front - FIELD_YIELD_RANGE / 2), REFERENCE_TOP_SPEED);
+    }
+    expect(Math.abs(race.field[0].lane)).toBeCloseTo(FIELD_LANE_OPEN);
+    expect(Math.abs(race.field[1].lane)).toBeCloseTo(FIELD_LANE_OPEN);
+    expect(Math.sign(race.field[0].lane)).not.toBe(Math.sign(race.field[1].lane));
+    // Room for a car between them, if they are abreast.
+    expect(Math.abs(race.field[0].lane - race.field[1].lane)).toBeGreaterThan(CAR_RADIUS * 4);
+    expect(gap(race)).toBeGreaterThan(0);
+  });
+
+  it('keeps its own lane with nobody coming', () => {
+    const race = racing();
+    const far = pointAt(route.points, route.length, route.length / 2);
+    for (let t = 0; t < 4; t += STEP) race.update(STEP, far, REFERENCE_TOP_SPEED);
+    expect(Math.abs(race.field[0].lane)).toBeCloseTo(FIELD_LANE);
   });
 });
