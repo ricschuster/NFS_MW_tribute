@@ -1757,13 +1757,20 @@ export interface HeatLevel {
  * as a floor under the pursuit rather than as the mechanic:
  * `npm run endings -- --damage 1` is where that claim is checked.
  */
+// maxCops is 2, 2, 2, 3, 3, 4 by level, down from 2, 3, 4, 4, 5, 6 (2026-09-28,
+// with `PATROL_IN_CITY`): the chase is felt more than seen. Measured with
+// `npm run endings`: a car that keeps driving is half busted and half away at
+// every level, where heat 6 used to bust it every time; a car that stops is still busted
+// at heat 6 every time and half the time lower down; nothing ends in a
+// stalemate. `npm run pace` passes. Level 1 keeps two: with one, a car that
+// stopped always got away.
 export const HEAT_LEVELS: HeatLevel[] = [
   { units: ['cruiser'], maxCops: 2, speed: 0.84, enforcers: 0, enforcerUnit: 'suv' },
-  { units: ['cruiser', 'unmarked'], maxCops: 3, speed: 0.85, enforcers: 0, enforcerUnit: 'suv' },
-  { units: ['unmarked', 'state'], maxCops: 4, speed: 0.86, enforcers: 1, enforcerUnit: 'suv' },
-  { units: ['state', 'suv'], maxCops: 4, speed: 0.87, enforcers: 1, enforcerUnit: 'enforcer' },
-  { units: ['state', 'suv', 'federal'], maxCops: 5, speed: 0.875, enforcers: 2, enforcerUnit: 'enforcer' },
-  { units: ['federal', 'elite', 'suv'], maxCops: 6, speed: 0.88, enforcers: 2, enforcerUnit: 'enforcer' },
+  { units: ['cruiser', 'unmarked'], maxCops: 2, speed: 0.85, enforcers: 0, enforcerUnit: 'suv' },
+  { units: ['unmarked', 'state'], maxCops: 2, speed: 0.86, enforcers: 1, enforcerUnit: 'suv' },
+  { units: ['state', 'suv'], maxCops: 3, speed: 0.87, enforcers: 1, enforcerUnit: 'enforcer' },
+  { units: ['state', 'suv', 'federal'], maxCops: 3, speed: 0.875, enforcers: 2, enforcerUnit: 'enforcer' },
+  { units: ['federal', 'elite', 'suv'], maxCops: 4, speed: 0.88, enforcers: 2, enforcerUnit: 'enforcer' },
 ];
 
 /** How many heat levels there are. Six, as the genre has had for twenty years. */
@@ -1814,7 +1821,16 @@ export const TUNNEL_COVER = m(2.5);
  * which is why they are kept around the player the way traffic is: a city-wide
  * police force would be simulating a hundred cars nobody is looking at.
  */
-export const PATROL_IN_CITY = 4;
+//
+// One, down from four (2026-09-28). The owner: "way too much police around".
+// Four was set when fifty-two civilian cars were kept around the player; with
+// traffic thinned to twenty-four (#348) it made about one car in seven a
+// police car. The reference game's police are "felt, not seen" and no pursuit
+// began in free roam in 47 minutes. Measured with `npm run patrol` over ten
+// minutes of a driver that speeds everywhere: four patrols started seven
+// pursuits and kept it wanted for half the session; two, still seven; one,
+// three, wanted for a sixth of it.
+export const PATROL_IN_CITY = 1;
 export const PATROL_RADIUS = m(520);
 /** Never spawn one closer than this, or a patrol appears out of nothing in view. */
 export const PATROL_SPAWN_MIN = m(230);
