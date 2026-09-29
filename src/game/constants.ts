@@ -1655,6 +1655,23 @@ export const CRASH_DISTANCE = m(13);
 /** The opening pass around the car before you take control. */
 export const INTRO_HOLD = 2.6;
 export const INTRO_RADIUS = m(17);
+/**
+ * The pass over a circuit before its lights (#359). The reference flies the
+ * course for about 25 seconds; this is shorter because it plays before every
+ * ladder race rather than once, and confirm skips it either way. The time is
+ * fixed and the speed follows the lap, so a long course is flown faster rather
+ * than for longer.
+ */
+export const FLYOVER_TIME = 12;
+/** How high over the road it flies, and how far ahead along the lap it looks. */
+export const FLYOVER_HEIGHT = m(55);
+export const FLYOVER_LEAD = m(160);
+/**
+ * The last part of the flyover is the camera coming down behind the car, with
+ * the lights still held, so the countdown starts on the chase camera rather
+ * than under a camera still dropping out of the sky.
+ */
+export const FLYOVER_SETTLE = 1.4;
 /** How long a glance behind is held, so a tap is readable. */
 export const LOOK_BACK_HOLD = 0.9;
 /** Impact shake: how hard, and how fast it dies away. */

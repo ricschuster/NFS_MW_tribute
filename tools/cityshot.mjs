@@ -30,7 +30,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -39,7 +39,7 @@ const VIEWS = flag('--view')
       'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
       'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
       'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout',
+      'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover',
     ];
 
 const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
@@ -585,6 +585,30 @@ for (const view of VIEWS) {
     if (view === 'race') await page.keyboard.up('Shift');
     await page.keyboard.up('ArrowUp');
     await page.waitForTimeout(400);
+  }
+
+  if (view === 'flyover') {
+    // Put a circuit's lights on and let the director take the camera up over
+    // the course (#359). The world holds still under it, so the shot is of the
+    // course and the card, partway round.
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+      timeout: 60000,
+    });
+    await page.evaluate(() => {
+      const { world } = globalThis.crosstown;
+      const route = world.city.routes.find((r) => r.kind === 'circuit');
+      if (!route) return;
+      world.x = route.start.x;
+      world.z = route.start.z;
+      world.y = 0;
+      world.crashFlash = 0;
+      const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
+      world.step(1 / 60, { ...none, confirm: true });
+    });
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'flyover', {
+      timeout: 20000,
+    });
+    await page.waitForTimeout(5000);
   }
 
   if (view === 'ambush') {

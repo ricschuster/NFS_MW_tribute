@@ -8,6 +8,10 @@ import {
   CHASE_FOV_FAST,
   CRASH_HOLD,
   CRASH_DISTANCE,
+  FLYOVER_HEIGHT,
+  FLYOVER_LEAD,
+  FLYOVER_SETTLE,
+  FLYOVER_TIME,
   INTRO_HOLD,
   INTRO_RADIUS,
   LOOK_BACK_HOLD,
@@ -19,6 +23,8 @@ import {
   TAKEDOWN_ORBIT,
 } from '../constants';
 import type { CityWorld } from '../cityworld';
+import type { Vec2 } from '../city/types';
+import { groundAt } from '../city/terrain';
 
 const M = UNITS_PER_METRE;
 
@@ -26,7 +32,7 @@ const M = UNITS_PER_METRE;
  * Which camera is running. Named, because the point of #88 is that the camera
  * stops being "behind the car" and becomes a thing with opinions.
  */
-export type CameraMode = 'intro' | 'chase' | 'lookBack' | 'crash' | 'takedown';
+export type CameraMode = 'intro' | 'flyover' | 'chase' | 'lookBack' | 'crash' | 'takedown';
 
 /** Where a camera wants to be this frame. */
 export interface Shot {
@@ -76,6 +82,10 @@ export class CameraDirector {
   private lookBack = 0;
   private wasCrashing = false;
   private wasTakedown = false;
+  private wasCountdown = false;
+  /** The lap being flown, closed back onto its start (#359). */
+  private course: Vec2[] = [];
+  private courseLength = 0;
   /** Where the wreck was when the cut started; the car drives away from it. */
   private readonly wreckAt = new THREE.Vector3();
 
@@ -83,6 +93,17 @@ export class CameraDirector {
 
   constructor(private readonly calm: boolean = false) {
     if (calm) this.mode = 'chase';
+  }
+
+  /**
+   * Skip the flyover (#359): straight to the chase camera, and the lights run.
+   * A cut rather than a blend, because a skip that then spends a second
+   * descending is a skip that did not quite happen.
+   */
+  skipFlyover(): void {
+    if (this.mode !== 'flyover') return;
+    this.mode = 'chase';
+    this.started = false;
   }
 
   /** Ask for a look behind, held for a moment so a tap is readable. */
@@ -123,11 +144,27 @@ export class CameraDirector {
     }
     this.wasTakedown = took;
 
+    // A circuit's lights are an edge too (#359). Only a circuit: a speed run
+    // has no field to be shown the course ahead of, and the flyover is the
+    // pre-race of a ladder race in the reference.
+    const race = world.race;
+    const countdown = race?.state === 'countdown';
+    if (countdown && !this.wasCountdown && !this.calm && race.route?.kind === 'circuit') {
+      this.fly(race.route.points);
+    }
+    this.wasCountdown = countdown;
+
+    if (this.mode === 'flyover' && this.elapsed > FLYOVER_TIME + FLYOVER_SETTLE) this.mode = 'chase';
     if (this.mode === 'intro' && (this.elapsed > INTRO_HOLD || this.calm)) this.mode = 'chase';
     if (this.mode === 'crash' && this.elapsed > CRASH_HOLD) this.mode = 'chase';
     if (this.mode === 'takedown' && this.elapsed > TAKEDOWN_HOLD) this.mode = 'chase';
     // Reduced motion gets no slow motion either: it is the same request.
-    this.timeScale = this.mode === 'takedown' ? TAKEDOWN_SLOWMO : 1;
+    //
+    // The flyover holds the world still rather than asking the sim to wait
+    // (#359): it is a property of watching, like the slow motion, and a
+    // countdown that ran under it would start the race while the camera was
+    // still over the far side of the course.
+    this.timeScale = this.mode === 'takedown' ? TAKEDOWN_SLOWMO : this.mode === 'flyover' ? 0 : 1;
     if (this.mode === 'chase' && this.lookBack > 0) this.mode = 'lookBack';
     if (this.mode === 'lookBack' && this.lookBack <= 0) this.mode = 'chase';
 
@@ -153,6 +190,43 @@ export class CameraDirector {
     }
 
     return { position: this.position, target: this.target, fov: this.fov };
+  }
+
+  /** Start flying `points`, closing the loop back to the start line. */
+  private fly(points: Vec2[]): void {
+    if (points.length < 2) return;
+    const first = points[0];
+    const last = points[points.length - 1];
+    this.course = Math.hypot(first.x - last.x, first.z - last.z) > 1 ? [...points, first] : points;
+    this.courseLength = 0;
+    for (let i = 1; i < this.course.length; i++) {
+      const a = this.course[i - 1];
+      const b = this.course[i];
+      this.courseLength += Math.hypot(b.x - a.x, b.z - a.z);
+    }
+    this.mode = 'flyover';
+    this.elapsed = 0;
+    this.started = false; // a cut up into the sky, not a climb
+  }
+
+  /** The point `distance` along the course, wrapping round the lap. */
+  private along(distance: number): Vec2 {
+    let left = ((distance % this.courseLength) + this.courseLength) % this.courseLength;
+    for (let i = 1; i < this.course.length; i++) {
+      const a = this.course[i - 1];
+      const b = this.course[i];
+      const span = Math.hypot(b.x - a.x, b.z - a.z);
+      if (left <= span && span > 0) {
+        const t = left / span;
+        return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+      }
+      left -= span;
+    }
+    return this.course[this.course.length - 1];
+  }
+
+  private groundUnder(world: CityWorld, at: Vec2): number {
+    return world.city ? groundAt(world.city.terrain, at.x, at.z) : 0;
   }
 
   /**
@@ -198,6 +272,22 @@ export class CameraDirector {
           .add(new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle)).multiplyScalar(INTRO_RADIUS))
           .setY(world.y + 9 * M),
         target: car.clone().setY(world.y + 2 * M),
+        fov: CHASE_FOV,
+      };
+    }
+
+    // Over the course, then down behind the car for the settle. The settle
+    // is the chase shot, eased into, which is what makes it a descent.
+    if (this.mode === 'flyover' && this.elapsed < FLYOVER_TIME) {
+      // Eased at both ends, so it lifts off the grid and slows into the last
+      // corner rather than arriving at the start line at full tilt.
+      const u = this.elapsed / FLYOVER_TIME;
+      const s = (u * u * (3 - 2 * u)) * this.courseLength;
+      const at = this.along(s);
+      const ahead = this.along(s + FLYOVER_LEAD);
+      return {
+        position: new THREE.Vector3(at.x, this.groundUnder(world, at) + FLYOVER_HEIGHT, at.z),
+        target: new THREE.Vector3(ahead.x, this.groundUnder(world, ahead), ahead.z),
         fov: CHASE_FOV,
       };
     }

@@ -81,6 +81,8 @@ const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
 export class Hud {
   /** Held while the collection map is open (#93). Set by whoever reads input. */
   showMap = false;
+  /** While the camera flies the course before a circuit (#359). Set by the view. */
+  flyover = false;
   /** The Quick Wheel while it is held open (#90), or null. */
   wheel: QuickWheel | null = null;
   /** On-screen controls, when there are any (#89). */
@@ -962,9 +964,29 @@ export class Hud {
     }
 
     if (race.state === 'countdown') {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '800 120px system-ui, sans-serif';
-      ctx.fillText(String(Math.max(1, Math.ceil(race.countdown))), WIDTH / 2, HEIGHT / 2 + 40);
+      // Over the course the lights have not started, so there is no number to
+      // show: the course is the subject, and a 3 hanging for twelve seconds
+      // would read as a frozen game (#359).
+      if (this.flyover && race.route) {
+        const km = race.route.length / UNITS_PER_METRE / 1000;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 44px system-ui, sans-serif';
+        ctx.fillText(race.route.name.toUpperCase(), WIDTH / 2, HEIGHT - 120);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '500 16px system-ui, sans-serif';
+        ctx.fillText(
+          `${race.route.laps} ${race.route.laps === 1 ? 'lap' : 'laps'}  ·  ${km.toFixed(1)} km a lap`,
+          WIDTH / 2,
+          HEIGHT - 92,
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.font = '600 13px system-ui, sans-serif';
+        ctx.fillText('ENTER - skip', WIDTH / 2, HEIGHT - 60);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 120px system-ui, sans-serif';
+        ctx.fillText(String(Math.max(1, Math.ceil(race.countdown))), WIDTH / 2, HEIGHT / 2 + 40);
+      }
       const challenger = race.challenger;
       if (challenger) {
         ctx.fillStyle = challenger.color;
