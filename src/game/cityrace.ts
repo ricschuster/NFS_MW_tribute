@@ -21,6 +21,7 @@ import {
 import { routeAt } from './city/routes';
 import type { CityRoute } from './city/types';
 import { RIVALS, type Rival } from './rivals';
+import { CARS } from './cars';
 
 /**
  * A race in Kestrel Bay (#70).
@@ -103,12 +104,43 @@ export function ordinaryPace(difficulty: number): Rival {
   return { ...donor, difficulty };
 }
 
-export function fieldFor(challenge: Rival): Rival[] {
+export function fieldFor(challenge: Rival, ordinary = false): Rival[] {
+  if (ordinary) return ordinaryField(challenge);
   const from = Math.max(0, RIVALS.indexOf(challenge));
   const field: Rival[] = [challenge];
   for (let i = 1; i < FIELD_SIZE; i++) {
     const donor = RIVALS[(from + i) % RIVALS.length];
     field.push({ ...donor, difficulty: Math.max(0.05, challenge.difficulty - i * FIELD_SPREAD) });
+  }
+  return field;
+}
+
+/**
+ * An ordinary race's field (#419): cars off the street, not the ladder's.
+ * Borrowing the rivals' identities drew an easy race as a grid of hypercars
+ * once cars had bodies of their own (#434). The pace is the same as ever -
+ * the challenge's difficulty stepped down - but who is driving what comes
+ * from the parked cars, at the point in their order the difficulty points to:
+ * an easy event is hatches and saloons, a hard one the quick end of the street.
+ */
+function ordinaryField(challenge: Rival): Rival[] {
+  const street = CARS.filter((car) => car.source === 'street').sort((a, b) => a.topSpeed - b.topSpeed);
+  const at = Math.round(Math.max(0, Math.min(1, challenge.difficulty / 0.6)) * (street.length - 1));
+  // Six neighbours around that point, quickest first: the first car is the
+  // pace, and the pace should be the quickest thing on the grid.
+  const start = Math.max(0, Math.min(street.length - FIELD_SIZE, at - Math.floor(FIELD_SIZE / 2)));
+  const cars = street.slice(start, start + FIELD_SIZE).reverse();
+  const field: Rival[] = [];
+  for (let i = 0; i < cars.length; i++) {
+    const car = cars[i];
+    field.push({
+      ...challenge,
+      name: car.name,
+      car: car.name,
+      color: car.colour,
+      carId: car.id,
+      difficulty: Math.max(0.05, challenge.difficulty - i * FIELD_SPREAD),
+    });
   }
   return field;
 }
@@ -253,7 +285,7 @@ export class CityRace {
     this.challenge = rival;
     // A speed run is driven alone: it is a question about your own lap, and a
     // field on the road would be answering a different one.
-    const grid = route.kind === 'speedrun' ? [] : fieldFor(rival);
+    const grid = route.kind === 'speedrun' ? [] : fieldFor(rival, !ladder);
     for (let i = 0; i < grid.length; i++) {
       this.field.push({
         rival: grid[i],
