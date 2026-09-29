@@ -1876,6 +1876,32 @@ export const COP_LEASH = m(70);
  * lose less by cutting than they do by following.
  */
 export const COP_OFF_ROAD = 0.55;
+/**
+ * A unit that has got past the car it is chasing (#422).
+ *
+ * A chasing unit drives at its own target pace and only chooses at a
+ * junction, and it cannot choose the road it came along. So one that got by
+ * - the player braking for a corner the unit took faster - carried on to the
+ * next junction and turned further away still. On the Halloway Rim that is a
+ * long way, and the owner saw a cruiser overtake and drive off mid-pursuit.
+ *
+ * More than `COP_PASSED` ahead of the car along its own road, with the car
+ * coming the same way and within `COP_HOLD_RANGE`, it holds station: no faster
+ * than `COP_HOLD_PACE` of the car's speed, so it stays in sight rather than
+ * lost. Matching and not slower, so a person can always drive past it: at
+ * 0.85 of your speed it is a rolling roadblock. With the car gone the other
+ * way, or further back than that, it turns round where it is and keeps
+ * `COP_TURN_KEPT` of its speed.
+ *
+ * `npm run endings` reads heat 6 as busted every time with this on (half
+ * before), and that is its driver: it never overtakes, follows any car in its
+ * line at that car's speed, and treats a unit coming back at it head on the
+ * same way. The escapes it had at heat 6 were units overshooting and leaving.
+ */
+export const COP_PASSED = m(10);
+export const COP_HOLD_RANGE = m(70);
+export const COP_HOLD_PACE = 1;
+export const COP_TURN_KEPT = 0.3;
 export const PATROL_PACE = 0.85;
 
 /**

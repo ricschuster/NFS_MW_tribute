@@ -5,6 +5,7 @@ import {
   CAR_RADIUS,
   SEA_SHEET,
   COP_LEASH,
+  COP_HOLD_RANGE,
   TRAFFIC_RADIUS,
   HEAT_LEVELS,
   HEAT_LEVEL_COUNT,
@@ -4559,5 +4560,69 @@ describe('roadblocks in a rival race', () => {
   it('are not laid below heat 3', () => {
     const { world } = raceAt(2, 25);
     expect(world.police.roadblocks.length).toBe(0);
+  });
+});
+
+// A unit that gets past you does not drive away (#422): the owner watched a
+// cruiser overtake mid-pursuit and carry on down the rim road.
+describe('a unit that has got ahead of you', () => {
+  /** A pursuit on the car's road, and a chasing unit `metres` ahead of it going its way at pace. */
+  const passedBy = (metres: number) => {
+    const world = new CityWorld(undefined, { traffic: false });
+    // A long, level, paved piece of boulevard, so the unit has room to get away.
+    const road = world.city.roads.find(
+      (r) =>
+        r.class === 'boulevard' &&
+        r.surface !== 'dirt' &&
+        r.length > 300 * M &&
+        Math.abs(world.city.nodes[r.a].y - world.city.nodes[r.b].y) < 2 * M,
+    )!;
+    const a = world.city.nodes[road.a].pos;
+    const b = world.city.nodes[road.b].pos;
+    // Pointed down the road, from a quarter of the way along it.
+    world.x = a.x + (b.x - a.x) * 0.25;
+    world.z = a.z + (b.z - a.z) * 0.25;
+    world.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.step(STEP, NONE);
+    world.speed = world.maxSpeed * 0.3;
+    tail(world);
+    const cop: Cop = {
+      road,
+      t: 0.25 + (metres * M) / Math.max(1, road.length),
+      forward: true,
+      speed: world.maxSpeed * 0.9,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      kind: 'cruiser',
+      role: 'chase',
+      offRoad: 0,
+    };
+    placeOnRoad(world.city, cop, TRAFFIC_LANE);
+    world.police.cops.push(cop);
+    return { world, cop, road };
+  };
+
+  it('holds station ahead of a car coming the same way', () => {
+    const { world, cop, road } = passedBy(20);
+    expect(world.onRoad).toBe(road);
+    const hold = press({ up: true });
+    for (let t = 0; t < 2; t += STEP) {
+      world.speed = Math.min(world.speed, world.maxSpeed * 0.3);
+      world.step(STEP, hold);
+    }
+    expect(world.police.cops).toContain(cop);
+    expect(Math.hypot(cop.x - world.x, cop.z - world.z) / M).toBeLessThan(COP_HOLD_RANGE / M + 10);
+  });
+
+  it('turns round when the car has gone the other way', () => {
+    const { world, cop } = passedBy(40);
+    world.heading += Math.PI;
+    world.speed = 0;
+    const was = cop.forward;
+    world.step(STEP, NONE);
+    expect(cop.forward).toBe(!was);
   });
 });
