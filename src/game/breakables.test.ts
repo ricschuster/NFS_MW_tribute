@@ -2,11 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { kestrelBay } from './city/index';
 import { CityWorld } from './cityworld';
 import { distanceToRoad } from './city/grid';
+import { shortcuts } from './city/breakables';
 import type { Cop } from './citypolice';
 import {
   STEP,
-  CITY_STREET_GRID,
   GATE_COUNT,
+  GATE_DETOUR,
   BREAKER_SPACING,
   BREAKER_MIN_SPEED,
   BREAKER_SPEED_KEPT,
@@ -26,12 +27,22 @@ describe('what there is to break', () => {
     expect(stacks.length).toBeGreaterThan(0);
   });
 
-  // A gate stands across an open, non-park block (a yard, a lot), and every
-  // block is parkland today because there is no street grid to leave a
-  // graded lot behind (ADR-0009) - see the same finding in cars.test.ts.
-  it.skipIf(!CITY_STREET_GRID)('puts gates on the yards', () => {
-    const gates = city.breakables.filter((b) => b.kind === 'gate');
-    expect(gates.length).toBe(GATE_COUNT);
+  // A gate guards a shortcut (#361): it stands at the mouth of a way across
+  // open ground between two roads that the network goes at least
+  // GATE_DETOUR times as far round to join.
+  it('puts every gate at the mouth of a shortcut', () => {
+    const gates = generated.filter((b) => b.kind === 'gate');
+    expect(gates.length).toBeGreaterThan(10);
+    expect(gates.length).toBeLessThanOrEqual(GATE_COUNT);
+    const links = shortcuts(city);
+    for (const gate of gates) {
+      const link = links.find((l) => {
+        const step = l.road.width / 2 + 4 * M;
+        return Math.hypot(l.from.x + l.way.x * step - gate.at.x, l.from.z + l.way.z * step - gate.at.z) < 1;
+      });
+      expect(link, `gate ${gate.id} guards nothing`).toBeDefined();
+      expect(link!.detour).toBeGreaterThanOrEqual(GATE_DETOUR);
+    }
   });
 
   it('keeps them apart, so a corner is not four of them', () => {
