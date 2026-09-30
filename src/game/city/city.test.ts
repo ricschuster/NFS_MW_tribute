@@ -1845,7 +1845,9 @@ describe('Halloway Quarry, a working quarry (#323, #327)', () => {
   // finished city, so the sim and the renderer see the same thing, and kept
   // clear of everything the layout put near them.
   describe('settling ponds (#329)', () => {
-    const ponds = city.water.filter((b) => b.kind === 'pond');
+    // The quarry's, not Tidewater Park's (#461): the ones near the pit.
+    const quarry = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
+    const ponds = city.water.filter((b) => b.kind === 'pond' && Math.hypot(b.outline[0].x - quarry.at.x, b.outline[0].z - quarry.at.z) < quarry.radius * 2);
     const centre = (ring: { x: number; z: number }[]) => ({
       x: ring.reduce((s, p) => s + p.x, 0) / ring.length,
       z: ring.reduce((s, p) => s + p.z, 0) / ring.length,

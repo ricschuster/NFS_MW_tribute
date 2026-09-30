@@ -215,8 +215,11 @@ describe('Kestrel Head castle (#454)', () => {
 
 describe('Highmoor Park (#460)', () => {
   const pieces = highmoorPieces();
-  const trees = pieces.filter((p) => p.kind === 'tree');
   const park = PLAN_DISTRICTS.find((a) => a.name === 'Highmoor Park')!;
+  // Highmoor's woods, not Tidewater Park's trees (#461): the ones in a box
+  // round this park, 300 m wider than it all round - Tidewater is 2 km off.
+  const near = (v: number, of: number[]) => v > Math.min(...of) - 300 * M && v < Math.max(...of) + 300 * M;
+  const trees = pieces.filter((p) => p.kind === 'tree' && near(p.at.x, park.poly.map((q) => q.x)) && near(p.at.z, park.poly.map((q) => q.z)));
   const roadGap = (x: number, z: number) =>
     Math.min(
       ...city.roads.map((r) => {
@@ -229,7 +232,9 @@ describe('Highmoor Park (#460)', () => {
   it('puts its own props in first, then a wood of a thousand trees and more', () => {
     expect(pieces.slice(0, piecesOf(HIGHMOOR_PROPS)).every((p) => p.kind !== 'tree')).toBe(true);
     expect(trees.length).toBeGreaterThan(1000);
-    expect(trees.length).toBe(pieces.length - piecesOf(HIGHMOOR_PROPS));
+    // Everything after the props is a tree: Highmoor's woods, then Tidewater
+    // Park's (#461).
+    expect(pieces.slice(piecesOf(HIGHMOOR_PROPS)).every((p) => p.kind === 'tree')).toBe(true);
   });
 
   it('keeps the woods in the park or on unclaimed ground just past it, off the roads, out of the castle and below the meadow', () => {

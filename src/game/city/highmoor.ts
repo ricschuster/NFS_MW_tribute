@@ -136,7 +136,7 @@ export function woodsFor(
 }
 
 /** A number in [0, 1) for one cell of the woods' lattice and one use of it, the same every time. */
-function cellRandom(i: number, j: number, k: number): number {
+export function cellRandom(i: number, j: number, k: number): number {
   let h = (Math.imul(i, 374761393) + Math.imul(j, 668265263) + Math.imul(k, 2246822519) + CITY_WOODS_STREAM) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   h = Math.imul(h ^ (h >>> 16), 2246822507);
@@ -144,7 +144,7 @@ function cellRandom(i: number, j: number, k: number): number {
 }
 
 /** A smooth noise in [0, 1] over a lattice `cell` metres across, the same for a given seed. */
-function valueNoise(seed: number, cell: number): (x: number, z: number) => number {
+export function valueNoise(seed: number, cell: number): (x: number, z: number) => number {
   const hash = (i: number, j: number) => {
     let h = (Math.imul(i, 374761393) + Math.imul(j, 668265263) + seed) | 0;
     h = Math.imul(h ^ (h >>> 13), 1274126177);
