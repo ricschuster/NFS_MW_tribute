@@ -1635,7 +1635,9 @@ describe('Marrow Field, the disused airfield (#295)', () => {
     return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
   };
 
-  const isFieldDirt = (r: CityRoad) => r.surface === 'dirt';
+  // The field's dirt, not every dirt road: Highmoor Park's woodland paths
+  // (#460) are dirt too, and are the park's.
+  const isFieldDirt = (r: CityRoad) => r.surface === 'dirt' && r.district !== 'park';
 
   it('marks the runway and taxiway dirt, and leaves the rest of the network paved', () => {
     const dirt = city.roads.filter(isFieldDirt);

@@ -1038,14 +1038,16 @@ export const CITY_MIN_STREET = m(70);
  * - **Park is new.** It has no streets of its own worth the name - what it has
  *   is the road through it - so the blocks are enormous and almost everything is
  *   skipped. The hill park is 41% too steep for a street to climb, and what is
- *   left is the road up.
+ *   left is the road up. Its streets are the drawn paths through Highmoor's
+ *   woods (#460), and they are two lanes: one lane at this scale is 4.9 m, a
+ *   hair wider than the car, and a path you cannot drive is not a way through.
  */
 export const DISTRICTS: Record<DistrictKind, DistrictCharacter> = {
   downtown: { blockX: m(80), blockZ: m(80), jitter: 0.08, skip: 0.03, lanes: 2, speed: kmh(50), winding: 1 },
   midtown: { blockX: m(165), blockZ: m(145), jitter: 0.3, skip: 0.22, lanes: 2, speed: kmh(60), winding: 1 },
   waterfront: { blockX: m(280), blockZ: m(300), jitter: 0.34, skip: 0.5, lanes: 2, speed: kmh(60), winding: 1 },
   industrial: { blockX: m(250), blockZ: m(230), jitter: 0.18, skip: 0.3, lanes: 2, speed: kmh(70), winding: 1 },
-  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 1, speed: kmh(50), winding: 1 },
+  park: { blockX: m(420), blockZ: m(400), jitter: 0.35, skip: 0.8, lanes: 2, speed: kmh(50), winding: 1 },
 };
 
 /**
