@@ -92,6 +92,7 @@ import type {
   Rect,
   RoadClass,
   Superblock,
+  Apron,
   Vec2,
 } from './types';
 
@@ -604,7 +605,7 @@ export function generateCity(seed: number): City {
     repairs: [],
     breakables: [],
     setPieces: [],
-    aprons: hasDocksApron ? [wharfApron()] : [],
+    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons()],
     jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
@@ -678,6 +679,7 @@ export function generateCity(seed: number): City {
   // turned round on the racing line. Now they turn round at the far end of the
   // bridge, and the wharf is closed from there.
   for (const apron of city.aprons) {
+    if (!apron.yard) continue;
     for (const road of city.roads) {
       const ends = [city.nodes[road.a].pos, city.nodes[road.b].pos];
       if (ends.some((p) => insideOrNear(apron.outline, p.x, p.z, YARD_REACH))) road.yard = true;
@@ -696,9 +698,58 @@ const YARD_REACH = 5 * UNITS_PER_METRE;
  * two drawn roads that make it, `w1` and `w2`, joined end to end.
  */
 const WHARF_APRON_MARGIN = 45 * UNITS_PER_METRE;
-function wharfApron(): { outline: Vec2[]; margin: number } {
+function wharfApron(): Apron {
   const [a, b] = ['w1', 'w2'].map((id) => AUTHORED_ROADS.find((road) => road.id === id)!.points);
-  return { outline: [...a, ...b.slice(1, -1)], margin: WHARF_APRON_MARGIN };
+  return { outline: [...a, ...b.slice(1, -1)], margin: WHARF_APRON_MARGIN, look: 'concrete', yard: true };
+}
+
+/**
+ * Kestrel Head's castle (#454), cobbled: the outer bailey between its walls and
+ * the inner castle's courtyard inside its ring. Both laid off the roads that run
+ * through them, as the walls were (`docs/research/kestrel-head-castle.md`): the
+ * bailey along `k1` from its main gate to the inner castle, the courtyard an
+ * oval from `k1`'s end to the back gate on `k2`. Just inside the walls, so the
+ * cobbles stop at the stone.
+ */
+const CASTLE_BAILEY_FROM = 55;
+const CASTLE_BAILEY_HALF = 26;
+const CASTLE_BACK_GATE = { x: 1404, z: -530 };
+const CASTLE_COURT_HALF = 53;
+function castleAprons(): Apron[] {
+  const k1 = AUTHORED_ROADS.find((road) => road.id === 'k1');
+  if (!k1 || !PLAN_PLACES.some((p) => p.kind === 'lookout')) return [];
+  const M = UNITS_PER_METRE;
+  const start = k1.points[0];
+  const gate = k1.points[k1.points.length - 1];
+  const length = Math.hypot(gate.x - start.x, gate.z - start.z) / M;
+  const d = { x: (gate.x - start.x) / (length * M), z: (gate.z - start.z) / (length * M) };
+  const n = { x: -d.z, z: d.x };
+  const at = (along: number, across: number) => ({
+    x: start.x + (d.x * along + n.x * across) * M,
+    z: start.z + (d.z * along + n.z * across) * M,
+  });
+  const bailey = [
+    at(CASTLE_BAILEY_FROM, -CASTLE_BAILEY_HALF),
+    at(length, -CASTLE_BAILEY_HALF),
+    at(length, CASTLE_BAILEY_HALF),
+    at(CASTLE_BAILEY_FROM, CASTLE_BAILEY_HALF),
+  ];
+  const back = { x: CASTLE_BACK_GATE.x * M, z: CASTLE_BACK_GATE.z * M };
+  const centre = { x: (gate.x + back.x) / 2, z: (gate.z + back.z) / 2 };
+  const half = Math.hypot(back.x - gate.x, back.z - gate.z) / 2;
+  const a = { x: (back.x - gate.x) / (half * 2), z: (back.z - gate.z) / (half * 2) };
+  const court: Vec2[] = [];
+  for (let i = 0; i < 32; i++) {
+    const t = (i / 32) * Math.PI * 2;
+    const u = Math.cos(t) * half * 0.94;
+    const v = Math.sin(t) * CASTLE_COURT_HALF * M;
+    court.push({ x: centre.x + a.x * u - a.z * v, z: centre.z + a.z * u + a.x * v });
+  }
+  const margin = 1 * M;
+  return [
+    { outline: bailey, margin, look: 'cobbles', yard: false },
+    { outline: court, margin, look: 'cobbles', yard: false },
+  ];
 }
 
 /**
