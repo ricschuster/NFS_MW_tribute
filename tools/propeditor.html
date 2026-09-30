@@ -302,6 +302,12 @@
       variants: ['large', 'small'], sizes: { large: [50, 130], small: [30, 60] } },
     { id: 'straddle-carrier', group: 'Port', name: 'Straddle carrier', w: 5, l: 9, shape: 'box', color: '#f0c419', road: 'ok' },
     { id: 'reach-stacker', group: 'Port', name: 'Reach stacker', w: 4.5, l: 11, shape: 'box', color: '#f0c419', road: 'ok' },
+    // Kestrel Head's old fort and signal station (#454).
+    { id: 'rampart', group: 'Fort', name: 'Rampart', w: 3, l: 20, shape: 'box', color: '#8d877a', flat: true, variants: ['whole', 'broken'] },
+    { id: 'bastion', group: 'Fort', name: 'Bastion', w: 20, l: 20, shape: 'circle', color: '#8d877a', flat: true },
+    { id: 'fort-gate', group: 'Fort', name: 'Fort gate', w: 31, l: 8, shape: 'box', color: '#a39d8f', road: 'ok' },
+    { id: 'signal-tower', group: 'Fort', name: 'Signal tower', w: 9, l: 9, shape: 'tower', color: '#8d877a', flat: true },
+    { id: 'cannon', group: 'Fort', name: 'Cannon', w: 2, l: 4, shape: 'box', color: '#3b3f42', road: 'ok' },
     { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
     { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
     // Sized per variant, to match `JUMP_SHAPES` in `city/jumps.ts` (#307).

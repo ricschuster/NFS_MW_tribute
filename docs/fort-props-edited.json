@@ -1,0 +1,272 @@
+{
+  "seed": "0x4b657374",
+  "place": "Kestrel Head",
+  "props": [
+    {
+      "id": "f1",
+      "kind": "fort-gate",
+      "x": 1340,
+      "z": -400,
+      "angle": 2.729,
+      "note": "North-west gate - the Kestrel Climb finishes here"
+    },
+    {
+      "id": "f2",
+      "kind": "fort-gate",
+      "x": 1410,
+      "z": -560,
+      "angle": 2.729,
+      "note": "South gate - the gravel track down leaves here"
+    },
+    {
+      "id": "f3",
+      "kind": "bastion",
+      "x": 1280.4,
+      "z": -426.1,
+      "angle": 0
+    },
+    {
+      "id": "f4",
+      "kind": "bastion",
+      "x": 1399.6,
+      "z": -373.9,
+      "angle": 0
+    },
+    {
+      "id": "f5",
+      "kind": "bastion",
+      "x": 1350.4,
+      "z": -586.1,
+      "angle": 0
+    },
+    {
+      "id": "f6",
+      "kind": "bastion",
+      "x": 1469.6,
+      "z": -533.9,
+      "angle": 0
+    },
+    {
+      "id": "f7",
+      "kind": "rampart",
+      "x": 1315.7,
+      "z": -410.6,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f8",
+      "kind": "rampart",
+      "x": 1298.3,
+      "z": -418.2,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f9",
+      "kind": "rampart",
+      "x": 1364.3,
+      "z": -389.4,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f10",
+      "kind": "rampart",
+      "x": 1381.7,
+      "z": -381.8,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f11",
+      "kind": "rampart",
+      "x": 1368.3,
+      "z": -578.2,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f12",
+      "kind": "rampart",
+      "x": 1434.3,
+      "z": -549.4,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f13",
+      "kind": "rampart",
+      "x": 1451.7,
+      "z": -541.8,
+      "angle": 1.158,
+      "variant": "whole"
+    },
+    {
+      "id": "f14",
+      "kind": "rampart",
+      "x": 1288.3,
+      "z": -444.1,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f15",
+      "kind": "rampart",
+      "x": 1296.1,
+      "z": -461.8,
+      "angle": 2.729,
+      "variant": "broken"
+    },
+    {
+      "id": "f16",
+      "kind": "rampart",
+      "x": 1303.8,
+      "z": -479.5,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f17",
+      "kind": "rampart",
+      "x": 1319.3,
+      "z": -514.9,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f18",
+      "kind": "rampart",
+      "x": 1407.4,
+      "z": -392.0,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f19",
+      "kind": "rampart",
+      "x": 1415.2,
+      "z": -409.7,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f20",
+      "kind": "rampart",
+      "x": 1422.9,
+      "z": -427.4,
+      "angle": 2.729,
+      "variant": "broken"
+    },
+    {
+      "id": "f21",
+      "kind": "rampart",
+      "x": 1430.7,
+      "z": -445.1,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f22",
+      "kind": "rampart",
+      "x": 1438.4,
+      "z": -462.8,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f23",
+      "kind": "rampart",
+      "x": 1453.9,
+      "z": -498.2,
+      "angle": 2.729,
+      "variant": "broken"
+    },
+    {
+      "id": "f24",
+      "kind": "rampart",
+      "x": 1461.7,
+      "z": -515.9,
+      "angle": 2.729,
+      "variant": "whole"
+    },
+    {
+      "id": "f25",
+      "kind": "signal-tower",
+      "x": 1346.9,
+      "z": -503.2,
+      "angle": 0,
+      "note": "The signal station - the beacon on the skyline"
+    },
+    {
+      "id": "f26",
+      "kind": "cannon",
+      "x": 1306.7,
+      "z": -466.2,
+      "angle": -1.983
+    },
+    {
+      "id": "f27",
+      "kind": "cannon",
+      "x": 1336.8,
+      "z": -534.9,
+      "angle": -1.983
+    },
+    {
+      "id": "f28",
+      "kind": "cannon",
+      "x": 1411.2,
+      "z": -420.5,
+      "angle": 1.158
+    },
+    {
+      "id": "f29",
+      "kind": "cannon",
+      "x": 1441.2,
+      "z": -489.2,
+      "angle": 1.158
+    },
+    {
+      "id": "f30",
+      "kind": "cannon",
+      "x": 1306.6,
+      "z": -423.4,
+      "angle": -0.412
+    },
+    {
+      "id": "f31",
+      "kind": "cannon",
+      "x": 1443.4,
+      "z": -536.6,
+      "angle": 2.729
+    },
+    {
+      "id": "f32",
+      "kind": "rubble",
+      "x": 1325.0,
+      "z": -512.8,
+      "angle": 0
+    },
+    {
+      "id": "f33",
+      "kind": "rubble",
+      "x": 1445.1,
+      "z": -493.0,
+      "angle": 0
+    },
+    {
+      "id": "f34",
+      "kind": "rubble",
+      "x": 1299.6,
+      "z": -447.5,
+      "angle": 0
+    },
+    {
+      "id": "f35",
+      "kind": "rubble",
+      "x": 1447.1,
+      "z": -505.2,
+      "angle": 0
+    }
+  ]
+}

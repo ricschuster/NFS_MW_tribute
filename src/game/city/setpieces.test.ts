@@ -5,6 +5,7 @@ import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
+import { FORT_PROPS } from './fortprops';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
@@ -69,7 +70,8 @@ describe('Marrow Field props (#295)', () => {
 // three radii of the pit.
 const piecesOf = (props: typeof MARROW_PROPS) => airfieldProps(city.terrain, 0, props).pieces.length;
 const quarryPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS), piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS));
-const wharfPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS));
+const wharfPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS)).slice(0, piecesOf(WHARF_PROPS));
+const fortPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS) + piecesOf(WHARF_PROPS));
 
 describe('Halloway Quarry props (#323)', () => {
   const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
@@ -144,6 +146,47 @@ describe('Sablet Wharf props (#410)', () => {
     const up = 8 * M;
     expect(hitsSetPiece([block('two high')], 0, 0, up, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
     expect(hitsSetPiece([block('four high')], 0, 0, up, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+  });
+});
+
+describe('Kestrel Head fort (#454)', () => {
+  const fort = fortPieces();
+  const roadGap = (x: number, z: number) =>
+    Math.min(
+      ...city.roads.map((r) => {
+        const a = city.nodes[r.a].pos;
+        const b = city.nodes[r.b].pos;
+        return distanceToSegment(x, z, a.x, a.z, b.x, b.z) - r.width / 2;
+      }),
+    );
+
+  it('builds the fort it was given, on the summit', () => {
+    expect(fort.length).toBe(airfieldProps(city.terrain, 0, FORT_PROPS).pieces.length);
+    expect(fort.filter((p) => p.kind === 'rampart').length).toBeGreaterThan(10);
+    expect(fort.filter((p) => p.kind === 'fort-gate').length).toBe(2);
+    expect(fort.some((p) => p.kind === 'signal-tower')).toBe(true);
+    for (const piece of fort) expect(Math.hypot(piece.at.x / M - 1375, piece.at.z / M + 480)).toBeLessThan(150);
+  });
+
+  it('keeps its walls and its tower off the road', () => {
+    for (const piece of fort.filter((p) => p.kind === 'rampart' || p.kind === 'bastion' || p.kind === 'signal-tower')) {
+      expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
+    }
+  });
+
+  it('stands each gate over the road, and lets a car through under the arch', () => {
+    for (const gate of fort.filter((p) => p.kind === 'fort-gate')) {
+      expect(roadGap(gate.at.x, gate.at.z)).toBeLessThan(0);
+      expect(hitsSetPiece([gate], gate.at.x, gate.at.z, gate.y, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+      const tower = beside(gate, 0, 13);
+      expect(hitsSetPiece([gate], tower.x, tower.z, gate.y, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+    }
+  });
+
+  it('makes a broken wall lower than a whole one', () => {
+    const wall = (variant: string): SetPiece => ({ kind: 'rampart', at: { x: 0, z: 0 }, y: 0, angle: 0, variant });
+    expect(hitsSetPiece([wall('broken')], 0, 0, 4 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece([wall('whole')], 0, 0, 4 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
   });
 });
 

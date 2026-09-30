@@ -13,6 +13,7 @@
 //   npm run propsync                        # docs/props-edited.json -> src/game/city/marrowprops.ts
 //   npm run propsync -- --place quarry      # docs/quarry-props-edited.json -> src/game/city/quarryprops.ts
 //   npm run propsync -- --place docks       # docs/wharf-props-edited.json -> src/game/city/wharfprops.ts
+//   npm run propsync -- --place lookout     # docs/fort-props-edited.json -> src/game/city/fortprops.ts
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const args = process.argv.slice(2);
@@ -20,6 +21,7 @@ const PLACES = {
   airfield: { json: 'docs/props-edited.json', out: 'src/game/city/marrowprops.ts', name: 'Marrow Field', exportName: 'MARROW_PROPS', issue: '#295' },
   quarry: { json: 'docs/quarry-props-edited.json', out: 'src/game/city/quarryprops.ts', name: 'Halloway Quarry', exportName: 'QUARRY_PROPS', issue: '#323' },
   docks: { json: 'docs/wharf-props-edited.json', out: 'src/game/city/wharfprops.ts', name: 'Sablet Wharf', exportName: 'WHARF_PROPS', issue: '#410' },
+  lookout: { json: 'docs/fort-props-edited.json', out: 'src/game/city/fortprops.ts', name: 'Kestrel Head', exportName: 'FORT_PROPS', issue: '#454' },
 };
 const which = args.includes('--place') ? args[args.indexOf('--place') + 1] : 'airfield';
 if (!PLACES[which]) {
@@ -42,6 +44,7 @@ const KINDS = [
   'silo', 'water-tower', 'crane', 'mast', 'bunker', 'blast-wall', 'shed', 'cone', 'tree', 'jump', 'billboard',
   'stockpile', 'conveyor', 'haul-truck', 'excavator', 'cabin', 'crusher', 'rubble',
   'container-block', 'sts-crane', 'warehouse', 'straddle-carrier', 'reach-stacker',
+  'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

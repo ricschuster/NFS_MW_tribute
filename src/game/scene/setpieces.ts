@@ -371,6 +371,77 @@ function reachStacker(): Part[] {
   ];
 }
 
+const STONE = '#8d877a';
+const STONE_DARK = '#6f6a5f';
+
+/**
+ * A length of the fort's wall (#454): dressed stone, twenty metres, with a
+ * walkway and merlons along the top. Broken down, it stands a little over
+ * three metres with its top gone ragged - the ruin you can see over and
+ * cannot drive through.
+ */
+function rampart(variant?: string): Part[] {
+  if (variant === 'broken') {
+    return [
+      { geometry: at(box(3, 2.4, 20), 0, 1.2, 0), colour: STONE },
+      { geometry: at(box(3, 0.8, 7), 0, 2.8, -5.5), colour: STONE_DARK },
+      { geometry: at(box(2.6, 0.6, 4), 0, 2.7, 6), colour: STONE_DARK },
+    ];
+  }
+  const merlons = [];
+  for (let i = 0; i < 8; i++) merlons.push(at(box(0.8, 1, 1.4), 1.1, 6.5, -8.75 + i * 2.5));
+  return [
+    { geometry: at(box(3, 6, 20), 0, 3, 0), colour: STONE },
+    { geometry: at(box(3.4, 0.4, 20.2), 0, 6, 0), colour: STONE_DARK },
+    ...merlons.map((geometry) => ({ geometry, colour: STONE })),
+  ];
+}
+
+/** The angled corner work of a fort: a five-sided platform, battered at the foot. */
+function bastion(): Part[] {
+  return [
+    { geometry: at(upright(9, 10.5, 7, 5), 0, 3.5, 0), colour: STONE },
+    { geometry: at(upright(9.3, 9.3, 0.5, 5), 0, 7.2, 0), colour: STONE_DARK },
+  ];
+}
+
+/**
+ * A gatehouse the road runs through: two squat towers either side of the
+ * carriageway and an arch between them eight metres up.
+ */
+function fortGate(): Part[] {
+  const towers = [-13, 13].map((x) => at(box(5, 11, 8), x, 5.5, 0));
+  const caps = [-13, 13].map((x) => at(box(5.8, 0.6, 8.8), x, 11.3, 0));
+  return [
+    ...towers.map((geometry) => ({ geometry, colour: STONE })),
+    { geometry: at(box(21, 3, 8), 0, 9.5, 0), colour: STONE },
+    ...caps.map((geometry) => ({ geometry, colour: STONE_DARK })),
+  ];
+}
+
+/**
+ * The signal station: a round stone tower with a parapet and an iron beacon
+ * basket on top. The thing on the skyline that says where the fort is.
+ */
+function signalTower(): Part[] {
+  return [
+    { geometry: at(upright(4, 4.6, 18, 12), 0, 9, 0), colour: STONE },
+    { geometry: at(upright(4.6, 4.6, 1.4, 12), 0, 18.7, 0), colour: STONE_DARK },
+    { geometry: at(upright(0.25, 0.25, 4, 6), 0, 21.4, 0), colour: DARK_METAL },
+    { geometry: at(upright(1.4, 0.7, 1.2, 8), 0, 23.8, 0), colour: DARK_METAL },
+    { geometry: at(box(1.4, 2.4, 0.2), 0, 1.2, 4.55), colour: '#2e2a26' },
+  ];
+}
+
+/** An old muzzle-loader on its carriage, pointing out over the wall. */
+function cannon(): Part[] {
+  return [
+    { geometry: at(box(1.6, 0.7, 2.6), 0, 0.45, -0.4), colour: '#5a4a38' },
+    { geometry: at(tube(0.22, 0.34, 3.2), 0, 1.05, 0.6), colour: '#2f3336' },
+    ...[-0.85, 0.85].map((x) => ({ geometry: at(tube(0.45, 0.45, 0.15).rotateY(Math.PI / 2), x, 0.45, 0.4), colour: '#3b2f25' })),
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -407,6 +478,11 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   warehouse,
   'straddle-carrier': straddleCarrier,
   'reach-stacker': reachStacker,
+  rampart,
+  bastion,
+  'fort-gate': fortGate,
+  'signal-tower': signalTower,
+  cannon,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

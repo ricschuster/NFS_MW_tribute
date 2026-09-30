@@ -99,6 +99,19 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // Legs a car cannot fit between, and the frame fifteen metres up.
   'straddle-carrier': [post(-2.2, -4.2, 0.4, 15), post(2.2, -4.2, 0.4, 15), post(-2.2, 4.2, 0.4, 15), post(2.2, 4.2, 0.4, 15)],
   'reach-stacker': [{ u: 0, v: 0, w: 4.5, l: 11, y0: 0, y1: 3.6 }],
+  // Kestrel Head's old fort (#454). A wall is solid to its height, whole or
+  // broken down (`VARIANT_SOLIDS`); a gate is its two towers and the arch over
+  // the road, high enough to drive under; a bastion is the angled platform at
+  // a corner.
+  rampart: [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 6 }],
+  bastion: [post(0, 0, 9, 7)],
+  'fort-gate': [
+    { u: -13, v: 0, w: 5, l: 8, y0: 0, y1: 11 },
+    { u: 13, v: 0, w: 5, l: 8, y0: 0, y1: 11 },
+    { u: 0, v: 0, w: 31, l: 8, y0: 8, y1: 11 },
+  ],
+  'signal-tower': [post(0, 0, 4.6, 20)],
+  cannon: [{ u: 0, v: 0, w: 2, l: 4, y0: 0, y1: 1.4 }],
 };
 
 /**
@@ -110,6 +123,7 @@ const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'container-block:three high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 7.8 }],
   'container-block:four high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 10.4 }],
   'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: 0, y1: 10 }],
+  'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
 };
 
 /** What this piece is solid as. */

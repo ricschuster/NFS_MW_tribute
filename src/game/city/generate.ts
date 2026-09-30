@@ -51,6 +51,7 @@ import { airfieldProps } from './setpieces';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
+import { FORT_PROPS } from './fortprops';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
 import { FREEWAY_LOOP, FREEWAY_RAMPS, FREEWAY_TUNNELS } from './freeway';
@@ -642,14 +643,16 @@ export function generateCity(seed: number): City {
   // they are data, so placing them draws nothing from `rng` and cannot move
   // anything generated before them. Their gates and stacks number on from
   // the generated breakables, which keeps those ids where they were.
-  // Marrow Field's, then Halloway Quarry's, then Sablet Wharf's: appended in
+  // Marrow Field's, then Halloway Quarry's, Sablet Wharf's and Kestrel Head's: appended in
   // that order so the ids and the save-remembered billboards of the first do
   // not move.
   const hasDocks = PLAN_PLACES.some((p) => p.kind === 'docks');
+  const hasLookout = PLAN_PLACES.some((p) => p.kind === 'lookout');
   const placed = [
     ...(hasAirfield ? MARROW_PROPS : []),
     ...(hasQuarry ? QUARRY_PROPS : []),
     ...(hasDocks ? WHARF_PROPS : []),
+    ...(hasLookout ? FORT_PROPS : []),
   ];
   if (placed.length > 0) {
     const authored = airfieldProps(terrain, city.breakables.length, placed);
