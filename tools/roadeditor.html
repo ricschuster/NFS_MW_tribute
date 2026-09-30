@@ -198,7 +198,9 @@
     <b>Drag</b> empty ground to pan · <b>wheel</b> or <kbd>+</kbd> <kbd>-</kbd> <kbd>0</kbd> to zoom<br>
     <b><kbd>Shift</kbd>+drag anywhere to draw freehand</b><br>
     <b>Show grade</b>: amber over 10%, red over 13% - no road crosses red<br>
-    Draw road: click points, <kbd>Enter</kbd> to finish, <kbd>Esc</kbd> to cancel
+    Draw road: click points, <kbd>Enter</kbd> to finish, <kbd>Esc</kbd> to cancel<br>
+    <b>Dashed lines</b> are guides to trace, not roads<br>
+    <b>Shaded shapes</b> are items to build round · <b style="color:#ff8a80">red rings</b> are issues
   </div>
 
   <div class="sel">
@@ -371,6 +373,17 @@
     return d;
   };
   const live = () => roads.filter((r) => !removed.has(r.id));
+  // A new road's id has to be one nobody has used, deleted roads included.
+  // It used to be `n${roads.length}`, which in a save of 73 roads is n73 - an id
+  // on the removed list, so the road was hidden the instant it was drawn.
+  const newId = () => {
+    let most = 0;
+    for (const id of [...roads.map((r) => r.id), ...removed]) {
+      const m = /^n(\d+)$/.exec(id);
+      if (m) most = Math.max(most, Number(m[1]));
+    }
+    return `n${most + 1}`;
+  };
   // Below this a road is a fragment: shorter than a single city block, too short
   // to be somewhere you drive, and usually left behind by a clip or a trim.
   const STUB = 30;
@@ -463,6 +476,78 @@
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.stroke();
+    }
+
+    // Guides are proposals drawn over the map, not roads: a line to trace or
+    // to ignore. They cannot be selected and are never saved.
+    for (const g of DATA.guides ?? []) {
+      ctx.beginPath();
+      g.points.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      if (g.closed) ctx.closePath();
+      ctx.strokeStyle = g.color;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([8, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const [lx, lz] = g.points[0];
+      ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#0d1a1f';
+      ctx.strokeText(g.label, sx(lx) + 8, sy(lz) + 4);
+      ctx.fillStyle = g.color;
+      ctx.fillText(g.label, sx(lx) + 8, sy(lz) + 4);
+    }
+
+    // Items are what will stand in a place - cranes, warehouses, container
+    // rows - drawn as footprints so roads can be laid round them. Like guides
+    // they are never saved; they come in with the page.
+    for (const it of DATA.items ?? []) {
+      ctx.beginPath();
+      const pts = it.poly ?? it.line;
+      pts.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      if (it.poly) {
+        ctx.closePath();
+        ctx.fillStyle = it.color + '55';
+        ctx.fill();
+      } else {
+        ctx.setLineDash([3, 4]);
+      }
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (view.scale > 1.2 && it.poly) {
+        const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+        const cz = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+        ctx.font = '500 11px "IBM Plex Sans", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#0d1a1f';
+        ctx.strokeText(it.label, sx(cx), sy(cz) + 4);
+        ctx.fillStyle = '#f4f1ea';
+        ctx.fillText(it.label, sx(cx), sy(cz) + 4);
+      }
+    }
+
+    // Issues: a spot somebody should look at, and what is wrong there.
+    for (const m of DATA.issues ?? []) {
+      const x = sx(m.at[0]);
+      const y = sy(m.at[1]);
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ff5252';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      m.text.split('\n').forEach((line, i) => {
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#0d1a1f';
+        ctx.strokeText(line, x + 20, y + 4 + i * 15);
+        ctx.fillStyle = '#ff8a80';
+        ctx.fillText(line, x + 20, y + 4 + i * 15);
+      });
     }
 
     if (drawing && drawing.length) {
@@ -709,7 +794,7 @@
     }
     const points = thin(drawing, FREEHAND_TOLERANCE);
     snapshot();
-    const id = `n${roads.length}`;
+    const id = newId();
     roads.push({ id, kind: 'boulevard', bridge: false, district: 'midtown', points, isNew: true });
     selected = { road: roads[roads.length - 1], point: null };
     drawing = null;
@@ -847,7 +932,7 @@
     }
     if (e.key === 'Enter' && mode === 'draw' && drawing && drawing.length > 1) {
       snapshot();
-      const id = `n${roads.length}`;
+      const id = newId();
       roads.push({ id, kind: 'boulevard', bridge: false, district: 'midtown', points: drawing, isNew: true });
       drawing = null;
       selected = { road: roads[roads.length - 1], point: null };
