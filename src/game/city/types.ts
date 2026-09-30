@@ -529,6 +529,20 @@ export interface Jump {
   angle: number;
 }
 
+/**
+ * Paved ground that is not a road (#410): the land inside `outline`, and
+ * `margin` past it, is paved rather than grass, and drives like it
+ * (`city/aprons.ts`). Concrete at Sablet Wharf; cobbles in Kestrel Head's
+ * castle (#454). A `yard` is closed to civilian traffic, roads and all - the
+ * wharf is a working port; a castle courtyard is a place anyone drives into.
+ */
+export interface Apron {
+  outline: Vec2[];
+  margin: number;
+  look: 'concrete' | 'cobbles';
+  yard: boolean;
+}
+
 /** A generated city. A pure function of `seed`, and the same one every time. */
 export interface City {
   seed: number;
@@ -551,11 +565,8 @@ export interface City {
   breakables: Breakable[];
   /** Hand-placed set dressing (#295). */
   setPieces: SetPiece[];
-  /**
-   * Paved ground that is not a road (#410): Sablet Wharf's yard. The land
-   * inside `outline`, and `margin` past it, is concrete rather than grass.
-   */
-  aprons: { outline: Vec2[]; margin: number }[];
+  /** Paved ground that is not a road: Sablet Wharf's yard, Kestrel Head's courtyards. */
+  aprons: Apron[];
   /** Things to launch off (#307). */
   jumps: Jump[];
 }

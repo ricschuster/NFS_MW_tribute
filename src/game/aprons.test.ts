@@ -39,7 +39,9 @@ function hold(at: { x: number; z: number; y: number }, frac: number) {
 
 describe('the wharf is paved (#410)', () => {
   it('has an apron, and the middle of the yard is on it', () => {
-    expect(city.aprons.length).toBe(1);
+    const wharf = city.aprons.filter((apron) => apron.yard);
+    expect(wharf.length).toBe(1);
+    expect(wharf[0].look).toBe('concrete');
     expect(onApron(city, -1634 * M, -1955 * M)).toBe(true);
     expect(onApron(city, 0, 0)).toBe(false);
   });
@@ -90,5 +92,18 @@ describe('the race on the quay (#451)', () => {
       w.step(1 / 60, { left: false, right: false, up: false, down: false, confirm: false, nitro: false });
       for (const car of w.traffic.cars) expect(car.road.yard).toBeFalsy();
     }
+  });
+});
+
+describe('Kestrel Head\'s castle is cobbled (#454)', () => {
+  it('paves the bailey and the inner courtyard, and keeps them open to anyone', () => {
+    const castle = city.aprons.filter((apron) => apron.look === 'cobbles');
+    expect(castle.length).toBe(2);
+    for (const apron of castle) expect(apron.yard).toBe(false);
+    // In the bailey, beside the road; in the courtyard, by the keep.
+    expect(onApron(city, 1297 * M, -325 * M)).toBe(true);
+    expect(onApron(city, 1370 * M, -470 * M)).toBe(true);
+    // And not outside the walls.
+    expect(onApron(city, 1200 * M, -400 * M)).toBe(false);
   });
 });

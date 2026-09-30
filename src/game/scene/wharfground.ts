@@ -1,47 +1,66 @@
 import * as THREE from 'three';
-import type { Vec2 } from '../city/types';
+import type { Apron, Vec2 } from '../city/types';
 
 /**
- * Paved ground (#410): Sablet Wharf's yard is concrete, not grass.
+ * Paved ground (#410, #454): Sablet Wharf's yard is concrete, and Kestrel
+ * Head's castle courtyards are cobbled, not grass.
  *
  * The same move as the quarry's ground (`quarryground.ts`): a patch on the
  * ground's own material rather than a second mesh, so the terrain, its
  * lighting and its shadows stay what they were and everything outside an
  * apron is exactly the colour it was. An apron is an outline and a margin
- * (`City.aprons`); the fragment asks how far it is from the outline - inside
+ * (`City.aprons`); the fragment asks how far it is from each outline - inside
  * is paved, and it fades to grass over the last stretch of the margin - and
- * lays a slab joint every `SLAB` metres, which is what makes a flat grey read
- * as a yard rather than as a colour.
+ * lays the joints of its look: a concrete slab every `SLAB` metres, or setts
+ * a little under a metre, which is what makes a flat colour read as a yard.
  *
  * Chained onto whatever patch the material already has, because a material
  * compiles one `onBeforeCompile` and the quarry's is on the same ground.
  */
 const SLAB = 8;
-/** GLSL wants a fixed array size; an outline is resampled to this many points. */
+const SETT = 0.9;
+/** GLSL wants fixed array sizes: this many aprons, each resampled to this many points. */
+const APRONS = 4;
 const POINTS = 96;
 
-export function wharfGround(material: THREE.Material, aprons: readonly { outline: Vec2[]; margin: number }[], unitsPerMetre: number): void {
-  const apron = aprons[0];
-  if (!apron || apron.outline.length < 3) return;
-  const outline = resample(apron.outline, POINTS);
-  const xs = outline.map((p) => p.x);
-  const zs = outline.map((p) => p.z);
-  const before = material.onBeforeCompile.bind(material);
-  const key = material.customProgramCacheKey?.bind(material);
-
-  material.onBeforeCompile = (shader, renderer) => {
-    before(shader, renderer);
-    shader.uniforms.uApron = { value: outline.map((p) => new THREE.Vector2(p.x, p.z)) };
-    shader.uniforms.uApronBox = {
-      value: new THREE.Vector4(
+export function wharfGround(material: THREE.Material, aprons: readonly Apron[], unitsPerMetre: number): void {
+  const used = aprons.filter((apron) => apron.outline.length >= 3).slice(0, APRONS);
+  if (used.length === 0) return;
+  const points: THREE.Vector2[] = [];
+  const boxes: THREE.Vector4[] = [];
+  const params: THREE.Vector4[] = [];
+  for (let i = 0; i < APRONS; i++) {
+    const apron = used[i];
+    const outline = apron ? resample(apron.outline, POINTS) : [];
+    for (let k = 0; k < POINTS; k++) points.push(new THREE.Vector2(outline[k]?.x ?? 0, outline[k]?.z ?? 0));
+    if (!apron) {
+      // An empty box nothing is ever inside.
+      boxes.push(new THREE.Vector4(1, 1, -1, -1));
+      params.push(new THREE.Vector4(0, 1, 0, 0));
+      continue;
+    }
+    const xs = outline.map((p) => p.x);
+    const zs = outline.map((p) => p.z);
+    boxes.push(
+      new THREE.Vector4(
         Math.min(...xs) - apron.margin,
         Math.min(...zs) - apron.margin,
         Math.max(...xs) + apron.margin,
         Math.max(...zs) + apron.margin,
       ),
-    };
-    shader.uniforms.uApronMargin = { value: apron.margin };
-    shader.uniforms.uApronSlab = { value: SLAB * unitsPerMetre };
+    );
+    // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles).
+    const cobbles = apron.look === 'cobbles';
+    params.push(new THREE.Vector4(apron.margin, (cobbles ? SETT : SLAB) * unitsPerMetre, cobbles ? 1 : 0, 0));
+  }
+  const before = material.onBeforeCompile.bind(material);
+  const key = material.customProgramCacheKey?.bind(material);
+
+  material.onBeforeCompile = (shader, renderer) => {
+    before(shader, renderer);
+    shader.uniforms.uApron = { value: points };
+    shader.uniforms.uApronBox = { value: boxes };
+    shader.uniforms.uApronParams = { value: params };
 
     if (!shader.vertexShader.includes('vApronWorld')) {
       shader.vertexShader = shader.vertexShader
@@ -52,11 +71,11 @@ export function wharfGround(material: THREE.Material, aprons: readonly { outline
       .replace(
         '#include <common>',
         `#include <common>
+        #define APRONS ${APRONS}
         #define APRON_POINTS ${POINTS}
-        uniform vec2 uApron[APRON_POINTS];
-        uniform vec4 uApronBox;
-        uniform float uApronMargin;
-        uniform float uApronSlab;
+        uniform vec2 uApron[APRONS * APRON_POINTS];
+        uniform vec4 uApronBox[APRONS];
+        uniform vec4 uApronParams[APRONS];
         varying vec3 vApronWorld;`,
       )
       .replace(
@@ -64,34 +83,41 @@ export function wharfGround(material: THREE.Material, aprons: readonly { outline
         `#include <map_fragment>
         {
           vec2 p = vApronWorld.xz;
-          if (p.x > uApronBox.x && p.y > uApronBox.y && p.x < uApronBox.z && p.y < uApronBox.w) {
+          for (int k = 0; k < APRONS; k++) {
+            vec4 box = uApronBox[k];
+            if (p.x < box.x || p.y < box.y || p.x > box.z || p.y > box.w) continue;
+            vec4 params = uApronParams[k];
             // Distance to the outline, and which side of it: even-odd crossings.
             float d = 1e20;
             bool inside = false;
             for (int i = 0; i < APRON_POINTS; i++) {
-              vec2 a = uApron[i];
-              vec2 b = uApron[(i + 1) % APRON_POINTS];
+              vec2 a = uApron[k * APRON_POINTS + i];
+              vec2 b = uApron[k * APRON_POINTS + (i + 1) % APRON_POINTS];
               vec2 ab = b - a;
               float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
               d = min(d, length(p - a - ab * t));
               if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
             }
-            float paved = inside ? 1.0 : 1.0 - smoothstep(uApronMargin * 0.75, uApronMargin, d);
-            if (paved > 0.0) {
-              vec2 g = fract(p / uApronSlab);
-              float joint = min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y));
-              vec2 cell = floor(p / uApronSlab);
-              float tone = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
-              vec3 concrete = vec3(0.60, 0.59, 0.56) * (0.93 + 0.07 * tone);
-              concrete *= mix(0.78, 1.0, smoothstep(0.0, 0.025, joint));
-              diffuseColor.rgb = mix(diffuseColor.rgb, concrete, paved);
-            }
+            float paved = inside ? 1.0 : 1.0 - smoothstep(params.x * 0.75, params.x, d);
+            if (paved <= 0.0) continue;
+            bool setts = params.z > 0.5;
+            // Setts are laid in courses, each one offset by half a stone.
+            vec2 q = p / params.y;
+            if (setts) q.x += 0.5 * floor(q.y);
+            vec2 g = fract(q);
+            float joint = min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y));
+            float tone = fract(sin(dot(floor(q), vec2(12.9898, 78.233))) * 43758.5453);
+            vec3 paving = setts
+              ? vec3(0.40, 0.37, 0.32) * (0.82 + 0.26 * tone)
+              : vec3(0.60, 0.59, 0.56) * (0.93 + 0.07 * tone);
+            paving *= mix(setts ? 0.62 : 0.78, 1.0, smoothstep(0.0, setts ? 0.09 : 0.025, joint));
+            diffuseColor.rgb = mix(diffuseColor.rgb, paving, paved);
           }
         }`,
       );
   };
   // Two patches sharing a key would share a compiled program.
-  material.customProgramCacheKey = () => `${key ? key() : ''}+wharfground`;
+  material.customProgramCacheKey = () => `${key ? key() : ''}+wharfground${used.length}`;
 }
 
 /** `count` points spaced evenly along a closed outline. */
