@@ -44,7 +44,7 @@ const KINDS = [
   'silo', 'water-tower', 'crane', 'mast', 'bunker', 'blast-wall', 'shed', 'cone', 'tree', 'jump', 'billboard',
   'stockpile', 'conveyor', 'haul-truck', 'excavator', 'cabin', 'crusher', 'rubble',
   'container-block', 'sts-crane', 'warehouse', 'straddle-carrier', 'reach-stacker',
-  'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon',
+  'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon', 'keep', 'palas', 'chapel', 'wall-tower', 'ruin-house',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

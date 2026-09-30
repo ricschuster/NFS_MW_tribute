@@ -149,7 +149,7 @@ describe('Sablet Wharf props (#410)', () => {
   });
 });
 
-describe('Kestrel Head fort (#454)', () => {
+describe('Kestrel Head castle (#454)', () => {
   const fort = fortPieces();
   const roadGap = (x: number, z: number) =>
     Math.min(
@@ -160,16 +160,18 @@ describe('Kestrel Head fort (#454)', () => {
       }),
     );
 
-  it('builds the fort it was given, on the summit', () => {
+  it('builds the castle it was given: a bailey, an inner castle and a keep', () => {
     expect(fort.length).toBe(airfieldProps(city.terrain, 0, FORT_PROPS).pieces.length);
     expect(fort.filter((p) => p.kind === 'rampart').length).toBeGreaterThan(10);
-    expect(fort.filter((p) => p.kind === 'fort-gate').length).toBe(2);
-    expect(fort.some((p) => p.kind === 'signal-tower')).toBe(true);
-    for (const piece of fort) expect(Math.hypot(piece.at.x / M - 1375, piece.at.z / M + 480)).toBeLessThan(150);
+    // The main gate, the inner gate and the back gate, in a row down the approach.
+    expect(fort.filter((p) => p.kind === 'fort-gate').length).toBe(3);
+    for (const kind of ['keep', 'palas', 'chapel'] as const) expect(fort.some((p) => p.kind === kind)).toBe(true);
+    for (const piece of fort) expect(Math.hypot(piece.at.x / M - 1320, piece.at.z / M + 400)).toBeLessThan(200);
   });
 
-  it('keeps its walls and its tower off the road', () => {
-    for (const piece of fort.filter((p) => p.kind === 'rampart' || p.kind === 'bastion' || p.kind === 'signal-tower')) {
+  it('keeps its walls and its buildings off the road', () => {
+    const standing = ['rampart', 'wall-tower', 'keep', 'palas', 'chapel', 'ruin-house'];
+    for (const piece of fort.filter((p) => standing.includes(p.kind))) {
       expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
     }
   });
