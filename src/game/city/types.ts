@@ -324,6 +324,12 @@ export interface CityRoute {
   name: string;
   kind: RouteKind;
   points: Vec2[];
+  /**
+   * The road's height at each point, where the route was laid through the graph:
+   * what the field reads the hill off (#454), since it is positions along the
+   * line rather than cars on the road.
+   */
+  heights?: number[];
   checkpoints: Vec2[];
   /** Where the lap starts and finishes. */
   start: Vec2;
