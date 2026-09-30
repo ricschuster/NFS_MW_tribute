@@ -593,7 +593,40 @@ export function startingAt(route: CityRoute, fraction: number): CityRoute {
   }
   const start = pointAt(points, length, fraction * length);
   const rotated = [start, ...points.slice(at + 1), ...points.slice(0, at + 1)];
-  return { ...route, points: rotated, start, checkpoints: checkpointsAlong(rotated, length) };
+  // The heights go round with the points, the new first one taken between its neighbours.
+  const h = route.heights;
+  const heights = h
+    ? (() => {
+        const a = points[at];
+        const b = points[(at + 1) % points.length];
+        const span = Math.hypot(b.x - a.x, b.z - a.z);
+        const t = span < 1e-6 ? 0 : Math.hypot(start.x - a.x, start.z - a.z) / span;
+        return [h[at] + (h[(at + 1) % h.length] - h[at]) * t, ...h.slice(at + 1), ...h.slice(0, at + 1)];
+      })()
+    : undefined;
+  return { ...route, points: rotated, start, checkpoints: checkpointsAlong(rotated, length), ...(heights ? { heights } : {}) };
+}
+
+/**
+ * The grade `along` a route, rise over run in the direction it is driven: what
+ * the field reads a hill off (#454). Zero where the route carries no heights.
+ */
+export function routeGradeAt(route: CityRoute, along: number): number {
+  const { points, heights } = route;
+  if (!heights || points.length < 2) return 0;
+  const open = route.kind === 'sprint';
+  const segments = open ? points.length - 1 : points.length;
+  let left = open ? Math.max(0, Math.min(route.length, along)) : ((along % route.length) + route.length) % route.length;
+  for (let i = 0; i < segments; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    const span = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= span || i === segments - 1) {
+      return span < 1e-6 ? 0 : (heights[(i + 1) % heights.length] - heights[i]) / span;
+    }
+    left -= span;
+  }
+  return 0;
 }
 
 /** The point `along` world units into the loop, wrapping at the end. */

@@ -636,6 +636,9 @@ export function generateCity(seed: number): City {
   city.routes = routesFor(city);
   // Then the ones a place asked for (#311), numbered after the search's own.
   city.routes.push(...placedRoutes(city, city.routes.length));
+  // Each point of a route is a node's own position, so its height is that node's.
+  const heightOf = new Map(city.nodes.map((node) => [node.pos, node.y]));
+  for (const route of city.routes) route.heights = route.points.map((p) => heightOf.get(p) ?? 0);
   city.ambushes = ambushesFor(city);
   city.repairs = repairsFor(city);
   city.breakables = breakablesFor(rng, city);

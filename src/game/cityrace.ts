@@ -18,7 +18,8 @@ import {
   SPEEDRUN_SETTLE,
   REFERENCE_TOP_SPEED,
 } from './constants';
-import { routeAt } from './city/routes';
+import { routeAt, routeGradeAt } from './city/routes';
+import { slopeSpeed } from './slope';
 import type { CityRoute } from './city/types';
 import { RIVALS, type Rival } from './rivals';
 import { CARS } from './cars';
@@ -431,8 +432,17 @@ export class CityRace {
     // settled in the first corner and the rest of the race is a procession.
     // And less of it for a moment after being hit (#350).
     car.shaken = Math.max(0, car.shaken - dt);
+    // And the hill, the way every car on the graph feels it (#255): the field is
+    // positions along the line, and without this it ran up the Kestrel Climb
+    // (#454) at its flat pace while the car it was racing lost a fifth of its
+    // top speed to the slope - measured, it finished before a perfect driver
+    // could, and the race could not be won.
+    const hill = slopeSpeed(routeGradeAt(route, car.dist));
     const pace =
-      base * (1 + FIELD_WOBBLE * Math.sin(this.elapsed * car.rate + car.phase)) * (car.shaken > 0 ? FIELD_SHAKEN_PACE : 1);
+      base *
+      hill *
+      (1 + FIELD_WOBBLE * Math.sin(this.elapsed * car.rate + car.phase)) *
+      (car.shaken > 0 ? FIELD_SHAKEN_PACE : 1);
     car.speed = pace;
     const was = { x: car.x, z: car.z };
     car.dist += pace * dt;
