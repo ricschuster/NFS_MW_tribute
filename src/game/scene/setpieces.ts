@@ -443,6 +443,83 @@ function cannon(): Part[] {
 }
 
 /**
+ * A keep: the castle's great tower, on a five-sided plan with one point aimed
+ * the way it is turned - down the approach, where an attack would come from -
+ * so a shot glances off. Thirty metres, with a parapet and the signal
+ * station's beacon on top: the one thing on the skyline that says where the
+ * castle is.
+ */
+function keep(): Part[] {
+  return [
+    { geometry: at(upright(6.6, 7.4, 28, 5), 0, 14, 0), colour: STONE },
+    { geometry: at(upright(7, 7, 2, 5), 0, 29, 0), colour: STONE_DARK },
+    { geometry: at(upright(0.3, 0.3, 4, 6), 0, 32, 0), colour: DARK_METAL },
+    { geometry: at(upright(1.6, 0.8, 1.4, 8), 0, 34.6, 0), colour: DARK_METAL },
+    { geometry: at(box(1.6, 3, 0.3), 0, 7.5, -6.2), colour: '#2e2a26' },
+  ];
+}
+
+/** The four walls of a roofless building, `w` across and `l` long, with a door gap in the front. */
+function shell(w: number, l: number, h: number, thick: number, door: number, colour: string): Part[] {
+  const side = (x: number) => at(box(thick, h, l), x, h / 2, 0);
+  const back = at(box(w, h, thick), 0, h / 2, -l / 2 + thick / 2);
+  const front = (w - door) / 2;
+  return [
+    { geometry: side(-w / 2 + thick / 2), colour },
+    { geometry: side(w / 2 - thick / 2), colour },
+    { geometry: back, colour },
+    { geometry: at(box(front, h, thick), -w / 2 + front / 2, h / 2, l / 2 - thick / 2), colour },
+    { geometry: at(box(front, h, thick), w / 2 - front / 2, h / 2, l / 2 - thick / 2), colour },
+  ];
+}
+
+/**
+ * The hall of the inner castle: a tall roofless range with rows of window
+ * openings and a pointed-arch doorway, the part of a ruin people photograph.
+ */
+function palas(): Part[] {
+  const windows = [];
+  for (let i = 0; i < 5; i++) {
+    for (const x of [-8.05, 8.05]) windows.push(at(box(0.2, 2.6, 1.6), x, 8, -12 + i * 6));
+  }
+  const arch = new THREE.CylinderGeometry(2, 2, 0.3, 3).rotateX(Math.PI / 2).rotateZ(Math.PI);
+  return [
+    ...shell(16, 34, 12, 1.6, 4, STONE),
+    ...windows.map((geometry) => ({ geometry, colour: '#2e2a26' })),
+    { geometry: at(box(4, 3.4, 1.8), 0, 5.7, 16.2), colour: STONE },
+    { geometry: at(arch, 0, 4.6, 16.3), colour: STONE_DARK },
+  ];
+}
+
+/** The chapel: a roofless nave and a rounded end wall, with a narrow door. */
+function chapel(): Part[] {
+  const apse = new THREE.CylinderGeometry(5, 5, 7, 12, 1, true, -Math.PI / 2, Math.PI);
+  return [
+    ...shell(10, 18, 9, 1.2, 2.2, STONE),
+    { geometry: at(apse, 0, 3.5, 9), colour: STONE },
+    { geometry: at(box(1, 3, 0.2), 0, 5, -9.1), colour: '#2e2a26' },
+  ];
+}
+
+/** A round tower standing on the curtain wall, crenellated. */
+function wallTower(): Part[] {
+  const merlons = [];
+  for (let i = 0; i < 10; i++) {
+    const t = (i / 10) * Math.PI * 2;
+    merlons.push(at(box(1, 1.2, 1), Math.sin(t) * 4.6, 14.6, Math.cos(t) * 4.6));
+  }
+  return [
+    { geometry: at(upright(4.8, 5.2, 14, 12), 0, 7, 0), colour: STONE },
+    ...merlons.map((geometry) => ({ geometry, colour: STONE })),
+  ];
+}
+
+/** A low roofless outbuilding of the bailey - a stable, a granary, a gatekeeper's lodge. */
+function ruinHouse(variant?: string): Part[] {
+  return variant === 'small' ? shell(8, 12, 4.5, 0.9, 1.8, STONE_DARK) : shell(12, 24, 4.5, 1, 3, STONE_DARK);
+}
+
+/**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
  * thing driving past it: these are built to real proportions and then grown
@@ -483,6 +560,11 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'fort-gate': fortGate,
   'signal-tower': signalTower,
   cannon,
+  keep,
+  palas,
+  chapel,
+  'wall-tower': wallTower,
+  'ruin-house': ruinHouse,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

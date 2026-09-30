@@ -483,7 +483,12 @@ export type SetPieceKind =
   | 'bastion'
   | 'fort-gate'
   | 'signal-tower'
-  | 'cannon';
+  | 'cannon'
+  | 'keep'
+  | 'palas'
+  | 'chapel'
+  | 'wall-tower'
+  | 'ruin-house';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
