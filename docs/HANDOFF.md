@@ -3,10 +3,10 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-09-30, end of day).** Kestrel Head is finished bar the
-  owner's sign-off, Highmoor Park is built, and the owner has stepped away.
+- **Start here (2026-09-30, end of day).** Kestrel Head and Highmoor Park are
+  both finished and signed off by the owner.
   Everything is merged or armed; the owner's dev server follows main.
-  - **Kestrel Head (#454): built out, needs the owner's sign-off.** The
+  - **Kestrel Head (#454): done, signed off by the owner on 2026-09-30.** The
     castle stands on a raised platform (`levelCastle` in `places.ts`), and its
     cobbled courtyards are found from the walls (`tools/castleareas.mjs`,
     written by `propsync --place lookout` into `city/castle.ts`), so moving a
@@ -14,7 +14,7 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     (`PALAS_GROWN`, `CHAPEL_GROWN`, `HOUSE_GROWN`), there is ruin clutter
     (masonry, wells, rubble), and the ward's arch is clear to drive through
     (#464, #465, #466).
-  - **Highmoor Park (#460): built, waiting on the owner's drive.** Dirt
+  - **Highmoor Park (#460): done, driven and signed off by the owner on 2026-09-30.** Dirt
     paths through the woods, a car park, a viewpoint spur (#468); generated
     woods (`city/highmoor.ts`: below 96 m, meadow above 108, clear of every
     road, 18 m off the tarmac and off any road a race runs on), a picnic area,
@@ -38,8 +38,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     origin/main` from a branch built on an older main reverted #462's
     HANDOFF entry and map-areas rows; #467 and this entry put them back.
     Squash onto the branch's *own* base, not onto a newer main.
-  - **Next:** the owner drives Highmoor Park and signs off Kestrel Head;
-    then **Tidewater Park (#461)**, whose three questions are still open.
+  - **Next:** Kestrel Head and Highmoor Park are signed off;
+    next is **Tidewater Park (#461)**, whose three questions are still open.
 - **Earlier on 2026-09-30.** Two places were built with the owner and merged:
   - **Sablet Wharf (#410, done and signed off).** The quay loop, two more
     bridges, a container port (5 new set-piece kinds), a paved yard that drives
