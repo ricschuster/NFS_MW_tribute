@@ -157,6 +157,14 @@ export interface CityRoad {
    * pier as well; what it is not is a crossing.
    */
   pier?: boolean;
+  /**
+   * True on the roads inside a yard (#451): Sablet Wharf's, inside its apron.
+   * A working port is closed to the public, the way the quarry's gravel is, so
+   * civilian traffic keeps off - measured, with it on the quay loop the lap
+   * took twice as long as without, because traffic is kept round the player
+   * and on the wharf every road near the player is the loop.
+   */
+  yard?: boolean;
 }
 
 /**

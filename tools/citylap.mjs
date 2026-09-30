@@ -326,7 +326,11 @@ if (!proving) {
 
   console.log('\nTHE LADDER');
   console.log(
-    `  every rival on "${proving.name}", driven by ${ladderDriver.name === 'perfect' ? 'the perfect driver' : `an ${ladderDriver.name}`} in traffic, clean and boosted\n`,
+    // Each rival races their own circuit, picked by rank (`CityWorld.rivalRoute`):
+    // with more than one, naming only the first was the table saying something
+    // that was not true.
+    `  every rival on their own circuit (${city.routes.filter((r) => r.kind === 'circuit').map((r) => `"${r.name}"`).join(', ')}, by rank), ` +
+      `driven by ${ladderDriver.name === 'perfect' ? 'the perfect driver' : `an ${ladderDriver.name}`} in traffic, clean and boosted\n`,
   );
 
   const ladderHead = ['rival', 'their pace', 'clean', 'scored', 'ground', 'gap', 'boosted', 'scored', 'ground', 'gap', 'on boost'];

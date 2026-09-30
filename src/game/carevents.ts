@@ -48,6 +48,7 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Marrow Field Run': ['Runway', 'Hangar', 'Tailwind', 'Crosswind', 'Apron', 'Control'],
   'Halloway Rim': ['Rim', 'Quarry', 'Dust', 'Edge', 'Blast', 'Bench'],
   'Halloway Drop': ['Haul', 'Spiral', 'Gravel', 'Pit', 'Bedrock', 'Tipper'],
+  'Sablet Quay': ['Quay', 'Crane', 'Berth', 'Harbour', 'Tide', 'Stack'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 

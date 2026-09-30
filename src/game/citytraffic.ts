@@ -44,7 +44,8 @@ export function hourly(hour: number): number {
 
 /**
  * Roads that belong to a place rather than to the city, which civilian traffic
- * is kept off: the quarry's gravel (#327), and Marrow Field's dirt (#377).
+ * is kept off: the quarry's gravel (#327), Marrow Field's dirt (#377), and
+ * Sablet Wharf's yard (#451).
  *
  * The airfield joined the quarry for the same reason and a sharper one. Its
  * longest road has the cargo plane's belly across it - solid, so a car either
@@ -55,7 +56,8 @@ export function hourly(hour: number): number {
  * lap: the Marrow Field Run could not be lapped with traffic at all.
  */
 const PRIVATE_SURFACES: ReadonlySet<RoadSurface> = new Set<RoadSurface>(['gravel', 'dirt']);
-const isPublic = (road: CityRoad) => !PRIVATE_SURFACES.has(road.surface);
+// And a yard's roads (#451): Sablet Wharf is a working port, closed to the public.
+const isPublic = (road: CityRoad) => !PRIVATE_SURFACES.has(road.surface) && !road.yard;
 
 /** One car going about its business on the street network. */
 export interface TrafficCar extends GraphCar {
