@@ -23,6 +23,7 @@ const PLACES = {
   quarry: { json: 'docs/quarry-props-edited.json', out: 'src/game/city/quarryprops.ts', name: 'Halloway Quarry', exportName: 'QUARRY_PROPS', issue: '#323' },
   docks: { json: 'docs/wharf-props-edited.json', out: 'src/game/city/wharfprops.ts', name: 'Sablet Wharf', exportName: 'WHARF_PROPS', issue: '#410' },
   highmoor: { json: 'docs/highmoor-props-edited.json', out: 'src/game/city/highmoorprops.ts', name: 'Highmoor Park', exportName: 'HIGHMOOR_PROPS', issue: '#460' },
+  tidewater: { json: 'docs/tidewater-props-edited.json', out: 'src/game/city/tidewaterprops.ts', name: 'Tidewater Park', exportName: 'TIDEWATER_PROPS', issue: '#461' },
   lookout: {
     json: 'docs/fort-props-edited.json', out: 'src/game/city/fortprops.ts', name: 'Kestrel Head', exportName: 'FORT_PROPS', issue: '#454',
     // The castle's enclosures are found from its walls (`castleareas.mjs`): a
@@ -57,6 +58,7 @@ const KINDS = [
   'container-block', 'sts-crane', 'warehouse', 'straddle-carrier', 'reach-stacker',
   'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon', 'keep', 'palas', 'chapel', 'wall-tower', 'ruin-house', 'masonry', 'well',
   'picnic-table', 'bench', 'telescope',
+  'bandstand', 'toilet-block', 'cafe',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

@@ -499,7 +499,10 @@ export type SetPieceKind =
   | 'well'
   | 'picnic-table'
   | 'bench'
-  | 'telescope';
+  | 'telescope'
+  | 'bandstand'
+  | 'toilet-block'
+  | 'cafe';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by

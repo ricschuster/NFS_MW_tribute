@@ -53,6 +53,7 @@ import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
 import { HIGHMOOR_PROPS } from './highmoorprops';
+import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { CASTLE_AREAS } from './castle';
@@ -659,12 +660,14 @@ export function generateCity(seed: number): City {
   const hasDocks = PLAN_PLACES.some((p) => p.kind === 'docks');
   const hasLookout = PLAN_PLACES.some((p) => p.kind === 'lookout');
   const hasHighmoor = PLAN_DISTRICTS.some((a) => a.name === 'Highmoor Park');
+  const hasTidewater = PLAN_DISTRICTS.some((a) => a.name === 'Tidewater Park');
   const placed = [
     ...(hasAirfield ? MARROW_PROPS : []),
     ...(hasQuarry ? QUARRY_PROPS : []),
     ...(hasDocks ? WHARF_PROPS : []),
     ...(hasLookout ? FORT_PROPS : []),
     ...(hasHighmoor ? HIGHMOOR_PROPS : []),
+    ...(hasTidewater ? TIDEWATER_PROPS : []),
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:

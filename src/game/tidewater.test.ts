@@ -5,6 +5,7 @@ import { PLAN_DISTRICTS, inArea } from './city/plan';
 import { groundAt } from './city/terrain';
 import { inWater } from './city/grid';
 import { TIDEWATER_PONDS } from './city/tidewater';
+import { TIDEWATER_PROPS } from './city/tidewaterprops';
 
 const M = UNITS_PER_METRE;
 const { city } = new CityWorld(undefined, { traffic: false, police: false });
@@ -74,6 +75,28 @@ describe('Tidewater Park (#461)', () => {
         const dz = b.z - a.z;
         const t = Math.max(0, Math.min(1, ((tree.at.x - a.x) * dx + (tree.at.z - a.z) * dz) / (dx * dx + dz * dz)));
         expect(Math.hypot(a.x + dx * t - tree.at.x, a.z + dz * t - tree.at.z) / M).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it('has its buildings: a bandstand, a café and toilets, on dry lawn and off the roads', () => {
+    for (const kind of ['bandstand', 'cafe', 'toilet-block'] as const) {
+      const placed = TIDEWATER_PROPS.filter((p) => p.kind === kind);
+      expect(placed.length).toBeGreaterThan(0);
+      for (const p of placed) {
+        const piece = city.setPieces.find((q) => q.kind === kind && Math.hypot(q.at.x / M - p.x, q.at.z / M - p.z) < 0.5)!;
+        expect(piece).toBeDefined();
+        expect(inArea(park.poly, piece.at)).toBe(true);
+        expect(inWater(city, piece.at.x, piece.at.z)).toBe(false);
+        for (const road of city.roads) {
+          if (city.nodes[road.a].level === 'tunnel') continue;
+          const a = city.nodes[road.a].pos;
+          const b = city.nodes[road.b].pos;
+          const dx = b.x - a.x;
+          const dz = b.z - a.z;
+          const t = Math.max(0, Math.min(1, ((piece.at.x - a.x) * dx + (piece.at.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+          expect(Math.hypot(a.x + dx * t - piece.at.x, a.z + dz * t - piece.at.z) / M).toBeGreaterThan(road.width / 2 / M + 12);
+        }
       }
     }
   });
