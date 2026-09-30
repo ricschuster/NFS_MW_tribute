@@ -134,7 +134,7 @@ Car events use both kinds. Nothing about the ladder changes.
 
 ## Decisions for the owner
 
-All seven adopted as recommended, 2026-09-29.
+All seven adopted as recommended, 2026-09-29. The first moved to three to six on 2026-09-30, when the Highmoor Descent (#460) became the sixth route.
 
 1. Three to five events per car, starting at three?
 2. Routes shared between cars, contributed area by area?

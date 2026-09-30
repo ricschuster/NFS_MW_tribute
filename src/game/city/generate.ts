@@ -667,7 +667,7 @@ export function generateCity(seed: number): City {
     // Highmoor's woods (#460) go last, round everything placed before them:
     // generated, on a stream of their own, so they move nothing else.
     const first = airfieldProps(terrain, city.breakables.length, placed);
-    const woods = hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS) : [];
+    const woods = hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, city.routes.map((route) => route.points)) : [];
     const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));

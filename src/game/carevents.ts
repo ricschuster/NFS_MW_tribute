@@ -9,7 +9,7 @@ import type { CityRoute } from './city/types';
  * finding the car is the unlock. The owner adopted the design's seven
  * recommendations on 2026-09-29, which is what this is:
  *
- * - three to five events a car, starting at three;
+ * - three to six events a car, starting at three (six since #460);
  * - routes shared between cars, so a road network gets many events out of few
  *   routes, and each finished area adds routes for every car at once;
  * - a car's list is there the moment you have the car;
