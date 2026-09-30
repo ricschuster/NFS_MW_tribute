@@ -46,6 +46,11 @@ export interface Span {
   /** What it is paved with (#294). Undefined means asphalt, same as everywhere else. */
   surface?: RoadSurface;
   /**
+   * The surface was drawn on this road (#454), and is its own: it does not
+   * spread to the roads leading to it the way a place's does (`markDirtAccess`).
+   */
+  ownSurface?: boolean;
+  /**
    * A pier's deck (`piers.ts`): held at this height rather than following the
    * ground, which under a pier is the seabed.
    */
@@ -157,6 +162,7 @@ export function layRoute(
   district: DistrictKind = 'midtown',
   required = false,
   surface?: RoadSurface,
+  ownSurface?: boolean,
 ): void {
   if (line.length < 2) return;
   const wet = (a: Vec2, b: Vec2) => water.isWater((a.x + b.x) / 2, (a.z + b.z) / 2);
@@ -164,7 +170,7 @@ export function layRoute(
   let i = 0;
   while (i < line.length - 1) {
     if (!wet(line[i], line[i + 1])) {
-      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required, surface });
+      laid.push({ from: line[i], to: line[i + 1], class: kind, district, required, surface, ...(ownSurface ? { ownSurface } : {}) });
       i++;
       continue;
     }
@@ -178,7 +184,7 @@ export function layRoute(
     while (j < line.length - 1 && wet(line[j], line[j + 1])) j++;
     const back = reachBack(line, i, -1);
     const on = reachBack(line, Math.min(j + 1, line.length - 1), 1);
-    laid.push({ from: line[back], to: line[on], class: kind, district, required, surface });
+    laid.push({ from: line[back], to: line[on], class: kind, district, required, surface, ...(ownSurface ? { ownSurface } : {}) });
     // Resume where the crossing ended, not where the water did. Resuming at the
     // far bank leaves the span's far end joined to nothing, so the bridge is its
     // own two-node island and `prune` deletes it - a chosen crossing that never

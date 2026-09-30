@@ -317,10 +317,31 @@ const LATER_ROUTES: PlacedRoute[] = [
       [-1955, -2448],
     ],
   },
+  // Kestrel Climb (#454): the map's first uphill race. From the straight near
+  // the foot of Highmoor Park's one road up, 3 km and 110 m of climb to the
+  // gate of the fort on Kestrel Head. Up, as the owner chose on 2026-09-30:
+  // the Halloway Drop is already the descent, and a hill moves the top speed
+  // (#255), so this is the one event where the slope is the opponent.
+  {
+    name: 'Kestrel Climb',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [-734, 384],
+      [447, 203],
+      [938, -364],
+      [1340, -400],
+    ],
+  },
 ];
 
-/** A hand-laid route through its way points, shortest path between each, no road twice. */
+/**
+ * A hand-laid route through its way points, shortest path between each, no
+ * road twice. A loop comes back to its first point; a sprint (#397) stops at
+ * its last, which is its finish.
+ */
 function laidThrough(city: City, graph: Graph, def: PlacedRoute, id: number): CityRoute | null {
+  const open = def.kind === 'sprint';
   const stops: number[] = [];
   for (const [x, z] of def.via) {
     const node = nearestNode(city, graph, { x: x * UNITS_PER_METRE, z: z * UNITS_PER_METRE });
@@ -330,24 +351,24 @@ function laidThrough(city: City, graph: Graph, def: PlacedRoute, id: number): Ci
 
   const points: Vec2[] = [];
   const used = new Set<string>();
-  for (let i = 0; i < stops.length; i++) {
+  for (let i = 0; i < (open ? stops.length - 1 : stops.length); i++) {
     const leg = shortestPath(graph, stops[i], stops[(i + 1) % stops.length], Infinity, used);
     if (!leg) return null;
     for (let n = 1; n < leg.length; n++) used.add(edgeKey(leg[n - 1], leg[n]));
     for (const node of i === 0 ? leg : leg.slice(1)) points.push(city.nodes[node].pos);
   }
-  // The last leg ends where the first began: drop the repeat, or the loop
+  // A loop's last leg ends where the first began: drop the repeat, or it
   // closes with a zero-length segment.
-  points.pop();
+  if (!open) points.pop();
   if (points.length < 8) return null;
 
-  const length = lengthOf(points);
+  const length = lengthOf(points, open);
   return {
     id,
     name: def.name,
     kind: def.kind,
     points,
-    checkpoints: checkpointsAlong(points, length),
+    checkpoints: checkpointsAlong(points, length, open),
     start: points[0],
     length,
     laps: def.kind === 'circuit' ? ROUTE_LAPS : 1,

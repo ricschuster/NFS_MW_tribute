@@ -396,13 +396,17 @@ export function markAirfieldDirt(nodes: CityNode[], roads: CityRoad[]): void {
  */
 export function markDirtAccess(nodes: CityNode[], roads: CityRoad[]): void {
   const unpaved = (road: CityRoad) => road.surface !== 'asphalt';
+  // A place's surface spreads to its way in; a surface drawn on a road
+  // (#454) is that road's own, or Kestrel Head's gravel track turned the one
+  // tarmac road up the hill to gravel from the fort to the foot.
+  const spreads = (road: CityRoad) => unpaved(road) && !road.ownSurface;
   const joins = nodes.filter(
-    (node) => node.roads.some((id) => unpaved(roads[id])) && node.roads.some((id) => !unpaved(roads[id])),
+    (node) => node.roads.some((id) => spreads(roads[id])) && node.roads.some((id) => !unpaved(roads[id])),
   );
   for (const start of joins) {
     // The way in takes the surface of the place it leads to: gravel to the
     // quarry, dirt to the airfield.
-    const laid = roads[start.roads.find((id) => unpaved(roads[id]))!].surface;
+    const laid = roads[start.roads.find((id) => spreads(roads[id]))!].surface;
     for (const first of start.roads) {
       let road = roads[first];
       if (unpaved(road)) continue;

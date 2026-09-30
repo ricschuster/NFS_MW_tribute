@@ -165,6 +165,8 @@ export interface CityRoad {
    * and on the wharf every road near the player is the loop.
    */
   yard?: boolean;
+  /** Its surface was drawn on it (#454), and does not spread to the roads that reach it. */
+  ownSurface?: boolean;
 }
 
 /**

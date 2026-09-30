@@ -21,11 +21,11 @@
  * `docs/roads-edited.json`, which is what the road editor saves. Editing here
  * instead means the next sync silently reverts you.
  *
- * 79 roads · 75.7 km ·
+ * 82 roads · 78.2 km ·
  * 0 carrying a bridge
  */
 import { UNITS_PER_METRE } from '../constants';
-import type { DistrictKind, RoadClass, Vec2 } from './types';
+import type { DistrictKind, RoadClass, RoadSurface, Vec2 } from './types';
 
 export interface AuthoredRoad {
   id: string;
@@ -37,6 +37,12 @@ export interface AuthoredRoad {
   deadEnd: boolean;
   /** In world units, so this is ready to lay. */
   points: Vec2[];
+  /**
+   * What it is paved with, where that is not asphalt (#454): Kestrel Head's
+   * track down the far side of the hill is gravel. Written by the editor like
+   * any other field a road carries.
+   */
+  surface?: RoadSurface;
 }
 
 const road = (
@@ -46,15 +52,41 @@ const road = (
   bridge: 0 | 1,
   deadEnd: 0 | 1,
   points: number[],
+  surface?: RoadSurface,
 ): AuthoredRoad => {
   const out: Vec2[] = [];
   for (let i = 0; i < points.length; i += 2) {
     out.push({ x: points[i] * UNITS_PER_METRE, z: points[i + 1] * UNITS_PER_METRE });
   }
-  return { id, kind, district, bridge: bridge === 1, deadEnd: deadEnd === 1, points: out };
+  return { id, kind, district, bridge: bridge === 1, deadEnd: deadEnd === 1, points: out, ...(surface ? { surface } : {}) };
 };
 
 export const AUTHORED_ROADS: AuthoredRoad[] = [
+  // k1 · 175 m
+  road('k1', 'boulevard', 'park', 0, 0, [
+    1250,-250, 1260,-267, 1270,-283, 1280,-300, 1290,-317, 1300,-333, 1310,-350, 1320,-367,
+    1330,-383, 1340,-400,
+  ]),
+  // k2 · 179 m · gravel
+  road('k2', 'boulevard', 'park', 0, 0, [
+    1340,-400, 1353,-417, 1366,-434, 1379,-451, 1392,-468, 1396,-486, 1399,-505, 1403,-523,
+    1406,-542, 1410,-560,
+  ], 'gravel'),
+  // k3 · 2159 m · gravel
+  road('k3', 'boulevard', 'park', 0, 0, [
+    1410,-560, 1372,-550, 1347,-550, 1322,-550, 1297,-550, 1272,-550, 1247,-550, 1222,-550,
+    1197,-550, 1172,-550, 1147,-550, 1122,-550, 1097,-550, 1072,-550, 1072,-572, 1088,-592,
+    1066,-600, 1041,-600, 1014,-602, 1028,-628, 1033,-649, 1013,-658, 1028,-678, 1033,-699,
+    1013,-708, 1028,-728, 1033,-749, 1013,-758, 1028,-778, 1047,-797, 1066,-816, 1086,-838,
+    1072,-850, 1047,-850, 1022,-850, 997,-850, 972,-850, 947,-850, 922,-850, 897,-850, 872,-850,
+    851,-866, 850,-891, 850,-916, 855,-942, 878,-950, 903,-950, 928,-950, 953,-958, 978,-978,
+    995,-1003, 1000,-1028, 1000,-1053, 1000,-1078, 1000,-1103, 1000,-1128, 1000,-1153,
+    1000,-1178, 1000,-1203, 1000,-1228, 1000,-1253, 1000,-1278, 1000,-1303, 1000,-1328,
+    1000,-1353, 1000,-1378, 1000,-1403, 1000,-1428, 1008,-1453, 1028,-1478, 1033,-1499,
+    1013,-1508, 1028,-1528, 1033,-1549, 1013,-1558, 1028,-1578, 1033,-1599, 1013,-1608,
+    1028,-1628, 1047,-1647, 1066,-1666, 1084,-1684, 1098,-1709, 1100,-1734, 1100,-1759,
+    1100,-1784, 1097,-1805,
+  ], 'gravel'),
   // n95 · 224 m
   road('n95', 'boulevard', 'midtown', 0, 0, [
     28,2528, -4,2608, -56,2675, -50,2728,
