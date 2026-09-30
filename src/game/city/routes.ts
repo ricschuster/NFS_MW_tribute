@@ -31,7 +31,12 @@ import { haulRoad } from './haulroad';
  * head, and "am I past that checkpoint" stops having an answer.
  */
 export function routesFor(city: City): CityRoute[] {
-  const graph = surfaceGraph(city);
+  // Paved roads only. A generated lap is drawn round whatever junctions are
+  // nearest its corners, and a dirt path is a junction like any other: when
+  // Highmoor's woodland paths went in (#460), Harbour Loop's corners landed on
+  // them and the lap came out 6 km long and doubling back through the trees.
+  // Unpaved roads are places, and their races are placed by hand below.
+  const graph = surfaceGraph(city, true);
   if (graph.nodes.length === 0) return [];
 
   const routes: CityRoute[] = [];
@@ -129,7 +134,7 @@ interface Graph {
   edges: Map<number, { to: number; cost: number }[]>;
 }
 
-function surfaceGraph(city: City): Graph {
+function surfaceGraph(city: City, pavedOnly = false): Graph {
   const edges = new Map<number, { to: number; cost: number }[]>();
   const add = (from: number, to: number, cost: number) => {
     const list = edges.get(from);
@@ -140,6 +145,7 @@ function surfaceGraph(city: City): Graph {
   for (const road of city.roads) {
     if (road.class === 'interstate' || road.class === 'ramp') continue;
     if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
+    if (pavedOnly && road.surface !== 'asphalt') continue;
     add(road.a, road.b, road.length);
     add(road.b, road.a, road.length);
   }

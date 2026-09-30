@@ -65,15 +65,27 @@ function stitch(roads) {
     return best;
   };
 
+  const nearest = (road, at) => {
+    let best = null;
+    for (const other of roads) {
+      if (other === road) continue;
+      const hit = project(at, other);
+      if (hit && hit.d <= STITCH && (!best || hit.d < best.d)) best = { ...hit, other };
+    }
+    return best;
+  };
   for (const road of roads) {
-    for (const end of [0, road.points.length - 1]) {
+    // A dead end stops where it was drawn on purpose (#460): Highmoor's
+    // viewpoint spur ends 64 m from the path it leaves, inside the reach, and
+    // was pulled back onto that path as a loop. It joins at its near end only.
+    const last = road.points.length - 1;
+    const keep = road.deadEnd
+      ? (nearest(road, road.points[0])?.d ?? Infinity) <= (nearest(road, road.points[last])?.d ?? Infinity) ? last : 0
+      : -1;
+    for (const end of [0, last]) {
+      if (end === keep) continue;
       const at = road.points[end === 0 ? 0 : road.points.length - 1];
-      let best = null;
-      for (const other of roads) {
-        if (other === road) continue;
-        const hit = project(at, other);
-        if (hit && hit.d <= STITCH && (!best || hit.d < best.d)) best = { ...hit, other };
-      }
+      const best = nearest(road, at);
       // Not `best.d === 0`. A road whose end lies exactly *on* another road is
       // the case that needs this most and the one the first version skipped:
       // `buildGraph` makes a junction where two spans cross or share a vertex,

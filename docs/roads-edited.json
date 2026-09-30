@@ -12730,6 +12730,7 @@
     },
     {
       "bridge": false,
+      "deadEnd": false,
       "district": "midtown",
       "id": "r73",
       "isNew": false,
@@ -14419,8 +14420,7 @@
           1250,
           -250
         ]
-      ],
-      "deadEnd": false
+      ]
     },
     {
       "bridge": false,
@@ -18394,12 +18394,12 @@
       ]
     },
     {
-      "id": "p1",
-      "kind": "boulevard",
-      "district": "industrial",
       "bridge": false,
       "deadEnd": true,
+      "district": "industrial",
+      "id": "p1",
       "isNew": true,
+      "kind": "boulevard",
       "points": [
         [
           -1910,
@@ -18501,11 +18501,11 @@
     },
     {
       "bridge": false,
+      "deadEnd": false,
       "district": "park",
+      "id": "k1",
       "isNew": true,
       "kind": "boulevard",
-      "deadEnd": false,
-      "id": "k1",
       "points": [
         [
           1250,
@@ -18551,11 +18551,11 @@
     },
     {
       "bridge": false,
+      "deadEnd": false,
       "district": "park",
+      "id": "k2",
       "isNew": true,
       "kind": "boulevard",
-      "deadEnd": false,
-      "id": "k2",
       "points": [
         [
           1340,
@@ -18602,11 +18602,11 @@
     },
     {
       "bridge": false,
+      "deadEnd": false,
       "district": "park",
+      "id": "k3",
       "isNew": true,
       "kind": "boulevard",
-      "deadEnd": false,
-      "id": "k3",
       "points": [
         [
           1410,
@@ -18958,8 +18958,171 @@
         ]
       ],
       "surface": "gravel"
+    },
+    {
+      "id": "h1",
+      "kind": "street",
+      "bridge": false,
+      "district": "park",
+      "points": [
+        [
+          705,
+          -40
+        ],
+        [
+          775,
+          -20
+        ]
+      ],
+      "surface": "gravel",
+      "isNew": true
+    },
+    {
+      "id": "h2",
+      "kind": "street",
+      "bridge": false,
+      "district": "park",
+      "points": [
+        [
+          705,
+          -40
+        ],
+        [
+          790,
+          20
+        ],
+        [
+          880,
+          80
+        ],
+        [
+          1000,
+          130
+        ],
+        [
+          1100,
+          180
+        ],
+        [
+          1180,
+          160
+        ],
+        [
+          1250,
+          100
+        ],
+        [
+          1320,
+          50
+        ],
+        [
+          1400,
+          0
+        ]
+      ],
+      "surface": "dirt",
+      "isNew": true
+    },
+    {
+      "id": "h3",
+      "kind": "street",
+      "bridge": false,
+      "district": "park",
+      "points": [
+        [
+          1400,
+          0
+        ],
+        [
+          1360,
+          -90
+        ],
+        [
+          1310,
+          -170
+        ],
+        [
+          1262,
+          -240
+        ]
+      ],
+      "surface": "dirt",
+      "isNew": true
+    },
+    {
+      "id": "h4",
+      "kind": "street",
+      "bridge": false,
+      "district": "park",
+      "points": [
+        [
+          1400,
+          0
+        ],
+        [
+          1430,
+          -20
+        ],
+        [
+          1455,
+          -45
+        ]
+      ],
+      "surface": "dirt",
+      "deadEnd": true,
+      "isNew": true
+    },
+    {
+      "id": "h5",
+      "kind": "street",
+      "bridge": false,
+      "district": "park",
+      "points": [
+        [
+          1013,
+          -650
+        ],
+        [
+          950,
+          -610
+        ],
+        [
+          880,
+          -570
+        ],
+        [
+          810,
+          -530
+        ],
+        [
+          740,
+          -480
+        ],
+        [
+          690,
+          -420
+        ],
+        [
+          680,
+          -320
+        ],
+        [
+          690,
+          -220
+        ],
+        [
+          700,
+          -120
+        ],
+        [
+          705,
+          -40
+        ]
+      ],
+      "surface": "dirt",
+      "isNew": true
     }
   ],
-  "savedAt": "2026-09-30T11:29:11.179Z",
+  "savedAt": "2026-09-30T16:15:30.758Z",
   "seed": "0x4b657374"
 }
