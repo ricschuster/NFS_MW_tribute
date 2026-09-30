@@ -47,3 +47,20 @@ and running 175 m to the summit (`k1`), and the summit itself.
   road would then need bridges over.
 - The old tree by the original's gate is drawn with the game's one tree, a
   conifer.
+
+## Along the ridge (2026-09-30, the owner's sketch)
+
+The owner sketched the castle filling out the ridge south of the summit, bigger
+and wider. Measured, the crest is a flat plateau at about 122 m, 200-400 m
+wide, running from the summit south-south-east to about (1500, -800). So:
+
+- **The bailey** keeps its north start and main gate, and widens to 40 m
+  either side of the road.
+- **The inner castle** is larger and lopsided: narrow on the west, where the
+  gravel track leaves the back gate and runs along under the wall (a stretch of
+  wall is left out there, where the track goes), and wide on the east.
+- **A south ward** runs down the plateau to the tip, about 170 by 220 m, with
+  corner towers, and a second keep in the middle of its long east wall - after
+  the original, whose outer ward's exposed wall has a second keep set in it.
+  It is reached from the inner courtyard between two towers; no road goes in.
+- All three are cobbled (`city/castle.ts`, written with the walls).
