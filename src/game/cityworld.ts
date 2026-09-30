@@ -1015,7 +1015,11 @@ export class CityWorld {
     if (!rival || !this.challengeReady) return null;
     const circuits = this.city.routes.filter((route) => route.kind === 'circuit');
     if (circuits.length === 0) return null;
-    const base = circuits[RIVALS.indexOf(rival) % circuits.length];
+    // Counted from the top of the ladder, so the boss races the first circuit
+    // - the Halloway Rim, gravel and the harder of the two. Counted from the
+    // bottom, adding Sablet Quay (#451) moved Reaper onto the quicker circuit
+    // and the starter car beat the boss, which the ladder is built not to allow.
+    const base = circuits[(rival.rank - 1) % circuits.length];
     if (this.rivalRouteFor?.base !== base) {
       this.rivalRouteFor = { base, route: startingAt(base, RIVAL_START_ALONG) };
     }

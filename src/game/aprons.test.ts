@@ -52,3 +52,43 @@ describe('the wharf is paved (#410)', () => {
     expect(hold(openGround(false), 0.8)).toBeLessThan(0.7);
   });
 });
+
+describe('the race on the quay (#451)', () => {
+  const quay = city.routes.find((route) => route.name === 'Sablet Quay')!;
+  /** The road under a point on the route: the nearest one. */
+  const roadAt = (p: { x: number; z: number }) => {
+    let best = city.roads[0];
+    let gap = Infinity;
+    for (const road of city.roads) {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      const d = Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
+      if (d < gap) {
+        gap = d;
+        best = road;
+      }
+    }
+    return best;
+  };
+
+  it('is a two-lap circuit round the quay, on the wharf\'s own roads', () => {
+    expect(quay).toBeDefined();
+    expect(quay.kind).toBe('circuit');
+    expect(quay.laps).toBe(2);
+    expect(quay.length / M).toBeGreaterThan(2500);
+    for (const p of quay.points) expect(roadAt(p).yard).toBe(true);
+  });
+
+  it('keeps civilian traffic out of the yard', () => {
+    const w = new CityWorld(city, { police: false });
+    w.x = quay.start.x;
+    w.z = quay.start.z;
+    for (let i = 0; i < 60 * 30; i++) {
+      w.step(1 / 60, { left: false, right: false, up: false, down: false, confirm: false, nitro: false });
+      for (const car of w.traffic.cars) expect(car.road.yard).toBeFalsy();
+    }
+  });
+});

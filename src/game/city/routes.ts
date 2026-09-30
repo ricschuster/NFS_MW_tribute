@@ -252,8 +252,20 @@ function circuitAround(city: City, graph: Graph, at: Vec2, id: number): CityRout
  * you watch them work the pit rather than follow one round it. The way points
  * sit on the outer ring, a hundred metres clear of the spiral's top turn, so
  * the nearest node is always the rim's.
+ *
+ * **Sablet Quay** (#451). Two laps of the quay loop round Sablet Wharf,
+ * 3.3 km a lap: north up the west quay under the five ship-to-shore cranes and
+ * over the crane-line kicker, round the tip, south down the east side past the
+ * container rows, and back. That way round because the kicker was placed
+ * facing it. Twelve way points rather than five: the wharf's cross streets,
+ * its spine and the Pier Jump's straight all cut the loop, and with the points
+ * far apart the shortest path between two of them is a cut across the yard
+ * rather than the quay. It starts on the west quay's straight, before the
+ * cranes, not on the bend at the south end. An ordinary race, so no police:
+ * they come only in a rival's (#349).
  */
-const PLACED_ROUTES: { name: string; kind: RouteKind; difficulty: number; via: [number, number][] }[] = [
+type PlacedRoute = { name: string; kind: RouteKind; difficulty: number; via: [number, number][] };
+const PLACED_ROUTES: PlacedRoute[] = [
   {
     name: 'Marrow Field Run',
     kind: 'speedrun',
@@ -281,53 +293,85 @@ const PLACED_ROUTES: { name: string; kind: RouteKind; difficulty: number; via: [
   },
 ];
 
+/**
+ * Placed after the Halloway Drop, which `haulSprint` finds rather than being
+ * listed, so adding one does not renumber the events already in a save.
+ */
+const LATER_ROUTES: PlacedRoute[] = [
+  {
+    name: 'Sablet Quay',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [-1918, -2177],
+      [-1833, -1936],
+      [-1785, -1681],
+      [-1717, -1420],
+      [-1545, -1292],
+      [-1393, -1496],
+      [-1323, -1752],
+      [-1327, -1995],
+      [-1437, -2226],
+      [-1588, -2445],
+      [-1788, -2607],
+      [-1955, -2448],
+    ],
+  },
+];
+
+/** A hand-laid route through its way points, shortest path between each, no road twice. */
+function laidThrough(city: City, graph: Graph, def: PlacedRoute, id: number): CityRoute | null {
+  const stops: number[] = [];
+  for (const [x, z] of def.via) {
+    const node = nearestNode(city, graph, { x: x * UNITS_PER_METRE, z: z * UNITS_PER_METRE });
+    if (node === null) return null;
+    stops.push(node);
+  }
+
+  const points: Vec2[] = [];
+  const used = new Set<string>();
+  for (let i = 0; i < stops.length; i++) {
+    const leg = shortestPath(graph, stops[i], stops[(i + 1) % stops.length], Infinity, used);
+    if (!leg) return null;
+    for (let n = 1; n < leg.length; n++) used.add(edgeKey(leg[n - 1], leg[n]));
+    for (const node of i === 0 ? leg : leg.slice(1)) points.push(city.nodes[node].pos);
+  }
+  // The last leg ends where the first began: drop the repeat, or the loop
+  // closes with a zero-length segment.
+  points.pop();
+  if (points.length < 8) return null;
+
+  const length = lengthOf(points);
+  return {
+    id,
+    name: def.name,
+    kind: def.kind,
+    points,
+    checkpoints: checkpointsAlong(points, length),
+    start: points[0],
+    length,
+    laps: def.kind === 'circuit' ? ROUTE_LAPS : 1,
+    difficulty: def.difficulty,
+    placed: true,
+  };
+}
+
 /** The hand-laid events that the streets will make, numbered from `firstId`. */
 export function placedRoutes(city: City, firstId: number): CityRoute[] {
   const graph = surfaceGraph(city);
   if (graph.nodes.length === 0) return [];
   const routes: CityRoute[] = [];
   for (const def of PLACED_ROUTES) {
-    const stops: number[] = [];
-    for (const [x, z] of def.via) {
-      const node = nearestNode(city, graph, { x: x * UNITS_PER_METRE, z: z * UNITS_PER_METRE });
-      if (node === null) break;
-      stops.push(node);
-    }
-    if (stops.length !== def.via.length) continue;
-
-    const points: Vec2[] = [];
-    const used = new Set<string>();
-    let ok = true;
-    for (let i = 0; i < stops.length; i++) {
-      const leg = shortestPath(graph, stops[i], stops[(i + 1) % stops.length], Infinity, used);
-      if (!leg) {
-        ok = false;
-        break;
-      }
-      for (let n = 1; n < leg.length; n++) used.add(edgeKey(leg[n - 1], leg[n]));
-      for (const node of i === 0 ? leg : leg.slice(1)) points.push(city.nodes[node].pos);
-    }
-    // The last leg ends where the first began: drop the repeat, or the loop
-    // closes with a zero-length segment.
-    points.pop();
-    if (!ok || points.length < 8) continue;
-
-    const length = lengthOf(points);
-    routes.push({
-      id: firstId + routes.length,
-      name: def.name,
-      kind: def.kind,
-      points,
-      checkpoints: checkpointsAlong(points, length),
-      start: points[0],
-      length,
-      laps: def.kind === 'circuit' ? ROUTE_LAPS : 1,
-      difficulty: def.difficulty,
-      placed: true,
-    });
+    const route = laidThrough(city, graph, def, firstId + routes.length);
+    if (route) routes.push(route);
   }
   const sprint = haulSprint(city, firstId + routes.length);
   if (sprint) routes.push(sprint);
+  // After the sprint, so the routes that were already here keep their ids.
+  for (const def of LATER_ROUTES) {
+    const route = laidThrough(city, graph, def, firstId + routes.length);
+    if (route) routes.push(route);
+  }
   return routes;
 }
 

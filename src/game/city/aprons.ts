@@ -35,7 +35,7 @@ export function onApron(city: City, x: number, z: number): boolean {
   return false;
 }
 
-function insideOrNear(outline: Vec2[], x: number, z: number, reach: number): boolean {
+export function insideOrNear(outline: Vec2[], x: number, z: number, reach: number): boolean {
   let inside = false;
   let near = Infinity;
   for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {

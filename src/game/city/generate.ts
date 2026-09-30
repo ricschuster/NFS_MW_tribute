@@ -76,6 +76,7 @@ import {
 import { landBodies, type LandBodies } from './bodies';
 import { AUTHORED_ROADS } from './roads';
 import { deckSpans, pierOf, withoutDeck } from './piers';
+import { insideOrNear } from './aprons';
 import { cutAndFill } from './cutfill';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import { allWater, anyWater, centre, divide, layRoute, pullClear, type Span } from './spans';
@@ -668,8 +669,22 @@ export function generateCity(seed: number): City {
     }
     city.breakables.push(...authored.breakables);
   }
+  // Any road with an end in a yard is the yard's, the roads that lead to it
+  // included. Traffic turns round where a private road starts, and with only the
+  // roads wholly inside marked, the last public road ended on the quay loop: cars
+  // turned round on the racing line. Now they turn round at the far end of the
+  // bridge, and the wharf is closed from there.
+  for (const apron of city.aprons) {
+    for (const road of city.roads) {
+      const ends = [city.nodes[road.a].pos, city.nodes[road.b].pos];
+      if (ends.some((p) => insideOrNear(apron.outline, p.x, p.z, YARD_REACH))) road.yard = true;
+    }
+  }
   return city;
 }
+
+/** How near a yard's outline a road's end has to be to count as in it: the quay loop is the outline. */
+const YARD_REACH = 5 * UNITS_PER_METRE;
 
 
 /**

@@ -275,8 +275,14 @@ function hunt(world: CityWorld, heat: number, seconds: number, each?: () => void
 
 
 /** Rep enough for the first rival, and the car parked on their line (#419). */
-function onRivalLine(world: CityWorld): CityRoute {
-  world.rep.total = RIVALS[0].rep;
+/**
+ * On the start line of the next rival's race: `RIVALS[beaten]`, with the Rep
+ * to be taken seriously. Each rival races their own circuit, by rank (#451),
+ * so which rival it is decides which circuit it is.
+ */
+function onRivalLine(world: CityWorld, beaten = 0): CityRoute {
+  world.beaten = beaten;
+  world.rep.total = RIVALS[beaten].rep;
   const route = world.rivalRoute!;
   world.x = route.start.x;
   world.z = route.start.z;
@@ -4464,8 +4470,10 @@ describe('rival races', () => {
   });
 
   it('puts the rival on a line of their own, away from the ordinary one', () => {
-    const { world, route } = circuit();
+    const { world } = circuit();
     const theirs = onRivalLine(world);
+    // Each rival has their own circuit, by rank (#451): compare with the one theirs is set round.
+    const route = world.city.routes.find((r) => r.kind === 'circuit' && r.name === theirs.name)!;
     expect(theirs.length).toBeCloseTo(route.length);
     expect(Math.hypot(theirs.start.x - route.start.x, theirs.start.z - route.start.z)).toBeGreaterThan(
       ROUTE_START_RANGE * 4,
@@ -4518,7 +4526,12 @@ describe('roadblocks in a rival race', () => {
   /** Race the rival and carry the car round their route at half pace, heat held at `level`. */
   const raceAt = (level: number, seconds: number) => {
     const world = new CityWorld(undefined, { traffic: false });
-    const route = onRivalLine(world);
+    // A rival who races the Halloway Rim, on the mainland: this is about where
+    // roadblocks go, and on Sablet Quay (#451) the units that are sent come
+    // round over three bridges to a peninsula the car is carried round, and
+    // lose it before one can be laid.
+    const rim = RIVALS.findIndex((_, i) => onRivalLine(world, i).name === 'Halloway Rim');
+    const route = onRivalLine(world, rim);
     world.step(STEP, press({ confirm: true }));
     drive(world, CITY_COUNTDOWN + RACE_CHASE_DELAY + 0.5, NONE);
     expect(world.police.state).not.toBe('clear');

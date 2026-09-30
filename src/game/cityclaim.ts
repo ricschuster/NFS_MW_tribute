@@ -67,13 +67,19 @@ export class CityClaim {
    * that has to be closed before anything can happen.
    */
   begin(rival: Rival, at: Rammer, onRoad: CityRoad | null = null): boolean {
-    const roads = this.grid.roadsNear(at.x, at.z).filter((road) => road.length > road.width * 2);
+    // Not a stub, where there is a choice. Where there is not, any road: the
+    // quay loop at Sablet Wharf (#451) is laid in thirty-metre pieces, shorter
+    // than twice its own width, and with none to choose from the rival who had
+    // just lost to you never ran at all.
+    const long = (road: CityRoad) => road.length > road.width * 2;
+    const near = this.grid.roadsNear(at.x, at.z);
+    const roads = near.some(long) ? near.filter(long) : near;
 
     // The road the race ended on, when there is one (#419). Nearest in plan is
     // not nearest in height: at the quarry that was the haul road down in the
     // pit, and the runner started somewhere the owner could not find on a
     // road at all.
-    const own = onRoad && onRoad.length > onRoad.width * 2 ? onRoad : null;
+    const own = onRoad && (long(onRoad) || !near.some(long)) ? onRoad : null;
     if (!own && roads.length === 0) return false;
     const road = own ?? nearestRoad(this.city, roads, at.x, at.z);
     const runner: Runner = {
