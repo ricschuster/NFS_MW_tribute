@@ -3,6 +3,66 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Start here (2026-09-30, end of day).** Kestrel Head is finished bar the
+  owner's sign-off, Highmoor Park is built, and the owner has stepped away.
+  Everything is merged or armed; the owner's dev server follows main.
+  - **Kestrel Head (#454): built out, needs the owner's sign-off.** The
+    castle stands on a raised platform (`levelCastle` in `places.ts`), and its
+    cobbled courtyards are found from the walls (`tools/castleareas.mjs`,
+    written by `propsync --place lookout` into `city/castle.ts`), so moving a
+    wall in the editor moves the setts. The buildings are grown 1.6-2x
+    (`PALAS_GROWN`, `CHAPEL_GROWN`, `HOUSE_GROWN`), there is ruin clutter
+    (masonry, wells, rubble), and the ward's arch is clear to drive through
+    (#464, #465, #466).
+  - **Highmoor Park (#460): built, waiting on the owner's drive.** Dirt
+    paths through the woods, a car park, a viewpoint spur (#468); generated
+    woods (`city/highmoor.ts`: below 96 m, meadow above 108, clear of every
+    road, 18 m off the tarmac and off any road a race runs on), a picnic area,
+    a viewpoint, a jump and the **Highmoor Descent** sprint (#470); the woods
+    past the park edge and six events a car (#471). New editor: Highmoor Park
+    Props (`propexport`/`propsync --place highmoor`).
+  - **Changed on the way:** park streets are two lanes (one was 4.9 m, a
+    car's width); `roadsync` leaves a dead end's far end where it was drawn;
+    generated laps run on paved roads only (Harbour Loop had come out 6 km
+    through the woods); apron slots 4 -> 6 with a gravel look;
+    `CAR_EVENTS_MAX` 5 -> 6 on the owner's word.
+  - **Parked on the owner's word:** freezing the billboards and cameras as
+    data (#469) waits until the map's design and placement are solid. Every
+    road change still reshuffles them. A draft is on the local branch
+    `collectibles-frozen`.
+  - **Discussed, not started:** a more sophisticated art style, recorded on
+    #11 (lighting first, CC0 materials, a building kit, stylised direction
+    recommended; the local model's part is small). The owner declined a
+    look-development test for now.
+  - **A process slip, fixed:** squashing #465 with `git reset --soft
+    origin/main` from a branch built on an older main reverted #462's
+    HANDOFF entry and map-areas rows; #467 and this entry put them back.
+    Squash onto the branch's *own* base, not onto a newer main.
+  - **Next:** the owner drives Highmoor Park and signs off Kestrel Head;
+    then **Tidewater Park (#461)**, whose three questions are still open.
+- **Earlier on 2026-09-30.** Two places were built with the owner and merged:
+  - **Sablet Wharf (#410, done and signed off).** The quay loop, two more
+    bridges, a container port (5 new set-piece kinds), a paved yard that drives
+    at 0.9 of top (`City.aprons`, `APRON_SPEED_FRAC`, police too), the **Pier
+    Jump** off a jetty (`city/piers.ts`: a `deadEnd` road ending in water is a
+    level deck), and the **Sablet Quay** circuit (#451; the loop smoothed and
+    held 22 m from the water, the wharf closed to civilian traffic as a
+    `yard`).
+  - **Kestrel Head (#454, waiting on the owner's review and sign-off).** The
+    road on to the summit, a gravel track down the far side (drawn surfaces:
+    `AuthoredRoad.surface`, `ownSurface`), the **Kestrel Climb** uphill sprint,
+    and a **castle modelled on a real ruin** (`docs/research/kestrel-head-castle.md`
+    names it; nothing of it ships) with cobbled courtyards.
+  - **Found on the way, all fixed:** the claim runner never started on short
+    roads; rivals now get circuits by rank (the boss races the Rim); citylap's
+    driver treated sprints as loops (the Halloway Drop really runs at 77% of
+    top); a race field now slows on hills like every graph car (the Climb could
+    not be won); cameras no longer land on billboards.
+  - **Next:** the owner's answers on **Highmoor Park (#460)** and **Tidewater
+    Park (#461)**, both audited with questions; the owner's sign-off on
+    Kestrel Head. Editors: road editor, Sablet Wharf Props, Kestrel Head Props
+    (URLs in the agent's memory, not the repo). The dev server is served from a
+    worktree of main and follows it.
 - **The freeway is built (2026-09-28, [#371](https://github.com/ricschuster/crosstown/issues/371)).**
   `CITY_FREEWAY` is on: the authored loop, 4 tunnels, and 7 ramps at the
   owner's markers (`FREEWAY_RAMPS`), each foot joined to the nearest drawn road
