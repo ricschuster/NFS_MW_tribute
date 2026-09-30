@@ -52,6 +52,8 @@ import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
+import { HIGHMOOR_PROPS } from './highmoorprops';
+import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
@@ -606,7 +608,7 @@ export function generateCity(seed: number): City {
     repairs: [],
     breakables: [],
     setPieces: [],
-    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons()],
+    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons()],
     jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
@@ -653,14 +655,20 @@ export function generateCity(seed: number): City {
   // not move.
   const hasDocks = PLAN_PLACES.some((p) => p.kind === 'docks');
   const hasLookout = PLAN_PLACES.some((p) => p.kind === 'lookout');
+  const hasHighmoor = PLAN_DISTRICTS.some((a) => a.name === 'Highmoor Park');
   const placed = [
     ...(hasAirfield ? MARROW_PROPS : []),
     ...(hasQuarry ? QUARRY_PROPS : []),
     ...(hasDocks ? WHARF_PROPS : []),
     ...(hasLookout ? FORT_PROPS : []),
+    ...(hasHighmoor ? HIGHMOOR_PROPS : []),
   ];
   if (placed.length > 0) {
-    const authored = airfieldProps(terrain, city.breakables.length, placed);
+    // Highmoor's woods (#460) go last, round everything placed before them:
+    // generated, on a stream of their own, so they move nothing else.
+    const first = airfieldProps(terrain, city.breakables.length, placed);
+    const woods = hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS) : [];
+    const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));
     // Billboards number on from the generated ones, the same way the
@@ -724,6 +732,12 @@ function castleAprons(): Apron[] {
     look: 'cobbles' as const,
     yard: false,
   }));
+}
+
+/** Highmoor Park's car park (#460), gravel, if the park is on the map. */
+function highmoorAprons(): Apron[] {
+  if (!PLAN_DISTRICTS.some((a) => a.name === 'Highmoor Park')) return [];
+  return [{ outline: HIGHMOOR_CAR_PARK, margin: 2 * UNITS_PER_METRE, look: 'gravel', yard: false }];
 }
 
 /**

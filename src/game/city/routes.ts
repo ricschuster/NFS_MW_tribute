@@ -339,6 +339,23 @@ const LATER_ROUTES: PlacedRoute[] = [
       [1340, -400],
     ],
   },
+  // Highmoor Descent (#460): the Climb's other half, and off the tarmac. From
+  // the castle's back opening down the gravel track and the west slope path
+  // to the car park at the foot, over the jump on the steep bit. The owner's
+  // pick for Highmoor Park's own event. It starts at the opening, pointed down
+  // the track, rather than at the inner gate: from there the first thing in
+  // front of a racing car was the corner at the opening, and a car that ran
+  // it wide went off the castle's own jump into the south ward.
+  {
+    name: 'Highmoor Descent',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [1410, -560],
+      [1016, -657],
+      [705, -40],
+    ],
+  },
 ];
 
 /**

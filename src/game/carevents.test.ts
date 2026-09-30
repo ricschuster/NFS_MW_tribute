@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { eventsFor } from './carevents';
 import { CARS, STARTER_CAR } from './cars';
+import { CAR_EVENTS_MAX } from './constants';
 import { kestrelBay } from './city/index';
 
 const routes = kestrelBay().routes;
@@ -26,7 +27,8 @@ describe('events per car', () => {
   // Every car, not only the first two: a small pool repeated every few cars
   // was the same name on the same route for cars seven apart.
   it('gives every car its own name on each route', () => {
-    for (const route of routes) {
+    // The routes a car has events on: the first `CAR_EVENTS_MAX` of them.
+    for (const route of routes.slice(0, CAR_EVENTS_MAX)) {
       const names = CARS.map((car) => eventsFor(car, routes).find((e) => e.route === route)!.name);
       expect(new Set(names).size).toBe(CARS.length);
     }

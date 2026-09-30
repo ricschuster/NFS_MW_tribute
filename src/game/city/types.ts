@@ -496,7 +496,10 @@ export type SetPieceKind =
   | 'wall-tower'
   | 'ruin-house'
   | 'masonry'
-  | 'well';
+  | 'well'
+  | 'picnic-table'
+  | 'bench'
+  | 'telescope';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
@@ -541,7 +544,7 @@ export interface Jump {
 export interface Apron {
   outline: Vec2[];
   margin: number;
-  look: 'concrete' | 'cobbles';
+  look: 'concrete' | 'cobbles' | 'gravel';
   yard: boolean;
 }
 

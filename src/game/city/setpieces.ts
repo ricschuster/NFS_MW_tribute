@@ -131,6 +131,11 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // Ruin clutter (#454): a fallen stretch of dressed stone, and a well.
   masonry: grown([{ u: 0, v: 0, w: 4, l: 7, y0: 0, y1: 1.4 }], 2),
   well: [post(0, 0, 2.4, 3.4)],
+  // Highmoor Park's furniture (#460), grown like the quarry's plant so a
+  // table reads as one beside a car 4.8 m across.
+  'picnic-table': grown([{ u: 0, v: 0, w: 1.8, l: 2.2, y0: 0, y1: 0.8 }], 2),
+  bench: grown([{ u: 0, v: 0, w: 0.6, l: 1.8, y0: 0, y1: 0.9 }], 2),
+  telescope: [post(0, 0, 0.5, 2.6)],
 };
 
 /**

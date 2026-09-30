@@ -546,6 +546,37 @@ function well(): Part[] {
   ];
 }
 
+const TIMBER = '#7a5a3c';
+const TIMBER_DARK = '#5a4230';
+
+/** A picnic table with its two benches, the kind every park has. */
+function picnicTable(): Part[] {
+  return [
+    { geometry: at(box(0.8, 0.06, 2.2), 0, 0.75, 0), colour: TIMBER },
+    ...[-0.75, 0.75].map((x) => ({ geometry: at(box(0.3, 0.05, 2.2), x, 0.45, 0), colour: TIMBER })),
+    ...[-0.55, 0.55].flatMap((z) => [-0.4, 0.4].map((x) => ({ geometry: at(box(0.08, 0.75, 0.08), x, 0.375, z), colour: TIMBER_DARK }))),
+    ...[-0.55, 0.55].map((z) => ({ geometry: at(box(1.8, 0.06, 0.08), 0, 0.3, z), colour: TIMBER_DARK })),
+  ];
+}
+
+/** A slatted bench on two iron ends, facing the way it is turned. */
+function bench(): Part[] {
+  return [
+    { geometry: at(box(0.45, 0.05, 1.8), 0, 0.45, 0), colour: TIMBER },
+    { geometry: at(box(0.05, 0.35, 1.8), -0.22, 0.7, 0), colour: TIMBER },
+    ...[-0.8, 0.8].map((z) => ({ geometry: at(box(0.5, 0.45, 0.06), 0, 0.225, z), colour: '#2f3336' })),
+  ];
+}
+
+/** A coin telescope on a post at the viewpoint, pointed out over the city. */
+function telescope(): Part[] {
+  return [
+    { geometry: at(upright(0.12, 0.16, 1.4, 8), 0, 0.7, 0), colour: '#2f3336' },
+    { geometry: at(box(0.4, 0.4, 0.4), 0, 1.55, 0), colour: '#3d6b52' },
+    { geometry: at(tube(0.12, 0.18, 1, 10).rotateX(-0.15), 0, 1.7, 0.3), colour: '#3d6b52' },
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -594,6 +625,9 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'ruin-house': grown(ruinHouse, HOUSE_GROWN),
   masonry: grown(masonry, 2),
   well,
+  'picnic-table': grown(picnicTable, 2),
+  bench: grown(bench, 2),
+  telescope: grown(telescope, 1.6),
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

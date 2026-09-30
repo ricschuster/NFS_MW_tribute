@@ -1,0 +1,95 @@
+{
+  "seed": "0x4b657374",
+  "place": "Highmoor Park",
+  "savedAt": "2026-09-30T00:00:00.000Z",
+  "props": [
+    {
+      "id": "m1",
+      "kind": "picnic-table",
+      "x": 1318,
+      "z": -70,
+      "angle": 0.4,
+      "note": "The picnic area on the meadow"
+    },
+    {
+      "id": "m2",
+      "kind": "picnic-table",
+      "x": 1332,
+      "z": -82,
+      "angle": 1.1
+    },
+    {
+      "id": "m3",
+      "kind": "picnic-table",
+      "x": 1306,
+      "z": -88,
+      "angle": -0.3
+    },
+    {
+      "id": "m4",
+      "kind": "picnic-table",
+      "x": 1322,
+      "z": -100,
+      "angle": 0.8
+    },
+    {
+      "id": "m5",
+      "kind": "picnic-table",
+      "x": 1296,
+      "z": -66,
+      "angle": 1.5
+    },
+    {
+      "id": "m6",
+      "kind": "picnic-table",
+      "x": 1340,
+      "z": -62,
+      "angle": -0.9
+    },
+    {
+      "id": "m7",
+      "kind": "bench",
+      "x": 1300,
+      "z": -110,
+      "angle": 0.2
+    },
+    {
+      "id": "m8",
+      "kind": "bench",
+      "x": 1346,
+      "z": -104,
+      "angle": -0.6
+    },
+    {
+      "id": "v1",
+      "kind": "bench",
+      "x": 1460.2,
+      "z": -55.8,
+      "angle": 0.785,
+      "note": "The viewpoint, looking east"
+    },
+    {
+      "id": "v2",
+      "kind": "bench",
+      "x": 1465.8,
+      "z": -50.2,
+      "angle": 0.785
+    },
+    {
+      "id": "v3",
+      "kind": "telescope",
+      "x": 1466.5,
+      "z": -56.5,
+      "angle": 2.356
+    },
+    {
+      "id": "j1",
+      "kind": "jump",
+      "x": 845,
+      "z": -550,
+      "angle": -1.052,
+      "variant": "grass mound",
+      "note": "The Descent's jump, off the west slope"
+    }
+  ]
+}
