@@ -578,6 +578,51 @@ function telescope(): Part[] {
 }
 
 /**
+ * A park bandstand (#461): an eight-sided platform up a step, eight slim
+ * columns and a painted roof coming to a point, the kind a city park put up
+ * a century ago for Sunday brass bands.
+ */
+function bandstand(): Part[] {
+  const columns = Array.from({ length: 8 }, (_, i) => {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    return { geometry: at(upright(0.14, 0.14, 2.7, 8), Math.cos(a) * 3.9, 2.45, Math.sin(a) * 3.9), colour: '#e8e4da' };
+  });
+  return [
+    { geometry: at(upright(4.4, 4.5, 1.1, 8), 0, 0.55, 0), colour: '#b9b2a4' },
+    { geometry: at(box(2, 0.5, 1.4), 0, 0.25, 4.8), colour: '#b9b2a4' },
+    ...columns,
+    { geometry: at(upright(4.8, 4.8, 0.3, 8), 0, 3.95, 0), colour: '#e8e4da' },
+    { geometry: at(new THREE.ConeGeometry(4.9, 1.6, 8), 0, 4.9, 0), colour: '#3f6b5a' },
+    { geometry: at(upright(0.08, 0.08, 0.9, 6), 0, 6.1, 0), colour: DARK_METAL },
+  ];
+}
+
+/** A park's toilet block: low brick walls, a flat roof, a door at each end. */
+function toiletBlock(): Part[] {
+  return [
+    { geometry: at(box(5, 2.9, 8), 0, 1.45, 0), colour: '#8c5a46' },
+    { geometry: at(box(5.4, 0.3, 8.4), 0, 3.05, 0), colour: '#5b5f60' },
+    ...[-1, 1].map((end) => ({ geometry: at(box(1.1, 2.1, 0.12), 0, 1.05, end * 4.02), colour: '#2f4a3e' })),
+    { geometry: at(box(0.12, 0.5, 5.6), 2.52, 2.4, 0), colour: '#cfd4d0' },
+  ];
+}
+
+/**
+ * The park café: a single-storey pavilion with a wall of windows down one
+ * side, a striped awning over it and a few tables outside.
+ */
+function cafe(): Part[] {
+  const tables = [-4, 0, 4].map((z) => ({ geometry: at(upright(0.55, 0.55, 0.75, 10), 5.6, 0.38, z), colour: '#e8e4da' }));
+  return [
+    { geometry: at(box(7, 3.2, 12), 0, 1.6, 0), colour: '#e2dccd' },
+    { geometry: at(box(0.12, 2.2, 10), 3.52, 1.5, 0), colour: '#3a4a52' },
+    { geometry: at(box(7.6, 0.4, 12.6), 0, 3.4, 0), colour: '#5b5f60' },
+    { geometry: at(box(2.4, 0.1, 12).rotateZ(-0.3), 4.6, 2.9, 0), colour: '#c94f3d' },
+    ...tables,
+  ];
+}
+
+/**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
  * thing driving past it: these are built to real proportions and then grown
@@ -628,6 +673,9 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'picnic-table': grown(picnicTable, 2),
   bench: grown(bench, 2),
   telescope: grown(telescope, 1.6),
+  bandstand: grown(bandstand, HOUSE_GROWN),
+  'toilet-block': grown(toiletBlock, HOUSE_GROWN),
+  cafe: grown(cafe, HOUSE_GROWN),
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

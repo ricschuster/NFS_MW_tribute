@@ -136,6 +136,12 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'picnic-table': grown([{ u: 0, v: 0, w: 1.8, l: 2.2, y0: 0, y1: 0.8 }], 2),
   bench: grown([{ u: 0, v: 0, w: 0.6, l: 1.8, y0: 0, y1: 0.9 }], 2),
   telescope: [post(0, 0, 0.5, 2.6)],
+  // Tidewater Park's buildings (#461), grown by the same amount as the castle's
+  // houses. A bandstand is solid at its platform, which is too high to drive
+  // onto, and at its roof, which is over a car; between them it is open.
+  bandstand: grown([post(0, 0, 4.4, 1.1), { u: 0, v: 0, r: 4.8, y0: 3.8, y1: 5.6 }], HOUSE_GROWN),
+  'toilet-block': grown([{ u: 0, v: 0, w: 5, l: 8, y0: 0, y1: 3.2 }], HOUSE_GROWN),
+  cafe: grown([{ u: 0, v: 0, w: 7, l: 12, y0: 0, y1: 3.8 }], HOUSE_GROWN),
 };
 
 /**

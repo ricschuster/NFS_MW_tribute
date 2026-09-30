@@ -183,7 +183,7 @@ function levelCastle(terrain: Terrain): void {
  * by an independent roll per vertex, because independent rolls give a *ragged*
  * ring and what is wanted is a lumpy one.
  */
-function lumpyLoop(at: Vec2, radius: number, sides: number, phase: number, rough: number): Vec2[] {
+export function lumpyLoop(at: Vec2, radius: number, sides: number, phase: number, rough: number): Vec2[] {
   const loop: Vec2[] = [];
   for (let i = 0; i < sides; i++) {
     const angle = (i / sides) * Math.PI * 2;

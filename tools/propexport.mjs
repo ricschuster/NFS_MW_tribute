@@ -45,12 +45,14 @@ const r2 = (v) => Math.round(v * 100) / 100;
 // past the circle at both ends: 2.3 km of runway against a 700 m radius.
 const argv = process.argv.slice(2);
 const which = argv.includes('--place') ? argv[argv.indexOf('--place') + 1] : 'airfield';
-const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry', docks: 'docks', wharf: 'docks', lookout: 'lookout', fort: 'lookout', highmoor: 'highmoor' }[which];
-if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry, docks, lookout or highmoor`);
-// Highmoor Park (#460) is a district of the plan, not a place: a circle round
-// its outline stands in for one, so the crop and the rest of the page work
-// the same way.
-const parkArea = KIND === 'highmoor' ? plan.PLAN_DISTRICTS.find((a) => a.name === 'Highmoor Park') : null;
+const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry', docks: 'docks', wharf: 'docks', lookout: 'lookout', fort: 'lookout', highmoor: 'highmoor', tidewater: 'tidewater' }[which];
+if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry, docks, lookout, highmoor or tidewater`);
+// Highmoor Park (#460) and Tidewater Park (#461) are districts of the plan, not
+// places: a circle round the outline stands in for one, so the crop and the
+// rest of the page work the same way.
+const parkArea = KIND === 'highmoor' || KIND === 'tidewater'
+  ? plan.PLAN_DISTRICTS.find((a) => a.name === (KIND === 'highmoor' ? 'Highmoor Park' : 'Tidewater Park'))
+  : null;
 const field = parkArea
   ? (() => {
       const xs = parkArea.poly.map((p) => p.x), zs = parkArea.poly.map((p) => p.z);
@@ -68,8 +70,8 @@ const radius = toM(field.radius);
 // lands 300 m out across the east channel: the crop reaches for both.
 // The lookout's circle is 150 m and the fort stands on the summit 260 m from
 // its centre, with the track leaving the south gate: the crop takes in both.
-const MARGIN = KIND === 'airfield' ? 250 : KIND === 'docks' ? 400 : KIND === 'lookout' ? 450 : KIND === 'highmoor' ? 60 : radius * 0.85;
-const OUT = { airfield: '', quarry: 'quarry-', docks: 'wharf-', lookout: 'fort-', highmoor: 'highmoor-' }[KIND];
+const MARGIN = KIND === 'airfield' ? 250 : KIND === 'docks' ? 400 : KIND === 'lookout' ? 450 : KIND === 'highmoor' || KIND === 'tidewater' ? 60 : radius * 0.85;
+const OUT = { airfield: '', quarry: 'quarry-', docks: 'wharf-', lookout: 'fort-', highmoor: 'highmoor-', tidewater: 'tidewater-' }[KIND];
 const box = {
   minX: Math.floor(Math.min(centre.x - radius, ...runway.map((p) => p.x)) - MARGIN),
   maxX: Math.ceil(Math.max(centre.x + radius, ...runway.map((p) => p.x)) + MARGIN),
@@ -175,8 +177,8 @@ const out = {
 // What the place already has, so a first save from a new editor keeps it; and
 // for the wharf, the layout its roads were drawn round (#410) and ideas for
 // its jumps, drawn under the props and never saved.
-const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops', lookout: 'fortprops', highmoor: 'highmoorprops' }[KIND];
-const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS', highmoor: 'HIGHMOOR_PROPS' }[KIND];
+const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops', lookout: 'fortprops', highmoor: 'highmoorprops', tidewater: 'tidewaterprops' }[KIND];
+const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS', highmoor: 'HIGHMOOR_PROPS', tidewater: 'TIDEWATER_PROPS' }[KIND];
 const server2 = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 out.initial = (await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`))[EXPORT];
 // Kestrel Head: the enclosures the last sync found from the walls (#454), so a
@@ -193,6 +195,16 @@ if (carPark) {
     { poly: pts(parkArea.poly), label: 'Highmoor Park', color: '#f2c230' },
     { poly: pts(carPark), label: 'Car park - gravel', color: '#e0d8c0' },
     ...(descent ? [{ line: pts(descent.points), label: 'Highmoor Descent', color: '#ff5a5a' }] : []),
+  ];
+}
+// Tidewater Park (#461): its outline and Tidewater Drive's line, so the
+// buildings and benches are placed against the lawns the race leaves open.
+if (KIND === 'tidewater') {
+  const pts = (list) => list.map((p) => [r1(toM(p.x)), r1(toM(p.z))]);
+  const drive = city.routes.find((r) => r.name === 'Tidewater Drive');
+  out.guides = [
+    { poly: pts(parkArea.poly), label: 'Tidewater Park', color: '#f2c230' },
+    ...(drive ? [{ line: [...pts(drive.points), pts(drive.points)[0]], label: 'Tidewater Drive', color: '#ff5a5a' }] : []),
   ];
 }
 if (castle) {

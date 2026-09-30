@@ -53,7 +53,9 @@ import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
 import { HIGHMOOR_PROPS } from './highmoorprops';
+import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
+import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
@@ -157,6 +159,8 @@ export function generateCity(seed: number): City {
   // sim's own `groundAt` - then sees the ground as it will be rather than the
   // hillside it replaced.
   shapeForPlaces(terrain, water);
+  // Tidewater Park's ponds (#461) sit in hollows dug the same way.
+  const parkPonds = digTidewaterPonds(terrain);
   // And cut and fill the roads into it (#252). After the places, because a road
   // to the quarry is graded against the quarry and not the hill it replaced;
   // before anything is laid, so the network, the blocks and the sim's own
@@ -591,9 +595,9 @@ export function generateCity(seed: number): City {
   const city: City = {
     seed,
     bounds,
-    // The quarry's ponds are added to the finished city (#329), not to the
-    // water everything was routed against.
-    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : [])],
+    // The quarry's and the park's ponds are added to the finished city (#329,
+    // #461), not to the water everything was routed against.
+    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : []), ...parkPonds],
     terrain,
     nodes,
     roads,
@@ -656,18 +660,25 @@ export function generateCity(seed: number): City {
   const hasDocks = PLAN_PLACES.some((p) => p.kind === 'docks');
   const hasLookout = PLAN_PLACES.some((p) => p.kind === 'lookout');
   const hasHighmoor = PLAN_DISTRICTS.some((a) => a.name === 'Highmoor Park');
+  const hasTidewater = PLAN_DISTRICTS.some((a) => a.name === 'Tidewater Park');
   const placed = [
     ...(hasAirfield ? MARROW_PROPS : []),
     ...(hasQuarry ? QUARRY_PROPS : []),
     ...(hasDocks ? WHARF_PROPS : []),
     ...(hasLookout ? FORT_PROPS : []),
     ...(hasHighmoor ? HIGHMOOR_PROPS : []),
+    ...(hasTidewater ? TIDEWATER_PROPS : []),
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:
     // generated, on a stream of their own, so they move nothing else.
     const first = airfieldProps(terrain, city.breakables.length, placed);
-    const woods = hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, city.routes.map((route) => route.points)) : [];
+    const raced = city.routes.map((route) => route.points);
+    const woods = [
+      ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced) : []),
+      // And Tidewater Park's trees (#461), on the same terms.
+      ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced),
+    ];
     const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));
