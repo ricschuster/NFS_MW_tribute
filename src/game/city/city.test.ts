@@ -496,7 +496,7 @@ describe('water', () => {
   });
 
   it('keeps the crossings few, so they are chokepoints', () => {
-    const crossings = city.roads.filter((r) => r.bridge).length;
+    const crossings = city.roads.filter((r) => r.bridge && !r.pier).length;
     expect(crossings).toBeGreaterThan(3);
     expect(crossings).toBeLessThan(10);
   });
@@ -819,7 +819,8 @@ describe.skipIf(!CITY_FREEWAY)('the elevated interstate', () => {
   // surface and on the ground.
   it('leaves the streets on the ground', () => {
     for (const road of city.roads) {
-      if (road.class === 'interstate' || road.class === 'ramp') continue;
+      // A pier's deck is held level with the quay over the water (#410).
+      if (road.class === 'interstate' || road.class === 'ramp' || road.pier) continue;
       for (const end of [city.nodes[road.a], city.nodes[road.b]]) {
         expect(end.level).toBe('surface');
         // On the ground, or on a causeway where the ground is under the water.

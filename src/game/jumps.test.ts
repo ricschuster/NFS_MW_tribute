@@ -57,8 +57,8 @@ describe('what a jump is (#307)', () => {
     expect(lipSlope('mound')).toBeGreaterThan(rise / l);
   });
 
-  it('builds the jumps the editors placed: four on Marrow Field, one in Halloway Quarry', () => {
-    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'ramp', 'slab', 'slab', 'slab']);
+  it('builds the jumps the editors placed: four on Marrow Field, one in Halloway Quarry, one at Sablet Wharf', () => {
+    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'ramp', 'ramp', 'slab', 'slab', 'slab']);
   });
 });
 
@@ -187,5 +187,66 @@ describe('the Hangar Ramp billboards', () => {
     const smashed = boards.filter((b) => world.collectibles.smashed.has(b.id));
     expect(boards.length).toBe(4);
     expect(smashed.length).toBe(4);
+  });
+});
+
+// The Pier Jump (#410): Sablet Wharf's way out across the east channel. No
+// channel off the wharf is narrower than 140 m, and the narrow ones are beside
+// the south bridge, so a jetty runs 90 m out and the jump is off its end: about
+// 110 m of water to the far bank. The run-up is the straight across the wharf
+// behind it, which is what makes the speed.
+describe('the Pier Jump', () => {
+  const pier = city.jumps.find((jump) => Math.hypot(jump.at.x / M + 1360, jump.at.z / M + 2286) < 5)!;
+  const deck = city.roads.filter(
+    (road) =>
+      road.bridge &&
+      [road.a, road.b].some((id) => Math.hypot(city.nodes[id].pos.x / M + 1354, city.nodes[id].pos.z / M + 2288) < 3),
+  );
+
+  it('stands on the end of a deck over the water, level with the quay', () => {
+    expect(pier).toBeDefined();
+    const tip = deck.flatMap((road) => [road.a, road.b]).map((id) => city.nodes[id]).find((n) => n.roads.length === 1)!;
+    expect(tip).toBeDefined();
+    expect(pier.y).toBeCloseTo(tip.y, 3);
+    expect(tip.y / M).toBeGreaterThan(3);
+    expect(groundAt(city.terrain, pier.at.x, pier.at.z)).toBeLessThan(0);
+  });
+
+  /** From the west end of the straight, standing, flat out with no nitrous. */
+  function run(cap = Infinity) {
+    const world = new CityWorld(city, { traffic: false, police: false });
+    const from = { x: -1911 * M, z: -2139 * M };
+    world.x = from.x;
+    world.z = from.z;
+    world.y = groundAt(city.terrain, from.x, from.z);
+    world.heading = pier.angle;
+    world.speed = 0;
+    const keys = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
+    let flew = false;
+    let wet = false;
+    let after = 0;
+    for (let step = 0; step < 60 * 40; step++) {
+      if (!world.airborne) world.speed = Math.min(world.speed, cap);
+      world.step(1 / 60, keys);
+      if (world.airborne) flew = true;
+      if (world.dunked > 0) wet = true;
+      // A second on after landing: going in is noticed on the step after.
+      if (flew && !world.airborne && ++after > 60) break;
+    }
+    return { world, flew, wet };
+  }
+
+  it('is cleared from the straight behind it, landing clean on the far bank', () => {
+    const { world, flew, wet } = run();
+    expect(flew).toBe(true);
+    expect(wet).toBe(false);
+    expect(world.lastJump!.distance / M).toBeGreaterThan(110);
+    expect(world.lastJump!.hard).toBe(false);
+  });
+
+  it('is not cleared slowly: short of the bank is the water', () => {
+    const { flew, wet } = run(kmh(170));
+    expect(flew).toBe(true);
+    expect(wet).toBe(true);
   });
 });

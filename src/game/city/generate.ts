@@ -49,6 +49,7 @@ import { breakablesFor } from './breakables';
 import { airfieldProps } from './setpieces';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
+import { WHARF_PROPS } from './wharfprops';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
 import { FREEWAY_LOOP, FREEWAY_RAMPS, FREEWAY_TUNNELS } from './freeway';
@@ -73,6 +74,7 @@ import {
 } from './places';
 import { landBodies, type LandBodies } from './bodies';
 import { AUTHORED_ROADS } from './roads';
+import { deckSpans, pierOf, withoutDeck } from './piers';
 import { cutAndFill } from './cutfill';
 import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
 import { allWater, anyWater, centre, divide, layRoute, pullClear, type Span } from './spans';
@@ -156,7 +158,9 @@ export function generateCity(seed: number): City {
   // The freeway's ramp connectors (#371) are graded with them, since each one
   // ends on a drawn road and the two have to agree about the height they meet at.
   const connectors = CITY_FREEWAY && CITY_AUTHORED_ROADS ? rampConnectors(FREEWAY_LOOP, FREEWAY_RAMPS, AUTHORED_ROADS) : [];
-  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, [...AUTHORED_ROADS, ...connectors]);
+  // A pier's deck is over the water (`piers.ts`): graded, it would pull the
+  // seabed up under it and the bank down to meet it.
+  if (CITY_AUTHORED_ROADS) cutAndFill(terrain, [...AUTHORED_ROADS.map((road) => withoutDeck(road, water)), ...connectors]);
 
   // Which body of land each point is on. Wanted in three places now - the roads
   // between the bodies, the blocks that must not cross a channel, and the places.
@@ -235,7 +239,12 @@ export function generateCity(seed: number): City {
     // among crossings nobody chose.
     const authoredStart = laid.length;
     for (const road of AUTHORED_ROADS) {
-      layRoute(road.points, water, laid, road.kind, road.district, true);
+      const pier = pierOf(road, water);
+      layRoute(pier ? pier.land : road.points, water, laid, road.kind, road.district, true);
+      if (pier) {
+        const foot = pier.deck[0];
+        laid.push(...deckSpans(road, pier.deck, Math.max(groundAt(terrain, foot.x, foot.z), ROAD_ABOVE_WATER)));
+      }
     }
     // A boulevard from each ramp's foot to the road it joins, laid with the
     // roads so it is split and repaired by the same code (`rampconnectors.ts`).
@@ -626,13 +635,19 @@ export function generateCity(seed: number): City {
   // they are data, so placing them draws nothing from `rng` and cannot move
   // anything generated before them. Their gates and stacks number on from
   // the generated breakables, which keeps those ids where they were.
-  // Marrow Field's, then Halloway Quarry's: appended in that order so the ids
-  // and the save-remembered billboards of the first do not move.
-  const placed = [...(hasAirfield ? MARROW_PROPS : []), ...(hasQuarry ? QUARRY_PROPS : [])];
+  // Marrow Field's, then Halloway Quarry's, then Sablet Wharf's: appended in
+  // that order so the ids and the save-remembered billboards of the first do
+  // not move.
+  const hasDocks = PLAN_PLACES.some((p) => p.kind === 'docks');
+  const placed = [
+    ...(hasAirfield ? MARROW_PROPS : []),
+    ...(hasQuarry ? QUARRY_PROPS : []),
+    ...(hasDocks ? WHARF_PROPS : []),
+  ];
   if (placed.length > 0) {
     const authored = airfieldProps(terrain, city.breakables.length, placed);
     city.setPieces = authored.pieces;
-    city.jumps = authored.jumps;
+    city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));
     // Billboards number on from the generated ones, the same way the
     // breakables do: a save remembers smashed boards by id, and appending is
     // the one change that cannot make an old save point at the wrong board.
@@ -650,6 +665,28 @@ export function generateCity(seed: number): City {
   return city;
 }
 
+
+/**
+ * The height of the deck under a point, if it is on one. A jump is ground with
+ * a shape, and the ground under the end of a pier is the seabed: drawn there,
+ * the pier's jump sat under the water while the car rode it on the deck.
+ */
+function deckUnder(nodes: CityNode[], roads: CityRoad[], at: Vec2): number | null {
+  let best: number | null = null;
+  for (const road of roads) {
+    if (!road.bridge) continue;
+    const a = nodes[road.a];
+    const b = nodes[road.b];
+    const dx = b.pos.x - a.pos.x;
+    const dz = b.pos.z - a.pos.z;
+    const span = dx * dx + dz * dz;
+    const t = span < 1e-9 ? 0 : Math.max(0, Math.min(1, ((at.x - a.pos.x) * dx + (at.z - a.pos.z) * dz) / span));
+    if (Math.hypot(a.pos.x + dx * t - at.x, a.pos.z + dz * t - at.z) > road.width / 2) continue;
+    const y = a.y + (b.y - a.y) * t;
+    if (best === null || y > best) best = y;
+  }
+  return best;
+}
 
 /** A stretch of water a road would have to cross: a bridge, or a dead end. */
 interface Gap {
@@ -1028,6 +1065,11 @@ function edge(span: Span, water: Water, dry: number, wet: number): number {
  * stretches of water between them are recorded as gaps a bridge could cross.
  */
 function clip(span: Span, water: Water, dry: Span[], gaps: Gap[]): void {
+  // Already a deck: a pier's (`piers.ts`), laid over the water on purpose.
+  if (span.bridge) {
+    dry.push(span);
+    return;
+  }
   const length = spanLength(span);
   const runs: { from: number; to: number }[] = [];
   let start: number | null = null;
@@ -1270,6 +1312,10 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
       const a = nodeAt(p1.x, p1.z);
       const b = nodeAt(p2.x, p2.z);
       if (a.id === b.id) continue;
+      if (span.deck !== undefined) {
+        a.y = Math.max(a.y, span.deck);
+        b.y = Math.max(b.y, span.deck);
+      }
 
       const k = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
       if (seen.has(k)) continue;
@@ -1288,6 +1334,7 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
         length: piece,
         bridge: span.bridge ?? false,
         embankment: span.embankment,
+        ...(span.deck !== undefined ? { pier: true } : {}),
       };
       roads.push(road);
       a.roads.push(road.id);

@@ -45,6 +45,11 @@ export interface Span {
   axis?: Axis;
   /** What it is paved with (#294). Undefined means asphalt, same as everywhere else. */
   surface?: RoadSurface;
+  /**
+   * A pier's deck (`piers.ts`): held at this height rather than following the
+   * ground, which under a pier is the seabed.
+   */
+  deck?: number;
 }
 
 export const centre = (r: Rect) => ({ x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2 });
