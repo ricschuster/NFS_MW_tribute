@@ -242,7 +242,7 @@ export function generateCity(seed: number): City {
     const authoredStart = laid.length;
     for (const road of AUTHORED_ROADS) {
       const pier = pierOf(road, water);
-      layRoute(pier ? pier.land : road.points, water, laid, road.kind, road.district, true);
+      layRoute(pier ? pier.land : road.points, water, laid, road.kind, road.district, true, road.surface, road.surface !== undefined);
       if (pier) {
         const foot = pier.deck[0];
         laid.push(...deckSpans(road, pier.deck, Math.max(groundAt(terrain, foot.x, foot.z), ROAD_ABOVE_WATER)));
@@ -1366,6 +1366,7 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
         length: piece,
         bridge: span.bridge ?? false,
         embankment: span.embankment,
+        ...(span.ownSurface ? { ownSurface: true } : {}),
         ...(span.deck !== undefined ? { pier: true } : {}),
       };
       roads.push(road);

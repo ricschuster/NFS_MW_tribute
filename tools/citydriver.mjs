@@ -203,6 +203,13 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
   const points = route.points;
   const cumulative = measure(points);
   const length = cumulative[points.length];
+  // A sprint (#397) is not a loop: its finish does not join its start. The
+  // closing segment a loop has ends exactly on a sprint's start line, so a car
+  // standing there was as near the finish as the start, took the later one,
+  // and drove back and forth over its first hundred metres for four minutes -
+  // measured, on the Kestrel Climb (#454). Nothing past the finish counts.
+  const open = route.kind === 'sprint';
+  const segments = open ? points.length - 1 : points.length;
 
   /**
    * The point `along` world units into the loop, wrapping.
@@ -211,7 +218,7 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
    * thirty times a step and a linear walk makes the probe take minutes.
    */
   function at(along) {
-    const left = ((along % length) + length) % length;
+    const left = open ? Math.max(0, Math.min(cumulative[segments] - 1e-6, along)) : ((along % length) + length) % length;
     let lo = 0;
     let hi = points.length - 1;
     while (lo < hi) {
@@ -241,13 +248,15 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
     const back = 6000;
     const forward = 14000;
 
-    for (let i = 0; i < points.length; i++) {
+    for (let i = 0; i < segments; i++) {
       const from = cumulative[i];
       const span = cumulative[i + 1] - from;
       // Distance from the hint to this segment, the short way round the loop.
       let off = from + span / 2 - hint;
-      while (off > length / 2) off -= length;
-      while (off < -length / 2) off += length;
+      if (!open) {
+        while (off > length / 2) off -= length;
+        while (off < -length / 2) off += length;
+      }
       if (off < -back - span || off > forward + span) continue;
 
       const a = points[i];
@@ -332,7 +341,9 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
   };
 
   return {
-    length,
+    // A sprint's is its own length, to the finish: a loop's closing segment is
+    // road a sprint never takes, and counting it asked for distance that was not there.
+    length: open ? cumulative[segments] - 1 : length,
     at,
     progress,
     /** Concentrate: hold the line exactly for a moment. Called after a scrape. */

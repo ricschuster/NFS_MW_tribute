@@ -119,7 +119,8 @@ roads.sort((a, b) => (a.id[0] === b.id[0] ? num(a.id) - num(b.id) : a.id[0] < b.
 
 const body = roads
   .map((r) => {
-    const flags = [r.bridge ? 'bridge' : null, r.deadEnd ? 'deadEnd' : null].filter(Boolean);
+    const surface = r.surface && r.surface !== 'asphalt' ? r.surface : null;
+    const flags = [r.bridge ? 'bridge' : null, r.deadEnd ? 'deadEnd' : null, surface].filter(Boolean);
     // One `x,z,` per point: this is a flat number array, so the pairs are a
     // convention for reading it and every number still needs its comma.
     const pairs = r.points.map(([x, z]) => `${x},${z},`);
@@ -139,7 +140,7 @@ const body = roads
       (flags.length ? ` · ${flags.join(', ')}` : '') +
       `\n  road('${r.id}', '${r.kind}', '${r.district}', ${r.bridge ? 1 : 0}, ${r.deadEnd ? 1 : 0}, [\n` +
       wrapped.join('\n') +
-      '\n  ]),'
+      (surface ? `\n  ], '${surface}'),` : '\n  ]),')
     );
   })
   .join('\n');
@@ -171,7 +172,7 @@ const file = `/**
  * ${roads.filter((r) => r.bridge).length} carrying a bridge
  */
 import { UNITS_PER_METRE } from '../constants';
-import type { DistrictKind, RoadClass, Vec2 } from './types';
+import type { DistrictKind, RoadClass, RoadSurface, Vec2 } from './types';
 
 export interface AuthoredRoad {
   id: string;
@@ -183,6 +184,12 @@ export interface AuthoredRoad {
   deadEnd: boolean;
   /** In world units, so this is ready to lay. */
   points: Vec2[];
+  /**
+   * What it is paved with, where that is not asphalt (#454): Kestrel Head's
+   * track down the far side of the hill is gravel. Written by the editor like
+   * any other field a road carries.
+   */
+  surface?: RoadSurface;
 }
 
 const road = (
@@ -192,12 +199,13 @@ const road = (
   bridge: 0 | 1,
   deadEnd: 0 | 1,
   points: number[],
+  surface?: RoadSurface,
 ): AuthoredRoad => {
   const out: Vec2[] = [];
   for (let i = 0; i < points.length; i += 2) {
     out.push({ x: points[i] * UNITS_PER_METRE, z: points[i + 1] * UNITS_PER_METRE });
   }
-  return { id, kind, district, bridge: bridge === 1, deadEnd: deadEnd === 1, points: out };
+  return { id, kind, district, bridge: bridge === 1, deadEnd: deadEnd === 1, points: out, ...(surface ? { surface } : {}) };
 };
 
 export const AUTHORED_ROADS: AuthoredRoad[] = [
