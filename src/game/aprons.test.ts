@@ -96,13 +96,15 @@ describe('the race on the quay (#451)', () => {
 });
 
 describe('Kestrel Head\'s castle is cobbled (#454)', () => {
-  it('paves the bailey and the inner courtyard, and keeps them open to anyone', () => {
+  it('paves the bailey, the inner courtyard and the south ward, and keeps them open to anyone', () => {
     const castle = city.aprons.filter((apron) => apron.look === 'cobbles');
-    expect(castle.length).toBe(2);
+    expect(castle.length).toBe(3);
     for (const apron of castle) expect(apron.yard).toBe(false);
     // In the bailey, beside the road; in the courtyard, by the keep.
     expect(onApron(city, 1297 * M, -325 * M)).toBe(true);
     expect(onApron(city, 1370 * M, -470 * M)).toBe(true);
+    // And down the ridge in the south ward.
+    expect(onApron(city, 1510 * M, -690 * M)).toBe(true);
     // And not outside the walls.
     expect(onApron(city, 1200 * M, -400 * M)).toBe(false);
   });

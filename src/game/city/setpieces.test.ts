@@ -166,7 +166,10 @@ describe('Kestrel Head castle (#454)', () => {
     // The main gate, the inner gate and the back gate, in a row down the approach.
     expect(fort.filter((p) => p.kind === 'fort-gate').length).toBe(3);
     for (const kind of ['keep', 'palas', 'chapel'] as const) expect(fort.some((p) => p.kind === kind)).toBe(true);
-    for (const piece of fort) expect(Math.hypot(piece.at.x / M - 1320, piece.at.z / M + 400)).toBeLessThan(200);
+    // Two keeps: the inner castle's, and the south ward's in the middle of its long wall.
+    expect(fort.filter((p) => p.kind === 'keep').length).toBe(2);
+    // From the bailey at the north end to the tip of the ridge.
+    for (const piece of fort) expect(Math.hypot(piece.at.x / M - 1420, piece.at.z / M + 520)).toBeLessThan(360);
   });
 
   it('keeps its walls and its buildings off the road', () => {
