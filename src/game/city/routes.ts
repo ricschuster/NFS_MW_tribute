@@ -356,6 +356,21 @@ const LATER_ROUTES: PlacedRoute[] = [
       [705, -40],
     ],
   },
+  // Tidewater Drive (#461): the park's own event, a speed run round its drives
+  // - the owner's pick. East along the shore boulevard, up the loop east of
+  // the north-south boulevard, back across it and over the top of the west
+  // lawns, and down to the shore again: one lap of 2.2 km, all of it through
+  // the park, with the freeway in its tunnel underneath.
+  {
+    name: 'Tidewater Drive',
+    kind: 'speedrun',
+    difficulty: 0.2,
+    via: [
+      [367, -2894],
+      [900, -2880],
+      [380, -2530],
+    ],
+  },
 ];
 
 /**
