@@ -6,11 +6,13 @@ import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
+import { HIGHMOOR_PROPS } from './highmoorprops';
+import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
-import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea } from './plan';
 import { distanceToSegment } from './grid';
 import type { SetPiece } from './types';
 
@@ -73,7 +75,10 @@ describe('Marrow Field props (#295)', () => {
 const piecesOf = (props: typeof MARROW_PROPS) => airfieldProps(city.terrain, 0, props).pieces.length;
 const quarryPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS), piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS));
 const wharfPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS)).slice(0, piecesOf(WHARF_PROPS));
-const fortPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS) + piecesOf(WHARF_PROPS));
+const fortStart = () => piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS) + piecesOf(WHARF_PROPS);
+const fortPieces = () => city.setPieces.slice(fortStart(), fortStart() + piecesOf(FORT_PROPS));
+// Highmoor Park's (#460) after the castle's: its placed props, then the woods.
+const highmoorPieces = () => city.setPieces.slice(fortStart() + piecesOf(FORT_PROPS));
 
 describe('Halloway Quarry props (#323)', () => {
   const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
@@ -205,6 +210,61 @@ describe('Kestrel Head castle (#454)', () => {
     const wall = (variant: string): SetPiece => ({ kind: 'rampart', at: { x: 0, z: 0 }, y: 0, angle: 0, variant });
     expect(hitsSetPiece([wall('broken')], 0, 0, 4 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
     expect(hitsSetPiece([wall('whole')], 0, 0, 4 * M, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
+  });
+});
+
+describe('Highmoor Park (#460)', () => {
+  const pieces = highmoorPieces();
+  const trees = pieces.filter((p) => p.kind === 'tree');
+  const park = PLAN_DISTRICTS.find((a) => a.name === 'Highmoor Park')!;
+  const roadGap = (x: number, z: number) =>
+    Math.min(
+      ...city.roads.map((r) => {
+        const a = city.nodes[r.a].pos;
+        const b = city.nodes[r.b].pos;
+        return distanceToSegment(x, z, a.x, a.z, b.x, b.z) - r.width / 2;
+      }),
+    );
+
+  it('puts its own props in first, then a wood of a thousand trees and more', () => {
+    expect(pieces.slice(0, piecesOf(HIGHMOOR_PROPS)).every((p) => p.kind !== 'tree')).toBe(true);
+    expect(trees.length).toBeGreaterThan(1000);
+    expect(trees.length).toBe(pieces.length - piecesOf(HIGHMOOR_PROPS));
+  });
+
+  it('keeps the woods in the park, off the roads, out of the castle and below the meadow', () => {
+    for (const tree of trees) {
+      expect(inArea(park.poly, tree.at)).toBe(true);
+      expect(roadGap(tree.at.x, tree.at.z)).toBeGreaterThan(3 * M);
+      for (const area of [CASTLE_AREAS.bailey, CASTLE_AREAS.court, CASTLE_AREAS.ward]) {
+        expect(insideOrNear(area, tree.at.x, tree.at.z, 10 * M)).toBe(false);
+      }
+      // The meadow near the top is open, so the castle stands clear.
+      expect(groundAt(city.terrain, tree.at.x, tree.at.z) / M).toBeLessThan(108);
+    }
+  });
+
+  it('leaves the picnic area, the viewpoint and the car park open', () => {
+    const furniture = pieces.filter((p) => ['picnic-table', 'bench', 'telescope'].includes(p.kind));
+    expect(furniture.length).toBeGreaterThanOrEqual(8);
+    for (const piece of furniture) {
+      for (const tree of trees) expect(Math.hypot(tree.at.x - piece.at.x, tree.at.z - piece.at.z)).toBeGreaterThan(12 * M);
+    }
+    const lot = city.aprons.find((a) => a.look === 'gravel');
+    expect(lot?.outline).toEqual(HIGHMOOR_CAR_PARK);
+    for (const tree of trees) expect(insideOrNear(HIGHMOOR_CAR_PARK, tree.at.x, tree.at.z, 5 * M)).toBe(false);
+  });
+
+  it('runs the Descent down from the castle to the car park, over the jump', () => {
+    const descent = city.routes.find((r) => r.name === 'Highmoor Descent')!;
+    expect(descent.kind).toBe('sprint');
+    const heights = descent.heights!;
+    expect((heights[0] - heights[heights.length - 1]) / M).toBeGreaterThan(40);
+    const end = descent.points[descent.points.length - 1];
+    expect(insideOrNear(HIGHMOOR_CAR_PARK, end.x, end.z, 10 * M)).toBe(true);
+    const jump = city.jumps.find((j) => Math.hypot(j.at.x / M - 845, j.at.z / M + 550) < 5)!;
+    const nearest = Math.min(...descent.points.slice(1).map((p, i) => distanceToSegment(jump.at.x, jump.at.z, descent.points[i].x, descent.points[i].z, p.x, p.z)));
+    expect(nearest / M).toBeLessThan(3);
   });
 });
 

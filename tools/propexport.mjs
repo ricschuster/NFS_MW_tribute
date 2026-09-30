@@ -45,9 +45,19 @@ const r2 = (v) => Math.round(v * 100) / 100;
 // past the circle at both ends: 2.3 km of runway against a 700 m radius.
 const argv = process.argv.slice(2);
 const which = argv.includes('--place') ? argv[argv.indexOf('--place') + 1] : 'airfield';
-const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry', docks: 'docks', wharf: 'docks', lookout: 'lookout', fort: 'lookout' }[which];
-if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry, docks or lookout`);
-const field = plan.PLAN_PLACES.find((p) => p.kind === KIND);
+const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry', docks: 'docks', wharf: 'docks', lookout: 'lookout', fort: 'lookout', highmoor: 'highmoor' }[which];
+if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry, docks, lookout or highmoor`);
+// Highmoor Park (#460) is a district of the plan, not a place: a circle round
+// its outline stands in for one, so the crop and the rest of the page work
+// the same way.
+const parkArea = KIND === 'highmoor' ? plan.PLAN_DISTRICTS.find((a) => a.name === 'Highmoor Park') : null;
+const field = parkArea
+  ? (() => {
+      const xs = parkArea.poly.map((p) => p.x), zs = parkArea.poly.map((p) => p.z);
+      const at = { x: (Math.min(...xs) + Math.max(...xs)) / 2, z: (Math.min(...zs) + Math.max(...zs)) / 2 };
+      return { name: parkArea.name, at, radius: Math.max(Math.max(...xs) - at.x, Math.max(...zs) - at.z) };
+    })()
+  : plan.PLAN_PLACES.find((p) => p.kind === KIND);
 // Only an airfield has a runway; a quarry is a circle, and the crop reaches
 // past it to take in the rim road, the yard and the road in (the yard sits
 // about 1.5 radii out, so the box is not just the place's own circle).
@@ -58,8 +68,8 @@ const radius = toM(field.radius);
 // lands 300 m out across the east channel: the crop reaches for both.
 // The lookout's circle is 150 m and the fort stands on the summit 260 m from
 // its centre, with the track leaving the south gate: the crop takes in both.
-const MARGIN = KIND === 'airfield' ? 250 : KIND === 'docks' ? 400 : KIND === 'lookout' ? 450 : radius * 0.85;
-const OUT = { airfield: '', quarry: 'quarry-', docks: 'wharf-', lookout: 'fort-' }[KIND];
+const MARGIN = KIND === 'airfield' ? 250 : KIND === 'docks' ? 400 : KIND === 'lookout' ? 450 : KIND === 'highmoor' ? 60 : radius * 0.85;
+const OUT = { airfield: '', quarry: 'quarry-', docks: 'wharf-', lookout: 'fort-', highmoor: 'highmoor-' }[KIND];
 const box = {
   minX: Math.floor(Math.min(centre.x - radius, ...runway.map((p) => p.x)) - MARGIN),
   maxX: Math.ceil(Math.max(centre.x + radius, ...runway.map((p) => p.x)) + MARGIN),
@@ -135,6 +145,10 @@ const furniture = {};
 for (const f of city.furniture.filter((f) => inBox(f.at))) {
   (furniture[f.kind] ??= []).push([r1(toM(f.at.x)), r1(toM(f.at.z)), r2(f.angle)]);
 }
+// The woods (#460) are generated round the placed props, so the page shows
+// them to place against, not to edit: move a table and the trees make room on
+// the next sync.
+furniture.tree = city.setPieces.filter((p) => p.kind === 'tree' && inBox(p.at)).map((p) => [r1(toM(p.at.x)), r1(toM(p.at.z)), r2(p.angle)]);
 
 const out = {
   seed: `0x${(CITY_SEED >>> 0).toString(16)}`,
@@ -161,14 +175,26 @@ const out = {
 // What the place already has, so a first save from a new editor keeps it; and
 // for the wharf, the layout its roads were drawn round (#410) and ideas for
 // its jumps, drawn under the props and never saved.
-const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops', lookout: 'fortprops' }[KIND];
-const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS' }[KIND];
+const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops', lookout: 'fortprops', highmoor: 'highmoorprops' }[KIND];
+const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS', highmoor: 'HIGHMOOR_PROPS' }[KIND];
 const server2 = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 out.initial = (await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`))[EXPORT];
 // Kestrel Head: the enclosures the last sync found from the walls (#454), so a
 // wall moved in the editor can be checked against what got cobbled and raised.
 const castle = KIND === 'lookout' ? (await server2.ssrLoadModule('/src/game/city/castle.ts')).CASTLE_AREAS : null;
+const carPark = KIND === 'highmoor' ? (await server2.ssrLoadModule('/src/game/city/highmoor.ts')).HIGHMOOR_CAR_PARK : null;
 await server2.close();
+// Highmoor Park: its outline, the car park, and the Descent's line, so the
+// furniture is placed against what the park is for.
+if (carPark) {
+  const pts = (list) => list.map((p) => [r1(toM(p.x)), r1(toM(p.z))]);
+  const descent = city.routes.find((r) => r.name === 'Highmoor Descent');
+  out.guides = [
+    { poly: pts(parkArea.poly), label: 'Highmoor Park', color: '#f2c230' },
+    { poly: pts(carPark), label: 'Car park - gravel', color: '#e0d8c0' },
+    ...(descent ? [{ line: pts(descent.points), label: 'Highmoor Descent', color: '#ff5a5a' }] : []),
+  ];
+}
 if (castle) {
   const area = (poly, label, color) => ({ poly: poly.map((p) => [r1(toM(p.x)), r1(toM(p.z))]), label, color });
   out.guides = [

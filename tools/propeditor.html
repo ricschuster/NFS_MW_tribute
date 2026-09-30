@@ -315,6 +315,10 @@
     { id: 'ruin-house', group: 'Fort', name: 'Ruined outbuilding', w: 19.2, l: 38.4, shape: 'box', color: '#6f6a5f', flat: true, variants: ['large', 'small'], sizes: { large: [19.2, 38.4], small: [12.8, 19.2] } },
     { id: 'masonry', group: 'Fort', name: 'Fallen masonry', w: 8, l: 14, shape: 'box', color: '#9a9486' },
     { id: 'well', group: 'Fort', name: 'Well', w: 5, l: 5, shape: 'circle', color: '#8d877a' },
+    // Highmoor Park (#460), at the size the game draws them.
+    { id: 'picnic-table', group: 'Park', name: 'Picnic table', w: 3.6, l: 4.4, shape: 'box', color: '#7a5a3c' },
+    { id: 'bench', group: 'Park', name: 'Bench', w: 1.2, l: 3.6, shape: 'box', color: '#7a5a3c' },
+    { id: 'telescope', group: 'Park', name: 'Coin telescope', w: 1, l: 1, shape: 'circle', color: '#3d6b52' },
     { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
     { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
     // Sized per variant, to match `JUMP_SHAPES` in `city/jumps.ts` (#307).
@@ -774,6 +778,7 @@
       dot(DATA.furniture.fence, 'rgba(222,226,214,0.7)', Math.max(0.9, 0.35 * s));
       dot(DATA.furniture.barrier, 'rgba(200,120,90,0.8)', Math.max(0.9, 0.35 * s));
       dot(DATA.furniture.lamp, 'rgba(255,230,150,0.9)', Math.max(1.2, 0.5 * s));
+      dot(DATA.furniture.tree, 'rgba(46,110,52,0.85)', Math.max(1.5, 2.2 * s));
     }
 
     if (layers.generated) {

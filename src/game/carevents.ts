@@ -50,6 +50,7 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Halloway Drop': ['Haul', 'Spiral', 'Gravel', 'Pit', 'Bedrock', 'Tipper'],
   'Sablet Quay': ['Quay', 'Crane', 'Berth', 'Harbour', 'Tide', 'Stack'],
   'Kestrel Climb': ['Summit', 'Rampart', 'Signal', 'Crest', 'Beacon', 'Fort'],
+  'Highmoor Descent': ['Woodland', 'Slope', 'Bracken', 'Meadow', 'Gully', 'Fell'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 

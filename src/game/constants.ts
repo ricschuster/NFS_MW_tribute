@@ -444,6 +444,13 @@ export const CITY_LAND_STREAM = 0x4b657374;
 export const CITY_AIRFIELD_STREAM = 0x4d617272;
 
 /**
+ * A stream of its own for Highmoor Park's woods (#460), for the same reason
+ * as the airfield's fence: the woods are a couple of thousand draws, and on
+ * the shared seed every one of them would move the collectibles placed after.
+ */
+export const CITY_WOODS_STREAM = 0x486d6f72;
+
+/**
  * The named places (#271, ADR-0009 rule 5), which are shaped into the ground
  * before any road is laid.
  *

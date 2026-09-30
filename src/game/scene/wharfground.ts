@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import type { Apron, Vec2 } from '../city/types';
 
 /**
- * Paved ground (#410, #454): Sablet Wharf's yard is concrete, and Kestrel
- * Head's castle courtyards are cobbled, not grass.
+ * Paved ground (#410, #454, #460): Sablet Wharf's yard is concrete, Kestrel
+ * Head's castle courtyards are cobbled, and Highmoor's car park is gravel, not grass.
  *
  * The same move as the quarry's ground (`quarryground.ts`): a patch on the
  * ground's own material rather than a second mesh, so the terrain, its
@@ -19,8 +19,10 @@ import type { Apron, Vec2 } from '../city/types';
  */
 const SLAB = 8;
 const SETT = 0.9;
+/** Gravel has no joints: a grain this size, speckled light and dark, as a car park at the foot of Highmoor (#460) is. */
+const GRIT = 0.35;
 /** GLSL wants fixed array sizes: this many aprons, each resampled to this many points. */
-const APRONS = 4;
+const APRONS = 6;
 const POINTS = 96;
 
 export function wharfGround(material: THREE.Material, aprons: readonly Apron[], unitsPerMetre: number): void {
@@ -49,9 +51,10 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
         Math.max(...zs) + apron.margin,
       ),
     );
-    // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles).
+    // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles, 2 gravel).
     const cobbles = apron.look === 'cobbles';
-    params.push(new THREE.Vector4(apron.margin, (cobbles ? SETT : SLAB) * unitsPerMetre, cobbles ? 1 : 0, 0));
+    const look = cobbles ? 1 : apron.look === 'gravel' ? 2 : 0;
+    params.push(new THREE.Vector4(apron.margin, (cobbles ? SETT : apron.look === 'gravel' ? GRIT : SLAB) * unitsPerMetre, look, 0));
   }
   const before = material.onBeforeCompile.bind(material);
   const key = material.customProgramCacheKey?.bind(material);
@@ -100,6 +103,14 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
             }
             float paved = inside ? 1.0 : 1.0 - smoothstep(params.x * 0.75, params.x, d);
             if (paved <= 0.0) continue;
+            if (params.z > 1.5) {
+              // Gravel: no joints, a speckle of light and dark stones.
+              vec2 grain = floor(p / params.y);
+              float n = fract(sin(dot(grain, vec2(12.9898, 78.233))) * 43758.5453);
+              vec3 gravel = vec3(0.36, 0.33, 0.28) * (0.75 + 0.35 * n);
+              diffuseColor.rgb = mix(diffuseColor.rgb, gravel, paved);
+              continue;
+            }
             bool setts = params.z > 0.5;
             // Setts are laid in courses, each one offset by half a stone.
             vec2 q = p / params.y;
