@@ -714,7 +714,10 @@ function wharfApron(): Apron {
  */
 function castleAprons(): Apron[] {
   if (!PLAN_PLACES.some((p) => p.kind === 'lookout')) return [];
-  const margin = 1 * UNITS_PER_METRE;
+  // The areas are found a little inside the stone (`castleareas.mjs` grows the
+  // walls by 2.6 m to close gaps no car fits through), so the setts run on to
+  // meet the wall.
+  const margin = 3.5 * UNITS_PER_METRE;
   return [CASTLE_AREAS.bailey, CASTLE_AREAS.court, CASTLE_AREAS.ward].map((outline) => ({
     outline,
     margin,

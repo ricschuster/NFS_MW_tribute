@@ -6,6 +6,8 @@ import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
 import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
+import { CASTLE_AREAS } from './castle';
+import { insideOrNear } from './aprons';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
@@ -163,7 +165,8 @@ describe('Kestrel Head castle (#454)', () => {
   it('builds the castle it was given: a bailey, an inner castle and a keep', () => {
     expect(fort.length).toBe(airfieldProps(city.terrain, 0, FORT_PROPS).pieces.length);
     expect(fort.filter((p) => p.kind === 'rampart').length).toBeGreaterThan(10);
-    // The main gate, the inner gate and the back gate, in a row down the approach.
+    // The main gate and the inner gate down the approach, and the gate from the
+    // courtyard through to the south ward.
     expect(fort.filter((p) => p.kind === 'fort-gate').length).toBe(3);
     for (const kind of ['keep', 'palas', 'chapel'] as const) expect(fort.some((p) => p.kind === kind)).toBe(true);
     // Two keeps: the inner castle's, and the south ward's in the middle of its long wall.
@@ -179,9 +182,19 @@ describe('Kestrel Head castle (#454)', () => {
     }
   });
 
-  it('stands each gate over the road, and lets a car through under the arch', () => {
+  // A gate is a way through: over the road up, or from one cobbled enclosure
+  // into the next - the ward's gate stands in the courtyard wall, off the road.
+  const cobbled = (x: number, z: number) =>
+    [CASTLE_AREAS.bailey, CASTLE_AREAS.court, CASTLE_AREAS.ward].findIndex((area) => insideOrNear(area, x, z, 0));
+  it('stands each gate over the road or between two enclosures, and lets a car through under the arch', () => {
     for (const gate of fort.filter((p) => p.kind === 'fort-gate')) {
-      expect(roadGap(gate.at.x, gate.at.z)).toBeLessThan(0);
+      if (roadGap(gate.at.x, gate.at.z) >= 0) {
+        const front = beside(gate, 10, 0);
+        const back = beside(gate, -10, 0);
+        expect(cobbled(front.x, front.z)).toBeGreaterThanOrEqual(0);
+        expect(cobbled(back.x, back.z)).toBeGreaterThanOrEqual(0);
+        expect(cobbled(front.x, front.z)).not.toBe(cobbled(back.x, back.z));
+      }
       expect(hitsSetPiece([gate], gate.at.x, gate.at.z, gate.y, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
       const tower = beside(gate, 0, 13);
       expect(hitsSetPiece([gate], tower.x, tower.z, gate.y, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
