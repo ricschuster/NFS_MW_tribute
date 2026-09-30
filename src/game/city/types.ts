@@ -150,6 +150,13 @@ export interface CityRoad {
    * trimmed away.
    */
   embankment?: boolean;
+  /**
+   * True on a pier's deck (#410, `piers.ts`): out over the water and back, not
+   * across it. It is `bridge` too, because everything that asks about a deck -
+   * drawing it, railing it, keeping clutter and roadblocks off it - means a
+   * pier as well; what it is not is a crossing.
+   */
+  pier?: boolean;
 }
 
 /**

@@ -2316,7 +2316,13 @@ export class CityWorld {
   private afloat(): boolean {
     // Over the water is not in it: a jump can clear a creek (#307), and one
     // that does not is caught by the landing, which comes down on the bed.
-    if (this.airborne) return false;
+    //
+    // Nor is a car just off the end of a jump: it takes off in `settle`, after
+    // this, so on the step it passes a lip that stands over the water - the
+    // Pier Jump's (#410) - it is not airborne yet and has no road under it.
+    // Asked here, that step was a dunk, or not, by where the step happened to
+    // fall.
+    if (this.airborne || this.ramp) return false;
     // Or on land that is drawn as sea (#403): below `SEA_SHEET`, off the road,
     // the car is under the surface the player can see.
     const sea = groundAt(this.city.terrain, this.x, this.z) < SEA_SHEET;
