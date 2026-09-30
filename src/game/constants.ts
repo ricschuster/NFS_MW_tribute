@@ -52,6 +52,15 @@ export const GRAVEL_SPEED_FRAC = 0.92;
  * everything; the police are held to `COP_OFF_ROAD` either way.
  */
 export const OFFROAD_TYRE_LIMIT = 0.45;
+/**
+ * Paved ground that is not a road (#410, `city/aprons.ts`): Sablet Wharf's
+ * yard. Concrete is a good surface, so the car keeps this fraction of its top
+ * speed there - a shade under the road, which is laid and marked for it, and
+ * nothing like the quarter open ground allows. The police drive it at the same
+ * fraction of their pace rather than `COP_OFF_ROAD`, or the container rows
+ * would be an escape nobody could follow into.
+ */
+export const APRON_SPEED_FRAC = 0.9;
 
 /**
  * Nitrous (#45, #48, #105).

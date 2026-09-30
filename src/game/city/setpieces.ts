@@ -83,7 +83,38 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   cabin: grown([{ u: 0, v: 0, w: 3.2, l: 8.4, y0: 0, y1: 2.9 }], 1.8),
   crusher: grown([{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }], 2),
   rubble: grown([post(0, 0, 2, 1.5)], 3),
+  // Sablet Wharf's container port (#410), at real size. A block is a row of
+  // forty-foot containers stacked two to four high (`VARIANT_SOLIDS`); a
+  // ship-to-shore crane is solid at its legs, which stand either side of the
+  // quay road so the road runs under it, and at its portal overhead.
+  'container-block': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 5.2 }],
+  'sts-crane': [
+    post(-14, -12, 0.8, 38),
+    post(14, -12, 0.8, 38),
+    post(-14, 12, 0.8, 38),
+    post(14, 12, 0.8, 38),
+    { u: 0, v: 0, w: 30, l: 26, y0: 36, y1: 40 },
+  ],
+  warehouse: [{ u: 0, v: 0, w: 50, l: 130, y0: 0, y1: 14 }],
+  // Legs a car cannot fit between, and the frame fifteen metres up.
+  'straddle-carrier': [post(-2.2, -4.2, 0.4, 15), post(2.2, -4.2, 0.4, 15), post(-2.2, 4.2, 0.4, 15), post(2.2, 4.2, 0.4, 15)],
+  'reach-stacker': [{ u: 0, v: 0, w: 4.5, l: 11, y0: 0, y1: 3.6 }],
 };
+
+/**
+ * Where a kind's look changes its size, the solids for that look: a container
+ * block four high is twice the height of one two high, and a small warehouse
+ * is not a large one.
+ */
+const VARIANT_SOLIDS: Record<string, Solid[]> = {
+  'container-block:three high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 7.8 }],
+  'container-block:four high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 10.4 }],
+  'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: 0, y1: 10 }],
+};
+
+/** What this piece is solid as. */
+export const solidsOf = (piece: Pick<SetPiece, 'kind' | 'variant'>): Solid[] =>
+  (piece.variant && VARIANT_SOLIDS[`${piece.kind}:${piece.variant}`]) || SET_PIECE_SOLIDS[piece.kind];
 
 /** Where a hand-placed thing stands, before it is given an id. */
 export interface Placed {
@@ -99,8 +130,11 @@ const JUMP_VARIANTS: Record<string, JumpKind> = {
   'lifted slab': 'slab',
 };
 
-/** How far a set piece's solid parts can reach from its centre, in metres. */
-const SOLID_REACH = 45;
+/**
+ * How far a set piece's solid parts can reach from its centre, in metres. A
+ * large warehouse, 50 m by 130 m, reaches 70 m to a corner.
+ */
+const SOLID_REACH = 70;
 
 /**
  * Marrow Field's hand-placed props (#295), as city data.
@@ -173,7 +207,7 @@ export function hitsSetPiece(
     const r = radius / M;
     const bottom = (y - piece.y) / M;
     const top = bottom + height / M;
-    for (const solid of SET_PIECE_SOLIDS[piece.kind]) {
+    for (const solid of solidsOf(piece)) {
       if (top < solid.y0 || bottom > solid.y1) continue;
       if ('r' in solid) {
         if (Math.hypot(u - solid.u, v - solid.v) < solid.r + r) return true;

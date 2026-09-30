@@ -287,6 +287,91 @@ function rubble(): Part[] {
 }
 
 /**
+ * A row of forty-foot containers, twelve side by side and stacked two to four
+ * high (#410). Coloured the way a real yard is, a few shipping lines' colours
+ * in no order, so a block is not a brick. The colours are a fixed pattern
+ * rather than per instance - one mesh per colour is what keeps five hundred
+ * blocks to a handful of draw calls - and the pattern shifts with each tier.
+ */
+const CONTAINER_COLOURS = ['#9c3b2b', '#2f5d8a', '#3c6e47', '#b5652a', '#8a8f93', '#c9a227', '#6b3f73', '#d8d6cf'];
+function containerBlock(variant?: string): Part[] {
+  const tiers = variant === 'four high' ? 4 : variant === 'three high' ? 3 : 2;
+  const parts: Part[] = [];
+  for (let tier = 0; tier < tiers; tier++) {
+    for (let i = 0; i < 12; i++) {
+      const colour = CONTAINER_COLOURS[(i * 5 + tier * 3 + (i >> 2)) % CONTAINER_COLOURS.length];
+      parts.push({ geometry: at(box(2.38, 2.55, 12.2), -13.42 + i * 2.44, 1.3 + tier * 2.6, 0), colour });
+    }
+  }
+  return parts;
+}
+
+/**
+ * A ship-to-shore crane: four legs on rails 28 m apart, straddling the quay
+ * road, a portal over it, and the boom reaching out over the water on +x with
+ * its backreach over the yard. The tallest thing on the wharf, which is the
+ * point: it is how a player finds the docks from across the bay.
+ */
+function stsCrane(): Part[] {
+  const legs = [-14, 14].flatMap((x) => [-12, 12].map((z) => at(box(1.4, 38, 1.4), x, 19, z)));
+  const frame = [
+    at(box(30, 2, 1.6), 0, 36, -12),
+    at(box(30, 2, 1.6), 0, 36, 12),
+    at(box(1.6, 2, 26), -14, 37, 0),
+    at(box(1.6, 2, 26), 14, 37, 0),
+    at(box(1.4, 1, 24), -14, 1.5, 0),
+    at(box(1.4, 1, 24), 14, 1.5, 0),
+  ];
+  const boom = [at(box(85, 2.4, 2.4), 17.5, 41, -1.5), at(box(85, 2.4, 2.4), 17.5, 41, 1.5), at(box(3, 16, 3), -4, 50, 0)];
+  const stays = [
+    at(box(0.5, 0.5, 30).rotateY(Math.PI / 2).rotateZ(-0.52), 9, 49, 0),
+    at(box(0.5, 0.5, 30).rotateY(Math.PI / 2).rotateZ(0.52), -15, 49, 0),
+  ];
+  return [
+    ...[...legs, ...frame, ...boom, ...stays].map((geometry) => ({ geometry, colour: '#c8452f' })),
+    { geometry: at(box(8, 5, 6), -10, 44.5, 0), colour: '#d9d6cc' },
+    { geometry: at(box(3, 3, 3), 6, 38.5, 0), colour: '#3a4a52' },
+  ];
+}
+
+/** A portal-frame shed: clad walls, a shallow roof, and loading doors down the long side. */
+function warehouse(variant?: string): Part[] {
+  const [w, l, h] = variant === 'small' ? [30, 60, 10] : [50, 130, 14];
+  const doors = Math.floor(l / 16);
+  const parts: Part[] = [
+    { geometry: at(box(w, h, l), 0, h / 2, 0), colour: '#9aa3a8' },
+    { geometry: at(box(w + 1.2, 0.8, l + 1.2), 0, h + 0.4, 0), colour: '#6f787d' },
+    { geometry: at(box(w * 0.5, 1.6, l), 0, h + 1.2, 0), colour: '#6f787d' },
+  ];
+  for (let i = 0; i < doors; i++) {
+    parts.push({ geometry: at(box(0.2, 5, 5), w / 2 + 0.1, 2.5, -l / 2 + 8 + i * 16), colour: '#2e3538' });
+  }
+  return parts;
+}
+
+/** Four tall legs and a frame on top: it drives over a container and picks it up. */
+function straddleCarrier(): Part[] {
+  const legs = [-2.2, 2.2].flatMap((x) => [-4.2, 4.2].map((z) => at(box(0.7, 13, 0.7), x, 6.5, z)));
+  return [
+    ...legs.map((geometry) => ({ geometry, colour: '#e0b21a' })),
+    { geometry: at(box(5, 1.5, 9.5), 0, 13.8, 0), colour: '#e0b21a' },
+    { geometry: at(box(1.8, 2, 2.2), 1.6, 15.5, 3.4), colour: '#3a4a52' },
+    ...[-2.2, 2.2].flatMap((x) => [-4.2, 4.2].map((z) => ({ geometry: at(box(0.9, 1.2, 1.2), x, 0.6, z), colour: '#222222' }))),
+  ];
+}
+
+/** A heavy forklift with a telescopic boom: the thing that stacks the corner of a yard. */
+function reachStacker(): Part[] {
+  return [
+    { geometry: at(box(4.2, 2.4, 9), 0, 1.9, 0), colour: '#e0b21a' },
+    { geometry: at(box(2, 2.2, 2.2), 1, 4.1, -2), colour: '#3a4a52' },
+    { geometry: at(box(1, 1, 10).rotateX(-0.35), 0, 5.2, 2.5), colour: '#e0b21a' },
+    { geometry: at(box(4.4, 0.6, 1), 0, 7, 6.8), colour: DARK_METAL },
+    ...[-1.8, 1.8].flatMap((x) => [-3, 3].map((z) => ({ geometry: at(tube(1, 1, 0.8).rotateY(Math.PI / 2), x, 1, z), colour: '#222222' }))),
+  ];
+}
+
+/**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
  * thing driving past it: these are built to real proportions and then grown
@@ -317,6 +402,11 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   cabin: grown(cabin, 1.8),
   crusher: grown(crusher, 2),
   rubble: grown(rubble, 3),
+  'container-block': containerBlock,
+  'sts-crane': stsCrane,
+  warehouse,
+  'straddle-carrier': straddleCarrier,
+  'reach-stacker': reachStacker,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

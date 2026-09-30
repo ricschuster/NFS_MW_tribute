@@ -16,6 +16,7 @@ import {
   CITY_BRIDGES,
   CITY_MAX_BRIDGE,
   ROAD_ABOVE_WATER,
+  UNITS_PER_METRE,
   CITY_BRIDGE_SPACING,
   CITY_CLIP_STEP,
   CITY_MIN_STREET,
@@ -577,6 +578,10 @@ export function generateCity(seed: number): City {
     }
   }
 
+  const hasDocksApron =
+    CITY_AUTHORED_ROADS &&
+    PLAN_PLACES.some((p) => p.kind === 'docks') &&
+    ['w1', 'w2'].every((id) => AUTHORED_ROADS.some((road) => road.id === id));
   const city: City = {
     seed,
     bounds,
@@ -597,6 +602,7 @@ export function generateCity(seed: number): City {
     repairs: [],
     breakables: [],
     setPieces: [],
+    aprons: hasDocksApron ? [wharfApron()] : [],
     jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
@@ -665,6 +671,17 @@ export function generateCity(seed: number): City {
   return city;
 }
 
+
+/**
+ * Sablet Wharf's yard, paved (#410): inside the quay loop, and out past it to
+ * the water, since the loop runs about 30 m in from the shore. The loop is the
+ * two drawn roads that make it, `w1` and `w2`, joined end to end.
+ */
+const WHARF_APRON_MARGIN = 45 * UNITS_PER_METRE;
+function wharfApron(): { outline: Vec2[]; margin: number } {
+  const [a, b] = ['w1', 'w2'].map((id) => AUTHORED_ROADS.find((road) => road.id === id)!.points);
+  return { outline: [...a, ...b.slice(1, -1)], margin: WHARF_APRON_MARGIN };
+}
 
 /**
  * The height of the deck under a point, if it is on one. A jump is ground with
