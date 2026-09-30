@@ -12,7 +12,7 @@ import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
-import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea } from './plan';
+import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea, planDistrictAt } from './plan';
 import { distanceToSegment } from './grid';
 import type { SetPiece } from './types';
 
@@ -232,9 +232,20 @@ describe('Highmoor Park (#460)', () => {
     expect(trees.length).toBe(pieces.length - piecesOf(HIGHMOOR_PROPS));
   });
 
-  it('keeps the woods in the park, off the roads, out of the castle and below the meadow', () => {
+  it('keeps the woods in the park or on unclaimed ground just past it, off the roads, out of the castle and below the meadow', () => {
+    const edge = (at: { x: number; z: number }) =>
+      Math.min(...park.poly.map((b, i) => {
+        const a = park.poly[(i + park.poly.length - 1) % park.poly.length];
+        return distanceToSegment(at.x, at.z, a.x, a.z, b.x, b.z) / M;
+      }));
+    let outside = 0;
     for (const tree of trees) {
-      expect(inArea(park.poly, tree.at)).toBe(true);
+      if (!inArea(park.poly, tree.at)) {
+        outside++;
+        // Past the edge only onto ground no district has, and not far.
+        expect(planDistrictAt(tree.at)).toBe(null);
+        expect(edge(tree.at)).toBeLessThan(140);
+      }
       expect(roadGap(tree.at.x, tree.at.z)).toBeGreaterThan(3 * M);
       for (const area of [CASTLE_AREAS.bailey, CASTLE_AREAS.court, CASTLE_AREAS.ward]) {
         expect(insideOrNear(area, tree.at.x, tree.at.z, 10 * M)).toBe(false);
@@ -242,6 +253,8 @@ describe('Highmoor Park (#460)', () => {
       // The meadow near the top is open, so the castle stands clear.
       expect(groundAt(city.terrain, tree.at.x, tree.at.z) / M).toBeLessThan(108);
     }
+    // The owner asked for the woods to run on past the south-west edge (#460).
+    expect(outside).toBeGreaterThan(100);
   });
 
   it('leaves the picnic area, the viewpoint and the car park open', () => {

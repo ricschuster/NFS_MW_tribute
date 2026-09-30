@@ -2425,9 +2425,10 @@ export const RIVAL_START_ALONG = 0.5;
  * Events per car (M12). A car gets one event per route, up to this many, and
  * the design starts it at three; its field is the route's difficulty moved by
  * how much faster than the reference car it is, so a quick car on the same
- * roads is a harder event (`carevents.ts`).
+ * roads is a harder event (`carevents.ts`). Six since the Highmoor Descent
+ * (#460), on the owner's word: one event per route, and there are six.
  */
-export const CAR_EVENTS_MAX = 5;
+export const CAR_EVENTS_MAX = 6;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);
