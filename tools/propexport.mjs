@@ -165,7 +165,18 @@ const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharf
 const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS' }[KIND];
 const server2 = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 out.initial = (await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`))[EXPORT];
+// Kestrel Head: the enclosures the last sync found from the walls (#454), so a
+// wall moved in the editor can be checked against what got cobbled and raised.
+const castle = KIND === 'lookout' ? (await server2.ssrLoadModule('/src/game/city/castle.ts')).CASTLE_AREAS : null;
 await server2.close();
+if (castle) {
+  const area = (poly, label, color) => ({ poly: poly.map((p) => [r1(toM(p.x)), r1(toM(p.z))]), label, color });
+  out.guides = [
+    area(castle.bailey, 'Bailey - cobbled', '#e0b050'),
+    area(castle.court, 'Inner castle - cobbled, raised', '#6fc3ff'),
+    area(castle.ward, 'South ward - cobbled, raised', '#8be08b'),
+  ];
+}
 if (KIND === 'docks') {
   out.guides = JSON.parse(readFileSync('docs/research/sablet-wharf/port-layout.json', 'utf8'));
   out.ideas = JSON.parse(readFileSync('docs/research/sablet-wharf/jump-ideas.json', 'utf8'));

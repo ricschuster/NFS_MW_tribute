@@ -60,6 +60,8 @@ import {
   WEED_SPACING,
 } from '../constants';
 import { PLAN_PLACES, PLAN_RUNWAY, type PlanPlace } from './plan';
+import { CASTLE_AREAS } from './castle';
+import { insideOrNear } from './aprons';
 import { groundAt, type Terrain } from './terrain';
 import type { Rng } from './rng';
 import type { Building, CityNode, CityRoad, RoadSurface, StreetProp, Vec2, WaterBody } from './types';
@@ -128,6 +130,45 @@ export function shapeForPlaces(terrain: Terrain, water: Water): void {
     if (place.kind === 'airfield') levelRunway(terrain, water);
     if (place.kind === 'quarry') digQuarry(terrain, place.at, place.radius);
     if (place.kind === 'docks') levelDocks(terrain, water, place.at, place.radius);
+    if (place.kind === 'lookout') levelCastle(terrain);
+  }
+}
+
+/**
+ * Kestrel Head's castle stands on a platform (#454): the inner castle and the
+ * south ward are raised to the top of the plateau they are on, and so is the
+ * ground for `CASTLE_TERRACE` past their walls, so the walls stand on the flat
+ * and the hillside drops away steeply just outside them - the owner's ask, and
+ * how a castle on a ridge is built: the ground inside made up, the slope
+ * outside left to fall.
+ *
+ * Raised, never cut: nothing inside a wall is lowered. The bailey is left as it
+ * is: it is the ramp up the road from the main gate, and raising it would put a
+ * step in the road at the gate.
+ */
+const CASTLE_TERRACE = m(12);
+function levelCastle(terrain: Terrain): void {
+  for (const outline of [CASTLE_AREAS.court, CASTLE_AREAS.ward]) {
+    let top = -Infinity;
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const p of outline) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+    }
+    // The platform's height is the highest ground inside it.
+    for (let x = minX; x <= maxX; x += terrain.cell) {
+      for (let z = minZ; z <= maxZ; z += terrain.cell) {
+        if (insideOrNear(outline, x, z, 0)) top = Math.max(top, groundAt(terrain, x, z));
+      }
+    }
+    if (!Number.isFinite(top)) continue;
+    const centre = { x: (minX + maxX) / 2, z: (minZ + maxZ) / 2 };
+    const reach = Math.hypot(maxX - minX, maxZ - minZ) / 2 + CASTLE_TERRACE + terrain.cell;
+    reshape(terrain, centre, reach, (at, was) => {
+      if (was >= top) return null;
+      if (insideOrNear(outline, at.x, at.z, CASTLE_TERRACE)) return top;
+      return null;
+    });
   }
 }
 

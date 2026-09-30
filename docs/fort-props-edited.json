@@ -1,850 +1,990 @@
 {
-  "seed": "0x4b657374",
   "place": "Kestrel Head",
   "props": [
     {
+      "angle": 0,
       "id": "c1",
       "kind": "tree",
-      "x": 1310.0,
-      "z": -260.6,
-      "angle": 0,
-      "note": "The old tree outside the gate"
+      "note": "The old tree outside the gate",
+      "x": 1310,
+      "z": -260.6
     },
     {
+      "angle": 2.601,
       "id": "c2",
       "kind": "fort-gate",
+      "note": "Main gate",
       "x": 1278.3,
-      "z": -297.2,
-      "angle": 2.601,
-      "note": "Main gate"
+      "z": -297.2
     },
     {
+      "angle": 0,
       "id": "c3",
       "kind": "wall-tower",
+      "note": "Powder tower",
       "x": 1242.3,
-      "z": -318.8,
-      "angle": 0,
-      "note": "Powder tower"
+      "z": -318.8
     },
     {
+      "angle": 0,
       "id": "c4",
       "kind": "wall-tower",
       "x": 1314.3,
-      "z": -275.6,
-      "angle": 0
+      "z": -275.6
     },
     {
+      "angle": -2.111,
       "id": "c5",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1253.9,
-      "z": -311.8,
-      "angle": -2.111,
-      "variant": "whole"
+      "z": -311.8
     },
     {
+      "angle": 2.601,
       "id": "c6",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1253.5,
-      "z": -333.5,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -333.5
     },
     {
+      "angle": 2.601,
       "id": "c7",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1264.2,
-      "z": -351.3,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -351.3
     },
     {
+      "angle": 2.601,
       "id": "c8",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1274.8,
-      "z": -369.2,
-      "angle": 2.601,
-      "variant": "broken"
+      "z": -369.2
     },
     {
+      "angle": 2.601,
       "id": "c9",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1285.5,
-      "z": -387.0,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -387
     },
     {
+      "angle": 0,
       "id": "c10",
       "kind": "wall-tower",
       "x": 1273.1,
-      "z": -370.2,
-      "angle": 0
+      "z": -370.2
     },
     {
+      "angle": 1.03,
       "id": "c11",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1302.7,
-      "z": -282.5,
-      "angle": 1.03,
-      "variant": "whole"
+      "z": -282.5
     },
     {
+      "angle": 2.601,
       "id": "c12",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1322.1,
-      "z": -292.4,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -292.4
     },
     {
+      "angle": 2.601,
       "id": "c13",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1332.8,
-      "z": -310.2,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -310.2
     },
     {
+      "angle": 2.601,
       "id": "c14",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1343.4,
-      "z": -328.0,
-      "angle": 2.601,
-      "variant": "broken"
+      "z": -328
     },
     {
+      "angle": 2.601,
       "id": "c15",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1354.1,
-      "z": -345.8,
-      "angle": 2.601,
-      "variant": "whole"
+      "z": -345.8
     },
     {
+      "angle": 0,
       "id": "c16",
       "kind": "wall-tower",
       "x": 1345.2,
-      "z": -327.0,
-      "angle": 0
+      "z": -327
     },
     {
+      "angle": 2.601,
       "id": "c17",
       "kind": "ruin-house",
-      "x": 1309.2,
-      "z": -302.0,
-      "angle": 2.601,
+      "note": "Gatekeeper's lodge",
       "variant": "small",
-      "note": "Gatekeeper's lodge"
+      "x": 1309.2,
+      "z": -302
     },
     {
+      "angle": 2.601,
       "id": "c18",
       "kind": "ruin-house",
-      "x": 1280.0,
-      "z": -348.6,
-      "angle": 2.601,
-      "note": "Stables"
+      "note": "Stables",
+      "x": 1280,
+      "z": -348.6
     },
     {
+      "angle": 2.601,
       "id": "c19",
       "kind": "ruin-house",
+      "note": "Granary",
       "x": 1322.9,
-      "z": -322.9,
-      "angle": 2.601,
-      "note": "Granary"
+      "z": -322.9
     },
     {
+      "angle": 2.601,
       "id": "c20",
       "kind": "ruin-house",
-      "x": 1298.0,
-      "z": -378.6,
-      "angle": 2.601,
+      "note": "Smithy",
       "variant": "small",
-      "note": "Smithy"
+      "x": 1298,
+      "z": -378.6
     },
     {
+      "angle": 2.601,
       "id": "c21",
       "kind": "ruin-house",
-      "x": 1342.6,
-      "z": -351.9,
-      "angle": 2.601,
+      "note": "Mill",
       "variant": "small",
-      "note": "Mill"
+      "x": 1342.6,
+      "z": -351.9
     },
     {
+      "angle": 2.489,
       "id": "c22",
       "kind": "fort-gate",
+      "note": "Inner gate",
       "x": 1340,
-      "z": -400,
-      "angle": 2.489,
-      "note": "Inner gate"
+      "z": -400
     },
     {
-      "id": "c23",
-      "kind": "fort-gate",
-      "x": 1410,
-      "z": -560,
-      "angle": 2.948,
-      "note": "Back gate - the gravel track down leaves here"
-    },
-    {
-      "id": "c24",
-      "kind": "rampart",
-      "x": 1434.5,
-      "z": -541.8,
-      "angle": 0.724,
-      "variant": "whole"
-    },
-    {
-      "id": "c25",
-      "kind": "rampart",
-      "x": 1442.0,
-      "z": -531.7,
-      "angle": 0.557,
-      "variant": "whole"
-    },
-    {
-      "id": "c26",
-      "kind": "rampart",
-      "x": 1447.8,
-      "z": -520.4,
-      "angle": 0.395,
-      "variant": "whole"
-    },
-    {
-      "id": "c27",
-      "kind": "rampart",
-      "x": 1451.8,
-      "z": -508.1,
-      "angle": 0.239,
-      "variant": "whole"
-    },
-    {
-      "id": "c28",
-      "kind": "rampart",
-      "x": 1454.0,
-      "z": -495.1,
-      "angle": 0.088,
-      "variant": "whole"
-    },
-    {
-      "id": "c29",
-      "kind": "rampart",
-      "x": 1443.3,
-      "z": -442.7,
-      "angle": -0.483,
-      "variant": "broken"
-    },
-    {
+      "angle": -0.624,
       "id": "c30",
       "kind": "rampart",
-      "x": 1436.1,
-      "z": -431.1,
-      "angle": -0.624,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1380.5,
+      "z": -576.6
     },
     {
-      "id": "c31",
-      "kind": "rampart",
-      "x": 1427.5,
-      "z": -420.7,
-      "angle": -0.767,
-      "variant": "whole"
-    },
-    {
+      "angle": -0.913,
       "id": "c32",
       "kind": "rampart",
-      "x": 1417.5,
-      "z": -411.8,
-      "angle": -0.913,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1427.5,
+      "z": -405.6
     },
     {
+      "angle": -1.064,
       "id": "c33",
       "kind": "rampart",
-      "x": 1406.5,
-      "z": -404.5,
-      "angle": -1.064,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1440.8,
+      "z": -417
     },
     {
+      "angle": -0.992,
       "id": "c34",
       "kind": "rampart",
-      "x": 1394.7,
-      "z": -399.1,
-      "angle": -1.22,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1407.8,
+      "z": -389.7
     },
     {
+      "angle": -0.933,
       "id": "c35",
       "kind": "rampart",
-      "x": 1382.5,
-      "z": -395.7,
-      "angle": -1.382,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1385.6,
+      "z": -373.2
     },
     {
+      "angle": -2.102,
       "id": "c36",
       "kind": "rampart",
-      "x": 1370.0,
-      "z": -394.4,
-      "angle": -1.549,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1365,
+      "z": -376.3
     },
     {
+      "angle": 2.591,
       "id": "c37",
       "kind": "rampart",
-      "x": 1324.3,
-      "z": -421.2,
-      "angle": -2.866,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1297.9,
+      "z": -412.9
     },
     {
+      "angle": 2.697,
       "id": "c38",
       "kind": "rampart",
-      "x": 1322.4,
-      "z": -430.8,
-      "angle": -3.021,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1308.8,
+      "z": -437.4
     },
     {
+      "angle": 2.767,
       "id": "c39",
       "kind": "rampart",
-      "x": 1321.8,
-      "z": -441.6,
-      "angle": 3.136,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1314,
+      "z": -456
     },
     {
-      "id": "c40",
-      "kind": "rampart",
-      "x": 1322.5,
-      "z": -453.3,
-      "angle": 3.029,
-      "variant": "whole"
-    },
-    {
-      "id": "c41",
-      "kind": "rampart",
-      "x": 1324.5,
-      "z": -465.7,
-      "angle": 2.935,
-      "variant": "whole"
-    },
-    {
+      "angle": 2.605,
       "id": "c42",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1327.8,
-      "z": -478.5,
-      "angle": 2.85,
-      "variant": "whole"
+      "z": -478.5
     },
     {
+      "angle": 2.769,
       "id": "c43",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1332.2,
-      "z": -491.3,
-      "angle": 2.769,
-      "variant": "broken"
+      "z": -491.3
     },
     {
+      "angle": 2.69,
       "id": "c44",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1337.7,
-      "z": -503.8,
-      "angle": 2.69,
-      "variant": "whole"
+      "z": -503.8
     },
     {
+      "angle": 2.609,
       "id": "c45",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1344.1,
-      "z": -515.7,
-      "angle": 2.609,
-      "variant": "whole"
+      "z": -515.7
     },
     {
+      "angle": 2.523,
       "id": "c46",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1351.2,
-      "z": -526.8,
-      "angle": 2.523,
-      "variant": "whole"
+      "z": -526.8
     },
     {
+      "angle": 0,
       "id": "c47",
       "kind": "wall-tower",
-      "x": 1448.6,
-      "z": -447.8,
-      "angle": 0
+      "x": 1399.9,
+      "z": -381.6
     },
     {
+      "angle": 0,
       "id": "c48",
       "kind": "wall-tower",
       "x": 1333.5,
-      "z": -498.2,
-      "angle": 0
+      "z": -498.2
     },
     {
+      "angle": 0,
       "id": "c49",
       "kind": "wall-tower",
       "x": 1363.5,
-      "z": -391.7,
-      "angle": 0
+      "z": -391.7
     },
     {
+      "angle": -0.412,
       "id": "c50",
       "kind": "keep",
-      "x": 1331.0,
-      "z": -439.2,
-      "angle": -0.412,
-      "note": "The keep, its point aimed down the approach; the beacon on top is the signal station"
+      "note": "The keep, its point aimed down the approach; the beacon on top is the signal station",
+      "x": 1343.7,
+      "z": -459.1
     },
     {
+      "angle": 2.728,
       "id": "c51",
       "kind": "palas",
-      "x": 1347.3,
-      "z": -486.6,
-      "angle": 2.729,
-      "note": "The hall"
+      "note": "The hall",
+      "x": 1488.8,
+      "z": -606.6
     },
     {
+      "angle": 2.729,
       "id": "c52",
       "kind": "ruin-house",
-      "x": 1365.2,
-      "z": -522.5,
-      "angle": 2.729,
-      "note": "Living quarters"
+      "note": "Living quarters",
+      "x": 1455.8,
+      "z": -642.5
     },
     {
+      "angle": 2.738,
       "id": "c53",
       "kind": "chapel",
-      "x": 1434.3,
-      "z": -503.2,
-      "angle": 2.729,
-      "note": "The chapel"
+      "note": "The chapel",
+      "x": 1515.4,
+      "z": -728.9
     },
     {
+      "angle": 2.729,
       "id": "c54",
       "kind": "ruin-house",
-      "x": 1402.2,
-      "z": -429.9,
-      "angle": 2.729,
+      "note": "Service rooms",
       "variant": "small",
-      "note": "Service rooms"
+      "x": 1533.3,
+      "z": -572.2
     },
     {
+      "angle": 2.729,
       "id": "c55",
       "kind": "ruin-house",
-      "x": 1427.4,
-      "z": -462.5,
-      "angle": 2.729,
-      "note": "Kitchen"
+      "note": "Kitchen",
+      "x": 1553.8,
+      "z": -623.8
     },
     {
+      "angle": 0,
       "id": "c56",
       "kind": "wall-tower",
-      "x": 1445.9,
-      "z": -453.3,
-      "angle": 0,
-      "note": "Tower by the way through to the south ward"
+      "note": "Tower by the way through to the south ward",
+      "x": 1464.6,
+      "z": -440.2
     },
     {
+      "angle": 0,
       "id": "c57",
       "kind": "wall-tower",
       "x": 1458.7,
-      "z": -482.7,
-      "angle": 0
+      "z": -482.7
     },
     {
+      "angle": 2.307,
       "id": "c58",
       "kind": "rampart",
-      "x": 1467.2,
-      "z": -487.9,
-      "angle": 2.123,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1479.1,
+      "z": -452.9
     },
     {
+      "angle": 2.262,
       "id": "c59",
       "kind": "rampart",
-      "x": 1484.1,
-      "z": -498.2,
-      "angle": 2.123,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1504.1,
+      "z": -475.7
     },
     {
+      "angle": 2.276,
       "id": "c60",
       "kind": "rampart",
-      "x": 1500.9,
-      "z": -508.6,
-      "angle": 2.123,
-      "variant": "broken"
+      "variant": "broken",
+      "x": 1522.1,
+      "z": -491.7
     },
     {
+      "angle": 2.595,
       "id": "c61",
       "kind": "rampart",
-      "x": 1517.8,
-      "z": -519.0,
-      "angle": 2.123,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1538.4,
+      "z": -509.6
     },
     {
+      "angle": 2.319,
       "id": "c62",
       "kind": "rampart",
-      "x": 1534.7,
-      "z": -529.4,
-      "angle": 2.123,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1457.9,
+      "z": -428.2
     },
     {
+      "angle": 2.637,
       "id": "c63",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1551.6,
-      "z": -539.8,
-      "angle": 2.123,
-      "variant": "whole"
+      "z": -531.1
     },
     {
+      "angle": 0,
       "id": "c64",
       "kind": "wall-tower",
       "x": 1560,
-      "z": -545,
-      "angle": 0
+      "z": -545
     },
     {
+      "angle": 2.743,
       "id": "c65",
       "kind": "rampart",
-      "x": 1564.0,
-      "z": -554.5,
-      "angle": 2.743,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1564,
+      "z": -554.5
     },
     {
+      "angle": 2.743,
       "id": "c66",
       "kind": "rampart",
-      "x": 1572.0,
-      "z": -573.5,
-      "angle": 2.743,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1572,
+      "z": -573.5
     },
     {
+      "angle": 2.743,
       "id": "c67",
       "kind": "rampart",
-      "x": 1580.0,
-      "z": -592.5,
-      "angle": 2.743,
-      "variant": "broken"
+      "variant": "broken",
+      "x": 1580,
+      "z": -592.5
     },
     {
+      "angle": 2.743,
       "id": "c68",
       "kind": "rampart",
-      "x": 1588.0,
-      "z": -611.5,
-      "angle": 2.743,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1588,
+      "z": -611.5
     },
     {
+      "angle": 2.743,
       "id": "c69",
       "kind": "rampart",
-      "x": 1596.0,
-      "z": -630.5,
-      "angle": 2.743,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1596,
+      "z": -630.5
     },
     {
+      "angle": 0,
       "id": "c70",
       "kind": "wall-tower",
       "x": 1600,
-      "z": -640,
-      "angle": 0
+      "z": -640
     },
     {
+      "angle": -3.1,
       "id": "c71",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1599.6,
-      "z": -650.0,
-      "angle": -3.1,
-      "variant": "whole"
+      "z": -650
     },
     {
+      "angle": -3.1,
       "id": "c72",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1598.8,
-      "z": -670.0,
-      "angle": -3.1,
-      "variant": "whole"
+      "z": -670
     },
     {
+      "angle": -3.1,
       "id": "c73",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1597.9,
-      "z": -690.0,
-      "angle": -3.1,
-      "variant": "broken"
+      "z": -690
     },
     {
+      "angle": -3.1,
       "id": "c74",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1597.1,
-      "z": -710.0,
-      "angle": -3.1,
-      "variant": "whole"
+      "z": -710
     },
     {
+      "angle": -3.1,
       "id": "c75",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1596.2,
-      "z": -730.0,
-      "angle": -3.1,
-      "variant": "whole"
+      "z": -730
     },
     {
+      "angle": -3.1,
       "id": "c76",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1595.4,
-      "z": -750.0,
-      "angle": -3.1,
-      "variant": "whole"
+      "z": -750
     },
     {
+      "angle": 0,
       "id": "c77",
       "kind": "wall-tower",
       "x": 1595,
-      "z": -760,
-      "angle": 0
+      "z": -760
     },
     {
+      "angle": -2.176,
       "id": "c78",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1586.9,
-      "z": -765.6,
-      "angle": -2.176,
-      "variant": "whole"
+      "z": -765.6
     },
     {
+      "angle": -2.176,
       "id": "c79",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1570.6,
-      "z": -776.9,
-      "angle": -2.176,
-      "variant": "whole"
+      "z": -776.9
     },
     {
+      "angle": -2.176,
       "id": "c80",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1554.4,
-      "z": -788.1,
-      "angle": -2.176,
-      "variant": "broken"
+      "z": -788.1
     },
     {
+      "angle": -2.176,
       "id": "c81",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1538.1,
-      "z": -799.4,
-      "angle": -2.176,
-      "variant": "whole"
+      "z": -799.4
     },
     {
+      "angle": 0,
       "id": "c82",
       "kind": "wall-tower",
       "x": 1530,
-      "z": -805,
-      "angle": 0
+      "z": -805
     },
     {
+      "angle": -1.134,
       "id": "c83",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1520.6,
-      "z": -800.6,
-      "angle": -1.134,
-      "variant": "whole"
+      "z": -800.6
     },
     {
+      "angle": -1.134,
       "id": "c84",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1501.9,
-      "z": -791.9,
-      "angle": -1.134,
-      "variant": "whole"
+      "z": -791.9
     },
     {
+      "angle": -1.134,
       "id": "c85",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1483.1,
-      "z": -783.1,
-      "angle": -1.134,
-      "variant": "broken"
+      "z": -783.1
     },
     {
+      "angle": -1.134,
       "id": "c86",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1464.4,
-      "z": -774.4,
-      "angle": -1.134,
-      "variant": "whole"
+      "z": -774.4
     },
     {
+      "angle": 0,
       "id": "c87",
       "kind": "wall-tower",
       "x": 1455,
-      "z": -770,
-      "angle": 0
+      "z": -770
     },
     {
+      "angle": -0.322,
       "id": "c88",
       "kind": "rampart",
-      "x": 1452.0,
-      "z": -761.0,
-      "angle": -0.322,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1452,
+      "z": -761
     },
     {
+      "angle": -0.322,
       "id": "c89",
       "kind": "rampart",
-      "x": 1446.0,
-      "z": -743.0,
-      "angle": -0.322,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1446,
+      "z": -743
     },
     {
+      "angle": -0.322,
       "id": "c90",
       "kind": "rampart",
-      "x": 1440.0,
-      "z": -725.0,
-      "angle": -0.322,
-      "variant": "broken"
+      "variant": "broken",
+      "x": 1440,
+      "z": -725
     },
     {
+      "angle": -0.322,
       "id": "c91",
       "kind": "rampart",
-      "x": 1434.0,
-      "z": -707.0,
-      "angle": -0.322,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1434,
+      "z": -707
     },
     {
+      "angle": -0.322,
       "id": "c92",
       "kind": "rampart",
-      "x": 1428.0,
-      "z": -689.0,
-      "angle": -0.322,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1428,
+      "z": -689
     },
     {
+      "angle": 0,
       "id": "c93",
       "kind": "wall-tower",
       "x": 1425,
-      "z": -680,
-      "angle": 0
+      "z": -680
     },
     {
+      "angle": -0.062,
       "id": "c94",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1424.4,
-      "z": -670.0,
-      "angle": -0.062,
-      "variant": "whole"
+      "z": -670
     },
     {
+      "angle": -0.062,
       "id": "c95",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1423.1,
-      "z": -650.0,
-      "angle": -0.062,
-      "variant": "whole"
+      "z": -650
     },
     {
+      "angle": -0.062,
       "id": "c96",
       "kind": "rampart",
+      "variant": "broken",
       "x": 1421.9,
-      "z": -630.0,
-      "angle": -0.062,
-      "variant": "broken"
+      "z": -630
     },
     {
+      "angle": -0.062,
       "id": "c97",
       "kind": "rampart",
+      "variant": "whole",
       "x": 1420.6,
-      "z": -610.0,
-      "angle": -0.062,
-      "variant": "whole"
+      "z": -610
     },
     {
+      "angle": 0,
       "id": "c98",
       "kind": "wall-tower",
       "x": 1420,
-      "z": -600,
-      "angle": 0
+      "z": -600
     },
     {
+      "angle": 0,
       "id": "c99",
       "kind": "rampart",
-      "x": 1420.0,
-      "z": -600.0,
-      "angle": 0.0,
-      "variant": "whole"
+      "variant": "whole",
+      "x": 1420,
+      "z": -600
     },
     {
-      "id": "c100",
-      "kind": "rampart",
-      "x": 1424.0,
-      "z": -586.0,
-      "angle": 0.278,
-      "variant": "whole"
-    },
-    {
+      "angle": 1.571,
       "id": "c101",
       "kind": "keep",
+      "note": "The second keep, in the middle of the long wall",
       "x": 1583.5,
-      "z": -700.0,
-      "angle": 1.571,
-      "note": "The second keep, in the middle of the long wall"
+      "z": -700
     },
     {
+      "angle": 2.85,
       "id": "c102",
       "kind": "ruin-house",
-      "x": 1500,
-      "z": -620,
-      "angle": 2.85,
-      "note": "Barracks"
+      "note": "Barracks",
+      "x": 1402.3,
+      "z": -435.6
     },
     {
+      "angle": 2.85,
       "id": "c103",
       "kind": "ruin-house",
+      "note": "Granary of the ward",
       "x": 1540,
-      "z": -700,
-      "angle": 2.85,
-      "note": "Granary of the ward"
+      "z": -700
     },
     {
+      "angle": 2.85,
       "id": "c104",
       "kind": "ruin-house",
-      "x": 1470,
-      "z": -700,
-      "angle": 2.85,
+      "note": "Armoury",
       "variant": "small",
-      "note": "Armoury"
+      "x": 1470,
+      "z": -700
     },
     {
+      "angle": 0,
       "id": "c105",
       "kind": "rubble",
       "x": 1450,
-      "z": -740,
-      "angle": 0
+      "z": -740
     },
     {
+      "angle": 0,
       "id": "c106",
       "kind": "rubble",
       "x": 1575,
-      "z": -600,
+      "z": -600
+    },
+    {
+      "angle": 0,
+      "id": "c107",
+      "kind": "rubble",
+      "x": 1346,
+      "z": -503.6
+    },
+    {
+      "angle": 2.85,
+      "id": "pmuo8neoe6w",
+      "kind": "ruin-house",
+      "variant": "large",
+      "x": 1485.6,
+      "z": -537.5
+    },
+    {
+      "angle": 2.85,
+      "id": "pmuo8nfwu8k",
+      "kind": "ruin-house",
+      "variant": "large",
+      "x": 1418.9,
+      "z": -494.6
+    },
+    {
+      "angle": 0,
+      "id": "pmuo8plynsw",
+      "kind": "bastion",
+      "x": 1482.3,
+      "z": -482.8
+    },
+    {
+      "angle": -0.632,
+      "id": "pmuo8q6cfw8",
+      "kind": "fort-gate",
+      "x": 1448.6,
+      "z": -518.1
+    },
+    {
+      "angle": -3.115,
+      "id": "pmuo8qfr2zd",
+      "kind": "jump",
+      "variant": "built ramp",
+      "x": 1406.8,
+      "z": -578.7
+    },
+    {
+      "angle": -2.164,
+      "id": "pmuo8rmy7132",
+      "kind": "rampart",
+      "variant": "whole",
+      "x": 1320,
+      "z": -412.7
+    },
+    {
+      "angle": -2.102,
+      "id": "pmuo8s6tj160",
+      "kind": "rampart",
+      "variant": "whole",
+      "x": 1497.9,
+      "z": -488.2
+    },
+    {
+      "angle": -2.102,
+      "id": "pmuo8s7on16o",
+      "kind": "rampart",
+      "variant": "whole",
+      "x": 1477.3,
+      "z": -502.6
+    },
+    {
+      "angle": -2.102,
+      "id": "pmuo8s85j16y",
+      "kind": "rampart",
+      "variant": "whole",
+      "x": 1463,
+      "z": -507.6
+    },
+    {
+      "angle": -2.102,
+      "id": "pmuo8s9rr17n",
+      "kind": "rampart",
+      "variant": "whole",
+      "x": 1425.5,
+      "z": -534.4
+    },
+    {
+      "id": "x0",
+      "kind": "rampart",
+      "x": 1513.1,
+      "z": -483.6,
+      "angle": 2.436,
+      "variant": "whole"
+    },
+    {
+      "id": "x1",
+      "kind": "rampart",
+      "x": 1531.5,
+      "z": -499.6,
+      "angle": 2.26,
+      "variant": "whole"
+    },
+    {
+      "id": "x2",
+      "kind": "rampart",
+      "x": 1545.2,
+      "z": -520.2,
+      "angle": 2.496,
+      "variant": "whole"
+    },
+    {
+      "id": "x3",
+      "kind": "rampart",
+      "x": 1487.6,
+      "z": -495.4,
+      "angle": -2.475,
+      "variant": "whole"
+    },
+    {
+      "id": "x4",
+      "kind": "rampart",
+      "x": 1417.9,
+      "z": -397.3,
+      "angle": -0.669,
+      "variant": "whole"
+    },
+    {
+      "id": "x5",
+      "kind": "wall-tower",
+      "x": 1375.6,
+      "z": -369.2,
       "angle": 0
     },
     {
-      "id": "c107",
-      "kind": "rubble",
-      "x": 1346.0,
-      "z": -503.6,
+      "id": "x6",
+      "kind": "rampart",
+      "x": 1320.2,
+      "z": -467.6,
+      "angle": 2.312,
+      "variant": "whole"
+    },
+    {
+      "id": "x7",
+      "kind": "rampart",
+      "x": 1303.8,
+      "z": -424.9,
+      "angle": 2.947,
+      "variant": "whole"
+    },
+    {
+      "id": "x8",
+      "kind": "rampart",
+      "x": 1291.7,
+      "z": -400.0,
+      "angle": 2.916,
+      "variant": "whole"
+    },
+    {
+      "id": "x9",
+      "kind": "rampart",
+      "x": 1491.5,
+      "z": -464.5,
+      "angle": 2.347,
+      "variant": "whole"
+    },
+    {
+      "id": "x10",
+      "kind": "rampart",
+      "x": 1258.9,
+      "z": -311.2,
+      "angle": -2.484,
+      "variant": "whole"
+    },
+    {
+      "id": "x11",
+      "kind": "rampart",
+      "x": 1251.9,
+      "z": -320.4,
+      "angle": -2.484,
+      "variant": "whole"
+    },
+    {
+      "id": "x12",
+      "kind": "rampart",
+      "x": 1299.8,
+      "z": -286.7,
+      "angle": 1.405,
+      "variant": "whole"
+    },
+    {
+      "id": "x13",
+      "kind": "rampart",
+      "x": 1311.2,
+      "z": -284.8,
+      "angle": 1.405,
+      "variant": "whole"
+    },
+    {
+      "id": "x14",
+      "kind": "rampart",
+      "x": 1358.5,
+      "z": -361.1,
+      "angle": -3.036,
+      "variant": "whole"
+    },
+    {
+      "id": "x15",
+      "kind": "rampart",
+      "x": 1357.1,
+      "z": -374.6,
+      "angle": -3.036,
+      "variant": "whole"
+    },
+    {
+      "id": "x16",
+      "kind": "rampart",
+      "x": 1468.1,
+      "z": -443.2,
+      "angle": -0.87,
+      "variant": "whole"
+    },
+    {
+      "id": "x17",
+      "kind": "wall-tower",
+      "x": 1307.3,
+      "z": -419.2,
+      "angle": 0
+    },
+    {
+      "id": "x18",
+      "kind": "wall-tower",
+      "x": 1507.9,
+      "z": -481.5,
       "angle": 0
     }
-  ]
+  ],
+  "savedAt": "2026-09-30T15:11:58.015Z",
+  "seed": "0x4b657374"
 }
