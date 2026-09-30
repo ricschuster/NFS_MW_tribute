@@ -3,6 +3,29 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Start here (2026-09-30).** Two places were built with the owner and merged:
+  - **Sablet Wharf (#410, done and signed off).** The quay loop, two more
+    bridges, a container port (5 new set-piece kinds), a paved yard that drives
+    at 0.9 of top (`City.aprons`, `APRON_SPEED_FRAC`, police too), the **Pier
+    Jump** off a jetty (`city/piers.ts`: a `deadEnd` road ending in water is a
+    level deck), and the **Sablet Quay** circuit (#451; the loop smoothed and
+    held 22 m from the water, the wharf closed to civilian traffic as a
+    `yard`).
+  - **Kestrel Head (#454, waiting on the owner's review and sign-off).** The
+    road on to the summit, a gravel track down the far side (drawn surfaces:
+    `AuthoredRoad.surface`, `ownSurface`), the **Kestrel Climb** uphill sprint,
+    and a **castle modelled on a real ruin** (`docs/research/kestrel-head-castle.md`
+    names it; nothing of it ships) with cobbled courtyards.
+  - **Found on the way, all fixed:** the claim runner never started on short
+    roads; rivals now get circuits by rank (the boss races the Rim); citylap's
+    driver treated sprints as loops (the Halloway Drop really runs at 77% of
+    top); a race field now slows on hills like every graph car (the Climb could
+    not be won); cameras no longer land on billboards.
+  - **Next:** the owner's answers on **Highmoor Park (#460)** and **Tidewater
+    Park (#461)**, both audited with questions; the owner's sign-off on
+    Kestrel Head. Editors: road editor, Sablet Wharf Props, Kestrel Head Props
+    (URLs in the agent's memory, not the repo). The dev server is served from a
+    worktree of main and follows it.
 - **The freeway is built (2026-09-28, [#371](https://github.com/ricschuster/crosstown/issues/371)).**
   `CITY_FREEWAY` is on: the authored loop, 4 tunnels, and 7 ramps at the
   owner's markers (`FREEWAY_RAMPS`), each foot joined to the nearest drawn road
