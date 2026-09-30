@@ -51,6 +51,7 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Sablet Quay': ['Quay', 'Crane', 'Berth', 'Harbour', 'Tide', 'Stack'],
   'Kestrel Climb': ['Summit', 'Rampart', 'Signal', 'Crest', 'Beacon', 'Fort'],
   'Highmoor Descent': ['Woodland', 'Slope', 'Bracken', 'Meadow', 'Gully', 'Fell'],
+  'Tidewater Drive': ['Lawn', 'Pond', 'Bandstand', 'Parkway', 'Willow', 'Shoreline'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 
