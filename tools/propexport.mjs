@@ -18,6 +18,7 @@
 // Usage:
 //   npm run propexport                      # Marrow Field -> screenshots/props.json, propeditor.html
 //   npm run propexport -- --place quarry    # Halloway Quarry -> screenshots/quarry-props.json, quarry-propeditor.html
+//   npm run propexport -- --place docks     # Sablet Wharf -> screenshots/wharf-props.json, wharf-propeditor.html
 import { createServer } from 'vite';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
@@ -43,8 +44,8 @@ const r2 = (v) => Math.round(v * 100) / 100;
 // past the circle at both ends: 2.3 km of runway against a 700 m radius.
 const argv = process.argv.slice(2);
 const which = argv.includes('--place') ? argv[argv.indexOf('--place') + 1] : 'airfield';
-const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry' }[which];
-if (!KIND) throw new Error(`unknown place '${which}': airfield or quarry`);
+const KIND = { airfield: 'airfield', marrow: 'airfield', quarry: 'quarry', docks: 'docks', wharf: 'docks' }[which];
+if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry or docks`);
 const field = plan.PLAN_PLACES.find((p) => p.kind === KIND);
 // Only an airfield has a runway; a quarry is a circle, and the crop reaches
 // past it to take in the rim road, the yard and the road in (the yard sits
@@ -52,8 +53,10 @@ const field = plan.PLAN_PLACES.find((p) => p.kind === KIND);
 const runway = KIND === 'airfield' ? plan.PLAN_RUNWAY.map((p) => ({ x: toM(p.x), z: toM(p.z) })) : [];
 const centre = { x: toM(field.at.x), z: toM(field.at.z) };
 const radius = toM(field.radius);
-const MARGIN = KIND === 'airfield' ? 250 : radius * 0.85;
-const OUT = KIND === 'airfield' ? '' : 'quarry-';
+// The wharf is a peninsula 1.5 km long in a 450 m circle, and the Pier Jump
+// lands 300 m out across the east channel: the crop reaches for both.
+const MARGIN = KIND === 'airfield' ? 250 : KIND === 'docks' ? 400 : radius * 0.85;
+const OUT = { airfield: '', quarry: 'quarry-', docks: 'wharf-' }[KIND];
 const box = {
   minX: Math.floor(Math.min(centre.x - radius, ...runway.map((p) => p.x)) - MARGIN),
   maxX: Math.ceil(Math.max(centre.x + radius, ...runway.map((p) => p.x)) + MARGIN),
@@ -151,6 +154,19 @@ const out = {
   repairs: city.repairs.filter((r) => inBox(r.at)).map((r) => [r1(toM(r.at.x)), r1(toM(r.at.z))]),
   ambushes: city.ambushes.filter((a) => inBox(a.at)).map((a) => ({ at: [r1(toM(a.at.x)), r1(toM(a.at.z))], level: a.level })),
 };
+
+// What the place already has, so a first save from a new editor keeps it; and
+// for the wharf, the layout its roads were drawn round (#410) and ideas for
+// its jumps, drawn under the props and never saved.
+const AUTHORED = { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops' }[KIND];
+const EXPORT = { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS' }[KIND];
+const server2 = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
+out.initial = (await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`))[EXPORT];
+await server2.close();
+if (KIND === 'docks') {
+  out.guides = JSON.parse(readFileSync('docs/research/sablet-wharf/port-layout.json', 'utf8'));
+  out.ideas = JSON.parse(readFileSync('docs/research/sablet-wharf/jump-ideas.json', 'utf8'));
+}
 
 mkdirSync('screenshots', { recursive: true });
 const json = JSON.stringify(out);

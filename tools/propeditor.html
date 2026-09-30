@@ -291,6 +291,17 @@
     { id: 'cabin', group: 'Quarry', name: 'Site cabin', w: 5.8, l: 15.5, shape: 'box', color: '#d7d9d6', flat: true },
     { id: 'crusher', group: 'Quarry', name: 'Crusher hopper', w: 16, l: 16, shape: 'box', color: '#8a5a3c', flat: true },
     { id: 'rubble', group: 'Quarry', name: 'Rubble pile', w: 16, l: 16, shape: 'circle', color: '#b7b3a8', road: 'ok' },
+    // Sablet Wharf's container port (#410), sized from real terminals: a 40 ft
+    // container is 12.2 m by 2.4 m and 2.6 m high, and a block is a row of
+    // them side by side; a ship-to-shore crane stands on rails about 30 m
+    // apart, so its legs straddle the quay road and you drive under it.
+    { id: 'container-block', group: 'Port', name: 'Container block', w: 30, l: 12.5, shape: 'box', color: '#c4553d', flat: true,
+      variants: ['two high', 'three high', 'four high'] },
+    { id: 'sts-crane', group: 'Port', name: 'Ship-to-shore crane', w: 30, l: 27, shape: 'box', color: '#e5563a', road: 'ok' },
+    { id: 'warehouse', group: 'Port', name: 'Warehouse', w: 50, l: 130, shape: 'shed', color: '#9aa3a8', flat: true,
+      variants: ['large', 'small'], sizes: { large: [50, 130], small: [30, 60] } },
+    { id: 'straddle-carrier', group: 'Port', name: 'Straddle carrier', w: 5, l: 9, shape: 'box', color: '#f0c419', road: 'ok' },
+    { id: 'reach-stacker', group: 'Port', name: 'Reach stacker', w: 4.5, l: 11, shape: 'box', color: '#f0c419', road: 'ok' },
     { id: 'cone', group: 'Small', name: 'Traffic cone', w: 0.6, l: 0.6, shape: 'cone', color: '#f28a30', road: 'ok' },
     { id: 'tree', group: 'Small', name: 'Conifer', w: 6, l: 6, shape: 'tree', color: '#5f9d5a' },
     // Sized per variant, to match `JUMP_SHAPES` in `city/jumps.ts` (#307).
@@ -300,7 +311,8 @@
   const KIND = Object.fromEntries(KINDS.map((k) => [k.id, k]));
 
   // ---- state ----------------------------------------------------------------
-  let props = [];
+  // What the place already has in the generator, so the first save keeps it.
+  let props = (DATA.initial ?? []).map((p, i) => ({ id: p.id ?? `p${i + 1}`, ...p }));
   let saved = '[]';
   let selected = null;
   let mode = 'select';
@@ -308,7 +320,7 @@
   const lastAngle = {};
   let checks = new Map();
   let attentionAt = -1;
-  const layers = { relief: true, roads: true, fence: true, generated: true, outline: true, labels: true };
+  const layers = { relief: true, roads: true, fence: true, generated: true, outline: true, labels: true, layout: true };
   const view = { scale: 1, x: 0, y: 0 };
   let dpr = window.devicePixelRatio || 1;
   let hover = null;
@@ -679,6 +691,57 @@
       }
     }
 
+    // The layout the roads were drawn round (#410): footprints to place props
+    // over, and ideas for jumps. Never saved; they come in with the page.
+    if (layers.layout) {
+      for (const g of DATA.guides ?? []) {
+        const pts = g.poly ?? g.line;
+        ctx.beginPath();
+        pts.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+        if (g.poly) {
+          ctx.closePath();
+          ctx.fillStyle = g.color + '26';
+          ctx.fill();
+        }
+        ctx.setLineDash([5, 4]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = g.color + 'aa';
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (g.poly && s > 1.1) {
+          const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+          const cz = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+          ctx.font = '11px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(240,236,226,0.7)';
+          ctx.fillText(g.label, sx(cx), sy(cz) + 4);
+        }
+      }
+      for (const idea of DATA.ideas ?? []) {
+        const x = sx(idea.at[0]);
+        const y = sy(idea.at[1]);
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#b99cff';
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Which way it throws you.
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - Math.sin(idea.angle) * 22, y - Math.cos(idea.angle) * 22);
+        ctx.stroke();
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#111';
+        ctx.strokeText(idea.label, x + 14, y - 8);
+        ctx.fillStyle = '#d9c9ff';
+        ctx.fillText(idea.label, x + 14, y - 8);
+      }
+    }
+
     for (const b of DATA.buildings) {
       const [x0, z0, x1, z1] = b.rect;
       ctx.fillStyle = b.derelict ? '#6d5845' : '#848a90';
@@ -933,6 +996,7 @@
 
   function buildLayers() {
     const names = { relief: 'Relief', roads: 'Roads', fence: 'Fence & weeds', generated: 'Generated', outline: 'Field outline', labels: 'Labels' };
+    if ((DATA.guides ?? []).length || (DATA.ideas ?? []).length) names.layout = 'Layout guide';
     for (const [id, text] of Object.entries(names)) {
       const l = document.createElement('label');
       const i = document.createElement('input');

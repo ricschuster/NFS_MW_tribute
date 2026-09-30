@@ -1,0 +1,18 @@
+[
+ {
+  "label": "Crane-line kicker: a slab on the west quay straight, between two cranes, on the race loop",
+  "at": [
+   -1809,
+   -1808
+  ],
+  "angle": 0.253
+ },
+ {
+  "label": "Platform drop: off the end of the north loading platform, down onto the loop",
+  "at": [
+   -1636,
+   -1404
+  ],
+  "angle": 0.253
+ }
+]
