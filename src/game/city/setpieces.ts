@@ -35,6 +35,11 @@ const grown = (solids: Solid[], k: number): Solid[] =>
       : { u: s.u * k, v: s.v * k, w: s.w * k, l: s.l * k, y0: s.y0 * k, y1: s.y1 * k },
   );
 
+/** How much bigger than life Kestrel Head's buildings are drawn (#454). */
+export const PALAS_GROWN = 1.6;
+export const CHAPEL_GROWN = 2;
+export const HOUSE_GROWN = 1.6;
+
 export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'plane-belly': [
     { u: 0, v: 0, w: 4.4, l: 30, y0: 0, y1: 4.4 },
@@ -115,12 +120,17 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // The castle it became (#454): a keep, the hall and the chapel of the inner
   // castle, towers on the curtain wall, and the outbuildings of the bailey. A
   // roofless building is solid at its walls, not across its floor, but there
-  // is no way in, so it is solid as a box.
+  // is no way in, so it is solid as a box. The buildings are grown like the
+  // quarry's plant, and by the same amounts as their models: at real size a
+  // chapel was hardly taller than the wall round it.
   keep: [post(0, 0, 7.4, 30)],
-  palas: [{ u: 0, v: 0, w: 16, l: 34, y0: 0, y1: 12 }],
-  chapel: [{ u: 0, v: 0, w: 10, l: 18, y0: 0, y1: 9 }, post(0, 9, 5, 7)],
+  palas: grown([{ u: 0, v: 0, w: 16, l: 34, y0: 0, y1: 12 }], PALAS_GROWN),
+  chapel: grown([{ u: 0, v: 0, w: 10, l: 18, y0: 0, y1: 9 }, post(0, 9, 5, 7)], CHAPEL_GROWN),
   'wall-tower': [post(0, 0, 5, 14)],
-  'ruin-house': [{ u: 0, v: 0, w: 12, l: 24, y0: 0, y1: 4.5 }],
+  'ruin-house': grown([{ u: 0, v: 0, w: 12, l: 24, y0: 0, y1: 4.5 }], HOUSE_GROWN),
+  // Ruin clutter (#454): a fallen stretch of dressed stone, and a well.
+  masonry: grown([{ u: 0, v: 0, w: 4, l: 7, y0: 0, y1: 1.4 }], 2),
+  well: [post(0, 0, 2.4, 3.4)],
 };
 
 /**
@@ -133,7 +143,7 @@ const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'container-block:four high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 10.4 }],
   'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: 0, y1: 10 }],
   'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
-  'ruin-house:small': [{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }],
+  'ruin-house:small': grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }], HOUSE_GROWN),
 };
 
 /** What this piece is solid as. */

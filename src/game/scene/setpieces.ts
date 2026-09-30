@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
+import { CHAPEL_GROWN, HOUSE_GROWN, PALAS_GROWN } from '../city/setpieces';
 
 const M = UNITS_PER_METRE;
 
@@ -520,6 +521,32 @@ function ruinHouse(variant?: string): Part[] {
 }
 
 /**
+ * Dressed stone come down off a wall: a few squared blocks where they fell and
+ * a column drum on its side. Low enough to see over, not to drive through.
+ */
+function masonry(): Part[] {
+  const drum = tube(0.7, 0.7, 2.2, 10).rotateY(0.5);
+  return [
+    { geometry: at(box(1.8, 1, 1.2).rotateY(0.3), -0.6, 0.5, -2.2), colour: STONE },
+    { geometry: at(box(1.4, 0.9, 1.4).rotateY(-0.4), 0.8, 0.45, -0.6), colour: STONE_DARK },
+    { geometry: at(box(1.6, 0.8, 1).rotateY(1.1), -0.5, 0.4, 1), colour: STONE },
+    { geometry: at(box(1, 0.7, 1).rotateY(0.2), 0.3, 1.25, -2.1), colour: '#9a9486' },
+    { geometry: at(drum, 0.6, 0.7, 2.6), colour: '#9a9486' },
+  ];
+}
+
+/** A well in the courtyard: a round stone curb, two posts and a beam across with its winch. */
+function well(): Part[] {
+  return [
+    { geometry: at(upright(2.2, 2.4, 1.2, 14), 0, 0.6, 0), colour: STONE },
+    { geometry: at(upright(1.7, 1.7, 0.05, 14), 0, 1.2, 0), colour: '#1f2224' },
+    ...[-1.9, 1.9].map((x) => ({ geometry: at(box(0.3, 3.2, 0.3), x, 1.6, 0), colour: '#5a4a38' })),
+    { geometry: at(box(4.2, 0.3, 0.3), 0, 3.2, 0), colour: '#5a4a38' },
+    { geometry: at(tube(0.25, 0.25, 1.6, 8).rotateY(Math.PI / 2), 0, 2.6, 0), colour: '#3b2f25' },
+  ];
+}
+
+/**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
  * thing driving past it: these are built to real proportions and then grown
@@ -561,10 +588,12 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'signal-tower': signalTower,
   cannon,
   keep,
-  palas,
-  chapel,
+  palas: grown(palas, PALAS_GROWN),
+  chapel: grown(chapel, CHAPEL_GROWN),
   'wall-tower': wallTower,
-  'ruin-house': ruinHouse,
+  'ruin-house': grown(ruinHouse, HOUSE_GROWN),
+  masonry: grown(masonry, 2),
+  well,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

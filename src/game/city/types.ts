@@ -494,7 +494,9 @@ export type SetPieceKind =
   | 'palas'
   | 'chapel'
   | 'wall-tower'
-  | 'ruin-house';
+  | 'ruin-house'
+  | 'masonry'
+  | 'well';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
