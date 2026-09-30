@@ -2,7 +2,7 @@
 // Place props in the Kestrel Head Props editor (`npm run propexport -- --place lookout`), save,
 // read the save back into docs/fort-props-edited.json, and run the sync again.
 //
-// Seed 0x4b657374, saved 2026-09-30T15:52:58.760Z.
+// Seed 0x4b657374, saved 2026-09-30T16:01:40.219Z.
 import type { AuthoredProp } from './types';
 
 /** Kestrel Head's set dressing, in metres, as placed in the editor (#454). */
@@ -52,7 +52,7 @@ export const FORT_PROPS: AuthoredProp[] = [
   { kind: 'ruin-house', x: 1533.3, z: -572.2, angle: 2.729, variant: 'small', note: 'Service rooms' },
   { kind: 'ruin-house', x: 1553.8, z: -623.8, angle: 2.729, note: 'Kitchen' },
   { kind: 'wall-tower', x: 1464.6, z: -440.2, angle: 0, note: 'Tower by the way through to the south ward' },
-  { kind: 'wall-tower', x: 1458.7, z: -482.7, angle: 0 },
+  { kind: 'wall-tower', x: 1462.5, z: -493.5, angle: 0 },
   { kind: 'rampart', x: 1479.1, z: -452.9, angle: 2.307, variant: 'whole' },
   { kind: 'rampart', x: 1504.1, z: -475.7, angle: 2.262, variant: 'whole' },
   { kind: 'rampart', x: 1522.1, z: -491.7, angle: 2.276, variant: 'broken' },
@@ -103,14 +103,14 @@ export const FORT_PROPS: AuthoredProp[] = [
   { kind: 'rubble', x: 1575, z: -600, angle: 0 },
   { kind: 'rubble', x: 1352.6, z: -493.9, angle: 0 },
   { kind: 'ruin-house', x: 1485.6, z: -537.5, angle: 2.85, variant: 'large' },
-  { kind: 'ruin-house', x: 1428.2, z: -487.7, angle: 2.85, variant: 'large' },
+  { kind: 'ruin-house', x: 1435.8, z: -473.5, angle: 2.492, variant: 'large' },
   { kind: 'bastion', x: 1482.3, z: -482.8, angle: 0 },
   { kind: 'fort-gate', x: 1448.6, z: -518.1, angle: -0.632 },
   { kind: 'jump', x: 1406.8, z: -578.7, angle: -3.115, variant: 'built ramp' },
   { kind: 'rampart', x: 1320, z: -412.7, angle: -2.164, variant: 'whole' },
   { kind: 'rampart', x: 1497.9, z: -488.2, angle: -2.102, variant: 'whole' },
   { kind: 'rampart', x: 1477.3, z: -502.6, angle: -2.102, variant: 'whole' },
-  { kind: 'rampart', x: 1463, z: -507.6, angle: -2.102, variant: 'whole' },
+  { kind: 'rampart', x: 1467.3, z: -505.1, angle: -2.102, variant: 'whole' },
   { kind: 'rampart', x: 1425.5, z: -534.4, angle: -2.102, variant: 'whole' },
   { kind: 'rampart', x: 1513.1, z: -483.6, angle: 2.436, variant: 'whole' },
   { kind: 'rampart', x: 1531.5, z: -499.6, angle: 2.26, variant: 'whole' },
@@ -135,7 +135,7 @@ export const FORT_PROPS: AuthoredProp[] = [
   { kind: 'masonry', x: 1266.6, z: -320.9, angle: -2.575 },
   { kind: 'rubble', x: 1346, z: -370.7, angle: 0.554 },
   { kind: 'well', x: 1382.3, z: -409, angle: 2.791 },
-  { kind: 'masonry', x: 1450.3, z: -469, angle: -1.115 },
+  { kind: 'masonry', x: 1443.7, z: -445, angle: -1.115 },
   { kind: 'masonry', x: 1326.3, z: -441, angle: -0.246 },
   { kind: 'masonry', x: 1402.3, z: -401, angle: -0.768 },
   { kind: 'masonry', x: 1362.3, z: -469, angle: 0.748 },
