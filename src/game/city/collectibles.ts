@@ -3,6 +3,7 @@ import {
   CAMERA_COUNT,
   BILLBOARD_SPACING,
   CAMERA_SPACING,
+  COLLECTIBLE_APART,
   BILLBOARD_KERB_GAP,
   BILLBOARD_WIDTH,
   CAMERA_KERB_GAP,
@@ -44,7 +45,19 @@ export function collectiblesFor(rng: Rng, city: City): Collectible[] {
   place('billboard', shuffled(rng, anyRoad), BILLBOARD_COUNT, BILLBOARD_SPACING, BILLBOARD_KERB_GAP);
   place('camera', shuffled(rng, fastRoads), CAMERA_COUNT, CAMERA_SPACING, CAMERA_KERB_GAP);
 
-  return found;
+  // A camera on top of a billboard is one find scored twice, so it goes. Done
+  // after placing rather than by rejecting it while placing, because every
+  // candidate tried draws from the city's rng: one more rejection there shifts
+  // everything generated after the collectibles, breakables included.
+  // Renumbered after, since a save file keys on ids counted from zero.
+  const boards = found.filter((c) => c.kind === 'billboard');
+  return found
+    .filter(
+      (c) =>
+        c.kind !== 'camera' ||
+        boards.every((b) => Math.hypot(b.at.x - c.at.x, b.at.z - c.at.z) >= COLLECTIBLE_APART),
+    )
+    .map((c, i) => ({ ...c, id: i }));
 
   function place(
     kind: CollectibleKind,

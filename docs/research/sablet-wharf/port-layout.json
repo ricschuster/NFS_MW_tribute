@@ -1,0 +1,957 @@
+[
+ {
+  "kind": "stack",
+  "label": "containers A1",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1522,
+    -2321
+   ],
+   [
+    -1494,
+    -2210
+   ],
+   [
+    -1527,
+    -2201
+   ],
+   [
+    -1555,
+    -2312
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers A2",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1573,
+    -2308
+   ],
+   [
+    -1544,
+    -2197
+   ],
+   [
+    -1577,
+    -2188
+   ],
+   [
+    -1606,
+    -2299
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers A3",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1623,
+    -2295
+   ],
+   [
+    -1594,
+    -2184
+   ],
+   [
+    -1627,
+    -2175
+   ],
+   [
+    -1656,
+    -2286
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers A4",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1752,
+    -2262
+   ],
+   [
+    -1723,
+    -2150
+   ],
+   [
+    -1756,
+    -2142
+   ],
+   [
+    -1785,
+    -2253
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers A5",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1802,
+    -2249
+   ],
+   [
+    -1773,
+    -2137
+   ],
+   [
+    -1806,
+    -2129
+   ],
+   [
+    -1835,
+    -2240
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers B1",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1486,
+    -2181
+   ],
+   [
+    -1450,
+    -2040
+   ],
+   [
+    -1483,
+    -2032
+   ],
+   [
+    -1519,
+    -2172
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers B2",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1537,
+    -2168
+   ],
+   [
+    -1500,
+    -2027
+   ],
+   [
+    -1533,
+    -2019
+   ],
+   [
+    -1569,
+    -2159
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers B3",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1587,
+    -2155
+   ],
+   [
+    -1551,
+    -2014
+   ],
+   [
+    -1584,
+    -2006
+   ],
+   [
+    -1620,
+    -2146
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers B4",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1716,
+    -2121
+   ],
+   [
+    -1679,
+    -1981
+   ],
+   [
+    -1712,
+    -1972
+   ],
+   [
+    -1749,
+    -2113
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers B5",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1766,
+    -2108
+   ],
+   [
+    -1730,
+    -1968
+   ],
+   [
+    -1763,
+    -1959
+   ],
+   [
+    -1799,
+    -2100
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers C1",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1442,
+    -2011
+   ],
+   [
+    -1406,
+    -1871
+   ],
+   [
+    -1439,
+    -1862
+   ],
+   [
+    -1475,
+    -2003
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers C2",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1493,
+    -1998
+   ],
+   [
+    -1457,
+    -1858
+   ],
+   [
+    -1489,
+    -1849
+   ],
+   [
+    -1526,
+    -1990
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers C3",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1543,
+    -1985
+   ],
+   [
+    -1507,
+    -1845
+   ],
+   [
+    -1540,
+    -1836
+   ],
+   [
+    -1576,
+    -1977
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers C4",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1672,
+    -1952
+   ],
+   [
+    -1636,
+    -1812
+   ],
+   [
+    -1669,
+    -1803
+   ],
+   [
+    -1705,
+    -1943
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers C5",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1722,
+    -1939
+   ],
+   [
+    -1686,
+    -1799
+   ],
+   [
+    -1719,
+    -1790
+   ],
+   [
+    -1755,
+    -1930
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers D1",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1399,
+    -1842
+   ],
+   [
+    -1362,
+    -1701
+   ],
+   [
+    -1395,
+    -1693
+   ],
+   [
+    -1432,
+    -1833
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers D2",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1449,
+    -1829
+   ],
+   [
+    -1413,
+    -1688
+   ],
+   [
+    -1446,
+    -1680
+   ],
+   [
+    -1482,
+    -1820
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers D3",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1499,
+    -1816
+   ],
+   [
+    -1463,
+    -1675
+   ],
+   [
+    -1496,
+    -1667
+   ],
+   [
+    -1532,
+    -1807
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers D4",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1628,
+    -1782
+   ],
+   [
+    -1592,
+    -1642
+   ],
+   [
+    -1625,
+    -1634
+   ],
+   [
+    -1661,
+    -1774
+   ]
+  ]
+ },
+ {
+  "kind": "stack",
+  "label": "containers D5",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1678,
+    -1769
+   ],
+   [
+    -1642,
+    -1629
+   ],
+   [
+    -1675,
+    -1621
+   ],
+   [
+    -1711,
+    -1761
+   ]
+  ]
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 1",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1904,
+    -2192
+   ],
+   [
+    -1899,
+    -2171
+   ],
+   [
+    -1932,
+    -2163
+   ],
+   [
+    -1937,
+    -2184
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 2",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1863,
+    -2100
+   ],
+   [
+    -1857,
+    -2079
+   ],
+   [
+    -1890,
+    -2070
+   ],
+   [
+    -1896,
+    -2091
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 3",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1830,
+    -1984
+   ],
+   [
+    -1824,
+    -1963
+   ],
+   [
+    -1857,
+    -1955
+   ],
+   [
+    -1862,
+    -1976
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 4",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1820,
+    -1884
+   ],
+   [
+    -1815,
+    -1862
+   ],
+   [
+    -1848,
+    -1854
+   ],
+   [
+    -1853,
+    -1875
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 5",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1788,
+    -1758
+   ],
+   [
+    -1783,
+    -1736
+   ],
+   [
+    -1815,
+    -1728
+   ],
+   [
+    -1821,
+    -1749
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 6",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1755,
+    -1663
+   ],
+   [
+    -1749,
+    -1642
+   ],
+   [
+    -1782,
+    -1633
+   ],
+   [
+    -1788,
+    -1655
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "crane",
+  "label": "gantry crane 7",
+  "color": "#ff8fd0",
+  "poly": [
+   [
+    -1735,
+    -1534
+   ],
+   [
+    -1730,
+    -1513
+   ],
+   [
+    -1763,
+    -1504
+   ],
+   [
+    -1768,
+    -1525
+   ]
+  ],
+  "note": "legs either side of the quay road: you drive under it"
+ },
+ {
+  "kind": "berth",
+  "label": "berth 1",
+  "color": "#6fd3ff",
+  "poly": [
+   [
+    -1961,
+    -2239
+   ],
+   [
+    -1904,
+    -2016
+   ],
+   [
+    -1914,
+    -2013
+   ],
+   [
+    -1971,
+    -2236
+   ]
+  ]
+ },
+ {
+  "kind": "berth",
+  "label": "berth 2",
+  "color": "#6fd3ff",
+  "poly": [
+   [
+    -1892,
+    -1978
+   ],
+   [
+    -1819,
+    -1697
+   ],
+   [
+    -1829,
+    -1695
+   ],
+   [
+    -1901,
+    -1975
+   ]
+  ]
+ },
+ {
+  "kind": "berth",
+  "label": "berth 3",
+  "color": "#6fd3ff",
+  "poly": [
+   [
+    -1815,
+    -1667
+   ],
+   [
+    -1750,
+    -1415
+   ],
+   [
+    -1760,
+    -1413
+   ],
+   [
+    -1825,
+    -1665
+   ]
+  ]
+ },
+ {
+  "kind": "warehouse",
+  "label": "warehouse 1",
+  "color": "#e0b27a",
+  "poly": [
+   [
+    -1610,
+    -1550
+   ],
+   [
+    -1578,
+    -1424
+   ],
+   [
+    -1624,
+    -1412
+   ],
+   [
+    -1657,
+    -1538
+   ]
+  ]
+ },
+ {
+  "kind": "warehouse",
+  "label": "warehouse 2",
+  "color": "#e0b27a",
+  "poly": [
+   [
+    -1538,
+    -1568
+   ],
+   [
+    -1505,
+    -1443
+   ],
+   [
+    -1552,
+    -1431
+   ],
+   [
+    -1584,
+    -1556
+   ]
+  ]
+ },
+ {
+  "kind": "platform",
+  "label": "loading platform",
+  "color": "#e0b27a",
+  "poly": [
+   [
+    -1664,
+    -1536
+   ],
+   [
+    -1631,
+    -1410
+   ],
+   [
+    -1643,
+    -1407
+   ],
+   [
+    -1675,
+    -1533
+   ]
+  ]
+ },
+ {
+  "kind": "platform",
+  "label": "loading platform",
+  "color": "#e0b27a",
+  "poly": [
+   [
+    -1591,
+    -1555
+   ],
+   [
+    -1558,
+    -1429
+   ],
+   [
+    -1570,
+    -1426
+   ],
+   [
+    -1603,
+    -1552
+   ]
+  ]
+ },
+ {
+  "kind": "gate",
+  "label": "security gate",
+  "color": "#ff9f43",
+  "poly": [
+   [
+    -1781,
+    -2416
+   ],
+   [
+    -1778,
+    -2403
+   ],
+   [
+    -1811,
+    -2394
+   ],
+   [
+    -1814,
+    -2408
+   ]
+  ],
+  "note": "gatehouse and barrier across the bridge road"
+ },
+ {
+  "kind": "amenity",
+  "label": "offices and canteen",
+  "color": "#9be28a",
+  "poly": [
+   [
+    -1670,
+    -2458
+   ],
+   [
+    -1660,
+    -2419
+   ],
+   [
+    -1686,
+    -2413
+   ],
+   [
+    -1696,
+    -2452
+   ]
+  ]
+ },
+ {
+  "kind": "utility",
+  "label": "substation",
+  "color": "#9be28a",
+  "poly": [
+   [
+    -1880,
+    -2419
+   ],
+   [
+    -1873,
+    -2390
+   ],
+   [
+    -1892,
+    -2385
+   ],
+   [
+    -1900,
+    -2414
+   ]
+  ]
+ },
+ {
+  "kind": "utility",
+  "label": "water tower",
+  "color": "#9be28a",
+  "poly": [
+   [
+    -1891,
+    -2367
+   ],
+   [
+    -1887,
+    -2354
+   ],
+   [
+    -1901,
+    -2350
+   ],
+   [
+    -1904,
+    -2364
+   ]
+  ]
+ },
+ {
+  "kind": "park",
+  "label": "straddle carrier park",
+  "color": "#b8c4cc",
+  "poly": [
+   [
+    -1831,
+    -2375
+   ],
+   [
+    -1816,
+    -2317
+   ],
+   [
+    -1839,
+    -2311
+   ],
+   [
+    -1854,
+    -2369
+   ]
+  ]
+ },
+ {
+  "kind": "fence",
+  "label": "security fence (yard)",
+  "color": "#ff9f43",
+  "line": [
+   [
+    -1525,
+    -2362
+   ],
+   [
+    -1350,
+    -1684
+   ],
+   [
+    -1684,
+    -1598
+   ],
+   [
+    -1859,
+    -2275
+   ],
+   [
+    -1525,
+    -2362
+   ]
+  ]
+ },
+ {
+  "kind": "jump",
+  "label": "jump ramp (lip at the shore)",
+  "color": "#ffc857",
+  "poly": [
+   [
+    -1364,
+    -2162
+   ],
+   [
+    -1348,
+    -2173
+   ],
+   [
+    -1338,
+    -2161
+   ],
+   [
+    -1355,
+    -2149
+   ]
+  ]
+ }
+]

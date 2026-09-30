@@ -2268,6 +2268,13 @@ export const CAMERA_COUNT = 30;
 /** How far apart they are kept, so finding one is not finding six. */
 export const BILLBOARD_SPACING = m(340);
 export const CAMERA_SPACING = m(700);
+/**
+ * How far a camera is kept from a billboard. The spacings above are per
+ * kind, so a camera could land on a billboard, and driving past one then paid
+ * for both: one find, scored twice. Far enough apart that they read as two
+ * places, not just past a camera's range plus a billboard's hit.
+ */
+export const COLLECTIBLE_APART = m(120);
 /** Clear of the kerb, and how big the board is. */
 export const BILLBOARD_KERB_GAP = m(3);
 export const BILLBOARD_WIDTH = m(11);
