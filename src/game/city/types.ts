@@ -478,7 +478,12 @@ export type SetPieceKind =
   | 'sts-crane'
   | 'warehouse'
   | 'straddle-carrier'
-  | 'reach-stacker';
+  | 'reach-stacker'
+  | 'rampart'
+  | 'bastion'
+  | 'fort-gate'
+  | 'signal-tower'
+  | 'cannon';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
