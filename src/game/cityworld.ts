@@ -60,6 +60,7 @@ import {
   SPAWN_LEAD,
   CITY_EDGE_MARGIN,
   DUNK_HOLD,
+  APRON_SPEED_FRAC,
   DUNK_DAMAGE,
   DUNK_DEPTH,
   FALL_CLEARANCE,
@@ -161,6 +162,7 @@ import {
   distanceToRoad,
 } from './city/grid';
 import { hitsSetPiece } from './city/setpieces';
+import { onApron } from './city/aprons';
 import { JUMP_SHAPES, jumpProfile, jumpUnder, lipSlope } from './city/jumps';
 import type { OnJump } from './city/jumps';
 import { crestGrip, slopePull, slopeSpeed } from './slope';
@@ -2402,7 +2404,8 @@ export class CityWorld {
 
     // Open ground is drivable but slow, which is what makes cutting a corner
     // across a block a decision instead of a free shortcut.
-    if (!surface.road && this.speed > this.offRoadLimit) {
+    const limit = !surface.road && onApron(this.city, this.x, this.z) ? this.maxSpeed * APRON_SPEED_FRAC : this.offRoadLimit;
+    if (!surface.road && this.speed > limit) {
       this.speed = accelerate(this.speed, this.offRoadDecel, dt);
     }
   }

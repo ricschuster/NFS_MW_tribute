@@ -4,6 +4,7 @@ import { CityWorld } from '../cityworld';
 import { kestrelBay } from './index';
 import { MARROW_PROPS } from './marrowprops';
 import { QUARRY_PROPS } from './quarryprops';
+import { WHARF_PROPS } from './wharfprops';
 import { airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
@@ -62,6 +63,14 @@ describe('Marrow Field props (#295)', () => {
   });
 });
 
+// The places' set pieces go into the city in order - Marrow Field's, Halloway
+// Quarry's, Sablet Wharf's - so each place's are a slice of the list. Asking by
+// distance instead stopped working once the wharf's yard (#410) came within
+// three radii of the pit.
+const piecesOf = (props: typeof MARROW_PROPS) => airfieldProps(city.terrain, 0, props).pieces.length;
+const quarryPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS), piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS));
+const wharfPieces = () => city.setPieces.slice(piecesOf(MARROW_PROPS) + piecesOf(QUARRY_PROPS));
+
 describe('Halloway Quarry props (#323)', () => {
   const pit = PLAN_PLACES.find((p) => p.kind === 'quarry')!;
   const away = (x: number, z: number) => Math.hypot(x - pit.at.x, z - pit.at.z);
@@ -77,12 +86,13 @@ describe('Halloway Quarry props (#323)', () => {
   it('puts every placed prop into the city, after Marrow Field\'s and without renumbering them', () => {
     const { pieces, breakables, jumps, billboards } = airfieldProps(city.terrain, 0, QUARRY_PROPS);
     expect(pieces.length + breakables.length + jumps.length + billboards.length).toBe(QUARRY_PROPS.length);
-    const inQuarry = city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3);
+    const inQuarry = quarryPieces();
     expect(inQuarry.length).toBe(pieces.length);
+    for (const piece of inQuarry) expect(away(piece.at.x, piece.at.z)).toBeLessThan(pit.radius * 3);
   });
 
   it('keeps every set piece off the road, off the water and inside the place', () => {
-    for (const piece of city.setPieces.filter((p) => away(p.at.x, p.at.z) < pit.radius * 3)) {
+    for (const piece of quarryPieces()) {
       // A cone is the one thing that is meant to stand on tarmac.
       if (piece.kind !== 'cone') expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
       expect(piece.y).toBeGreaterThan(0);
@@ -93,6 +103,47 @@ describe('Halloway Quarry props (#323)', () => {
     const gates = QUARRY_PROPS.filter((p) => p.kind === 'gate');
     expect(gates.length).toBeGreaterThan(0);
     for (const gate of gates) expect(roadGap(gate.x * M, gate.z * M)).toBeLessThan(0);
+  });
+});
+
+describe('Sablet Wharf props (#410)', () => {
+  const docks = PLAN_PLACES.find((p) => p.kind === 'docks')!;
+  const inWharf = wharfPieces();
+  const roadGap = (x: number, z: number) =>
+    Math.min(
+      ...city.roads.map((r) => {
+        const a = city.nodes[r.a].pos;
+        const b = city.nodes[r.b].pos;
+        return distanceToSegment(x, z, a.x, a.z, b.x, b.z) - r.width / 2;
+      }),
+    );
+
+  it('builds the container port it was given', () => {
+    const { pieces } = airfieldProps(city.terrain, 0, WHARF_PROPS);
+    expect(inWharf.length).toBe(pieces.length);
+    for (const piece of inWharf) expect(Math.hypot(piece.at.x - docks.at.x, piece.at.z - docks.at.z)).toBeLessThan(docks.radius * 2);
+    expect(inWharf.filter((p) => p.kind === 'container-block').length).toBeGreaterThan(100);
+    expect(inWharf.some((p) => p.kind === 'sts-crane')).toBe(true);
+  });
+
+  it('keeps the containers and the buildings off the road', () => {
+    for (const piece of inWharf.filter((p) => p.kind === 'container-block' || p.kind === 'warehouse')) {
+      expect(roadGap(piece.at.x, piece.at.z)).toBeGreaterThan(0);
+    }
+  });
+
+  it('stands each crane over the quay road, and lets a car drive under it', () => {
+    for (const crane of inWharf.filter((p) => p.kind === 'sts-crane')) {
+      expect(roadGap(crane.at.x, crane.at.z)).toBeLessThan(0);
+      expect(hitsSetPiece([crane], crane.at.x, crane.at.z, crane.y, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+    }
+  });
+
+  it('makes a four-high block taller than a two-high one', () => {
+    const block = (variant: string): SetPiece => ({ kind: 'container-block', at: { x: 0, z: 0 }, y: 0, angle: 0, variant });
+    const up = 8 * M;
+    expect(hitsSetPiece([block('two high')], 0, 0, up, CAR_RADIUS, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece([block('four high')], 0, 0, up, CAR_RADIUS, CAR_HEIGHT)).toBe(true);
   });
 });
 

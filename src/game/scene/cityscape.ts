@@ -10,6 +10,7 @@ import {
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
 import { quarryGround } from './quarryground';
+import { wharfGround } from './wharfground';
 import { PLAN_PLACES } from '../city/plan';
 import type { City, CityRoad, RoadSurface } from '../city/types';
 import { groundAt } from '../city/terrain';
@@ -237,6 +238,8 @@ export class Cityscape {
         floor: groundAt(city.terrain, pit.at.x, pit.at.z),
       });
     }
+    // And the wharf's yard is concrete (#410).
+    wharfGround(material, city.aprons, UNITS_PER_METRE);
     this.owned.push(geometry, material);
 
     const mesh = new THREE.Mesh(geometry, material);

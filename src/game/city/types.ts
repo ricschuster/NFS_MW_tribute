@@ -463,7 +463,12 @@ export type SetPieceKind =
   | 'excavator'
   | 'cabin'
   | 'crusher'
-  | 'rubble';
+  | 'rubble'
+  | 'container-block'
+  | 'sts-crane'
+  | 'warehouse'
+  | 'straddle-carrier'
+  | 'reach-stacker';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
@@ -520,6 +525,11 @@ export interface City {
   breakables: Breakable[];
   /** Hand-placed set dressing (#295). */
   setPieces: SetPiece[];
+  /**
+   * Paved ground that is not a road (#410): Sablet Wharf's yard. The land
+   * inside `outline`, and `margin` past it, is concrete rather than grass.
+   */
+  aprons: { outline: Vec2[]; margin: number }[];
   /** Things to launch off (#307). */
   jumps: Jump[];
 }

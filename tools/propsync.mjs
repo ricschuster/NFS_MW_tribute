@@ -41,6 +41,7 @@ const KINDS = [
   'gate', 'stack', 'plane-belly', 'plane-nose', 'fuselage', 'fuselage-hung', 'helicopter',
   'silo', 'water-tower', 'crane', 'mast', 'bunker', 'blast-wall', 'shed', 'cone', 'tree', 'jump', 'billboard',
   'stockpile', 'conveyor', 'haul-truck', 'excavator', 'cabin', 'crusher', 'rubble',
+  'container-block', 'sts-crane', 'warehouse', 'straddle-carrier', 'reach-stacker',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

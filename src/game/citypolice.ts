@@ -1,3 +1,4 @@
+import { onApron } from './city/aprons';
 import {
   COP_RESPAWN,
   COP_BUST_COOLDOWN,
@@ -61,6 +62,7 @@ import {
   PATROL_SPAWN_MIN,
   COP_LEASH,
   COP_OFF_ROAD,
+  APRON_SPEED_FRAC,
   COP_PASSED,
   COP_HOLD_RANGE,
   COP_HOLD_PACE,
@@ -918,7 +920,8 @@ export class CityPolice {
       const dx = player.x - cop.x;
       const dz = player.z - cop.z;
       const gap = Math.max(1, Math.hypot(dx, dz));
-      const step = cop.speed * COP_OFF_ROAD * dt;
+      // Paved ground (#410) is driven at pavement pace, the same as the player.
+      const step = cop.speed * (onApron(this.city, cop.x, cop.z) ? APRON_SPEED_FRAC : COP_OFF_ROAD) * dt;
       cop.x += (dx / gap) * step;
       cop.z += (dz / gap) * step;
       // Riding the ground it is actually crossing (#255's own rule for the
