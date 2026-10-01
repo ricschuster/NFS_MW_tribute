@@ -10,6 +10,7 @@ import { HIGHMOOR_PROPS } from './highmoorprops';
 import { TIDEWATER_PROPS } from './tidewaterprops';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
+import { ASHFORD_PROPS } from './ashfordprops';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
 import { INDUSTRIAL_PROPS } from './industrialprops';
 import { HIGHMOOR_CAR_PARK } from './highmoor';
@@ -239,8 +240,9 @@ describe('Highmoor Park (#460)', () => {
     expect(trees.length).toBeGreaterThan(1000);
     // Everything after the placed props is a tree: Highmoor's woods, then
     // Tidewater Park's (#461). Tidewater's buildings and Midtown north's
-    // houses (#477), Midtown south's (#487), Midtown south-west's (#488) and
-    // Industrial's works (#489) are placed props, after Highmoor's.
+    // houses (#477), Midtown south's (#487), Midtown south-west's (#488),
+    // Industrial's works (#489) and Ashford Point's estates (#293) are placed
+    // props, after Highmoor's.
     expect(
       pieces
         .slice(
@@ -249,7 +251,8 @@ describe('Highmoor Park (#460)', () => {
             piecesOf(MIDTOWN_PROPS) +
             piecesOf(MIDTOWN_SOUTH_PROPS) +
             piecesOf(MIDTOWN_SW_PROPS) +
-            piecesOf(INDUSTRIAL_PROPS),
+            piecesOf(INDUSTRIAL_PROPS) +
+            piecesOf(ASHFORD_PROPS),
         )
         .every((p) => p.kind === 'tree'),
     ).toBe(true);

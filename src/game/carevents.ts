@@ -57,6 +57,8 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Promenade Sprint': ['Promenade', 'Bankside', 'Channel', 'Railing', 'Esplanade', 'Mooring'],
   'Main Street Sprint': ['Shopfront', 'Awning', 'Parade', 'Market', 'Arcade', 'Terrace'],
   'Works Circuit': ['Furnace', 'Gantry', 'Siding', 'Foundry', 'Smokestack', 'Ironworks'],
+  'Ashford Coast Sprint': ['Coastline', 'Cliffside', 'Saltmarsh', 'Shingle', 'Seaview', 'Point'],
+  'Estates Circuit': ['Manor', 'Villa', 'Gatehouse', 'Orchard', 'Paddock', 'Ridge'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 

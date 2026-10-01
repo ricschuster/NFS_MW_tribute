@@ -522,6 +522,8 @@ export type SetPieceKind =
   | 'apartment'
   | 'shop'
   | 'flat'
+  | 'villa'
+  | 'manor'
   | 'chimney'
   | 'tank'
   | 'gantry'
@@ -603,6 +605,13 @@ export interface City {
   setPieces: SetPiece[];
   /** Paved ground that is not a road: Sablet Wharf's yard, Kestrel Head's courtyards. */
   aprons: Apron[];
+  /**
+   * Ashford Point's drives and forecourts (#293): paved ground like an apron,
+   * but drawn as a thin mesh over the ground rather than in the ground's
+   * shader, which tests every fragment against every apron - a hundred drives
+   * there made the ground too slow to render.
+   */
+  drives: Apron[];
   /** Things to launch off (#307). */
   jumps: Jump[];
 }

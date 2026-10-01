@@ -20,6 +20,13 @@ export const SUBURBS = {
     index: 0, name: 'Midtown south-west', issue: '#488',
     json: 'docs/midtown-sw-props-edited.json', module: 'midtownswprops', exportName: 'MIDTOWN_SW_PROPS', prefix: 'midtown-sw-',
   },
+  // The affluent enclave (#293): estates off winding lanes, the waterfront
+  // district's only area. Its streets used to be grown by the game
+  // (`localStreetsFor`), which left houses with no road near them.
+  ashford: {
+    district: 'waterfront', index: 0, name: 'Ashford Point', issue: '#293',
+    json: 'docs/ashford-props-edited.json', module: 'ashfordprops', exportName: 'ASHFORD_PROPS', prefix: 'ashford-',
+  },
   // Not a suburb: its works are placed by hand in the area editor, and
   // `housedraft` refuses it.
   industrial: {

@@ -498,11 +498,14 @@ export const CITY_STREET_GRID = false;
  * second, newer generator - local streets that branch off a district's own
  * authored major roads (`city/roads.ts`) instead of a synthetic grid, clipped
  * to that district's own plan polygon instead of a global lattice cell - built
- * and judged one district at a time. `waterfront` (Ashford Point) is the pilot;
- * every other kind stays without blocks or buildings until it earns its own
- * pass.
+ * and judged one district at a time. `waterfront` (Ashford Point) was the
+ * pilot, and is off again (#293): its driveways stranded eight houses up to
+ * 400 m from a road, and the areas since have been drafted once and edited by
+ * hand instead (`npm run suburbdraft`, `housedraft`), which Ashford Point now
+ * is too. Kept, empty, because it is the only thing that knows how a district
+ * grows blocks off its own roads.
  */
-export const CITY_LOCAL_STREETS_KINDS: DistrictKind[] = ['waterfront'];
+export const CITY_LOCAL_STREETS_KINDS: DistrictKind[] = [];
 
 /**
  * Whether the roads come from `city/roads.ts` rather than from the generator.
@@ -2449,9 +2452,10 @@ export const RIVAL_CIRCUITS = ['Halloway Rim', 'Sablet Quay'];
  * owner's word at the Highmoor Descent (#460): seven since Tidewater Drive
  * (#461), nine since Midtown north's two circuits (#477), ten since the
  * Promenade Sprint (#487), eleven since the Main Street Sprint (#488),
- * twelve with the Works Circuit (#489).
+ * twelve with the Works Circuit (#489), fourteen with Ashford Point's
+ * Coast Sprint and Estates Circuit (#293).
  */
-export const CAR_EVENTS_MAX = 12;
+export const CAR_EVENTS_MAX = 14;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);

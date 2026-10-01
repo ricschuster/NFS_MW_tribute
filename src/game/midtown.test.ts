@@ -37,7 +37,9 @@ describe('Midtown north (#477)', () => {
   it('is a suburb: houses on its streets and low apartment blocks on its boulevards', () => {
     expect(homes.filter((p) => p.kind === 'house').length).toBeGreaterThan(120);
     expect(homes.filter((p) => p.kind === 'apartment').length).toBeGreaterThan(40);
-    for (const home of allHomes) expect(SUBURB_AREAS.some((i) => inArea(midtowns[i].poly, home.at))).toBe(true);
+    // Or Ashford Point's estates (#293), which have suburb houses among their villas.
+    const ashford = PLAN_DISTRICTS.find((a) => a.name === 'Ashford Point')!;
+    for (const home of allHomes) expect(SUBURB_AREAS.some((i) => inArea(midtowns[i].poly, home.at)) || inArea(ashford.poly, home.at)).toBe(true);
   });
 
   it('stands every house on dry ground and clear of the road, and nearly all of them facing one across a front garden', () => {

@@ -27,9 +27,13 @@ const POND_DEPTH = 1.5 * M;
 /** How far out from the water its bank grades back up to the lawn. */
 const POND_BANK = 14 * M;
 
+/** A pond's shore: a lumpy loop round its centre, each pond its own shape. */
+export function pondOutlineOf(pond: { at: Vec2; radius: number }, phase: number): Vec2[] {
+  return lumpyLoop(pond.at, pond.radius, 20, phase, 0.16);
+}
+
 function pondOutline(i: number): Vec2[] {
-  const pond = TIDEWATER_PONDS[i];
-  return lumpyLoop(pond.at, pond.radius, 20, 0.9 + i * 2.3, 0.16);
+  return pondOutlineOf(TIDEWATER_PONDS[i], 0.9 + i * 2.3);
 }
 
 function distanceToOutline(outline: Vec2[], x: number, z: number): number {
@@ -56,8 +60,13 @@ function distanceToOutline(outline: Vec2[], x: number, z: number): number {
  */
 export function digTidewaterPonds(terrain: Terrain): WaterBody[] {
   if (!PLAN_DISTRICTS.some((a) => a.name === 'Tidewater Park')) return [];
-  return TIDEWATER_PONDS.map((pond, i) => {
-    const outline = pondOutline(i);
+  return digPonds(terrain, TIDEWATER_PONDS.map((pond, i) => ({ ...pond, outline: pondOutline(i) })));
+}
+
+/** Dig ponds into the ground, each in a hollow of its own (`digTidewaterPonds` has how). Ashford Point's too (#293). */
+export function digPonds(terrain: Terrain, ponds: readonly { at: Vec2; radius: number; outline: Vec2[] }[]): WaterBody[] {
+  return ponds.map((pond) => {
+    const outline = pond.outline;
     let rim = Infinity;
     for (const p of outline) rim = Math.min(rim, groundAt(terrain, p.x, p.z));
     const level = rim - POND_LIFT * 2;

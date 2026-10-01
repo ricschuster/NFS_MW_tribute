@@ -30,6 +30,7 @@ import { CityCollectibles } from './collectibles';
 import { CityBreakables } from './breakables';
 import { CitySetPieces } from './setpieces';
 import { CityJumps } from './jumps';
+import { drivesFor } from './drives';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
@@ -98,6 +99,10 @@ export class Cityscape {
 
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
+    for (const mesh of drivesFor(city)) {
+      this.owned.push(mesh.geometry, mesh.material as THREE.Material);
+      this.group.add(mesh);
+    }
     for (const mesh of this.carriageways(city)) this.group.add(mesh);
     for (const mesh of this.railways(city)) this.group.add(mesh);
     for (const mesh of this.water(city)) this.group.add(mesh);
