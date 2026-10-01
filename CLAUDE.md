@@ -154,13 +154,14 @@ what the city is shaped like.
   boulevards, added to `docs/roads-edited.json` for the road editor. A
   drawing tool, not a generator the game runs: once edited and synced by
   `roadsync`, a street is authored data like any other
-- `npm run housedraft` - draft Midtown north's front hedges and street trees
-  (#477) round the houses in `docs/midtown-props-edited.json`, keeping those
+- `npm run housedraft -- --place P` - draft a suburb's front hedges and
+  street trees (#477) round the houses in its props file, keeping those
   houses and any hand edits to them; `-- --houses` redrafts the houses too,
-  losing their hand edits. Generated once by `city/suburb.ts`, then edited in
-  the area editor (`npm run propexport -- --place midtown`) and synced with
-  `npm run propsync -- --place midtown`. Still Midtown north only: the next
-  area gives it an area argument (`docs/HANDOFF.md`)
+  losing their hand edits. The suburbs are a table in `tools/suburbs.mjs`
+  (`midtown` for Midtown north, the default, and `midtown-south`), which
+  `propexport` and `propsync` read too. Generated once by `city/suburb.ts`,
+  then edited in the area editor (`npm run propexport -- --place P`) and
+  synced with `npm run propsync -- --place P`
 - `npm run propexport -- --place P` — crop an area out of the generated city
   and write `screenshots/<area>-propeditor.html`, the area editor with the
   ground inlined: props, houses and the area's drawn roads, all editable

@@ -9,11 +9,13 @@ import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
 const M = UNITS_PER_METRE;
 
 /**
- * Which midtowns are suburbs with houses on their streets (#477), by their
- * place in the plan's list of midtowns. Midtown north first; the other two
- * join it as each gets its own pass.
+ * Which midtowns are suburbs with houses on their streets, by their place in
+ * the plan's list of midtowns: Midtown north (#477) and Midtown south (#487).
+ * The drafts take one at a time (`npm run housedraft -- --place P`, whose
+ * table in `tools/suburbs.mjs` carries the same indices), since each area's
+ * houses go to its own props file.
  */
-export const SUBURB_AREAS = [2];
+export const SUBURB_AREAS = [2, 1];
 
 /**
  * A house and a low apartment block, at the size their models are drawn: real
@@ -76,11 +78,12 @@ export function suburbHousesFor(
   pieces: readonly SetPiece[],
   clear: readonly Vec2[],
   raced: readonly Vec2[][] = [],
+  areas: readonly number[] = SUBURB_AREAS,
 ): AuthoredProp[] {
   const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
   const houses: AuthoredProp[] = [];
   const placed: { at: Vec2; r: number }[] = [];
-  for (const index of SUBURB_AREAS) {
+  for (const index of areas) {
     const area = midtowns[index];
     if (!area) continue;
     const local = roads.filter((r) => {
@@ -254,6 +257,7 @@ export function suburbExtrasFor(
   isWater: (x: number, z: number) => boolean,
   raced: readonly Vec2[][] = [],
   clear: readonly Vec2[] = [],
+  areas: readonly number[] = SUBURB_AREAS,
 ): AuthoredProp[] {
   const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
   const segments = roads
@@ -292,7 +296,7 @@ export function suburbExtrasFor(
   const onRace = (a: Vec2, b: Vec2): boolean =>
     racing.some((s) => distanceToSegment(a.x, a.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M && distanceToSegment(b.x, b.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M);
   const trees: Vec2[] = [];
-  for (const index of SUBURB_AREAS) {
+  for (const index of areas) {
     const area = midtowns[index];
     if (!area) continue;
     const local = roads.filter((r) => {

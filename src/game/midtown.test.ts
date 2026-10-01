@@ -7,8 +7,12 @@ import { APARTMENT, HOUSE, SUBURB_AREAS } from './city/suburb';
 
 const M = UNITS_PER_METRE;
 const { city } = new CityWorld(undefined, { traffic: false, police: false });
-const area = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown')[SUBURB_AREAS[0]];
-const homes = city.setPieces.filter((p) => p.kind === 'house' || p.kind === 'apartment');
+const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
+const area = midtowns[2];
+// Every suburb's houses, and Midtown north's own: Midtown south (#487) builds
+// on the same pipeline.
+const allHomes = city.setPieces.filter((p) => p.kind === 'house' || p.kind === 'apartment');
+const homes = allHomes.filter((p) => inArea(area.poly, p.at));
 
 /** The nearest surface road to a point, and how far its edge is. */
 function nearestRoad(p: { x: number; z: number }) {
@@ -31,7 +35,7 @@ describe('Midtown north (#477)', () => {
   it('is a suburb: houses on its streets and low apartment blocks on its boulevards', () => {
     expect(homes.filter((p) => p.kind === 'house').length).toBeGreaterThan(120);
     expect(homes.filter((p) => p.kind === 'apartment').length).toBeGreaterThan(40);
-    for (const home of homes) expect(inArea(area.poly, home.at)).toBe(true);
+    for (const home of allHomes) expect(SUBURB_AREAS.some((i) => inArea(midtowns[i].poly, home.at))).toBe(true);
   });
 
   it('stands every house on dry ground and clear of the road, and nearly all of them facing one across a front garden', () => {

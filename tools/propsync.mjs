@@ -14,9 +14,11 @@
 //   npm run propsync -- --place quarry      # docs/quarry-props-edited.json -> src/game/city/quarryprops.ts
 //   npm run propsync -- --place docks       # docs/wharf-props-edited.json -> src/game/city/wharfprops.ts
 //   npm run propsync -- --place lookout     # docs/fort-props-edited.json -> src/game/city/fortprops.ts
+//   npm run propsync -- --place midtown-south   # a suburb, from tools/suburbs.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { castleAreas } from './castleareas.mjs';
+import { SUBURBS } from './suburbs.mjs';
 
 const args = process.argv.slice(2);
 const PLACES = {
@@ -25,7 +27,7 @@ const PLACES = {
   docks: { json: 'docs/wharf-props-edited.json', out: 'src/game/city/wharfprops.ts', name: 'Sablet Wharf', exportName: 'WHARF_PROPS', issue: '#410' },
   highmoor: { json: 'docs/highmoor-props-edited.json', out: 'src/game/city/highmoorprops.ts', name: 'Highmoor Park', exportName: 'HIGHMOOR_PROPS', issue: '#460' },
   tidewater: { json: 'docs/tidewater-props-edited.json', out: 'src/game/city/tidewaterprops.ts', name: 'Tidewater Park', exportName: 'TIDEWATER_PROPS', issue: '#461' },
-  midtown: { json: 'docs/midtown-props-edited.json', out: 'src/game/city/midtownprops.ts', name: 'Midtown north', exportName: 'MIDTOWN_PROPS', issue: '#477' },
+  ...Object.fromEntries(Object.entries(SUBURBS).map(([place, s]) => [place, { json: s.json, out: `src/game/city/${s.module}.ts`, name: s.name, exportName: s.exportName, issue: s.issue }])),
   lookout: {
     json: 'docs/fort-props-edited.json', out: 'src/game/city/fortprops.ts', name: 'Kestrel Head', exportName: 'FORT_PROPS', issue: '#454',
     // The castle's enclosures are found from its walls (`castleareas.mjs`): a
