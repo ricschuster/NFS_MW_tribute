@@ -3,7 +3,35 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-09-30, end of day).** Kestrel Head and Highmoor Park are
+- **Start here (2026-10-01).** Tidewater Park and Halloway Quarry are signed
+  off; Midtown north is built and waiting on the owner's drive; the three
+  remaining areas are audited with their questions open.
+  - **Races wait for the map** (owner, 2026-09-30; `docs/map-areas.md`): no
+    race tuning while areas are built. A `citylap` shift from area work is
+    re-recorded, not chased; the ladder stays on Halloway Rim and Sablet Quay
+    (`RIVAL_CIRCUITS`) until the race exploration.
+  - **Never move the owner's roads.** `roadsync`'s stitch pulls any loose end
+    within 70 m onto a road, and moved four of theirs; the area editor now
+    shows a red dash for every end a sync would pull and snaps a dragged point
+    onto a road (#483). Nineteen older moved ends elsewhere are #484, the
+    owner's to fix.
+  - **Midtown north (#477): built, needs the owner's drive and sign-off.** A
+    quiet suburb: 14 streets drafted by `npm run suburbdraft` and edited by
+    the owner; about 290 houses and apartment blocks, hedges and street trees
+    drafted by `npm run housedraft` (generate once, then edit: they are props
+    in `docs/midtown-props-edited.json`); two circuits, the Midtown Crescents
+    (1.6 km, one 134-degree corner the owner kept) and the Northshore Loop
+    (3.3 km). Street trees are kept off race roads, or the Crescents is not
+    drivable.
+  - **The area editor** (`npm run propexport -- --place midtown`, published as
+    Midtown north Props) edits roads, houses and props together; `propsync`
+    merges its roads into `docs/roads-edited.json` by id and runs `roadsync`.
+    After a sync, write the file back into the Road Editor's store.
+  - **Next:** the owner's drive of Midtown north, then their answers on
+    Midtown south (#487), Midtown south-west (#488) and Industrial (#489).
+    The dev server serves `../crosstown-play` (main plus a local-only spawn in
+    Midtown north) until the owner says to switch back to following main.
+- **Earlier (2026-09-30, end of day).** Kestrel Head and Highmoor Park are
   both finished and signed off by the owner.
   Everything is merged or armed; the owner's dev server follows main.
   - **Kestrel Head (#454): done, signed off by the owner on 2026-09-30.** The
