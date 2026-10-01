@@ -29,6 +29,7 @@ export const SUBURBS = {
     // the generator reads its module's yards.
     yards: true,
     json: 'docs/industrial-props-edited.json', module: 'industrialprops', exportName: 'INDUSTRIAL_PROPS', prefix: 'industrial-',
+    route: 'Works Circuit',
   },
 };
 

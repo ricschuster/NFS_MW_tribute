@@ -39,6 +39,8 @@ export function rampConnectors(loop: Vec2[], ramps: Vec2[], roads: AuthoredRoad[
     let best: { at: Vec2; gap: number; district: DistrictKind } | null = null;
     for (const road of roads) {
       if (road.kind === 'interstate' || road.kind === 'ramp') continue;
+      // A ramp comes down to the streets, never onto a railway (#489).
+      if (road.surface === 'rail') continue;
       for (const at of road.points) {
         const gap = Math.hypot(at.x - foot.x, at.z - foot.z);
         if (best && gap >= best.gap) continue;

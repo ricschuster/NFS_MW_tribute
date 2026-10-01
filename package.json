@@ -25,6 +25,7 @@
     "roadfix": "node tools/roadfix.mjs",
     "roadsync": "node tools/roadsync.mjs",
     "suburbdraft": "node tools/suburbdraft.mjs",
+    "worksdraft": "node tools/worksdraft.mjs",
     "housedraft": "node tools/housedraft.mjs",
     "freewayexport": "node tools/freewayexport.mjs",
     "freewaysync": "node tools/freewaysync.mjs",

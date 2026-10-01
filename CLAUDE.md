@@ -168,6 +168,13 @@ what the city is shaped like.
   the pavement in front of them. Generated once by `city/suburb.ts`,
   then edited in the area editor (`npm run propexport -- --place P`) and
   synced with `npm run propsync -- --place P`
+- `npm run worksdraft` - draft Industrial's works and the first stretch of
+  the railway (#489, #514) into its props file: a main line with surface
+  `rail` beside the freeway, rail yards along it, and tank farms, sheds,
+  stacks and yards along every works road, each on ground flat enough for
+  what stands on it. Its own ids (`dw…`, `dy…`, `rail1`) are replaced on a
+  re-run and everything else in the file is kept. Then `propsync --place
+  industrial`
 - `npm run propexport -- --place P` — crop an area out of the generated city
   and write `screenshots/<area>-propeditor.html`, the area editor with the
   ground inlined: props, houses and the area's drawn roads, all editable

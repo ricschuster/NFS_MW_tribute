@@ -1199,7 +1199,7 @@ for (const view of VIEWS) {
   // The HUD is a separate canvas over the world, so a shot of the WebGL canvas
   // alone is a shot with no HUD in it. Capture the stage for the driving views.
   const shot = DRIVING.has(view) ? '.stage' : '#game3d';
-  await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png` });
+  await page.locator(shot).screenshot({ path: `${OUT}/city-${view}.png`, timeout: 120000 });
   if (DRIVING.has(view)) {
     if (view === 'collection') await page.keyboard.up('Tab');
     await page.keyboard.up('ArrowUp');
