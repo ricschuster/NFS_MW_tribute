@@ -102,12 +102,16 @@ const area = (
  * coastal park were found sharing an island exactly that way.
  */
 export const PLAN_DISTRICTS: PlanArea[] = [
-  // Downtown: 1.5 km², 75% land, 3 m above the sea. Small on purpose - a dense
-  // core, not a third of the city.
+  // Downtown: 1.2 km², nearly all of it land, 3 m above the sea. Small on
+  // purpose - a dense core, not a third of the city. Trimmed to the shore for
+  // #268: it used to take in 0.4 km² of the bay and the channel beside Sablet
+  // Wharf. The inland edges are unchanged, and the strip on the downtown bank
+  // of the channel is downtown's to its tip; the wharf ends at the water.
 
   area('downtown', [
-    [125, -2500], [-124, -1899], [-1100, -1525], [-1125, -2025],
-    [-1825, -2875], [-1100, -2725], [-550, -2775], [-124, -3101],
+    [125, -2500], [-124, -1899], [-1100, -1525], [-1090, -1800],
+    [-1050, -1870], [-1170, -2190], [-1735, -2823], [-1516, -2785],
+    [-1310, -2710], [-960, -2610], [-570, -2610], [-30, -2830],
   ], 1.35),
 
   // The industrial edge, inland of downtown. Unchanged in character.

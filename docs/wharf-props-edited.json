@@ -100,59 +100,11 @@
     },
     {
       "angle": -1.318,
-      "id": "w16",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1481.1,
-      "z": -2712.6
-    },
-    {
-      "angle": -1.318,
-      "id": "w17",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1473.4,
-      "z": -2682.6
-    },
-    {
-      "angle": -1.318,
       "id": "w18",
       "kind": "container-block",
       "variant": "three high",
       "x": -1124.6,
       "z": -1332.2
-    },
-    {
-      "angle": -1.318,
-      "id": "w19",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1494.2,
-      "z": -2709.2
-    },
-    {
-      "angle": -1.318,
-      "id": "w20",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1521.8,
-      "z": -2702.1
-    },
-    {
-      "angle": -1.318,
-      "id": "w22",
-      "kind": "container-block",
-      "variant": "two high",
-      "x": -1542.6,
-      "z": -2728.7
-    },
-    {
-      "angle": -1.318,
-      "id": "w23",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1534.9,
-      "z": -2698.7
     },
     {
       "angle": -1.318,
@@ -193,22 +145,6 @@
       "variant": "two high",
       "x": -1325.6,
       "z": -1888.5
-    },
-    {
-      "angle": -1.318,
-      "id": "w30",
-      "kind": "container-block",
-      "variant": "two high",
-      "x": -1570.2,
-      "z": -2721.6
-    },
-    {
-      "angle": -1.318,
-      "id": "w31",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1562.4,
-      "z": -2691.6
     },
     {
       "angle": -1.318,
@@ -305,22 +241,6 @@
       "variant": "three high",
       "x": -1337.7,
       "z": -1821.4
-    },
-    {
-      "angle": -1.318,
-      "id": "w44",
-      "kind": "container-block",
-      "variant": "two high",
-      "x": -1583.3,
-      "z": -2718.2
-    },
-    {
-      "angle": -1.318,
-      "id": "w45",
-      "kind": "container-block",
-      "variant": "three high",
-      "x": -1575.5,
-      "z": -2688.2
     },
     {
       "angle": -1.318,
