@@ -56,6 +56,7 @@ import { HIGHMOOR_PROPS } from './highmoorprops';
 import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
+import { suburbHousesFor } from './suburb';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
@@ -678,6 +679,8 @@ export function generateCity(seed: number): City {
       ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced) : []),
       // And Tidewater Park's trees (#461), on the same terms.
       ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced),
+      // And Midtown north's houses (#477), facing their streets.
+      ...suburbHousesFor(terrain, roads, nodes, (x, z) => water.isWater(x, z), first.pieces, [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at)], raced),
     ];
     const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
     city.setPieces = authored.pieces;

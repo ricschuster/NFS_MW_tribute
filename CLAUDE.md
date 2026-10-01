@@ -149,6 +149,11 @@ what the city is shaped like.
   freewaysync` writes it into `city/freeway.ts`
 - `npm run roadexport` — write the road network, the relief and the plan to
   `screenshots/roads.json`, for the road editor to load
+- `npm run suburbdraft -- --area N` - draft a midtown's residential streets
+  (#477): curving streets, cul-de-sacs and crescents off its drawn
+  boulevards, added to `docs/roads-edited.json` for the road editor. A
+  drawing tool, not a generator the game runs: once edited and synced by
+  `roadsync`, a street is authored data like any other
 - `npm run propexport` — crop Marrow Field out of the generated city and write
   `screenshots/propeditor.html`, the prop placement editor with the field
   inlined; `npm run propsync` writes `city/marrowprops.ts` from the placements
