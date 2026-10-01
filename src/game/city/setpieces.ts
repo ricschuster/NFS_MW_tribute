@@ -146,6 +146,10 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // as boxes to their eaves, at the sizes in `suburb.ts`.
   house: grown([{ u: 0, v: 0, w: 10, l: 12, y0: 0, y1: 5.5 }], HOUSE_GROWN),
   apartment: grown([{ u: 0, v: 0, w: 24, l: 12, y0: 0, y1: 9.6 }], HOUSE_GROWN),
+  // Its front gardens and streets (#477): a hedge either side of the path to
+  // the door, and a broadleaf street tree, solid only at its trunk.
+  hedge: [{ u: -5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }, { u: 5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }],
+  'street-tree': [post(0, 0, 0.5, 3), { u: 0, v: 0, r: 2.8, y0: 3.4, y1: 10 }],
 };
 
 /**

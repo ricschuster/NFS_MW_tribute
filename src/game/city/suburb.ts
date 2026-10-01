@@ -227,3 +227,101 @@ function makeRun(road: CityRoad, points: Vec2[], junctionAtStart: boolean, junct
     },
   };
 }
+
+/** From the kerb to a street tree's trunk, in the verge. */
+const VERGE = 2.5;
+const TREE_SPACING = 30;
+const AVENUE_SPACING = 36;
+/** A hedge stands this far back from the kerb, along the front of the garden. */
+const HEDGE_BACK = 1.6;
+
+/**
+ * Front hedges and street trees round the houses already placed (#477): what
+ * turns a row of boxes into a street. Drafted with the houses by `npm run
+ * housedraft`, from the houses in the file rather than freshly generated
+ * ones, so a house moved or deleted by hand keeps or loses its hedge with it.
+ *
+ * A hedge runs along the kerb side of a house's garden, a gap in it for the
+ * path to the door; an apartment block has none. A street tree stands in the
+ * verge every `TREE_SPACING` metres, kept off junctions, off every road, out of
+ * the houses and their hedges - and off a road a race runs on, because a trunk
+ * in the verge is a wall to a car that runs a corner wide.
+ */
+export function suburbExtrasFor(
+  houses: readonly AuthoredProp[],
+  roads: readonly CityRoad[],
+  nodes: readonly CityNode[],
+  isWater: (x: number, z: number) => boolean,
+  raced: readonly Vec2[][] = [],
+): AuthoredProp[] {
+  const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
+  const segments = roads
+    .filter((r) => nodes[r.a].level === 'surface' && nodes[r.b].level === 'surface')
+    .map((r) => ({ a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 }));
+  const kerbGap = (p: Vec2) => Math.min(...segments.map((s) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) - s.half)) / M;
+  const homes = houses.filter((h) => h.kind === 'house' || h.kind === 'apartment').map((h) => ({ h, size: h.kind === 'house' ? HOUSE : APARTMENT }));
+  const inHome = (p: Vec2, margin: number) =>
+    homes.some(({ h, size }) => {
+      const dx = p.x / M - h.x, dz = p.z / M - h.z;
+      const v = dx * Math.sin(h.angle) + dz * Math.cos(h.angle);
+      const u = dx * Math.cos(h.angle) - dz * Math.sin(h.angle);
+      return Math.abs(u) < size.w / 2 + margin && Math.abs(v) < size.l / 2 + margin;
+    });
+  const out: AuthoredProp[] = [];
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+
+  // Hedges: out from each house's front until the kerb, and back a little.
+  const hedges: Vec2[] = [];
+  for (const { h, size } of homes) {
+    if (h.kind !== 'house') continue;
+    const f = { x: Math.sin(h.angle), z: Math.cos(h.angle) };
+    for (let d = size.l / 2 + 2; d < size.l / 2 + 30; d += 0.5) {
+      const p = { x: (h.x + f.x * d) * M, z: (h.z + f.z * d) * M };
+      if (kerbGap(p) > HEDGE_BACK) continue;
+      const at = { x: h.x + f.x * (d - 0.6), z: h.z + f.z * (d - 0.6) };
+      if (d - 0.6 - size.l / 2 < 2) break; // no garden to speak of
+      out.push({ kind: 'hedge', x: r1(at.x), z: r1(at.z), angle: h.angle });
+      hedges.push({ x: at.x * M, z: at.z * M });
+      break;
+    }
+  }
+
+  // Street trees, in the verge of every street and boulevard through a suburb.
+  const racing = raced.flatMap((line) => line.slice(1).map((b, k) => ({ a: line[k], b })));
+  const onRace = (a: Vec2, b: Vec2): boolean =>
+    racing.some((s) => distanceToSegment(a.x, a.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M && distanceToSegment(b.x, b.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M);
+  const trees: Vec2[] = [];
+  for (const index of SUBURB_AREAS) {
+    const area = midtowns[index];
+    if (!area) continue;
+    const local = roads.filter((r) => {
+      if (r.class === 'interstate' || r.class === 'ramp' || r.bridge) return false;
+      const a = nodes[r.a], b = nodes[r.b];
+      return a.level === 'surface' && b.level === 'surface' && (inArea(area.poly, a.pos) || inArea(area.poly, b.pos));
+    });
+    for (const run of runsOf(local, nodes)) {
+      if (run.raced(onRace)) continue;
+      const spacing = run.road.class === 'boulevard' ? AVENUE_SPACING : TREE_SPACING;
+      const length = run.length / M;
+      const clearStart = run.junctionAtStart ? CORNER : 6;
+      const clearEnd = run.junctionAtEnd ? CORNER : 6;
+      for (let d = clearStart + spacing / 2; d <= length - clearEnd; d += spacing) {
+        const here = run.at(d * M);
+        for (const side of [1, -1]) {
+          const n = { x: -here.dir.z * side, z: here.dir.x * side };
+          const out1 = run.road.width / 2 / M + VERGE;
+          const at = { x: here.p.x + n.x * out1 * M, z: here.p.z + n.z * out1 * M };
+          if (!inArea(area.poly, at) || isWater(at.x, at.z)) continue;
+          if (kerbGap(at) < VERGE - 0.5) continue;
+          if (inHome(at, 2)) continue;
+          if (hedges.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 7)) continue;
+          if (trees.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 10)) continue;
+          const angle = Math.round(cellRandom(Math.round(at.x / M), Math.round(at.z / M), 13) * Math.PI * 2 * 1000) / 1000;
+          out.push({ kind: 'street-tree', x: r1(at.x / M), z: r1(at.z / M), angle });
+          trees.push(at);
+        }
+      }
+    }
+  }
+  return out;
+}
