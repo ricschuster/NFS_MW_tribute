@@ -142,6 +142,31 @@ const roads = city.roads
     };
   });
 
+// The freeway over and under the crop, to look at and not to edit: its line
+// is `city/freeway.ts`, changed in the freeway editor. Each segment says
+// whether it is on the deck or in a tunnel, and the deck's pillars go where
+// the scene stands them (`viaduct` in `scene/cityscape.ts`), because a street
+// under the deck (#487) has to find its way between them.
+const PILLAR_SPACING = C.INTERSTATE_PILLAR_SPACING;
+const DECK_THICKNESS = 1.1 * U;
+const pillars = [];
+const freeway = city.roads
+  .filter((r) => r.class === 'interstate' || r.class === 'ramp')
+  .filter((r) => inBox(city.nodes[r.a].pos, 50) || inBox(city.nodes[r.b].pos, 50))
+  .map((r) => {
+    const a = city.nodes[r.a], b = city.nodes[r.b];
+    if (r.class === 'interstate') {
+      const count = Math.max(1, Math.round(r.length / PILLAR_SPACING));
+      for (let k = 0; k < count; k++) {
+        const t = (k + 0.5) / count;
+        if (a.y + (b.y - a.y) * t < DECK_THICKNESS * 2) continue;
+        pillars.push([r1(toM(a.pos.x + (b.pos.x - a.pos.x) * t)), r1(toM(a.pos.z + (b.pos.z - a.pos.z) * t))]);
+      }
+    }
+    const level = a.level === 'tunnel' || b.level === 'tunnel' ? 'tunnel' : a.level === 'elevated' || b.level === 'elevated' ? 'elevated' : 'surface';
+    return { a: [r1(toM(a.pos.x)), r1(toM(a.pos.z))], b: [r1(toM(b.pos.x)), r1(toM(b.pos.z))], width: r1(toM(r.width)), class: r.class, level };
+  });
+
 // The drawn roads the crop touches (#477), so the editor can change them: the
 // polylines `docs/roads-edited.json` holds, which `propsync` merges an edit
 // back into by id. Each city segment says which of them it lies on, so the
@@ -203,6 +228,7 @@ const out = {
   kind: KIND,
   height: { step: STEP, cols, rows, water: WATER, cells: Buffer.from(cells).toString('base64') },
   roads,
+  freeway: { segments: freeway, pillars },
   drawn,
   drawnWidths,
   roadWidths,

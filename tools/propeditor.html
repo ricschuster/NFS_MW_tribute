@@ -396,7 +396,7 @@
   const lastAngle = {};
   let checks = new Map();
   let attentionAt = -1;
-  const layers = { relief: true, roads: true, fence: true, generated: true, outline: true, labels: true, layout: true };
+  const layers = { relief: true, roads: true, freeway: true, fence: true, generated: true, outline: true, labels: true, layout: true };
   const view = { scale: 1, x: 0, y: 0 };
   let dpr = window.devicePixelRatio || 1;
   let hover = null;
@@ -774,6 +774,32 @@
         ctx.stroke();
         ctx.setLineDash([]);
       }
+    }
+
+    // The freeway, to look at (#487): the deck translucent so the streets
+    // under it show through, with its pillars; a tunnel dashed; the ramps
+    // orange. Not editable here - its line is the freeway editor's.
+    if (layers.freeway && DATA.freeway) {
+      ctx.lineCap = 'butt';
+      for (const r of DATA.freeway.segments) {
+        ctx.beginPath();
+        ctx.moveTo(sx(r.a[0]), sy(r.a[1]));
+        ctx.lineTo(sx(r.b[0]), sy(r.b[1]));
+        ctx.lineWidth = Math.max(2, r.width * s);
+        if (r.level === 'tunnel') {
+          ctx.setLineDash([8, 6]);
+          ctx.lineWidth = Math.max(1.5, r.width * s * 0.35);
+          ctx.strokeStyle = 'rgba(255,110,110,0.7)';
+        } else {
+          ctx.strokeStyle = r.class === 'ramp' ? 'rgba(255,160,60,0.5)' : 'rgba(255,80,80,0.38)';
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.fillStyle = '#c9ced4';
+      const pr = Math.max(1.5, 1.1 * s);
+      for (const [x, z] of DATA.freeway.pillars) ctx.fillRect(sx(x) - pr, sy(z) - pr, pr * 2, pr * 2);
+      ctx.lineCap = 'round';
     }
 
     // The layout the roads were drawn round (#410): footprints to place props
@@ -1251,6 +1277,7 @@
   function buildLayers() {
     const names = { relief: 'Relief', roads: 'Roads', fence: 'Fence & weeds', generated: 'Generated', outline: 'Field outline', labels: 'Labels' };
     if ((DATA.guides ?? []).length || (DATA.ideas ?? []).length) names.layout = 'Layout guide';
+    if ((DATA.freeway?.segments ?? []).length) names.freeway = 'Freeway';
     for (const [id, text] of Object.entries(names)) {
       const l = document.createElement('label');
       const i = document.createElement('input');
