@@ -253,6 +253,7 @@ export function suburbExtrasFor(
   nodes: readonly CityNode[],
   isWater: (x: number, z: number) => boolean,
   raced: readonly Vec2[][] = [],
+  clear: readonly Vec2[] = [],
 ): AuthoredProp[] {
   const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
   const segments = roads
@@ -316,6 +317,8 @@ export function suburbExtrasFor(
           if (inHome(at, 2)) continue;
           if (hedges.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 7)) continue;
           if (trees.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 10)) continue;
+          // Not on a billboard, a speed camera or a breakable.
+          if (clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < 6)) continue;
           const angle = Math.round(cellRandom(Math.round(at.x / M), Math.round(at.z / M), 13) * Math.PI * 2 * 1000) / 1000;
           out.push({ kind: 'street-tree', x: r1(at.x / M), z: r1(at.z / M), angle });
           trees.push(at);

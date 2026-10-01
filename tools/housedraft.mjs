@@ -42,7 +42,10 @@ const houses = !HOUSES && inFile.length ? inFile.map(({ id, ...p }) => p) : subu
   [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at)],
   city.routes.map((r) => r.points),
 );
-const extras = suburbExtrasFor(houses, city.roads, city.nodes, (x, z) => inWater(city, x, z), city.routes.map((r) => r.points));
+const extras = suburbExtrasFor(houses, city.roads, city.nodes, (x, z) => inWater(city, x, z), city.routes.map((r) => r.points), [
+  ...city.collectibles.map((c) => c.at),
+  ...city.breakables.map((b) => b.at),
+]);
 const kept = (old.props ?? []).filter((p) => !drafted.has(p.kind));
 const keptIds = new Map(inFile.map((p) => [`${p.kind}:${p.x}:${p.z}`, p.id]));
 const props = [
