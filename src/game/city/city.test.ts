@@ -22,7 +22,7 @@ import { landBodies } from './bodies';
 import { groundAt } from './terrain';
 import { CityGrid, lineBlocked, inWater, surfaceAt, distanceToRoad } from './grid';
 import { distanceToSegment } from './grid';
-import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea } from './plan';
 import { AUTHORED_ROADS } from './roads';
 import { layRoute, type Span } from './spans';
 import type { Water } from './water';
@@ -263,18 +263,39 @@ describe('the street network', () => {
     }
   });
 
-  // Streets bend in winding quarters now, so most of them are not axis-aligned
-  // any more. What must stay true is that downtown is a grid: it is the one
-  // district defined by being one, and the arterials are the city's skeleton.
-  it('keeps downtown and the arterials on the grid', () => {
+  // The arterials are the city's skeleton and stay on the grid. Downtown used
+  // to be the other thing held to it, as the one district defined by being a
+  // grid; #268 overturned that, and its streets are grown now.
+  it('keeps the arterials on the grid', () => {
     for (const road of city.roads) {
-      const gridded =
-        road.class === 'arterial' || (road.class === 'street' && road.district === 'downtown');
-      if (!gridded) continue;
+      if (road.class !== 'arterial') continue;
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
       expect(Math.min(Math.abs(b.x - a.x), Math.abs(b.z - a.z))).toBeLessThan(1);
     }
+  });
+
+  // What "grew naturally" means, from #268's own acceptance test: junctions
+  // with three and five arms, not only four, and streets at every angle.
+  it("grows downtown's streets rather than ruling them (#268)", () => {
+    const downtown = PLAN_DISTRICTS.find((d) => d.kind === 'downtown')!;
+    const arms = new Map<number, number>();
+    for (const node of city.nodes) {
+      if (node.level !== 'surface' || !inArea(downtown.poly, node.pos)) continue;
+      const n = node.roads.filter((id) => city.roads[id].class !== 'interstate').length;
+      arms.set(n, (arms.get(n) ?? 0) + 1);
+    }
+    expect(arms.get(3) ?? 0).toBeGreaterThan(50);
+    expect(arms.get(4) ?? 0).toBeGreaterThan(5);
+    expect(arms.get(5) ?? 0).toBeGreaterThan(0);
+    // Pieces long enough to have a direction, off the grid by more than 5 degrees.
+    const streets = city.roads.filter((r) => r.class === 'street' && r.length > 15 * UNITS_PER_METRE && inArea(downtown.poly, city.nodes[r.a].pos));
+    const slanted = streets.filter((r) => {
+      const a = city.nodes[r.a].pos, b = city.nodes[r.b].pos;
+      const off = Math.abs(Math.atan2(b.z - a.z, b.x - a.x)) % (Math.PI / 2);
+      return Math.min(off, Math.PI / 2 - off) > (5 * Math.PI) / 180;
+    });
+    expect(slanted.length).toBeGreaterThan(streets.length / 2);
   });
 
   // Every district winds now, downtown included: a ruled grid is what read as
