@@ -371,6 +371,48 @@ const LATER_ROUTES: PlacedRoute[] = [
       [380, -2530],
     ],
   },
+  // Midtown north's two circuits (#477), both the owner's pick of the two
+  // loops the suburb's streets allow. The Crescents is the street race, 1.6 km
+  // a lap: east along the north-coast boulevard, round the s2-1 crescent, north
+  // up s2-12 and back down r41 - with one tight corner, 134 degrees, where r41
+  // comes back down onto the boulevard, kept as the slow turn of a suburban
+  // race. The Northshore Loop is the fast one, 3.3 km a lap round the shore
+  // boulevards, across on s2-10 and back up r41, no turn sharper than 105
+  // degrees. Both start on a straight, not on a junction.
+  {
+    name: 'Midtown Crescents',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [555, 2938],
+      [668, 2934],
+      [649, 2873],
+      [811, 2849],
+      [855, 2906],
+      [738, 3026],
+      [673, 3173],
+      [557, 3057],
+      [441, 2941],
+    ],
+  },
+  {
+    name: 'Northshore Loop',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [-160, 2290],
+      [28, 2528],
+      [-50, 2728],
+      [203, 3003],
+      [309, 3109],
+      [-50, 3195],
+      [-294, 2739],
+      [-464, 2327],
+      [-532, 2193],
+      [-443, 2095],
+      [-279, 2021],
+    ],
+  },
 ];
 
 /**

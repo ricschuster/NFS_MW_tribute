@@ -2422,14 +2422,22 @@ export const ROUTE_START_RANGE = m(28);
 export const ORDINARY_RACE_DIFFICULTY = 0.2;
 export const RIVAL_START_ALONG = 0.5;
 /**
+ * The circuits the ladder's rivals race, by rank (#419). Named rather than
+ * "every circuit" since Midtown north's two (#477): rivals are dealt round the
+ * circuits by rank, so each new circuit moved four of them, and two landed on
+ * a street circuit they could not finish. The ladder stays on these until the
+ * race exploration (`docs/map-areas.md`, "Races wait for the map").
+ */
+export const RIVAL_CIRCUITS = ['Halloway Rim', 'Sablet Quay'];
+/**
  * Events per car (M12). A car gets one event per route, up to this many, and
  * the design starts it at three; its field is the route's difficulty moved by
  * how much faster than the reference car it is, so a quick car on the same
  * roads is a harder event (`carevents.ts`). One event per route, on the
- * owner's word at the Highmoor Descent (#460), so seven since Tidewater Drive
- * (#461).
+ * owner's word at the Highmoor Descent (#460): seven since Tidewater Drive
+ * (#461), nine since Midtown north's two circuits (#477).
  */
-export const CAR_EVENTS_MAX = 7;
+export const CAR_EVENTS_MAX = 9;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);

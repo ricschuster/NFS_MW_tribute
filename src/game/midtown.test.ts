@@ -63,4 +63,16 @@ describe('Midtown north (#477)', () => {
       }
     }
   });
+
+  it('races two circuits through it: the Crescents on its streets, the Northshore Loop round its shore', () => {
+    const crescents = city.routes.find((r) => r.name === 'Midtown Crescents')!;
+    const northshore = city.routes.find((r) => r.name === 'Northshore Loop')!;
+    for (const route of [crescents, northshore]) {
+      expect(route.kind).toBe('circuit');
+      // Mostly inside the area: the loops close on roads just past its edge.
+      expect(route.points.filter((p) => inArea(area.poly, p)).length / route.points.length).toBeGreaterThan(0.8);
+    }
+    expect(crescents.length / M).toBeGreaterThan(1400);
+    expect(northshore.length / M).toBeGreaterThan(3000);
+  });
 });
