@@ -246,7 +246,12 @@ export function cutAndFill(terrain: Terrain, roads: Gradeable[], cap = ROUTE_COU
       }
       if (best > reach || weight === 0) continue;
       const want = sum / weight;
-      cells[at] = best <= half ? want : lerp(want, cells[at], (best - half) / ROAD_CUT_BLEND);
+      const graded = best <= half ? want : lerp(want, cells[at], (best - half) / ROAD_CUT_BLEND);
+      // Land stays land. A road along a bank samples ground `groundAt` has
+      // already blended toward the seabed, so its shelf can come out below sea
+      // level, and written back that is a hollow under the water line on dry
+      // land: the river running along a hillside that ADR-0007 rule 1 forbids.
+      cells[at] = cells[at] >= 0 ? Math.max(0, graded) : graded;
     }
   }
 }
