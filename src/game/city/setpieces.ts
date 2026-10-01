@@ -276,9 +276,11 @@ const JUMP_VARIANTS: Record<string, JumpKind> = {
 
 /**
  * How far a set piece's solid parts can reach from its centre, in metres. A
- * large warehouse, 50 m by 130 m, reaches 70 m to a corner.
+ * large warehouse, 50 m by 130 m, reaches 70 m to a corner; downtown's
+ * stadium (#268) reaches 115 m to the end of its bowl, and its cruise
+ * terminal, 56 m by 200, 104 m to a corner.
  */
-const SOLID_REACH = 70;
+export const SOLID_REACH = 120;
 
 /**
  * Marrow Field's hand-placed props (#295), as city data.

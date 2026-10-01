@@ -17,7 +17,7 @@ import { INDUSTRIAL_PROPS } from './industrialprops';
 import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
-import { airfieldProps, hitsSetPiece } from './setpieces';
+import { SET_PIECE_SOLIDS, SOLID_REACH, airfieldProps, hitsSetPiece } from './setpieces';
 import { groundAt } from './terrain';
 import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea, planDistrictAt } from './plan';
 import { distanceToSegment } from './grid';
@@ -440,5 +440,19 @@ describe('the roads to Marrow Field', () => {
       return away > 150 * M;
     });
     expect(far.length).toBeGreaterThan(0);
+  });
+});
+
+describe('solid reach', () => {
+  // `hitsSetPiece` skips a piece whose centre is further than `SOLID_REACH`
+  // from the car, so a solid reaching past it is a wall a car drives through
+  // at its far end. Downtown's stadium and cruise terminal (#268) are the
+  // first kinds bigger than a warehouse.
+  it('keeps every kind inside the reach a collision looks', () => {
+    const reach = (s: (typeof SET_PIECE_SOLIDS)[keyof typeof SET_PIECE_SOLIDS][number]) =>
+      'r' in s ? Math.hypot(s.u, s.v) + s.r : Math.hypot(Math.abs(s.u) + s.w / 2, Math.abs(s.v) + s.l / 2);
+    for (const [kind, solids] of Object.entries(SET_PIECE_SOLIDS)) {
+      for (const s of solids) expect(reach(s), kind).toBeLessThanOrEqual(SOLID_REACH);
+    }
   });
 });
