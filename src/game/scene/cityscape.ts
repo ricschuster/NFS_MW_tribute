@@ -19,7 +19,7 @@ import {
   SEA_SHEET,
   PLACE_BLEND,
   QUARRY_BENCH,
-  INTERSTATE_PILLAR_SPACING,
+  PILLAR_WIDTH,
   ROADBLOCK_MIN_WIDTH,
   TERRAIN_RENDER_STEP,
 } from '../constants';
@@ -64,7 +64,6 @@ const MARKING_LEVEL = 0.06 * UNITS_PER_METRE;
 /** How far the open sea reaches past the map, so it always meets the horizon. */
 const SEA_REACH = 40000 * UNITS_PER_METRE;
 const DECK_THICKNESS = 1.1 * UNITS_PER_METRE;
-const PILLAR_WIDTH = 2.2 * UNITS_PER_METRE;
 
 /**
  * Turn a generated city into something to look at (#84).
@@ -696,9 +695,8 @@ export class Cityscape {
    * The interstate: its deck, and the pillars holding it up.
    *
    * Decks are sloped boxes rather than flat ones, because the deck really does
-   * change height - on the ramps, and on the dive into the tunnel. A pillar
-   * only goes under a stretch that is actually above the ground; the tunnel
-   * section is below it and needs nothing holding it up.
+   * change height - on the ramps, and on the dive into the tunnel. The
+   * pillars are the city's (`city/pillars.ts`), since the car hits them.
    */
   private viaduct(city: City): THREE.InstancedMesh[] {
     const decks = city.roads.filter(
@@ -717,7 +715,6 @@ export class Cityscape {
     );
     deck.name = 'interstate';
 
-    const pillarSpots: { x: number; z: number; height: number }[] = [];
     const matrix = new THREE.Matrix4();
     const quaternion = new THREE.Quaternion();
     const euler = new THREE.Euler();
@@ -752,18 +749,6 @@ export class Cityscape {
       matrix.compose(position, quaternion, scale);
       deck.setMatrixAt(i, matrix);
 
-      if (road.class !== 'interstate') return;
-      const count = Math.max(1, Math.round(run / INTERSTATE_PILLAR_SPACING));
-      for (let p = 0; p < count; p++) {
-        const t = (p + 0.5) / count;
-        const height = a.y + rise * t;
-        if (height < DECK_THICKNESS * 2) continue; // in the tunnel, or on the deck
-        pillarSpots.push({
-          x: a.pos.x + (b.pos.x - a.pos.x) * t,
-          z: a.pos.z + (b.pos.z - a.pos.z) * t,
-          height,
-        });
-      }
     });
     deck.instanceMatrix.needsUpdate = true;
 
@@ -775,15 +760,16 @@ export class Cityscape {
     const pillars = new THREE.InstancedMesh(
       pillarGeometry,
       pillarMaterial,
-      Math.max(1, pillarSpots.length),
+      Math.max(1, city.pillars.length),
     );
     pillars.name = 'interstate-pillars';
-    pillarSpots.forEach((spot, i) => {
-      matrix.makeScale(PILLAR_WIDTH, spot.height, PILLAR_WIDTH);
-      matrix.setPosition(spot.x, spot.height, spot.z);
+    // City data, because the sim hits them too (#487): drawn where they are.
+    city.pillars.forEach((pillar, i) => {
+      matrix.makeScale(PILLAR_WIDTH, pillar.height, PILLAR_WIDTH);
+      matrix.setPosition(pillar.at.x, pillar.height, pillar.at.z);
       pillars.setMatrixAt(i, matrix);
     });
-    pillars.count = pillarSpots.length;
+    pillars.count = city.pillars.length;
     pillars.instanceMatrix.needsUpdate = true;
 
     return [deck, pillars];

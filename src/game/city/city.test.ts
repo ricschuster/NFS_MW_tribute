@@ -1796,7 +1796,10 @@ describe('Halloway Quarry, a working quarry (#323, #327)', () => {
     // Beyond the reach, dirt is the access road only, and `markDirtAccess`
     // stops at the first real junction: a dirt road out there with a side
     // street off it would be the quarry's dirt leaking onto the network.
-    const past = city.roads.filter((r) => r.surface === 'gravel' && away(midOf(r)) > pit.radius * 1.2);
+    // Not a surface drawn on a road (#454): the gravel track under the
+    // freeway in Midtown south (#487) is gravel, near enough, and has
+    // junctions all the way along it, and is nothing the quarry spread.
+    const past = city.roads.filter((r) => r.surface === 'gravel' && !r.ownSurface && away(midOf(r)) > pit.radius * 1.2);
     const near = past.filter((r) => away(midOf(r)) < pit.radius * 3);
     expect(near.length).toBeGreaterThan(0);
     // A node with dirt on both sides is the middle of the chain and has to be a

@@ -1211,8 +1211,20 @@ export const INTERSTATE_INSET = 0.16; // of the map, in from each edge
 export const INTERSTATE_HEIGHT = m(12);
 export const INTERSTATE_LANES = 6;
 export const INTERSTATE_SPEED = kmh(140);
-/** How often a support pillar goes under the deck. */
+/** How often a pair of support pillars goes under the deck. */
 export const INTERSTATE_PILLAR_SPACING = m(45);
+/** A pillar's side: square, and as solid as a wall (#487). */
+export const PILLAR_WIDTH = m(2.2);
+/** How far in from the deck's edge a pillar stands. */
+export const PILLAR_INSET = m(1.5);
+/**
+ * How far a pillar keeps from a road's kerb (#487). Solid pillars on a
+ * street passing under the deck would be a wall across it, so one that would
+ * stand closer than this is left out and the deck spans the gap.
+ */
+export const PILLAR_CLEAR = m(1.5);
+/** Lower than this the deck is diving into a tunnel, and needs nothing under it. */
+export const PILLAR_MIN_HEIGHT = m(2.2);
 /** Deck resolution: short enough that a slope reads as a slope. */
 export const INTERSTATE_SEGMENT = m(60);
 
@@ -2435,9 +2447,10 @@ export const RIVAL_CIRCUITS = ['Halloway Rim', 'Sablet Quay'];
  * how much faster than the reference car it is, so a quick car on the same
  * roads is a harder event (`carevents.ts`). One event per route, on the
  * owner's word at the Highmoor Descent (#460): seven since Tidewater Drive
- * (#461), nine since Midtown north's two circuits (#477).
+ * (#461), nine since Midtown north's two circuits (#477), ten since the
+ * Promenade Sprint (#487).
  */
-export const CAR_EVENTS_MAX = 9;
+export const CAR_EVENTS_MAX = 10;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);
@@ -2650,8 +2663,10 @@ export const DAMAGE_HIT_GAP = 0.4;
  * contact, so a car arrived at 100% within a minute and stayed there. That is
  * fixed, and this is the other half. Fourteen is a shop somewhere in most
  * quarters rather than a pilgrimage, and the spacing keeps them from bunching.
+ * Fifteen since Midtown south's, placed by hand (`PLACED_REPAIRS`, #487), so
+ * the fourteen generated ones stay where they were.
  */
-export const REPAIR_COUNT = 14;
+export const REPAIR_COUNT = 15;
 export const REPAIR_SPACING = m(620);
 /** How close you have to pass. A drive-through you have to aim at is a menu. */
 export const REPAIR_RANGE = m(14);

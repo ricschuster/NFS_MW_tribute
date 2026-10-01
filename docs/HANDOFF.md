@@ -3,26 +3,38 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, Midtown south's houses in).** Midtown south (#487)
-  is in progress. Done: the suburb tools take `--place midtown-south` (#494);
-  the freeway is a view-only layer in the area editors and the Road Editor;
-  17 streets drafted and kept by the owner, the bank boulevard is the
-  promenade (#495); houses on the land side only (`WATERFRONT` in
-  `city/suburb.ts`: no lot between a road and water within 40 m), drafted
-  and edited by the owner: 177 houses, 51 apartments, hedges, 390 street
-  trees. `housedraft` now keeps the props file's other keys (it used to drop
-  a save's `roads`). The Midtown south Props editor (URL in the agent's
-  memory) has `edits/props` at v17, the Road Editor's `edits/roads` is at
-  v65, both matching the files.
-  - **Next:** the sprint along the promenade; street trees on the promenade
-    go once it is laid.
-  - **Then:** one repair shop. Open: the
-    deck's pillars are single, visual-only columns; solid pairs at the deck
-    edges were recommended for streets under it, not decided. n101's far end
-    (outside the area) is drawn 40 m short of r89 and the stitch pulls it 34 m:
-    reported, the owner's to fix. The owner's edit to n108 and n109 brought
-    their #484 stitches down to 21 m and 42 m (from 43 and 65): both are
-    pulled onto `w1`/`w2`.
+- **Start here (2026-10-01, Midtown south signed off).** Eight areas are
+  done and signed off; Midtown south (#487) is the eighth, driven and
+  approved by the owner on 2026-10-01. Next is **Midtown south-west (#488)**,
+  then Industrial (#489); Ashford Point stays parked (#293) and downtown
+  (#268) is last.
+  - **Midtown south (#487): done.** The suburb tools take `--place
+    midtown-south` (#494); 17 streets drafted and kept by the owner, the bank
+    boulevard (r30) is the promenade (#495); houses on the land side only
+    (`WATERFRONT` in `city/suburb.ts`), 177 houses and 51 apartments with
+    hedges and 314 street trees, edited by the owner (#497, #499); the
+    **Promenade Sprint**, 1.9 km north to south on r30 (route 9, 57% of top
+    empty and 25% in traffic on `citylap` - traffic costs it more than half,
+    worth a look when races are tuned), its trees taken off the promenade;
+    **one repair shop** on the inland boulevard r34, the first placed by hand
+    (`PLACED_REPAIRS`, `REPAIR_COUNT` 14 -> 15 so the generated fourteen stay
+    put); `CAR_EVENTS_MAX` 9 -> 10.
+  - **The freeway's pillars are pairs, solid, along the whole loop** (the
+    owner's call, driving Midtown south): one under each deck edge every
+    45 m, city data in `city/pillars.ts` so the sim hits what the renderer
+    draws, left out wherever a road passes under. Under Midtown south's
+    deck, between the rows, a **gravel track** `deck1`, 930 m, a drawn
+    street. Gravel under every raised stretch is #500, a note for later, no
+    action now.
+  - **Found on the way, all fixed:** `cutAndFill` could dig dry land below
+    sea level by a bank road (#497); the suburb drafter did not see ramps and
+    planted a tree on ramp 4 (#499); #494 had committed a worktree's
+    `node_modules` link, which broke the main checkout's install when pulled
+    (#498); `housedraft` dropped a save's roads (#497).
+  - **Editors:** the Midtown south Props editor (URL in the agent's memory)
+    and the Road Editor both match the files (store versions in memory).
+  - **Still the owner's:** n101's far end is drawn 40 m short of r89 (the
+    stitch pulls it 34 m); n108 and n109's #484 stitches are 21 m and 42 m.
 - **Earlier (2026-10-01, end of session).** Seven areas are done and
   signed off (Marrow Field, Sablet Wharf, Halloway Quarry, Kestrel Head,
   Highmoor Park, Tidewater Park, Midtown north); three are audited **with the

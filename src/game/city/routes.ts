@@ -413,6 +413,26 @@ const LATER_ROUTES: PlacedRoute[] = [
       [-279, 2021],
     ],
   },
+  // Promenade Sprint (#487): Midtown south's event, the owner's pick - the
+  // length of the strip on the promenade, the bank boulevard (r30), with the
+  // channel and Sablet Wharf's container port across the water the whole
+  // way. North to south, 2 km, from a straight below the junction at the
+  // strip's north end to where the promenade leaves the area for the wharf.
+  // The way points sit on r30 every few hundred metres, or the shortest path
+  // between two of them takes the inland boulevard instead.
+  {
+    name: 'Promenade Sprint',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [-1030, 360],
+      [-990, 103],
+      [-1112, -329],
+      [-1270, -880],
+      [-1232, -1191],
+      [-1100, -1455],
+    ],
+  },
 ];
 
 /**

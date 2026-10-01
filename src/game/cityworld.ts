@@ -44,6 +44,7 @@ import {
   NITRO_BLEED_FRAC,
   NITRO_TAPER,
   CAR_RADIUS,
+  PILLAR_WIDTH,
   UNITS_PER_METRE,
   CAR_HEIGHT,
   LAND_SOFT,
@@ -2534,6 +2535,15 @@ export class CityWorld {
       const nearestX = Math.max(f.minX, Math.min(this.x, f.maxX));
       const nearestZ = Math.max(f.minZ, Math.min(this.z, f.maxZ));
       if (Math.hypot(this.x - nearestX, this.z - nearestZ) < CAR_RADIUS) return true;
+    }
+    // The freeway's pillars (#487): square and upright, so the same test as a
+    // building's footprint, up to the deck they hold.
+    const half = PILLAR_WIDTH / 2;
+    for (const pillar of this.city.pillars) {
+      const dx = Math.abs(this.x - pillar.at.x) - half;
+      const dz = Math.abs(this.z - pillar.at.z) - half;
+      if (dx > CAR_RADIUS || dz > CAR_RADIUS || above > pillar.height) continue;
+      if (Math.hypot(Math.max(0, dx), Math.max(0, dz)) < CAR_RADIUS) return true;
     }
     // A crashed plane or a silo is as solid as a wall (#295), though it is
     // turned to any angle and so is not in the grid's axis-aligned buildings.
