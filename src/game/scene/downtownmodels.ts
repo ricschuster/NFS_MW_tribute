@@ -376,6 +376,8 @@ export function cruiseTerminal(): Part[] {
     { geometry: at(upright(0.4, 0.5, 6, 6), 0, 32 + (k % 2) * 4 + 3, z), colour: '#8a8f93' },
   ]);
   return [
+    // The pier it stands on, down into the water.
+    { geometry: at(box(56, 8, 200), 0, -4, 0), colour: '#5b5f60' },
     { geometry: at(box(56, 14, 200), 0, 7, 0), colour: '#dcdcd6' },
     { geometry: at(box(56.2, 5, 200.2), 0, 9, 0), colour: GLASS_LIGHT },
     { geometry: at(box(56.4, 0.8, 200.4), 0, 14.2, 0), colour: WHITE },

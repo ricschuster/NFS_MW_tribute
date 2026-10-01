@@ -304,7 +304,9 @@ export function airfieldProps(
   let id = firstId;
   for (const prop of props) {
     const at = { x: prop.x * M, z: prop.z * M };
-    const y = groundAt(terrain, at.x, at.z);
+    // A cruise terminal (#268) stands out over the bay on its pier, level
+    // with the shore it comes off rather than down on the sea bed.
+    const y = prop.kind === 'cruise-terminal' ? Math.max(0, groundAt(terrain, at.x, at.z)) : groundAt(terrain, at.x, at.z);
     if (prop.kind === 'billboard') {
       billboards.push({ at, y, angle: prop.angle });
       continue;
