@@ -657,6 +657,20 @@ function apartment(variant?: string): Part[] {
   ];
 }
 
+/** A clipped privet hedge either side of the path to a front door (#477). */
+function hedge(): Part[] {
+  return [-5, 5].map((x) => ({ geometry: at(box(6, 1.3, 1.2), x, 0.65, 0), colour: '#3f6a37' }));
+}
+
+/** A broadleaf street tree (#477): a plane or a lime, round-headed, not a conifer. */
+function streetTree(): Part[] {
+  return [
+    { geometry: at(upright(0.25, 0.35, 3.6, 8), 0, 1.8, 0), colour: '#5a4632' },
+    { geometry: at(new THREE.IcosahedronGeometry(3.2, 1).scale(1, 0.9, 1), 0, 6.4, 0), colour: '#4f7d3c' },
+    { geometry: at(new THREE.IcosahedronGeometry(2.2, 1), 1.4, 7.6, -0.8), colour: '#5b8a45' },
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -713,6 +727,8 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   cafe: grown(cafe, HOUSE_GROWN),
   house: grown(house, HOUSE_GROWN),
   apartment: grown(apartment, HOUSE_GROWN),
+  hedge,
+  'street-tree': streetTree,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */
