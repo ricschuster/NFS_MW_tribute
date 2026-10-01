@@ -768,6 +768,9 @@ for (const view of VIEWS) {
         world.recover();
         world.heading = (heading * Math.PI) / 180;
         world.speed = 0;
+        // Cut the chase camera to the car rather than flying it in from the
+        // spawn, which can be kilometres off and through a row of buildings.
+        globalThis.crosstown.view.director.started = false;
       },
       { x, z, heading },
     );
