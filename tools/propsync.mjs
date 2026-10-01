@@ -15,6 +15,7 @@
 //   npm run propsync -- --place docks       # docs/wharf-props-edited.json -> src/game/city/wharfprops.ts
 //   npm run propsync -- --place lookout     # docs/fort-props-edited.json -> src/game/city/fortprops.ts
 import { readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { castleAreas } from './castleareas.mjs';
 
 const args = process.argv.slice(2);
@@ -91,6 +92,39 @@ ${lines.join('\n')}
 ];
 `;
 writeFileSync(out, body);
+
+// The area editor's roads (#477), when the save carries them: merged into
+// `docs/roads-edited.json` by id - a road the editor changed replaces the
+// drawn one, a new one is added, a deleted one goes - and then `roadsync`
+// lays the city from it, the same as a save from the road editor. The Road
+// Editor's own store is then behind the file: write the file back into it
+// (its `edits/roads` doc) so the two editors start from the same network.
+if (Array.isArray(doc.roads)) {
+  const roadsPath = 'docs/roads-edited.json';
+  const rawRoads = readFileSync(roadsPath, 'utf8');
+  const network = JSON.parse(rawRoads);
+  const gone = new Set(doc.removedRoads ?? []);
+  const byId = new Map(doc.roads.map((r) => [r.id, r]));
+  let changed = 0, added = 0;
+  network.roads = network.roads.filter((r) => !gone.has(r.id)).map((r) => {
+    const mine = byId.get(r.id);
+    if (!mine) return r;
+    byId.delete(r.id);
+    const next = { ...r, kind: mine.kind, district: mine.district ?? r.district, points: mine.points };
+    if (mine.surface) next.surface = mine.surface; else delete next.surface;
+    if (mine.deadEnd) next.deadEnd = true; else delete next.deadEnd;
+    if (JSON.stringify(next) !== JSON.stringify(r)) changed++;
+    return next;
+  });
+  for (const r of byId.values()) {
+    network.roads.push({ ...r, bridge: !!r.bridge, isNew: true });
+    added++;
+  }
+  writeFileSync(roadsPath, JSON.stringify(network, null, 2) + (rawRoads.endsWith('\n') ? '\n' : ''));
+  console.log(`merged roads into ${roadsPath}  ·  ${changed} changed, ${added} added, ${gone.size} removed`);
+  const run = spawnSync('node', ['tools/roadsync.mjs'], { stdio: 'inherit' });
+  if (run.status !== 0) process.exit(run.status ?? 1);
+}
 const count = {};
 for (const p of props) count[p.kind] = (count[p.kind] ?? 0) + 1;
 console.log(

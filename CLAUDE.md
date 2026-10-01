@@ -159,10 +159,13 @@ what the city is shaped like.
   edited in the area editor (`npm run propexport -- --place midtown`) and
   synced with `npm run propsync -- --place midtown`. A rerun replaces every
   house in the file, hand edits included
-- `npm run propexport` — crop Marrow Field out of the generated city and write
-  `screenshots/propeditor.html`, the prop placement editor with the field
-  inlined; `npm run propsync` writes `city/marrowprops.ts` from the placements
-  saved back into `docs/props-edited.json`
+- `npm run propexport -- --place P` — crop an area out of the generated city
+  and write `screenshots/<area>-propeditor.html`, the area editor with the
+  ground inlined: props, houses and the area's drawn roads, all editable
+  (#477). `npm run propsync -- --place P` writes the area's props file from
+  the save, and merges any roads in it into `docs/roads-edited.json` by id
+  and runs `roadsync`; the Road Editor's store is then behind and wants the
+  file written back into it
 - `npm run pwa` — serve `dist/`, cut the network, check the game still loads
 - `npm run build` — typecheck + production build to `dist/`
 

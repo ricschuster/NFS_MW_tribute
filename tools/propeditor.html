@@ -196,6 +196,10 @@
     <div class="sub" id="sub">—</div>
   </header>
   <div class="scroll">
+    <section id="roads-section" hidden>
+      <h2>Roads</h2>
+      <button class="kind" id="k-road" aria-pressed="false"><span class="meta"><span>Draw a road</span><span class="size">click points · Enter or double-click to finish</span></span><span class="count" id="c-road"></span></button>
+    </section>
     <section>
       <h2>Place</h2>
       <div id="palette"></div>
@@ -203,6 +207,17 @@
     <section id="inspector">
       <h2>Selected</h2>
       <p class="empty" id="none">Nothing selected. Pick a prop above and click the map to place it, or click one already placed.</p>
+      <div id="road-detail" hidden>
+        <div class="field"><label>Road</label><div id="r-id"></div></div>
+        <div class="field"><label for="r-kind">Class</label><select id="r-kind"><option value="street">street</option><option value="boulevard">boulevard</option></select></div>
+        <div class="field"><label for="r-surface">Surface</label><select id="r-surface"><option value="asphalt">asphalt</option><option value="gravel">gravel</option><option value="dirt">dirt</option></select></div>
+        <div class="field"><label for="r-dead">Dead end</label><input id="r-dead" type="checkbox" style="justify-self:start"></div>
+        <ul class="checks" id="r-info"></ul>
+        <div class="row">
+          <button class="act" id="r-delpoint" title="Delete the selected point (Del)">Delete point</button>
+          <button class="act danger" id="r-del" title="Delete the road (Del with no point selected)">Delete road</button>
+        </div>
+      </div>
       <div id="detail" hidden>
         <div class="field"><label>Prop</label><div id="d-kind"></div></div>
         <div class="field" id="f-variant"><label for="d-variant">Variant</label><select id="d-variant"></select></div>
@@ -337,6 +352,39 @@
   // ---- state ----------------------------------------------------------------
   // What the place already has in the generator, so the first save keeps it.
   let props = (DATA.initial ?? []).map((p, i) => ({ id: p.id ?? `p${i + 1}`, ...p }));
+  // The area's drawn roads (#477), when the export carries them: the polylines
+  // `docs/roads-edited.json` holds, editable here and saved beside the props.
+  // `segs` is what the map and the checks see - the city's own segments, with
+  // the ones that belong to a drawn road swapped for that road as it is now.
+  const ROADS = !!DATA.drawn;
+  let roads = (DATA.drawn ?? []).map((r) => ({ ...r, points: r.points.map((q) => [...q]) }));
+  let removedRoads = [];
+  // Which roads came in with the export: deleting one of those is a removal
+  // the sync has to make; deleting one drawn here is just undoing a draft.
+  const exported = new Set((DATA.drawn ?? []).map((r) => r.id));
+  let selRoad = null;
+  let selVertex = null;
+  let drawing = null;
+  let segs = DATA.roads;
+  const widthOf = (r) => (DATA.drawnWidths ?? {})[r.id] ?? (DATA.roadWidths ?? {})[r.kind] ?? 10;
+  function rebuildSegs() {
+    if (!ROADS) return;
+    const live = [];
+    for (const r of roads) {
+      for (let i = 1; i < r.points.length; i++) {
+        live.push({ a: r.points[i - 1], b: r.points[i], width: widthOf(r), surface: r.surface ?? 'asphalt', class: r.kind, road: r.id });
+      }
+    }
+    segs = [...DATA.roads.filter((q) => !q.road), ...live];
+  }
+  rebuildSegs();
+  function cleanRoad(r) {
+    const out = { id: r.id, kind: r.kind, district: r.district, bridge: !!r.bridge, points: r.points.map(([x, z]) => [Math.round(x), Math.round(z)]) };
+    if (r.surface && r.surface !== 'asphalt') out.surface = r.surface;
+    if (r.deadEnd) out.deadEnd = true;
+    if (r.isNew) out.isNew = true;
+    return out;
+  }
   let saved = '[]';
   let selected = null;
   let mode = 'select';
@@ -365,7 +413,16 @@
     const sized = k.sizes && k.sizes[p.variant];
     return sized ? { w: sized[0], l: sized[1] } : { w: p.w ?? k.w, l: k.l };
   };
-  const snapshot = () => JSON.stringify(props.map(clean));
+  const snapshot = () => JSON.stringify(ROADS ? { props: props.map(clean), roads: roads.map(cleanRoad), removedRoads } : props.map(clean));
+  /** Put a snapshot back: the props, and the roads when this editor has them. */
+  function restore(text) {
+    const was = JSON.parse(text);
+    if (Array.isArray(was)) { props = was; return; }
+    props = was.props;
+    roads = was.roads.map((r) => ({ ...r, points: r.points.map((q) => [...q]) }));
+    removedRoads = was.removedRoads;
+    rebuildSegs();
+  }
   function clean(p) {
     const out = { id: p.id, kind: p.kind, x: Math.round(p.x * 10) / 10, z: Math.round(p.z * 10) / 10, angle: Math.round(p.angle * 1000) / 1000 };
     if (p.w != null) out.w = Math.round(p.w * 10) / 10;
@@ -394,7 +451,7 @@
   }
   function nearestRoad(x, z) {
     let best = null;
-    for (const r of DATA.roads) {
+    for (const r of segs) {
       const hit = project(x, z, r.a, r.b);
       if (!best || hit.d < best.d) best = { ...hit, r };
     }
@@ -436,7 +493,7 @@
         if (x >= b.rect[0] && x <= b.rect[2] && z >= b.rect[1] && z <= b.rect[3]) inside = b;
       }
       if (!onRoad) {
-        for (const r of DATA.roads) {
+        for (const r of segs) {
           if (project(x, z, r.a, r.b).d <= r.width / 2) { onRoad = r; break; }
         }
       }
@@ -693,7 +750,7 @@
       ctx.lineCap = 'round';
       for (const surface of ['asphalt', 'dirt', 'gravel']) {
         ctx.strokeStyle = surface === 'dirt' ? '#a58759' : surface === 'gravel' ? '#b9b3a6' : '#565f62';
-        for (const r of DATA.roads) {
+        for (const r of segs) {
           if (r.surface !== surface) continue;
           ctx.lineWidth = Math.max(1.5, r.width * s);
           ctx.beginPath();
@@ -859,11 +916,52 @@
       ctx.stroke();
     }
     if (ghost) drawProp(ghost, { ghost: true });
+    if (ROADS) drawRoadEdits();
 
     // Scale bar, in the only units the game uses.
     const nice = [5, 10, 20, 50, 100, 200, 500, 1000];
     const m = nice.find((n) => n * s >= 70) ?? 1000;
     $('h-scale').innerHTML = `<span style="display:inline-block;width:${Math.round(m * s)}px;border-bottom:2px solid var(--dim);height:6px;margin-right:6px;vertical-align:1px"></span>${m} m`;
+  }
+
+  function drawRoadEdits() {
+    const line = (pts, color, width, dash) => {
+      ctx.beginPath();
+      pts.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      ctx.setLineDash(dash ?? []);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+    // Every drawn road shows its centreline faintly, so it is clear which
+    // roads this editor can change.
+    if (layers.roads) for (const r of roads) line(r.points, r === selRoad ? '#f2c230' : 'rgba(242,194,48,0.28)', r === selRoad ? 2 : 1);
+    if (selRoad) {
+      selRoad.points.forEach(([x, z], i) => {
+        const big = i === selVertex;
+        ctx.fillStyle = big ? '#f2c230' : '#141c1a';
+        ctx.strokeStyle = '#f2c230';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(sx(x) - (big ? 5 : 4), sy(z) - (big ? 5 : 4), big ? 10 : 8, big ? 10 : 8);
+        ctx.strokeRect(sx(x) - (big ? 5 : 4), sy(z) - (big ? 5 : 4), big ? 10 : 8, big ? 10 : 8);
+      });
+      if (selRoad.deadEnd) {
+        const [x, z] = selRoad.points[selRoad.points.length - 1];
+        ctx.beginPath();
+        ctx.arc(sx(x), sy(z), 9, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f2c230';
+        ctx.stroke();
+      }
+    }
+    if (drawing && drawing.length) {
+      const pts = drawing.cursor ? [...drawing, drawing.cursor] : drawing;
+      line(pts, '#7fd6a2', Math.max(2, (DATA.roadWidths?.street ?? 10) * view.scale), [6, 4]);
+      for (const [x, z] of drawing) {
+        ctx.fillStyle = '#7fd6a2';
+        ctx.fillRect(sx(x) - 3, sy(z) - 3, 6, 6);
+      }
+    }
   }
 
   function label(text, x, y, color) {
@@ -913,6 +1011,7 @@
     if (undoStack.length > 200) undoStack.shift();
   }
   function changed() {
+    rebuildSegs();
     checks = new Map(props.map((p) => [p, check(p)]));
     refresh();
     draw();
@@ -948,14 +1047,101 @@
     p.angle = roadHeading(n.r);
     p.w = Math.round((n.r.width + 2) * 10) / 10;
   }
+  /** The drawn road under a screen point, and which segment of it. */
+  function roadHit(px, py) {
+    let best = null;
+    for (const r of roads) {
+      for (let i = 1; i < r.points.length; i++) {
+        const a = [sx(r.points[i - 1][0]), sy(r.points[i - 1][1])];
+        const b = [sx(r.points[i][0]), sy(r.points[i][1])];
+        const hit = project(px, py, a, b);
+        const reach = Math.max(6, (widthOf(r) * view.scale) / 2);
+        if (hit.d <= reach && (!best || hit.d < best.d)) best = { r, i, d: hit.d, x: wx(hit.px), z: wz(hit.pz) };
+      }
+    }
+    return best;
+  }
+  function vertexHit(px, py) {
+    if (!selRoad) return null;
+    let best = null;
+    selRoad.points.forEach(([x, z], i) => {
+      const d = Math.hypot(sx(x) - px, sy(z) - py);
+      if (d < 8 && (best === null || d < best.d)) best = { i, d };
+    });
+    return best && best.i;
+  }
+  /** Snap a point being drawn onto a road it is placed on, so the two meet. */
+  function snapToRoads(x, z) {
+    let best = null;
+    for (const r of segs) {
+      const hit = project(x, z, r.a, r.b);
+      if (hit.d * view.scale < 10 && (!best || hit.d < best.d)) best = hit;
+    }
+    for (const r of segs) {
+      for (const q of [r.a, r.b]) if (Math.hypot(q[0] - x, q[1] - z) * view.scale < 10) return [q[0], q[1]];
+    }
+    return best ? [best.px, best.pz] : [x, z];
+  }
+  function selectRoad(r, vertex = null) {
+    selRoad = r;
+    selVertex = vertex;
+    if (r) selected = null;
+    refresh();
+    draw();
+  }
+  function finishDrawing() {
+    if (!drawing) return;
+    if (drawing.length >= 2) {
+      remember();
+      const r = { id: newId().replace(/^p/, 'e'), kind: 'street', district: DATA.district ?? 'midtown', bridge: false, points: drawing.map((q) => [...q]), isNew: true };
+      roads.push(r);
+      drawing = null;
+      setMode('select');
+      selectRoad(r);
+      changed();
+      toast('Road added');
+      return;
+    }
+    drawing = null;
+    draw();
+  }
+  function removeRoadOrPoint() {
+    if (!selRoad) return;
+    remember();
+    if (selVertex !== null && selRoad.points.length > 2) {
+      selRoad.points.splice(selVertex, 1);
+      selVertex = null;
+    } else {
+      if (exported.has(selRoad.id)) removedRoads.push(selRoad.id);
+      roads = roads.filter((r) => r !== selRoad);
+      selRoad = null;
+      selVertex = null;
+    }
+    changed();
+  }
+  function editRoad(fn) {
+    if (!selRoad) return;
+    remember();
+    fn(selRoad);
+    changed();
+  }
+  $('r-kind').onchange = () => editRoad((r) => { r.kind = $('r-kind').value; });
+  $('r-surface').onchange = () => editRoad((r) => { r.surface = $('r-surface').value; });
+  $('r-dead').onchange = () => editRoad((r) => { r.deadEnd = $('r-dead').checked; });
+  $('r-delpoint').onclick = () => removeRoadOrPoint();
+  $('r-del').onclick = () => { selVertex = null; removeRoadOrPoint(); };
+  $('k-road').onclick = () => setMode(mode === 'road' ? 'select' : 'road');
+
   function select(p) {
     selected = p;
+    if (p) { selRoad = null; selVertex = null; }
     refresh();
     draw();
   }
   function setMode(m) {
     mode = m;
     ghost = null;
+    if (m !== 'road') drawing = null;
     canvas.style.cursor = m === 'select' ? 'default' : 'crosshair';
     refresh();
     draw();
@@ -1037,6 +1223,10 @@
   const attention = () => props.filter((p) => severity(checks.get(p) ?? []) !== 'ok');
 
   function refresh() {
+    if (ROADS) {
+      $('k-road').setAttribute('aria-pressed', String(mode === 'road'));
+      $('c-road').textContent = roads.length;
+    }
     for (const k of KINDS) {
       $(`k-${k.id}`).setAttribute('aria-pressed', String(mode === k.id));
       const n = props.filter((p) => p.kind === k.id).length;
@@ -1057,12 +1247,26 @@
     $('undo').disabled = !undoStack.length;
     $('revert').disabled = !dirty;
 
-    $('hint').innerHTML = mode === 'select'
-      ? 'Drag to move · handle to turn · <kbd>R</kbd> ±15° · <kbd>Del</kbd> remove · drag the map to pan'
+    $('hint').innerHTML = mode === 'road'
+      ? 'Click to add points - they snap onto a road you click on · <kbd>Enter</kbd> or double-click to finish · <kbd>Esc</kbd> cancel'
+      : mode === 'select'
+      ? 'Drag to move · handle to turn · <kbd>R</kbd> ±15° · <kbd>Del</kbd> remove · drag the map to pan' + (ROADS ? ' · click a road to edit it, drag its points, <kbd>Shift</kbd>-click it to add one' : '')
       : `Click to place ${KIND[mode].name.toLowerCase()}${mode === 'gate' ? ' - it snaps across the nearest road' : ''} · <kbd>R</kbd> turns it · <kbd>Esc</kbd> done`;
 
-    $('none').hidden = !!selected;
+    $('none').hidden = !!selected || !!selRoad;
     $('detail').hidden = !selected;
+    $('road-detail').hidden = !selRoad;
+    if (selRoad) {
+      const r = selRoad;
+      let len = 0;
+      for (let i = 1; i < r.points.length; i++) len += Math.hypot(r.points[i][0] - r.points[i - 1][0], r.points[i][1] - r.points[i - 1][1]);
+      $('r-id').textContent = exported.has(r.id) ? r.id : `${r.id} (new)`;
+      $('r-kind').value = r.kind;
+      $('r-surface').value = r.surface ?? 'asphalt';
+      $('r-dead').checked = !!r.deadEnd;
+      $('r-delpoint').disabled = selVertex === null || r.points.length <= 2;
+      $('r-info').innerHTML = `<li class="info">${Math.round(len)} m · ${r.points.length} points</li>`;
+    }
     if (!selected) return;
     const p = selected, k = KIND[p.kind];
     $('d-kind').textContent = k.name;
@@ -1126,8 +1330,11 @@
     const prev = undoStack.pop();
     if (prev == null) return;
     const id = selected && selected.id;
-    props = JSON.parse(prev);
+    const rid = selRoad && selRoad.id;
+    restore(prev);
     selected = props.find((p) => p.id === id) ?? null;
+    selRoad = roads.find((r) => r.id === rid) ?? null;
+    selVertex = null;
     changed();
   }
   function rotate(delta) {
@@ -1142,8 +1349,10 @@
   $('undo').onclick = undo;
   $('revert').onclick = () => {
     remember();
-    props = JSON.parse(saved);
+    restore(saved);
     selected = null;
+    selRoad = null;
+    selVertex = null;
     changed();
     toast('Back to the last save');
   };
@@ -1162,6 +1371,16 @@
       drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
       return;
     }
+    if (mode === 'road') {
+      const at = snapToRoads(x, z);
+      drawing = drawing ?? [];
+      const last = drawing[drawing.length - 1];
+      // A second click on the last point finishes the road.
+      if (last && Math.hypot(sx(last[0]) - px, sy(last[1]) - py) < 8) { finishDrawing(); return; }
+      drawing.push(at);
+      draw();
+      return;
+    }
     if (mode !== 'select') {
       remember();
       const p = makeProp(mode, x, z);
@@ -1177,14 +1396,47 @@
         return;
       }
     }
-    const hit = hitTest(x, z);
+    if (ROADS && selRoad) {
+      const v = vertexHit(px, py);
+      if (v !== null) {
+        selVertex = v;
+        drag = { type: 'vertex', before: snapshot(), r: selRoad, i: v, moved: false };
+        refresh();
+        draw();
+        return;
+      }
+    }
+    // A click on a carriageway is the road, whatever prop is near it: nothing
+    // stands on a road. Off the carriageway, a prop wins and the road's wider
+    // grab margin only counts on open ground.
+    const rh = ROADS ? roadHit(px, py) : null;
+    const onCarriageway = rh && rh.d <= (widthOf(rh.r) * view.scale) / 2;
+    const hit = onCarriageway ? null : hitTest(x, z);
+    if (rh && (onCarriageway || !hit)) {
+      if (e.shiftKey && rh.r === selRoad) {
+        // Shift-click on the selected road puts a new point there, ready to drag.
+        const before = snapshot();
+        rh.r.points.splice(rh.i, 0, [rh.x, rh.z]);
+        selVertex = rh.i;
+        drag = { type: 'vertex', before, r: rh.r, i: rh.i, moved: true };
+        changed();
+        return;
+      }
+      selectRoad(rh.r);
+      drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
+      return;
+    }
     if (hit) {
+      selRoad = null;
+      selVertex = null;
       selected = hit;
       drag = { type: 'move', before: snapshot(), p: hit, dx: x - hit.x, dz: z - hit.z, moved: false };
       refresh();
       draw();
     } else {
       selected = null;
+      selRoad = null;
+      selVertex = null;
       refresh();
       drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
       draw();
@@ -1201,6 +1453,17 @@
       view.x = drag.vx + (px - drag.px);
       view.y = drag.vy + (py - drag.py);
       draw();
+      return;
+    }
+    if (drag?.type === 'vertex') {
+      drag.r.points[drag.i] = [x, z];
+      drag.moved = true;
+      rebuildSegs();
+      draw();
+      return;
+    }
+    if (mode === 'road') {
+      if (drawing) { drawing.cursor = [x, z]; draw(); }
       return;
     }
     if (drag?.type === 'move') {
@@ -1234,6 +1497,12 @@
     }
   });
   const end = () => {
+    if (drag && drag.type === 'vertex') {
+      if (drag.moved) undoStack.push(drag.before);
+      drag = null;
+      changed();
+      return;
+    }
     if (drag && (drag.type === 'move' || drag.type === 'turn')) {
       if (drag.type === 'turn' || drag.moved) {
         undoStack.push(drag.before);
@@ -1248,6 +1517,7 @@
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('pointerleave', () => { if (ghost) { ghost = null; draw(); } });
+  canvas.addEventListener('dblclick', () => { if (mode === 'road') finishDrawing(); });
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const [px, py] = local(e);
@@ -1262,7 +1532,9 @@
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && !typing) { e.preventDefault(); duplicate(); return; }
     if (typing) return;
-    if (e.key === 'Escape') { if (mode !== 'select') setMode('select'); else select(null); return; }
+    if (e.key === 'Enter' && mode === 'road') { finishDrawing(); return; }
+    if (e.key === 'Escape') { if (mode !== 'select') setMode('select'); else if (selRoad) selectRoad(null); else select(null); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selRoad) { e.preventDefault(); removeRoadOrPoint(); return; }
     if (e.key === 'r' || e.key === 'R') { rotate((e.shiftKey ? -1 : 1) * (Math.PI / 12)); return; }
     if (e.key === 'a' || e.key === 'A') { $('align').click(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && selected) { e.preventDefault(); remove(); return; }
@@ -1309,6 +1581,10 @@
       const hadEdits = props.length > 0;
       if (hadEdits) remember();
       props = doc.props.map((p) => ({ ...p }));
+      if (ROADS && Array.isArray(doc.roads)) {
+        roads = doc.roads.map((r) => ({ ...r, points: r.points.map((q) => [...q]) }));
+        removedRoads = doc.removedRoads ?? [];
+      }
       saved = snapshot();
       selected = null;
       changed();
@@ -1328,10 +1604,11 @@
         place: DATA.place,
         savedAt: new Date().toISOString(),
         props: props.map(clean),
+        ...(ROADS ? { roads: roads.map(cleanRoad), removedRoads } : {}),
       });
       saved = snapshot();
       refresh();
-      toast(`Saved ${props.length} props`);
+      toast(ROADS ? `Saved ${props.length} props and ${roads.length} roads` : `Saved ${props.length} props`);
     } catch (err) {
       toast(`Could not save (${err && err.code ? err.code : 'unknown error'}). Your placements are still here - try again.`);
     } finally {
@@ -1343,6 +1620,10 @@
   $('sub').textContent = `seed ${DATA.seed} · ${Math.round(B.maxX - B.minX)} × ${Math.round(B.maxZ - B.minZ)} m of ground`;
   buildPalette();
   buildLayers();
+  $('roads-section').hidden = !ROADS;
+  // What counts as saved before the first save: no props (so a fresh draft
+  // reads as unsaved, as it always has) and the roads as the export drew them.
+  saved = ROADS ? JSON.stringify({ props: [], roads: roads.map(cleanRoad), removedRoads: [] }) : '[]';
   new ResizeObserver(resize).observe(canvas);
   canvas.width = Math.round(canvas.clientWidth * dpr);
   canvas.height = Math.round(canvas.clientHeight * dpr);

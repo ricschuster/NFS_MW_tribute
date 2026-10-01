@@ -138,6 +138,32 @@ const roads = city.roads
     };
   });
 
+// The drawn roads the crop touches (#477), so the editor can change them: the
+// polylines `docs/roads-edited.json` holds, which `propsync` merges an edit
+// back into by id. Each city segment says which of them it lies on, so the
+// editor can draw and check against a road as it is being moved rather than
+// as it was exported.
+const edited = JSON.parse(readFileSync('docs/roads-edited.json', 'utf8'));
+const drawn = edited.roads.filter((r) => r.points.some(([x, z]) => x >= box.minX - 50 && x <= box.maxX + 50 && z >= box.minZ - 50 && z <= box.maxZ + 50));
+const onLine = (q, pts) => {
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, az] = pts[i - 1], [bx, bz] = pts[i];
+    const dx = bx - ax, dz = bz - az;
+    const t = Math.max(0, Math.min(1, ((q[0] - ax) * dx + (q[1] - az) * dz) / (dx * dx + dz * dz || 1)));
+    if (Math.hypot(ax + dx * t - q[0], az + dz * t - q[1]) < 2) return true;
+  }
+  return false;
+};
+const drawnWidths = {};
+for (const seg of roads) {
+  const owner = drawn.find((r) => onLine(seg.a, r.points) && onLine(seg.b, r.points));
+  if (!owner) continue;
+  seg.road = owner.id;
+  drawnWidths[owner.id] = Math.max(drawnWidths[owner.id] ?? 0, seg.width);
+}
+const roadWidths = {};
+for (const seg of roads) if (seg.class === 'street' || seg.class === 'boulevard') roadWidths[seg.class] = Math.max(roadWidths[seg.class] ?? 0, seg.width);
+
 const buildings = city.buildings
   .filter((b) => inBox({ x: (b.footprint.minX + b.footprint.maxX) / 2, z: (b.footprint.minZ + b.footprint.maxZ) / 2 }))
   .map((b) => ({
@@ -166,6 +192,10 @@ const out = {
   kind: KIND,
   height: { step: STEP, cols, rows, water: WATER, cells: Buffer.from(cells).toString('base64') },
   roads,
+  drawn,
+  drawnWidths,
+  roadWidths,
+  district: parkArea?.kind ?? 'midtown',
   buildings,
   furniture,
   collectibles: city.collectibles
