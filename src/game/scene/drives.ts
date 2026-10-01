@@ -11,14 +11,15 @@ const LIFT = 0.08 * M;
 const COLOURS: Record<Apron['look'], string> = { cobbles: '#6f665c', gravel: '#8c826f', concrete: '#9a9890' };
 
 /**
- * Ashford Point's drives and forecourts (#293), one mesh per look: each a
+ * Ashford Point's drives and forecourts (#293), and downtown's pavements and
+ * squares (#268), one mesh per look: each a
  * four-cornered strip draped over the ground, sampled along its length. Its
  * own geometry rather than the ground shader's apron loop (`wharfground.ts`),
  * which every fragment of the ground pays for once per apron.
  */
 export function drivesFor(city: City): THREE.Mesh[] {
   const byLook = new Map<Apron['look'], number[]>();
-  for (const drive of city.drives) {
+  for (const drive of [...city.drives, ...city.pavements]) {
     if (drive.outline.length !== 4) continue;
     const positions = byLook.get(drive.look) ?? [];
     byLook.set(drive.look, positions);
