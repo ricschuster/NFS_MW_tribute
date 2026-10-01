@@ -825,6 +825,9 @@ function crossing(a: Span, b: Span): Vec2 | null {
   return segmentIntersection(a.from, a.to, b.from, b.to);
 }
 
+/** A railway's width in lanes: two, about ten metres, which is a double track on its ballast. */
+const RAIL_LANES = 2;
+
 function roadWidth(lanes: number): number {
   return lanes * CITY_LANE_WIDTH;
 }
@@ -1403,7 +1406,9 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
     }
 
     const along = [...cuts].sort((p, q) => p - q);
-    const lanes = LANES_FOR[span.class] ?? DISTRICTS[span.district].lanes;
+    // A railway is as wide as its double track (#489), whatever the
+    // district's streets are: a one-lane works street is half a line.
+    const lanes = span.surface === 'rail' ? RAIL_LANES : LANES_FOR[span.class] ?? DISTRICTS[span.district].lanes;
     const speed = SPEED_FOR[span.class] ?? DISTRICTS[span.district].speed;
 
     for (let i = 0; i < along.length - 1; i++) {

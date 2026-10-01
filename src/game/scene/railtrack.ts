@@ -6,8 +6,9 @@ import type { City, CityRoad } from '../city/types';
  * The track on a railway (#489): two lines of sleepers and rails down a road
  * whose surface is `rail`, over the ballast `carriageways` paints under them.
  *
- * Double track, because a main line is, and because a road wide enough to
- * drive two cars down is wide enough for two tracks. The rails are drawn,
+ * Double track, because a main line is, and a railway is given the width
+ * for it (`RAIL_LANES`); anything drawn narrower gets one track down its
+ * middle rather than a second track off the edge of its ballast. The rails are drawn,
  * not solid: the sim drives the road under them like gravel, and a rail a
  * car could catch on would turn an escape route into a trap.
  *
@@ -18,8 +19,10 @@ import type { City, CityRoad } from '../city/types';
  */
 
 const M = UNITS_PER_METRE;
-/** Centre of each track from the middle of the line, in metres. */
+/** Centre of each track from the middle of the line, in metres, on a line wide enough for two. */
 const TRACKS = [-2.25, 2.25];
+/** Narrower than this and a line is one track down its middle. */
+const DOUBLE_WIDTH = 7.5;
 /** Half the gauge: standard gauge is 1.435 m between the rails. */
 const RAIL_HALF = 0.72;
 const SLEEPER_LENGTH = 2.6;
@@ -33,11 +36,12 @@ export function railTrack(
   roads: readonly CityRoad[],
   groundUnder: (x: number, z: number) => number,
 ): { meshes: THREE.Object3D[]; owned: (THREE.BufferGeometry | THREE.Material | THREE.Texture)[] } {
-  const pieces: { a: THREE.Vector3; b: THREE.Vector3; from: number }[] = [];
+  const pieces: { a: THREE.Vector3; b: THREE.Vector3; from: number; tracks: number[] }[] = [];
   for (const road of roads) {
     const a = city.nodes[road.a].pos;
     const b = city.nodes[road.b].pos;
     const steps = Math.max(1, Math.ceil(road.length / TERRAIN_RENDER_STEP));
+    const tracks = road.width / M >= DOUBLE_WIDTH ? TRACKS : [0];
     for (let s = 0; s < steps; s++) {
       const t0 = s / steps;
       const t1 = (s + 1) / steps;
@@ -49,6 +53,7 @@ export function railTrack(
         a: new THREE.Vector3(ax, groundUnder(ax, az), az),
         b: new THREE.Vector3(bx, groundUnder(bx, bz), bz),
         from: (road.length * t0) / M,
+        tracks,
       });
     }
   }
@@ -67,10 +72,10 @@ export function railTrack(
   const normals: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
-  for (const { a, b, from } of pieces) {
+  for (const { a, b, from, tracks } of pieces) {
     const { forward, right, normal } = frame(a, b);
     const length = a.distanceTo(b) / M;
-    for (const track of TRACKS) {
+    for (const track of tracks) {
       const base = positions.length / 3;
       for (const [along, v] of [
         [-PAD, (from - PAD) / SLEEPER_PITCH],
@@ -115,17 +120,17 @@ export function railTrack(
   // Rails: a unit box per rail per piece, scaled and pitched to the piece.
   const railGeometry = new THREE.BoxGeometry(1, 1, 1);
   const railMaterial = new THREE.MeshLambertMaterial({ color: '#8f9498' });
-  const count = pieces.length * TRACKS.length * 2;
+  const count = pieces.reduce((sum, piece) => sum + piece.tracks.length * 2, 0);
   const rails = new THREE.InstancedMesh(railGeometry, railMaterial, count);
   rails.name = 'rail-rails';
   rails.castShadow = true;
   const matrix = new THREE.Matrix4();
   let i = 0;
-  for (const { a, b } of pieces) {
+  for (const { a, b, tracks } of pieces) {
     const { forward, right, normal } = frame(a, b);
     const length = a.distanceTo(b) + 2 * PAD * M;
     const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5);
-    for (const track of TRACKS) {
+    for (const track of tracks) {
       for (const rail of [-RAIL_HALF, RAIL_HALF]) {
         matrix.makeBasis(
           right.clone().multiplyScalar(0.08 * M),
