@@ -373,7 +373,7 @@
     { id: 'gallery', group: 'Downtown', name: 'Gallery', w: 74, l: 50, shape: 'box', color: '#d8d0bd' },
     { id: 'cathedral', group: 'Downtown', name: 'Cathedral', w: 26, l: 64, shape: 'box', color: '#9e978a' },
     { id: 'city-hall', group: 'Downtown', name: 'City hall', w: 77, l: 45, shape: 'box', color: '#d6cdb8' },
-    { id: 'cruise-terminal', group: 'Downtown', name: 'Cruise terminal', w: 56, l: 200, shape: 'box', color: '#f4f4f0' },
+    { id: 'cruise-terminal', group: 'Downtown', name: 'Cruise terminal', w: 56, l: 200, shape: 'box', color: '#f4f4f0', water: 'ok' },
     { id: 'geodesic-dome', group: 'Downtown', name: 'Geodesic dome', w: 44, l: 44, shape: 'circle', color: '#c9ced4' },
     { id: 'flatiron', group: 'Downtown', name: 'Flatiron', w: 26, l: 44, shape: 'box', color: '#cbbfa6', variants: ['stone', 'brick'] },
     { id: 'hedge', group: 'Suburb', name: 'Front hedge', w: 16, l: 1.2, shape: 'box', color: '#3f6a37' },
@@ -512,6 +512,9 @@
       for (let j = 0; j < nv; j++) {
         const u = -w / 2 + (w * i) / (nu - 1);
         const v = -l / 2 + (l * j) / (nv - 1);
+        // A round thing is measured where it stands, not over the corners of
+        // the square round it: the stadium's corners are 40 m off its bowl (#268).
+        if (KIND[p.kind]?.shape === 'circle' && (u / (w / 2)) ** 2 + (v / (l / 2)) ** 2 > 1.0001) continue;
         pts.push([p.x + u * c + v * s, p.z - u * s + v * c]);
       }
     }
@@ -540,7 +543,8 @@
       }
     }
     if (off) out.push(['err', 'Off the edge of the exported field']);
-    if (wet) out.push(['err', wet >= pts.length - off ? 'In the water' : 'Hangs out over the water']);
+    // A cruise terminal stands out over the bay on its pier (#268); anything else in the water is an error.
+    if (wet && k.water !== 'ok') out.push(['err', wet >= pts.length - off ? 'In the water' : 'Hangs out over the water']);
     if (inside) out.push(['err', `Inside ${inside.derelict ? 'the derelict hangar' : `a ${inside.kind}`}`]);
     if (k.road === 'must') {
       const n = nearestRoad(p.x, p.z);
