@@ -23,6 +23,7 @@ import { groundAt } from './terrain';
 import { CityGrid, lineBlocked, inWater, surfaceAt, distanceToRoad } from './grid';
 import { distanceToSegment } from './grid';
 import { PLAN_PLACES, PLAN_RUNWAY } from './plan';
+import { AUTHORED_ROADS } from './roads';
 import { layRoute, type Span } from './spans';
 import type { Water } from './water';
 import type { City, CityRoad, Rect } from './types';
@@ -627,8 +628,13 @@ describe('the embankment', () => {
   // them to it - both are genuine dead ends, not stubs, and it will climb
   // again with every district that grows real houses of its own; if it climbs
   // for any other reason, that is a stub to go find.
+  //
+  // A road drawn as a dead end (a suburb's cul-de-sacs, #477 and #487) stops
+  // where somebody meant it to, so it is not counted at all.
   it('leaves the network with few dead ends at all', () => {
-    expect(deadEnds().length).toBeLessThan(70);
+    const meant = AUTHORED_ROADS.filter((r) => r.deadEnd).map((r) => r.points[r.points.length - 1]);
+    const stubs = deadEnds().filter(({ node }) => !meant.some((p) => Math.hypot(p.x - node.pos.x, p.z - node.pos.z) < m(5)));
+    expect(stubs.length).toBeLessThan(70);
   });
 });
 

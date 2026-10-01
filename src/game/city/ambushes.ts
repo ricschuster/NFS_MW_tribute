@@ -35,6 +35,10 @@ export function ambushesFor(city: City): AmbushSpot[] {
         return road.class !== 'interstate' && road.class !== 'ramp' && !road.bridge;
       }),
     )
+    // Three of those roads have to go somewhere. A junction where cul-de-sacs
+    // leave a boulevard (#487) counts three roads and has two ways out, and
+    // the cars sprung there have nowhere to come from but the one road in.
+    .filter((node) => node.roads.filter((id) => !leadsNowhere(city, node.id, id)).length >= 3)
     .sort(
       (a, b) =>
         Math.hypot(a.pos.x - middle.x, a.pos.z - middle.z) -
@@ -52,4 +56,22 @@ export function ambushesFor(city: City): AmbushSpot[] {
     });
   }
   return spots;
+}
+
+/**
+ * Whether a road off a junction only ends: followed through its plain
+ * through-points, it stops at a node nothing else meets.
+ */
+function leadsNowhere(city: City, from: number, roadId: number): boolean {
+  let node = from;
+  let id = roadId;
+  for (let steps = 0; steps < 200; steps++) {
+    const road = city.roads[id];
+    node = road.a === node ? road.b : road.a;
+    const next = city.nodes[node].roads;
+    if (next.length === 1) return true;
+    if (next.length !== 2) return false;
+    id = next[0] === id ? next[1] : next[0];
+  }
+  return false;
 }

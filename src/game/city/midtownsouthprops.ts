@@ -2,8 +2,10 @@
 // Place props in the Midtown south Props editor (`npm run propexport -- --place midtown-south`), save,
 // read the save back into docs/midtown-south-props-edited.json, and run the sync again.
 //
-// Nothing placed yet (#487).
+// Seed 0x4b657374, saved 2026-10-01T02:16:40.940Z.
 import type { AuthoredProp } from './types';
 
 /** Midtown south's set dressing, in metres, as placed in the editor (#487). */
-export const MIDTOWN_SOUTH_PROPS: AuthoredProp[] = [];
+export const MIDTOWN_SOUTH_PROPS: AuthoredProp[] = [
+
+];
