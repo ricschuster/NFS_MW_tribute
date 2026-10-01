@@ -622,6 +622,41 @@ function cafe(): Part[] {
   ];
 }
 
+const WALLS: Record<string, string> = { cream: '#e4dcc4', brick: '#9a5b45', blue: '#8fa6b8', green: '#9fb39a', render: '#d8d2c6' };
+const ROOFS: Record<string, string> = { cream: '#6b4a3a', brick: '#4f4a48', blue: '#56504a', green: '#6b4a3a', render: '#5b5f60' };
+
+/**
+ * A suburban house (#477): two storeys under a pitched roof running across
+ * the front, a door and windows facing the street, and a chimney. The
+ * variant is the colour of its walls.
+ */
+function house(variant?: string): Part[] {
+  const wall = WALLS[variant ?? 'cream'] ?? WALLS.cream;
+  // A three-sided cylinder on its side is a gable roof: ridge along the
+  // front, apex up, eaves the depth of the house.
+  const roof = new THREE.CylinderGeometry(7, 7, 10.6, 3).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2).scale(1, 0.42, 1);
+  const windows = [-2.8, 2.8].flatMap((x) => [1.5, 4].map((y) => ({ geometry: at(box(1.4, 1.2, 0.1), x, y, 6.02), colour: '#3a4a52' })));
+  return [
+    { geometry: at(box(10, 5.5, 12), 0, 2.75, 0), colour: wall },
+    { geometry: at(roof, 0, 5.5 + 7 * 0.5 * 0.42, 0), colour: ROOFS[variant ?? 'cream'] ?? ROOFS.cream },
+    { geometry: at(box(1.2, 2.2, 0.12), 0, 1.1, 6.03), colour: '#5a3e2e' },
+    ...windows,
+    { geometry: at(box(0.9, 2.6, 0.9), 3.4, 8.2, -2.5), colour: '#7a4c3a' },
+  ];
+}
+
+/** A low apartment block (#477): three storeys, a flat roof, rows of windows front and back. */
+function apartment(variant?: string): Part[] {
+  const wall = WALLS[variant ?? 'brick'] ?? WALLS.brick;
+  const rows = [1.6, 4.8, 8].flatMap((y) => [-9, -5, -1, 3, 7].flatMap((x) => [6.02, -6.02].map((z) => ({ geometry: at(box(1.8, 1.4, 0.1), x + 1, y, z), colour: '#3a4a52' }))));
+  return [
+    { geometry: at(box(24, 9.6, 12), 0, 4.8, 0), colour: wall },
+    { geometry: at(box(24.4, 0.4, 12.4), 0, 9.8, 0), colour: ROOFS[variant ?? 'brick'] ?? ROOFS.brick },
+    { geometry: at(box(2.2, 2.6, 0.14), -11 + 2.5, 1.3, 6.04), colour: '#3d3a36' },
+    ...rows,
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -676,6 +711,8 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   bandstand: grown(bandstand, HOUSE_GROWN),
   'toilet-block': grown(toiletBlock, HOUSE_GROWN),
   cafe: grown(cafe, HOUSE_GROWN),
+  house: grown(house, HOUSE_GROWN),
+  apartment: grown(apartment, HOUSE_GROWN),
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

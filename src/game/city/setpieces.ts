@@ -142,6 +142,10 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   bandstand: grown([post(0, 0, 4.4, 1.1), { u: 0, v: 0, r: 4.8, y0: 3.8, y1: 5.6 }], HOUSE_GROWN),
   'toilet-block': grown([{ u: 0, v: 0, w: 5, l: 8, y0: 0, y1: 3.2 }], HOUSE_GROWN),
   cafe: grown([{ u: 0, v: 0, w: 7, l: 12, y0: 0, y1: 3.8 }], HOUSE_GROWN),
+  // Midtown north's suburb (#477): a house and a low apartment block, solid
+  // as boxes to their eaves, at the sizes in `suburb.ts`.
+  house: grown([{ u: 0, v: 0, w: 10, l: 12, y0: 0, y1: 5.5 }], HOUSE_GROWN),
+  apartment: grown([{ u: 0, v: 0, w: 24, l: 12, y0: 0, y1: 9.6 }], HOUSE_GROWN),
 };
 
 /**
