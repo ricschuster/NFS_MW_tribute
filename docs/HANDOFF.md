@@ -3,7 +3,28 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, end of session).** Seven areas are done and
+- **Start here (2026-10-02, paused mid Midtown south).** Midtown south (#487)
+  is in progress. Done: the suburb tools take `--place midtown-south` (#494);
+  the freeway is a view-only layer in the area editors and the Road Editor;
+  17 streets drafted and kept by the owner, the bank boulevard is the
+  promenade (#495). The Midtown south Props editor is an Artifact (URL in the
+  agent's memory), store `edits/props` at v6 (roads only); the Road Editor's
+  `edits/roads` is at v64.
+  - **Next:** houses behind the promenade, land side only. A draft exists
+    uncommitted in the `../crosstown-south` worktree: `WATERFRONT` in
+    `city/suburb.ts` (no lot between a road and water within 40 m) and
+    `housedraft --place midtown-south --houses` output (199 houses, 51
+    apartments, hedges, 392 street trees). Before using it: make `housedraft`
+    keep the file's other keys (it dropped the save's `roads`), then
+    `propsync`, `propexport`, write the props into the editor's store pinned
+    to v6, republish, and let the owner review. Street trees on the promenade
+    go once the bank sprint is laid.
+  - **Then:** the sprint along the promenade, one repair shop. Open: the
+    deck's pillars are single, visual-only columns; solid pairs at the deck
+    edges were recommended for streets under it, not decided. n101's far end
+    (outside the area) is drawn 40 m short of r89 and the stitch pulls it 34 m:
+    reported, the owner's to fix.
+- **Earlier (2026-10-01, end of session).** Seven areas are done and
   signed off (Marrow Field, Sablet Wharf, Halloway Quarry, Kestrel Head,
   Highmoor Park, Tidewater Park, Midtown north); three are audited **with the
   owner's answers in** and nothing built; Ashford Point is parked (#293, never
