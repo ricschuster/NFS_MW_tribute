@@ -47,13 +47,12 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
        finishes, none faster in traffic. Keep street trees off race roads.
        One event per route: raise `CAR_EVENTS_MAX` and add the route's words
        in `carevents.ts`.
-  - **First jobs for Midtown south**, because the tools still assume Midtown
-    north: `housedraft` writes `docs/midtown-props-edited.json` and
-    `SUBURB_AREAS` is `[2]`; `propexport`/`propsync`'s `midtown` place is the
-    third midtown only. Give them an area argument (e.g. `--place
-    midtown-south`, its own props file and generated module). `suburbdraft`
-    grows streets square off boulevards, so the promenade (one road along
-    the water) and streets under the deck are new modes or drawn by hand.
+  - **Midtown south's tools are ready:** `housedraft`, `propexport` and
+    `propsync` take `--place midtown-south` (the suburbs are a table in
+    `tools/suburbs.mjs`; its props go to `docs/midtown-south-props-edited.json`
+    and `city/midtownsouthprops.ts`). `suburbdraft` grows streets square off
+    boulevards, so the promenade (one road along the water) and the streets
+    under the deck are new modes or drawn by hand.
   - **Rules that hold:** races are not tuned while the map is built ("Races
     wait for the map" in `docs/map-areas.md`; `RIVAL_CIRCUITS` keeps the
     ladder on Halloway Rim and Sablet Quay); **never move a road the owner

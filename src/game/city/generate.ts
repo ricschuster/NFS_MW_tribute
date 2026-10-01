@@ -57,6 +57,7 @@ import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { MIDTOWN_PROPS } from './midtownprops';
+import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
@@ -672,6 +673,8 @@ export function generateCity(seed: number): City {
     // Midtown north's houses (#477): drafted by `npm run housedraft`, edited
     // in the area editor.
     ...MIDTOWN_PROPS,
+    // And Midtown south's (#487), the same way.
+    ...MIDTOWN_SOUTH_PROPS,
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:
