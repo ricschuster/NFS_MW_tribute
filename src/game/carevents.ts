@@ -54,6 +54,7 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Tidewater Drive': ['Lawn', 'Pond', 'Bandstand', 'Parkway', 'Willow', 'Shoreline'],
   'Midtown Crescents': ['Crescent', 'Hedgerow', 'Driveway', 'Porch', 'Cul-de-sac', 'Avenue'],
   'Northshore Loop': ['Northshore', 'Seawall', 'Breakwater', 'Lighthouse', 'Surf', 'Headland'],
+  'Promenade Sprint': ['Promenade', 'Bankside', 'Channel', 'Railing', 'Esplanade', 'Mooring'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 

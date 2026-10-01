@@ -242,7 +242,9 @@ is in `generate.ts` next to where it happens.
 under the interstate rather than swept out from under it - the opposite trade
 from a ramp's corridor (#212), because a ramp is low enough to be in the road
 and the deck is high enough to be scenery. `DECK_HEADROOM`'s doc comment in
-`constants.ts` has the measurement that forced this.
+`constants.ts` has the measurement that forced this. The deck stands on pairs
+of solid pillars under its edges (#487), city data so the sim hits what is
+drawn, and none stands on a road: `city/pillars.ts`.
 
 **The freeway is built last, so it is the one thing that can end up in the
 bay** (issue #244). The rule isn't "keep the freeway off the water" - the

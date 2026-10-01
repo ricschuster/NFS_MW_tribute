@@ -362,6 +362,15 @@ export interface AmbushSpot {
 }
 
 /**
+ * A pillar under the freeway deck (#487): solid, from the ground up to the
+ * deck. Its height is the deck's above the surface there.
+ */
+export interface Pillar {
+  at: Vec2;
+  height: number;
+}
+
+/**
  * A drive-through repair shop (#95).
  *
  * A position on a road and nothing else. It has to be something you go
@@ -574,6 +583,8 @@ export interface City {
   routes: CityRoute[];
   ambushes: AmbushSpot[];
   repairs: RepairShop[];
+  /** What holds the freeway deck up (#487), pairs under its edges. */
+  pillars: Pillar[];
   breakables: Breakable[];
   /** Hand-placed set dressing (#295). */
   setPieces: SetPiece[];

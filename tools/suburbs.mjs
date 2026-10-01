@@ -12,6 +12,7 @@ export const SUBURBS = {
   'midtown-south': {
     index: 1, name: 'Midtown south', issue: '#487',
     json: 'docs/midtown-south-props-edited.json', module: 'midtownsouthprops', exportName: 'MIDTOWN_SOUTH_PROPS', prefix: 'midtown-south-',
+    route: 'Promenade Sprint',
   },
 };
 

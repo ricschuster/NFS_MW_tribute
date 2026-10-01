@@ -45,6 +45,7 @@ import { parksFor } from './parks';
 import { findsFor } from './streetfinds';
 import { placedRoutes, routesFor } from './routes';
 import { ambushesFor } from './ambushes';
+import { pillarsFor } from './pillars';
 import { repairsFor } from './repairs';
 import { breakablesFor } from './breakables';
 import { airfieldProps } from './setpieces';
@@ -612,6 +613,7 @@ export function generateCity(seed: number): City {
     routes: [],
     ambushes: [],
     repairs: [],
+    pillars: [],
     breakables: [],
     setPieces: [],
     aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons()],
@@ -651,6 +653,7 @@ export function generateCity(seed: number): City {
   for (const route of city.routes) route.heights = route.points.map((p) => heightOf.get(p) ?? 0);
   city.ambushes = ambushesFor(city);
   city.repairs = repairsFor(city);
+  city.pillars = pillarsFor(city);
   city.breakables = breakablesFor(rng, city);
   // Marrow Field's hand-placed props (#295), last and off no stream at all:
   // they are data, so placing them draws nothing from `rng` and cannot move

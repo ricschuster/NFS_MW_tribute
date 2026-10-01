@@ -284,7 +284,8 @@ if (suburb) {
   const run = suburb.route && city.routes.find((r) => r.name === suburb.route);
   out.guides = [
     { poly: pts(parkArea.poly), label: suburb.name, color: '#f2c230' },
-    ...(run ? [{ line: [...pts(run.points), pts(run.points)[0]], label: suburb.route, color: '#ff5a5a' }] : []),
+    // A sprint ends at its finish; only a loop closes back to its start.
+    ...(run ? [{ line: run.kind === 'sprint' ? pts(run.points) : [...pts(run.points), pts(run.points)[0]], label: suburb.route, color: '#ff5a5a' }] : []),
   ];
 }
 if (castle) {

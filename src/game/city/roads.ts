@@ -21,7 +21,7 @@
  * `docs/roads-edited.json`, which is what the road editor saves. Editing here
  * instead means the next sync silently reverts you.
  *
- * 121 roads · 91.0 km ·
+ * 122 roads · 92.0 km ·
  * 0 carrying a bridge
  */
 import { UNITS_PER_METRE } from '../constants';
@@ -62,6 +62,12 @@ const road = (
 };
 
 export const AUTHORED_ROADS: AuthoredRoad[] = [
+  // deck1 · 930 m · gravel
+  road('deck1', 'street', 'midtown', 0, 0, [
+    -850,-359, -855,-371, -879,-428, -903,-485, -926,-543, -950,-600, -955,-657, -960,-714,
+    -965,-771, -970,-829, -975,-886, -980,-943, -985,-1000, -990,-1058, -992,-1077, -995,-1115,
+    -1000,-1172, -1006,-1230, -1009,-1266,
+  ], 'gravel'),
   // h1 · 69 m · gravel
   road('h1', 'street', 'park', 0, 0, [
     705,-40, 772,-22,
@@ -978,7 +984,7 @@ export const AUTHORED_ROADS: AuthoredRoad[] = [
   ]),
   // s1-9 · 327 m · deadEnd
   road('s1-9', 'street', 'midtown', 0, 1, [
-    -1132,-1391, -1084,-1319, -1025,-1270, -950,-1252, -864,-1257,
+    -1132,-1391, -1084,-1319, -1025,-1270, -1009,-1266, -950,-1252, -864,-1257,
   ]),
   // s2-1 · 664 m
   road('s2-1', 'street', 'midtown', 0, 0, [
