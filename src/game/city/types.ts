@@ -516,6 +516,11 @@ export type SetPieceKind =
   | 'apartment'
   | 'shop'
   | 'flat'
+  | 'chimney'
+  | 'tank'
+  | 'gantry'
+  | 'rails'
+  | 'wagon'
   | 'hedge'
   | 'street-tree';
 

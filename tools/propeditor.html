@@ -344,6 +344,13 @@
     // Midtown south-west's high street (#488).
     { id: 'shop', group: 'Suburb', name: 'Shop, flats over', w: 12.8, l: 19.2, shape: 'box', color: '#c9a25c', variants: ['red', 'green', 'blue', 'black'] },
     { id: 'flat', group: 'Suburb', name: 'Block of flats', w: 25.6, l: 19.2, shape: 'box', color: '#7f9fc8', variants: ['brick', 'render'] },
+    // The works (#489), at real size. A gantry's footprint is its legs and
+    // beam; a car drives under it. Rail track is ground and may cross a road.
+    { id: 'chimney', group: 'Works', name: 'Chimney', w: 7, l: 7, shape: 'box', color: '#8c4a3a' },
+    { id: 'tank', group: 'Works', name: 'Storage tank', w: 28, l: 28, shape: 'circle', color: '#d9d6cc', variants: ['large', 'small'], sizes: { large: [28, 28], small: [14, 14] } },
+    { id: 'gantry', group: 'Works', name: 'Gantry crane', w: 34, l: 7, shape: 'box', color: '#d9a12b' },
+    { id: 'rails', group: 'Works', name: 'Rail track, 40 m', w: 3.4, l: 40, shape: 'box', color: '#7d776c', road: 'ok', flat: true },
+    { id: 'wagon', group: 'Works', name: 'Rail wagon', w: 3, l: 14, shape: 'box', color: '#8a5a3c', variants: ['box', 'tank'] },
     { id: 'hedge', group: 'Suburb', name: 'Front hedge', w: 16, l: 1.2, shape: 'box', color: '#3f6a37' },
     // Sized to its trunk and the low part of its crown, not the canopy that
     // hangs over the verge: the canopy is over a car and blocks nothing.

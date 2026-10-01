@@ -333,6 +333,31 @@ describe('hitsSetPiece', () => {
   });
 });
 
+describe('the works (#489)', () => {
+  const r = CAR_RADIUS;
+  const piece = (kind: SetPiece['kind'], variant?: string): SetPiece => ({ kind, at: { x: 0, z: 0 }, y: 0, angle: 0, variant });
+
+  it('lets a car drive under a gantry crane between its legs, and not through a leg', () => {
+    const gantry = [piece('gantry')];
+    expect(hitsSetPiece(gantry, 0, 0, 0, r, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece(gantry, 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece(gantry, 16 * M, 2.5 * M, 0, r, CAR_HEIGHT)).toBe(true);
+    // Its beam is fourteen metres up: what is tall enough meets it.
+    expect(hitsSetPiece(gantry, 0, 0, 0, r, 15 * M)).toBe(true);
+  });
+
+  it('stands a chimney and a tank in the way, small tanks smaller', () => {
+    expect(hitsSetPiece([piece('chimney')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('tank')], 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('tank', 'small')], 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(false);
+  });
+
+  it('lets a car drive over rail track, and not through a wagon on it', () => {
+    expect(hitsSetPiece([piece('rails')], 0, 0, 0, r, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece([piece('wagon')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+  });
+});
+
 describe('driving into them', () => {
   const FLOOR = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
 
