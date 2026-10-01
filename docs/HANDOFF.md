@@ -3,15 +3,35 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, the owner away; Midtown south-west drafted).**
-  The owner said to keep going while away. Midtown south-west (#488) is
-  built up to the owner's review: the tools and two new kinds are merged
-  (shops with flats over them, blocks of flats, a high-street mode in the
-  drafter, pavements paved; `HIGH_STREETS` is empty on main), and a draft
-  waits on a branch and in a new area editor (URL in the agent's memory):
-  7 streets, houses, and n100 as the high street, the draft's pick. **The
-  owner's to decide:** which boulevard is the high street, and the streets
-  and props in the editor. Then the sprint down it.
+- **Start here (2026-10-01, the owner away; two areas ready for the owner).**
+  The owner said to keep going while away, and to take on anything else
+  found on the way. Everything below is merged except the drafts, which
+  wait for the owner.
+  - **Midtown south-west (#488), drafted, waiting for the owner.** Merged:
+    shops with flats over them and blocks of flats (#502), the drafter's
+    high-street mode, pavements paved; `HIGH_STREETS` is empty on main.
+    Not merged: branch `midtown-sw-draft` (pushed, no PR) with 7 streets,
+    n100 as the high street (the draft's pick), 26 shops, 11 blocks of
+    flats, 81 houses, and the **Main Street Sprint** (2.1 km from
+    downtown's edge down the high street into Tidewater Park; 44% of top
+    empty, 26% in traffic). It is in the Midtown south-west Props editor
+    (URL in the agent's memory, store empty until the owner's first save)
+    and on the dev server. **The owner decides:** which boulevard is the
+    high street; the streets and props. Then sync, rebase the branch onto
+    main, PR.
+  - **Industrial (#489), ready for the owner's layout.** Merged: chimneys,
+    storage tanks, gantry cranes (a car drives under), rail track and
+    wagons (#504); an Industrial area editor (#505, published empty, URL in
+    memory). The works' layout, yards and streets are the owner's.
+  - **Found and fixed on the way:** paved ground was six uniform arrays,
+    about 590 uniform vectors, where WebGL 2 promises 224, so a phone at the
+    minimum likely never compiled the ground; it is a texture now, any
+    number of aprons (#504). The area editors drew the old single pillars,
+    not #501's pairs (#505). `cityshot --view at` stands the car anywhere
+    and cuts the camera to it (#502, #503).
+  - **Process notes:** a PR opened just after another merges can sit
+    BEHIND with auto-merge armed, since the branch updater only runs on a
+    push to main: update it by hand (`gh api -X PUT .../pulls/N/update-branch`).
 - **Start here (2026-10-01, Midtown south signed off).** Eight areas are
   done and signed off; Midtown south (#487) is the eighth, driven and
   approved by the owner on 2026-10-01. Next is **Midtown south-west (#488)**,
