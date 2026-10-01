@@ -77,6 +77,8 @@
   .kind[aria-pressed='true'] { background: var(--panel-2); border-color: var(--accent); }
   .kind:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .kind canvas { width: 22px; height: 22px; }
+  /* The drawing tools have no glyph: their text takes the glyph's column too. */
+  #k-road, #k-yard { grid-template-columns: 1fr auto; }
   .kind .meta { display: flex; flex-direction: column; min-width: 0; }
   .kind .size { font: 10.5px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
   .kind .count { font: 500 11px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
@@ -199,6 +201,7 @@
     <section id="roads-section" hidden>
       <h2>Roads</h2>
       <button class="kind" id="k-road" aria-pressed="false"><span class="meta"><span>Draw a road</span><span class="size">click points · Enter or double-click to finish</span></span><span class="count" id="c-road"></span></button>
+      <button class="kind" id="k-yard" aria-pressed="false"><span class="meta"><span>Draw a yard</span><span class="size">paved, drivable, no traffic · click its corners</span></span><span class="count" id="c-yard"></span></button>
     </section>
     <section>
       <h2>Place</h2>
@@ -209,7 +212,7 @@
       <p class="empty" id="none">Nothing selected. Pick a prop above and click the map to place it, or click one already placed.</p>
       <div id="road-detail" hidden>
         <div class="field"><label>Road</label><div id="r-id"></div></div>
-        <div class="field"><label for="r-kind">Class</label><select id="r-kind"><option value="street">street</option><option value="boulevard">boulevard</option></select></div>
+        <div class="field"><label for="r-kind">Class</label><select id="r-kind"><option value="street">street</option><option value="boulevard">boulevard</option><option value="yard">yard</option></select></div>
         <div class="field"><label for="r-surface">Surface</label><select id="r-surface"><option value="asphalt">asphalt</option><option value="gravel">gravel</option><option value="dirt">dirt</option></select></div>
         <div class="field"><label for="r-dead">Dead end</label><input id="r-dead" type="checkbox" style="justify-self:start"></div>
         <ul class="checks" id="r-info"></ul>
@@ -385,6 +388,8 @@
     if (!ROADS) return;
     const live = [];
     for (const r of roads) {
+      // A yard (#489) is ground, not a road: no ribbon, nothing snaps to it.
+      if (r.kind === 'yard') continue;
       for (let i = 1; i < r.points.length; i++) {
         live.push({ a: r.points[i - 1], b: r.points[i], width: widthOf(r), surface: r.surface ?? 'asphalt', class: r.kind, road: r.id });
       }
@@ -976,7 +981,16 @@
     };
     // Every drawn road shows its centreline faintly, so it is clear which
     // roads this editor can change.
-    if (layers.roads) for (const r of roads) line(r.points, r === selRoad ? '#f2c230' : 'rgba(242,194,48,0.28)', r === selRoad ? 2 : 1);
+    // A yard (#489): paved ground the sync makes an apron, drawn as itself.
+    for (const r of roads) {
+      if (r.kind !== 'yard' || r.points.length < 3) continue;
+      ctx.beginPath();
+      r.points.forEach(([x, z], i) => (i ? ctx.lineTo(sx(x), sy(z)) : ctx.moveTo(sx(x), sy(z))));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(155,155,146,0.45)';
+      ctx.fill();
+    }
+    if (layers.roads) for (const r of roads) line(r.kind === 'yard' ? [...r.points, r.points[0]] : r.points, r === selRoad ? '#f2c230' : 'rgba(242,194,48,0.28)', r === selRoad ? 2 : 1);
     // Every end the sync would pull, as a red dash to where it would go.
     for (const r of roads) {
       for (const pull of pulls(r)) {
@@ -1143,6 +1157,7 @@
    */
   const STITCH = 70;
   function pulls(r) {
+    if (r.kind === 'yard') return [];
     const nearestTo = (at) => {
       let best = null;
       for (const q of segs) {
@@ -1170,15 +1185,16 @@
   }
   function finishDrawing() {
     if (!drawing) return;
-    if (drawing.length >= 2) {
+    const yard = mode === 'yard';
+    if (drawing.length >= (yard ? 3 : 2)) {
       remember();
-      const r = { id: newId().replace(/^p/, 'e'), kind: 'street', district: DATA.district ?? 'midtown', bridge: false, points: drawing.map((q) => [...q]), isNew: true };
+      const r = { id: newId().replace(/^p/, yard ? 'y' : 'e'), kind: yard ? 'yard' : 'street', district: DATA.district ?? 'midtown', bridge: false, points: drawing.map((q) => [...q]), isNew: true };
       roads.push(r);
       drawing = null;
       setMode('select');
       selectRoad(r);
       changed();
-      toast('Road added');
+      toast(yard ? 'Yard added' : 'Road added');
       return;
     }
     drawing = null;
@@ -1187,7 +1203,7 @@
   function removeRoadOrPoint() {
     if (!selRoad) return;
     remember();
-    if (selVertex !== null && selRoad.points.length > 2) {
+    if (selVertex !== null && selRoad.points.length > (selRoad.kind === 'yard' ? 3 : 2)) {
       selRoad.points.splice(selVertex, 1);
       selVertex = null;
     } else {
@@ -1210,6 +1226,8 @@
   $('r-delpoint').onclick = () => removeRoadOrPoint();
   $('r-del').onclick = () => { selVertex = null; removeRoadOrPoint(); };
   $('k-road').onclick = () => setMode(mode === 'road' ? 'select' : 'road');
+  $('k-yard').onclick = () => setMode(mode === 'yard' ? 'select' : 'yard');
+  const outlining = () => mode === 'road' || mode === 'yard';
 
   function select(p) {
     selected = p;
@@ -1220,7 +1238,7 @@
   function setMode(m) {
     mode = m;
     ghost = null;
-    if (m !== 'road') drawing = null;
+    if (m !== 'road' && m !== 'yard') drawing = null;
     canvas.style.cursor = m === 'select' ? 'default' : 'crosshair';
     refresh();
     draw();
@@ -1305,7 +1323,10 @@
   function refresh() {
     if (ROADS) {
       $('k-road').setAttribute('aria-pressed', String(mode === 'road'));
-      $('c-road').textContent = roads.length;
+      $('c-road').textContent = roads.filter((r) => r.kind !== 'yard').length;
+      $('k-yard').setAttribute('aria-pressed', String(mode === 'yard'));
+      const yards = roads.filter((r) => r.kind === 'yard').length;
+      $('c-yard').textContent = yards ? yards : '';
     }
     for (const k of KINDS) {
       $(`k-${k.id}`).setAttribute('aria-pressed', String(mode === k.id));
@@ -1335,7 +1356,9 @@
     $('undo').disabled = !undoStack.length;
     $('revert').disabled = !dirty;
 
-    $('hint').innerHTML = mode === 'road'
+    $('hint').innerHTML = mode === 'yard'
+      ? 'Click each corner of the yard · <kbd>Enter</kbd> or double-click to close it · <kbd>Esc</kbd> cancel · roads that end inside it close to traffic'
+      : mode === 'road'
       ? 'Click to add points - they snap onto a road you click on · <kbd>Enter</kbd> or double-click to finish · <kbd>Esc</kbd> cancel'
       : mode === 'select'
       ? 'Drag to move · handle to turn · <kbd>R</kbd> ±15° · <kbd>Del</kbd> remove · drag the map to pan' + (ROADS ? ' · click a road to edit it, drag its points (they snap onto a road), <kbd>Shift</kbd>-click it to add one · a red dash is an end the sync would move' : '')
@@ -1352,9 +1375,15 @@
       $('r-kind').value = r.kind;
       $('r-surface').value = r.surface ?? 'asphalt';
       $('r-dead').checked = !!r.deadEnd;
-      $('r-delpoint').disabled = selVertex === null || r.points.length <= 2;
+      const fewest = r.kind === 'yard' ? 3 : 2;
+      $('r-delpoint').disabled = selVertex === null || r.points.length <= fewest;
       const warn = pulls(r).map((pull) => `<li class="warn">${pull.i === 0 ? 'Start' : 'End'} will be joined to ${pull.onto}, ${Math.round(pull.d)} m away, when synced - drag it onto the road, or tick Dead end to keep it where it is</li>`).join('');
-      $('r-info').innerHTML = warn + `<li class="info">${Math.round(len)} m · ${r.points.length} points</li>`;
+      if (r.kind === 'yard') {
+        // Shoelace: the yard's area, which is what matters about one.
+        let twice = 0;
+        r.points.forEach(([x, z], i) => { const [x2, z2] = r.points[(i + 1) % r.points.length]; twice += x * z2 - x2 * z; });
+        $('r-info').innerHTML = `<li class="info">${Math.round(Math.abs(twice) / 2).toLocaleString()} m² · ${r.points.length} corners · roads ending inside it close to traffic</li>`;
+      } else $('r-info').innerHTML = warn + `<li class="info">${Math.round(len)} m · ${r.points.length} points</li>`;
     }
     if (!selected) return;
     const p = selected, k = KIND[p.kind];
@@ -1460,8 +1489,8 @@
       drag = { type: 'pan', px, py, vx: view.x, vy: view.y };
       return;
     }
-    if (mode === 'road') {
-      const at = snapToRoads(x, z);
+    if (outlining()) {
+      const at = mode === 'yard' ? [x, z] : snapToRoads(x, z);
       drawing = drawing ?? [];
       const last = drawing[drawing.length - 1];
       // A second click on the last point finishes the road.
@@ -1551,7 +1580,7 @@
       draw();
       return;
     }
-    if (mode === 'road') {
+    if (outlining()) {
       if (drawing) { drawing.cursor = [x, z]; draw(); }
       return;
     }
@@ -1608,7 +1637,7 @@
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('pointerleave', () => { if (ghost) { ghost = null; draw(); } });
-  canvas.addEventListener('dblclick', () => { if (mode === 'road') finishDrawing(); });
+  canvas.addEventListener('dblclick', () => { if (outlining()) finishDrawing(); });
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const [px, py] = local(e);
@@ -1623,7 +1652,7 @@
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && !typing) { e.preventDefault(); duplicate(); return; }
     if (typing) return;
-    if (e.key === 'Enter' && mode === 'road') { finishDrawing(); return; }
+    if (e.key === 'Enter' && outlining()) { finishDrawing(); return; }
     if (e.key === 'Escape') { if (mode !== 'select') setMode('select'); else if (selRoad) selectRoad(null); else select(null); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && selRoad) { e.preventDefault(); removeRoadOrPoint(); return; }
     if (e.key === 'r' || e.key === 'R') { rotate((e.shiftKey ? -1 : 1) * (Math.PI / 12)); return; }
@@ -1712,6 +1741,8 @@
   buildPalette();
   buildLayers();
   $('roads-section').hidden = !ROADS;
+  // Only an area whose yards the game reads offers to draw one (#489).
+  $('k-yard').hidden = !DATA.yards;
   // What counts as saved before the first save: no props (so a fresh draft
   // reads as unsaved, as it always has) and the roads as the export drew them.
   saved = ROADS ? JSON.stringify({ props: [], roads: roads.map(cleanRoad), removedRoads: [] }) : '[]';

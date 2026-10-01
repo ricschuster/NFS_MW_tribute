@@ -24,6 +24,10 @@ export const SUBURBS = {
   // `housedraft` refuses it.
   industrial: {
     district: 'industrial', index: 0, name: 'Industrial', issue: '#489',
+    // Its open yards (#489) are drawn in the editor and paved by the game
+    // (`INDUSTRIAL_YARDS`, `city/yards.ts`); an area takes yards only once
+    // the generator reads its module's yards.
+    yards: true,
     json: 'docs/industrial-props-edited.json', module: 'industrialprops', exportName: 'INDUSTRIAL_PROPS', prefix: 'industrial-',
   },
 };

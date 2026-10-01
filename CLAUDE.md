@@ -171,7 +171,9 @@ what the city is shaped like.
 - `npm run propexport -- --place P` — crop an area out of the generated city
   and write `screenshots/<area>-propeditor.html`, the area editor with the
   ground inlined: props, houses and the area's drawn roads, all editable
-  (#477). `npm run propsync -- --place P` writes the area's props file from
+  (#477), and in an area that takes them (Industrial, #489) yards: paved,
+  drivable outlines closed to traffic, synced into the area's module as
+  `<AREA>_YARDS` and paved by `city/yards.ts`. `npm run propsync -- --place P` writes the area's props file from
   the save, and merges any roads in it into `docs/roads-edited.json` by id
   and runs `roadsync`; the Road Editor's store is then behind and wants the
   file written back into it

@@ -27,7 +27,7 @@ const PLACES = {
   docks: { json: 'docs/wharf-props-edited.json', out: 'src/game/city/wharfprops.ts', name: 'Sablet Wharf', exportName: 'WHARF_PROPS', issue: '#410' },
   highmoor: { json: 'docs/highmoor-props-edited.json', out: 'src/game/city/highmoorprops.ts', name: 'Highmoor Park', exportName: 'HIGHMOOR_PROPS', issue: '#460' },
   tidewater: { json: 'docs/tidewater-props-edited.json', out: 'src/game/city/tidewaterprops.ts', name: 'Tidewater Park', exportName: 'TIDEWATER_PROPS', issue: '#461' },
-  ...Object.fromEntries(Object.entries(SUBURBS).map(([place, s]) => [place, { json: s.json, out: `src/game/city/${s.module}.ts`, name: s.name, exportName: s.exportName, issue: s.issue }])),
+  ...Object.fromEntries(Object.entries(SUBURBS).map(([place, s]) => [place, { json: s.json, out: `src/game/city/${s.module}.ts`, name: s.name, exportName: s.exportName, issue: s.issue, yards: !!s.yards }])),
   lookout: {
     json: 'docs/fort-props-edited.json', out: 'src/game/city/fortprops.ts', name: 'Kestrel Head', exportName: 'FORT_PROPS', issue: '#454',
     // The castle's enclosures are found from its walls (`castleareas.mjs`): a
@@ -45,11 +45,16 @@ if (!PLACES[which]) {
   process.exit(1);
 }
 const source = args.find((a) => a.endsWith('.json')) ?? PLACES[which].json;
-const { out, name: place, exportName, issue, areas: areaConfig } = PLACES[which];
+const { out, name: place, exportName, issue, areas: areaConfig, yards: hasYards } = PLACES[which];
 const raw = JSON.parse(readFileSync(source, 'utf8'));
 // The store hands back the document; accept it bare or under a wrapper.
 const doc = raw.props ? raw : raw.data ?? raw;
 const props = doc.props ?? [];
+// A yard (#489) is drawn in the area editor like a road and saved with the
+// roads, but it is paved ground, not a road: it goes into the area's module
+// as an outline, and never into the road network.
+const yards = (doc.roads ?? []).filter((r) => r.kind === 'yard' && r.points.length >= 3);
+if (Array.isArray(doc.roads)) doc.roads = doc.roads.filter((r) => r.kind !== 'yard');
 // A save with roads and no props is a road review (#487), made before any
 // house is placed; with neither it is a bad read.
 if (props.length === 0 && !Array.isArray(doc.roads)) {
@@ -95,7 +100,16 @@ import type { AuthoredProp } from './types';
 export const ${exportName}: AuthoredProp[] = [
 ${lines.join('\n')}
 ];
-`;
+${
+  hasYards
+    ? `
+/** ${place}'s yards (#489): outlines in metres, paved, drivable and closed to traffic. */
+export const ${exportName.replace(/_PROPS$/, '_YARDS')}: [number, number][][] = ${
+        yards.length ? `[\n${yards.map((y) => `  [${y.points.map(([x, z]) => `[${num(x)}, ${num(z)}]`).join(', ')}],`).join('\n')}\n]` : '[]'
+      };
+`
+    : ''
+}`;
 writeFileSync(out, body);
 
 // The area editor's roads (#477), when the save carries them: merged into
