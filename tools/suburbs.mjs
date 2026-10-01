@@ -1,5 +1,6 @@
 // The areas edited as districts of the plan rather than places: the midtowns
-// with houses on their streets (#477, #487, #488) and Industrial (#489). Each
+// with houses on their streets (#477, #487, #488), Industrial (#489) and
+// downtown (#268). Each
 // one's place in the plan's list of its kind of district (`district`,
 // midtown unless it says), which has no names of its own there, and the files
 // its props go through. One table for `housedraft`, `propexport` and
@@ -37,6 +38,12 @@ export const SUBURBS = {
     yards: true,
     json: 'docs/industrial-props-edited.json', module: 'industrialprops', exportName: 'INDUSTRIAL_PROPS', prefix: 'industrial-',
     route: 'Works Circuit',
+  },
+  // The last area (#268): an old core by the water and towers inland, on
+  // streets grown by `suburbdraft --district downtown`.
+  downtown: {
+    district: 'downtown', index: 0, name: 'Downtown', issue: '#268',
+    json: 'docs/downtown-props-edited.json', module: 'downtownprops', exportName: 'DOWNTOWN_PROPS', prefix: 'downtown-',
   },
 };
 
