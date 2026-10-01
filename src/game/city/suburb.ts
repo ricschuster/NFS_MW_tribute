@@ -47,6 +47,11 @@ const HOUSE_GAP = 4;
 const CORNER = 22;
 /** How often a lot is left empty: a gap in the row reads as a suburb rather than a terrace. */
 const EMPTY = 0.12;
+/**
+ * How far past the back of a lot the water may not come: closer than this,
+ * the lot is the strip between a road and the shore, which is left open.
+ */
+const WATERFRONT = 40;
 /** A house whose ground falls more than this across it is left off: it would float or sink. */
 const MAX_FALL = 1.5;
 
@@ -123,6 +128,12 @@ export function suburbHousesFor(
           const angle = Math.round(Math.atan2(-n.x, -n.z) * 1000) / 1000;
           const corners = footprint(at, angle, size);
           if (![at, ...corners].every((p) => inArea(area.poly, p) && !isWater(p.x, p.z))) continue;
+          // Nothing between a road and the water close behind it: that side
+          // of a waterfront road is the view, not a lot (#487's promenade).
+          const behind = out + size.l / 2 + WATERFRONT;
+          let onTheWater = false;
+          for (let d = run.road.width / 2 / M; d <= behind && !onTheWater; d += 5) onTheWater = isWater(here.p.x + n.x * d * M, here.p.z + n.z * d * M);
+          if (onTheWater) continue;
           const r = Math.hypot(size.w, size.l) / 2;
           if (placed.some((p) => Math.hypot(p.at.x - at.x, p.at.z - at.z) / M < (p.r + r) * 0.82 + HOUSE_GAP)) continue;
           // Clear of every road's edge; the road it faces is already a garden away.

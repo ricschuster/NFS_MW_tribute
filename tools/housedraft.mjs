@@ -62,6 +62,8 @@ const props = [
 const count = (k) => props.filter((p) => p.kind === k).length;
 console.log(`${count('house')} houses, ${count('apartment')} apartments${HOUSES || !inFile.length ? ' (drafted)' : ' (kept)'}; ${count('hedge')} hedges, ${count('street-tree')} street trees; ${kept.length} other props kept`);
 if (!DRY) {
-  writeFileSync(FILE, JSON.stringify({ seed: `0x${(CITY_SEED >>> 0).toString(16)}`, place: suburb.name, savedAt: new Date().toISOString(), props }, null, 2) + '\n');
+  // Everything else in the file is kept: an editor save carries the area's
+  // roads in it too, which `propsync` merges, and a draft is not a reason to lose them.
+  writeFileSync(FILE, JSON.stringify({ ...old, seed: `0x${(CITY_SEED >>> 0).toString(16)}`, place: suburb.name, savedAt: new Date().toISOString(), props }, null, 2) + '\n');
   console.log(`wrote ${FILE}`);
 }
