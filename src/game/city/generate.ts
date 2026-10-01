@@ -60,6 +60,7 @@ import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
+import { INDUSTRIAL_PROPS } from './industrialprops';
 import { highStreetAprons } from './highstreet';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
@@ -682,6 +683,8 @@ export function generateCity(seed: number): City {
     ...MIDTOWN_SOUTH_PROPS,
     // And Midtown south-west's high street and the houses behind it (#488).
     ...MIDTOWN_SW_PROPS,
+    // Industrial's works (#489), placed by hand in the area editor.
+    ...INDUSTRIAL_PROPS,
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:

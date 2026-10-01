@@ -160,7 +160,8 @@ what the city is shaped like.
   houses and any hand edits to them; `-- --houses` redrafts the houses too,
   losing their hand edits. The suburbs are a table in `tools/suburbs.mjs`
   (`midtown` for Midtown north, the default, `midtown-south` and
-  `midtown-sw`), which `propexport` and `propsync` read too. On a midtown's
+  `midtown-sw`, and `industrial`, whose works are placed by hand and which
+  it refuses), which `propexport` and `propsync` read too. On a midtown's
   high street (`HIGH_STREETS` in `city/highstreet.ts`, the owner's pick, #488)
   it drafts terraced shops and flats instead of houses, and the game paves
   the pavement in front of them. Generated once by `city/suburb.ts`,

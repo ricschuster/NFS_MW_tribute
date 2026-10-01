@@ -23,6 +23,7 @@ import { suburbFrom } from './suburbs.mjs';
 const DRY = process.argv.includes('--dry');
 const HOUSES = process.argv.includes('--houses');
 const suburb = suburbFrom(process.argv);
+if (suburb.district !== 'midtown') throw new Error(`${suburb.name} is not a suburb: its props are placed by hand in the area editor`);
 const FILE = suburb.json;
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
