@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UNITS_PER_METRE } from './constants';
 import { CityWorld } from './cityworld';
-import { onApron } from './city/aprons';
+import { insideOrNear, onApron } from './city/aprons';
 import { surfaceAt } from './city/grid';
 import { groundAt } from './city/terrain';
 
@@ -39,7 +39,10 @@ function hold(at: { x: number; z: number; y: number }, frac: number) {
 
 describe('the wharf is paved (#410)', () => {
   it('has an apron, and the middle of the yard is on it', () => {
-    const wharf = city.aprons.filter((apron) => apron.yard);
+    // The wharf's yard is the one round the middle of the wharf: Industrial's
+    // yards (#489) are yards too, so it is found by where it is.
+    const middle = { x: -1634 * M, z: -1955 * M };
+    const wharf = city.aprons.filter((apron) => apron.yard && insideOrNear(apron.outline, middle.x, middle.z, 0));
     expect(wharf.length).toBe(1);
     expect(wharf[0].look).toBe('concrete');
     expect(onApron(city, -1634 * M, -1955 * M)).toBe(true);
