@@ -9,10 +9,10 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   17 streets drafted and kept by the owner, the bank boulevard is the
   promenade (#495); houses on the land side only (`WATERFRONT` in
   `city/suburb.ts`: no lot between a road and water within 40 m), drafted
-  and edited by the owner: 177 houses, 51 apartments, hedges, 391 street
+  and edited by the owner: 177 houses, 51 apartments, hedges, 390 street
   trees. `housedraft` now keeps the props file's other keys (it used to drop
   a save's `roads`). The Midtown south Props editor (URL in the agent's
-  memory) has `edits/props` at v16, the Road Editor's `edits/roads` is at
+  memory) has `edits/props` at v17, the Road Editor's `edits/roads` is at
   v65, both matching the files.
   - **Next:** the sprint along the promenade; street trees on the promenade
     go once it is laid.
