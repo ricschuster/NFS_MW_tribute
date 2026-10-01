@@ -629,6 +629,12 @@ export interface City {
    * there made the ground too slow to render.
    */
   drives: Apron[];
+  /**
+   * Downtown's pavements and squares (#268), drawn the way the drives are and
+   * paved the way an apron is, but their own list: the estates' gardens and
+   * lamps read the drives as somebody's drive, which a pavement is not.
+   */
+  pavements: Apron[];
   /** Things to launch off (#307). */
   jumps: Jump[];
 }
