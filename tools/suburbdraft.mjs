@@ -43,6 +43,10 @@ const SHORE_CLEAR = 25;
 const MAX_GRADE = 0.09;
 const THROUGH_REACH = 70; // a far end this near a boulevard runs on to it
 const CRESCENT_MAX = 260; // far ends further apart than this are left as cul-de-sacs
+// The far end of a crossing street is let off `STREET_GAP` from the boulevard
+// it arrives at for this far back: it has to get within the gap to meet it,
+// and at a slant it is within it for longer than the gap itself.
+const ARRIVE = STREET_GAP * 1.6;
 
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
@@ -158,7 +162,7 @@ for (const spine of spines) {
       const opposite = crossing(here.p, normal, spine);
       if (opposite) {
         const { dense, sparse } = curve(here.p, normal, opposite.distance, bow / 2);
-        if (clearOf(dense, spine, 30, opposite.road, 40)) {
+        if (clearOf(dense, spine, 30, opposite.road, ARRIVE)) {
           sparse[sparse.length - 1] = opposite.at;
           streets.push({ spine, side, station: d, points: sparse, deadEnd: false });
           continue;

@@ -50,7 +50,9 @@ const raw = JSON.parse(readFileSync(source, 'utf8'));
 // The store hands back the document; accept it bare or under a wrapper.
 const doc = raw.props ? raw : raw.data ?? raw;
 const props = doc.props ?? [];
-if (props.length === 0) {
+// A save with roads and no props is a road review (#487), made before any
+// house is placed; with neither it is a bad read.
+if (props.length === 0 && !Array.isArray(doc.roads)) {
   console.error(`no props in ${source}`);
   process.exit(1);
 }
