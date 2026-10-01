@@ -225,7 +225,39 @@ ${body}
 ];
 `;
 
+// A ramp's connector runs to the nearest vertex of any drawn road (#371), so
+// a road drawn near a ramp's foot moves it - and one ending on the foot takes
+// its place, leaving the ramp reached only by that road. Neither is wrong in
+// itself, but it changes how the freeway is reached, so the sync says so
+// rather than doing it quietly. Read from the file before and after writing.
+const connectorsNow = async () => {
+  const { createServer } = await import('vite');
+  // No dependency scan and no hot reload: this server lives for a second,
+  // and the scan would be cut off mid-run and the socket meet a dev server's.
+  const server = await createServer({
+    appType: 'custom',
+    server: { middlewareMode: true, hmr: false, ws: false },
+    optimizeDeps: { noDiscovery: true },
+    logLevel: 'error',
+  });
+  try {
+    const { rampConnectors } = await server.ssrLoadModule('/src/game/city/rampconnectors.ts');
+    const { FREEWAY_LOOP, FREEWAY_RAMPS } = await server.ssrLoadModule('/src/game/city/freeway.ts');
+    const { AUTHORED_ROADS } = await server.ssrLoadModule(`/${out}`);
+    const U = (await server.ssrLoadModule('/src/game/constants.ts')).UNITS_PER_METRE;
+    const m = (p) => `${Math.round(p.x / U)},${Math.round(p.z / U)}`;
+    return new Map(rampConnectors(FREEWAY_LOOP, FREEWAY_RAMPS, AUTHORED_ROADS).map((c) => [m(c.points[0]), m(c.points[1])]));
+  } finally {
+    await server.close();
+  }
+};
+const before = await connectorsNow();
 writeFileSync(out, file);
+const after = await connectorsNow();
+for (const [foot, to] of after) {
+  const was = before.get(foot);
+  if (was !== undefined && was !== to) console.log(`ramp at ${foot} now joins the streets at ${to}${to === foot ? ' (a road ends on its foot, and no connector is built)' : ''}, not ${was}`);
+}
 console.log(
   `stitched ${stitched} loose ends onto the roads they were reaching for\n` +
     `wrote ${out}  ·  ${roads.length} roads  ·  ` +
