@@ -316,7 +316,7 @@
     { id: 'container-block', group: 'Port', name: 'Container block', w: 30, l: 12.5, shape: 'box', color: '#c4553d', flat: true,
       variants: ['two high', 'three high', 'four high'] },
     { id: 'sts-crane', group: 'Port', name: 'Ship-to-shore crane', w: 30, l: 27, shape: 'box', color: '#e5563a', road: 'ok' },
-    { id: 'warehouse', group: 'Port', name: 'Warehouse', w: 50, l: 130, shape: 'shed', color: '#9aa3a8', flat: true,
+    { id: 'warehouse', group: 'Port', name: 'Warehouse', w: 50, l: 130, shape: 'shed', color: '#9aa3a8', flat: true, footing: 3,
       variants: ['large', 'small'], sizes: { large: [50, 130], small: [30, 60] } },
     { id: 'straddle-carrier', group: 'Port', name: 'Straddle carrier', w: 5, l: 9, shape: 'box', color: '#f0c419', road: 'ok' },
     { id: 'reach-stacker', group: 'Port', name: 'Reach stacker', w: 4.5, l: 11, shape: 'box', color: '#f0c419', road: 'ok' },
@@ -526,7 +526,8 @@
     } else if (k.road !== 'ok' && onRoad) {
       out.push(['warn', onRoad.surface !== 'asphalt' ? (DATA.runway.length ? 'Sits on the runway or taxiway' : 'Sits on a dirt road') : 'Blocks a road']);
     }
-    if (k.flat && Number.isFinite(lo) && hi - lo >= 2) out.push(['warn', `Ground falls ${hi - lo} m under it`]);
+    // A warehouse stands on a footing (`WAREHOUSE_FOOTING`), which hides a fall twice its depth.
+    if (k.flat && Number.isFinite(lo) && hi - lo >= (k.footing ? 2 * k.footing : 2)) out.push(['warn', `Ground falls ${hi - lo} m under it`]);
     for (const q of props) {
       if (q === p || q.kind === 'cone' || p.kind === 'cone') continue;
       const a = dims(p), b = dims(q);
