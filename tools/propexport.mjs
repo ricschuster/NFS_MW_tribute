@@ -241,7 +241,15 @@ const out = {
 const AUTHORED = suburb ? suburb.module : { airfield: 'marrowprops', quarry: 'quarryprops', docks: 'wharfprops', lookout: 'fortprops', highmoor: 'highmoorprops', tidewater: 'tidewaterprops' }[KIND];
 const EXPORT = suburb ? suburb.exportName : { airfield: 'MARROW_PROPS', quarry: 'QUARRY_PROPS', docks: 'WHARF_PROPS', lookout: 'FORT_PROPS', highmoor: 'HIGHMOOR_PROPS', tidewater: 'TIDEWATER_PROPS' }[KIND];
 const server2 = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
-out.initial = (await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`))[EXPORT];
+const authored = await server2.ssrLoadModule(`/src/game/city/${AUTHORED}.ts`);
+out.initial = authored[EXPORT];
+// The area's yards (#489), back into the editor as the outlines they were
+// drawn as, so a saved yard opens editable rather than as a new one.
+out.yards = !!suburb?.yards;
+if (suburb?.yards) {
+  const yards = authored[EXPORT.replace(/_PROPS$/, '_YARDS')] ?? [];
+  out.drawn = [...(out.drawn ?? []), ...yards.map((points, i) => ({ id: `y${i + 1}`, kind: 'yard', district: out.district, bridge: false, points }))];
+}
 // Kestrel Head: the enclosures the last sync found from the walls (#454), so a
 // wall moved in the editor can be checked against what got cobbled and raised.
 const castle = KIND === 'lookout' ? (await server2.ssrLoadModule('/src/game/city/castle.ts')).CASTLE_AREAS : null;

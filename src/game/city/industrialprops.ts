@@ -7,3 +7,6 @@ import type { AuthoredProp } from './types';
 
 /** Industrial's works, in metres, as placed in the editor (#489). */
 export const INDUSTRIAL_PROPS: AuthoredProp[] = [];
+
+/** Industrial's yards (#489): outlines in metres, paved, drivable and closed to traffic. */
+export const INDUSTRIAL_YARDS: [number, number][][] = [];

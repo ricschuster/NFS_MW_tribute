@@ -60,7 +60,8 @@ import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
-import { INDUSTRIAL_PROPS } from './industrialprops';
+import { INDUSTRIAL_PROPS, INDUSTRIAL_YARDS } from './industrialprops';
+import { yardAprons } from './yards';
 import { highStreetAprons } from './highstreet';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
@@ -619,7 +620,7 @@ export function generateCity(seed: number): City {
     pillars: [],
     breakables: [],
     setPieces: [],
-    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes)],
+    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS)],
     jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
