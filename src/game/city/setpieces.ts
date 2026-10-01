@@ -150,6 +150,21 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // over it, and a four-storey block of flats, solid to their parapets.
   shop: grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 10.4 }], HOUSE_GROWN),
   flat: grown([{ u: 0, v: 0, w: 16, l: 12, y0: 0, y1: 13 }], HOUSE_GROWN),
+  // The works (#489), at real size. A chimney is its plinth and its stack; a
+  // tank its drum; a gantry crane its four legs and the beam fourteen metres
+  // up, so a car drives under it between the legs; rail track is ground, flat
+  // and drivable; a wagon a box on the rails.
+  chimney: [{ u: 0, v: 0, w: 7, l: 7, y0: 0, y1: 3 }, post(0, 0, 2, 45)],
+  tank: [{ u: 0, v: 0, r: 14, y0: 0, y1: 14 }],
+  gantry: [
+    post(-16, -2.5, 0.8, 16),
+    post(-16, 2.5, 0.8, 16),
+    post(16, -2.5, 0.8, 16),
+    post(16, 2.5, 0.8, 16),
+    { u: 0, v: 0, w: 34, l: 3, y0: 14, y1: 17 },
+  ],
+  rails: [],
+  wagon: [{ u: 0, v: 0, w: 3, l: 14, y0: 0, y1: 4.2 }],
   // Its front gardens and streets (#477): a hedge either side of the path to
   // the door, and a broadleaf street tree, solid only at its trunk.
   hedge: [{ u: -5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }, { u: 5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }],
@@ -167,6 +182,7 @@ const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: 0, y1: 10 }],
   'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
   'ruin-house:small': grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }], HOUSE_GROWN),
+  'tank:small': [{ u: 0, v: 0, r: 7, y0: 0, y1: 10 }],
 };
 
 /** What this piece is solid as. */

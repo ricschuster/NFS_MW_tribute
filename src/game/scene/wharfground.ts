@@ -16,54 +16,53 @@ import type { Apron, Vec2 } from '../city/types';
  *
  * Chained onto whatever patch the material already has, because a material
  * compiles one `onBeforeCompile` and the quarry's is on the same ground.
+ *
+ * The outlines are a float texture, one row an apron, not uniform arrays
+ * (#489). Arrays held six outlines of ninety-six points, near six hundred
+ * uniform vectors in one fragment shader, and WebGL 2 promises only 224: on a
+ * phone that reports the minimum, the ground's shader would not compile at
+ * all. A texture costs one sampler however many aprons there are, so an area
+ * that needs yards - Industrial's, after a high street took the sixth slot -
+ * no longer has to wait for one.
  */
 const SLAB = 8;
 const SETT = 0.9;
 /** Gravel has no joints: a grain this size, speckled light and dark, as a car park at the foot of Highmoor (#460) is. */
 const GRIT = 0.35;
-/** GLSL wants fixed array sizes: this many aprons, each resampled to this many points. */
-const APRONS = 6;
+/** Each apron's outline is resampled to this many points. */
 const POINTS = 96;
+/** A row of the texture: the apron's box, its parameters, then its outline. */
+const COLUMNS = POINTS + 2;
 
-export function wharfGround(material: THREE.Material, aprons: readonly Apron[], unitsPerMetre: number): void {
-  const used = aprons.filter((apron) => apron.outline.length >= 3).slice(0, APRONS);
-  if (used.length === 0) return;
-  const points: THREE.Vector2[] = [];
-  const boxes: THREE.Vector4[] = [];
-  const params: THREE.Vector4[] = [];
-  for (let i = 0; i < APRONS; i++) {
-    const apron = used[i];
-    const outline = apron ? resample(apron.outline, POINTS) : [];
-    for (let k = 0; k < POINTS; k++) points.push(new THREE.Vector2(outline[k]?.x ?? 0, outline[k]?.z ?? 0));
-    if (!apron) {
-      // An empty box nothing is ever inside.
-      boxes.push(new THREE.Vector4(1, 1, -1, -1));
-      params.push(new THREE.Vector4(0, 1, 0, 0));
-      continue;
-    }
+/** Patch the ground's material; returns the texture holding the outlines, for its owner to dispose of. */
+export function wharfGround(material: THREE.Material, aprons: readonly Apron[], unitsPerMetre: number): THREE.DataTexture | null {
+  const used = aprons.filter((apron) => apron.outline.length >= 3);
+  if (used.length === 0) return null;
+  const data = new Float32Array(COLUMNS * used.length * 4);
+  used.forEach((apron, k) => {
+    const row = k * COLUMNS * 4;
+    const outline = resample(apron.outline, POINTS);
     const xs = outline.map((p) => p.x);
     const zs = outline.map((p) => p.z);
-    boxes.push(
-      new THREE.Vector4(
-        Math.min(...xs) - apron.margin,
-        Math.min(...zs) - apron.margin,
-        Math.max(...xs) + apron.margin,
-        Math.max(...zs) + apron.margin,
-      ),
-    );
+    data.set([Math.min(...xs) - apron.margin, Math.min(...zs) - apron.margin, Math.max(...xs) + apron.margin, Math.max(...zs) + apron.margin], row);
     // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles, 2 gravel).
     const cobbles = apron.look === 'cobbles';
     const look = cobbles ? 1 : apron.look === 'gravel' ? 2 : 0;
-    params.push(new THREE.Vector4(apron.margin, (cobbles ? SETT : apron.look === 'gravel' ? GRIT : SLAB) * unitsPerMetre, look, 0));
-  }
+    data.set([apron.margin, (cobbles ? SETT : apron.look === 'gravel' ? GRIT : SLAB) * unitsPerMetre, look, 0], row + 4);
+    outline.forEach((p, i) => data.set([p.x, p.z], row + (2 + i) * 4));
+  });
+  const texture = new THREE.DataTexture(data, COLUMNS, used.length, THREE.RGBAFormat, THREE.FloatType);
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
   const before = material.onBeforeCompile.bind(material);
   const key = material.customProgramCacheKey?.bind(material);
 
   material.onBeforeCompile = (shader, renderer) => {
     before(shader, renderer);
-    shader.uniforms.uApron = { value: points };
-    shader.uniforms.uApronBox = { value: boxes };
-    shader.uniforms.uApronParams = { value: params };
+    shader.uniforms.uAprons = { value: texture };
+    shader.uniforms.uApronCount = { value: used.length };
 
     if (!shader.vertexShader.includes('vApronWorld')) {
       shader.vertexShader = shader.vertexShader
@@ -74,11 +73,9 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
       .replace(
         '#include <common>',
         `#include <common>
-        #define APRONS ${APRONS}
         #define APRON_POINTS ${POINTS}
-        uniform vec2 uApron[APRONS * APRON_POINTS];
-        uniform vec4 uApronBox[APRONS];
-        uniform vec4 uApronParams[APRONS];
+        uniform highp sampler2D uAprons;
+        uniform int uApronCount;
         varying vec3 vApronWorld;`,
       )
       .replace(
@@ -86,16 +83,16 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
         `#include <map_fragment>
         {
           vec2 p = vApronWorld.xz;
-          for (int k = 0; k < APRONS; k++) {
-            vec4 box = uApronBox[k];
+          for (int k = 0; k < uApronCount; k++) {
+            vec4 box = texelFetch(uAprons, ivec2(0, k), 0);
             if (p.x < box.x || p.y < box.y || p.x > box.z || p.y > box.w) continue;
-            vec4 params = uApronParams[k];
+            vec4 params = texelFetch(uAprons, ivec2(1, k), 0);
             // Distance to the outline, and which side of it: even-odd crossings.
             float d = 1e20;
             bool inside = false;
             for (int i = 0; i < APRON_POINTS; i++) {
-              vec2 a = uApron[k * APRON_POINTS + i];
-              vec2 b = uApron[k * APRON_POINTS + (i + 1) % APRON_POINTS];
+              vec2 a = texelFetch(uAprons, ivec2(2 + i, k), 0).xy;
+              vec2 b = texelFetch(uAprons, ivec2(2 + (i + 1) % APRON_POINTS, k), 0).xy;
               vec2 ab = b - a;
               float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
               d = min(d, length(p - a - ab * t));
@@ -128,7 +125,8 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
       );
   };
   // Two patches sharing a key would share a compiled program.
-  material.customProgramCacheKey = () => `${key ? key() : ''}+wharfground${used.length}`;
+  material.customProgramCacheKey = () => `${key ? key() : ''}+wharfground`;
+  return texture;
 }
 
 /** `count` points spaced evenly along a closed outline. */

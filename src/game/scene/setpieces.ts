@@ -706,6 +706,82 @@ function flat(variant?: string): Part[] {
   ];
 }
 
+const BRICK = '#8c4a3a';
+const TANK_WHITE = '#d9d6cc';
+
+/**
+ * A works chimney (#489): a tapering brick stack forty-five metres high on a
+ * square plinth, with darker bands and a soot-black crown. The landmark that
+ * says "works" from anywhere in the area.
+ */
+function chimney(): Part[] {
+  const bands = [12, 24, 36].map((y) => ({ geometry: at(upright(2.55 - (y / 45) * 0.75, 2.6 - (y / 45) * 0.75, 0.6, 16), 0, y, 0), colour: '#5e3328' }));
+  return [
+    { geometry: at(box(7, 3, 7), 0, 1.5, 0), colour: CONCRETE },
+    { geometry: at(upright(1.6, 2.3, 42, 16), 0, 24, 0), colour: BRICK },
+    ...bands,
+    { geometry: at(upright(1.75, 1.75, 1.4, 16), 0, 45.3, 0), colour: '#26292b' },
+  ];
+}
+
+/**
+ * A storage tank (#489): a squat white drum with a shallow cone roof, a
+ * walkway railing round the top and a stair up the side. Large or small.
+ */
+function tank(variant?: string): Part[] {
+  const [r, h] = variant === 'small' ? [7, 10] : [14, 14];
+  const stair = at(box(1.2, h * 1.15, 1.2).rotateZ(0.6), r + 0.4, h / 2, 0);
+  return [
+    { geometry: at(upright(r, r, h, 32), 0, h / 2, 0), colour: TANK_WHITE },
+    { geometry: at(new THREE.ConeGeometry(r * 1.01, r * 0.18, 32), 0, h + r * 0.09, 0), colour: '#b9b5aa' },
+    { geometry: at(upright(r + 0.6, r + 0.6, 0.25, 32), 0, h + 0.9, 0), colour: DARK_METAL },
+    { geometry: at(upright(r + 0.05, r + 0.05, 0.6, 32), 0, 0.3, 0), colour: CONCRETE },
+    { geometry: stair, colour: DARK_METAL },
+  ];
+}
+
+/**
+ * A gantry crane (#489): two legs each side of a yard, a box-girder beam
+ * across fourteen metres up and a hoist trolley on it, the kind that runs on
+ * rails down a stockyard. A car drives under it between the legs.
+ */
+function gantry(): Part[] {
+  const legs = [-16, 16].flatMap((x) => [-2.5, 2.5].map((z) => at(box(1.4, 15, 1.4), x, 7.5, z)));
+  const feet = [-16, 16].map((x) => at(box(2, 1, 7), x, 0.5, 0));
+  const beams = [-1, 1].map((z) => at(box(35, 2.4, 1.2), 0, 15.6, z));
+  return [
+    ...[...legs, ...feet, ...beams].map((geometry) => ({ geometry, colour: '#d9a12b' })),
+    { geometry: at(box(4, 2.2, 4), -4, 17.9, 0), colour: DARK_METAL },
+    { geometry: at(box(0.1, 9, 0.1), -4, 11.5, 0), colour: DARK_METAL },
+    { geometry: at(box(2.4, 0.8, 1.6), -4, 6.6, 0), colour: DARK_METAL },
+  ];
+}
+
+/** Forty metres of rail siding (#489): a ballast bed, sleepers and two rails, flat enough to drive over. */
+function rails(): Part[] {
+  const sleepers = Array.from({ length: 60 }, (_, i) => at(box(2.6, 0.12, 0.25), 0, 0.2, -19.5 + i * 0.66));
+  return [
+    { geometry: at(box(3.4, 0.16, 40), 0, 0.08, 0), colour: '#7d776c' },
+    ...sleepers.map((geometry) => ({ geometry, colour: '#4a3c30' })),
+    ...[-0.72, 0.72].map((x) => ({ geometry: at(box(0.08, 0.16, 40), x, 0.32, 0), colour: '#8f9498' })),
+  ];
+}
+
+/** A rail wagon on a siding (#489): a box van, or a tank wagon, on two bogies. */
+function wagon(variant?: string): Part[] {
+  const bogies = [-4.8, 4.8].map((z) => ({ geometry: at(box(2.4, 0.9, 2.8), 0, 0.75, z), colour: '#26292b' }));
+  const frame = { geometry: at(box(2.9, 0.4, 14), 0, 1.4, 0), colour: '#26292b' };
+  if (variant === 'tank') {
+    return [
+      ...bogies,
+      frame,
+      { geometry: at(tube(1.4, 1.4, 12.6, 16), 0, 3, 0), colour: '#2f3336' },
+      { geometry: at(upright(0.5, 0.5, 0.6, 10), 0, 4.6, 0), colour: '#2f3336' },
+    ];
+  }
+  return [...bogies, frame, { geometry: at(box(2.9, 2.7, 13.6), 0, 2.95, 0), colour: RUST }, { geometry: at(box(2.95, 2.3, 2.6), 0, 2.85, 0), colour: '#6f4a33' }];
+}
+
 /** A clipped privet hedge either side of the path to a front door (#477). */
 function hedge(): Part[] {
   return [-5, 5].map((x) => ({ geometry: at(box(6, 1.3, 1.2), x, 0.65, 0), colour: '#3f6a37' }));
@@ -778,6 +854,11 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   apartment: grown(apartment, HOUSE_GROWN),
   shop: grown(shop, HOUSE_GROWN),
   flat: grown(flat, HOUSE_GROWN),
+  chimney,
+  tank,
+  gantry,
+  rails,
+  wagon,
   hedge,
   'street-tree': streetTree,
 };
