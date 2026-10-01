@@ -9,7 +9,7 @@ import {
 } from './surfaces';
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
-import { railTrack } from './railtrack';
+import { RAIL_BED, railTrack } from './railtrack';
 import { quarryGround } from './quarryground';
 import { wharfGround } from './wharfground';
 import { PLAN_PLACES } from '../city/plan';
@@ -501,6 +501,8 @@ export class Cityscape {
     const forward = new THREE.Vector3();
     const normal = new THREE.Vector3();
 
+    // A railway's ballast is a raised bed (`RAIL_BED`), clear of the ground mesh's wobble.
+    const lift = surface === 'rail' ? RAIL_BED : ROAD_LIFT;
     let i = 0;
     roads.forEach((road, r) => {
       const a = city.nodes[road.a].pos;
@@ -537,9 +539,9 @@ export class Cityscape {
           forward.multiplyScalar(pieceLength + road.width),
         );
         matrix.setPosition(
-          (ax + bx) / 2 + normal.x * ROAD_LIFT,
-          (ay + by) / 2 + ROAD_LIFT,
-          (az + bz) / 2 + normal.z * ROAD_LIFT,
+          (ax + bx) / 2 + normal.x * lift,
+          (ay + by) / 2 + lift,
+          (az + bz) / 2 + normal.z * lift,
         );
         mesh.setMatrixAt(i, matrix);
         i++;
