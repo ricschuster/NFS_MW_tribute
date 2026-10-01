@@ -97,8 +97,10 @@ export function suburbHousesFor(
       if (a.level !== 'surface' || b.level !== 'surface') return false;
       return inArea(area.poly, a.pos) || inArea(area.poly, b.pos);
     });
+    // Anything with a foot on the street, ramps included: a ramp climbs past
+    // a house at head height, and a lot under it is a wall across the climb.
     const segments = roads
-      .filter((r) => nodes[r.a].level === 'surface' && nodes[r.b].level === 'surface')
+      .filter((r) => onTheStreet(nodes, r))
       .map((r) => ({ road: r, a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 }));
     const racing = raced.flatMap((line) => line.slice(1).map((b, k) => ({ a: line[k], b })));
     const onRace = (a: Vec2, b: Vec2): boolean =>
@@ -249,6 +251,18 @@ const AVENUE_SPACING = 36;
 /** A hedge stands this far back from the kerb, along the front of the garden. */
 const HEDGE_BACK = 1.6;
 
+
+/**
+ * A road a prop has to keep clear of: one with an end on the street. Both
+ * ends is too narrow, because a ramp has one end up on the deck and the
+ * other on the street, and its first hundred metres are low enough to drive
+ * into anything standing there (#487: a street tree halfway up ramp 4 made
+ * the interstate unreachable from Midtown south). The deck itself is
+ * scenery, held high over everything (`DECK_HEADROOM`), so it is not one.
+ */
+function onTheStreet(nodes: readonly CityNode[], r: CityRoad): boolean {
+  return nodes[r.a].level === 'surface' || nodes[r.b].level === 'surface';
+}
 /**
  * Front hedges and street trees round the houses already placed (#477): what
  * turns a row of boxes into a street. Drafted with the houses by `npm run
@@ -272,7 +286,7 @@ export function suburbExtrasFor(
 ): AuthoredProp[] {
   const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
   const segments = roads
-    .filter((r) => nodes[r.a].level === 'surface' && nodes[r.b].level === 'surface')
+    .filter((r) => onTheStreet(nodes, r))
     .map((r) => ({ a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 }));
   const kerbGap = (p: Vec2) => Math.min(...segments.map((s) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) - s.half)) / M;
   const homes = houses.filter((h) => h.kind === 'house' || h.kind === 'apartment').map((h) => ({ h, size: h.kind === 'house' ? HOUSE : APARTMENT }));

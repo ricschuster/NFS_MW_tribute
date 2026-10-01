@@ -519,7 +519,6 @@ export const MIDTOWN_SOUTH_PROPS: AuthoredProp[] = [
   { kind: 'street-tree', x: -1067.2, z: 467.3, angle: 3.159 },
   { kind: 'street-tree', x: -837.6, z: 138, angle: 1.556 },
   { kind: 'street-tree', x: -862.4, z: 138, angle: 0.6 },
-  { kind: 'street-tree', x: -837.6, z: 63, angle: 2.239 },
   { kind: 'street-tree', x: -862.4, z: 63, angle: 5.756 },
   { kind: 'street-tree', x: -837.6, z: 27, angle: 2.827 },
   { kind: 'street-tree', x: -862.4, z: 27, angle: 0.702 },
