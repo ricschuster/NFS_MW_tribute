@@ -23,13 +23,17 @@
 // Industrial (#489) drafts the same way with straight service roads instead
 // of curving ones: `--district industrial --area 0`, bowing as `--bow` says.
 // Ashford Point (#293) as estates: `--district waterfront --area 0 --prefix a`.
+// Downtown (#268) is grown rather than laid: `--district downtown --area 0
+// --prefix d`, by `downtowngrow.mjs`, whose doc comment has how.
 //
 // Usage:
 //   npm run suburbdraft -- --area 2            # the third midtown in plan.ts
 //   npm run suburbdraft -- --area 2 --dry      # report, write nothing
 //   npm run suburbdraft -- --district industrial --area 0 --prefix i   # works roads
+//   npm run suburbdraft -- --district downtown --area 0 --prefix d     # downtown, grown
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'vite';
+import { growDowntown } from './downtowngrow.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
@@ -65,6 +69,7 @@ const K = await server.ssrLoadModule('/src/game/constants.ts');
 const { groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { inWater } = await server.ssrLoadModule('/src/game/city/grid.ts');
 const { PLAN_DISTRICTS, inArea } = await server.ssrLoadModule('/src/game/city/plan.ts');
+const freewayModule = await server.ssrLoadModule('/src/game/city/freeway.ts');
 const U = K.UNITS_PER_METRE;
 const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 await server.close();
@@ -84,7 +89,7 @@ const doc = JSON.parse(raw);
 // numbers repeat across kinds of district (Midtown south-west and Industrial
 // are both 0), so the district is part of which draft is whose.
 const kept = doc.roads.filter((r) => !(r.draft === 'suburb' && r.area === AREA && (r.district ?? 'midtown') === DISTRICT));
-const drawn = kept.map((r) => ({ id: r.id, kind: r.kind, points: r.points.map(([x, z]) => ({ x, z })) }));
+const drawn = kept.map((r) => ({ id: r.id, kind: r.kind, surface: r.surface, points: r.points.map(([x, z]) => ({ x, z })) }));
 
 const seg = (p, a, b) => {
   const dx = b.x - a.x, dz = b.z - a.z;
@@ -161,7 +166,8 @@ function crossing(from, dir, own) {
   return best;
 }
 
-for (const spine of spines) {
+const DOWNTOWN = DISTRICT === 'downtown';
+for (const spine of DOWNTOWN ? [] : spines) {
   const total = lengthOf(spine.points);
   for (let d = SPACING / 2; d < total - JUNCTION_CLEAR; d += SPACING) {
     const here = along(spine.points, d);
@@ -225,6 +231,31 @@ for (const s of streets) {
   out.push({ points: [...s.points, top, ...next.points.slice().reverse()], deadEnd: false, crescent: true });
 }
 for (const s of streets) if (!joined.has(s)) out.push({ points: s.points, deadEnd: s.deadEnd, crescent: false });
+if (DOWNTOWN) {
+  // The freeway's ramps and their connectors come down to the street, and
+  // are in the city rather than in the drawing; the deck itself is passed under.
+  const N = city.nodes;
+  // So does the freeway where it passes street level on its way between the
+  // deck and a tunnel: within `NEAR_GROUND` of the ground it is in the way.
+  const NEAR_GROUND = 7;
+  const atStreet = (n) => Math.abs(n.y / U - ground({ x: n.pos.x / U, z: n.pos.z / U })) < NEAR_GROUND;
+  const ramps = city.roads
+    .filter((r) => r.class === 'ramp' || (r.class === 'interstate' && (atStreet(N[r.a]) || atStreet(N[r.b]))))
+    .map((r, i) => ({ id: `ramp${i}`, points: [N[r.a].pos, N[r.b].pos].map((p) => ({ x: p.x / U, z: p.z / U })) }));
+  // A ramp's foot is joined to the nearest corner of a drawn road
+  // (`rampConnectors`), and a street meeting a road puts a corner in it, so a
+  // street nearer a foot than the corner it joins today would take the ramp
+  // over. Each foot keeps a circle that reaches past its corner.
+  const { FREEWAY_RAMPS } = freewayModule;
+  const corners = drawn.filter((r) => r.kind !== 'ramp' && r.kind !== 'interstate' && r.surface !== 'rail').flatMap((r) => r.points);
+  const feet = FREEWAY_RAMPS.map((p) => ({ x: p.x / U, z: p.z / U })).map((foot) => ({
+    foot,
+    clear: Math.min(...corners.map((c) => Math.hypot(c.x - foot.x, c.z - foot.z))) + 25,
+  }));
+  const clearOfFeet = (p) => feet.every(({ foot, clear }) => Math.hypot(p.x - foot.x, p.z - foot.z) > clear);
+  const grown = growDowntown({ poly, inside: (p) => inside(p) && clearOfFeet(p), wet, roads: drawn, freeway: ramps, rand });
+  for (const s of grown) out.push({ points: s.points, deadEnd: s.deadEnd, crescent: false });
+}
 
 const r0 = (v) => Math.round(v);
 const roads = out.map((s, i) => ({

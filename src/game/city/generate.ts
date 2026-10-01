@@ -61,6 +61,7 @@ import { ashfordWoodsFor, digAshfordPonds, estateDrives, gardenTreesFor } from '
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { ASHFORD_PROPS } from './ashfordprops';
+import { DOWNTOWN_PROPS } from './downtownprops';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
 import { INDUSTRIAL_PROPS, INDUSTRIAL_YARDS } from './industrialprops';
 import { yardAprons } from './yards';
@@ -695,6 +696,8 @@ export function generateCity(seed: number): City {
     ...INDUSTRIAL_PROPS,
     // Ashford Point's estates (#293), drafted and edited the same way.
     ...ASHFORD_PROPS,
+    // And downtown's (#268), the last area.
+    ...DOWNTOWN_PROPS,
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:
