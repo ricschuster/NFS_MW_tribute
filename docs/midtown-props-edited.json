@@ -1,0 +1,2351 @@
+{
+  "seed": "0x4b657374",
+  "place": "Midtown north",
+  "savedAt": "2026-10-01T00:18:15.994Z",
+  "props": [
+    {
+      "id": "h1",
+      "kind": "apartment",
+      "x": 0.2,
+      "z": 2645.8,
+      "angle": -2.231,
+      "variant": "brick"
+    },
+    {
+      "id": "h2",
+      "kind": "apartment",
+      "x": -73.5,
+      "z": 2654.4,
+      "angle": 0.911,
+      "variant": "render"
+    },
+    {
+      "id": "h3",
+      "kind": "apartment",
+      "x": 481.9,
+      "z": 2914.1,
+      "angle": 0.01,
+      "variant": "render"
+    },
+    {
+      "id": "h4",
+      "kind": "apartment",
+      "x": 534.5,
+      "z": 2966.5,
+      "angle": -3.131,
+      "variant": "render"
+    },
+    {
+      "id": "h5",
+      "kind": "apartment",
+      "x": 533.9,
+      "z": 2913.5,
+      "angle": 0.01,
+      "variant": "brick"
+    },
+    {
+      "id": "h6",
+      "kind": "apartment",
+      "x": 586.5,
+      "z": 2966,
+      "angle": -3.131,
+      "variant": "render"
+    },
+    {
+      "id": "h7",
+      "kind": "apartment",
+      "x": 585.9,
+      "z": 2913,
+      "angle": 0.01,
+      "variant": "brick"
+    },
+    {
+      "id": "h8",
+      "kind": "apartment",
+      "x": 712.6,
+      "z": 2954.1,
+      "angle": -2.994,
+      "variant": "brick"
+    },
+    {
+      "id": "h9",
+      "kind": "apartment",
+      "x": 704.9,
+      "z": 2901.8,
+      "angle": 0.148,
+      "variant": "render"
+    },
+    {
+      "id": "h10",
+      "kind": "apartment",
+      "x": 764.1,
+      "z": 2946.5,
+      "angle": -2.994,
+      "variant": "render"
+    },
+    {
+      "id": "h11",
+      "kind": "apartment",
+      "x": 756.3,
+      "z": 2894.1,
+      "angle": 0.148,
+      "variant": "render"
+    },
+    {
+      "id": "h12",
+      "kind": "apartment",
+      "x": 893.1,
+      "z": 2864.6,
+      "angle": 0.362,
+      "variant": "brick"
+    },
+    {
+      "id": "h13",
+      "kind": "apartment",
+      "x": 1020.1,
+      "z": 2866,
+      "angle": -2.096,
+      "variant": "brick"
+    },
+    {
+      "id": "h14",
+      "kind": "apartment",
+      "x": 1000.3,
+      "z": 2794.4,
+      "angle": 1.046,
+      "variant": "brick"
+    },
+    {
+      "id": "h15",
+      "kind": "apartment",
+      "x": 1113.7,
+      "z": 2792.9,
+      "angle": -2.967,
+      "variant": "render"
+    },
+    {
+      "id": "h16",
+      "kind": "apartment",
+      "x": 1104.5,
+      "z": 2740.7,
+      "angle": 0.174,
+      "variant": "render"
+    },
+    {
+      "id": "h17",
+      "kind": "apartment",
+      "x": 1164.9,
+      "z": 2783.9,
+      "angle": -2.967,
+      "variant": "brick"
+    },
+    {
+      "id": "h18",
+      "kind": "apartment",
+      "x": 1155.7,
+      "z": 2731.7,
+      "angle": 0.174,
+      "variant": "brick"
+    },
+    {
+      "id": "h19",
+      "kind": "apartment",
+      "x": -473.6,
+      "z": 1863.9,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h20",
+      "kind": "apartment",
+      "x": -539.6,
+      "z": 1813.4,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h21",
+      "kind": "apartment",
+      "x": -576.4,
+      "z": 1776.6,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h22",
+      "kind": "apartment",
+      "x": -560.2,
+      "z": 1686.8,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h23",
+      "kind": "apartment",
+      "x": -613.2,
+      "z": 1739.8,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h24",
+      "kind": "apartment",
+      "x": -596.9,
+      "z": 1650.1,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h25",
+      "kind": "apartment",
+      "x": -649.9,
+      "z": 1703.1,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h26",
+      "kind": "apartment",
+      "x": -686.7,
+      "z": 1666.3,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h27",
+      "kind": "apartment",
+      "x": -670.5,
+      "z": 1576.5,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h28",
+      "kind": "apartment",
+      "x": -707.3,
+      "z": 1539.7,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h29",
+      "kind": "apartment",
+      "x": -744,
+      "z": 1503,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h30",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 2769.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h31",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 2821.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h32",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 2873.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h33",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 2925.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h34",
+      "kind": "apartment",
+      "x": -23.5,
+      "z": 2925.2,
+      "angle": -1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h35",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 2977.2,
+      "angle": 1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h36",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 3029.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h37",
+      "kind": "apartment",
+      "x": -23.5,
+      "z": 3029.2,
+      "angle": -1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h38",
+      "kind": "apartment",
+      "x": -76.5,
+      "z": 3081.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h39",
+      "kind": "apartment",
+      "x": -23.5,
+      "z": 3081.2,
+      "angle": -1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h40",
+      "kind": "apartment",
+      "x": 21,
+      "z": 2783.6,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h41",
+      "kind": "apartment",
+      "x": 57.8,
+      "z": 2820.4,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h42",
+      "kind": "apartment",
+      "x": 94.6,
+      "z": 2857.1,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h43",
+      "kind": "apartment",
+      "x": 93.9,
+      "z": 2931.3,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h44",
+      "kind": "apartment",
+      "x": 131.3,
+      "z": 2893.9,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h45",
+      "kind": "apartment",
+      "x": 130.7,
+      "z": 2968.1,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h46",
+      "kind": "apartment",
+      "x": 250.9,
+      "z": 3013.4,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h47",
+      "kind": "apartment",
+      "x": 250.2,
+      "z": 3087.6,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h48",
+      "kind": "apartment",
+      "x": 287.6,
+      "z": 3050.2,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h49",
+      "kind": "apartment",
+      "x": 359.9,
+      "z": 3125.9,
+      "angle": -1.052,
+      "variant": "brick"
+    },
+    {
+      "id": "h50",
+      "kind": "apartment",
+      "x": 323.5,
+      "z": 3188,
+      "angle": 1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h51",
+      "kind": "apartment",
+      "x": 376.5,
+      "z": 3188,
+      "angle": -1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h52",
+      "kind": "apartment",
+      "x": 323.5,
+      "z": 3284.2,
+      "angle": 1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h53",
+      "kind": "apartment",
+      "x": 376.5,
+      "z": 3284.2,
+      "angle": -1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h54",
+      "kind": "apartment",
+      "x": -121.2,
+      "z": 3064.4,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h55",
+      "kind": "apartment",
+      "x": -143.9,
+      "z": 3028,
+      "angle": -1.107,
+      "variant": "render"
+    },
+    {
+      "id": "h56",
+      "kind": "apartment",
+      "x": -167.2,
+      "z": 2981.5,
+      "angle": -1.107,
+      "variant": "render"
+    },
+    {
+      "id": "h57",
+      "kind": "apartment",
+      "x": -190.4,
+      "z": 2935,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h58",
+      "kind": "apartment",
+      "x": -213.7,
+      "z": 2888.4,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h59",
+      "kind": "apartment",
+      "x": -252.4,
+      "z": 2799,
+      "angle": -1.336,
+      "variant": "render"
+    },
+    {
+      "id": "h60",
+      "kind": "apartment",
+      "x": -284.5,
+      "z": 2688.7,
+      "angle": -1.107,
+      "variant": "render"
+    },
+    {
+      "id": "h61",
+      "kind": "apartment",
+      "x": -307.8,
+      "z": 2642.2,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h62",
+      "kind": "apartment",
+      "x": -331,
+      "z": 2595.7,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h63",
+      "kind": "apartment",
+      "x": -415.2,
+      "z": 2365.4,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h64",
+      "kind": "apartment",
+      "x": -458.7,
+      "z": 2278.3,
+      "angle": -1.107,
+      "variant": "render"
+    },
+    {
+      "id": "h65",
+      "kind": "apartment",
+      "x": -482,
+      "z": 2231.8,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h66",
+      "kind": "apartment",
+      "x": -572.4,
+      "z": 2050.9,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h67",
+      "kind": "apartment",
+      "x": -611.8,
+      "z": 1961.7,
+      "angle": -1.334,
+      "variant": "brick"
+    },
+    {
+      "id": "h68",
+      "kind": "apartment",
+      "x": -624,
+      "z": 1911.1,
+      "angle": -1.334,
+      "variant": "render"
+    },
+    {
+      "id": "h69",
+      "kind": "apartment",
+      "x": -640.9,
+      "z": 1855.9,
+      "angle": -1.107,
+      "variant": "brick"
+    },
+    {
+      "id": "h70",
+      "kind": "apartment",
+      "x": -664.2,
+      "z": 1809.4,
+      "angle": -1.107,
+      "variant": "render"
+    },
+    {
+      "id": "h71",
+      "kind": "apartment",
+      "x": -676.8,
+      "z": 1768.3,
+      "angle": -1.424,
+      "variant": "render"
+    },
+    {
+      "id": "h72",
+      "kind": "apartment",
+      "x": -731.9,
+      "z": 1616.4,
+      "angle": -1.13,
+      "variant": "render"
+    },
+    {
+      "id": "h73",
+      "kind": "apartment",
+      "x": -1.4,
+      "z": 3280.2,
+      "angle": 2.499,
+      "variant": "render"
+    },
+    {
+      "id": "h74",
+      "kind": "apartment",
+      "x": 30.3,
+      "z": 3237.8,
+      "angle": -0.642,
+      "variant": "render"
+    },
+    {
+      "id": "h75",
+      "kind": "apartment",
+      "x": 72,
+      "z": 3269,
+      "angle": -0.642,
+      "variant": "render"
+    },
+    {
+      "id": "h76",
+      "kind": "apartment",
+      "x": -276.5,
+      "z": 2141.2,
+      "angle": 1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h77",
+      "kind": "apartment",
+      "x": -276.5,
+      "z": 2193.2,
+      "angle": 1.571,
+      "variant": "render"
+    },
+    {
+      "id": "h78",
+      "kind": "apartment",
+      "x": -269.9,
+      "z": 2256.5,
+      "angle": 2.034,
+      "variant": "render"
+    },
+    {
+      "id": "h79",
+      "kind": "apartment",
+      "x": -233.4,
+      "z": 2304.1,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h80",
+      "kind": "apartment",
+      "x": -195.9,
+      "z": 2266.6,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h81",
+      "kind": "apartment",
+      "x": -196.6,
+      "z": 2340.8,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h82",
+      "kind": "apartment",
+      "x": -159.8,
+      "z": 2377.6,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h83",
+      "kind": "apartment",
+      "x": -123.1,
+      "z": 2414.4,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h84",
+      "kind": "apartment",
+      "x": 160.9,
+      "z": 2698.3,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h85",
+      "kind": "apartment",
+      "x": 197.6,
+      "z": 2735.1,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h86",
+      "kind": "apartment",
+      "x": 235.1,
+      "z": 2697.6,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h87",
+      "kind": "apartment",
+      "x": 234.4,
+      "z": 2771.8,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h88",
+      "kind": "apartment",
+      "x": 271.8,
+      "z": 2734.4,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h89",
+      "kind": "apartment",
+      "x": 271.2,
+      "z": 2808.6,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h90",
+      "kind": "apartment",
+      "x": 308.6,
+      "z": 2771.2,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h91",
+      "kind": "apartment",
+      "x": 365.4,
+      "z": 2902.9,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h92",
+      "kind": "apartment",
+      "x": 402.9,
+      "z": 2865.4,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h93",
+      "kind": "apartment",
+      "x": 451.4,
+      "z": 2988.9,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h94",
+      "kind": "apartment",
+      "x": 488.2,
+      "z": 3025.6,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h95",
+      "kind": "apartment",
+      "x": 525,
+      "z": 3062.4,
+      "angle": 2.356,
+      "variant": "render"
+    },
+    {
+      "id": "h96",
+      "kind": "apartment",
+      "x": 562.4,
+      "z": 3025,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h97",
+      "kind": "apartment",
+      "x": 561.7,
+      "z": 3099.2,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h98",
+      "kind": "apartment",
+      "x": 599.2,
+      "z": 3061.7,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h99",
+      "kind": "apartment",
+      "x": 598.5,
+      "z": 3135.9,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h100",
+      "kind": "apartment",
+      "x": 635.9,
+      "z": 3098.5,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h101",
+      "kind": "apartment",
+      "x": 707.4,
+      "z": 3244.9,
+      "angle": 2.356,
+      "variant": "brick"
+    },
+    {
+      "id": "h102",
+      "kind": "apartment",
+      "x": 744.9,
+      "z": 3207.4,
+      "angle": -0.785,
+      "variant": "brick"
+    },
+    {
+      "id": "h103",
+      "kind": "apartment",
+      "x": 781.6,
+      "z": 3244.2,
+      "angle": -0.785,
+      "variant": "render"
+    },
+    {
+      "id": "h104",
+      "kind": "house",
+      "x": 638.5,
+      "z": 2911.8,
+      "angle": 1.873,
+      "variant": "cream"
+    },
+    {
+      "id": "h105",
+      "kind": "house",
+      "x": 671.6,
+      "z": 2873.2,
+      "angle": -1.269,
+      "variant": "brick"
+    },
+    {
+      "id": "h106",
+      "kind": "house",
+      "x": 630.5,
+      "z": 2886,
+      "angle": 1.873,
+      "variant": "green"
+    },
+    {
+      "id": "h107",
+      "kind": "house",
+      "x": 661,
+      "z": 2822.6,
+      "angle": -1.377,
+      "variant": "brick"
+    },
+    {
+      "id": "h108",
+      "kind": "house",
+      "x": 618.8,
+      "z": 2830.9,
+      "angle": 1.765,
+      "variant": "green"
+    },
+    {
+      "id": "h109",
+      "kind": "house",
+      "x": 614.4,
+      "z": 2802.2,
+      "angle": 1.667,
+      "variant": "blue"
+    },
+    {
+      "id": "h110",
+      "kind": "house",
+      "x": 654.7,
+      "z": 2771.2,
+      "angle": -1.474,
+      "variant": "cream"
+    },
+    {
+      "id": "h111",
+      "kind": "house",
+      "x": 611.8,
+      "z": 2775.3,
+      "angle": 1.667,
+      "variant": "blue"
+    },
+    {
+      "id": "h112",
+      "kind": "house",
+      "x": 652.5,
+      "z": 2746.3,
+      "angle": -1.571,
+      "variant": "brick"
+    },
+    {
+      "id": "h113",
+      "kind": "house",
+      "x": 652.5,
+      "z": 2719.3,
+      "angle": -1.571,
+      "variant": "cream"
+    },
+    {
+      "id": "h114",
+      "kind": "house",
+      "x": 609.5,
+      "z": 2719.3,
+      "angle": 1.571,
+      "variant": "green"
+    },
+    {
+      "id": "h115",
+      "kind": "house",
+      "x": 609.5,
+      "z": 2692.3,
+      "angle": 1.571,
+      "variant": "blue"
+    },
+    {
+      "id": "h116",
+      "kind": "house",
+      "x": 762.8,
+      "z": 2690.2,
+      "angle": 1.793,
+      "variant": "brick"
+    },
+    {
+      "id": "h117",
+      "kind": "house",
+      "x": 804.9,
+      "z": 2680.7,
+      "angle": -1.349,
+      "variant": "blue"
+    },
+    {
+      "id": "h118",
+      "kind": "house",
+      "x": 810.8,
+      "z": 2707,
+      "angle": -1.349,
+      "variant": "cream"
+    },
+    {
+      "id": "h119",
+      "kind": "house",
+      "x": 816.4,
+      "z": 2734.4,
+      "angle": -1.392,
+      "variant": "brick"
+    },
+    {
+      "id": "h120",
+      "kind": "house",
+      "x": 778.8,
+      "z": 2768.6,
+      "angle": 1.749,
+      "variant": "cream"
+    },
+    {
+      "id": "h121",
+      "kind": "house",
+      "x": 821.2,
+      "z": 2761,
+      "angle": -1.392,
+      "variant": "blue"
+    },
+    {
+      "id": "h122",
+      "kind": "house",
+      "x": 783.1,
+      "z": 2793.8,
+      "angle": 1.683,
+      "variant": "blue"
+    },
+    {
+      "id": "h123",
+      "kind": "house",
+      "x": 825.9,
+      "z": 2789,
+      "angle": -1.458,
+      "variant": "blue"
+    },
+    {
+      "id": "h124",
+      "kind": "house",
+      "x": 786.1,
+      "z": 2820.7,
+      "angle": 1.683,
+      "variant": "brick"
+    },
+    {
+      "id": "h125",
+      "kind": "house",
+      "x": 828.9,
+      "z": 2815.8,
+      "angle": -1.458,
+      "variant": "blue"
+    },
+    {
+      "id": "h126",
+      "kind": "house",
+      "x": 789.2,
+      "z": 2847.5,
+      "angle": 1.683,
+      "variant": "green"
+    },
+    {
+      "id": "h127",
+      "kind": "house",
+      "x": 832,
+      "z": 2842.6,
+      "angle": -1.458,
+      "variant": "blue"
+    },
+    {
+      "id": "h128",
+      "kind": "house",
+      "x": 791.4,
+      "z": 2873.7,
+      "angle": 1.65,
+      "variant": "blue"
+    },
+    {
+      "id": "h129",
+      "kind": "house",
+      "x": 834.3,
+      "z": 2870.3,
+      "angle": -1.492,
+      "variant": "blue"
+    },
+    {
+      "id": "h130",
+      "kind": "house",
+      "x": 946.7,
+      "z": 2902.8,
+      "angle": 1.855,
+      "variant": "brick"
+    },
+    {
+      "id": "h131",
+      "kind": "house",
+      "x": 988.1,
+      "z": 2890.8,
+      "angle": -1.287,
+      "variant": "green"
+    },
+    {
+      "id": "h132",
+      "kind": "house",
+      "x": 954.3,
+      "z": 2928.8,
+      "angle": 1.855,
+      "variant": "brick"
+    },
+    {
+      "id": "h133",
+      "kind": "house",
+      "x": 995.6,
+      "z": 2916.7,
+      "angle": -1.287,
+      "variant": "cream"
+    },
+    {
+      "id": "h134",
+      "kind": "house",
+      "x": 962.7,
+      "z": 2955.6,
+      "angle": 1.909,
+      "variant": "blue"
+    },
+    {
+      "id": "h135",
+      "kind": "house",
+      "x": 1003.3,
+      "z": 2941.3,
+      "angle": -1.232,
+      "variant": "blue"
+    },
+    {
+      "id": "h136",
+      "kind": "house",
+      "x": 971.6,
+      "z": 2981.1,
+      "angle": 1.909,
+      "variant": "blue"
+    },
+    {
+      "id": "h137",
+      "kind": "house",
+      "x": 1012.3,
+      "z": 2966.8,
+      "angle": -1.232,
+      "variant": "green"
+    },
+    {
+      "id": "h138",
+      "kind": "house",
+      "x": 980.6,
+      "z": 3006.6,
+      "angle": 1.909,
+      "variant": "cream"
+    },
+    {
+      "id": "h139",
+      "kind": "house",
+      "x": 1030.6,
+      "z": 3016.2,
+      "angle": -1.173,
+      "variant": "blue"
+    },
+    {
+      "id": "h140",
+      "kind": "house",
+      "x": 1001.3,
+      "z": 3057.8,
+      "angle": 1.969,
+      "variant": "brick"
+    },
+    {
+      "id": "h141",
+      "kind": "house",
+      "x": 1041,
+      "z": 3041.1,
+      "angle": -1.173,
+      "variant": "cream"
+    },
+    {
+      "id": "h142",
+      "kind": "house",
+      "x": 1011.8,
+      "z": 3082.7,
+      "angle": 1.969,
+      "variant": "brick"
+    },
+    {
+      "id": "h143",
+      "kind": "house",
+      "x": 1051.5,
+      "z": 3066,
+      "angle": -1.173,
+      "variant": "cream"
+    },
+    {
+      "id": "h144",
+      "kind": "house",
+      "x": 1023.4,
+      "z": 3108.1,
+      "angle": 2.011,
+      "variant": "blue"
+    },
+    {
+      "id": "h145",
+      "kind": "house",
+      "x": 1062.4,
+      "z": 3089.7,
+      "angle": -1.131,
+      "variant": "green"
+    },
+    {
+      "id": "h146",
+      "kind": "house",
+      "x": 1034.9,
+      "z": 3132.5,
+      "angle": 2.011,
+      "variant": "brick"
+    },
+    {
+      "id": "h147",
+      "kind": "house",
+      "x": 1073.9,
+      "z": 3114.2,
+      "angle": -1.131,
+      "variant": "brick"
+    },
+    {
+      "id": "h148",
+      "kind": "house",
+      "x": 1100.2,
+      "z": 3150.5,
+      "angle": -2.535,
+      "variant": "blue"
+    },
+    {
+      "id": "h149",
+      "kind": "house",
+      "x": 1122.4,
+      "z": 3135.1,
+      "angle": -2.535,
+      "variant": "blue"
+    },
+    {
+      "id": "h150",
+      "kind": "house",
+      "x": 1097.9,
+      "z": 3099.7,
+      "angle": 0.606,
+      "variant": "cream"
+    },
+    {
+      "id": "h151",
+      "kind": "house",
+      "x": 1120.1,
+      "z": 3084.3,
+      "angle": 0.606,
+      "variant": "brick"
+    },
+    {
+      "id": "h152",
+      "kind": "house",
+      "x": 1141.3,
+      "z": 3022.3,
+      "angle": 1.27,
+      "variant": "blue"
+    },
+    {
+      "id": "h153",
+      "kind": "house",
+      "x": 1182.2,
+      "z": 2991.6,
+      "angle": -0.974,
+      "variant": "brick"
+    },
+    {
+      "id": "h154",
+      "kind": "house",
+      "x": 1167.1,
+      "z": 2969.3,
+      "angle": -0.974,
+      "variant": "brick"
+    },
+    {
+      "id": "h155",
+      "kind": "house",
+      "x": 1131.4,
+      "z": 2993.5,
+      "angle": 2.167,
+      "variant": "blue"
+    },
+    {
+      "id": "h156",
+      "kind": "house",
+      "x": 1151.9,
+      "z": 2947,
+      "angle": -0.974,
+      "variant": "cream"
+    },
+    {
+      "id": "h157",
+      "kind": "house",
+      "x": 1116.3,
+      "z": 2971.2,
+      "angle": 2.167,
+      "variant": "green"
+    },
+    {
+      "id": "h158",
+      "kind": "house",
+      "x": 1102.1,
+      "z": 2945.4,
+      "angle": 2.056,
+      "variant": "green"
+    },
+    {
+      "id": "h159",
+      "kind": "house",
+      "x": 1127.6,
+      "z": 2901.5,
+      "angle": -1.086,
+      "variant": "cream"
+    },
+    {
+      "id": "h160",
+      "kind": "house",
+      "x": 1089.5,
+      "z": 2921.6,
+      "angle": 2.056,
+      "variant": "green"
+    },
+    {
+      "id": "h161",
+      "kind": "house",
+      "x": 1077.8,
+      "z": 2893.5,
+      "angle": 1.893,
+      "variant": "brick"
+    },
+    {
+      "id": "h162",
+      "kind": "house",
+      "x": 1110.1,
+      "z": 2854.2,
+      "angle": -1.249,
+      "variant": "brick"
+    },
+    {
+      "id": "h163",
+      "kind": "house",
+      "x": 1069.2,
+      "z": 2867.8,
+      "angle": 1.893,
+      "variant": "blue"
+    },
+    {
+      "id": "h164",
+      "kind": "house",
+      "x": 1060.7,
+      "z": 2839.7,
+      "angle": 1.777,
+      "variant": "green"
+    },
+    {
+      "id": "h165",
+      "kind": "house",
+      "x": 1055.2,
+      "z": 2813.2,
+      "angle": 1.777,
+      "variant": "brick"
+    },
+    {
+      "id": "h166",
+      "kind": "house",
+      "x": -430.3,
+      "z": 1911.5,
+      "angle": -2.339,
+      "variant": "green"
+    },
+    {
+      "id": "h167",
+      "kind": "house",
+      "x": -480.1,
+      "z": 1901,
+      "angle": 0.803,
+      "variant": "blue"
+    },
+    {
+      "id": "h168",
+      "kind": "house",
+      "x": -449.1,
+      "z": 1931,
+      "angle": -2.339,
+      "variant": "brick"
+    },
+    {
+      "id": "h169",
+      "kind": "house",
+      "x": -498.6,
+      "z": 1920.2,
+      "angle": 0.785,
+      "variant": "green"
+    },
+    {
+      "id": "h170",
+      "kind": "house",
+      "x": -468.2,
+      "z": 1950.6,
+      "angle": -2.356,
+      "variant": "cream"
+    },
+    {
+      "id": "h171",
+      "kind": "house",
+      "x": -517.7,
+      "z": 1939.3,
+      "angle": 0.785,
+      "variant": "cream"
+    },
+    {
+      "id": "h172",
+      "kind": "house",
+      "x": -487.3,
+      "z": 1969.7,
+      "angle": -2.356,
+      "variant": "blue"
+    },
+    {
+      "id": "h173",
+      "kind": "house",
+      "x": -536.7,
+      "z": 1957.4,
+      "angle": 0.75,
+      "variant": "brick"
+    },
+    {
+      "id": "h174",
+      "kind": "house",
+      "x": -507.3,
+      "z": 1988.9,
+      "angle": -2.392,
+      "variant": "cream"
+    },
+    {
+      "id": "h175",
+      "kind": "house",
+      "x": 172.4,
+      "z": 3023.7,
+      "angle": 1.217,
+      "variant": "cream"
+    },
+    {
+      "id": "h176",
+      "kind": "house",
+      "x": 163.1,
+      "z": 3049,
+      "angle": 1.217,
+      "variant": "brick"
+    },
+    {
+      "id": "h177",
+      "kind": "house",
+      "x": 203.5,
+      "z": 3063.9,
+      "angle": -1.924,
+      "variant": "cream"
+    },
+    {
+      "id": "h178",
+      "kind": "house",
+      "x": 188.9,
+      "z": 3092.1,
+      "angle": -2.154,
+      "variant": "blue"
+    },
+    {
+      "id": "h179",
+      "kind": "house",
+      "x": 138,
+      "z": 3090.9,
+      "angle": 0.987,
+      "variant": "blue"
+    },
+    {
+      "id": "h180",
+      "kind": "house",
+      "x": 174,
+      "z": 3114.7,
+      "angle": -2.154,
+      "variant": "brick"
+    },
+    {
+      "id": "h181",
+      "kind": "house",
+      "x": 151.5,
+      "z": 3141.8,
+      "angle": -2.558,
+      "variant": "brick"
+    },
+    {
+      "id": "h182",
+      "kind": "house",
+      "x": 105.3,
+      "z": 3120.8,
+      "angle": 0.584,
+      "variant": "green"
+    },
+    {
+      "id": "h183",
+      "kind": "house",
+      "x": 129,
+      "z": 3156.7,
+      "angle": -2.558,
+      "variant": "green"
+    },
+    {
+      "id": "h184",
+      "kind": "house",
+      "x": 106.5,
+      "z": 3171.6,
+      "angle": -2.558,
+      "variant": "blue"
+    },
+    {
+      "id": "h185",
+      "kind": "house",
+      "x": 62.7,
+      "z": 3142.7,
+      "angle": 0.322,
+      "variant": "cream"
+    },
+    {
+      "id": "h186",
+      "kind": "house",
+      "x": 76.3,
+      "z": 3183.6,
+      "angle": -2.82,
+      "variant": "green"
+    },
+    {
+      "id": "h187",
+      "kind": "house",
+      "x": 37.1,
+      "z": 3151.3,
+      "angle": 0.322,
+      "variant": "blue"
+    },
+    {
+      "id": "h188",
+      "kind": "house",
+      "x": 50.7,
+      "z": 3192.1,
+      "angle": -2.82,
+      "variant": "blue"
+    },
+    {
+      "id": "h189",
+      "kind": "house",
+      "x": 293.9,
+      "z": 3142.7,
+      "angle": -2.614,
+      "variant": "blue"
+    },
+    {
+      "id": "h190",
+      "kind": "house",
+      "x": 270.6,
+      "z": 3156.3,
+      "angle": -2.614,
+      "variant": "brick"
+    },
+    {
+      "id": "h191",
+      "kind": "house",
+      "x": 223.3,
+      "z": 3135.5,
+      "angle": 0.691,
+      "variant": "green"
+    },
+    {
+      "id": "h192",
+      "kind": "house",
+      "x": 202.5,
+      "z": 3152.8,
+      "angle": 0.691,
+      "variant": "brick"
+    },
+    {
+      "id": "h193",
+      "kind": "house",
+      "x": 229.9,
+      "z": 3185.9,
+      "angle": -2.45,
+      "variant": "blue"
+    },
+    {
+      "id": "h194",
+      "kind": "house",
+      "x": 181.7,
+      "z": 3170,
+      "angle": 0.691,
+      "variant": "green"
+    },
+    {
+      "id": "h195",
+      "kind": "house",
+      "x": 209.1,
+      "z": 3203.2,
+      "angle": -2.45,
+      "variant": "cream"
+    },
+    {
+      "id": "h196",
+      "kind": "house",
+      "x": 159.6,
+      "z": 3191.7,
+      "angle": 0.879,
+      "variant": "blue"
+    },
+    {
+      "id": "h197",
+      "kind": "house",
+      "x": 142.4,
+      "z": 3212.5,
+      "angle": 0.879,
+      "variant": "brick"
+    },
+    {
+      "id": "h198",
+      "kind": "house",
+      "x": 175.6,
+      "z": 3239.9,
+      "angle": -2.262,
+      "variant": "blue"
+    },
+    {
+      "id": "h199",
+      "kind": "house",
+      "x": 158.4,
+      "z": 3260.7,
+      "angle": -2.262,
+      "variant": "blue"
+    },
+    {
+      "id": "h200",
+      "kind": "house",
+      "x": 108.3,
+      "z": 3258.1,
+      "angle": 1.026,
+      "variant": "green"
+    },
+    {
+      "id": "h201",
+      "kind": "house",
+      "x": 131.1,
+      "z": 3303.6,
+      "angle": -2.116,
+      "variant": "green"
+    },
+    {
+      "id": "h202",
+      "kind": "house",
+      "x": 386.6,
+      "z": 3248.3,
+      "angle": -2.662,
+      "variant": "blue"
+    },
+    {
+      "id": "h203",
+      "kind": "house",
+      "x": 434.5,
+      "z": 3223.4,
+      "angle": -2.662,
+      "variant": "green"
+    },
+    {
+      "id": "h204",
+      "kind": "house",
+      "x": 414.6,
+      "z": 3185.1,
+      "angle": 0.48,
+      "variant": "green"
+    },
+    {
+      "id": "h205",
+      "kind": "house",
+      "x": 446.7,
+      "z": 3177.7,
+      "angle": 0.197,
+      "variant": "blue"
+    },
+    {
+      "id": "h206",
+      "kind": "house",
+      "x": 481.7,
+      "z": 3214.6,
+      "angle": -2.944,
+      "variant": "brick"
+    },
+    {
+      "id": "h207",
+      "kind": "house",
+      "x": 508.1,
+      "z": 3168.7,
+      "angle": -0.197,
+      "variant": "cream"
+    },
+    {
+      "id": "h208",
+      "kind": "house",
+      "x": 526.2,
+      "z": 3216.2,
+      "angle": 2.944,
+      "variant": "brick"
+    },
+    {
+      "id": "h209",
+      "kind": "house",
+      "x": 552.6,
+      "z": 3221.5,
+      "angle": 2.944,
+      "variant": "blue"
+    },
+    {
+      "id": "h210",
+      "kind": "house",
+      "x": 561.1,
+      "z": 3179.3,
+      "angle": -0.197,
+      "variant": "brick"
+    },
+    {
+      "id": "h211",
+      "kind": "house",
+      "x": 584.7,
+      "z": 3225,
+      "angle": -3.084,
+      "variant": "brick"
+    },
+    {
+      "id": "h212",
+      "kind": "house",
+      "x": 611.7,
+      "z": 3223.5,
+      "angle": -3.084,
+      "variant": "blue"
+    },
+    {
+      "id": "h213",
+      "kind": "house",
+      "x": 638.6,
+      "z": 3221.9,
+      "angle": -3.084,
+      "variant": "brick"
+    },
+    {
+      "id": "h214",
+      "kind": "house",
+      "x": 636.2,
+      "z": 3178.9,
+      "angle": 0.057,
+      "variant": "blue"
+    },
+    {
+      "id": "h215",
+      "kind": "house",
+      "x": 665.6,
+      "z": 3220.4,
+      "angle": -3.084,
+      "variant": "cream"
+    },
+    {
+      "id": "h216",
+      "kind": "house",
+      "x": -262.1,
+      "z": 2720.4,
+      "angle": -0.095,
+      "variant": "green"
+    },
+    {
+      "id": "h217",
+      "kind": "house",
+      "x": -235.1,
+      "z": 2763,
+      "angle": -3.042,
+      "variant": "blue"
+    },
+    {
+      "id": "h218",
+      "kind": "house",
+      "x": -202.6,
+      "z": 2758.4,
+      "angle": -2.766,
+      "variant": "cream"
+    },
+    {
+      "id": "h219",
+      "kind": "house",
+      "x": -218.4,
+      "z": 2718.4,
+      "angle": 0.376,
+      "variant": "green"
+    },
+    {
+      "id": "h220",
+      "kind": "house",
+      "x": -193.3,
+      "z": 2708.5,
+      "angle": 0.376,
+      "variant": "green"
+    },
+    {
+      "id": "h221",
+      "kind": "house",
+      "x": -150,
+      "z": 2734.4,
+      "angle": -2.58,
+      "variant": "cream"
+    },
+    {
+      "id": "h222",
+      "kind": "house",
+      "x": -385.6,
+      "z": 2457.4,
+      "angle": -0.331,
+      "variant": "cream"
+    },
+    {
+      "id": "h223",
+      "kind": "house",
+      "x": -374.1,
+      "z": 2506.9,
+      "angle": 2.811,
+      "variant": "green"
+    },
+    {
+      "id": "h224",
+      "kind": "house",
+      "x": -360.1,
+      "z": 2466.1,
+      "angle": -0.331,
+      "variant": "green"
+    },
+    {
+      "id": "h225",
+      "kind": "house",
+      "x": -342.2,
+      "z": 2513.3,
+      "angle": 3.079,
+      "variant": "blue"
+    },
+    {
+      "id": "h226",
+      "kind": "house",
+      "x": -312.6,
+      "z": 2472,
+      "angle": -0.062,
+      "variant": "cream"
+    },
+    {
+      "id": "h227",
+      "kind": "house",
+      "x": -254.4,
+      "z": 2504.9,
+      "angle": -2.79,
+      "variant": "green"
+    },
+    {
+      "id": "h228",
+      "kind": "house",
+      "x": -269.2,
+      "z": 2464.4,
+      "angle": 0.351,
+      "variant": "blue"
+    },
+    {
+      "id": "h229",
+      "kind": "house",
+      "x": -229,
+      "z": 2495.6,
+      "angle": -2.79,
+      "variant": "brick"
+    },
+    {
+      "id": "h230",
+      "kind": "house",
+      "x": -243.9,
+      "z": 2455.1,
+      "angle": 0.351,
+      "variant": "blue"
+    },
+    {
+      "id": "h231",
+      "kind": "house",
+      "x": -201.1,
+      "z": 2478.7,
+      "angle": -2.518,
+      "variant": "cream"
+    },
+    {
+      "id": "h232",
+      "kind": "house",
+      "x": -179.2,
+      "z": 2463,
+      "angle": -2.518,
+      "variant": "brick"
+    },
+    {
+      "id": "h233",
+      "kind": "house",
+      "x": -204.3,
+      "z": 2428,
+      "angle": 0.624,
+      "variant": "cream"
+    },
+    {
+      "id": "h234",
+      "kind": "house",
+      "x": -427.5,
+      "z": 2321.6,
+      "angle": -2.373,
+      "variant": "cream"
+    },
+    {
+      "id": "h235",
+      "kind": "house",
+      "x": -390.9,
+      "z": 2295.6,
+      "angle": -2.789,
+      "variant": "brick"
+    },
+    {
+      "id": "h236",
+      "kind": "house",
+      "x": -405.8,
+      "z": 2255.2,
+      "angle": 0.353,
+      "variant": "brick"
+    },
+    {
+      "id": "h237",
+      "kind": "house",
+      "x": -365.6,
+      "z": 2286.3,
+      "angle": -2.789,
+      "variant": "green"
+    },
+    {
+      "id": "h238",
+      "kind": "house",
+      "x": -380.4,
+      "z": 2245.8,
+      "angle": 0.353,
+      "variant": "green"
+    },
+    {
+      "id": "h239",
+      "kind": "house",
+      "x": -350.6,
+      "z": 2238.2,
+      "angle": 0.169,
+      "variant": "blue"
+    },
+    {
+      "id": "h240",
+      "kind": "house",
+      "x": -497.1,
+      "z": 2180.8,
+      "angle": -2.183,
+      "variant": "blue"
+    },
+    {
+      "id": "h241",
+      "kind": "house",
+      "x": -481.6,
+      "z": 2158.7,
+      "angle": -2.183,
+      "variant": "cream"
+    },
+    {
+      "id": "h242",
+      "kind": "house",
+      "x": -516.9,
+      "z": 2134,
+      "angle": 0.959,
+      "variant": "cream"
+    },
+    {
+      "id": "h243",
+      "kind": "house",
+      "x": -494.8,
+      "z": 2110.3,
+      "angle": 0.697,
+      "variant": "green"
+    },
+    {
+      "id": "h244",
+      "kind": "house",
+      "x": -446.5,
+      "z": 2126,
+      "angle": -2.445,
+      "variant": "brick"
+    },
+    {
+      "id": "h245",
+      "kind": "house",
+      "x": -474.1,
+      "z": 2092.9,
+      "angle": 0.697,
+      "variant": "cream"
+    },
+    {
+      "id": "h246",
+      "kind": "house",
+      "x": -444.8,
+      "z": 2073.1,
+      "angle": 0.287,
+      "variant": "blue"
+    },
+    {
+      "id": "h247",
+      "kind": "house",
+      "x": -418.9,
+      "z": 2065.4,
+      "angle": 0.287,
+      "variant": "green"
+    },
+    {
+      "id": "h248",
+      "kind": "house",
+      "x": -380.8,
+      "z": 2099.1,
+      "angle": -2.855,
+      "variant": "blue"
+    },
+    {
+      "id": "h249",
+      "kind": "house",
+      "x": -393,
+      "z": 2057.8,
+      "angle": 0.287,
+      "variant": "cream"
+    },
+    {
+      "id": "h250",
+      "kind": "house",
+      "x": -355.7,
+      "z": 2092.8,
+      "angle": -2.904,
+      "variant": "cream"
+    },
+    {
+      "id": "h251",
+      "kind": "house",
+      "x": -365.8,
+      "z": 2050.9,
+      "angle": 0.237,
+      "variant": "blue"
+    },
+    {
+      "id": "h252",
+      "kind": "house",
+      "x": -329.4,
+      "z": 2086.4,
+      "angle": -2.904,
+      "variant": "blue"
+    },
+    {
+      "id": "h253",
+      "kind": "house",
+      "x": -339.6,
+      "z": 2044.6,
+      "angle": 0.237,
+      "variant": "brick"
+    },
+    {
+      "id": "h254",
+      "kind": "house",
+      "x": -303.2,
+      "z": 2080.1,
+      "angle": -2.904,
+      "variant": "brick"
+    },
+    {
+      "id": "h255",
+      "kind": "house",
+      "x": -313.3,
+      "z": 2038.2,
+      "angle": 0.237,
+      "variant": "brick"
+    },
+    {
+      "id": "h256",
+      "kind": "house",
+      "x": 385,
+      "z": 2833.5,
+      "angle": -1.898,
+      "variant": "blue"
+    },
+    {
+      "id": "h257",
+      "kind": "house",
+      "x": 355.6,
+      "z": 2789.2,
+      "angle": 0.983,
+      "variant": "brick"
+    },
+    {
+      "id": "h258",
+      "kind": "house",
+      "x": 370.6,
+      "z": 2766.7,
+      "angle": 0.983,
+      "variant": "cream"
+    },
+    {
+      "id": "h259",
+      "kind": "house",
+      "x": 393.1,
+      "z": 2739.5,
+      "angle": 0.577,
+      "variant": "brick"
+    },
+    {
+      "id": "h260",
+      "kind": "house",
+      "x": 415.7,
+      "z": 2724.7,
+      "angle": 0.577,
+      "variant": "cream"
+    },
+    {
+      "id": "h261",
+      "kind": "house",
+      "x": 457.8,
+      "z": 2750.1,
+      "angle": -2.814,
+      "variant": "green"
+    },
+    {
+      "id": "h262",
+      "kind": "house",
+      "x": 443.9,
+      "z": 2709.3,
+      "angle": 0.327,
+      "variant": "cream"
+    },
+    {
+      "id": "h263",
+      "kind": "house",
+      "x": 483.3,
+      "z": 2741.4,
+      "angle": -2.814,
+      "variant": "cream"
+    },
+    {
+      "id": "h264",
+      "kind": "house",
+      "x": 701.4,
+      "z": 3149.7,
+      "angle": -1.87,
+      "variant": "cream"
+    },
+    {
+      "id": "h265",
+      "kind": "house",
+      "x": 709.4,
+      "z": 3123.9,
+      "angle": -1.87,
+      "variant": "cream"
+    },
+    {
+      "id": "h266",
+      "kind": "house",
+      "x": 668.2,
+      "z": 3111.2,
+      "angle": 1.271,
+      "variant": "brick"
+    },
+    {
+      "id": "h267",
+      "kind": "house",
+      "x": 717.4,
+      "z": 3098.1,
+      "angle": -1.87,
+      "variant": "cream"
+    },
+    {
+      "id": "h268",
+      "kind": "house",
+      "x": 676.2,
+      "z": 3085.4,
+      "angle": 1.271,
+      "variant": "cream"
+    },
+    {
+      "id": "h269",
+      "kind": "house",
+      "x": 692.8,
+      "z": 3057.3,
+      "angle": 1.008,
+      "variant": "blue"
+    },
+    {
+      "id": "h270",
+      "kind": "house",
+      "x": 743.6,
+      "z": 3057.5,
+      "angle": -2.134,
+      "variant": "blue"
+    },
+    {
+      "id": "h271",
+      "kind": "house",
+      "x": 729.4,
+      "z": 3006,
+      "angle": 0.563,
+      "variant": "cream"
+    },
+    {
+      "id": "h272",
+      "kind": "house",
+      "x": 752.2,
+      "z": 2991.6,
+      "angle": 0.563,
+      "variant": "cream"
+    },
+    {
+      "id": "h273",
+      "kind": "house",
+      "x": 798,
+      "z": 3013.6,
+      "angle": -2.579,
+      "variant": "cream"
+    },
+    {
+      "id": "h274",
+      "kind": "house",
+      "x": 775,
+      "z": 2977.2,
+      "angle": 0.563,
+      "variant": "green"
+    },
+    {
+      "id": "h275",
+      "kind": "house",
+      "x": 824.7,
+      "z": 2991.9,
+      "angle": -2.216,
+      "variant": "green"
+    },
+    {
+      "id": "h276",
+      "kind": "house",
+      "x": 841,
+      "z": 2970.4,
+      "angle": -2.216,
+      "variant": "blue"
+    },
+    {
+      "id": "h277",
+      "kind": "house",
+      "x": 806.6,
+      "z": 2944.5,
+      "angle": 0.925,
+      "variant": "green"
+    },
+    {
+      "id": "h278",
+      "kind": "house",
+      "x": 857.2,
+      "z": 2948.8,
+      "angle": -2.216,
+      "variant": "green"
+    },
+    {
+      "id": "h279",
+      "kind": "house",
+      "x": 1219.9,
+      "z": 2711.3,
+      "angle": -1.055,
+      "variant": "cream"
+    },
+    {
+      "id": "h280",
+      "kind": "house",
+      "x": 1161.4,
+      "z": 2671.9,
+      "angle": 1.596,
+      "variant": "brick"
+    },
+    {
+      "id": "h281",
+      "kind": "house",
+      "x": 1203.8,
+      "z": 2643.9,
+      "angle": -1.546,
+      "variant": "brick"
+    },
+    {
+      "id": "h282",
+      "kind": "house",
+      "x": 1160.8,
+      "z": 2644.9,
+      "angle": 1.596,
+      "variant": "brick"
+    },
+    {
+      "id": "h283",
+      "kind": "house",
+      "x": -21.8,
+      "z": 2565.9,
+      "angle": -0.284,
+      "variant": "cream"
+    },
+    {
+      "id": "h284",
+      "kind": "house",
+      "x": -46.3,
+      "z": 2558.4,
+      "angle": -0.347,
+      "variant": "blue"
+    },
+    {
+      "id": "h285",
+      "kind": "house",
+      "x": -60.9,
+      "z": 2598.9,
+      "angle": 2.795,
+      "variant": "blue"
+    },
+    {
+      "id": "h286",
+      "kind": "house",
+      "x": -71.6,
+      "z": 2549.2,
+      "angle": -0.347,
+      "variant": "green"
+    },
+    {
+      "id": "h287",
+      "kind": "house",
+      "x": -86.3,
+      "z": 2589.7,
+      "angle": 2.795,
+      "variant": "brick"
+    },
+    {
+      "id": "h288",
+      "kind": "house",
+      "x": -96,
+      "z": 2539.9,
+      "angle": -0.392,
+      "variant": "brick"
+    },
+    {
+      "id": "h289",
+      "kind": "house",
+      "x": -120.9,
+      "z": 2529.6,
+      "angle": -0.392,
+      "variant": "cream"
+    },
+    {
+      "id": "h290",
+      "kind": "house",
+      "x": -144.5,
+      "z": 2519,
+      "angle": -0.446,
+      "variant": "brick"
+    },
+    {
+      "id": "h291",
+      "kind": "house",
+      "x": -163.1,
+      "z": 2557.9,
+      "angle": 2.695,
+      "variant": "brick"
+    },
+    {
+      "id": "h292",
+      "kind": "house",
+      "x": -168.8,
+      "z": 2507.3,
+      "angle": -0.446,
+      "variant": "brick"
+    },
+    {
+      "id": "h293",
+      "kind": "house",
+      "x": -187.4,
+      "z": 2546.2,
+      "angle": 2.695,
+      "variant": "cream"
+    }
+  ]
+}
