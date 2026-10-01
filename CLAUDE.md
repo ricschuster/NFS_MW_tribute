@@ -73,7 +73,9 @@ what the city is shaped like.
   test in the suite, because the seed still built and the route still closed.
   A route that does not finish a lap at all fails it the same way. Exits
   non-zero on either, so a seed cannot ship six routes of which one nobody
-  can actually drive.
+  can actually drive. While the map is built area by area, a lap time that
+  moves is re-recorded, not chased: races are tuned once the areas are done
+  (`docs/map-areas.md`, "Races wait for the map").
 - `npm run ramps` — can every ramp be driven up? A guard, not an instrument: it
   exits non-zero if any ramp cannot be climbed, because the ramps are the only
   way onto the interstate and an interstate you cannot reach is scenery. Eleven

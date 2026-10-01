@@ -46,6 +46,26 @@ used to call #268 the gate, and several issues (#253, #256, #260, #265,
   are authored markers with a boulevard from each foot to the nearest drawn
   road (#371). More ramps are more markers in the freeway editor.
 
+## Races wait for the map
+
+Decided 2026-09-30, by the owner: **races are not tuned while the areas are
+being built.** Every area adds roads, buildings and breakables, and each of
+those moves the races - Midtown north's streets alone shifted Halloway Rim
+and Sablet Quay, kilometres away, through where the breakables landed (#469)
+- so a race tuned now is a race retuned after every area that follows.
+
+- Each area gets **its own event as it is built**, laid to be drivable and
+  checked for that only (checklist step 6).
+- **No race tuning** in the meantime: not lap times, rival pace, the ladder's
+  gaps, `SPEEDRUN_TARGET`, or an area's pace (step 7).
+- When **`citylap` moves** because of area work, re-record
+  `docs/city-baseline.json` and say in the PR what moved, rather than
+  chasing it. Its guards still hold: every route finishes, and none comes
+  back faster in traffic than empty (#210).
+- Once the areas are built, **a proper exploration of the races**: route
+  quality, pace against ADR-0011, the ladder and the rival pace fractions,
+  and the baselines, all at once against the finished map.
+
 ## What "done" means for an area
 
 What Marrow Field went through, from a road audit to an event, written down
@@ -64,13 +84,15 @@ so the next area has the same checklist:
    which today crops to Marrow Field and would be pointed at the next area).
 6. **Content:** collectibles, breakables and repair shops where it has them,
    and an event through it (generated, or laid by hand with
-   `placedRoutes`).
+   `placedRoutes`). The event has to be drivable - `citylap`'s driver finishes
+   it, and it has no hairpin the map did not mean - and nothing more: it is
+   not tuned yet (see "Races wait for the map" below).
 7. **Paced** (ADR-0011): the area's event route, driven by a person in the
    starter car, averages about 0.6 of top speed, and any fast road it has is
    one where a faster car is measurably quicker. Measured, not judged, with
    the review's tools (`docs/research/nfs-mw-2012/tools/`). Added
-   2026-09-27, after Marrow Field was signed off; its run is the first one to
-   measure.
+   2026-09-27, after Marrow Field was signed off. **Deferred** to the race
+   exploration since 2026-09-30: an area is done without it.
 8. **Played:** driven in the game and signed off by the person the map is for.
 
 ## The checklist
