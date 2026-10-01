@@ -89,6 +89,7 @@ import {
   ROUTE_START_RANGE,
   FIND_RANGE,
   RIVAL_START_ALONG,
+  RIVAL_CIRCUITS,
   REP_RACE_WIN,
   AMBUSH_RANGE,
   AMBUSH_CARS,
@@ -1013,7 +1014,10 @@ export class CityWorld {
   get rivalRoute(): CityRoute | null {
     const rival = this.currentRival;
     if (!rival || !this.challengeReady) return null;
-    const circuits = this.city.routes.filter((route) => route.kind === 'circuit');
+    // Only the ladder's own circuits (`RIVAL_CIRCUITS`): a circuit added with
+    // an area is an ordinary race and does not move a rival onto it.
+    const named = this.city.routes.filter((route) => route.kind === 'circuit' && RIVAL_CIRCUITS.includes(route.name));
+    const circuits = named.length ? named : this.city.routes.filter((route) => route.kind === 'circuit');
     if (circuits.length === 0) return null;
     // Counted from the top of the ladder, so the boss races the first circuit
     // - the Halloway Rim, gravel and the harder of the two. Counted from the
