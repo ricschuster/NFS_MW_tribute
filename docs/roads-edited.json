@@ -16392,8 +16392,8 @@
       "kind": "boulevard",
       "points": [
         [
-          -730,
-          -2452
+          -731,
+          -2469
         ],
         [
           -536,
@@ -16525,8 +16525,8 @@
           -1924
         ],
         [
-          896,
-          -1806
+          897,
+          -1800
         ]
       ]
     },
@@ -18559,7 +18559,6 @@
     },
     {
       "bridge": false,
-      "deadEnd": false,
       "district": "park",
       "id": "k3",
       "isNew": true,
@@ -18910,8 +18909,8 @@
           -1784
         ],
         [
-          1100,
-          -1800
+          1097,
+          -1805
         ]
       ],
       "surface": "gravel"
@@ -19124,7 +19123,7 @@
       "points": [
         [
           520,
-          -2565
+          -2560
         ],
         [
           560,
@@ -20327,6 +20326,229 @@
         ]
       ],
       "surface": "gravel"
+    },
+    {
+      "id": "s0-1",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          86,
+          -1900
+        ],
+        [
+          74,
+          -1951
+        ],
+        [
+          69,
+          -2003
+        ],
+        [
+          74,
+          -2054
+        ],
+        [
+          86,
+          -2106
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-2",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          386,
+          -1900
+        ],
+        [
+          399,
+          -1850
+        ],
+        [
+          404,
+          -1800
+        ],
+        [
+          399,
+          -1750
+        ],
+        [
+          386,
+          -1700
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-3",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          110,
+          -2075
+        ],
+        [
+          187,
+          -2088
+        ],
+        [
+          258,
+          -2113
+        ],
+        [
+          321,
+          -2155
+        ],
+        [
+          379,
+          -2208
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-4",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          915,
+          -2365
+        ],
+        [
+          886,
+          -2291
+        ],
+        [
+          844,
+          -2227
+        ],
+        [
+          786,
+          -2179
+        ],
+        [
+          716,
+          -2140
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-5",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          981,
+          -2236
+        ],
+        [
+          1031,
+          -2236
+        ],
+        [
+          1081,
+          -2237
+        ],
+        [
+          1131,
+          -2236
+        ],
+        [
+          1181,
+          -2236
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-6",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          981,
+          -2086
+        ],
+        [
+          919,
+          -2098
+        ],
+        [
+          856,
+          -2103
+        ],
+        [
+          794,
+          -2098
+        ],
+        [
+          731,
+          -2086
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "s0-7",
+      "kind": "street",
+      "bridge": false,
+      "district": "midtown",
+      "points": [
+        [
+          929,
+          -1946
+        ],
+        [
+          858,
+          -1971
+        ],
+        [
+          788,
+          -1997
+        ],
+        [
+          719,
+          -2027
+        ],
+        [
+          651,
+          -2059
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
     }
   ],
   "savedAt": "2026-09-30T23:15:10.032412Z",

@@ -2448,9 +2448,9 @@ export const RIVAL_CIRCUITS = ['Halloway Rim', 'Sablet Quay'];
  * roads is a harder event (`carevents.ts`). One event per route, on the
  * owner's word at the Highmoor Descent (#460): seven since Tidewater Drive
  * (#461), nine since Midtown north's two circuits (#477), ten since the
- * Promenade Sprint (#487).
+ * Promenade Sprint (#487), eleven since the Main Street Sprint (#488).
  */
-export const CAR_EVENTS_MAX = 10;
+export const CAR_EVENTS_MAX = 11;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);

@@ -101,12 +101,14 @@ describe('a high street (#488)', () => {
   });
 
   it('closes them up into a terrace, where a suburb leaves gardens between houses', () => {
-    // Each shop's nearest neighbour is about a shop's width away, which no
-    // two houses ever are.
+    // Most shops' nearest neighbour is about a shop's width away, which no
+    // two houses ever are. Most, not all: a side street joining the high
+    // street keeps its corners clear, and the stretch between two of them
+    // can hold a single shop.
     const shops = onHigh.filter((h) => h.kind === 'shop');
     const nearestNeighbour = shops.map((a) => Math.min(...onHigh.filter((b) => b !== a).map((b) => Math.hypot(a.x - b.x, a.z - b.z))));
     const terraced = nearestNeighbour.filter((d) => d < SHOP.w + 2).length;
-    expect(terraced / shops.length).toBeGreaterThan(0.8);
+    expect(terraced / shops.length).toBeGreaterThan(0.5);
     expect(Math.min(...nearestNeighbour)).toBeGreaterThan(SHOP.w * 0.9);
   });
 });

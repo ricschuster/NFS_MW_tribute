@@ -1,0 +1,8123 @@
+{
+  "place": "Midtown south-west",
+  "props": [
+    {
+      "angle": -1.109,
+      "id": "p1",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 185,
+      "z": -2008.2
+    },
+    {
+      "angle": -1.109,
+      "id": "p2",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 208.2,
+      "z": -1961.7
+    },
+    {
+      "angle": 2.416,
+      "id": "p3",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 833.5,
+      "z": -2387.2
+    },
+    {
+      "angle": 2.049,
+      "id": "p4",
+      "kind": "shop",
+      "variant": "red",
+      "x": 922.9,
+      "z": -2324
+    },
+    {
+      "angle": 2.049,
+      "id": "p5",
+      "kind": "shop",
+      "variant": "blue",
+      "x": 929.3,
+      "z": -2311.8
+    },
+    {
+      "angle": 2.049,
+      "id": "p6",
+      "kind": "shop",
+      "variant": "green",
+      "x": 935.6,
+      "z": -2299.5
+    },
+    {
+      "angle": 2.049,
+      "id": "p7",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 944.9,
+      "z": -2281.6
+    },
+    {
+      "angle": 2.049,
+      "id": "p8",
+      "kind": "shop",
+      "variant": "green",
+      "x": 954.2,
+      "z": -2263.7
+    },
+    {
+      "angle": -0.719,
+      "id": "p9",
+      "kind": "shop",
+      "variant": "red",
+      "x": 951.8,
+      "z": -2364
+    },
+    {
+      "angle": -1.092,
+      "id": "p10",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 967.5,
+      "z": -2340
+    },
+    {
+      "angle": -1.092,
+      "id": "p11",
+      "kind": "shop",
+      "variant": "red",
+      "x": 976.8,
+      "z": -2322
+    },
+    {
+      "angle": -1.092,
+      "id": "p12",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 986.1,
+      "z": -2304.1
+    },
+    {
+      "angle": -1.092,
+      "id": "p13",
+      "kind": "shop",
+      "variant": "blue",
+      "x": 995.4,
+      "z": -2286.2
+    },
+    {
+      "angle": 1.571,
+      "id": "p14",
+      "kind": "shop",
+      "variant": "blue",
+      "x": 957.5,
+      "z": -2207.6
+    },
+    {
+      "angle": 1.571,
+      "id": "p15",
+      "kind": "shop",
+      "variant": "red",
+      "x": 957.5,
+      "z": -2193.8
+    },
+    {
+      "angle": 1.571,
+      "id": "p16",
+      "kind": "shop",
+      "variant": "black",
+      "x": 957.5,
+      "z": -2180
+    },
+    {
+      "angle": 1.571,
+      "id": "p17",
+      "kind": "shop",
+      "variant": "red",
+      "x": 957.5,
+      "z": -2166.2
+    },
+    {
+      "angle": 1.571,
+      "id": "p18",
+      "kind": "flat",
+      "variant": "render",
+      "x": 957.5,
+      "z": -2146
+    },
+    {
+      "angle": 1.571,
+      "id": "p19",
+      "kind": "shop",
+      "variant": "black",
+      "x": 957.5,
+      "z": -2125.8
+    },
+    {
+      "angle": -1.571,
+      "id": "p20",
+      "kind": "shop",
+      "variant": "black",
+      "x": 1004.5,
+      "z": -2207.6
+    },
+    {
+      "angle": -1.571,
+      "id": "p21",
+      "kind": "shop",
+      "variant": "green",
+      "x": 1004.5,
+      "z": -2193.8
+    },
+    {
+      "angle": -1.571,
+      "id": "p22",
+      "kind": "flat",
+      "variant": "render",
+      "x": 1004.5,
+      "z": -2173.6
+    },
+    {
+      "angle": -1.571,
+      "id": "p23",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 1004.5,
+      "z": -2147
+    },
+    {
+      "angle": 1.188,
+      "id": "p24",
+      "kind": "shop",
+      "variant": "green",
+      "x": 952.7,
+      "z": -2067.6
+    },
+    {
+      "angle": 1.188,
+      "id": "p25",
+      "kind": "shop",
+      "variant": "green",
+      "x": 947.6,
+      "z": -2054.8
+    },
+    {
+      "angle": 1.188,
+      "id": "p26",
+      "kind": "flat",
+      "variant": "render",
+      "x": 940,
+      "z": -2036.1
+    },
+    {
+      "angle": 1.188,
+      "id": "p27",
+      "kind": "shop",
+      "variant": "black",
+      "x": 932.5,
+      "z": -2017.4
+    },
+    {
+      "angle": 1.188,
+      "id": "p28",
+      "kind": "shop",
+      "variant": "green",
+      "x": 927.3,
+      "z": -2004.6
+    },
+    {
+      "angle": 1.188,
+      "id": "p29",
+      "kind": "shop",
+      "variant": "black",
+      "x": 922.1,
+      "z": -1991.8
+    },
+    {
+      "angle": -1.954,
+      "id": "p30",
+      "kind": "flat",
+      "variant": "render",
+      "x": 993.9,
+      "z": -2044.1
+    },
+    {
+      "angle": -1.954,
+      "id": "p31",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 983.9,
+      "z": -2019.5
+    },
+    {
+      "angle": -1.954,
+      "id": "p32",
+      "kind": "shop",
+      "variant": "blue",
+      "x": 976.4,
+      "z": -2000.7
+    },
+    {
+      "angle": -1.954,
+      "id": "p33",
+      "kind": "shop",
+      "variant": "red",
+      "x": 971.2,
+      "z": -1987.9
+    },
+    {
+      "angle": -1.954,
+      "id": "p34",
+      "kind": "shop",
+      "variant": "green",
+      "x": 966.1,
+      "z": -1975.1
+    },
+    {
+      "angle": 1.387,
+      "id": "p35",
+      "kind": "shop",
+      "variant": "green",
+      "x": 896.1,
+      "z": -1923.7
+    },
+    {
+      "angle": 1.387,
+      "id": "p36",
+      "kind": "flat",
+      "variant": "render",
+      "x": 892.4,
+      "z": -1903.9
+    },
+    {
+      "angle": 1.387,
+      "id": "p37",
+      "kind": "shop",
+      "variant": "green",
+      "x": 888.7,
+      "z": -1884
+    },
+    {
+      "angle": -1.754,
+      "id": "p38",
+      "kind": "shop",
+      "variant": "black",
+      "x": 942.2,
+      "z": -1915.2
+    },
+    {
+      "angle": -1.754,
+      "id": "p39",
+      "kind": "flat",
+      "variant": "brick",
+      "x": 938.6,
+      "z": -1895.3
+    },
+    {
+      "angle": -1.754,
+      "id": "p40",
+      "kind": "shop",
+      "variant": "black",
+      "x": 934.9,
+      "z": -1875.4
+    },
+    {
+      "angle": 3.142,
+      "id": "p41",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 127.2,
+      "z": -1873.5
+    },
+    {
+      "angle": 0,
+      "id": "p42",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 127.2,
+      "z": -1926.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p43",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 290.2,
+      "z": -1862.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p44",
+      "kind": "apartment",
+      "variant": "render",
+      "x": 342.2,
+      "z": -1862.5
+    },
+    {
+      "angle": 0,
+      "id": "p45",
+      "kind": "apartment",
+      "variant": "render",
+      "x": 427.2,
+      "z": -1937.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p46",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 479.2,
+      "z": -1862.5
+    },
+    {
+      "angle": 0,
+      "id": "p47",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 479.2,
+      "z": -1937.5
+    },
+    {
+      "angle": 2.976,
+      "id": "p48",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 525,
+      "z": -1862.5
+    },
+    {
+      "angle": -0.165,
+      "id": "p49",
+      "kind": "apartment",
+      "variant": "render",
+      "x": 537.3,
+      "z": -1936.4
+    },
+    {
+      "angle": 2.356,
+      "id": "p50",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 594.4,
+      "z": -1818.1
+    },
+    {
+      "angle": 2.678,
+      "id": "p51",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 641.6,
+      "z": -1781.1
+    },
+    {
+      "angle": 0,
+      "id": "p52",
+      "kind": "apartment",
+      "variant": "render",
+      "x": 704.6,
+      "z": -1826.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p53",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 756.6,
+      "z": -1773.5
+    },
+    {
+      "angle": 0,
+      "id": "p54",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 756.6,
+      "z": -1826.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p55",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 808.6,
+      "z": -1773.5
+    },
+    {
+      "angle": 0,
+      "id": "p56",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 808.6,
+      "z": -1826.5
+    },
+    {
+      "angle": -0.165,
+      "id": "p57",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 627.5,
+      "z": -1887.1
+    },
+    {
+      "angle": 0,
+      "id": "p58",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 673.4,
+      "z": -1887.5
+    },
+    {
+      "angle": 0,
+      "id": "p59",
+      "kind": "apartment",
+      "variant": "render",
+      "x": 725.4,
+      "z": -1887.5
+    },
+    {
+      "angle": 0,
+      "id": "p60",
+      "kind": "apartment",
+      "variant": "brick",
+      "x": 829.4,
+      "z": -1887.5
+    },
+    {
+      "angle": 1.802,
+      "id": "p61",
+      "kind": "house",
+      "variant": "brick",
+      "x": 58.2,
+      "z": -1924.3
+    },
+    {
+      "angle": -1.475,
+      "id": "p62",
+      "kind": "house",
+      "variant": "green",
+      "x": 95,
+      "z": -1957.6
+    },
+    {
+      "angle": 1.667,
+      "id": "p63",
+      "kind": "house",
+      "variant": "brick",
+      "x": 52.1,
+      "z": -1953.5
+    },
+    {
+      "angle": -1.475,
+      "id": "p64",
+      "kind": "house",
+      "variant": "cream",
+      "x": 92.4,
+      "z": -1984.5
+    },
+    {
+      "angle": 1.667,
+      "id": "p65",
+      "kind": "house",
+      "variant": "blue",
+      "x": 49.5,
+      "z": -1980.4
+    },
+    {
+      "angle": 1.473,
+      "id": "p66",
+      "kind": "house",
+      "variant": "brick",
+      "x": 48.2,
+      "z": -2011.4
+    },
+    {
+      "angle": -1.669,
+      "id": "p67",
+      "kind": "house",
+      "variant": "cream",
+      "x": 93.7,
+      "z": -2034.1
+    },
+    {
+      "angle": 1.473,
+      "id": "p68",
+      "kind": "house",
+      "variant": "blue",
+      "x": 50.8,
+      "z": -2038.3
+    },
+    {
+      "angle": 1.344,
+      "id": "p69",
+      "kind": "house",
+      "variant": "cream",
+      "x": 55.1,
+      "z": -2067.7
+    },
+    {
+      "angle": -1.471,
+      "id": "p70",
+      "kind": "house",
+      "variant": "cream",
+      "x": 421,
+      "z": -1846.8
+    },
+    {
+      "angle": 1.67,
+      "id": "p71",
+      "kind": "house",
+      "variant": "blue",
+      "x": 380.8,
+      "z": -1815.7
+    },
+    {
+      "angle": -1.471,
+      "id": "p72",
+      "kind": "house",
+      "variant": "brick",
+      "x": 423.6,
+      "z": -1820
+    },
+    {
+      "angle": -1.67,
+      "id": "p73",
+      "kind": "house",
+      "variant": "brick",
+      "x": 424.5,
+      "z": -1788.8
+    },
+    {
+      "angle": -1.67,
+      "id": "p74",
+      "kind": "house",
+      "variant": "green",
+      "x": 421.8,
+      "z": -1761.9
+    },
+    {
+      "angle": 1.316,
+      "id": "p75",
+      "kind": "house",
+      "variant": "cream",
+      "x": 374.9,
+      "z": -1743
+    },
+    {
+      "angle": -1.825,
+      "id": "p76",
+      "kind": "house",
+      "variant": "green",
+      "x": 416.6,
+      "z": -1732.2
+    },
+    {
+      "angle": -1.825,
+      "id": "p77",
+      "kind": "house",
+      "variant": "green",
+      "x": 409.8,
+      "z": -1706
+    },
+    {
+      "angle": 0.167,
+      "id": "p78",
+      "kind": "house",
+      "variant": "cream",
+      "x": 136,
+      "z": -2101.2
+    },
+    {
+      "angle": -2.974,
+      "id": "p79",
+      "kind": "house",
+      "variant": "brick",
+      "x": 169.8,
+      "z": -2063.3
+    },
+    {
+      "angle": 0.167,
+      "id": "p80",
+      "kind": "house",
+      "variant": "cream",
+      "x": 162.6,
+      "z": -2105.7
+    },
+    {
+      "angle": -2.803,
+      "id": "p81",
+      "kind": "house",
+      "variant": "green",
+      "x": 225.2,
+      "z": -2078.6
+    },
+    {
+      "angle": -2.803,
+      "id": "p82",
+      "kind": "house",
+      "variant": "green",
+      "x": 250.7,
+      "z": -2087.6
+    },
+    {
+      "angle": 0.339,
+      "id": "p83",
+      "kind": "house",
+      "variant": "cream",
+      "x": 236.4,
+      "z": -2128.2
+    },
+    {
+      "angle": -2.554,
+      "id": "p84",
+      "kind": "house",
+      "variant": "cream",
+      "x": 302.1,
+      "z": -2116.5
+    },
+    {
+      "angle": 0.588,
+      "id": "p85",
+      "kind": "house",
+      "variant": "brick",
+      "x": 278.2,
+      "z": -2152.4
+    },
+    {
+      "angle": -2.554,
+      "id": "p86",
+      "kind": "house",
+      "variant": "cream",
+      "x": 324.6,
+      "z": -2131.5
+    },
+    {
+      "angle": 0.588,
+      "id": "p87",
+      "kind": "house",
+      "variant": "green",
+      "x": 300.7,
+      "z": -2167.3
+    },
+    {
+      "angle": -2.401,
+      "id": "p88",
+      "kind": "house",
+      "variant": "cream",
+      "x": 368,
+      "z": -2168.7
+    },
+    {
+      "angle": 0.74,
+      "id": "p89",
+      "kind": "house",
+      "variant": "blue",
+      "x": 338.9,
+      "z": -2200.5
+    },
+    {
+      "angle": 1.197,
+      "id": "p90",
+      "kind": "house",
+      "variant": "green",
+      "x": 884,
+      "z": -2344.9
+    },
+    {
+      "angle": 1.197,
+      "id": "p91",
+      "kind": "house",
+      "variant": "cream",
+      "x": 874.1,
+      "z": -2319.8
+    },
+    {
+      "angle": -2.152,
+      "id": "p92",
+      "kind": "house",
+      "variant": "blue",
+      "x": 901.5,
+      "z": -2275.4
+    },
+    {
+      "angle": 0.99,
+      "id": "p93",
+      "kind": "house",
+      "variant": "green",
+      "x": 850.7,
+      "z": -2276.5
+    },
+    {
+      "angle": -2.152,
+      "id": "p94",
+      "kind": "house",
+      "variant": "cream",
+      "x": 886.7,
+      "z": -2252.8
+    },
+    {
+      "angle": 0.99,
+      "id": "p95",
+      "kind": "house",
+      "variant": "cream",
+      "x": 835.9,
+      "z": -2253.9
+    },
+    {
+      "angle": -2.152,
+      "id": "p96",
+      "kind": "house",
+      "variant": "blue",
+      "x": 871.9,
+      "z": -2230.3
+    },
+    {
+      "angle": -2.45,
+      "id": "p97",
+      "kind": "house",
+      "variant": "brick",
+      "x": 850.8,
+      "z": -2204.7
+    },
+    {
+      "angle": 0.691,
+      "id": "p98",
+      "kind": "house",
+      "variant": "green",
+      "x": 802.6,
+      "z": -2220.7
+    },
+    {
+      "angle": -2.45,
+      "id": "p99",
+      "kind": "house",
+      "variant": "blue",
+      "x": 830,
+      "z": -2187.5
+    },
+    {
+      "angle": -2.45,
+      "id": "p100",
+      "kind": "house",
+      "variant": "green",
+      "x": 809.2,
+      "z": -2170.3
+    },
+    {
+      "angle": 0.508,
+      "id": "p101",
+      "kind": "house",
+      "variant": "cream",
+      "x": 762.7,
+      "z": -2190.7
+    },
+    {
+      "angle": -2.633,
+      "id": "p102",
+      "kind": "house",
+      "variant": "cream",
+      "x": 783.7,
+      "z": -2153
+    },
+    {
+      "angle": 0.508,
+      "id": "p103",
+      "kind": "house",
+      "variant": "brick",
+      "x": 739.1,
+      "z": -2177.5
+    },
+    {
+      "angle": -2.633,
+      "id": "p104",
+      "kind": "house",
+      "variant": "green",
+      "x": 760.1,
+      "z": -2139.9
+    },
+    {
+      "angle": 0.508,
+      "id": "p105",
+      "kind": "house",
+      "variant": "green",
+      "x": 715.5,
+      "z": -2164.4
+    },
+    {
+      "angle": 0,
+      "id": "p106",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1011,
+      "z": -2257.5
+    },
+    {
+      "angle": -3.122,
+      "id": "p107",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1038.4,
+      "z": -2214.6
+    },
+    {
+      "angle": -3.122,
+      "id": "p108",
+      "kind": "house",
+      "variant": "blue",
+      "x": 1065.4,
+      "z": -2215.1
+    },
+    {
+      "angle": 0.02,
+      "id": "p109",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1064.6,
+      "z": -2258.2
+    },
+    {
+      "angle": 3.122,
+      "id": "p110",
+      "kind": "house",
+      "variant": "blue",
+      "x": 1091.6,
+      "z": -2215.2
+    },
+    {
+      "angle": -0.02,
+      "id": "p111",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1092.4,
+      "z": -2258.3
+    },
+    {
+      "angle": 3.122,
+      "id": "p112",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1118.6,
+      "z": -2214.7
+    },
+    {
+      "angle": -0.02,
+      "id": "p113",
+      "kind": "house",
+      "variant": "blue",
+      "x": 1119.4,
+      "z": -2257.8
+    },
+    {
+      "angle": 3.142,
+      "id": "p114",
+      "kind": "house",
+      "variant": "blue",
+      "x": 1146,
+      "z": -2214.5
+    },
+    {
+      "angle": 0,
+      "id": "p115",
+      "kind": "house",
+      "variant": "blue",
+      "x": 1146,
+      "z": -2257.5
+    },
+    {
+      "angle": 3.142,
+      "id": "p116",
+      "kind": "house",
+      "variant": "green",
+      "x": 1173,
+      "z": -2214.5
+    },
+    {
+      "angle": 0,
+      "id": "p117",
+      "kind": "house",
+      "variant": "cream",
+      "x": 1173,
+      "z": -2257.5
+    },
+    {
+      "angle": 2.95,
+      "id": "p118",
+      "kind": "house",
+      "variant": "brick",
+      "x": 920.9,
+      "z": -2075.7
+    },
+    {
+      "angle": -0.079,
+      "id": "p119",
+      "kind": "house",
+      "variant": "blue",
+      "x": 899.9,
+      "z": -2121.1
+    },
+    {
+      "angle": -0.079,
+      "id": "p120",
+      "kind": "house",
+      "variant": "blue",
+      "x": 873,
+      "z": -2123.3
+    },
+    {
+      "angle": -3.061,
+      "id": "p121",
+      "kind": "house",
+      "variant": "blue",
+      "x": 846.1,
+      "z": -2080.6
+    },
+    {
+      "angle": 0.08,
+      "id": "p122",
+      "kind": "house",
+      "variant": "green",
+      "x": 815.7,
+      "z": -2121.4
+    },
+    {
+      "angle": -3.061,
+      "id": "p123",
+      "kind": "house",
+      "variant": "brick",
+      "x": 819.2,
+      "z": -2078.4
+    },
+    {
+      "angle": 0.188,
+      "id": "p124",
+      "kind": "house",
+      "variant": "green",
+      "x": 786.6,
+      "z": -2118.5
+    },
+    {
+      "angle": -2.953,
+      "id": "p125",
+      "kind": "house",
+      "variant": "blue",
+      "x": 794.6,
+      "z": -2076.2
+    },
+    {
+      "angle": 0.188,
+      "id": "p126",
+      "kind": "house",
+      "variant": "brick",
+      "x": 760.1,
+      "z": -2113.5
+    },
+    {
+      "angle": -2.953,
+      "id": "p127",
+      "kind": "house",
+      "variant": "green",
+      "x": 768.1,
+      "z": -2071.1
+    },
+    {
+      "angle": -0.339,
+      "id": "p128",
+      "kind": "house",
+      "variant": "green",
+      "x": 882.4,
+      "z": -1985.2
+    },
+    {
+      "angle": 2.803,
+      "id": "p129",
+      "kind": "house",
+      "variant": "green",
+      "x": 868.1,
+      "z": -1944.6
+    },
+    {
+      "angle": -0.356,
+      "id": "p130",
+      "kind": "house",
+      "variant": "cream",
+      "x": 857.3,
+      "z": -1994.2
+    },
+    {
+      "angle": 2.786,
+      "id": "p131",
+      "kind": "house",
+      "variant": "brick",
+      "x": 842.3,
+      "z": -1953.8
+    },
+    {
+      "angle": -0.356,
+      "id": "p132",
+      "kind": "house",
+      "variant": "cream",
+      "x": 832,
+      "z": -2003.6
+    },
+    {
+      "angle": 2.786,
+      "id": "p133",
+      "kind": "house",
+      "variant": "green",
+      "x": 817,
+      "z": -1963.2
+    },
+    {
+      "angle": -0.356,
+      "id": "p134",
+      "kind": "house",
+      "variant": "green",
+      "x": 806.7,
+      "z": -2013
+    },
+    {
+      "angle": 2.786,
+      "id": "p135",
+      "kind": "house",
+      "variant": "brick",
+      "x": 791.7,
+      "z": -1972.7
+    },
+    {
+      "angle": 2.731,
+      "id": "p136",
+      "kind": "house",
+      "variant": "cream",
+      "x": 740.8,
+      "z": -1994
+    },
+    {
+      "angle": 2.731,
+      "id": "p137",
+      "kind": "house",
+      "variant": "green",
+      "x": 716.1,
+      "z": -2004.8
+    },
+    {
+      "angle": -0.44,
+      "id": "p138",
+      "kind": "house",
+      "variant": "cream",
+      "x": 709.3,
+      "z": -2055.4
+    },
+    {
+      "angle": 2.702,
+      "id": "p139",
+      "kind": "house",
+      "variant": "green",
+      "x": 691,
+      "z": -2016.4
+    },
+    {
+      "angle": -0.44,
+      "id": "p140",
+      "kind": "house",
+      "variant": "blue",
+      "x": 684.9,
+      "z": -2066.8
+    },
+    {
+      "angle": 2.702,
+      "id": "p141",
+      "kind": "house",
+      "variant": "cream",
+      "x": 666.6,
+      "z": -2027.9
+    },
+    {
+      "angle": 1.802,
+      "id": "p142",
+      "kind": "hedge",
+      "x": 72.3,
+      "z": -1927.6
+    },
+    {
+      "angle": -1.475,
+      "id": "p143",
+      "kind": "hedge",
+      "x": 80.6,
+      "z": -1956.2
+    },
+    {
+      "angle": 1.667,
+      "id": "p144",
+      "kind": "hedge",
+      "x": 66.5,
+      "z": -1954.9
+    },
+    {
+      "angle": -1.475,
+      "id": "p145",
+      "kind": "hedge",
+      "x": 78,
+      "z": -1983.1
+    },
+    {
+      "angle": 1.667,
+      "id": "p146",
+      "kind": "hedge",
+      "x": 63.9,
+      "z": -1981.8
+    },
+    {
+      "angle": 1.473,
+      "id": "p147",
+      "kind": "hedge",
+      "x": 62.6,
+      "z": -2010
+    },
+    {
+      "angle": -1.669,
+      "id": "p148",
+      "kind": "hedge",
+      "x": 79.3,
+      "z": -2035.5
+    },
+    {
+      "angle": 1.473,
+      "id": "p149",
+      "kind": "hedge",
+      "x": 65.2,
+      "z": -2036.9
+    },
+    {
+      "angle": 1.344,
+      "id": "p150",
+      "kind": "hedge",
+      "x": 69.2,
+      "z": -2064.4
+    },
+    {
+      "angle": -1.471,
+      "id": "p151",
+      "kind": "hedge",
+      "x": 406.6,
+      "z": -1845.4
+    },
+    {
+      "angle": 1.67,
+      "id": "p152",
+      "kind": "hedge",
+      "x": 395.2,
+      "z": -1817.1
+    },
+    {
+      "angle": -1.471,
+      "id": "p153",
+      "kind": "hedge",
+      "x": 409.2,
+      "z": -1818.6
+    },
+    {
+      "angle": -1.67,
+      "id": "p154",
+      "kind": "hedge",
+      "x": 410.1,
+      "z": -1790.2
+    },
+    {
+      "angle": -1.67,
+      "id": "p155",
+      "kind": "hedge",
+      "x": 407.4,
+      "z": -1763.3
+    },
+    {
+      "angle": 1.316,
+      "id": "p156",
+      "kind": "hedge",
+      "x": 388.9,
+      "z": -1739.3
+    },
+    {
+      "angle": -1.825,
+      "id": "p157",
+      "kind": "hedge",
+      "x": 402.6,
+      "z": -1735.8
+    },
+    {
+      "angle": -1.825,
+      "id": "p158",
+      "kind": "hedge",
+      "x": 395.8,
+      "z": -1709.6
+    },
+    {
+      "angle": 0.167,
+      "id": "p159",
+      "kind": "hedge",
+      "x": 138.4,
+      "z": -2086.9
+    },
+    {
+      "angle": -2.974,
+      "id": "p160",
+      "kind": "hedge",
+      "x": 167.4,
+      "z": -2077.6
+    },
+    {
+      "angle": 0.167,
+      "id": "p161",
+      "kind": "hedge",
+      "x": 165,
+      "z": -2091.4
+    },
+    {
+      "angle": -2.803,
+      "id": "p162",
+      "kind": "hedge",
+      "x": 220.4,
+      "z": -2092.3
+    },
+    {
+      "angle": -2.803,
+      "id": "p163",
+      "kind": "hedge",
+      "x": 245.9,
+      "z": -2101.3
+    },
+    {
+      "angle": 0.339,
+      "id": "p164",
+      "kind": "hedge",
+      "x": 241.2,
+      "z": -2114.5
+    },
+    {
+      "angle": -2.554,
+      "id": "p165",
+      "kind": "hedge",
+      "x": 294.1,
+      "z": -2128.6
+    },
+    {
+      "angle": 0.588,
+      "id": "p166",
+      "kind": "hedge",
+      "x": 286.2,
+      "z": -2140.3
+    },
+    {
+      "angle": -2.554,
+      "id": "p167",
+      "kind": "hedge",
+      "x": 316.6,
+      "z": -2143.6
+    },
+    {
+      "angle": 0.588,
+      "id": "p168",
+      "kind": "hedge",
+      "x": 308.7,
+      "z": -2155.2
+    },
+    {
+      "angle": -2.401,
+      "id": "p169",
+      "kind": "hedge",
+      "x": 358.2,
+      "z": -2179.4
+    },
+    {
+      "angle": 0.74,
+      "id": "p170",
+      "kind": "hedge",
+      "x": 348.7,
+      "z": -2189.8
+    },
+    {
+      "angle": 1.197,
+      "id": "p171",
+      "kind": "hedge",
+      "x": 897.5,
+      "z": -2339.6
+    },
+    {
+      "angle": 1.197,
+      "id": "p172",
+      "kind": "hedge",
+      "x": 887.6,
+      "z": -2314.5
+    },
+    {
+      "angle": -2.152,
+      "id": "p173",
+      "kind": "hedge",
+      "x": 889.4,
+      "z": -2283.4
+    },
+    {
+      "angle": 0.99,
+      "id": "p174",
+      "kind": "hedge",
+      "x": 862.8,
+      "z": -2268.5
+    },
+    {
+      "angle": -2.152,
+      "id": "p175",
+      "kind": "hedge",
+      "x": 874.6,
+      "z": -2260.8
+    },
+    {
+      "angle": 0.99,
+      "id": "p176",
+      "kind": "hedge",
+      "x": 848,
+      "z": -2245.9
+    },
+    {
+      "angle": -2.152,
+      "id": "p177",
+      "kind": "hedge",
+      "x": 859.8,
+      "z": -2238.3
+    },
+    {
+      "angle": -2.45,
+      "id": "p178",
+      "kind": "hedge",
+      "x": 841.6,
+      "z": -2215.9
+    },
+    {
+      "angle": 0.691,
+      "id": "p179",
+      "kind": "hedge",
+      "x": 811.8,
+      "z": -2209.5
+    },
+    {
+      "angle": -2.45,
+      "id": "p180",
+      "kind": "hedge",
+      "x": 820.8,
+      "z": -2198.7
+    },
+    {
+      "angle": -2.45,
+      "id": "p181",
+      "kind": "hedge",
+      "x": 800,
+      "z": -2181.5
+    },
+    {
+      "angle": 0.508,
+      "id": "p182",
+      "kind": "hedge",
+      "x": 769.8,
+      "z": -2178
+    },
+    {
+      "angle": -2.633,
+      "id": "p183",
+      "kind": "hedge",
+      "x": 776.6,
+      "z": -2165.7
+    },
+    {
+      "angle": 0.508,
+      "id": "p184",
+      "kind": "hedge",
+      "x": 746.2,
+      "z": -2164.8
+    },
+    {
+      "angle": -2.633,
+      "id": "p185",
+      "kind": "hedge",
+      "x": 753,
+      "z": -2152.6
+    },
+    {
+      "angle": 0.508,
+      "id": "p186",
+      "kind": "hedge",
+      "x": 722.6,
+      "z": -2151.7
+    },
+    {
+      "angle": 0,
+      "id": "p187",
+      "kind": "hedge",
+      "x": 1011,
+      "z": -2243
+    },
+    {
+      "angle": -3.122,
+      "id": "p188",
+      "kind": "hedge",
+      "x": 1038.1,
+      "z": -2229.1
+    },
+    {
+      "angle": -3.122,
+      "id": "p189",
+      "kind": "hedge",
+      "x": 1065.1,
+      "z": -2229.6
+    },
+    {
+      "angle": 0.02,
+      "id": "p190",
+      "kind": "hedge",
+      "x": 1064.9,
+      "z": -2243.7
+    },
+    {
+      "angle": 3.122,
+      "id": "p191",
+      "kind": "hedge",
+      "x": 1091.9,
+      "z": -2229.7
+    },
+    {
+      "angle": -0.02,
+      "id": "p192",
+      "kind": "hedge",
+      "x": 1092.1,
+      "z": -2243.8
+    },
+    {
+      "angle": 3.122,
+      "id": "p193",
+      "kind": "hedge",
+      "x": 1118.9,
+      "z": -2229.2
+    },
+    {
+      "angle": -0.02,
+      "id": "p194",
+      "kind": "hedge",
+      "x": 1119.1,
+      "z": -2243.3
+    },
+    {
+      "angle": 3.142,
+      "id": "p195",
+      "kind": "hedge",
+      "x": 1146,
+      "z": -2229
+    },
+    {
+      "angle": 0,
+      "id": "p196",
+      "kind": "hedge",
+      "x": 1146,
+      "z": -2243
+    },
+    {
+      "angle": 3.142,
+      "id": "p197",
+      "kind": "hedge",
+      "x": 1173,
+      "z": -2229
+    },
+    {
+      "angle": 0,
+      "id": "p198",
+      "kind": "hedge",
+      "x": 1173,
+      "z": -2243
+    },
+    {
+      "angle": 2.95,
+      "id": "p199",
+      "kind": "hedge",
+      "x": 923.7,
+      "z": -2089.9
+    },
+    {
+      "angle": -0.079,
+      "id": "p200",
+      "kind": "hedge",
+      "x": 898.8,
+      "z": -2106.6
+    },
+    {
+      "angle": -0.079,
+      "id": "p201",
+      "kind": "hedge",
+      "x": 871.9,
+      "z": -2108.8
+    },
+    {
+      "angle": -3.061,
+      "id": "p202",
+      "kind": "hedge",
+      "x": 844.9,
+      "z": -2095.1
+    },
+    {
+      "angle": 0.08,
+      "id": "p203",
+      "kind": "hedge",
+      "x": 816.9,
+      "z": -2106.9
+    },
+    {
+      "angle": -3.061,
+      "id": "p204",
+      "kind": "hedge",
+      "x": 818,
+      "z": -2092.9
+    },
+    {
+      "angle": 0.188,
+      "id": "p205",
+      "kind": "hedge",
+      "x": 789.3,
+      "z": -2104.3
+    },
+    {
+      "angle": -2.953,
+      "id": "p206",
+      "kind": "hedge",
+      "x": 791.9,
+      "z": -2090.4
+    },
+    {
+      "angle": 0.188,
+      "id": "p207",
+      "kind": "hedge",
+      "x": 762.8,
+      "z": -2099.3
+    },
+    {
+      "angle": -2.953,
+      "id": "p208",
+      "kind": "hedge",
+      "x": 765.4,
+      "z": -2085.3
+    },
+    {
+      "angle": -0.339,
+      "id": "p209",
+      "kind": "hedge",
+      "x": 877.6,
+      "z": -1971.5
+    },
+    {
+      "angle": 2.803,
+      "id": "p210",
+      "kind": "hedge",
+      "x": 872.9,
+      "z": -1958.3
+    },
+    {
+      "angle": -0.356,
+      "id": "p211",
+      "kind": "hedge",
+      "x": 852.2,
+      "z": -1980.6
+    },
+    {
+      "angle": 2.786,
+      "id": "p212",
+      "kind": "hedge",
+      "x": 847.3,
+      "z": -1967.4
+    },
+    {
+      "angle": -0.356,
+      "id": "p213",
+      "kind": "hedge",
+      "x": 826.9,
+      "z": -1990
+    },
+    {
+      "angle": 2.786,
+      "id": "p214",
+      "kind": "hedge",
+      "x": 822,
+      "z": -1976.8
+    },
+    {
+      "angle": -0.356,
+      "id": "p215",
+      "kind": "hedge",
+      "x": 801.6,
+      "z": -1999.4
+    },
+    {
+      "angle": 2.786,
+      "id": "p216",
+      "kind": "hedge",
+      "x": 796.7,
+      "z": -1986.3
+    },
+    {
+      "angle": 2.731,
+      "id": "p217",
+      "kind": "hedge",
+      "x": 746.6,
+      "z": -2007.3
+    },
+    {
+      "angle": 2.731,
+      "id": "p218",
+      "kind": "hedge",
+      "x": 721.9,
+      "z": -2018.1
+    },
+    {
+      "angle": -0.44,
+      "id": "p219",
+      "kind": "hedge",
+      "x": 703.1,
+      "z": -2042.3
+    },
+    {
+      "angle": 2.702,
+      "id": "p220",
+      "kind": "hedge",
+      "x": 697.2,
+      "z": -2029.5
+    },
+    {
+      "angle": -0.44,
+      "id": "p221",
+      "kind": "hedge",
+      "x": 678.7,
+      "z": -2053.7
+    },
+    {
+      "angle": 2.702,
+      "id": "p222",
+      "kind": "hedge",
+      "x": 672.8,
+      "z": -2041
+    },
+    {
+      "angle": 6.279,
+      "id": "p223",
+      "kind": "street-tree",
+      "x": 1087.6,
+      "z": -1758
+    },
+    {
+      "angle": 2.737,
+      "id": "p224",
+      "kind": "street-tree",
+      "x": 16.7,
+      "z": -1849.2
+    },
+    {
+      "angle": 3.647,
+      "id": "p225",
+      "kind": "street-tree",
+      "x": -0.8,
+      "z": -1866.7
+    },
+    {
+      "angle": 0.126,
+      "id": "p226",
+      "kind": "street-tree",
+      "x": 42.2,
+      "z": -1874.7
+    },
+    {
+      "angle": 5.131,
+      "id": "p227",
+      "kind": "street-tree",
+      "x": 24.7,
+      "z": -1892.2
+    },
+    {
+      "angle": 5.165,
+      "id": "p228",
+      "kind": "street-tree",
+      "x": 126,
+      "z": -1887.6
+    },
+    {
+      "angle": 2.039,
+      "id": "p229",
+      "kind": "street-tree",
+      "x": 126,
+      "z": -1912.4
+    },
+    {
+      "angle": 5.872,
+      "id": "p230",
+      "kind": "street-tree",
+      "x": 162,
+      "z": -1887.6
+    },
+    {
+      "angle": 4.905,
+      "id": "p231",
+      "kind": "street-tree",
+      "x": 162,
+      "z": -1912.4
+    },
+    {
+      "angle": 1.188,
+      "id": "p232",
+      "kind": "street-tree",
+      "x": 603.5,
+      "z": -1829
+    },
+    {
+      "angle": 4.007,
+      "id": "p233",
+      "kind": "street-tree",
+      "x": 632.5,
+      "z": -1802.6
+    },
+    {
+      "angle": 4.522,
+      "id": "p234",
+      "kind": "street-tree",
+      "x": 644.7,
+      "z": -1824.1
+    },
+    {
+      "angle": 0.72,
+      "id": "p235",
+      "kind": "street-tree",
+      "x": 669.4,
+      "z": -1787.9
+    },
+    {
+      "angle": 1.503,
+      "id": "p236",
+      "kind": "street-tree",
+      "x": 673.5,
+      "z": -1812.3
+    },
+    {
+      "angle": 1.406,
+      "id": "p237",
+      "kind": "street-tree",
+      "x": 707.4,
+      "z": -1787.6
+    },
+    {
+      "angle": 2.661,
+      "id": "p238",
+      "kind": "street-tree",
+      "x": 707.4,
+      "z": -1812.4
+    },
+    {
+      "angle": 3.807,
+      "id": "p239",
+      "kind": "street-tree",
+      "x": 743.4,
+      "z": -1787.6
+    },
+    {
+      "angle": 5.346,
+      "id": "p240",
+      "kind": "street-tree",
+      "x": 743.4,
+      "z": -1812.4
+    },
+    {
+      "angle": 0.067,
+      "id": "p241",
+      "kind": "street-tree",
+      "x": 779.4,
+      "z": -1787.6
+    },
+    {
+      "angle": 1.151,
+      "id": "p242",
+      "kind": "street-tree",
+      "x": 779.4,
+      "z": -1812.4
+    },
+    {
+      "angle": 0.281,
+      "id": "p243",
+      "kind": "street-tree",
+      "x": 815.4,
+      "z": -1787.6
+    },
+    {
+      "angle": 1.46,
+      "id": "p244",
+      "kind": "street-tree",
+      "x": 815.4,
+      "z": -1812.4
+    },
+    {
+      "angle": 5.374,
+      "id": "p245",
+      "kind": "street-tree",
+      "x": 851.4,
+      "z": -1787.6
+    },
+    {
+      "angle": 0.404,
+      "id": "p246",
+      "kind": "street-tree",
+      "x": 851.4,
+      "z": -1812.4
+    },
+    {
+      "angle": 0.036,
+      "id": "p247",
+      "kind": "street-tree",
+      "x": 937,
+      "z": -1787.6
+    },
+    {
+      "angle": 4.836,
+      "id": "p248",
+      "kind": "street-tree",
+      "x": 937,
+      "z": -1812.4
+    },
+    {
+      "angle": 6.145,
+      "id": "p249",
+      "kind": "street-tree",
+      "x": 973,
+      "z": -1787.6
+    },
+    {
+      "angle": 3.781,
+      "id": "p250",
+      "kind": "street-tree",
+      "x": 973,
+      "z": -1812.4
+    },
+    {
+      "angle": 2.943,
+      "id": "p251",
+      "kind": "street-tree",
+      "x": 1009,
+      "z": -1787.6
+    },
+    {
+      "angle": 3.903,
+      "id": "p252",
+      "kind": "street-tree",
+      "x": 1009,
+      "z": -1812.4
+    },
+    {
+      "angle": 0.784,
+      "id": "p253",
+      "kind": "street-tree",
+      "x": 1045,
+      "z": -1787.6
+    },
+    {
+      "angle": 1.599,
+      "id": "p254",
+      "kind": "street-tree",
+      "x": 1045,
+      "z": -1812.4
+    },
+    {
+      "angle": 3.908,
+      "id": "p255",
+      "kind": "street-tree",
+      "x": 1120,
+      "z": -1837.5
+    },
+    {
+      "angle": 2.971,
+      "id": "p256",
+      "kind": "street-tree",
+      "x": 946.3,
+      "z": -1837.6
+    },
+    {
+      "angle": 0.665,
+      "id": "p257",
+      "kind": "street-tree",
+      "x": 946.3,
+      "z": -1862.4
+    },
+    {
+      "angle": 3.289,
+      "id": "p258",
+      "kind": "street-tree",
+      "x": 982.3,
+      "z": -1837.6
+    },
+    {
+      "angle": 2.767,
+      "id": "p259",
+      "kind": "street-tree",
+      "x": 982.3,
+      "z": -1862.4
+    },
+    {
+      "angle": 3.392,
+      "id": "p260",
+      "kind": "street-tree",
+      "x": 1018.3,
+      "z": -1837.6
+    },
+    {
+      "angle": 4.923,
+      "id": "p261",
+      "kind": "street-tree",
+      "x": 1018.3,
+      "z": -1862.4
+    },
+    {
+      "angle": 1.136,
+      "id": "p262",
+      "kind": "street-tree",
+      "x": 1054.3,
+      "z": -1837.6
+    },
+    {
+      "angle": 1.628,
+      "id": "p263",
+      "kind": "street-tree",
+      "x": 1054.3,
+      "z": -1862.4
+    },
+    {
+      "angle": 5.237,
+      "id": "p264",
+      "kind": "street-tree",
+      "x": 1091.9,
+      "z": -1839.6
+    },
+    {
+      "angle": 2.385,
+      "id": "p265",
+      "kind": "street-tree",
+      "x": 1088.4,
+      "z": -1864.1
+    },
+    {
+      "angle": 4.006,
+      "id": "p266",
+      "kind": "street-tree",
+      "x": 1129.3,
+      "z": -1861.8
+    },
+    {
+      "angle": 5.228,
+      "id": "p267",
+      "kind": "street-tree",
+      "x": 1111.8,
+      "z": -1879.3
+    },
+    {
+      "angle": 5.721,
+      "id": "p268",
+      "kind": "street-tree",
+      "x": 1154.8,
+      "z": -1887.3
+    },
+    {
+      "angle": 0.14,
+      "id": "p269",
+      "kind": "street-tree",
+      "x": 1137.3,
+      "z": -1904.8
+    },
+    {
+      "angle": 2.674,
+      "id": "p270",
+      "kind": "street-tree",
+      "x": 1162.7,
+      "z": -1930.2
+    },
+    {
+      "angle": 4.897,
+      "id": "p271",
+      "kind": "street-tree",
+      "x": 84.8,
+      "z": -1937.7
+    },
+    {
+      "angle": 1.788,
+      "id": "p272",
+      "kind": "street-tree",
+      "x": 80,
+      "z": -1966.3
+    },
+    {
+      "angle": 0.204,
+      "id": "p273",
+      "kind": "street-tree",
+      "x": 65.2,
+      "z": -1964.8
+    },
+    {
+      "angle": 1.053,
+      "id": "p274",
+      "kind": "street-tree",
+      "x": 77.1,
+      "z": -1996.1
+    },
+    {
+      "angle": 2.743,
+      "id": "p275",
+      "kind": "street-tree",
+      "x": 62.3,
+      "z": -1994.7
+    },
+    {
+      "angle": 0.14,
+      "id": "p276",
+      "kind": "street-tree",
+      "x": 78.6,
+      "z": -2024.5
+    },
+    {
+      "angle": 6.083,
+      "id": "p277",
+      "kind": "street-tree",
+      "x": 63.8,
+      "z": -2026
+    },
+    {
+      "angle": 3.912,
+      "id": "p278",
+      "kind": "street-tree",
+      "x": 81.5,
+      "z": -2053.4
+    },
+    {
+      "angle": 2.437,
+      "id": "p279",
+      "kind": "street-tree",
+      "x": 67,
+      "z": -2056.8
+    },
+    {
+      "angle": 2.281,
+      "id": "p280",
+      "kind": "street-tree",
+      "x": 88.2,
+      "z": -2082.7
+    },
+    {
+      "angle": 5.622,
+      "id": "p281",
+      "kind": "street-tree",
+      "x": 73.8,
+      "z": -2086
+    },
+    {
+      "angle": 2.169,
+      "id": "p282",
+      "kind": "street-tree",
+      "x": 388.1,
+      "z": -1862.3
+    },
+    {
+      "angle": 6.203,
+      "id": "p283",
+      "kind": "street-tree",
+      "x": 402.5,
+      "z": -1866.1
+    },
+    {
+      "angle": 3.922,
+      "id": "p284",
+      "kind": "street-tree",
+      "x": 393.1,
+      "z": -1834
+    },
+    {
+      "angle": 3.965,
+      "id": "p285",
+      "kind": "street-tree",
+      "x": 407.9,
+      "z": -1835.5
+    },
+    {
+      "angle": 3.309,
+      "id": "p286",
+      "kind": "street-tree",
+      "x": 396.1,
+      "z": -1804.1
+    },
+    {
+      "angle": 0.898,
+      "id": "p287",
+      "kind": "street-tree",
+      "x": 410.9,
+      "z": -1805.6
+    },
+    {
+      "angle": 3.59,
+      "id": "p288",
+      "kind": "street-tree",
+      "x": 394.1,
+      "z": -1775.8
+    },
+    {
+      "angle": 0.667,
+      "id": "p289",
+      "kind": "street-tree",
+      "x": 408.9,
+      "z": -1774.3
+    },
+    {
+      "angle": 2.974,
+      "id": "p290",
+      "kind": "street-tree",
+      "x": 390.6,
+      "z": -1747.2
+    },
+    {
+      "angle": 4.99,
+      "id": "p291",
+      "kind": "street-tree",
+      "x": 405,
+      "z": -1743.4
+    },
+    {
+      "angle": 1.352,
+      "id": "p292",
+      "kind": "street-tree",
+      "x": 147.7,
+      "z": -2073.8
+    },
+    {
+      "angle": 5.745,
+      "id": "p293",
+      "kind": "street-tree",
+      "x": 145.2,
+      "z": -2088.5
+    },
+    {
+      "angle": 4.457,
+      "id": "p294",
+      "kind": "street-tree",
+      "x": 177.3,
+      "z": -2078.8
+    },
+    {
+      "angle": 3.125,
+      "id": "p295",
+      "kind": "street-tree",
+      "x": 174.8,
+      "z": -2093.5
+    },
+    {
+      "angle": 3.111,
+      "id": "p296",
+      "kind": "street-tree",
+      "x": 207.3,
+      "z": -2087.3
+    },
+    {
+      "angle": 3.844,
+      "id": "p297",
+      "kind": "street-tree",
+      "x": 202.4,
+      "z": -2101.3
+    },
+    {
+      "angle": 4.308,
+      "id": "p298",
+      "kind": "street-tree",
+      "x": 235.6,
+      "z": -2097.2
+    },
+    {
+      "angle": 1.072,
+      "id": "p299",
+      "kind": "street-tree",
+      "x": 230.7,
+      "z": -2111.3
+    },
+    {
+      "angle": 5.512,
+      "id": "p300",
+      "kind": "street-tree",
+      "x": 265.2,
+      "z": -2108.8
+    },
+    {
+      "angle": 4.924,
+      "id": "p301",
+      "kind": "street-tree",
+      "x": 256.9,
+      "z": -2121.2
+    },
+    {
+      "angle": 5.529,
+      "id": "p302",
+      "kind": "street-tree",
+      "x": 339.2,
+      "z": -2161.6
+    },
+    {
+      "angle": 2.019,
+      "id": "p303",
+      "kind": "street-tree",
+      "x": 329.2,
+      "z": -2172.6
+    },
+    {
+      "angle": 5.436,
+      "id": "p304",
+      "kind": "street-tree",
+      "x": 908.4,
+      "z": -2327.8
+    },
+    {
+      "angle": 5.525,
+      "id": "p305",
+      "kind": "street-tree",
+      "x": 883.6,
+      "z": -2305.3
+    },
+    {
+      "angle": 0.104,
+      "id": "p306",
+      "kind": "street-tree",
+      "x": 897.5,
+      "z": -2299.9
+    },
+    {
+      "angle": 5.404,
+      "id": "p307",
+      "kind": "street-tree",
+      "x": 870.2,
+      "z": -2280.4
+    },
+    {
+      "angle": 2.803,
+      "id": "p308",
+      "kind": "street-tree",
+      "x": 882.6,
+      "z": -2272.3
+    },
+    {
+      "angle": 5.954,
+      "id": "p309",
+      "kind": "street-tree",
+      "x": 853.7,
+      "z": -2255.4
+    },
+    {
+      "angle": 5.71,
+      "id": "p310",
+      "kind": "street-tree",
+      "x": 866.1,
+      "z": -2247.2
+    },
+    {
+      "angle": 4.994,
+      "id": "p311",
+      "kind": "street-tree",
+      "x": 838.5,
+      "z": -2232.1
+    },
+    {
+      "angle": 5.975,
+      "id": "p312",
+      "kind": "street-tree",
+      "x": 848,
+      "z": -2220.7
+    },
+    {
+      "angle": 5.309,
+      "id": "p313",
+      "kind": "street-tree",
+      "x": 792.3,
+      "z": -2193.9
+    },
+    {
+      "angle": 3.911,
+      "id": "p314",
+      "kind": "street-tree",
+      "x": 1018,
+      "z": -2228.6
+    },
+    {
+      "angle": 5.511,
+      "id": "p315",
+      "kind": "street-tree",
+      "x": 1018,
+      "z": -2243.4
+    },
+    {
+      "angle": 2.042,
+      "id": "p316",
+      "kind": "street-tree",
+      "x": 1048.1,
+      "z": -2228.9
+    },
+    {
+      "angle": 0.432,
+      "id": "p317",
+      "kind": "street-tree",
+      "x": 1047.8,
+      "z": -2243.8
+    },
+    {
+      "angle": 5.518,
+      "id": "p318",
+      "kind": "street-tree",
+      "x": 1078.1,
+      "z": -2229.5
+    },
+    {
+      "angle": 0.015,
+      "id": "p319",
+      "kind": "street-tree",
+      "x": 1077.8,
+      "z": -2244.4
+    },
+    {
+      "angle": 0.663,
+      "id": "p320",
+      "kind": "street-tree",
+      "x": 1107.8,
+      "z": -2229
+    },
+    {
+      "angle": 3.936,
+      "id": "p321",
+      "kind": "street-tree",
+      "x": 1108.1,
+      "z": -2243.9
+    },
+    {
+      "angle": 3.481,
+      "id": "p322",
+      "kind": "street-tree",
+      "x": 1138,
+      "z": -2228.6
+    },
+    {
+      "angle": 2.212,
+      "id": "p323",
+      "kind": "street-tree",
+      "x": 1138,
+      "z": -2243.4
+    },
+    {
+      "angle": 4.718,
+      "id": "p324",
+      "kind": "street-tree",
+      "x": 946.1,
+      "z": -2100.3
+    },
+    {
+      "angle": 2.8,
+      "id": "p325",
+      "kind": "street-tree",
+      "x": 943.3,
+      "z": -2085.7
+    },
+    {
+      "angle": 6.279,
+      "id": "p326",
+      "kind": "street-tree",
+      "x": 915.8,
+      "z": -2105.7
+    },
+    {
+      "angle": 2.034,
+      "id": "p327",
+      "kind": "street-tree",
+      "x": 914.6,
+      "z": -2090.9
+    },
+    {
+      "angle": 5.182,
+      "id": "p328",
+      "kind": "street-tree",
+      "x": 885.8,
+      "z": -2108.1
+    },
+    {
+      "angle": 2.519,
+      "id": "p329",
+      "kind": "street-tree",
+      "x": 884.7,
+      "z": -2093.3
+    },
+    {
+      "angle": 0.699,
+      "id": "p330",
+      "kind": "street-tree",
+      "x": 854.8,
+      "z": -2110.4
+    },
+    {
+      "angle": 6.07,
+      "id": "p331",
+      "kind": "street-tree",
+      "x": 855.9,
+      "z": -2095.5
+    },
+    {
+      "angle": 6.198,
+      "id": "p332",
+      "kind": "street-tree",
+      "x": 824.8,
+      "z": -2108
+    },
+    {
+      "angle": 1.985,
+      "id": "p333",
+      "kind": "street-tree",
+      "x": 826,
+      "z": -2093.1
+    },
+    {
+      "angle": 5.452,
+      "id": "p334",
+      "kind": "street-tree",
+      "x": 896.6,
+      "z": -1965.3
+    },
+    {
+      "angle": 0.317,
+      "id": "p335",
+      "kind": "street-tree",
+      "x": 891.6,
+      "z": -1951.3
+    },
+    {
+      "angle": 4.736,
+      "id": "p336",
+      "kind": "street-tree",
+      "x": 868.3,
+      "z": -1975.3
+    },
+    {
+      "angle": 6.181,
+      "id": "p337",
+      "kind": "street-tree",
+      "x": 863.3,
+      "z": -1961.2
+    },
+    {
+      "angle": 3.653,
+      "id": "p338",
+      "kind": "street-tree",
+      "x": 840.2,
+      "z": -1985.5
+    },
+    {
+      "angle": 5.863,
+      "id": "p339",
+      "kind": "street-tree",
+      "x": 835,
+      "z": -1971.6
+    },
+    {
+      "angle": 5.693,
+      "id": "p340",
+      "kind": "street-tree",
+      "x": 812.1,
+      "z": -1996
+    },
+    {
+      "angle": 2.175,
+      "id": "p341",
+      "kind": "street-tree",
+      "x": 806.9,
+      "z": -1982
+    },
+    {
+      "angle": 5.946,
+      "id": "p342",
+      "kind": "street-tree",
+      "x": 784.5,
+      "z": -2006.6
+    },
+    {
+      "angle": 0.567,
+      "id": "p343",
+      "kind": "street-tree",
+      "x": 778.6,
+      "z": -1993
+    },
+    {
+      "angle": 3.107,
+      "id": "p344",
+      "kind": "street-tree",
+      "x": 757,
+      "z": -2018.6
+    },
+    {
+      "angle": 2.824,
+      "id": "p345",
+      "kind": "street-tree",
+      "x": 729.5,
+      "z": -2030.6
+    }
+  ],
+  "removedRoads": [],
+  "roads": [
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "r36",
+      "kind": "boulevard",
+      "points": [
+        [
+          -850,
+          -278
+        ],
+        [
+          -850,
+          -284
+        ],
+        [
+          -850,
+          -291
+        ],
+        [
+          -850,
+          -297
+        ],
+        [
+          -850,
+          -303
+        ],
+        [
+          -850,
+          -309
+        ],
+        [
+          -850,
+          -316
+        ],
+        [
+          -850,
+          -322
+        ],
+        [
+          -850,
+          -328
+        ],
+        [
+          -850,
+          -334
+        ],
+        [
+          -850,
+          -341
+        ],
+        [
+          -850,
+          -347
+        ],
+        [
+          -850,
+          -353
+        ],
+        [
+          -850,
+          -359
+        ],
+        [
+          -850,
+          -366
+        ],
+        [
+          -850,
+          -372
+        ],
+        [
+          -850,
+          -378
+        ],
+        [
+          -850,
+          -384
+        ],
+        [
+          -850,
+          -391
+        ],
+        [
+          -850,
+          -397
+        ],
+        [
+          -850,
+          -403
+        ],
+        [
+          -850,
+          -409
+        ],
+        [
+          -850,
+          -416
+        ],
+        [
+          -850,
+          -422
+        ],
+        [
+          -850,
+          -428
+        ],
+        [
+          -850,
+          -434
+        ],
+        [
+          -850,
+          -441
+        ],
+        [
+          -850,
+          -447
+        ],
+        [
+          -850,
+          -453
+        ],
+        [
+          -850,
+          -459
+        ],
+        [
+          -850,
+          -466
+        ],
+        [
+          -850,
+          -472
+        ],
+        [
+          -850,
+          -478
+        ],
+        [
+          -850,
+          -484
+        ],
+        [
+          -850,
+          -491
+        ],
+        [
+          -850,
+          -497
+        ],
+        [
+          -850,
+          -503
+        ],
+        [
+          -850,
+          -509
+        ],
+        [
+          -850,
+          -516
+        ],
+        [
+          -850,
+          -522
+        ],
+        [
+          -850,
+          -528
+        ],
+        [
+          -850,
+          -534
+        ],
+        [
+          -850,
+          -541
+        ],
+        [
+          -850,
+          -547
+        ],
+        [
+          -850,
+          -553
+        ],
+        [
+          -850,
+          -559
+        ],
+        [
+          -850,
+          -566
+        ],
+        [
+          -850,
+          -572
+        ],
+        [
+          -850,
+          -578
+        ],
+        [
+          -850,
+          -584
+        ],
+        [
+          -850,
+          -591
+        ],
+        [
+          -850,
+          -597
+        ],
+        [
+          -850,
+          -603
+        ],
+        [
+          -850,
+          -609
+        ],
+        [
+          -850,
+          -616
+        ],
+        [
+          -850,
+          -622
+        ],
+        [
+          -850,
+          -628
+        ],
+        [
+          -850,
+          -634
+        ],
+        [
+          -850,
+          -641
+        ],
+        [
+          -850,
+          -647
+        ],
+        [
+          -850,
+          -653
+        ],
+        [
+          -850,
+          -659
+        ],
+        [
+          -850,
+          -666
+        ],
+        [
+          -850,
+          -672
+        ],
+        [
+          -850,
+          -678
+        ],
+        [
+          -850,
+          -684
+        ],
+        [
+          -850,
+          -691
+        ],
+        [
+          -850,
+          -697
+        ],
+        [
+          -850,
+          -703
+        ],
+        [
+          -850,
+          -709
+        ],
+        [
+          -850,
+          -716
+        ],
+        [
+          -850,
+          -722
+        ],
+        [
+          -850,
+          -728
+        ],
+        [
+          -850,
+          -734
+        ],
+        [
+          -850,
+          -741
+        ],
+        [
+          -850,
+          -747
+        ],
+        [
+          -850,
+          -753
+        ],
+        [
+          -850,
+          -759
+        ],
+        [
+          -850,
+          -766
+        ],
+        [
+          -850,
+          -772
+        ],
+        [
+          -850,
+          -778
+        ],
+        [
+          -850,
+          -784
+        ],
+        [
+          -850,
+          -791
+        ],
+        [
+          -850,
+          -797
+        ],
+        [
+          -850,
+          -803
+        ],
+        [
+          -850,
+          -809
+        ],
+        [
+          -850,
+          -816
+        ],
+        [
+          -850,
+          -822
+        ],
+        [
+          -850,
+          -828
+        ],
+        [
+          -850,
+          -834
+        ],
+        [
+          -850,
+          -841
+        ],
+        [
+          -850,
+          -847
+        ],
+        [
+          -850,
+          -853
+        ],
+        [
+          -850,
+          -859
+        ],
+        [
+          -850,
+          -866
+        ],
+        [
+          -850,
+          -872
+        ],
+        [
+          -850,
+          -878
+        ],
+        [
+          -850,
+          -884
+        ],
+        [
+          -850,
+          -891
+        ],
+        [
+          -850,
+          -897
+        ],
+        [
+          -850,
+          -903
+        ],
+        [
+          -850,
+          -909
+        ],
+        [
+          -850,
+          -916
+        ],
+        [
+          -850,
+          -922
+        ],
+        [
+          -850,
+          -928
+        ],
+        [
+          -850,
+          -934
+        ],
+        [
+          -850,
+          -941
+        ],
+        [
+          -850,
+          -947
+        ],
+        [
+          -850,
+          -953
+        ],
+        [
+          -850,
+          -959
+        ],
+        [
+          -850,
+          -966
+        ],
+        [
+          -850,
+          -972
+        ],
+        [
+          -850,
+          -978
+        ],
+        [
+          -849,
+          -984
+        ],
+        [
+          -848,
+          -991
+        ],
+        [
+          -845,
+          -997
+        ],
+        [
+          -842,
+          -1003
+        ],
+        [
+          -838,
+          -1009
+        ],
+        [
+          -834,
+          -1016
+        ],
+        [
+          -828,
+          -1022
+        ],
+        [
+          -822,
+          -1028
+        ],
+        [
+          -816,
+          -1034
+        ],
+        [
+          -809,
+          -1041
+        ],
+        [
+          -803,
+          -1047
+        ],
+        [
+          -797,
+          -1053
+        ],
+        [
+          -791,
+          -1059
+        ],
+        [
+          -784,
+          -1066
+        ],
+        [
+          -778,
+          -1072
+        ],
+        [
+          -772,
+          -1078
+        ],
+        [
+          -766,
+          -1084
+        ],
+        [
+          -759,
+          -1091
+        ],
+        [
+          -753,
+          -1097
+        ],
+        [
+          -747,
+          -1103
+        ],
+        [
+          -741,
+          -1109
+        ],
+        [
+          -734,
+          -1116
+        ],
+        [
+          -728,
+          -1122
+        ],
+        [
+          -722,
+          -1128
+        ],
+        [
+          -716,
+          -1134
+        ],
+        [
+          -709,
+          -1141
+        ],
+        [
+          -703,
+          -1147
+        ],
+        [
+          -697,
+          -1153
+        ],
+        [
+          -691,
+          -1159
+        ],
+        [
+          -684,
+          -1166
+        ],
+        [
+          -678,
+          -1172
+        ],
+        [
+          -672,
+          -1178
+        ],
+        [
+          -666,
+          -1184
+        ],
+        [
+          -659,
+          -1191
+        ],
+        [
+          -653,
+          -1197
+        ],
+        [
+          -647,
+          -1203
+        ],
+        [
+          -641,
+          -1209
+        ],
+        [
+          -634,
+          -1216
+        ],
+        [
+          -628,
+          -1222
+        ],
+        [
+          -622,
+          -1228
+        ],
+        [
+          -616,
+          -1234
+        ],
+        [
+          -609,
+          -1241
+        ],
+        [
+          -603,
+          -1247
+        ],
+        [
+          -597,
+          -1253
+        ],
+        [
+          -591,
+          -1259
+        ],
+        [
+          -584,
+          -1266
+        ],
+        [
+          -578,
+          -1272
+        ],
+        [
+          -572,
+          -1278
+        ],
+        [
+          -566,
+          -1284
+        ],
+        [
+          -559,
+          -1291
+        ],
+        [
+          -553,
+          -1297
+        ],
+        [
+          -547,
+          -1303
+        ],
+        [
+          -541,
+          -1309
+        ],
+        [
+          -534,
+          -1316
+        ],
+        [
+          -528,
+          -1322
+        ],
+        [
+          -522,
+          -1328
+        ],
+        [
+          -516,
+          -1334
+        ],
+        [
+          -509,
+          -1341
+        ],
+        [
+          -503,
+          -1347
+        ],
+        [
+          -497,
+          -1353
+        ],
+        [
+          -491,
+          -1359
+        ],
+        [
+          -484,
+          -1366
+        ],
+        [
+          -478,
+          -1372
+        ],
+        [
+          -472,
+          -1378
+        ],
+        [
+          -466,
+          -1384
+        ],
+        [
+          -459,
+          -1391
+        ],
+        [
+          -453,
+          -1397
+        ],
+        [
+          -447,
+          -1403
+        ],
+        [
+          -441,
+          -1409
+        ],
+        [
+          -434,
+          -1416
+        ],
+        [
+          -428,
+          -1422
+        ],
+        [
+          -422,
+          -1428
+        ],
+        [
+          -416,
+          -1434
+        ],
+        [
+          -409,
+          -1441
+        ],
+        [
+          -403,
+          -1447
+        ],
+        [
+          -397,
+          -1453
+        ],
+        [
+          -391,
+          -1459
+        ],
+        [
+          -384,
+          -1466
+        ],
+        [
+          -378,
+          -1472
+        ],
+        [
+          -372,
+          -1478
+        ],
+        [
+          -366,
+          -1484
+        ],
+        [
+          -359,
+          -1491
+        ],
+        [
+          -353,
+          -1497
+        ],
+        [
+          -347,
+          -1503
+        ],
+        [
+          -341,
+          -1509
+        ],
+        [
+          -334,
+          -1516
+        ],
+        [
+          -328,
+          -1522
+        ],
+        [
+          -322,
+          -1528
+        ],
+        [
+          -316,
+          -1534
+        ],
+        [
+          -309,
+          -1541
+        ],
+        [
+          -303,
+          -1547
+        ],
+        [
+          -297,
+          -1553
+        ],
+        [
+          -291,
+          -1559
+        ],
+        [
+          -284,
+          -1566
+        ],
+        [
+          -278,
+          -1572
+        ],
+        [
+          -272,
+          -1578
+        ],
+        [
+          -266,
+          -1584
+        ],
+        [
+          -259,
+          -1591
+        ],
+        [
+          -253,
+          -1597
+        ],
+        [
+          -247,
+          -1603
+        ],
+        [
+          -241,
+          -1609
+        ],
+        [
+          -234,
+          -1616
+        ],
+        [
+          -228,
+          -1622
+        ],
+        [
+          -222,
+          -1628
+        ],
+        [
+          -216,
+          -1634
+        ],
+        [
+          -209,
+          -1641
+        ],
+        [
+          -203,
+          -1647
+        ],
+        [
+          -197,
+          -1653
+        ],
+        [
+          -191,
+          -1659
+        ],
+        [
+          -184,
+          -1666
+        ],
+        [
+          -178,
+          -1672
+        ],
+        [
+          -172,
+          -1678
+        ],
+        [
+          -166,
+          -1684
+        ],
+        [
+          -159,
+          -1691
+        ],
+        [
+          -153,
+          -1697
+        ],
+        [
+          -147,
+          -1703
+        ],
+        [
+          -141,
+          -1709
+        ],
+        [
+          -134,
+          -1716
+        ],
+        [
+          -128,
+          -1722
+        ],
+        [
+          -122,
+          -1728
+        ],
+        [
+          -116,
+          -1734
+        ],
+        [
+          -109,
+          -1741
+        ],
+        [
+          -103,
+          -1747
+        ],
+        [
+          -97,
+          -1753
+        ],
+        [
+          -91,
+          -1759
+        ],
+        [
+          -84,
+          -1766
+        ],
+        [
+          -78,
+          -1772
+        ],
+        [
+          -72,
+          -1778
+        ],
+        [
+          -66,
+          -1784
+        ],
+        [
+          -59,
+          -1791
+        ],
+        [
+          -53,
+          -1797
+        ],
+        [
+          -47,
+          -1803
+        ],
+        [
+          -41,
+          -1809
+        ],
+        [
+          -34,
+          -1816
+        ],
+        [
+          -28,
+          -1822
+        ],
+        [
+          -22,
+          -1828
+        ],
+        [
+          -16,
+          -1834
+        ],
+        [
+          -9,
+          -1841
+        ],
+        [
+          -3,
+          -1847
+        ],
+        [
+          3,
+          -1853
+        ],
+        [
+          9,
+          -1859
+        ],
+        [
+          16,
+          -1866
+        ],
+        [
+          22,
+          -1872
+        ],
+        [
+          28,
+          -1878
+        ],
+        [
+          34,
+          -1884
+        ],
+        [
+          41,
+          -1888
+        ],
+        [
+          47,
+          -1892
+        ],
+        [
+          53,
+          -1895
+        ],
+        [
+          59,
+          -1898
+        ],
+        [
+          66,
+          -1899
+        ],
+        [
+          72,
+          -1900
+        ],
+        [
+          78,
+          -1900
+        ],
+        [
+          84,
+          -1900
+        ],
+        [
+          91,
+          -1900
+        ],
+        [
+          97,
+          -1900
+        ],
+        [
+          103,
+          -1900
+        ],
+        [
+          109,
+          -1900
+        ],
+        [
+          116,
+          -1900
+        ],
+        [
+          122,
+          -1900
+        ],
+        [
+          128,
+          -1900
+        ],
+        [
+          134,
+          -1900
+        ],
+        [
+          141,
+          -1900
+        ],
+        [
+          147,
+          -1900
+        ],
+        [
+          153,
+          -1900
+        ],
+        [
+          159,
+          -1900
+        ],
+        [
+          166,
+          -1900
+        ],
+        [
+          172,
+          -1900
+        ],
+        [
+          178,
+          -1900
+        ],
+        [
+          184,
+          -1900
+        ],
+        [
+          191,
+          -1900
+        ],
+        [
+          197,
+          -1900
+        ],
+        [
+          203,
+          -1900
+        ],
+        [
+          209,
+          -1900
+        ],
+        [
+          216,
+          -1900
+        ],
+        [
+          222,
+          -1900
+        ],
+        [
+          228,
+          -1900
+        ],
+        [
+          234,
+          -1900
+        ],
+        [
+          241,
+          -1900
+        ],
+        [
+          247,
+          -1900
+        ],
+        [
+          253,
+          -1900
+        ],
+        [
+          259,
+          -1900
+        ],
+        [
+          266,
+          -1900
+        ],
+        [
+          272,
+          -1900
+        ],
+        [
+          278,
+          -1900
+        ],
+        [
+          284,
+          -1900
+        ],
+        [
+          291,
+          -1900
+        ],
+        [
+          297,
+          -1900
+        ],
+        [
+          303,
+          -1900
+        ],
+        [
+          309,
+          -1900
+        ],
+        [
+          316,
+          -1900
+        ],
+        [
+          322,
+          -1900
+        ],
+        [
+          328,
+          -1900
+        ],
+        [
+          334,
+          -1900
+        ],
+        [
+          341,
+          -1900
+        ],
+        [
+          347,
+          -1900
+        ],
+        [
+          353,
+          -1900
+        ],
+        [
+          359,
+          -1900
+        ],
+        [
+          366,
+          -1900
+        ],
+        [
+          372,
+          -1900
+        ],
+        [
+          378,
+          -1900
+        ],
+        [
+          384,
+          -1900
+        ],
+        [
+          391,
+          -1900
+        ],
+        [
+          397,
+          -1900
+        ],
+        [
+          403,
+          -1900
+        ],
+        [
+          409,
+          -1900
+        ],
+        [
+          416,
+          -1900
+        ],
+        [
+          422,
+          -1900
+        ],
+        [
+          428,
+          -1900
+        ],
+        [
+          434,
+          -1900
+        ],
+        [
+          441,
+          -1900
+        ],
+        [
+          447,
+          -1900
+        ],
+        [
+          453,
+          -1900
+        ],
+        [
+          459,
+          -1900
+        ],
+        [
+          466,
+          -1900
+        ],
+        [
+          472,
+          -1900
+        ],
+        [
+          478,
+          -1900
+        ],
+        [
+          484,
+          -1900
+        ],
+        [
+          491,
+          -1900
+        ],
+        [
+          497,
+          -1900
+        ],
+        [
+          503,
+          -1900
+        ],
+        [
+          509,
+          -1900
+        ],
+        [
+          516,
+          -1900
+        ],
+        [
+          522,
+          -1900
+        ],
+        [
+          528,
+          -1900
+        ],
+        [
+          534,
+          -1899
+        ],
+        [
+          541,
+          -1898
+        ],
+        [
+          547,
+          -1895
+        ],
+        [
+          553,
+          -1892
+        ],
+        [
+          559,
+          -1888
+        ],
+        [
+          566,
+          -1884
+        ],
+        [
+          572,
+          -1878
+        ],
+        [
+          578,
+          -1872
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "r38",
+      "kind": "boulevard",
+      "points": [
+        [
+          578,
+          -1872
+        ],
+        [
+          584,
+          -1866
+        ],
+        [
+          591,
+          -1859
+        ],
+        [
+          597,
+          -1853
+        ],
+        [
+          603,
+          -1847
+        ],
+        [
+          609,
+          -1841
+        ],
+        [
+          616,
+          -1834
+        ],
+        [
+          622,
+          -1828
+        ],
+        [
+          628,
+          -1822
+        ],
+        [
+          634,
+          -1816
+        ],
+        [
+          641,
+          -1812
+        ],
+        [
+          647,
+          -1808
+        ],
+        [
+          653,
+          -1805
+        ],
+        [
+          659,
+          -1802
+        ],
+        [
+          666,
+          -1801
+        ],
+        [
+          672,
+          -1800
+        ],
+        [
+          678,
+          -1800
+        ],
+        [
+          684,
+          -1800
+        ],
+        [
+          691,
+          -1800
+        ],
+        [
+          697,
+          -1800
+        ],
+        [
+          703,
+          -1800
+        ],
+        [
+          709,
+          -1800
+        ],
+        [
+          716,
+          -1800
+        ],
+        [
+          722,
+          -1800
+        ],
+        [
+          728,
+          -1800
+        ],
+        [
+          734,
+          -1800
+        ],
+        [
+          741,
+          -1800
+        ],
+        [
+          747,
+          -1800
+        ],
+        [
+          753,
+          -1800
+        ],
+        [
+          759,
+          -1800
+        ],
+        [
+          766,
+          -1800
+        ],
+        [
+          772,
+          -1800
+        ],
+        [
+          778,
+          -1800
+        ],
+        [
+          784,
+          -1800
+        ],
+        [
+          791,
+          -1800
+        ],
+        [
+          797,
+          -1800
+        ],
+        [
+          803,
+          -1800
+        ],
+        [
+          809,
+          -1800
+        ],
+        [
+          816,
+          -1800
+        ],
+        [
+          822,
+          -1800
+        ],
+        [
+          828,
+          -1800
+        ],
+        [
+          834,
+          -1800
+        ],
+        [
+          841,
+          -1800
+        ],
+        [
+          847,
+          -1800
+        ],
+        [
+          853,
+          -1800
+        ],
+        [
+          859,
+          -1800
+        ],
+        [
+          866,
+          -1800
+        ],
+        [
+          872,
+          -1800
+        ],
+        [
+          878,
+          -1800
+        ],
+        [
+          884,
+          -1800
+        ],
+        [
+          891,
+          -1800
+        ],
+        [
+          897,
+          -1800
+        ],
+        [
+          903,
+          -1800
+        ],
+        [
+          909,
+          -1800
+        ],
+        [
+          916,
+          -1800
+        ],
+        [
+          922,
+          -1800
+        ],
+        [
+          928,
+          -1800
+        ],
+        [
+          934,
+          -1800
+        ],
+        [
+          941,
+          -1800
+        ],
+        [
+          947,
+          -1800
+        ],
+        [
+          953,
+          -1800
+        ],
+        [
+          959,
+          -1800
+        ],
+        [
+          966,
+          -1800
+        ],
+        [
+          972,
+          -1800
+        ],
+        [
+          978,
+          -1800
+        ],
+        [
+          984,
+          -1800
+        ],
+        [
+          991,
+          -1800
+        ],
+        [
+          997,
+          -1800
+        ],
+        [
+          1003,
+          -1800
+        ],
+        [
+          1009,
+          -1800
+        ],
+        [
+          1016,
+          -1800
+        ],
+        [
+          1022,
+          -1800
+        ],
+        [
+          1028,
+          -1800
+        ],
+        [
+          1034,
+          -1800
+        ],
+        [
+          1041,
+          -1800
+        ],
+        [
+          1047,
+          -1800
+        ],
+        [
+          1053,
+          -1800
+        ],
+        [
+          1059,
+          -1800
+        ],
+        [
+          1066,
+          -1800
+        ],
+        [
+          1072,
+          -1800
+        ],
+        [
+          1078,
+          -1800
+        ],
+        [
+          1084,
+          -1801
+        ],
+        [
+          1091,
+          -1802
+        ],
+        [
+          1097,
+          -1805
+        ],
+        [
+          1103,
+          -1808
+        ],
+        [
+          1109,
+          -1812
+        ],
+        [
+          1116,
+          -1816
+        ],
+        [
+          1122,
+          -1822
+        ],
+        [
+          1128,
+          -1828
+        ],
+        [
+          1134,
+          -1834
+        ],
+        [
+          1141,
+          -1841
+        ],
+        [
+          1147,
+          -1847
+        ],
+        [
+          1153,
+          -1853
+        ],
+        [
+          1159,
+          -1859
+        ],
+        [
+          1166,
+          -1866
+        ],
+        [
+          1172,
+          -1872
+        ],
+        [
+          1178,
+          -1878
+        ],
+        [
+          1184,
+          -1884
+        ],
+        [
+          1191,
+          -1891
+        ],
+        [
+          1197,
+          -1897
+        ],
+        [
+          1203,
+          -1903
+        ],
+        [
+          1209,
+          -1909
+        ],
+        [
+          1216,
+          -1916
+        ],
+        [
+          1222,
+          -1922
+        ],
+        [
+          1228,
+          -1928
+        ],
+        [
+          1234,
+          -1934
+        ],
+        [
+          1241,
+          -1938
+        ],
+        [
+          1247,
+          -1942
+        ],
+        [
+          1253,
+          -1945
+        ],
+        [
+          1259,
+          -1948
+        ],
+        [
+          1266,
+          -1949
+        ],
+        [
+          1272,
+          -1950
+        ],
+        [
+          1278,
+          -1950
+        ],
+        [
+          1284,
+          -1950
+        ],
+        [
+          1291,
+          -1950
+        ],
+        [
+          1297,
+          -1950
+        ],
+        [
+          1303,
+          -1950
+        ],
+        [
+          1309,
+          -1950
+        ],
+        [
+          1316,
+          -1950
+        ],
+        [
+          1322,
+          -1950
+        ],
+        [
+          1328,
+          -1950
+        ],
+        [
+          1334,
+          -1950
+        ],
+        [
+          1341,
+          -1950
+        ],
+        [
+          1347,
+          -1950
+        ],
+        [
+          1353,
+          -1950
+        ],
+        [
+          1359,
+          -1950
+        ],
+        [
+          1366,
+          -1950
+        ],
+        [
+          1372,
+          -1950
+        ],
+        [
+          1378,
+          -1950
+        ],
+        [
+          1384,
+          -1950
+        ],
+        [
+          1391,
+          -1950
+        ],
+        [
+          1397,
+          -1950
+        ],
+        [
+          1403,
+          -1950
+        ],
+        [
+          1409,
+          -1950
+        ],
+        [
+          1416,
+          -1950
+        ],
+        [
+          1422,
+          -1950
+        ],
+        [
+          1428,
+          -1950
+        ],
+        [
+          1434,
+          -1950
+        ],
+        [
+          1441,
+          -1950
+        ],
+        [
+          1447,
+          -1950
+        ],
+        [
+          1453,
+          -1950
+        ],
+        [
+          1459,
+          -1950
+        ],
+        [
+          1466,
+          -1950
+        ],
+        [
+          1472,
+          -1950
+        ],
+        [
+          1478,
+          -1950
+        ],
+        [
+          1484,
+          -1950
+        ],
+        [
+          1491,
+          -1950
+        ],
+        [
+          1497,
+          -1950
+        ],
+        [
+          1503,
+          -1950
+        ],
+        [
+          1509,
+          -1950
+        ],
+        [
+          1516,
+          -1950
+        ],
+        [
+          1522,
+          -1950
+        ],
+        [
+          1528,
+          -1950
+        ],
+        [
+          1534,
+          -1950
+        ],
+        [
+          1541,
+          -1950
+        ],
+        [
+          1547,
+          -1950
+        ],
+        [
+          1553,
+          -1950
+        ],
+        [
+          1559,
+          -1950
+        ],
+        [
+          1566,
+          -1950
+        ],
+        [
+          1572,
+          -1950
+        ],
+        [
+          1578,
+          -1950
+        ],
+        [
+          1584,
+          -1950
+        ],
+        [
+          1591,
+          -1950
+        ],
+        [
+          1597,
+          -1950
+        ],
+        [
+          1603,
+          -1950
+        ],
+        [
+          1609,
+          -1950
+        ],
+        [
+          1616,
+          -1950
+        ],
+        [
+          1622,
+          -1950
+        ],
+        [
+          1628,
+          -1950
+        ],
+        [
+          1634,
+          -1950
+        ],
+        [
+          1641,
+          -1950
+        ],
+        [
+          1647,
+          -1950
+        ],
+        [
+          1653,
+          -1950
+        ],
+        [
+          1659,
+          -1950
+        ],
+        [
+          1666,
+          -1950
+        ],
+        [
+          1672,
+          -1950
+        ],
+        [
+          1678,
+          -1950
+        ],
+        [
+          1684,
+          -1950
+        ],
+        [
+          1691,
+          -1950
+        ],
+        [
+          1697,
+          -1950
+        ],
+        [
+          1703,
+          -1950
+        ],
+        [
+          1709,
+          -1950
+        ],
+        [
+          1716,
+          -1950
+        ],
+        [
+          1722,
+          -1950
+        ],
+        [
+          1728,
+          -1950
+        ],
+        [
+          1734,
+          -1950
+        ],
+        [
+          1741,
+          -1950
+        ],
+        [
+          1747,
+          -1950
+        ],
+        [
+          1753,
+          -1950
+        ],
+        [
+          1759,
+          -1950
+        ],
+        [
+          1766,
+          -1950
+        ],
+        [
+          1772,
+          -1950
+        ],
+        [
+          1778,
+          -1950
+        ],
+        [
+          1784,
+          -1950
+        ],
+        [
+          1791,
+          -1950
+        ],
+        [
+          1797,
+          -1950
+        ],
+        [
+          1803,
+          -1950
+        ],
+        [
+          1809,
+          -1950
+        ],
+        [
+          1816,
+          -1950
+        ],
+        [
+          1822,
+          -1950
+        ],
+        [
+          1828,
+          -1950
+        ],
+        [
+          1834,
+          -1950
+        ],
+        [
+          1841,
+          -1950
+        ],
+        [
+          1847,
+          -1950
+        ],
+        [
+          1853,
+          -1950
+        ],
+        [
+          1859,
+          -1950
+        ],
+        [
+          1866,
+          -1950
+        ],
+        [
+          1872,
+          -1950
+        ],
+        [
+          1878,
+          -1950
+        ],
+        [
+          1884,
+          -1949
+        ],
+        [
+          1891,
+          -1948
+        ],
+        [
+          1897,
+          -1945
+        ],
+        [
+          1903,
+          -1942
+        ],
+        [
+          1909,
+          -1938
+        ],
+        [
+          1916,
+          -1934
+        ],
+        [
+          1922,
+          -1928
+        ],
+        [
+          1928,
+          -1922
+        ],
+        [
+          1934,
+          -1916
+        ],
+        [
+          1941,
+          -1912
+        ],
+        [
+          1947,
+          -1908
+        ],
+        [
+          1953,
+          -1905
+        ],
+        [
+          1959,
+          -1902
+        ],
+        [
+          1966,
+          -1901
+        ],
+        [
+          1972,
+          -1900
+        ],
+        [
+          1978,
+          -1900
+        ],
+        [
+          1984,
+          -1900
+        ],
+        [
+          1991,
+          -1900
+        ],
+        [
+          1997,
+          -1900
+        ],
+        [
+          2003,
+          -1900
+        ],
+        [
+          2009,
+          -1900
+        ],
+        [
+          2016,
+          -1900
+        ],
+        [
+          2022,
+          -1900
+        ],
+        [
+          2028,
+          -1900
+        ],
+        [
+          2034,
+          -1900
+        ],
+        [
+          2041,
+          -1900
+        ],
+        [
+          2047,
+          -1900
+        ],
+        [
+          2053,
+          -1900
+        ],
+        [
+          2059,
+          -1900
+        ],
+        [
+          2066,
+          -1900
+        ],
+        [
+          2072,
+          -1900
+        ],
+        [
+          2078,
+          -1900
+        ],
+        [
+          2084,
+          -1900
+        ],
+        [
+          2091,
+          -1900
+        ],
+        [
+          2097,
+          -1900
+        ],
+        [
+          2103,
+          -1900
+        ],
+        [
+          2109,
+          -1900
+        ],
+        [
+          2116,
+          -1900
+        ],
+        [
+          2122,
+          -1900
+        ],
+        [
+          2128,
+          -1900
+        ],
+        [
+          2134,
+          -1899
+        ],
+        [
+          2141,
+          -1898
+        ],
+        [
+          2147,
+          -1895
+        ],
+        [
+          2153,
+          -1892
+        ],
+        [
+          2159,
+          -1888
+        ],
+        [
+          2166,
+          -1884
+        ],
+        [
+          2172,
+          -1878
+        ],
+        [
+          2178,
+          -1872
+        ],
+        [
+          2184,
+          -1866
+        ],
+        [
+          2191,
+          -1859
+        ],
+        [
+          2197,
+          -1853
+        ],
+        [
+          2203,
+          -1847
+        ],
+        [
+          2209,
+          -1841
+        ],
+        [
+          2216,
+          -1834
+        ],
+        [
+          2222,
+          -1828
+        ],
+        [
+          2228,
+          -1822
+        ],
+        [
+          2234,
+          -1816
+        ],
+        [
+          2241,
+          -1809
+        ],
+        [
+          2247,
+          -1803
+        ],
+        [
+          2253,
+          -1797
+        ],
+        [
+          2259,
+          -1791
+        ],
+        [
+          2266,
+          -1784
+        ],
+        [
+          2272,
+          -1778
+        ],
+        [
+          2278,
+          -1772
+        ],
+        [
+          2284,
+          -1766
+        ],
+        [
+          2291,
+          -1759
+        ],
+        [
+          2297,
+          -1753
+        ],
+        [
+          2303,
+          -1747
+        ],
+        [
+          2309,
+          -1741
+        ],
+        [
+          2316,
+          -1734
+        ],
+        [
+          2322,
+          -1728
+        ],
+        [
+          2328,
+          -1722
+        ],
+        [
+          2334,
+          -1716
+        ],
+        [
+          2341,
+          -1709
+        ],
+        [
+          2347,
+          -1703
+        ],
+        [
+          2353,
+          -1697
+        ],
+        [
+          2359,
+          -1691
+        ],
+        [
+          2366,
+          -1684
+        ],
+        [
+          2372,
+          -1678
+        ],
+        [
+          2378,
+          -1672
+        ],
+        [
+          2384,
+          -1666
+        ],
+        [
+          2391,
+          -1659
+        ],
+        [
+          2397,
+          -1653
+        ],
+        [
+          2403,
+          -1647
+        ],
+        [
+          2409,
+          -1641
+        ],
+        [
+          2416,
+          -1634
+        ],
+        [
+          2422,
+          -1628
+        ],
+        [
+          2428,
+          -1622
+        ],
+        [
+          2434,
+          -1616
+        ],
+        [
+          2441,
+          -1609
+        ],
+        [
+          2447,
+          -1603
+        ],
+        [
+          2453,
+          -1597
+        ],
+        [
+          2459,
+          -1591
+        ],
+        [
+          2466,
+          -1584
+        ],
+        [
+          2472,
+          -1578
+        ],
+        [
+          2478,
+          -1572
+        ],
+        [
+          2484,
+          -1566
+        ],
+        [
+          2491,
+          -1559
+        ],
+        [
+          2497,
+          -1553
+        ],
+        [
+          2503,
+          -1547
+        ],
+        [
+          2509,
+          -1541
+        ],
+        [
+          2516,
+          -1534
+        ],
+        [
+          2522,
+          -1528
+        ],
+        [
+          2528,
+          -1522
+        ],
+        [
+          2534,
+          -1516
+        ],
+        [
+          2538,
+          -1509
+        ],
+        [
+          2542,
+          -1503
+        ],
+        [
+          2545,
+          -1497
+        ],
+        [
+          2548,
+          -1491
+        ],
+        [
+          2549,
+          -1484
+        ],
+        [
+          2550,
+          -1478
+        ],
+        [
+          2550,
+          -1472
+        ],
+        [
+          2550,
+          -1466
+        ],
+        [
+          2550,
+          -1459
+        ],
+        [
+          2550,
+          -1453
+        ],
+        [
+          2550,
+          -1447
+        ],
+        [
+          2550,
+          -1441
+        ],
+        [
+          2550,
+          -1434
+        ],
+        [
+          2550,
+          -1428
+        ],
+        [
+          2550,
+          -1422
+        ],
+        [
+          2550,
+          -1416
+        ],
+        [
+          2550,
+          -1409
+        ],
+        [
+          2550,
+          -1403
+        ],
+        [
+          2550,
+          -1397
+        ],
+        [
+          2550,
+          -1391
+        ],
+        [
+          2550,
+          -1384
+        ],
+        [
+          2550,
+          -1378
+        ],
+        [
+          2550,
+          -1372
+        ],
+        [
+          2550,
+          -1366
+        ],
+        [
+          2550,
+          -1359
+        ],
+        [
+          2550,
+          -1353
+        ],
+        [
+          2550,
+          -1347
+        ],
+        [
+          2550,
+          -1341
+        ],
+        [
+          2550,
+          -1334
+        ],
+        [
+          2550,
+          -1328
+        ],
+        [
+          2550,
+          -1322
+        ],
+        [
+          2550,
+          -1316
+        ],
+        [
+          2550,
+          -1309
+        ],
+        [
+          2550,
+          -1303
+        ],
+        [
+          2550,
+          -1297
+        ],
+        [
+          2550,
+          -1291
+        ],
+        [
+          2550,
+          -1284
+        ],
+        [
+          2550,
+          -1278
+        ],
+        [
+          2550,
+          -1272
+        ],
+        [
+          2550,
+          -1266
+        ],
+        [
+          2550,
+          -1259
+        ],
+        [
+          2550,
+          -1253
+        ],
+        [
+          2550,
+          -1247
+        ],
+        [
+          2550,
+          -1241
+        ],
+        [
+          2550,
+          -1234
+        ],
+        [
+          2550,
+          -1228
+        ],
+        [
+          2550,
+          -1222
+        ],
+        [
+          2550,
+          -1216
+        ],
+        [
+          2550,
+          -1209
+        ],
+        [
+          2550,
+          -1203
+        ],
+        [
+          2550,
+          -1197
+        ],
+        [
+          2550,
+          -1191
+        ],
+        [
+          2550,
+          -1184
+        ],
+        [
+          2550,
+          -1178
+        ],
+        [
+          2550,
+          -1172
+        ],
+        [
+          2550,
+          -1166
+        ],
+        [
+          2550,
+          -1159
+        ],
+        [
+          2550,
+          -1153
+        ],
+        [
+          2550,
+          -1147
+        ],
+        [
+          2550,
+          -1141
+        ],
+        [
+          2550,
+          -1134
+        ],
+        [
+          2550,
+          -1128
+        ],
+        [
+          2550,
+          -1122
+        ],
+        [
+          2550,
+          -1116
+        ],
+        [
+          2550,
+          -1109
+        ],
+        [
+          2550,
+          -1103
+        ],
+        [
+          2550,
+          -1097
+        ],
+        [
+          2550,
+          -1091
+        ],
+        [
+          2550,
+          -1084
+        ],
+        [
+          2550,
+          -1078
+        ],
+        [
+          2550,
+          -1072
+        ],
+        [
+          2550,
+          -1066
+        ],
+        [
+          2550,
+          -1059
+        ],
+        [
+          2550,
+          -1053
+        ],
+        [
+          2550,
+          -1047
+        ],
+        [
+          2550,
+          -1041
+        ],
+        [
+          2550,
+          -1034
+        ],
+        [
+          2550,
+          -1028
+        ],
+        [
+          2550,
+          -1022
+        ],
+        [
+          2550,
+          -1016
+        ],
+        [
+          2550,
+          -1009
+        ],
+        [
+          2550,
+          -1003
+        ],
+        [
+          2550,
+          -997
+        ],
+        [
+          2550,
+          -991
+        ],
+        [
+          2550,
+          -984
+        ],
+        [
+          2550,
+          -978
+        ],
+        [
+          2550,
+          -972
+        ],
+        [
+          2550,
+          -966
+        ],
+        [
+          2550,
+          -959
+        ],
+        [
+          2550,
+          -953
+        ],
+        [
+          2550,
+          -947
+        ],
+        [
+          2550,
+          -941
+        ],
+        [
+          2550,
+          -934
+        ],
+        [
+          2550,
+          -928
+        ],
+        [
+          2550,
+          -922
+        ],
+        [
+          2550,
+          -916
+        ],
+        [
+          2550,
+          -909
+        ],
+        [
+          2550,
+          -903
+        ],
+        [
+          2550,
+          -897
+        ],
+        [
+          2550,
+          -891
+        ],
+        [
+          2550,
+          -884
+        ],
+        [
+          2550,
+          -878
+        ],
+        [
+          2550,
+          -872
+        ],
+        [
+          2550,
+          -866
+        ],
+        [
+          2550,
+          -859
+        ],
+        [
+          2550,
+          -853
+        ],
+        [
+          2550,
+          -847
+        ],
+        [
+          2550,
+          -841
+        ],
+        [
+          2550,
+          -834
+        ],
+        [
+          2550,
+          -828
+        ],
+        [
+          2550,
+          -822
+        ],
+        [
+          2550,
+          -816
+        ],
+        [
+          2550,
+          -809
+        ],
+        [
+          2550,
+          -803
+        ],
+        [
+          2550,
+          -797
+        ],
+        [
+          2550,
+          -791
+        ],
+        [
+          2550,
+          -784
+        ],
+        [
+          2550,
+          -778
+        ],
+        [
+          2550,
+          -772
+        ],
+        [
+          2550,
+          -766
+        ],
+        [
+          2550,
+          -759
+        ],
+        [
+          2550,
+          -753
+        ],
+        [
+          2550,
+          -747
+        ],
+        [
+          2550,
+          -741
+        ],
+        [
+          2550,
+          -734
+        ],
+        [
+          2550,
+          -728
+        ],
+        [
+          2550,
+          -722
+        ],
+        [
+          2550,
+          -716
+        ],
+        [
+          2550,
+          -709
+        ],
+        [
+          2550,
+          -703
+        ],
+        [
+          2550,
+          -697
+        ],
+        [
+          2550,
+          -691
+        ],
+        [
+          2550,
+          -684
+        ],
+        [
+          2550,
+          -678
+        ],
+        [
+          2550,
+          -672
+        ],
+        [
+          2550,
+          -666
+        ],
+        [
+          2550,
+          -659
+        ],
+        [
+          2550,
+          -653
+        ],
+        [
+          2550,
+          -647
+        ],
+        [
+          2550,
+          -641
+        ],
+        [
+          2550,
+          -634
+        ],
+        [
+          2550,
+          -628
+        ],
+        [
+          2550,
+          -622
+        ],
+        [
+          2551,
+          -616
+        ],
+        [
+          2552,
+          -609
+        ],
+        [
+          2555,
+          -603
+        ],
+        [
+          2558,
+          -597
+        ],
+        [
+          2562,
+          -591
+        ],
+        [
+          2566,
+          -584
+        ],
+        [
+          2572,
+          -578
+        ],
+        [
+          2578,
+          -572
+        ],
+        [
+          2584,
+          -566
+        ],
+        [
+          2591,
+          -559
+        ],
+        [
+          2597,
+          -553
+        ],
+        [
+          2603,
+          -547
+        ],
+        [
+          2609,
+          -541
+        ],
+        [
+          2616,
+          -534
+        ],
+        [
+          2622,
+          -528
+        ],
+        [
+          2628,
+          -522
+        ],
+        [
+          2634,
+          -516
+        ],
+        [
+          2638,
+          -512
+        ],
+        [
+          2642,
+          -508
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "r39",
+      "kind": "boulevard",
+      "points": [
+        [
+          578,
+          -1872
+        ],
+        [
+          584,
+          -1866
+        ],
+        [
+          591,
+          -1862
+        ],
+        [
+          597,
+          -1858
+        ],
+        [
+          603,
+          -1855
+        ],
+        [
+          609,
+          -1852
+        ],
+        [
+          616,
+          -1851
+        ],
+        [
+          622,
+          -1850
+        ],
+        [
+          628,
+          -1850
+        ],
+        [
+          634,
+          -1850
+        ],
+        [
+          641,
+          -1850
+        ],
+        [
+          647,
+          -1850
+        ],
+        [
+          653,
+          -1850
+        ],
+        [
+          659,
+          -1850
+        ],
+        [
+          666,
+          -1850
+        ],
+        [
+          672,
+          -1850
+        ],
+        [
+          678,
+          -1850
+        ],
+        [
+          684,
+          -1850
+        ],
+        [
+          691,
+          -1850
+        ],
+        [
+          697,
+          -1850
+        ],
+        [
+          703,
+          -1850
+        ],
+        [
+          709,
+          -1850
+        ],
+        [
+          716,
+          -1850
+        ],
+        [
+          722,
+          -1850
+        ],
+        [
+          728,
+          -1850
+        ],
+        [
+          734,
+          -1850
+        ],
+        [
+          741,
+          -1850
+        ],
+        [
+          747,
+          -1850
+        ],
+        [
+          753,
+          -1850
+        ],
+        [
+          759,
+          -1850
+        ],
+        [
+          766,
+          -1850
+        ],
+        [
+          772,
+          -1850
+        ],
+        [
+          778,
+          -1850
+        ],
+        [
+          784,
+          -1850
+        ],
+        [
+          791,
+          -1850
+        ],
+        [
+          797,
+          -1850
+        ],
+        [
+          803,
+          -1850
+        ],
+        [
+          809,
+          -1850
+        ],
+        [
+          816,
+          -1850
+        ],
+        [
+          822,
+          -1850
+        ],
+        [
+          828,
+          -1850
+        ],
+        [
+          834,
+          -1850
+        ],
+        [
+          841,
+          -1850
+        ],
+        [
+          847,
+          -1850
+        ],
+        [
+          853,
+          -1850
+        ],
+        [
+          859,
+          -1850
+        ],
+        [
+          866,
+          -1850
+        ],
+        [
+          872,
+          -1850
+        ],
+        [
+          878,
+          -1850
+        ],
+        [
+          884,
+          -1850
+        ],
+        [
+          891,
+          -1850
+        ],
+        [
+          897,
+          -1850
+        ],
+        [
+          903,
+          -1850
+        ],
+        [
+          909,
+          -1850
+        ],
+        [
+          916,
+          -1850
+        ],
+        [
+          922,
+          -1850
+        ],
+        [
+          928,
+          -1850
+        ],
+        [
+          934,
+          -1850
+        ],
+        [
+          941,
+          -1850
+        ],
+        [
+          947,
+          -1850
+        ],
+        [
+          953,
+          -1850
+        ],
+        [
+          959,
+          -1850
+        ],
+        [
+          966,
+          -1850
+        ],
+        [
+          972,
+          -1850
+        ],
+        [
+          978,
+          -1850
+        ],
+        [
+          984,
+          -1850
+        ],
+        [
+          991,
+          -1850
+        ],
+        [
+          997,
+          -1850
+        ],
+        [
+          1003,
+          -1850
+        ],
+        [
+          1009,
+          -1850
+        ],
+        [
+          1016,
+          -1850
+        ],
+        [
+          1022,
+          -1850
+        ],
+        [
+          1028,
+          -1850
+        ],
+        [
+          1034,
+          -1850
+        ],
+        [
+          1041,
+          -1850
+        ],
+        [
+          1047,
+          -1850
+        ],
+        [
+          1053,
+          -1850
+        ],
+        [
+          1059,
+          -1850
+        ],
+        [
+          1066,
+          -1850
+        ],
+        [
+          1072,
+          -1850
+        ],
+        [
+          1078,
+          -1850
+        ],
+        [
+          1084,
+          -1851
+        ],
+        [
+          1091,
+          -1852
+        ],
+        [
+          1097,
+          -1855
+        ],
+        [
+          1103,
+          -1858
+        ],
+        [
+          1109,
+          -1862
+        ],
+        [
+          1116,
+          -1866
+        ],
+        [
+          1122,
+          -1872
+        ],
+        [
+          1128,
+          -1878
+        ],
+        [
+          1134,
+          -1884
+        ],
+        [
+          1141,
+          -1891
+        ],
+        [
+          1147,
+          -1897
+        ],
+        [
+          1153,
+          -1903
+        ],
+        [
+          1159,
+          -1909
+        ],
+        [
+          1166,
+          -1916
+        ],
+        [
+          1172,
+          -1922
+        ],
+        [
+          1178,
+          -1928
+        ],
+        [
+          1184,
+          -1934
+        ],
+        [
+          1191,
+          -1941
+        ],
+        [
+          1197,
+          -1947
+        ],
+        [
+          1203,
+          -1953
+        ],
+        [
+          1209,
+          -1959
+        ],
+        [
+          1216,
+          -1966
+        ],
+        [
+          1222,
+          -1972
+        ],
+        [
+          1228,
+          -1978
+        ],
+        [
+          1234,
+          -1984
+        ],
+        [
+          1241,
+          -1988
+        ],
+        [
+          1247,
+          -1992
+        ],
+        [
+          1253,
+          -1995
+        ],
+        [
+          1259,
+          -1998
+        ],
+        [
+          1266,
+          -1999
+        ],
+        [
+          1272,
+          -2000
+        ],
+        [
+          1278,
+          -2000
+        ],
+        [
+          1284,
+          -2000
+        ],
+        [
+          1291,
+          -2000
+        ],
+        [
+          1297,
+          -2000
+        ],
+        [
+          1303,
+          -2000
+        ],
+        [
+          1309,
+          -2000
+        ],
+        [
+          1316,
+          -2000
+        ],
+        [
+          1322,
+          -2000
+        ],
+        [
+          1328,
+          -2000
+        ],
+        [
+          1334,
+          -2000
+        ],
+        [
+          1341,
+          -2000
+        ],
+        [
+          1347,
+          -2000
+        ],
+        [
+          1353,
+          -2000
+        ],
+        [
+          1359,
+          -2000
+        ],
+        [
+          1366,
+          -2000
+        ],
+        [
+          1372,
+          -2000
+        ],
+        [
+          1378,
+          -2000
+        ],
+        [
+          1384,
+          -2000
+        ],
+        [
+          1391,
+          -2000
+        ],
+        [
+          1397,
+          -2000
+        ],
+        [
+          1403,
+          -2000
+        ],
+        [
+          1409,
+          -2000
+        ],
+        [
+          1416,
+          -2000
+        ],
+        [
+          1422,
+          -2000
+        ],
+        [
+          1428,
+          -2000
+        ],
+        [
+          1434,
+          -2000
+        ],
+        [
+          1441,
+          -2000
+        ],
+        [
+          1447,
+          -2000
+        ],
+        [
+          1453,
+          -2000
+        ],
+        [
+          1459,
+          -2000
+        ],
+        [
+          1466,
+          -2000
+        ],
+        [
+          1472,
+          -2000
+        ],
+        [
+          1478,
+          -2000
+        ],
+        [
+          1484,
+          -2000
+        ],
+        [
+          1491,
+          -2000
+        ],
+        [
+          1497,
+          -2000
+        ],
+        [
+          1503,
+          -2000
+        ],
+        [
+          1509,
+          -2000
+        ],
+        [
+          1516,
+          -2000
+        ],
+        [
+          1522,
+          -2000
+        ],
+        [
+          1528,
+          -2000
+        ],
+        [
+          1534,
+          -2000
+        ],
+        [
+          1541,
+          -2000
+        ],
+        [
+          1547,
+          -2000
+        ],
+        [
+          1553,
+          -2000
+        ],
+        [
+          1559,
+          -2000
+        ],
+        [
+          1566,
+          -2000
+        ],
+        [
+          1572,
+          -2000
+        ],
+        [
+          1578,
+          -2000
+        ],
+        [
+          1584,
+          -2000
+        ],
+        [
+          1591,
+          -2000
+        ],
+        [
+          1597,
+          -2000
+        ],
+        [
+          1603,
+          -2000
+        ],
+        [
+          1609,
+          -2000
+        ],
+        [
+          1616,
+          -2000
+        ],
+        [
+          1622,
+          -2000
+        ],
+        [
+          1628,
+          -2000
+        ],
+        [
+          1634,
+          -2000
+        ],
+        [
+          1641,
+          -2000
+        ],
+        [
+          1647,
+          -2000
+        ],
+        [
+          1653,
+          -2000
+        ],
+        [
+          1659,
+          -2000
+        ],
+        [
+          1666,
+          -2000
+        ],
+        [
+          1672,
+          -2000
+        ],
+        [
+          1678,
+          -2000
+        ],
+        [
+          1684,
+          -2000
+        ],
+        [
+          1691,
+          -2000
+        ],
+        [
+          1697,
+          -2000
+        ],
+        [
+          1703,
+          -2000
+        ],
+        [
+          1709,
+          -2000
+        ],
+        [
+          1716,
+          -2000
+        ],
+        [
+          1722,
+          -2000
+        ],
+        [
+          1728,
+          -2000
+        ],
+        [
+          1734,
+          -2000
+        ],
+        [
+          1741,
+          -2000
+        ],
+        [
+          1747,
+          -2000
+        ],
+        [
+          1753,
+          -2000
+        ],
+        [
+          1759,
+          -2000
+        ],
+        [
+          1766,
+          -2000
+        ],
+        [
+          1772,
+          -2000
+        ],
+        [
+          1778,
+          -2000
+        ],
+        [
+          1784,
+          -2000
+        ],
+        [
+          1791,
+          -2000
+        ],
+        [
+          1797,
+          -2000
+        ],
+        [
+          1803,
+          -2000
+        ],
+        [
+          1809,
+          -2000
+        ],
+        [
+          1816,
+          -2000
+        ],
+        [
+          1822,
+          -2000
+        ],
+        [
+          1828,
+          -2000
+        ],
+        [
+          1834,
+          -2000
+        ],
+        [
+          1841,
+          -2000
+        ],
+        [
+          1847,
+          -2000
+        ],
+        [
+          1853,
+          -2000
+        ],
+        [
+          1859,
+          -2000
+        ],
+        [
+          1866,
+          -2000
+        ],
+        [
+          1872,
+          -2000
+        ],
+        [
+          1878,
+          -2000
+        ],
+        [
+          1884,
+          -2000
+        ],
+        [
+          1891,
+          -2000
+        ],
+        [
+          1897,
+          -2000
+        ],
+        [
+          1903,
+          -2000
+        ],
+        [
+          1909,
+          -2000
+        ],
+        [
+          1916,
+          -2000
+        ],
+        [
+          1922,
+          -2000
+        ],
+        [
+          1928,
+          -2000
+        ],
+        [
+          1934,
+          -2000
+        ],
+        [
+          1941,
+          -2000
+        ],
+        [
+          1947,
+          -2000
+        ],
+        [
+          1953,
+          -2000
+        ],
+        [
+          1959,
+          -2000
+        ],
+        [
+          1966,
+          -2000
+        ],
+        [
+          1972,
+          -2000
+        ],
+        [
+          1978,
+          -2000
+        ],
+        [
+          1984,
+          -2000
+        ],
+        [
+          1991,
+          -2000
+        ],
+        [
+          1997,
+          -2000
+        ],
+        [
+          2003,
+          -2000
+        ],
+        [
+          2009,
+          -2000
+        ],
+        [
+          2016,
+          -2000
+        ],
+        [
+          2022,
+          -2000
+        ],
+        [
+          2028,
+          -2000
+        ],
+        [
+          2034,
+          -2000
+        ],
+        [
+          2041,
+          -2000
+        ],
+        [
+          2047,
+          -2000
+        ],
+        [
+          2053,
+          -2000
+        ],
+        [
+          2059,
+          -2000
+        ],
+        [
+          2066,
+          -2000
+        ],
+        [
+          2072,
+          -2000
+        ],
+        [
+          2078,
+          -2000
+        ],
+        [
+          2084,
+          -2000
+        ],
+        [
+          2091,
+          -2000
+        ],
+        [
+          2097,
+          -2000
+        ],
+        [
+          2103,
+          -2000
+        ],
+        [
+          2109,
+          -2000
+        ],
+        [
+          2116,
+          -2000
+        ],
+        [
+          2122,
+          -2000
+        ],
+        [
+          2128,
+          -2000
+        ],
+        [
+          2134,
+          -2000
+        ],
+        [
+          2141,
+          -2000
+        ],
+        [
+          2147,
+          -2000
+        ],
+        [
+          2153,
+          -2000
+        ],
+        [
+          2159,
+          -2000
+        ],
+        [
+          2166,
+          -2000
+        ],
+        [
+          2172,
+          -2000
+        ],
+        [
+          2178,
+          -2000
+        ],
+        [
+          2184,
+          -2000
+        ],
+        [
+          2191,
+          -2000
+        ],
+        [
+          2197,
+          -2000
+        ],
+        [
+          2203,
+          -2000
+        ],
+        [
+          2209,
+          -2000
+        ],
+        [
+          2216,
+          -2000
+        ],
+        [
+          2222,
+          -2000
+        ],
+        [
+          2228,
+          -2000
+        ],
+        [
+          2234,
+          -2000
+        ],
+        [
+          2241,
+          -2000
+        ],
+        [
+          2247,
+          -2000
+        ],
+        [
+          2253,
+          -2000
+        ],
+        [
+          2259,
+          -2000
+        ],
+        [
+          2266,
+          -2000
+        ],
+        [
+          2272,
+          -2000
+        ],
+        [
+          2278,
+          -2000
+        ],
+        [
+          2284,
+          -2000
+        ],
+        [
+          2291,
+          -2000
+        ],
+        [
+          2297,
+          -2000
+        ],
+        [
+          2303,
+          -2000
+        ],
+        [
+          2309,
+          -2000
+        ],
+        [
+          2316,
+          -2000
+        ],
+        [
+          2322,
+          -2000
+        ],
+        [
+          2328,
+          -2000
+        ],
+        [
+          2334,
+          -2000
+        ],
+        [
+          2341,
+          -2000
+        ],
+        [
+          2347,
+          -2000
+        ],
+        [
+          2353,
+          -2000
+        ],
+        [
+          2359,
+          -2000
+        ],
+        [
+          2366,
+          -2000
+        ],
+        [
+          2372,
+          -2000
+        ],
+        [
+          2378,
+          -2000
+        ],
+        [
+          2384,
+          -2000
+        ],
+        [
+          2391,
+          -2000
+        ],
+        [
+          2397,
+          -2000
+        ],
+        [
+          2403,
+          -2000
+        ],
+        [
+          2409,
+          -2000
+        ],
+        [
+          2416,
+          -2000
+        ],
+        [
+          2422,
+          -2000
+        ],
+        [
+          2428,
+          -2000
+        ],
+        [
+          2434,
+          -2000
+        ],
+        [
+          2441,
+          -2000
+        ],
+        [
+          2447,
+          -2000
+        ],
+        [
+          2453,
+          -2000
+        ],
+        [
+          2459,
+          -2000
+        ],
+        [
+          2466,
+          -2000
+        ],
+        [
+          2472,
+          -2000
+        ],
+        [
+          2478,
+          -2000
+        ],
+        [
+          2484,
+          -1999
+        ],
+        [
+          2491,
+          -1998
+        ],
+        [
+          2497,
+          -1995
+        ],
+        [
+          2503,
+          -1992
+        ],
+        [
+          2509,
+          -1988
+        ],
+        [
+          2516,
+          -1984
+        ],
+        [
+          2522,
+          -1978
+        ],
+        [
+          2528,
+          -1972
+        ],
+        [
+          2534,
+          -1966
+        ],
+        [
+          2541,
+          -1962
+        ],
+        [
+          2547,
+          -1958
+        ],
+        [
+          2553,
+          -1955
+        ],
+        [
+          2559,
+          -1952
+        ],
+        [
+          2566,
+          -1951
+        ],
+        [
+          2572,
+          -1950
+        ],
+        [
+          2578,
+          -1950
+        ],
+        [
+          2584,
+          -1950
+        ],
+        [
+          2591,
+          -1950
+        ],
+        [
+          2597,
+          -1950
+        ],
+        [
+          2603,
+          -1950
+        ],
+        [
+          2609,
+          -1950
+        ],
+        [
+          2616,
+          -1950
+        ],
+        [
+          2622,
+          -1950
+        ],
+        [
+          2628,
+          -1950
+        ],
+        [
+          2634,
+          -1950
+        ],
+        [
+          2641,
+          -1950
+        ],
+        [
+          2647,
+          -1950
+        ],
+        [
+          2653,
+          -1950
+        ],
+        [
+          2659,
+          -1950
+        ],
+        [
+          2666,
+          -1950
+        ],
+        [
+          2672,
+          -1950
+        ],
+        [
+          2678,
+          -1950
+        ],
+        [
+          2684,
+          -1950
+        ],
+        [
+          2691,
+          -1950
+        ],
+        [
+          2697,
+          -1950
+        ],
+        [
+          2703,
+          -1950
+        ],
+        [
+          2709,
+          -1950
+        ],
+        [
+          2716,
+          -1950
+        ],
+        [
+          2722,
+          -1950
+        ],
+        [
+          2728,
+          -1950
+        ],
+        [
+          2734,
+          -1950
+        ],
+        [
+          2738,
+          -1950
+        ],
+        [
+          2742,
+          -1950
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "n99",
+      "isNew": true,
+      "kind": "boulevard",
+      "points": [
+        [
+          -731,
+          -2469
+        ],
+        [
+          -536,
+          -2372
+        ],
+        [
+          -381,
+          -2212
+        ],
+        [
+          -282,
+          -2197
+        ],
+        [
+          -75,
+          -2207
+        ],
+        [
+          34,
+          -2165
+        ],
+        [
+          105,
+          -2084
+        ],
+        [
+          196,
+          -1900
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "n100",
+      "isNew": true,
+      "kind": "boulevard",
+      "points": [
+        [
+          2089,
+          -2003
+        ],
+        [
+          2088,
+          -2117
+        ],
+        [
+          2333,
+          -2438
+        ],
+        [
+          2362,
+          -2570
+        ],
+        [
+          2347,
+          -2650
+        ],
+        [
+          2065,
+          -2852
+        ],
+        [
+          1933,
+          -2980
+        ],
+        [
+          1810,
+          -3036
+        ],
+        [
+          1565,
+          -3093
+        ],
+        [
+          1433,
+          -3097
+        ],
+        [
+          1169,
+          -3046
+        ],
+        [
+          844,
+          -3055
+        ],
+        [
+          750,
+          -3008
+        ],
+        [
+          708,
+          -2961
+        ],
+        [
+          679,
+          -2895
+        ],
+        [
+          670,
+          -2801
+        ],
+        [
+          703,
+          -2664
+        ],
+        [
+          759,
+          -2541
+        ],
+        [
+          844,
+          -2428
+        ],
+        [
+          939,
+          -2344
+        ],
+        [
+          981,
+          -2263
+        ],
+        [
+          981,
+          -2075
+        ],
+        [
+          920,
+          -1924
+        ],
+        [
+          897,
+          -1800
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "n104",
+      "isNew": true,
+      "kind": "boulevard",
+      "points": [
+        [
+          -731,
+          -2469
+        ],
+        [
+          -340,
+          -2532
+        ],
+        [
+          -88,
+          -2620
+        ],
+        [
+          161,
+          -2738
+        ],
+        [
+          367,
+          -2894
+        ],
+        [
+          485,
+          -2953
+        ],
+        [
+          653,
+          -3011
+        ],
+        [
+          792,
+          -3028
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "park",
+      "id": "k3",
+      "isNew": true,
+      "kind": "boulevard",
+      "points": [
+        [
+          1410,
+          -560
+        ],
+        [
+          1372,
+          -550
+        ],
+        [
+          1347,
+          -550
+        ],
+        [
+          1322,
+          -550
+        ],
+        [
+          1297,
+          -550
+        ],
+        [
+          1272,
+          -550
+        ],
+        [
+          1247,
+          -550
+        ],
+        [
+          1222,
+          -550
+        ],
+        [
+          1197,
+          -550
+        ],
+        [
+          1172,
+          -550
+        ],
+        [
+          1147,
+          -550
+        ],
+        [
+          1122,
+          -550
+        ],
+        [
+          1097,
+          -550
+        ],
+        [
+          1072,
+          -550
+        ],
+        [
+          1072,
+          -572
+        ],
+        [
+          1088,
+          -592
+        ],
+        [
+          1066,
+          -600
+        ],
+        [
+          1041,
+          -600
+        ],
+        [
+          1014,
+          -602
+        ],
+        [
+          1028,
+          -628
+        ],
+        [
+          1033,
+          -649
+        ],
+        [
+          1013,
+          -658
+        ],
+        [
+          1028,
+          -678
+        ],
+        [
+          1033,
+          -699
+        ],
+        [
+          1013,
+          -708
+        ],
+        [
+          1028,
+          -728
+        ],
+        [
+          1033,
+          -749
+        ],
+        [
+          1013,
+          -758
+        ],
+        [
+          1028,
+          -778
+        ],
+        [
+          1047,
+          -797
+        ],
+        [
+          1066,
+          -816
+        ],
+        [
+          1086,
+          -838
+        ],
+        [
+          1072,
+          -850
+        ],
+        [
+          1047,
+          -850
+        ],
+        [
+          1022,
+          -850
+        ],
+        [
+          997,
+          -850
+        ],
+        [
+          972,
+          -850
+        ],
+        [
+          947,
+          -850
+        ],
+        [
+          922,
+          -850
+        ],
+        [
+          897,
+          -850
+        ],
+        [
+          872,
+          -850
+        ],
+        [
+          851,
+          -866
+        ],
+        [
+          850,
+          -891
+        ],
+        [
+          850,
+          -916
+        ],
+        [
+          855,
+          -942
+        ],
+        [
+          878,
+          -950
+        ],
+        [
+          903,
+          -950
+        ],
+        [
+          928,
+          -950
+        ],
+        [
+          953,
+          -958
+        ],
+        [
+          978,
+          -978
+        ],
+        [
+          995,
+          -1003
+        ],
+        [
+          1000,
+          -1028
+        ],
+        [
+          1000,
+          -1053
+        ],
+        [
+          1000,
+          -1078
+        ],
+        [
+          1000,
+          -1103
+        ],
+        [
+          1000,
+          -1128
+        ],
+        [
+          1000,
+          -1153
+        ],
+        [
+          1000,
+          -1178
+        ],
+        [
+          1000,
+          -1203
+        ],
+        [
+          1000,
+          -1228
+        ],
+        [
+          1000,
+          -1253
+        ],
+        [
+          1000,
+          -1278
+        ],
+        [
+          1000,
+          -1303
+        ],
+        [
+          1000,
+          -1328
+        ],
+        [
+          1000,
+          -1353
+        ],
+        [
+          1000,
+          -1378
+        ],
+        [
+          1000,
+          -1403
+        ],
+        [
+          1000,
+          -1428
+        ],
+        [
+          1008,
+          -1453
+        ],
+        [
+          1028,
+          -1478
+        ],
+        [
+          1033,
+          -1499
+        ],
+        [
+          1013,
+          -1508
+        ],
+        [
+          1028,
+          -1528
+        ],
+        [
+          1033,
+          -1549
+        ],
+        [
+          1013,
+          -1558
+        ],
+        [
+          1028,
+          -1578
+        ],
+        [
+          1033,
+          -1599
+        ],
+        [
+          1013,
+          -1608
+        ],
+        [
+          1028,
+          -1628
+        ],
+        [
+          1047,
+          -1647
+        ],
+        [
+          1066,
+          -1666
+        ],
+        [
+          1084,
+          -1684
+        ],
+        [
+          1098,
+          -1709
+        ],
+        [
+          1100,
+          -1734
+        ],
+        [
+          1100,
+          -1759
+        ],
+        [
+          1100,
+          -1784
+        ],
+        [
+          1097,
+          -1805
+        ]
+      ],
+      "surface": "gravel"
+    },
+    {
+      "bridge": false,
+      "district": "park",
+      "id": "t1",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          110,
+          -2715
+        ],
+        [
+          150,
+          -2620
+        ],
+        [
+          240,
+          -2555
+        ],
+        [
+          380,
+          -2530
+        ],
+        [
+          520,
+          -2560
+        ],
+        [
+          640,
+          -2585
+        ],
+        [
+          748,
+          -2566
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "park",
+      "id": "t2",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          520,
+          -2560
+        ],
+        [
+          560,
+          -2680
+        ],
+        [
+          600,
+          -2780
+        ],
+        [
+          590,
+          -2880
+        ],
+        [
+          560,
+          -2979
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "park",
+      "id": "t3",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          748,
+          -2566
+        ],
+        [
+          830,
+          -2600
+        ],
+        [
+          900,
+          -2680
+        ],
+        [
+          930,
+          -2780
+        ],
+        [
+          915,
+          -2880
+        ],
+        [
+          895,
+          -2970
+        ],
+        [
+          895,
+          -3052
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "district": "midtown",
+      "id": "s0-1",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          86,
+          -1900
+        ],
+        [
+          74,
+          -1951
+        ],
+        [
+          69,
+          -2003
+        ],
+        [
+          74,
+          -2054
+        ],
+        [
+          86,
+          -2106
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-2",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          386,
+          -1900
+        ],
+        [
+          399,
+          -1850
+        ],
+        [
+          404,
+          -1800
+        ],
+        [
+          399,
+          -1750
+        ],
+        [
+          386,
+          -1700
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-3",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          110,
+          -2075
+        ],
+        [
+          187,
+          -2088
+        ],
+        [
+          258,
+          -2113
+        ],
+        [
+          321,
+          -2155
+        ],
+        [
+          379,
+          -2208
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-4",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          915,
+          -2365
+        ],
+        [
+          886,
+          -2291
+        ],
+        [
+          844,
+          -2227
+        ],
+        [
+          786,
+          -2179
+        ],
+        [
+          716,
+          -2140
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-5",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          981,
+          -2236
+        ],
+        [
+          1031,
+          -2236
+        ],
+        [
+          1081,
+          -2237
+        ],
+        [
+          1131,
+          -2236
+        ],
+        [
+          1181,
+          -2236
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-6",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          981,
+          -2086
+        ],
+        [
+          919,
+          -2098
+        ],
+        [
+          856,
+          -2103
+        ],
+        [
+          794,
+          -2098
+        ],
+        [
+          731,
+          -2086
+        ]
+      ]
+    },
+    {
+      "bridge": false,
+      "deadEnd": true,
+      "district": "midtown",
+      "id": "s0-7",
+      "isNew": true,
+      "kind": "street",
+      "points": [
+        [
+          929,
+          -1946
+        ],
+        [
+          858,
+          -1971
+        ],
+        [
+          788,
+          -1997
+        ],
+        [
+          719,
+          -2027
+        ],
+        [
+          651,
+          -2059
+        ]
+      ]
+    }
+  ],
+  "savedAt": "2026-10-01T16:01:43.017Z",
+  "seed": "0x4b657374"
+}
