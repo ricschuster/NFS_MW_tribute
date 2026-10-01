@@ -154,7 +154,8 @@ what the city is shaped like.
   (#477): curving streets, cul-de-sacs and crescents off its drawn
   boulevards, added to `docs/roads-edited.json` for the road editor. A
   drawing tool, not a generator the game runs: once edited and synced by
-  `roadsync`, a street is authored data like any other
+  `roadsync`, a street is authored data like any other. `-- --district
+  industrial --area 0 --prefix i` drafts Industrial's straight works roads
 - `npm run housedraft -- --place P` - draft a suburb's front hedges and
   street trees (#477) round the houses in its props file, keeping those
   houses and any hand edits to them; `-- --houses` redrafts the houses too,
