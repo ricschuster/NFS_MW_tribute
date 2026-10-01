@@ -1,0 +1,5230 @@
+{
+  "seed": "0x4b657374",
+  "place": "Industrial",
+  "savedAt": "2026-10-01T16:58:16.087Z",
+  "props": [
+    {
+      "id": "w1",
+      "kind": "rails",
+      "x": 1480,
+      "z": -2280,
+      "angle": 0
+    },
+    {
+      "id": "w2",
+      "kind": "rails",
+      "x": 1480,
+      "z": -2320,
+      "angle": 0
+    },
+    {
+      "id": "w3",
+      "kind": "rails",
+      "x": 1480,
+      "z": -2360,
+      "angle": 0
+    },
+    {
+      "id": "w4",
+      "kind": "rails",
+      "x": 1490,
+      "z": -2280,
+      "angle": 0
+    },
+    {
+      "id": "w5",
+      "kind": "rails",
+      "x": 1490,
+      "z": -2320,
+      "angle": 0
+    },
+    {
+      "id": "w6",
+      "kind": "rails",
+      "x": 1490,
+      "z": -2360,
+      "angle": 0
+    },
+    {
+      "id": "w7",
+      "kind": "rails",
+      "x": 1500,
+      "z": -2280,
+      "angle": 0
+    },
+    {
+      "id": "w8",
+      "kind": "rails",
+      "x": 1500,
+      "z": -2320,
+      "angle": 0
+    },
+    {
+      "id": "w9",
+      "kind": "rails",
+      "x": 1500,
+      "z": -2360,
+      "angle": 0
+    },
+    {
+      "id": "w10",
+      "kind": "wagon",
+      "x": 1480,
+      "z": -2272,
+      "angle": 0,
+      "variant": "box"
+    },
+    {
+      "id": "w11",
+      "kind": "wagon",
+      "x": 1480,
+      "z": -2288,
+      "angle": 0,
+      "variant": "box"
+    },
+    {
+      "id": "w12",
+      "kind": "wagon",
+      "x": 1490,
+      "z": -2340,
+      "angle": 0,
+      "variant": "tank"
+    },
+    {
+      "id": "w13",
+      "kind": "wagon",
+      "x": 1490,
+      "z": -2356,
+      "angle": 0,
+      "variant": "tank"
+    },
+    {
+      "id": "w14",
+      "kind": "wagon",
+      "x": 1500,
+      "z": -2368,
+      "angle": 0,
+      "variant": "box"
+    },
+    {
+      "id": "w15",
+      "kind": "gantry",
+      "x": 1490,
+      "z": -2310,
+      "angle": 0
+    },
+    {
+      "id": "w16",
+      "kind": "tank",
+      "x": 1665,
+      "z": -2265,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "w17",
+      "kind": "tank",
+      "x": 1705,
+      "z": -2265,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "w18",
+      "kind": "tank",
+      "x": 1665,
+      "z": -2305,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "w19",
+      "kind": "tank",
+      "x": 1705,
+      "z": -2305,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "w20",
+      "kind": "warehouse",
+      "x": 1415,
+      "z": -2300,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "w21",
+      "kind": "chimney",
+      "x": 1440,
+      "z": -2255,
+      "angle": 0
+    },
+    {
+      "id": "w22",
+      "kind": "chimney",
+      "x": 1440,
+      "z": -2345,
+      "angle": 0
+    },
+    {
+      "id": "dw1",
+      "kind": "warehouse",
+      "x": 1563.9,
+      "z": -2050,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw2",
+      "kind": "chimney",
+      "x": 1586.9,
+      "z": -2050,
+      "angle": 0
+    },
+    {
+      "id": "dw3",
+      "kind": "warehouse",
+      "x": 1496.1,
+      "z": -2050,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw4",
+      "kind": "chimney",
+      "x": 1473.1,
+      "z": -2050,
+      "angle": 0
+    },
+    {
+      "id": "dw5",
+      "kind": "tank",
+      "x": 1459.1,
+      "z": -2047.3,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw6",
+      "kind": "tank",
+      "x": 1566.9,
+      "z": -2112,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw7",
+      "kind": "tank",
+      "x": 1566.9,
+      "z": -2148,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw8",
+      "kind": "tank",
+      "x": 1602.9,
+      "z": -2112,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw9",
+      "kind": "tank",
+      "x": 1602.9,
+      "z": -2148,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw10",
+      "kind": "tank",
+      "x": 1501.6,
+      "z": -2101.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw11",
+      "kind": "tank",
+      "x": 1501.6,
+      "z": -2120.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw12",
+      "kind": "tank",
+      "x": 1501.6,
+      "z": -2139.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw13",
+      "kind": "tank",
+      "x": 1501.6,
+      "z": -2158.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw14",
+      "kind": "tank",
+      "x": 1482.6,
+      "z": -2101.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw15",
+      "kind": "tank",
+      "x": 1482.6,
+      "z": -2120.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw16",
+      "kind": "tank",
+      "x": 1482.6,
+      "z": -2139.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw17",
+      "kind": "tank",
+      "x": 1482.6,
+      "z": -2158.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw18",
+      "kind": "tank",
+      "x": 1463.6,
+      "z": -2101.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw19",
+      "kind": "tank",
+      "x": 1463.6,
+      "z": -2120.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw20",
+      "kind": "tank",
+      "x": 1463.6,
+      "z": -2139.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw21",
+      "kind": "tank",
+      "x": 1463.6,
+      "z": -2158.5,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw22",
+      "kind": "chimney",
+      "x": 1448.1,
+      "z": -2109.1,
+      "angle": 0
+    },
+    {
+      "id": "dw23",
+      "kind": "warehouse",
+      "x": 1563.9,
+      "z": -2210,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw24",
+      "kind": "chimney",
+      "x": 1586.9,
+      "z": -2200,
+      "angle": 0
+    },
+    {
+      "id": "dw25",
+      "kind": "chimney",
+      "x": 1586.9,
+      "z": -2220,
+      "angle": 0
+    },
+    {
+      "id": "dw26",
+      "kind": "warehouse",
+      "x": 1496.1,
+      "z": -2210,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw27",
+      "kind": "chimney",
+      "x": 1473.1,
+      "z": -2200,
+      "angle": 0
+    },
+    {
+      "id": "dw28",
+      "kind": "chimney",
+      "x": 1473.1,
+      "z": -2220,
+      "angle": 0
+    },
+    {
+      "id": "dw29",
+      "kind": "tank",
+      "x": 1459.1,
+      "z": -2206.2,
+      "angle": 0,
+      "variant": "small"
+    },
+    {
+      "id": "dw30",
+      "kind": "tank",
+      "x": 1557.7,
+      "z": -2413.9,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw31",
+      "kind": "tank",
+      "x": 1555.7,
+      "z": -2432.8,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw32",
+      "kind": "tank",
+      "x": 1553.7,
+      "z": -2451.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw33",
+      "kind": "tank",
+      "x": 1576.5,
+      "z": -2415.9,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw34",
+      "kind": "tank",
+      "x": 1574.6,
+      "z": -2434.8,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw35",
+      "kind": "tank",
+      "x": 1572.6,
+      "z": -2453.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw36",
+      "kind": "tank",
+      "x": 1595.4,
+      "z": -2417.9,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw37",
+      "kind": "tank",
+      "x": 1593.5,
+      "z": -2436.8,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw38",
+      "kind": "tank",
+      "x": 1591.5,
+      "z": -2455.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw39",
+      "kind": "chimney",
+      "x": 1607.7,
+      "z": -2449.4,
+      "angle": 0.105
+    },
+    {
+      "id": "dw40",
+      "kind": "tank",
+      "x": 1495.9,
+      "z": -2457.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw41",
+      "kind": "tank",
+      "x": 1493.9,
+      "z": -2476.6,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw42",
+      "kind": "tank",
+      "x": 1491.9,
+      "z": -2495.5,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw43",
+      "kind": "tank",
+      "x": 1477,
+      "z": -2455.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw44",
+      "kind": "tank",
+      "x": 1475,
+      "z": -2474.6,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw45",
+      "kind": "tank",
+      "x": 1473,
+      "z": -2493.5,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw46",
+      "kind": "tank",
+      "x": 1458.1,
+      "z": -2453.7,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw47",
+      "kind": "tank",
+      "x": 1456.1,
+      "z": -2472.6,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw48",
+      "kind": "tank",
+      "x": 1454.1,
+      "z": -2491.5,
+      "angle": 0.105,
+      "variant": "small"
+    },
+    {
+      "id": "dw49",
+      "kind": "chimney",
+      "x": 1439.6,
+      "z": -2481.4,
+      "angle": 0.105
+    },
+    {
+      "id": "dw50",
+      "kind": "warehouse",
+      "x": 1553.8,
+      "z": -2503.4,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw51",
+      "kind": "chimney",
+      "x": 1576.7,
+      "z": -2505.7,
+      "angle": 0.1
+    },
+    {
+      "id": "dw52",
+      "kind": "tank",
+      "x": 1589.4,
+      "z": -2518.9,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw53",
+      "kind": "warehouse",
+      "x": 1478.8,
+      "z": -2571.3,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw54",
+      "kind": "chimney",
+      "x": 1455.9,
+      "z": -2569,
+      "angle": 0.1
+    },
+    {
+      "id": "dw55",
+      "kind": "tank",
+      "x": 1478.7,
+      "z": -2627.5,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw56",
+      "kind": "tank",
+      "x": 1476.8,
+      "z": -2646.4,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw57",
+      "kind": "tank",
+      "x": 1474.9,
+      "z": -2665.3,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw58",
+      "kind": "tank",
+      "x": 1459.8,
+      "z": -2625.6,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw59",
+      "kind": "tank",
+      "x": 1457.9,
+      "z": -2644.5,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw60",
+      "kind": "tank",
+      "x": 1456,
+      "z": -2663.4,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw61",
+      "kind": "tank",
+      "x": 1440.9,
+      "z": -2623.7,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw62",
+      "kind": "tank",
+      "x": 1439,
+      "z": -2642.6,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw63",
+      "kind": "tank",
+      "x": 1437.1,
+      "z": -2661.6,
+      "angle": 0.1,
+      "variant": "small"
+    },
+    {
+      "id": "dw64",
+      "kind": "chimney",
+      "x": 1422,
+      "z": -2656.9,
+      "angle": 0.1
+    },
+    {
+      "id": "dw65",
+      "kind": "chimney",
+      "x": 1529.5,
+      "z": -2663.8,
+      "angle": 0.033
+    },
+    {
+      "id": "dw66",
+      "kind": "chimney",
+      "x": 1528.7,
+      "z": -2687.8,
+      "angle": 0.033
+    },
+    {
+      "id": "dw67",
+      "kind": "tank",
+      "x": 1549.6,
+      "z": -2660.5,
+      "angle": 0.033,
+      "variant": "small"
+    },
+    {
+      "id": "dw68",
+      "kind": "tank",
+      "x": 1548.5,
+      "z": -2692.5,
+      "angle": 0.033,
+      "variant": "small"
+    },
+    {
+      "id": "dw69",
+      "kind": "chimney",
+      "x": 1478,
+      "z": -2712.1,
+      "angle": 0.033
+    },
+    {
+      "id": "dw70",
+      "kind": "chimney",
+      "x": 1477.2,
+      "z": -2736.1,
+      "angle": 0.033
+    },
+    {
+      "id": "dw71",
+      "kind": "chimney",
+      "x": 1463.6,
+      "z": -2723.7,
+      "angle": 0.033
+    },
+    {
+      "id": "dw72",
+      "kind": "tank",
+      "x": 1458.1,
+      "z": -2707.5,
+      "angle": 0.033,
+      "variant": "small"
+    },
+    {
+      "id": "dw73",
+      "kind": "tank",
+      "x": 1457.1,
+      "z": -2739.5,
+      "angle": 0.033,
+      "variant": "small"
+    },
+    {
+      "id": "dw74",
+      "kind": "tank",
+      "x": 1536.9,
+      "z": -2903.7,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw75",
+      "kind": "tank",
+      "x": 1536.9,
+      "z": -2939.7,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw76",
+      "kind": "tank",
+      "x": 1572.9,
+      "z": -2903.7,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw77",
+      "kind": "tank",
+      "x": 1572.9,
+      "z": -2939.7,
+      "angle": 0,
+      "variant": "large"
+    },
+    {
+      "id": "dw78",
+      "kind": "chimney",
+      "x": 1596.9,
+      "z": -2941.8,
+      "angle": 0
+    },
+    {
+      "id": "dw79",
+      "kind": "warehouse",
+      "x": 1874.7,
+      "z": -2949,
+      "angle": 2.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw80",
+      "kind": "chimney",
+      "x": 1853.2,
+      "z": -2957,
+      "angle": 2.785
+    },
+    {
+      "id": "dw81",
+      "kind": "warehouse",
+      "x": 1923.6,
+      "z": -2888.8,
+      "angle": 2.743,
+      "variant": "small"
+    },
+    {
+      "id": "dw82",
+      "kind": "chimney",
+      "x": 1944.8,
+      "z": -2879.9,
+      "angle": 2.743
+    },
+    {
+      "id": "dw83",
+      "kind": "warehouse",
+      "x": 1825.3,
+      "z": -2838.5,
+      "angle": 2.678,
+      "variant": "small"
+    },
+    {
+      "id": "dw84",
+      "kind": "chimney",
+      "x": 1809.2,
+      "z": -2857.7,
+      "angle": 2.678
+    },
+    {
+      "id": "dw85",
+      "kind": "chimney",
+      "x": 1800.2,
+      "z": -2839.8,
+      "angle": 2.678
+    },
+    {
+      "id": "dw86",
+      "kind": "tank",
+      "x": 1793.7,
+      "z": -2858,
+      "angle": 2.678,
+      "variant": "small"
+    },
+    {
+      "id": "dw87",
+      "kind": "rails",
+      "x": 1777.1,
+      "z": -2690,
+      "angle": 1.115
+    },
+    {
+      "id": "dw88",
+      "kind": "rails",
+      "x": 1741.2,
+      "z": -2707.6,
+      "angle": 1.115
+    },
+    {
+      "id": "dw89",
+      "kind": "wagon",
+      "x": 1759.1,
+      "z": -2698.8,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw90",
+      "kind": "wagon",
+      "x": 1744.8,
+      "z": -2705.9,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw91",
+      "kind": "wagon",
+      "x": 1730.4,
+      "z": -2712.9,
+      "angle": 1.115,
+      "variant": "tank"
+    },
+    {
+      "id": "dw92",
+      "kind": "rails",
+      "x": 1774,
+      "z": -2683.7,
+      "angle": 1.115
+    },
+    {
+      "id": "dw93",
+      "kind": "rails",
+      "x": 1738.1,
+      "z": -2701.3,
+      "angle": 1.115
+    },
+    {
+      "id": "dw94",
+      "kind": "wagon",
+      "x": 1770.4,
+      "z": -2685.5,
+      "angle": 1.115,
+      "variant": "tank"
+    },
+    {
+      "id": "dw95",
+      "kind": "wagon",
+      "x": 1756.1,
+      "z": -2692.5,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw96",
+      "kind": "wagon",
+      "x": 1741.7,
+      "z": -2699.6,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw97",
+      "kind": "wagon",
+      "x": 1727.3,
+      "z": -2706.6,
+      "angle": 1.115,
+      "variant": "tank"
+    },
+    {
+      "id": "dw98",
+      "kind": "rails",
+      "x": 1770.9,
+      "z": -2677.4,
+      "angle": 1.115
+    },
+    {
+      "id": "dw99",
+      "kind": "rails",
+      "x": 1735,
+      "z": -2695.1,
+      "angle": 1.115
+    },
+    {
+      "id": "dw100",
+      "kind": "wagon",
+      "x": 1781.7,
+      "z": -2672.2,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw101",
+      "kind": "wagon",
+      "x": 1767.3,
+      "z": -2679.2,
+      "angle": 1.115,
+      "variant": "tank"
+    },
+    {
+      "id": "dw102",
+      "kind": "wagon",
+      "x": 1753,
+      "z": -2686.2,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw103",
+      "kind": "wagon",
+      "x": 1724.2,
+      "z": -2700.3,
+      "angle": 1.115,
+      "variant": "box"
+    },
+    {
+      "id": "dw104",
+      "kind": "gantry",
+      "x": 1766.4,
+      "z": -2687.5,
+      "angle": 1.115
+    },
+    {
+      "id": "dw105",
+      "kind": "warehouse",
+      "x": 1704.2,
+      "z": -2854.7,
+      "angle": 2.926,
+      "variant": "small"
+    },
+    {
+      "id": "dw106",
+      "kind": "chimney",
+      "x": 1679.6,
+      "z": -2849.8,
+      "angle": 2.926
+    },
+    {
+      "id": "dw107",
+      "kind": "chimney",
+      "x": 1683.9,
+      "z": -2869.4,
+      "angle": 2.926
+    },
+    {
+      "id": "dw108",
+      "kind": "tank",
+      "x": 1669.6,
+      "z": -2869.8,
+      "angle": 2.926,
+      "variant": "small"
+    },
+    {
+      "id": "dw109",
+      "kind": "warehouse",
+      "x": 1798.9,
+      "z": -2960.7,
+      "angle": 2.9,
+      "variant": "small"
+    },
+    {
+      "id": "dw110",
+      "kind": "chimney",
+      "x": 1818.8,
+      "z": -2945.5,
+      "angle": 2.9
+    },
+    {
+      "id": "dw111",
+      "kind": "chimney",
+      "x": 1823.6,
+      "z": -2964.9,
+      "angle": 2.9
+    },
+    {
+      "id": "dw112",
+      "kind": "warehouse",
+      "x": 1721,
+      "z": -2928.4,
+      "angle": 2.9,
+      "variant": "small"
+    },
+    {
+      "id": "dw113",
+      "kind": "chimney",
+      "x": 1696.3,
+      "z": -2924.2,
+      "angle": 2.9
+    },
+    {
+      "id": "dw114",
+      "kind": "chimney",
+      "x": 1701.1,
+      "z": -2943.6,
+      "angle": 2.9
+    },
+    {
+      "id": "dw115",
+      "kind": "warehouse",
+      "x": 1739.9,
+      "z": -3002.1,
+      "angle": 2.874,
+      "variant": "small"
+    },
+    {
+      "id": "dw116",
+      "kind": "chimney",
+      "x": 1717.7,
+      "z": -3008.2,
+      "angle": 2.874
+    },
+    {
+      "id": "dw117",
+      "kind": "warehouse",
+      "x": 2250.5,
+      "z": -1869.5,
+      "angle": 2.342,
+      "variant": "small"
+    },
+    {
+      "id": "dw118",
+      "kind": "chimney",
+      "x": 2266.5,
+      "z": -1853,
+      "angle": 2.342
+    },
+    {
+      "id": "dw119",
+      "kind": "tank",
+      "x": 2284.7,
+      "z": -1851.1,
+      "angle": 2.342,
+      "variant": "small"
+    },
+    {
+      "id": "dw120",
+      "kind": "chimney",
+      "x": 2218.9,
+      "z": -1920.9,
+      "angle": 2.342
+    },
+    {
+      "id": "dw121",
+      "kind": "chimney",
+      "x": 2236.2,
+      "z": -1937.7,
+      "angle": 2.342
+    },
+    {
+      "id": "dw122",
+      "kind": "chimney",
+      "x": 2217.8,
+      "z": -1939.3,
+      "angle": 2.342
+    },
+    {
+      "id": "dw123",
+      "kind": "tank",
+      "x": 2202.1,
+      "z": -1932.5,
+      "angle": 2.342,
+      "variant": "small"
+    },
+    {
+      "id": "dw124",
+      "kind": "tank",
+      "x": 2225.1,
+      "z": -1954.8,
+      "angle": 2.342,
+      "variant": "small"
+    },
+    {
+      "id": "dw125",
+      "kind": "chimney",
+      "x": 2288.9,
+      "z": -1919.9,
+      "angle": 2.37
+    },
+    {
+      "id": "dw126",
+      "kind": "chimney",
+      "x": 2305.7,
+      "z": -1937.1,
+      "angle": 2.37
+    },
+    {
+      "id": "dw127",
+      "kind": "chimney",
+      "x": 2307.3,
+      "z": -1918.8,
+      "angle": 2.37
+    },
+    {
+      "id": "dw128",
+      "kind": "tank",
+      "x": 2300.5,
+      "z": -1903.1,
+      "angle": 2.37,
+      "variant": "small"
+    },
+    {
+      "id": "dw129",
+      "kind": "tank",
+      "x": 2322.8,
+      "z": -1926.1,
+      "angle": 2.37,
+      "variant": "small"
+    },
+    {
+      "id": "dw130",
+      "kind": "warehouse",
+      "x": 2308.4,
+      "z": -1812.4,
+      "angle": 2.356,
+      "variant": "small"
+    },
+    {
+      "id": "dw131",
+      "kind": "chimney",
+      "x": 2285,
+      "z": -1821.5,
+      "angle": 2.356
+    },
+    {
+      "id": "dw132",
+      "kind": "chimney",
+      "x": 2299.2,
+      "z": -1835.7,
+      "angle": 2.356
+    },
+    {
+      "id": "dw133",
+      "kind": "chimney",
+      "x": 2361.9,
+      "z": -1782.8,
+      "angle": 2.347
+    },
+    {
+      "id": "dw134",
+      "kind": "chimney",
+      "x": 2379,
+      "z": -1799.6,
+      "angle": 2.347
+    },
+    {
+      "id": "dw135",
+      "kind": "chimney",
+      "x": 2380.3,
+      "z": -1781.2,
+      "angle": 2.347
+    },
+    {
+      "id": "dw136",
+      "kind": "tank",
+      "x": 2373.1,
+      "z": -1765.7,
+      "angle": 2.347,
+      "variant": "small"
+    },
+    {
+      "id": "dw137",
+      "kind": "tank",
+      "x": 2395.9,
+      "z": -1788.2,
+      "angle": 2.347,
+      "variant": "small"
+    },
+    {
+      "id": "dw138",
+      "kind": "tank",
+      "x": 2497.1,
+      "z": -1900.8,
+      "angle": 2.356,
+      "variant": "large"
+    },
+    {
+      "id": "dw139",
+      "kind": "tank",
+      "x": 2522.5,
+      "z": -1926.3,
+      "angle": 2.356,
+      "variant": "large"
+    },
+    {
+      "id": "dw140",
+      "kind": "tank",
+      "x": 2522.5,
+      "z": -1875.4,
+      "angle": 2.356,
+      "variant": "large"
+    },
+    {
+      "id": "dw141",
+      "kind": "tank",
+      "x": 2548,
+      "z": -1900.8,
+      "angle": 2.356,
+      "variant": "large"
+    },
+    {
+      "id": "dw142",
+      "kind": "chimney",
+      "x": 2556.1,
+      "z": -1875,
+      "angle": 2.356
+    },
+    {
+      "id": "dw143",
+      "kind": "tank",
+      "x": 1964.1,
+      "z": -2058.4,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw144",
+      "kind": "tank",
+      "x": 1962.3,
+      "z": -2077.3,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw145",
+      "kind": "tank",
+      "x": 1960.6,
+      "z": -2096.2,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw146",
+      "kind": "tank",
+      "x": 1983,
+      "z": -2060.2,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw147",
+      "kind": "tank",
+      "x": 1981.3,
+      "z": -2079.1,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw148",
+      "kind": "tank",
+      "x": 1979.5,
+      "z": -2098,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw149",
+      "kind": "tank",
+      "x": 2001.9,
+      "z": -2061.9,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw150",
+      "kind": "tank",
+      "x": 2000.2,
+      "z": -2080.8,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw151",
+      "kind": "tank",
+      "x": 1998.4,
+      "z": -2099.8,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw152",
+      "kind": "chimney",
+      "x": 2014.1,
+      "z": -2098.9,
+      "angle": 0.093
+    },
+    {
+      "id": "dw153",
+      "kind": "chimney",
+      "x": 1912.6,
+      "z": -2035.5,
+      "angle": 0.093
+    },
+    {
+      "id": "dw154",
+      "kind": "chimney",
+      "x": 1910.4,
+      "z": -2059.4,
+      "angle": 0.093
+    },
+    {
+      "id": "dw155",
+      "kind": "chimney",
+      "x": 1897.6,
+      "z": -2046.2,
+      "angle": 0.093
+    },
+    {
+      "id": "dw156",
+      "kind": "tank",
+      "x": 1893.1,
+      "z": -2029.7,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw157",
+      "kind": "tank",
+      "x": 1890.1,
+      "z": -2061.5,
+      "angle": 0.093,
+      "variant": "small"
+    },
+    {
+      "id": "dw158",
+      "kind": "rails",
+      "x": 1905.9,
+      "z": -2103.9,
+      "angle": 0.04
+    },
+    {
+      "id": "dw159",
+      "kind": "rails",
+      "x": 1904.3,
+      "z": -2143.9,
+      "angle": 0.04
+    },
+    {
+      "id": "dw160",
+      "kind": "wagon",
+      "x": 1905.7,
+      "z": -2107.9,
+      "angle": 0.04,
+      "variant": "box"
+    },
+    {
+      "id": "dw161",
+      "kind": "wagon",
+      "x": 1905.1,
+      "z": -2123.9,
+      "angle": 0.04,
+      "variant": "box"
+    },
+    {
+      "id": "dw162",
+      "kind": "rails",
+      "x": 1898.9,
+      "z": -2103.6,
+      "angle": 0.04
+    },
+    {
+      "id": "dw163",
+      "kind": "rails",
+      "x": 1897.3,
+      "z": -2143.6,
+      "angle": 0.04
+    },
+    {
+      "id": "dw164",
+      "kind": "wagon",
+      "x": 1898.7,
+      "z": -2107.6,
+      "angle": 0.04,
+      "variant": "tank"
+    },
+    {
+      "id": "dw165",
+      "kind": "wagon",
+      "x": 1896.8,
+      "z": -2155.6,
+      "angle": 0.04,
+      "variant": "box"
+    },
+    {
+      "id": "dw166",
+      "kind": "rails",
+      "x": 1891.9,
+      "z": -2103.3,
+      "angle": 0.04
+    },
+    {
+      "id": "dw167",
+      "kind": "rails",
+      "x": 1890.3,
+      "z": -2143.3,
+      "angle": 0.04
+    },
+    {
+      "id": "dw168",
+      "kind": "wagon",
+      "x": 1891.7,
+      "z": -2107.3,
+      "angle": 0.04,
+      "variant": "box"
+    },
+    {
+      "id": "dw169",
+      "kind": "wagon",
+      "x": 1889.8,
+      "z": -2155.3,
+      "angle": 0.04,
+      "variant": "tank"
+    },
+    {
+      "id": "dw170",
+      "kind": "gantry",
+      "x": 1897.5,
+      "z": -2137.1,
+      "angle": 0.04
+    },
+    {
+      "id": "dw171",
+      "kind": "chimney",
+      "x": 1955.4,
+      "z": -2137,
+      "angle": 3.102
+    },
+    {
+      "id": "dw172",
+      "kind": "chimney",
+      "x": 1956.4,
+      "z": -2161,
+      "angle": 3.102
+    },
+    {
+      "id": "dw173",
+      "kind": "chimney",
+      "x": 1969.9,
+      "z": -2148.4,
+      "angle": 3.102
+    },
+    {
+      "id": "dw174",
+      "kind": "tank",
+      "x": 1975.3,
+      "z": -2132.2,
+      "angle": 3.102,
+      "variant": "small"
+    },
+    {
+      "id": "dw175",
+      "kind": "tank",
+      "x": 1976.5,
+      "z": -2164.2,
+      "angle": 3.102,
+      "variant": "small"
+    },
+    {
+      "id": "dw176",
+      "kind": "warehouse",
+      "x": 1967.9,
+      "z": -2223.6,
+      "angle": 3.102,
+      "variant": "small"
+    },
+    {
+      "id": "dw177",
+      "kind": "chimney",
+      "x": 1990.5,
+      "z": -2212.7,
+      "angle": 3.102
+    },
+    {
+      "id": "dw178",
+      "kind": "chimney",
+      "x": 1991.3,
+      "z": -2232.7,
+      "angle": 3.102
+    },
+    {
+      "id": "dw179",
+      "kind": "tank",
+      "x": 2004.9,
+      "z": -2222,
+      "angle": 3.102,
+      "variant": "small"
+    },
+    {
+      "id": "dw180",
+      "kind": "chimney",
+      "x": 1910.2,
+      "z": -2239.9,
+      "angle": 3.062
+    },
+    {
+      "id": "dw181",
+      "kind": "chimney",
+      "x": 1912.1,
+      "z": -2263.9,
+      "angle": 3.062
+    },
+    {
+      "id": "dw182",
+      "kind": "tank",
+      "x": 1889.9,
+      "z": -2237.6,
+      "angle": 3.062,
+      "variant": "small"
+    },
+    {
+      "id": "dw183",
+      "kind": "tank",
+      "x": 1892.5,
+      "z": -2269.5,
+      "angle": 3.062,
+      "variant": "small"
+    },
+    {
+      "id": "dw184",
+      "kind": "warehouse",
+      "x": 2273.7,
+      "z": -2050.8,
+      "angle": 0.025,
+      "variant": "small"
+    },
+    {
+      "id": "dw185",
+      "kind": "chimney",
+      "x": 2296.7,
+      "z": -2051.4,
+      "angle": 0.025
+    },
+    {
+      "id": "dw186",
+      "kind": "tank",
+      "x": 2203.1,
+      "z": -2038.1,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw187",
+      "kind": "tank",
+      "x": 2202.2,
+      "z": -2074,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw188",
+      "kind": "tank",
+      "x": 2201.3,
+      "z": -2110,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw189",
+      "kind": "tank",
+      "x": 2167.1,
+      "z": -2037.1,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw190",
+      "kind": "tank",
+      "x": 2166.2,
+      "z": -2073.1,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw191",
+      "kind": "tank",
+      "x": 2165.3,
+      "z": -2109.1,
+      "angle": 0.025,
+      "variant": "large"
+    },
+    {
+      "id": "dw192",
+      "kind": "warehouse",
+      "x": 2425.6,
+      "z": -2124.5,
+      "angle": 3.128,
+      "variant": "small"
+    },
+    {
+      "id": "dw193",
+      "kind": "chimney",
+      "x": 2448.5,
+      "z": -2114.2,
+      "angle": 3.128
+    },
+    {
+      "id": "dw194",
+      "kind": "chimney",
+      "x": 2448.7,
+      "z": -2134.2,
+      "angle": 3.128
+    },
+    {
+      "id": "dw195",
+      "kind": "tank",
+      "x": 2462.6,
+      "z": -2127.1,
+      "angle": 3.128,
+      "variant": "small"
+    },
+    {
+      "id": "dw196",
+      "kind": "tank",
+      "x": 2428.5,
+      "z": -2182.5,
+      "angle": 0.013,
+      "variant": "large"
+    },
+    {
+      "id": "dw197",
+      "kind": "tank",
+      "x": 2428,
+      "z": -2218.5,
+      "angle": 0.013,
+      "variant": "large"
+    },
+    {
+      "id": "dw198",
+      "kind": "tank",
+      "x": 2464.5,
+      "z": -2183,
+      "angle": 0.013,
+      "variant": "large"
+    },
+    {
+      "id": "dw199",
+      "kind": "tank",
+      "x": 2464,
+      "z": -2219,
+      "angle": 0.013,
+      "variant": "large"
+    },
+    {
+      "id": "dw200",
+      "kind": "chimney",
+      "x": 2488.4,
+      "z": -2190.3,
+      "angle": 0.013
+    },
+    {
+      "id": "dw201",
+      "kind": "warehouse",
+      "x": 2424.3,
+      "z": -2275.4,
+      "angle": 0.013,
+      "variant": "small"
+    },
+    {
+      "id": "dw202",
+      "kind": "chimney",
+      "x": 2447.4,
+      "z": -2265.8,
+      "angle": 0.013
+    },
+    {
+      "id": "dw203",
+      "kind": "chimney",
+      "x": 2447.1,
+      "z": -2285.8,
+      "angle": 0.013
+    },
+    {
+      "id": "dw204",
+      "kind": "warehouse",
+      "x": 2356.1,
+      "z": -2299.5,
+      "angle": 0.013,
+      "variant": "small"
+    },
+    {
+      "id": "dw205",
+      "kind": "chimney",
+      "x": 2333.2,
+      "z": -2289.2,
+      "angle": 0.013
+    },
+    {
+      "id": "dw206",
+      "kind": "chimney",
+      "x": 2332.9,
+      "z": -2309.2,
+      "angle": 0.013
+    },
+    {
+      "id": "dw207",
+      "kind": "tank",
+      "x": 2319.2,
+      "z": -2289.4,
+      "angle": 0.013,
+      "variant": "small"
+    },
+    {
+      "id": "dw208",
+      "kind": "warehouse",
+      "x": 2643.7,
+      "z": -1884.2,
+      "angle": 0.025,
+      "variant": "small"
+    },
+    {
+      "id": "dw209",
+      "kind": "chimney",
+      "x": 2620.5,
+      "z": -1893.6,
+      "angle": 0.025
+    },
+    {
+      "id": "dw210",
+      "kind": "chimney",
+      "x": 2621,
+      "z": -1873.6,
+      "angle": 0.025
+    },
+    {
+      "id": "dw211",
+      "kind": "tank",
+      "x": 2607,
+      "z": -1869.7,
+      "angle": 0.025,
+      "variant": "small"
+    },
+    {
+      "id": "dw212",
+      "kind": "rails",
+      "x": 2704.1,
+      "z": -1905.7,
+      "angle": 0.025
+    },
+    {
+      "id": "dw213",
+      "kind": "rails",
+      "x": 2705.1,
+      "z": -1865.7,
+      "angle": 0.025
+    },
+    {
+      "id": "dw214",
+      "kind": "wagon",
+      "x": 2703.8,
+      "z": -1917.7,
+      "angle": 0.025,
+      "variant": "tank"
+    },
+    {
+      "id": "dw215",
+      "kind": "wagon",
+      "x": 2704.2,
+      "z": -1901.7,
+      "angle": 0.025,
+      "variant": "tank"
+    },
+    {
+      "id": "dw216",
+      "kind": "wagon",
+      "x": 2705.4,
+      "z": -1853.7,
+      "angle": 0.025,
+      "variant": "tank"
+    },
+    {
+      "id": "dw217",
+      "kind": "rails",
+      "x": 2711.1,
+      "z": -1905.8,
+      "angle": 0.025
+    },
+    {
+      "id": "dw218",
+      "kind": "rails",
+      "x": 2712.1,
+      "z": -1865.9,
+      "angle": 0.025
+    },
+    {
+      "id": "dw219",
+      "kind": "wagon",
+      "x": 2710.8,
+      "z": -1917.8,
+      "angle": 0.025,
+      "variant": "box"
+    },
+    {
+      "id": "dw220",
+      "kind": "wagon",
+      "x": 2711.2,
+      "z": -1901.9,
+      "angle": 0.025,
+      "variant": "tank"
+    },
+    {
+      "id": "dw221",
+      "kind": "wagon",
+      "x": 2711.6,
+      "z": -1885.9,
+      "angle": 0.025,
+      "variant": "tank"
+    },
+    {
+      "id": "dw222",
+      "kind": "wagon",
+      "x": 2712,
+      "z": -1869.9,
+      "angle": 0.025,
+      "variant": "box"
+    },
+    {
+      "id": "dw223",
+      "kind": "gantry",
+      "x": 2708.2,
+      "z": -1880.5,
+      "angle": 0.025
+    },
+    {
+      "id": "dw224",
+      "kind": "warehouse",
+      "x": 2641.9,
+      "z": -1806.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw225",
+      "kind": "chimney",
+      "x": 2619.4,
+      "z": -1817.9,
+      "angle": 3.092
+    },
+    {
+      "id": "dw226",
+      "kind": "chimney",
+      "x": 2618.4,
+      "z": -1797.9,
+      "angle": 3.092
+    },
+    {
+      "id": "dw227",
+      "kind": "tank",
+      "x": 2605.5,
+      "z": -1820.9,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw228",
+      "kind": "tank",
+      "x": 2705.1,
+      "z": -1822.6,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw229",
+      "kind": "tank",
+      "x": 2704.2,
+      "z": -1803.6,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw230",
+      "kind": "tank",
+      "x": 2703.2,
+      "z": -1784.6,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw231",
+      "kind": "tank",
+      "x": 2724.1,
+      "z": -1821.6,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw232",
+      "kind": "tank",
+      "x": 2723.1,
+      "z": -1802.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw233",
+      "kind": "tank",
+      "x": 2722.2,
+      "z": -1783.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw234",
+      "kind": "tank",
+      "x": 2743.1,
+      "z": -1820.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw235",
+      "kind": "tank",
+      "x": 2742.1,
+      "z": -1801.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw236",
+      "kind": "tank",
+      "x": 2741.2,
+      "z": -1782.7,
+      "angle": 3.092,
+      "variant": "small"
+    },
+    {
+      "id": "dw237",
+      "kind": "chimney",
+      "x": 2758.2,
+      "z": -1813.8,
+      "angle": 3.092
+    },
+    {
+      "id": "dw238",
+      "kind": "tank",
+      "x": 2113,
+      "z": -2203.6,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw239",
+      "kind": "tank",
+      "x": 2098.5,
+      "z": -2216,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw240",
+      "kind": "tank",
+      "x": 2084.1,
+      "z": -2228.4,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw241",
+      "kind": "tank",
+      "x": 2100.6,
+      "z": -2189.2,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw242",
+      "kind": "tank",
+      "x": 2086.2,
+      "z": -2201.6,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw243",
+      "kind": "tank",
+      "x": 2071.8,
+      "z": -2214,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw244",
+      "kind": "tank",
+      "x": 2088.2,
+      "z": -2174.8,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw245",
+      "kind": "tank",
+      "x": 2073.8,
+      "z": -2187.2,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw246",
+      "kind": "tank",
+      "x": 2059.4,
+      "z": -2199.6,
+      "angle": 0.861,
+      "variant": "small"
+    },
+    {
+      "id": "dw247",
+      "kind": "chimney",
+      "x": 2053.6,
+      "z": -2184.2,
+      "angle": 0.861
+    },
+    {
+      "id": "dw248",
+      "kind": "rails",
+      "x": 2110.6,
+      "z": -2278.3,
+      "angle": 0.909
+    },
+    {
+      "id": "dw249",
+      "kind": "rails",
+      "x": 2079.1,
+      "z": -2302.9,
+      "angle": 0.909
+    },
+    {
+      "id": "dw250",
+      "kind": "wagon",
+      "x": 2120.1,
+      "z": -2270.9,
+      "angle": 0.909,
+      "variant": "box"
+    },
+    {
+      "id": "dw251",
+      "kind": "wagon",
+      "x": 2082.2,
+      "z": -2300.5,
+      "angle": 0.909,
+      "variant": "tank"
+    },
+    {
+      "id": "dw252",
+      "kind": "rails",
+      "x": 2114.9,
+      "z": -2283.8,
+      "angle": 0.909
+    },
+    {
+      "id": "dw253",
+      "kind": "rails",
+      "x": 2083.4,
+      "z": -2308.4,
+      "angle": 0.909
+    },
+    {
+      "id": "dw254",
+      "kind": "wagon",
+      "x": 2111.8,
+      "z": -2286.3,
+      "angle": 0.909,
+      "variant": "box"
+    },
+    {
+      "id": "dw255",
+      "kind": "wagon",
+      "x": 2099.2,
+      "z": -2296.1,
+      "angle": 0.909,
+      "variant": "box"
+    },
+    {
+      "id": "dw256",
+      "kind": "gantry",
+      "x": 2090.1,
+      "z": -2298.8,
+      "angle": 0.909
+    },
+    {
+      "id": "dw257",
+      "kind": "rails",
+      "x": 2031.2,
+      "z": -2339.6,
+      "angle": 0.927
+    },
+    {
+      "id": "dw258",
+      "kind": "rails",
+      "x": 1999.2,
+      "z": -2363.6,
+      "angle": 0.927
+    },
+    {
+      "id": "dw259",
+      "kind": "wagon",
+      "x": 2002.4,
+      "z": -2361.2,
+      "angle": 0.927,
+      "variant": "tank"
+    },
+    {
+      "id": "dw260",
+      "kind": "rails",
+      "x": 2035.4,
+      "z": -2345.2,
+      "angle": 0.927
+    },
+    {
+      "id": "dw261",
+      "kind": "rails",
+      "x": 2003.4,
+      "z": -2369.2,
+      "angle": 0.927
+    },
+    {
+      "id": "dw262",
+      "kind": "wagon",
+      "x": 2045,
+      "z": -2338,
+      "angle": 0.927,
+      "variant": "box"
+    },
+    {
+      "id": "dw263",
+      "kind": "wagon",
+      "x": 1993.8,
+      "z": -2376.4,
+      "angle": 0.927,
+      "variant": "box"
+    },
+    {
+      "id": "dw264",
+      "kind": "gantry",
+      "x": 2006.5,
+      "z": -2362.4,
+      "angle": 0.927
+    },
+    {
+      "id": "dw265",
+      "kind": "warehouse",
+      "x": 1918.6,
+      "z": -2344.9,
+      "angle": 0.975,
+      "variant": "small"
+    },
+    {
+      "id": "dw266",
+      "kind": "chimney",
+      "x": 1913.9,
+      "z": -2320.3,
+      "angle": 0.975
+    },
+    {
+      "id": "dw267",
+      "kind": "chimney",
+      "x": 1897.4,
+      "z": -2331.5,
+      "angle": 0.975
+    },
+    {
+      "id": "dw268",
+      "kind": "rails",
+      "x": 2456.5,
+      "z": -2385.1,
+      "angle": 1.432
+    },
+    {
+      "id": "dw269",
+      "kind": "rails",
+      "x": 2496.1,
+      "z": -2379.5,
+      "angle": 1.432
+    },
+    {
+      "id": "dw270",
+      "kind": "wagon",
+      "x": 2444.6,
+      "z": -2386.8,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw271",
+      "kind": "wagon",
+      "x": 2460.4,
+      "z": -2384.5,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw272",
+      "kind": "wagon",
+      "x": 2492.1,
+      "z": -2380.1,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw273",
+      "kind": "wagon",
+      "x": 2508,
+      "z": -2377.9,
+      "angle": 1.432,
+      "variant": "tank"
+    },
+    {
+      "id": "dw274",
+      "kind": "rails",
+      "x": 2455.5,
+      "z": -2378.2,
+      "angle": 1.432
+    },
+    {
+      "id": "dw275",
+      "kind": "rails",
+      "x": 2495.1,
+      "z": -2372.6,
+      "angle": 1.432
+    },
+    {
+      "id": "dw276",
+      "kind": "wagon",
+      "x": 2443.6,
+      "z": -2379.8,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw277",
+      "kind": "wagon",
+      "x": 2459.4,
+      "z": -2377.6,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw278",
+      "kind": "wagon",
+      "x": 2507,
+      "z": -2371,
+      "angle": 1.432,
+      "variant": "box"
+    },
+    {
+      "id": "dw279",
+      "kind": "gantry",
+      "x": 2473,
+      "z": -2379.2,
+      "angle": 1.432
+    },
+    {
+      "id": "dw280",
+      "kind": "warehouse",
+      "x": 2301.1,
+      "z": -2612.2,
+      "angle": 1.825,
+      "variant": "small"
+    },
+    {
+      "id": "dw281",
+      "kind": "chimney",
+      "x": 2304.9,
+      "z": -2637,
+      "angle": 1.825
+    },
+    {
+      "id": "dw282",
+      "kind": "chimney",
+      "x": 2285.6,
+      "z": -2632,
+      "angle": 1.825
+    },
+    {
+      "id": "dw283",
+      "kind": "warehouse",
+      "x": 2228.9,
+      "z": -2595.4,
+      "angle": 1.787,
+      "variant": "small"
+    },
+    {
+      "id": "dw284",
+      "kind": "chimney",
+      "x": 2224,
+      "z": -2617.9,
+      "angle": 1.787
+    },
+    {
+      "id": "dw285",
+      "kind": "tank",
+      "x": 2216.4,
+      "z": -2630.6,
+      "angle": 1.787,
+      "variant": "small"
+    },
+    {
+      "id": "dw286",
+      "kind": "chimney",
+      "x": 2302.1,
+      "z": -2551.2,
+      "angle": 1.787
+    },
+    {
+      "id": "dw287",
+      "kind": "chimney",
+      "x": 2278.6,
+      "z": -2546.1,
+      "angle": 1.787
+    },
+    {
+      "id": "dw288",
+      "kind": "chimney",
+      "x": 2293.3,
+      "z": -2535,
+      "angle": 1.787
+    },
+    {
+      "id": "dw289",
+      "kind": "tank",
+      "x": 2310.3,
+      "z": -2532.5,
+      "angle": 1.787,
+      "variant": "small"
+    },
+    {
+      "id": "dw290",
+      "kind": "tank",
+      "x": 2279,
+      "z": -2525.7,
+      "angle": 1.787,
+      "variant": "small"
+    },
+    {
+      "id": "dw291",
+      "kind": "warehouse",
+      "x": 2092.4,
+      "z": -2505.3,
+      "angle": 1.69,
+      "variant": "small"
+    },
+    {
+      "id": "dw292",
+      "kind": "chimney",
+      "x": 2105.1,
+      "z": -2483.7,
+      "angle": 1.69
+    },
+    {
+      "id": "dw293",
+      "kind": "chimney",
+      "x": 2085.2,
+      "z": -2481.3,
+      "angle": 1.69
+    },
+    {
+      "id": "dw294",
+      "kind": "tank",
+      "x": 2091.6,
+      "z": -2468,
+      "angle": 1.69,
+      "variant": "small"
+    },
+    {
+      "id": "dw295",
+      "kind": "warehouse",
+      "x": 2095.5,
+      "z": -2766,
+      "angle": 2.576,
+      "variant": "small"
+    },
+    {
+      "id": "dw296",
+      "kind": "chimney",
+      "x": 2081.5,
+      "z": -2786.8,
+      "angle": 2.576
+    },
+    {
+      "id": "dw297",
+      "kind": "chimney",
+      "x": 2070.8,
+      "z": -2769.9,
+      "angle": 2.576
+    },
+    {
+      "id": "dw298",
+      "kind": "warehouse",
+      "x": 2152.9,
+      "z": -2729.6,
+      "angle": 2.576,
+      "variant": "small"
+    },
+    {
+      "id": "dw299",
+      "kind": "chimney",
+      "x": 2177.6,
+      "z": -2725.7,
+      "angle": 2.576
+    },
+    {
+      "id": "dw300",
+      "kind": "chimney",
+      "x": 2166.9,
+      "z": -2708.8,
+      "angle": 2.576
+    },
+    {
+      "id": "dw301",
+      "kind": "tank",
+      "x": 1982.4,
+      "z": -2598.5,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw302",
+      "kind": "tank",
+      "x": 1970.6,
+      "z": -2583.6,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw303",
+      "kind": "tank",
+      "x": 1958.8,
+      "z": -2568.8,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw304",
+      "kind": "tank",
+      "x": 1967.6,
+      "z": -2610.3,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw305",
+      "kind": "tank",
+      "x": 1955.7,
+      "z": -2595.4,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw306",
+      "kind": "tank",
+      "x": 1943.9,
+      "z": -2580.6,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw307",
+      "kind": "tank",
+      "x": 1952.7,
+      "z": -2622.1,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw308",
+      "kind": "tank",
+      "x": 1940.9,
+      "z": -2607.3,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw309",
+      "kind": "tank",
+      "x": 1929,
+      "z": -2592.4,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw310",
+      "kind": "warehouse",
+      "x": 2035,
+      "z": -2564.3,
+      "angle": 2.469,
+      "variant": "small"
+    },
+    {
+      "id": "dw311",
+      "kind": "chimney",
+      "x": 2059.2,
+      "z": -2557.8,
+      "angle": 2.469
+    },
+    {
+      "id": "dw312",
+      "kind": "chimney",
+      "x": 2046.7,
+      "z": -2542.1,
+      "angle": 2.469
+    },
+    {
+      "id": "dw313",
+      "kind": "tank",
+      "x": 2034.6,
+      "z": -2839.9,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw314",
+      "kind": "tank",
+      "x": 2021.9,
+      "z": -2825.8,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw315",
+      "kind": "tank",
+      "x": 2009.3,
+      "z": -2811.6,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw316",
+      "kind": "tank",
+      "x": 2048.7,
+      "z": -2827.3,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw317",
+      "kind": "tank",
+      "x": 2036.1,
+      "z": -2813.1,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw318",
+      "kind": "tank",
+      "x": 2023.4,
+      "z": -2798.9,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw319",
+      "kind": "tank",
+      "x": 2062.9,
+      "z": -2814.6,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw320",
+      "kind": "tank",
+      "x": 2050.3,
+      "z": -2800.5,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw321",
+      "kind": "tank",
+      "x": 2037.6,
+      "z": -2786.3,
+      "angle": 2.413,
+      "variant": "small"
+    },
+    {
+      "id": "dw322",
+      "kind": "chimney",
+      "x": 2051.1,
+      "z": -2778.2,
+      "angle": 2.413
+    },
+    {
+      "id": "dw323",
+      "kind": "chimney",
+      "x": 1939.7,
+      "z": -2815.9,
+      "angle": 2.375
+    },
+    {
+      "id": "dw324",
+      "kind": "chimney",
+      "x": 1923,
+      "z": -2798.6,
+      "angle": 2.375
+    },
+    {
+      "id": "dw325",
+      "kind": "chimney",
+      "x": 1921.3,
+      "z": -2817,
+      "angle": 2.375
+    },
+    {
+      "id": "dw326",
+      "kind": "tank",
+      "x": 1928,
+      "z": -2832.7,
+      "angle": 2.375,
+      "variant": "small"
+    },
+    {
+      "id": "dw327",
+      "kind": "tank",
+      "x": 1905.8,
+      "z": -2809.6,
+      "angle": 2.375,
+      "variant": "small"
+    },
+    {
+      "id": "dw328",
+      "kind": "chimney",
+      "x": 1975.6,
+      "z": -2781.3,
+      "angle": 2.375
+    },
+    {
+      "id": "dw329",
+      "kind": "chimney",
+      "x": 1959,
+      "z": -2764,
+      "angle": 2.375
+    },
+    {
+      "id": "dw330",
+      "kind": "tank",
+      "x": 1992.8,
+      "z": -2770.3,
+      "angle": 2.375,
+      "variant": "small"
+    },
+    {
+      "id": "dw331",
+      "kind": "tank",
+      "x": 1970.6,
+      "z": -2747.3,
+      "angle": 2.375,
+      "variant": "small"
+    },
+    {
+      "id": "dw332",
+      "kind": "warehouse",
+      "x": 1851.4,
+      "z": -2645.3,
+      "angle": 2.337,
+      "variant": "small"
+    },
+    {
+      "id": "dw333",
+      "kind": "chimney",
+      "x": 1867.4,
+      "z": -2628.8,
+      "angle": 2.337
+    },
+    {
+      "id": "dw334",
+      "kind": "rails",
+      "x": 2056.7,
+      "z": -2054.7,
+      "angle": 0.009
+    },
+    {
+      "id": "dw335",
+      "kind": "rails",
+      "x": 2056.3,
+      "z": -2094.7,
+      "angle": 0.009
+    },
+    {
+      "id": "dw336",
+      "kind": "wagon",
+      "x": 2056.8,
+      "z": -2042.7,
+      "angle": 0.009,
+      "variant": "tank"
+    },
+    {
+      "id": "dw337",
+      "kind": "wagon",
+      "x": 2056.6,
+      "z": -2058.7,
+      "angle": 0.009,
+      "variant": "box"
+    },
+    {
+      "id": "dw338",
+      "kind": "wagon",
+      "x": 2056.5,
+      "z": -2074.7,
+      "angle": 0.009,
+      "variant": "box"
+    },
+    {
+      "id": "dw339",
+      "kind": "wagon",
+      "x": 2056.3,
+      "z": -2090.7,
+      "angle": 0.009,
+      "variant": "tank"
+    },
+    {
+      "id": "dw340",
+      "kind": "wagon",
+      "x": 2056.2,
+      "z": -2106.7,
+      "angle": 0.009,
+      "variant": "box"
+    },
+    {
+      "id": "dw341",
+      "kind": "rails",
+      "x": 2049.7,
+      "z": -2054.7,
+      "angle": 0.009
+    },
+    {
+      "id": "dw342",
+      "kind": "rails",
+      "x": 2049.3,
+      "z": -2094.7,
+      "angle": 0.009
+    },
+    {
+      "id": "dw343",
+      "kind": "wagon",
+      "x": 2049.5,
+      "z": -2074.7,
+      "angle": 0.009,
+      "variant": "box"
+    },
+    {
+      "id": "dw344",
+      "kind": "wagon",
+      "x": 2049.2,
+      "z": -2106.7,
+      "angle": 0.009,
+      "variant": "box"
+    },
+    {
+      "id": "dw345",
+      "kind": "gantry",
+      "x": 2052.9,
+      "z": -2087.9,
+      "angle": 0.009
+    },
+    {
+      "id": "dw346",
+      "kind": "chimney",
+      "x": 2165.1,
+      "z": -2168.9,
+      "angle": 2.491
+    },
+    {
+      "id": "dw347",
+      "kind": "chimney",
+      "x": 2179.6,
+      "z": -2188,
+      "angle": 2.491
+    },
+    {
+      "id": "dw348",
+      "kind": "tank",
+      "x": 2178.6,
+      "z": -2153.6,
+      "angle": 2.491,
+      "variant": "small"
+    },
+    {
+      "id": "dw349",
+      "kind": "tank",
+      "x": 2198,
+      "z": -2179.1,
+      "angle": 2.491,
+      "variant": "small"
+    },
+    {
+      "id": "dw350",
+      "kind": "chimney",
+      "x": 2284.7,
+      "z": -2424,
+      "angle": 2.49
+    },
+    {
+      "id": "dw351",
+      "kind": "chimney",
+      "x": 2299.3,
+      "z": -2443.1,
+      "angle": 2.49
+    },
+    {
+      "id": "dw352",
+      "kind": "tank",
+      "x": 2266.4,
+      "z": -2432.9,
+      "angle": 2.49,
+      "variant": "small"
+    },
+    {
+      "id": "dw353",
+      "kind": "tank",
+      "x": 2285.8,
+      "z": -2458.4,
+      "angle": 2.49,
+      "variant": "small"
+    },
+    {
+      "id": "dw354",
+      "kind": "warehouse",
+      "x": 2383.6,
+      "z": -2485.7,
+      "angle": 2.929,
+      "variant": "small"
+    },
+    {
+      "id": "dw355",
+      "kind": "chimney",
+      "x": 2406,
+      "z": -2480.8,
+      "angle": 2.929
+    },
+    {
+      "id": "dw356",
+      "kind": "warehouse",
+      "x": 2399.4,
+      "z": -2559,
+      "angle": 2.929,
+      "variant": "small"
+    },
+    {
+      "id": "dw357",
+      "kind": "chimney",
+      "x": 2419.8,
+      "z": -2544.3,
+      "angle": 2.929
+    },
+    {
+      "id": "dw358",
+      "kind": "chimney",
+      "x": 2424,
+      "z": -2563.9,
+      "angle": 2.929
+    },
+    {
+      "id": "dw359",
+      "kind": "rails",
+      "x": 2381.8,
+      "z": -2664.3,
+      "angle": 0.951
+    },
+    {
+      "id": "dw360",
+      "kind": "rails",
+      "x": 2349.3,
+      "z": -2687.6,
+      "angle": 0.951
+    },
+    {
+      "id": "dw361",
+      "kind": "wagon",
+      "x": 2352.5,
+      "z": -2685.2,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw362",
+      "kind": "wagon",
+      "x": 2339.5,
+      "z": -2694.5,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw363",
+      "kind": "rails",
+      "x": 2385.9,
+      "z": -2670,
+      "angle": 0.951
+    },
+    {
+      "id": "dw364",
+      "kind": "rails",
+      "x": 2353.3,
+      "z": -2693.3,
+      "angle": 0.951
+    },
+    {
+      "id": "dw365",
+      "kind": "wagon",
+      "x": 2382.6,
+      "z": -2672.3,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw366",
+      "kind": "wagon",
+      "x": 2369.6,
+      "z": -2681.6,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw367",
+      "kind": "wagon",
+      "x": 2343.6,
+      "z": -2700.2,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw368",
+      "kind": "rails",
+      "x": 2389.9,
+      "z": -2675.7,
+      "angle": 0.951
+    },
+    {
+      "id": "dw369",
+      "kind": "rails",
+      "x": 2357.4,
+      "z": -2699,
+      "angle": 0.951
+    },
+    {
+      "id": "dw370",
+      "kind": "wagon",
+      "x": 2399.7,
+      "z": -2668.7,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw371",
+      "kind": "wagon",
+      "x": 2386.7,
+      "z": -2678,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw372",
+      "kind": "wagon",
+      "x": 2373.7,
+      "z": -2687.3,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw373",
+      "kind": "wagon",
+      "x": 2360.6,
+      "z": -2696.6,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw374",
+      "kind": "gantry",
+      "x": 2381.3,
+      "z": -2673.3,
+      "angle": 0.951
+    },
+    {
+      "id": "dw375",
+      "kind": "rails",
+      "x": 2300.4,
+      "z": -2722.4,
+      "angle": 0.951
+    },
+    {
+      "id": "dw376",
+      "kind": "rails",
+      "x": 2267.9,
+      "z": -2745.7,
+      "angle": 0.951
+    },
+    {
+      "id": "dw377",
+      "kind": "wagon",
+      "x": 2310.2,
+      "z": -2715.5,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw378",
+      "kind": "wagon",
+      "x": 2297.2,
+      "z": -2724.8,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw379",
+      "kind": "wagon",
+      "x": 2284.2,
+      "z": -2734.1,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw380",
+      "kind": "rails",
+      "x": 2304.5,
+      "z": -2728.1,
+      "angle": 0.951
+    },
+    {
+      "id": "dw381",
+      "kind": "rails",
+      "x": 2271.9,
+      "z": -2751.4,
+      "angle": 0.951
+    },
+    {
+      "id": "dw382",
+      "kind": "wagon",
+      "x": 2314.3,
+      "z": -2721.2,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw383",
+      "kind": "wagon",
+      "x": 2301.2,
+      "z": -2730.5,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw384",
+      "kind": "wagon",
+      "x": 2275.2,
+      "z": -2749.1,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw385",
+      "kind": "gantry",
+      "x": 2289.3,
+      "z": -2734.7,
+      "angle": 0.951
+    },
+    {
+      "id": "dw386",
+      "kind": "rails",
+      "x": 2219.1,
+      "z": -2780.6,
+      "angle": 0.951
+    },
+    {
+      "id": "dw387",
+      "kind": "rails",
+      "x": 2186.5,
+      "z": -2803.8,
+      "angle": 0.951
+    },
+    {
+      "id": "dw388",
+      "kind": "wagon",
+      "x": 2228.8,
+      "z": -2773.6,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw389",
+      "kind": "wagon",
+      "x": 2215.8,
+      "z": -2782.9,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw390",
+      "kind": "wagon",
+      "x": 2202.8,
+      "z": -2792.2,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw391",
+      "kind": "wagon",
+      "x": 2176.7,
+      "z": -2810.8,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw392",
+      "kind": "rails",
+      "x": 2223.1,
+      "z": -2786.3,
+      "angle": 0.951
+    },
+    {
+      "id": "dw393",
+      "kind": "rails",
+      "x": 2190.6,
+      "z": -2809.5,
+      "angle": 0.951
+    },
+    {
+      "id": "dw394",
+      "kind": "wagon",
+      "x": 2232.9,
+      "z": -2779.3,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw395",
+      "kind": "wagon",
+      "x": 2219.9,
+      "z": -2788.6,
+      "angle": 0.951,
+      "variant": "box"
+    },
+    {
+      "id": "dw396",
+      "kind": "wagon",
+      "x": 2180.8,
+      "z": -2816.5,
+      "angle": 0.951,
+      "variant": "tank"
+    },
+    {
+      "id": "dw397",
+      "kind": "gantry",
+      "x": 2206,
+      "z": -2794.2,
+      "angle": 0.951
+    },
+    {
+      "id": "dw398",
+      "kind": "chimney",
+      "x": 2237.7,
+      "z": -2691.4,
+      "angle": 0.951
+    },
+    {
+      "id": "dw399",
+      "kind": "chimney",
+      "x": 2218.2,
+      "z": -2705.3,
+      "angle": 0.951
+    },
+    {
+      "id": "dw400",
+      "kind": "chimney",
+      "x": 2219.8,
+      "z": -2687,
+      "angle": 0.951
+    },
+    {
+      "id": "dw401",
+      "kind": "tank",
+      "x": 2229.3,
+      "z": -2672.8,
+      "angle": 0.951,
+      "variant": "small"
+    },
+    {
+      "id": "dw402",
+      "kind": "tank",
+      "x": 2203.3,
+      "z": -2691.4,
+      "angle": 0.951,
+      "variant": "small"
+    },
+    {
+      "id": "dw403",
+      "kind": "warehouse",
+      "x": 2133.2,
+      "z": -2850.8,
+      "angle": 0.946,
+      "variant": "small"
+    },
+    {
+      "id": "dw404",
+      "kind": "chimney",
+      "x": 2146.6,
+      "z": -2869.4,
+      "angle": 0.946
+    },
+    {
+      "id": "dw405",
+      "kind": "tank",
+      "x": 2146.4,
+      "z": -2886.9,
+      "angle": 0.946,
+      "variant": "small"
+    },
+    {
+      "id": "dw406",
+      "kind": "rails",
+      "x": 2070.6,
+      "z": -2890.9,
+      "angle": 0.8
+    },
+    {
+      "id": "dw407",
+      "kind": "rails",
+      "x": 2041.8,
+      "z": -2918.8,
+      "angle": 0.8
+    },
+    {
+      "id": "dw408",
+      "kind": "wagon",
+      "x": 2079.2,
+      "z": -2882.6,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw409",
+      "kind": "wagon",
+      "x": 2044.7,
+      "z": -2916,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw410",
+      "kind": "rails",
+      "x": 2075.4,
+      "z": -2896,
+      "angle": 0.8
+    },
+    {
+      "id": "dw411",
+      "kind": "rails",
+      "x": 2046.7,
+      "z": -2923.8,
+      "angle": 0.8
+    },
+    {
+      "id": "dw412",
+      "kind": "wagon",
+      "x": 2084,
+      "z": -2887.6,
+      "angle": 0.8,
+      "variant": "box"
+    },
+    {
+      "id": "dw413",
+      "kind": "wagon",
+      "x": 2072.6,
+      "z": -2898.8,
+      "angle": 0.8,
+      "variant": "box"
+    },
+    {
+      "id": "dw414",
+      "kind": "wagon",
+      "x": 2061.1,
+      "z": -2909.9,
+      "angle": 0.8,
+      "variant": "box"
+    },
+    {
+      "id": "dw415",
+      "kind": "wagon",
+      "x": 2049.6,
+      "z": -2921,
+      "angle": 0.8,
+      "variant": "box"
+    },
+    {
+      "id": "dw416",
+      "kind": "wagon",
+      "x": 2038.1,
+      "z": -2932.2,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw417",
+      "kind": "rails",
+      "x": 2080.3,
+      "z": -2901,
+      "angle": 0.8
+    },
+    {
+      "id": "dw418",
+      "kind": "rails",
+      "x": 2051.6,
+      "z": -2928.9,
+      "angle": 0.8
+    },
+    {
+      "id": "dw419",
+      "kind": "wagon",
+      "x": 2088.9,
+      "z": -2892.6,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw420",
+      "kind": "wagon",
+      "x": 2065.9,
+      "z": -2914.9,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw421",
+      "kind": "wagon",
+      "x": 2054.5,
+      "z": -2926.1,
+      "angle": 0.8,
+      "variant": "tank"
+    },
+    {
+      "id": "dw422",
+      "kind": "gantry",
+      "x": 2055.9,
+      "z": -2914.9,
+      "angle": 0.8
+    },
+    {
+      "id": "dw423",
+      "kind": "warehouse",
+      "x": 1944.3,
+      "z": -3028.5,
+      "angle": 1.143
+    },
+    {
+      "id": "dw424",
+      "kind": "chimney",
+      "x": 1987.5,
+      "z": -3045,
+      "angle": 1.143
+    },
+    {
+      "id": "dw425",
+      "kind": "chimney",
+      "x": 1958,
+      "z": -3058.5,
+      "angle": 1.143
+    },
+    {
+      "id": "dw426",
+      "kind": "chimney",
+      "x": 1928.4,
+      "z": -3072,
+      "angle": 1.143
+    },
+    {
+      "id": "dw427",
+      "kind": "rails",
+      "x": 1837.1,
+      "z": -3062.1,
+      "angle": 1.326
+    },
+    {
+      "id": "dw428",
+      "kind": "rails",
+      "x": 1798.3,
+      "z": -3071.8,
+      "angle": 1.326
+    },
+    {
+      "id": "dw429",
+      "kind": "wagon",
+      "x": 1848.8,
+      "z": -3059.2,
+      "angle": 1.326,
+      "variant": "tank"
+    },
+    {
+      "id": "dw430",
+      "kind": "wagon",
+      "x": 1802.2,
+      "z": -3070.8,
+      "angle": 1.326,
+      "variant": "box"
+    },
+    {
+      "id": "dw431",
+      "kind": "rails",
+      "x": 1838.8,
+      "z": -3068.9,
+      "angle": 1.326
+    },
+    {
+      "id": "dw432",
+      "kind": "rails",
+      "x": 1800,
+      "z": -3078.6,
+      "angle": 1.326
+    },
+    {
+      "id": "dw433",
+      "kind": "wagon",
+      "x": 1819.4,
+      "z": -3073.7,
+      "angle": 1.326,
+      "variant": "tank"
+    },
+    {
+      "id": "dw434",
+      "kind": "wagon",
+      "x": 1788.4,
+      "z": -3081.5,
+      "angle": 1.326,
+      "variant": "box"
+    },
+    {
+      "id": "dw435",
+      "kind": "rails",
+      "x": 1840.5,
+      "z": -3075.7,
+      "angle": 1.326
+    },
+    {
+      "id": "dw436",
+      "kind": "rails",
+      "x": 1801.7,
+      "z": -3085.4,
+      "angle": 1.326
+    },
+    {
+      "id": "dw437",
+      "kind": "wagon",
+      "x": 1836.6,
+      "z": -3076.6,
+      "angle": 1.326,
+      "variant": "tank"
+    },
+    {
+      "id": "dw438",
+      "kind": "wagon",
+      "x": 1821.1,
+      "z": -3080.5,
+      "angle": 1.326,
+      "variant": "tank"
+    },
+    {
+      "id": "dw439",
+      "kind": "wagon",
+      "x": 1805.6,
+      "z": -3084.4,
+      "angle": 1.326,
+      "variant": "box"
+    },
+    {
+      "id": "dw440",
+      "kind": "gantry",
+      "x": 1825,
+      "z": -3072.3,
+      "angle": 1.326
+    },
+    {
+      "id": "dw441",
+      "kind": "chimney",
+      "x": 1296.7,
+      "z": -2869.1,
+      "angle": 1.198
+    },
+    {
+      "id": "dw442",
+      "kind": "chimney",
+      "x": 1319.1,
+      "z": -2860.4,
+      "angle": 1.198
+    },
+    {
+      "id": "dw443",
+      "kind": "chimney",
+      "x": 1302.8,
+      "z": -2851.7,
+      "angle": 1.198
+    },
+    {
+      "id": "dw444",
+      "kind": "tank",
+      "x": 1285.7,
+      "z": -2852,
+      "angle": 1.198,
+      "variant": "small"
+    },
+    {
+      "id": "dw445",
+      "kind": "tank",
+      "x": 1315.5,
+      "z": -2840.3,
+      "angle": 1.198,
+      "variant": "small"
+    },
+    {
+      "id": "dw446",
+      "kind": "chimney",
+      "x": 1390.4,
+      "z": -2834.1,
+      "angle": 1.212
+    },
+    {
+      "id": "dw447",
+      "kind": "chimney",
+      "x": 1412.9,
+      "z": -2825.7,
+      "angle": 1.212
+    },
+    {
+      "id": "dw448",
+      "kind": "tank",
+      "x": 1379.6,
+      "z": -2816.8,
+      "angle": 1.212,
+      "variant": "small"
+    },
+    {
+      "id": "dw449",
+      "kind": "tank",
+      "x": 1409.6,
+      "z": -2805.5,
+      "angle": 1.212,
+      "variant": "small"
+    },
+    {
+      "id": "dw450",
+      "kind": "rails",
+      "x": 1549.2,
+      "z": -2777.9,
+      "angle": 1.249
+    },
+    {
+      "id": "dw451",
+      "kind": "rails",
+      "x": 1587.2,
+      "z": -2765.2,
+      "angle": 1.249
+    },
+    {
+      "id": "dw452",
+      "kind": "wagon",
+      "x": 1568.2,
+      "z": -2771.5,
+      "angle": 1.249,
+      "variant": "tank"
+    },
+    {
+      "id": "dw453",
+      "kind": "rails",
+      "x": 1547,
+      "z": -2771.2,
+      "angle": 1.249
+    },
+    {
+      "id": "dw454",
+      "kind": "rails",
+      "x": 1585,
+      "z": -2758.6,
+      "angle": 1.249
+    },
+    {
+      "id": "dw455",
+      "kind": "wagon",
+      "x": 1535.6,
+      "z": -2775,
+      "angle": 1.249,
+      "variant": "tank"
+    },
+    {
+      "id": "dw456",
+      "kind": "wagon",
+      "x": 1550.8,
+      "z": -2770,
+      "angle": 1.249,
+      "variant": "tank"
+    },
+    {
+      "id": "dw457",
+      "kind": "wagon",
+      "x": 1581.2,
+      "z": -2759.8,
+      "angle": 1.249,
+      "variant": "tank"
+    },
+    {
+      "id": "dw458",
+      "kind": "gantry",
+      "x": 1568.7,
+      "z": -2767.7,
+      "angle": 1.249
+    },
+    {
+      "id": "dw459",
+      "kind": "chimney",
+      "x": 1676.5,
+      "z": -2739.4,
+      "angle": 1.236
+    },
+    {
+      "id": "dw460",
+      "kind": "chimney",
+      "x": 1699.1,
+      "z": -2731.5,
+      "angle": 1.236
+    },
+    {
+      "id": "dw461",
+      "kind": "chimney",
+      "x": 1683.2,
+      "z": -2722.2,
+      "angle": 1.236
+    },
+    {
+      "id": "dw462",
+      "kind": "tank",
+      "x": 1666.1,
+      "z": -2721.8,
+      "angle": 1.236,
+      "variant": "small"
+    },
+    {
+      "id": "dw463",
+      "kind": "tank",
+      "x": 1696.3,
+      "z": -2711.3,
+      "angle": 1.236,
+      "variant": "small"
+    },
+    {
+      "id": "dw464",
+      "kind": "warehouse",
+      "x": 2161.8,
+      "z": -2420.3,
+      "angle": 0.322,
+      "variant": "small"
+    },
+    {
+      "id": "dw465",
+      "kind": "chimney",
+      "x": 2136.8,
+      "z": -2422.5,
+      "angle": 0.322
+    },
+    {
+      "id": "dw466",
+      "kind": "chimney",
+      "x": 2143.1,
+      "z": -2403.5,
+      "angle": 0.322
+    },
+    {
+      "id": "dw467",
+      "kind": "tank",
+      "x": 2128.3,
+      "z": -2403.7,
+      "angle": 0.322,
+      "variant": "small"
+    },
+    {
+      "id": "dw468",
+      "kind": "chimney",
+      "x": 2191.5,
+      "z": -2363.8,
+      "angle": 0.322
+    },
+    {
+      "id": "dw469",
+      "kind": "chimney",
+      "x": 2199,
+      "z": -2341,
+      "angle": 0.322
+    },
+    {
+      "id": "dw470",
+      "kind": "tank",
+      "x": 2171.2,
+      "z": -2361.3,
+      "angle": 0.322,
+      "variant": "small"
+    },
+    {
+      "id": "dw471",
+      "kind": "tank",
+      "x": 2181.3,
+      "z": -2330.9,
+      "angle": 0.322,
+      "variant": "small"
+    },
+    {
+      "id": "dw472",
+      "kind": "chimney",
+      "x": 2364.4,
+      "z": -1893.1,
+      "angle": 0.373
+    },
+    {
+      "id": "dw473",
+      "kind": "chimney",
+      "x": 2373.1,
+      "z": -1870.7,
+      "angle": 0.373
+    },
+    {
+      "id": "dw474",
+      "kind": "chimney",
+      "x": 2355.7,
+      "z": -1876.8,
+      "angle": 0.373
+    },
+    {
+      "id": "dw475",
+      "kind": "tank",
+      "x": 2344.3,
+      "z": -1889.5,
+      "angle": 0.373,
+      "variant": "small"
+    },
+    {
+      "id": "dw476",
+      "kind": "tank",
+      "x": 2356,
+      "z": -1859.7,
+      "angle": 0.373,
+      "variant": "small"
+    },
+    {
+      "id": "dw477",
+      "kind": "chimney",
+      "x": 1472,
+      "z": -1920.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw478",
+      "kind": "chimney",
+      "x": 1496,
+      "z": -1920.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw479",
+      "kind": "tank",
+      "x": 1468,
+      "z": -1900.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw480",
+      "kind": "tank",
+      "x": 1500,
+      "z": -1900.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw481",
+      "kind": "warehouse",
+      "x": 1553,
+      "z": -1911.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw482",
+      "kind": "chimney",
+      "x": 1553,
+      "z": -1888.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw483",
+      "kind": "tank",
+      "x": 1549.4,
+      "z": -1874.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw484",
+      "kind": "warehouse",
+      "x": 1628,
+      "z": -1911.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw485",
+      "kind": "chimney",
+      "x": 1618,
+      "z": -1888.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw486",
+      "kind": "chimney",
+      "x": 1638,
+      "z": -1888.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw487",
+      "kind": "chimney",
+      "x": 1898.4,
+      "z": -1909.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw488",
+      "kind": "chimney",
+      "x": 1915.4,
+      "z": -1892.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw489",
+      "kind": "tank",
+      "x": 1881.4,
+      "z": -1898,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw490",
+      "kind": "tank",
+      "x": 1904,
+      "z": -1875.4,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw491",
+      "kind": "chimney",
+      "x": 1979,
+      "z": -1870.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw492",
+      "kind": "chimney",
+      "x": 2003,
+      "z": -1870.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw493",
+      "kind": "chimney",
+      "x": 1991,
+      "z": -1856.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw494",
+      "kind": "tank",
+      "x": 1975,
+      "z": -1850.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw495",
+      "kind": "tank",
+      "x": 2007,
+      "z": -1850.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw496",
+      "kind": "chimney",
+      "x": 1979,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw497",
+      "kind": "chimney",
+      "x": 2003,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw498",
+      "kind": "tank",
+      "x": 1975,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw499",
+      "kind": "tank",
+      "x": 2007,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw500",
+      "kind": "chimney",
+      "x": 2047,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw501",
+      "kind": "chimney",
+      "x": 2071,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw502",
+      "kind": "chimney",
+      "x": 2059,
+      "z": -1943.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw503",
+      "kind": "tank",
+      "x": 2043,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw504",
+      "kind": "tank",
+      "x": 2075,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw505",
+      "kind": "chimney",
+      "x": 2066,
+      "z": -1870.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw506",
+      "kind": "chimney",
+      "x": 2090,
+      "z": -1870.1,
+      "angle": 1.571
+    },
+    {
+      "id": "dw507",
+      "kind": "tank",
+      "x": 2062,
+      "z": -1850.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw508",
+      "kind": "tank",
+      "x": 2094,
+      "z": -1850.1,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw509",
+      "kind": "chimney",
+      "x": 2104,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw510",
+      "kind": "chimney",
+      "x": 2128,
+      "z": -1929.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw511",
+      "kind": "tank",
+      "x": 2100,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw512",
+      "kind": "tank",
+      "x": 2132,
+      "z": -1949.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw513",
+      "kind": "chimney",
+      "x": 2148.4,
+      "z": -1859.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw514",
+      "kind": "chimney",
+      "x": 2165.4,
+      "z": -1842.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw515",
+      "kind": "tank",
+      "x": 2131.4,
+      "z": -1848,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw516",
+      "kind": "tank",
+      "x": 2154,
+      "z": -1825.4,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw517",
+      "kind": "chimney",
+      "x": 2198.4,
+      "z": -1809.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw518",
+      "kind": "chimney",
+      "x": 2215.4,
+      "z": -1792.4,
+      "angle": 0.785
+    },
+    {
+      "id": "dw519",
+      "kind": "chimney",
+      "x": 2197,
+      "z": -1791,
+      "angle": 0.785
+    },
+    {
+      "id": "dw520",
+      "kind": "tank",
+      "x": 2181.4,
+      "z": -1798,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw521",
+      "kind": "tank",
+      "x": 2204,
+      "z": -1775.4,
+      "angle": 0.785,
+      "variant": "small"
+    },
+    {
+      "id": "dw522",
+      "kind": "chimney",
+      "x": 1379,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw523",
+      "kind": "chimney",
+      "x": 1403,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw524",
+      "kind": "chimney",
+      "x": 1391,
+      "z": -2043.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw525",
+      "kind": "tank",
+      "x": 1375,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw526",
+      "kind": "tank",
+      "x": 1407,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw527",
+      "kind": "warehouse",
+      "x": 1634,
+      "z": -2038.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw528",
+      "kind": "chimney",
+      "x": 1634,
+      "z": -2061.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw529",
+      "kind": "warehouse",
+      "x": 1709,
+      "z": -2038.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw530",
+      "kind": "chimney",
+      "x": 1699,
+      "z": -2061.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw531",
+      "kind": "chimney",
+      "x": 1719,
+      "z": -2061.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw532",
+      "kind": "tank",
+      "x": 1717.1,
+      "z": -2075.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw533",
+      "kind": "chimney",
+      "x": 1760,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw534",
+      "kind": "chimney",
+      "x": 1784,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw535",
+      "kind": "tank",
+      "x": 1756,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw536",
+      "kind": "tank",
+      "x": 1788,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw537",
+      "kind": "warehouse",
+      "x": 1834,
+      "z": -2038.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw538",
+      "kind": "chimney",
+      "x": 1834,
+      "z": -2061.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw539",
+      "kind": "chimney",
+      "x": 2422,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw540",
+      "kind": "chimney",
+      "x": 2446,
+      "z": -2029.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw541",
+      "kind": "tank",
+      "x": 2418,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw542",
+      "kind": "tank",
+      "x": 2450,
+      "z": -2049.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw543",
+      "kind": "warehouse",
+      "x": 2508.4,
+      "z": -2032.8,
+      "angle": 1.107,
+      "variant": "small"
+    },
+    {
+      "id": "dw544",
+      "kind": "chimney",
+      "x": 2509.7,
+      "z": -2057.8,
+      "angle": 1.107
+    },
+    {
+      "id": "dw545",
+      "kind": "chimney",
+      "x": 2527.6,
+      "z": -2048.9,
+      "angle": 1.107
+    },
+    {
+      "id": "dw546",
+      "kind": "tank",
+      "x": 2568.5,
+      "z": -1983.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw547",
+      "kind": "tank",
+      "x": 2587.5,
+      "z": -1983.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw548",
+      "kind": "tank",
+      "x": 2606.5,
+      "z": -1983.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw549",
+      "kind": "tank",
+      "x": 2625.5,
+      "z": -1983.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw550",
+      "kind": "tank",
+      "x": 2568.5,
+      "z": -2002.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw551",
+      "kind": "tank",
+      "x": 2587.5,
+      "z": -2002.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw552",
+      "kind": "tank",
+      "x": 2606.5,
+      "z": -2002.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw553",
+      "kind": "tank",
+      "x": 2625.5,
+      "z": -2002.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw554",
+      "kind": "tank",
+      "x": 2568.5,
+      "z": -2021.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw555",
+      "kind": "tank",
+      "x": 2587.5,
+      "z": -2021.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw556",
+      "kind": "tank",
+      "x": 2606.5,
+      "z": -2021.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw557",
+      "kind": "tank",
+      "x": 2625.5,
+      "z": -2021.4,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw558",
+      "kind": "warehouse",
+      "x": 2672,
+      "z": -1988.9,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "dw559",
+      "kind": "chimney",
+      "x": 2672,
+      "z": -2011.9,
+      "angle": 1.571
+    },
+    {
+      "id": "dw560",
+      "kind": "rails",
+      "x": 1334.3,
+      "z": -2692.8,
+      "angle": 1.983
+    },
+    {
+      "id": "dw561",
+      "kind": "rails",
+      "x": 1371,
+      "z": -2708.8,
+      "angle": 1.983
+    },
+    {
+      "id": "dw562",
+      "kind": "wagon",
+      "x": 1352.7,
+      "z": -2700.8,
+      "angle": 1.983,
+      "variant": "tank"
+    },
+    {
+      "id": "dw563",
+      "kind": "wagon",
+      "x": 1367.3,
+      "z": -2707.2,
+      "angle": 1.983,
+      "variant": "tank"
+    },
+    {
+      "id": "dw564",
+      "kind": "wagon",
+      "x": 1382,
+      "z": -2713.6,
+      "angle": 1.983,
+      "variant": "box"
+    },
+    {
+      "id": "dw565",
+      "kind": "rails",
+      "x": 1337.2,
+      "z": -2686.4,
+      "angle": 1.983
+    },
+    {
+      "id": "dw566",
+      "kind": "rails",
+      "x": 1373.8,
+      "z": -2702.4,
+      "angle": 1.983
+    },
+    {
+      "id": "dw567",
+      "kind": "wagon",
+      "x": 1326.2,
+      "z": -2681.6,
+      "angle": 1.983,
+      "variant": "tank"
+    },
+    {
+      "id": "dw568",
+      "kind": "wagon",
+      "x": 1340.8,
+      "z": -2688,
+      "angle": 1.983,
+      "variant": "box"
+    },
+    {
+      "id": "dw569",
+      "kind": "wagon",
+      "x": 1370.1,
+      "z": -2700.8,
+      "angle": 1.983,
+      "variant": "box"
+    },
+    {
+      "id": "dw570",
+      "kind": "wagon",
+      "x": 1384.8,
+      "z": -2707.2,
+      "angle": 1.983,
+      "variant": "tank"
+    },
+    {
+      "id": "dw571",
+      "kind": "gantry",
+      "x": 1361.4,
+      "z": -2700.8,
+      "angle": 1.983
+    }
+  ],
+  "roads": [
+    {
+      "id": "i0-works",
+      "kind": "street",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1530,
+          -2000
+        ],
+        [
+          1530,
+          -2080
+        ],
+        [
+          1530,
+          -2160
+        ],
+        [
+          1530,
+          -2240
+        ],
+        [
+          1530,
+          -2320
+        ],
+        [
+          1530,
+          -2405
+        ],
+        [
+          1520,
+          -2500
+        ],
+        [
+          1505,
+          -2650
+        ],
+        [
+          1500,
+          -2800
+        ],
+        [
+          1500,
+          -2950
+        ],
+        [
+          1500,
+          -3095
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "y1",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1460,
+          -2240
+        ],
+        [
+          1620,
+          -2240
+        ],
+        [
+          1620,
+          -2400
+        ],
+        [
+          1460,
+          -2400
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "rail1",
+      "kind": "street",
+      "district": "industrial",
+      "bridge": false,
+      "surface": "rail",
+      "points": [
+        [
+          1317,
+          -2888
+        ],
+        [
+          1340,
+          -2879
+        ],
+        [
+          1364,
+          -2870
+        ],
+        [
+          1387,
+          -2862
+        ],
+        [
+          1411,
+          -2853
+        ],
+        [
+          1434,
+          -2844
+        ],
+        [
+          1458,
+          -2836
+        ],
+        [
+          1481,
+          -2828
+        ],
+        [
+          1505,
+          -2820
+        ],
+        [
+          1529,
+          -2812
+        ],
+        [
+          1553,
+          -2805
+        ],
+        [
+          1577,
+          -2797
+        ],
+        [
+          1600,
+          -2789
+        ],
+        [
+          1624,
+          -2782
+        ],
+        [
+          1648,
+          -2774
+        ],
+        [
+          1672,
+          -2767
+        ],
+        [
+          1696,
+          -2759
+        ],
+        [
+          1719,
+          -2751
+        ],
+        [
+          1743,
+          -2744
+        ],
+        [
+          1767,
+          -2736
+        ],
+        [
+          1791,
+          -2728
+        ],
+        [
+          1815,
+          -2721
+        ],
+        [
+          1838,
+          -2713
+        ],
+        [
+          1862,
+          -2705
+        ],
+        [
+          1886,
+          -2698
+        ],
+        [
+          1910,
+          -2690
+        ],
+        [
+          1934,
+          -2683
+        ],
+        [
+          1957,
+          -2675
+        ],
+        [
+          1981,
+          -2667
+        ],
+        [
+          2005,
+          -2660
+        ],
+        [
+          2029,
+          -2652
+        ],
+        [
+          2053,
+          -2644
+        ],
+        [
+          2076,
+          -2637
+        ],
+        [
+          2100,
+          -2629
+        ],
+        [
+          2122,
+          -2617
+        ],
+        [
+          2133,
+          -2595
+        ],
+        [
+          2142,
+          -2571
+        ],
+        [
+          2150,
+          -2548
+        ],
+        [
+          2159,
+          -2524
+        ],
+        [
+          2168,
+          -2501
+        ],
+        [
+          2176,
+          -2478
+        ],
+        [
+          2185,
+          -2454
+        ],
+        [
+          2194,
+          -2431
+        ],
+        [
+          2202,
+          -2407
+        ],
+        [
+          2211,
+          -2384
+        ],
+        [
+          2219,
+          -2360
+        ],
+        [
+          2228,
+          -2337
+        ],
+        [
+          2237,
+          -2313
+        ],
+        [
+          2245,
+          -2290
+        ],
+        [
+          2254,
+          -2266
+        ],
+        [
+          2263,
+          -2243
+        ],
+        [
+          2271,
+          -2219
+        ],
+        [
+          2280,
+          -2196
+        ],
+        [
+          2289,
+          -2173
+        ],
+        [
+          2297,
+          -2149
+        ],
+        [
+          2306,
+          -2126
+        ],
+        [
+          2315,
+          -2102
+        ],
+        [
+          2323,
+          -2079
+        ],
+        [
+          2332,
+          -2055
+        ],
+        [
+          2340,
+          -2032
+        ],
+        [
+          2349,
+          -2008
+        ],
+        [
+          2358,
+          -1985
+        ],
+        [
+          2366,
+          -1961
+        ],
+        [
+          2375,
+          -1938
+        ],
+        [
+          2384,
+          -1914
+        ],
+        [
+          2392,
+          -1891
+        ],
+        [
+          2401,
+          -1868
+        ],
+        [
+          2410,
+          -1844
+        ],
+        [
+          2418,
+          -1821
+        ],
+        [
+          2427,
+          -1797
+        ],
+        [
+          2436,
+          -1774
+        ],
+        [
+          2444,
+          -1750
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy1",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1803,
+          -2686
+        ],
+        [
+          1787,
+          -2654
+        ],
+        [
+          1706,
+          -2693
+        ],
+        [
+          1722,
+          -2726
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy2",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1915,
+          -2079
+        ],
+        [
+          1879,
+          -2078
+        ],
+        [
+          1875,
+          -2168
+        ],
+        [
+          1911,
+          -2169
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy3",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2695,
+          -1930
+        ],
+        [
+          2731,
+          -1931
+        ],
+        [
+          2734,
+          -1841
+        ],
+        [
+          2698,
+          -1840
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy4",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2125,
+          -2257
+        ],
+        [
+          2148,
+          -2285
+        ],
+        [
+          2077,
+          -2340
+        ],
+        [
+          2054,
+          -2312
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy5",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2046,
+          -2318
+        ],
+        [
+          2068,
+          -2347
+        ],
+        [
+          1996,
+          -2401
+        ],
+        [
+          1974,
+          -2372
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy6",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2433,
+          -2396
+        ],
+        [
+          2428,
+          -2361
+        ],
+        [
+          2517,
+          -2348
+        ],
+        [
+          2522,
+          -2384
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy7",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2065,
+          -2030
+        ],
+        [
+          2029,
+          -2029
+        ],
+        [
+          2028,
+          -2119
+        ],
+        [
+          2064,
+          -2120
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy8",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2397,
+          -2643
+        ],
+        [
+          2418,
+          -2673
+        ],
+        [
+          2345,
+          -2725
+        ],
+        [
+          2324,
+          -2696
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy9",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2316,
+          -2701
+        ],
+        [
+          2337,
+          -2731
+        ],
+        [
+          2264,
+          -2783
+        ],
+        [
+          2243,
+          -2754
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy10",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2235,
+          -2760
+        ],
+        [
+          2256,
+          -2789
+        ],
+        [
+          2182,
+          -2841
+        ],
+        [
+          2162,
+          -2812
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy11",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2083,
+          -2868
+        ],
+        [
+          2108,
+          -2894
+        ],
+        [
+          2043,
+          -2956
+        ],
+        [
+          2018,
+          -2930
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy12",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1859,
+          -3048
+        ],
+        [
+          1868,
+          -3083
+        ],
+        [
+          1781,
+          -3105
+        ],
+        [
+          1772,
+          -3070
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy13",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1528,
+          -2793
+        ],
+        [
+          1517,
+          -2759
+        ],
+        [
+          1602,
+          -2731
+        ],
+        [
+          1613,
+          -2765
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dy14",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1308,
+          -2690
+        ],
+        [
+          1323,
+          -2657
+        ],
+        [
+          1405,
+          -2693
+        ],
+        [
+          1391,
+          -2726
+        ]
+      ],
+      "isNew": true
+    }
+  ],
+  "removedRoads": []
+}

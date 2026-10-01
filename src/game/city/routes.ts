@@ -146,6 +146,10 @@ function surfaceGraph(city: City, pavedOnly = false): Graph {
     if (road.class === 'interstate' || road.class === 'ramp') continue;
     if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
     if (pavedOnly && road.surface !== 'asphalt') continue;
+    // Never along a railway (#489): it is the way out of a pursuit, and a
+    // race through the works that found it the shortest way round took to
+    // the ballast for a stretch and lost half its pace.
+    if (road.surface === 'rail') continue;
     add(road.a, road.b, road.length);
     add(road.b, road.a, road.length);
   }
@@ -450,6 +454,24 @@ const LATER_ROUTES: PlacedRoute[] = [
       [981, -2150],
       [844, -2428],
       [703, -2664],
+    ],
+  },
+  // Works Circuit (#489): Industrial's event, the owner's pick - a circuit
+  // round the works, on its roads and through a yard. Along r39, round the
+  // works on n100, and back up the works road from the coast through the
+  // yard, between the tank farm and the sidings. A draft: the
+  // works' layout is the owner's, and the way points move with it.
+  {
+    name: 'Works Circuit',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [1800, -2000],
+      [2333, -2438],
+      [1933, -2980],
+      [1500, -2800],
+      [1530, -2320],
+      [1530, -2100],
     ],
   },
 ];

@@ -69,6 +69,11 @@ function stitch(roads) {
     let best = null;
     for (const other of roads) {
       if (other === road) continue;
+      // A railway and a street never join at an end (#489): a line that
+      // stops short of a street stops there, and a street that stops short
+      // of the line is not reaching for it. Where they cross is a level
+      // crossing, which `buildGraph` makes on its own.
+      if ((road.surface === 'rail') !== (other.surface === 'rail')) continue;
       const hit = project(at, other);
       if (hit && hit.d <= STITCH && (!best || hit.d < best.d)) best = { ...hit, other };
     }

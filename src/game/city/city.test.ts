@@ -241,10 +241,10 @@ describe('the street network', () => {
 
   // Marrow Field (#295) is dirt and Halloway Quarry (#327) is gravel, each in
   // its own describe block below; everything else on the current seed should
-  // still come out paved.
+  // still come out paved, but for Industrial's railway (#489).
   it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
-      expect(['asphalt', 'dirt', 'gravel']).toContain(road.surface);
+      expect(['asphalt', 'dirt', 'gravel', 'rail']).toContain(road.surface);
     }
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
     const unpaved = city.roads.filter((r) => r.surface !== 'asphalt');
