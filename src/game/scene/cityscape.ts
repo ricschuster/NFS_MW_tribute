@@ -9,6 +9,7 @@ import {
 } from './surfaces';
 import { Rooftops } from './roofs';
 import { worldUvs } from './worlduv';
+import { railTrack } from './railtrack';
 import { quarryGround } from './quarryground';
 import { wharfGround } from './wharfground';
 import { PLAN_PLACES } from '../city/plan';
@@ -98,6 +99,7 @@ export class Cityscape {
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
     for (const mesh of this.carriageways(city)) this.group.add(mesh);
+    for (const mesh of this.railways(city)) this.group.add(mesh);
     for (const mesh of this.water(city)) this.group.add(mesh);
     for (const slab of this.pavements(city)) this.group.add(slab);
     this.group.add(this.markings(city));
@@ -416,11 +418,19 @@ export class Cityscape {
         !road.bridge && road.class !== 'interstate' && road.class !== 'ramp',
     );
     const meshes: THREE.InstancedMesh[] = [];
-    for (const surface of ['asphalt', 'dirt', 'gravel'] as const) {
+    for (const surface of ['asphalt', 'dirt', 'gravel', 'rail'] as const) {
       const roads = drivable.filter((road) => (road.surface ?? 'asphalt') === surface);
       if (roads.length === 0) continue;
       meshes.push(this.carriagewaysFor(city, roads, surface));
     }
+    return meshes;
+  }
+
+  /** The track down a railway (#489), over the ballast `carriageways` paints. */
+  private railways(city: City): THREE.Object3D[] {
+    const roads = city.roads.filter((road) => road.surface === 'rail' && !road.bridge);
+    const { meshes, owned } = railTrack(city, roads, (x, z) => this.groundUnder(city, x, z));
+    this.owned.push(...owned);
     return meshes;
   }
 
@@ -461,8 +471,14 @@ export class Cityscape {
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
     const material = new THREE.MeshLambertMaterial({
-      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : '#4a5057',
-      map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
+      // A railway's ballast is gravel, darker for the oil and the years (#489).
+      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : surface === 'rail' ? '#6f685f' : '#4a5057',
+      map:
+        surface === 'dirt'
+          ? dirtTexture(1, 1)
+          : surface === 'gravel' || surface === 'rail'
+            ? gravelTexture(1, 1)
+            : asphaltTexture(1, 1),
     });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
     // by how long each piece happens to be. Computed from the instance scale

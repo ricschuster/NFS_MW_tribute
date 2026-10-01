@@ -1234,7 +1234,9 @@ export class CityWorld {
     // A road, just a worse one (#294): still `onRoad`, still short of the
     // off-road penalty in `settle`, just less grip and a lower top speed -
     // unless the tyres were made for it.
-    const loose = this.offRoadTyres ? null : this.onRoad?.surface;
+    // A railway's ballast is gravel (#489).
+    const surface = this.onRoad?.surface === 'rail' ? 'gravel' : this.onRoad?.surface;
+    const loose = this.offRoadTyres ? null : surface;
     const gripFrac = loose === 'dirt' ? DIRT_GRIP_FRAC : loose === 'gravel' ? GRAVEL_GRIP_FRAC : 1;
     const speedFrac = loose === 'dirt' ? DIRT_SPEED_FRAC : loose === 'gravel' ? GRAVEL_SPEED_FRAC : 1;
 

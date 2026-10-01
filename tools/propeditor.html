@@ -213,7 +213,7 @@
       <div id="road-detail" hidden>
         <div class="field"><label>Road</label><div id="r-id"></div></div>
         <div class="field"><label for="r-kind">Class</label><select id="r-kind"><option value="street">street</option><option value="boulevard">boulevard</option><option value="yard">yard</option></select></div>
-        <div class="field"><label for="r-surface">Surface</label><select id="r-surface"><option value="asphalt">asphalt</option><option value="gravel">gravel</option><option value="dirt">dirt</option></select></div>
+        <div class="field"><label for="r-surface">Surface</label><select id="r-surface"><option value="asphalt">asphalt</option><option value="gravel">gravel</option><option value="dirt">dirt</option><option value="rail">rail</option></select></div>
         <div class="field"><label for="r-dead">Dead end</label><input id="r-dead" type="checkbox" style="justify-self:start"></div>
         <ul class="checks" id="r-info"></ul>
         <div class="row">
@@ -767,8 +767,8 @@
 
     if (layers.roads) {
       ctx.lineCap = 'round';
-      for (const surface of ['asphalt', 'dirt', 'gravel']) {
-        ctx.strokeStyle = surface === 'dirt' ? '#a58759' : surface === 'gravel' ? '#b9b3a6' : '#565f62';
+      for (const surface of ['asphalt', 'dirt', 'gravel', 'rail']) {
+        ctx.strokeStyle = surface === 'dirt' ? '#a58759' : surface === 'gravel' ? '#b9b3a6' : surface === 'rail' ? '#7a6f62' : '#565f62';
         for (const r of segs) {
           if (r.surface !== surface) continue;
           ctx.lineWidth = Math.max(1.5, r.width * s);

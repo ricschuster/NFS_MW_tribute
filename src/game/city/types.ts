@@ -51,8 +51,14 @@ export type RoadClass = 'arterial' | 'street' | 'boulevard' | 'interstate' | 'ra
  * street or a boulevard. Defaults to `asphalt` everywhere until something
  * asks for dirt. Gravel is the third: pale crushed stone, what a quarry's own
  * roads are laid with, and a little better to drive than packed earth.
+ *
+ * `rail` is a railway (#489): a double track on a ballast bed, drivable the
+ * way the reference game's railway is - off the freeway past a roadblock and
+ * along the tracks - and driven like gravel, because ballast is gravel. It is
+ * a surface rather than a road kind so a line is drawn, synced and routed
+ * like any other road, and only the drawing and who may use it change.
  */
-export type RoadSurface = 'asphalt' | 'dirt' | 'gravel';
+export type RoadSurface = 'asphalt' | 'dirt' | 'gravel' | 'rail';
 
 /**
  * What makes a district read as a place. Block size and how much it varies do

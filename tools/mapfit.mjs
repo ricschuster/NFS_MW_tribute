@@ -157,7 +157,7 @@ function corners(res, car, mode, loop) {
       const half = chord / 2;
       kappa = Math.max(kappa, (2 * Math.max(0, sag - h)) / (half * half));
     }
-    const surfaceCap = p.surface === 'dirt' ? K.DIRT_SPEED_FRAC : p.surface === 'gravel' ? K.GRAVEL_SPEED_FRAC : 1;
+    const surfaceCap = p.surface === 'dirt' ? K.DIRT_SPEED_FRAC : p.surface === 'gravel' || p.surface === 'rail' ? K.GRAVEL_SPEED_FRAC : 1;
     let v = car.top * surfaceCap * slopeSpeed(p.grade ?? 0);
     if (kappa > 0) {
       const r = 1 / kappa;

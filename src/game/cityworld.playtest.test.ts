@@ -80,7 +80,7 @@ import { CARS, STARTER_CAR, carById, colourName } from './cars';
 import { RIVALS, difficultyLabel } from './rivals';
 import { racePurse } from './rep';
 import { kestrelBay } from './city/index';
-import type { CityRoad, CityRoute } from './city/types';
+import type { CityRoad, CityRoute, RoadSurface } from './city/types';
 import { placeOnRoad } from './graphcar';
 import { hourly } from './citytraffic';
 import { roadHeightAt, inWater, distanceToRoad } from './city/grid';
@@ -2833,7 +2833,7 @@ describe('driving surfaces (#294)', () => {
   // Gravel (#327) is the middle surface: better than packed earth, worse than
   // tarmac. The order of the three is the order of how they drive.
   it('caps the top speed on gravel between dirt and tarmac', () => {
-    const settle = (surface: 'asphalt' | 'dirt' | 'gravel') => {
+    const settle = (surface: RoadSurface) => {
       const world = still();
       const road = world.onRoad!;
       const original = road.surface;
@@ -2857,6 +2857,30 @@ describe('driving surfaces (#294)', () => {
     expect(gravel).toBeLessThan(paved);
     expect(gravel).toBeGreaterThan(dirt);
     expect(gravel).toBeCloseTo(paved * GRAVEL_SPEED_FRAC, -2);
+  });
+
+  // A railway (#489) is driven on its ballast, which is gravel: the escape
+  // down the tracks costs what a gravel road does and no more.
+  it('drives a railway like gravel', () => {
+    const settle = (surface: RoadSurface) => {
+      const world = still();
+      const road = world.onRoad!;
+      const original = road.surface;
+      road.surface = surface;
+      try {
+        world.speed = world.maxSpeed;
+        const home = { x: world.x, z: world.z };
+        for (let t = 0; t < 2; t += STEP) {
+          world.x = home.x;
+          world.z = home.z;
+          world.step(STEP, press({ up: true }));
+        }
+        return world.speed;
+      } finally {
+        road.surface = original;
+      }
+    };
+    expect(settle('rail')).toBeCloseTo(settle('gravel'), 3);
   });
 
   it('takes the steering with it too', () => {
