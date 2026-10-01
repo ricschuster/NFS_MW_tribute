@@ -3,26 +3,35 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, the owner away; two areas ready for the owner).**
-  The owner said to keep going while away, and to take on anything else
-  found on the way. Everything below is merged except the drafts, which
-  wait for the owner.
-  - **Midtown south-west (#488), drafted, waiting for the owner.** Merged:
-    shops with flats over them and blocks of flats (#502), the drafter's
-    high-street mode, pavements paved; `HIGH_STREETS` is empty on main.
-    Not merged: branch `midtown-sw-draft` (pushed, no PR) with 7 streets,
-    n100 as the high street (the draft's pick), 26 shops, 11 blocks of
-    flats, 81 houses, and the **Main Street Sprint** (2.1 km from
-    downtown's edge down the high street into Tidewater Park; 44% of top
-    empty, 26% in traffic). It is in the Midtown south-west Props editor
-    (URL in the agent's memory, store empty until the owner's first save)
-    and on the dev server. **The owner decides:** which boulevard is the
-    high street; the streets and props. Then sync, rebase the branch onto
-    main, PR.
-  - **Industrial (#489), ready for the owner's layout.** Merged: chimneys,
-    storage tanks, gantry cranes (a car drives under), rail track and
-    wagons (#504); an Industrial area editor (#505, published empty, URL in
-    memory). The works' layout, yards and streets are the owner's.
+- **Start here (2026-10-01, evening; two areas drafted for the owner).**
+  The owner said to keep going while away. Both remaining areas before
+  downtown are drafted and wait for the owner; everything else is merged.
+  - **Midtown south-west (#488): a draft to review.** Merged: shops with
+    flats over them and blocks of flats, the drafter's high-street mode,
+    pavements paved (#502); `HIGH_STREETS` is empty on main. On the branch
+    `midtown-sw-draft` (pushed, no PR): 7 streets, n100 as the high street
+    (the draft's pick), 26 shops, 11 blocks of flats, 81 houses, and the
+    **Main Street Sprint** (2.1 km from downtown's edge down the high street
+    into Tidewater Park; 44% of top empty, 26% in traffic). In the Midtown
+    south-west Props editor and on the dev server at :5173.
+  - **Industrial (#489): a draft to review.** Merged: chimneys, storage
+    tanks, gantry cranes, rail track and wagons (#504); an Industrial area
+    editor (#505); `suburbdraft --district industrial` (#507); **yards drawn
+    in the editor**, paved and closed to traffic (#509). On the branch
+    `industrial-draft` (pushed, no PR): 12 works roads (82% of the land
+    within 150 m of a road, 64% before), a works on the open crest (a yard
+    with three sidings, a gantry, wagons, a tank farm, a shed, two
+    chimneys), a works road from r39 through the yard down to n100, and the
+    **Works Circuit** (3.4 km, two laps; 58% empty, 34% in traffic). In the
+    Industrial Props editor and on a second dev server at :5174.
+  - **The owner decides, in each editor:** the streets and props; for
+    Midtown south-west, which boulevard is the high street; for Industrial,
+    the works' layout. Two side effects of the Industrial draft to accept
+    or undo: it moves two ramps' connectors (2442,-2442 now joins a works
+    street, 1317,-2720 joins the works road; `roadsync` now says so, #511).
+  - **When both drafts land:** each raises `CAR_EVENTS_MAX` to 11 and
+    appends a route to `LATER_ROUTES`, so the second to merge takes 12 and
+    the next route id.
   - **Found and fixed on the way:** paved ground was six uniform arrays,
     about 590 uniform vectors, where WebGL 2 promises 224, so a phone at the
     minimum likely never compiled the ground; it is a texture now, any
