@@ -72,6 +72,8 @@ const KINDS = [
   'bandstand', 'toilet-block', 'cafe',
   'house', 'apartment', 'shop', 'flat', 'villa', 'manor', 'hedge', 'street-tree',
   'chimney', 'tank', 'gantry', 'rails', 'wagon',
+  'townhouse', 'loft', 'midrise', 'tower', 'lookout-tower', 'twist-tower', 'chateau-hotel', 'stadium',
+  'library', 'gallery', 'cathedral', 'city-hall', 'cruise-terminal', 'geodesic-dome', 'flatiron',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

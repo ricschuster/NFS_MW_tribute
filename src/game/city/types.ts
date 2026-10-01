@@ -530,7 +530,24 @@ export type SetPieceKind =
   | 'rails'
   | 'wagon'
   | 'hedge'
-  | 'street-tree';
+  | 'street-tree'
+  // Downtown (#268): its ordinary buildings, then its landmarks, drawn from
+  // Vancouver's downtown as originals rather than copies.
+  | 'townhouse'
+  | 'loft'
+  | 'midrise'
+  | 'tower'
+  | 'lookout-tower'
+  | 'twist-tower'
+  | 'chateau-hotel'
+  | 'stadium'
+  | 'library'
+  | 'gallery'
+  | 'cathedral'
+  | 'city-hall'
+  | 'cruise-terminal'
+  | 'geodesic-dome'
+  | 'flatiron';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by

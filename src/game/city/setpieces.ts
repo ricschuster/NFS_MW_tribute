@@ -40,6 +40,20 @@ export const PALAS_GROWN = 1.6;
 export const CHAPEL_GROWN = 2;
 export const HOUSE_GROWN = 1.6;
 /**
+ * Downtown's office tower (#268), in game metres: one footprint, and a height
+ * for each look, so a skyline steps down from the 180 m lookout tower
+ * through these (the owner's skyline, 55-130 m).
+ */
+export const TOWER = { w: 30, l: 30 };
+export const TOWER_HEIGHTS: Record<string, number> = {
+  'glass-low': 58,
+  glass: 88,
+  'glass-tall': 126,
+  stone: 70,
+  'stone-tall': 104,
+  deco: 118,
+};
+/**
  * How far a warehouse's walls run below the ground at its middle (#489). A
  * set piece stands at the height under its centre, and a 130 m shed across a
  * rise of a few metres has its downhill end in the air; Industrial's ground
@@ -205,6 +219,26 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // the door, and a broadleaf street tree, solid only at its trunk.
   hedge: [{ u: -5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }, { u: 5, v: 0, w: 6, l: 1.2, y0: 0, y1: 1.3 }],
   'street-tree': [post(0, 0, 0.5, 3), { u: 0, v: 0, r: 2.8, y0: 3.4, y1: 10 }],
+  // Downtown (#268). Its old core is drawn at the high street's scale - a
+  // townhouse, a warehouse loft and a mid-rise, real sizes grown by
+  // `HOUSE_GROWN` - and its towers and landmarks in game metres, sized
+  // against each other and against the 4.8 m car. Solid as the boxes and
+  // circles that cover them; a car never reaches the parts above a roofline.
+  townhouse: grown([{ u: 0, v: 0, w: 7, l: 12, y0: 0, y1: 15 }], HOUSE_GROWN),
+  loft: grown([{ u: 0, v: 0, w: 22, l: 16, y0: 0, y1: 19 }], HOUSE_GROWN),
+  midrise: grown([{ u: 0, v: 0, w: 20, l: 15, y0: 0, y1: 26 }], HOUSE_GROWN),
+  tower: [{ u: 0, v: 0, w: TOWER.w, l: TOWER.l, y0: 0, y1: TOWER_HEIGHTS.glass }],
+  'lookout-tower': [{ u: 0, v: 0, w: 32, l: 32, y0: 0, y1: 118 }, post(0, 0, 5.5, 166)],
+  'twist-tower': [{ u: 0, v: 0, r: 18, y0: 0, y1: 150 }],
+  'chateau-hotel': [{ u: 0, v: 0, w: 44, l: 32, y0: 0, y1: 42 }],
+  stadium: [-20, 0, 20].map((u) => ({ u, v: 0, r: 95, y0: 0, y1: 38 })),
+  library: [{ u: 0, v: 0, w: 80, l: 60, y0: 0, y1: 30 }],
+  gallery: [{ u: 0, v: -3, w: 72, l: 42, y0: 0, y1: 22 }, { u: 0, v: 21, w: 36, l: 8, y0: 0, y1: 2 }],
+  cathedral: [{ u: 0, v: -6, w: 26, l: 52, y0: 0, y1: 24 }, { u: 0, v: 26, w: 12, l: 12, y0: 0, y1: 40 }],
+  'city-hall': [{ u: 0, v: 0, w: 76, l: 34, y0: 0, y1: 22 }],
+  'cruise-terminal': [{ u: 0, v: 0, w: 56, l: 200, y0: 0, y1: 14 }],
+  'geodesic-dome': [{ u: 0, v: 0, r: 24, y0: 0, y1: 46 }],
+  flatiron: [{ u: 0, v: -11, w: 26, l: 22, y0: 0, y1: 34 }, { u: 0, v: 11, w: 14, l: 22, y0: 0, y1: 34 }],
 };
 
 /**
@@ -219,6 +253,7 @@ const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
   'ruin-house:small': grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }], HOUSE_GROWN),
   'tank:small': [{ u: 0, v: 0, r: 7, y0: 0, y1: 10 }],
+  ...Object.fromEntries(Object.entries(TOWER_HEIGHTS).map(([v, h]) => [`tower:${v}`, [{ u: 0, v: 0, w: TOWER.w, l: TOWER.l, y0: 0, y1: h }]])),
 };
 
 /** What this piece is solid as. */
@@ -241,9 +276,11 @@ const JUMP_VARIANTS: Record<string, JumpKind> = {
 
 /**
  * How far a set piece's solid parts can reach from its centre, in metres. A
- * large warehouse, 50 m by 130 m, reaches 70 m to a corner.
+ * large warehouse, 50 m by 130 m, reaches 70 m to a corner; downtown's
+ * stadium (#268) reaches 115 m to the end of its bowl, and its cruise
+ * terminal, 56 m by 200, 104 m to a corner.
  */
-const SOLID_REACH = 70;
+export const SOLID_REACH = 120;
 
 /**
  * Marrow Field's hand-placed props (#295), as city data.

@@ -4,6 +4,10 @@ import { UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
 import { CHAPEL_GROWN, ESTATE_FOOTING, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
 
+import {
+  townhouse, loft, midrise, tower, lookoutTower, twistTower, chateauHotel, stadium,
+  library, gallery, cathedral, cityHall, cruiseTerminal, geodesicDome, flatiron,
+} from './downtownmodels';
 const M = UNITS_PER_METRE;
 
 /**
@@ -924,6 +928,23 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   wagon,
   hedge,
   'street-tree': streetTree,
+  // Downtown (#268): the old core at the high street's scale, the towers and
+  // landmarks at game size (`downtownmodels.ts`).
+  townhouse: grown(townhouse, HOUSE_GROWN),
+  loft: grown(loft, HOUSE_GROWN),
+  midrise: grown(midrise, HOUSE_GROWN),
+  tower,
+  'lookout-tower': lookoutTower,
+  'twist-tower': twistTower,
+  'chateau-hotel': chateauHotel,
+  stadium,
+  library,
+  gallery,
+  cathedral,
+  'city-hall': cityHall,
+  'cruise-terminal': cruiseTerminal,
+  'geodesic-dome': geodesicDome,
+  flatiron,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */
