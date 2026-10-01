@@ -290,7 +290,7 @@ function edgeMiddles(corners: Vec2[]): Vec2[] {
  * The roads as runs from junction to junction (or to a dead end): consecutive
  * pieces of one class through nodes where only two roads meet.
  */
-function runsOf(roads: readonly CityRoad[], nodes: readonly CityNode[]) {
+export function runsOf(roads: readonly CityRoad[], nodes: readonly CityNode[]) {
   const ids = new Set(roads.map((r) => r.id));
   const byId = new Map(roads.map((r) => [r.id, r]));
   const used = new Set<number>();
@@ -377,7 +377,7 @@ const HEDGE_BACK = 1.6;
  * the interstate unreachable from Midtown south). The deck itself is
  * scenery, held high over everything (`DECK_HEADROOM`), so it is not one.
  */
-function onTheStreet(nodes: readonly CityNode[], r: CityRoad): boolean {
+export function onTheStreet(nodes: readonly CityNode[], r: CityRoad): boolean {
   return nodes[r.a].level === 'surface' || nodes[r.b].level === 'surface';
 }
 /**

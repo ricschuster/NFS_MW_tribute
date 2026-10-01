@@ -49,7 +49,9 @@ describe('Marrow Field props (#295)', () => {
 
   it('stands every piece on the ground where it was placed', () => {
     for (const piece of city.setPieces) {
-      expect(piece.y).toBeCloseTo(groundAt(city.terrain, piece.at.x, piece.at.z), 6);
+      const ground = groundAt(city.terrain, piece.at.x, piece.at.z);
+      // Bar a cruise terminal (#268), out on its pier over the bay: at sea level, not on the bed.
+      expect(piece.y).toBeCloseTo(piece.kind === 'cruise-terminal' ? Math.max(0, ground) : ground, 6);
     }
   });
 
