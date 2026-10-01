@@ -21736,6 +21736,2956 @@
       ],
       "deadEnd": true,
       "isNew": true
+    },
+    {
+      "id": "d0-1",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1054,
+          -1620
+        ],
+        [
+          -1038,
+          -1628
+        ],
+        [
+          -1011,
+          -1653
+        ],
+        [
+          -980,
+          -1670
+        ],
+        [
+          -875,
+          -1696
+        ],
+        [
+          -680,
+          -1690
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-2",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1037,
+          -1690
+        ],
+        [
+          -983,
+          -1691
+        ],
+        [
+          -956,
+          -1677
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-3",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1020,
+          -1753
+        ],
+        [
+          -967,
+          -1742
+        ],
+        [
+          -895,
+          -1744
+        ],
+        [
+          -842,
+          -1752
+        ],
+        [
+          -805,
+          -1751
+        ],
+        [
+          -706,
+          -1760
+        ],
+        [
+          -596,
+          -1789
+        ],
+        [
+          -426,
+          -1822
+        ],
+        [
+          -233,
+          -1876
+        ],
+        [
+          -138,
+          -1908
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-4",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1001,
+          -1813
+        ],
+        [
+          -900,
+          -1775
+        ],
+        [
+          -882,
+          -1745
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-5",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1027,
+          -1989
+        ],
+        [
+          -974,
+          -1999
+        ],
+        [
+          -922,
+          -2016
+        ],
+        [
+          -869,
+          -2026
+        ],
+        [
+          -796,
+          -2023
+        ],
+        [
+          -737,
+          -2014
+        ],
+        [
+          -697,
+          -2002
+        ],
+        [
+          -668,
+          -1958
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-6",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1189,
+          -2288
+        ],
+        [
+          -1157,
+          -2305
+        ],
+        [
+          -1074,
+          -2374
+        ],
+        [
+          -1037,
+          -2414
+        ],
+        [
+          -1031,
+          -2450
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-7",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1284,
+          -2415
+        ],
+        [
+          -1252,
+          -2432
+        ],
+        [
+          -1223,
+          -2454
+        ],
+        [
+          -1203,
+          -2495
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-8",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1332,
+          -2474
+        ],
+        [
+          -1274,
+          -2524
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-9",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -801,
+          -2450
+        ],
+        [
+          -812,
+          -2503
+        ],
+        [
+          -901,
+          -2509
+        ],
+        [
+          -971,
+          -2492
+        ],
+        [
+          -1007,
+          -2493
+        ],
+        [
+          -1042,
+          -2501
+        ],
+        [
+          -1126,
+          -2533
+        ],
+        [
+          -1179,
+          -2544
+        ],
+        [
+          -1208,
+          -2571
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-10",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -865,
+          -2450
+        ],
+        [
+          -875,
+          -2397
+        ],
+        [
+          -883,
+          -2305
+        ],
+        [
+          -926,
+          -2160
+        ],
+        [
+          -942,
+          -2128
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-11",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -920,
+          -2450
+        ],
+        [
+          -913,
+          -2485
+        ],
+        [
+          -914,
+          -2507
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-12",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1068,
+          -2450
+        ],
+        [
+          -1061,
+          -2485
+        ],
+        [
+          -1052,
+          -2505
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-13",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1119,
+          -2450
+        ],
+        [
+          -1111,
+          -2466
+        ],
+        [
+          -1097,
+          -2524
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-14",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1164,
+          -2465
+        ],
+        [
+          -1140,
+          -2513
+        ],
+        [
+          -1138,
+          -2534
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-15",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1220,
+          -2500
+        ],
+        [
+          -1254,
+          -2563
+        ],
+        [
+          -1267,
+          -2597
+        ],
+        [
+          -1321,
+          -2600
+        ],
+        [
+          -1390,
+          -2620
+        ],
+        [
+          -1420,
+          -2620
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-16",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1349,
+          -2556
+        ],
+        [
+          -1322,
+          -2580
+        ],
+        [
+          -1317,
+          -2600
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-17",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -685,
+          -2446
+        ],
+        [
+          -688,
+          -2374
+        ],
+        [
+          -707,
+          -2302
+        ],
+        [
+          -712,
+          -2262
+        ],
+        [
+          -711,
+          -2198
+        ],
+        [
+          -692,
+          -2063
+        ],
+        [
+          -711,
+          -2007
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-18",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -578,
+          -2393
+        ],
+        [
+          -645,
+          -2280
+        ],
+        [
+          -668,
+          -2222
+        ],
+        [
+          -711,
+          -2197
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-19",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -520,
+          -2356
+        ],
+        [
+          -573,
+          -2336
+        ],
+        [
+          -611,
+          -2338
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-20",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -472,
+          -2306
+        ],
+        [
+          -515,
+          -2233
+        ],
+        [
+          -564,
+          -2102
+        ],
+        [
+          -552,
+          -2027
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-21",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -248,
+          -2199
+        ],
+        [
+          -245,
+          -1949
+        ],
+        [
+          -224,
+          -1879
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-22",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -123,
+          -2205
+        ],
+        [
+          -127,
+          -2030
+        ],
+        [
+          -138,
+          -1908
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-23",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -26,
+          -2188
+        ],
+        [
+          -64,
+          -2096
+        ],
+        [
+          -126,
+          -2055
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-24",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -937,
+          -1884
+        ],
+        [
+          -919,
+          -1833
+        ],
+        [
+          -934,
+          -1790
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-25",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -878,
+          -1888
+        ],
+        [
+          -875,
+          -1834
+        ],
+        [
+          -865,
+          -1781
+        ],
+        [
+          -882,
+          -1745
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-26",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -814,
+          -1896
+        ],
+        [
+          -785,
+          -1850
+        ],
+        [
+          -779,
+          -1833
+        ],
+        [
+          -768,
+          -1796
+        ],
+        [
+          -766,
+          -1756
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-27",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -768,
+          -1915
+        ],
+        [
+          -764,
+          -1858
+        ],
+        [
+          -778,
+          -1831
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-28",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -694,
+          -1947
+        ],
+        [
+          -674,
+          -1863
+        ],
+        [
+          -648,
+          -1776
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-29",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -520,
+          -2060
+        ],
+        [
+          -466,
+          -2007
+        ],
+        [
+          -365,
+          -1897
+        ],
+        [
+          -349,
+          -1844
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-30",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -611,
+          -2488
+        ],
+        [
+          -606,
+          -2524
+        ],
+        [
+          -534,
+          -2530
+        ],
+        [
+          -501,
+          -2544
+        ],
+        [
+          -456,
+          -2573
+        ],
+        [
+          -369,
+          -2596
+        ],
+        [
+          -269,
+          -2637
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-31",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -538,
+          -2500
+        ],
+        [
+          -534,
+          -2410
+        ],
+        [
+          -549,
+          -2378
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-32",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -472,
+          -2511
+        ],
+        [
+          -479,
+          -2475
+        ],
+        [
+          -477,
+          -2422
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-33",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -411,
+          -2521
+        ],
+        [
+          -423,
+          -2555
+        ],
+        [
+          -441,
+          -2555
+        ],
+        [
+          -462,
+          -2570
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-34",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -352,
+          -2530
+        ],
+        [
+          -353,
+          -2476
+        ],
+        [
+          -341,
+          -2423
+        ],
+        [
+          -275,
+          -2251
+        ],
+        [
+          -276,
+          -2197
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-35",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -301,
+          -2546
+        ],
+        [
+          -301,
+          -2492
+        ],
+        [
+          -288,
+          -2382
+        ],
+        [
+          -313,
+          -2351
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-36",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -246,
+          -2565
+        ],
+        [
+          -245,
+          -2457
+        ],
+        [
+          -229,
+          -2403
+        ],
+        [
+          -219,
+          -2342
+        ],
+        [
+          -224,
+          -2251
+        ],
+        [
+          -221,
+          -2200
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-37",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -183,
+          -2587
+        ],
+        [
+          -194,
+          -2640
+        ],
+        [
+          -159,
+          -2646
+        ],
+        [
+          -125,
+          -2658
+        ],
+        [
+          -3,
+          -2734
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-38",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -69,
+          -2629
+        ],
+        [
+          -92,
+          -2680
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-39",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          1,
+          -2662
+        ],
+        [
+          -12,
+          -2696
+        ],
+        [
+          -29,
+          -2719
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-40",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -996,
+          -1662
+        ],
+        [
+          -962,
+          -1649
+        ],
+        [
+          -856,
+          -1630
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-41",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -927,
+          -1683
+        ],
+        [
+          -941,
+          -1716
+        ],
+        [
+          -942,
+          -1744
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-42",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -857,
+          -1697
+        ],
+        [
+          -854,
+          -1680
+        ],
+        [
+          -856,
+          -1630
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-43",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -548,
+          -1797
+        ],
+        [
+          -561,
+          -1920
+        ],
+        [
+          -588,
+          -1991
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-44",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -887,
+          -2022
+        ],
+        [
+          -880,
+          -1969
+        ],
+        [
+          -884,
+          -1933
+        ],
+        [
+          -878,
+          -1888
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-45",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -815,
+          -2024
+        ],
+        [
+          -848,
+          -1958
+        ],
+        [
+          -884,
+          -1933
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-46",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -737,
+          -2014
+        ],
+        [
+          -741,
+          -2098
+        ],
+        [
+          -703,
+          -2142
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-47",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1129,
+          -2328
+        ],
+        [
+          -1119,
+          -2313
+        ],
+        [
+          -984,
+          -2167
+        ],
+        [
+          -942,
+          -2128
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-48",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1063,
+          -2388
+        ],
+        [
+          -1037,
+          -2364
+        ],
+        [
+          -998,
+          -2303
+        ],
+        [
+          -983,
+          -2251
+        ],
+        [
+          -981,
+          -2215
+        ],
+        [
+          -1002,
+          -2187
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-49",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1237,
+          -2442
+        ],
+        [
+          -1206,
+          -2398
+        ],
+        [
+          -1160,
+          -2343
+        ],
+        [
+          -1129,
+          -2328
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-50",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -830,
+          -2503
+        ],
+        [
+          -834,
+          -2539
+        ],
+        [
+          -924,
+          -2547
+        ],
+        [
+          -994,
+          -2560
+        ],
+        [
+          -1058,
+          -2593
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-51",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1025,
+          -2498
+        ],
+        [
+          -1006,
+          -2528
+        ],
+        [
+          -946,
+          -2500
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-52",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1162,
+          -2538
+        ],
+        [
+          -1142,
+          -2568
+        ],
+        [
+          -1088,
+          -2566
+        ],
+        [
+          -1058,
+          -2593
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-53",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -876,
+          -2379
+        ],
+        [
+          -894,
+          -2382
+        ],
+        [
+          -1001,
+          -2374
+        ],
+        [
+          -1028,
+          -2353
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-54",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -889,
+          -2286
+        ],
+        [
+          -968,
+          -2341
+        ],
+        [
+          -979,
+          -2376
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-55",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -910,
+          -2212
+        ],
+        [
+          -963,
+          -2225
+        ],
+        [
+          -981,
+          -2224
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-56",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -932,
+          -2143
+        ],
+        [
+          -902,
+          -2124
+        ],
+        [
+          -877,
+          -2098
+        ],
+        [
+          -849,
+          -2076
+        ],
+        [
+          -796,
+          -2058
+        ],
+        [
+          -766,
+          -2018
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-57",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1254,
+          -2563
+        ],
+        [
+          -1201,
+          -2572
+        ],
+        [
+          -1179,
+          -2544
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-58",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1267,
+          -2597
+        ],
+        [
+          -1213,
+          -2598
+        ],
+        [
+          -1208,
+          -2571
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-59",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1303,
+          -2599
+        ],
+        [
+          -1295,
+          -2634
+        ],
+        [
+          -1279,
+          -2627
+        ],
+        [
+          -1267,
+          -2597
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-60",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -691,
+          -2356
+        ],
+        [
+          -728,
+          -2355
+        ],
+        [
+          -801,
+          -2362
+        ],
+        [
+          -837,
+          -2367
+        ],
+        [
+          -876,
+          -2379
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-61",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -712,
+          -2262
+        ],
+        [
+          -833,
+          -2287
+        ],
+        [
+          -889,
+          -2286
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-62",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -692,
+          -2063
+        ],
+        [
+          -599,
+          -2060
+        ],
+        [
+          -558,
+          -2065
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-63",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -616,
+          -2331
+        ],
+        [
+          -672,
+          -2341
+        ],
+        [
+          -691,
+          -2356
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-64",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -523,
+          -2213
+        ],
+        [
+          -593,
+          -2265
+        ],
+        [
+          -639,
+          -2291
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-65",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -564,
+          -2102
+        ],
+        [
+          -655,
+          -2141
+        ],
+        [
+          -703,
+          -2142
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-66",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -245,
+          -2049
+        ],
+        [
+          -170,
+          -2048
+        ],
+        [
+          -126,
+          -2055
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-67",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -668,
+          -1842
+        ],
+        [
+          -706,
+          -1821
+        ],
+        [
+          -722,
+          -1808
+        ],
+        [
+          -769,
+          -1798
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-68",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -415,
+          -1953
+        ],
+        [
+          -484,
+          -1880
+        ],
+        [
+          -556,
+          -1866
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-69",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -606,
+          -2524
+        ],
+        [
+          -695,
+          -2536
+        ],
+        [
+          -802,
+          -2544
+        ],
+        [
+          -833,
+          -2534
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-70",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -486,
+          -2554
+        ],
+        [
+          -499,
+          -2587
+        ],
+        [
+          -517,
+          -2586
+        ],
+        [
+          -563,
+          -2558
+        ],
+        [
+          -580,
+          -2552
+        ],
+        [
+          -606,
+          -2524
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-71",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -352,
+          -2603
+        ],
+        [
+          -363,
+          -2569
+        ],
+        [
+          -374,
+          -2554
+        ],
+        [
+          -380,
+          -2526
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-72",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -285,
+          -2629
+        ],
+        [
+          -246,
+          -2565
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-73",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -536,
+          -2428
+        ],
+        [
+          -622,
+          -2455
+        ],
+        [
+          -650,
+          -2482
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-74",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -478,
+          -2458
+        ],
+        [
+          -535,
+          -2465
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-75",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -349,
+          -2458
+        ],
+        [
+          -420,
+          -2447
+        ],
+        [
+          -477,
+          -2422
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-76",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -335,
+          -2406
+        ],
+        [
+          -408,
+          -2405
+        ],
+        [
+          -446,
+          -2436
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-77",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -307,
+          -2333
+        ],
+        [
+          -342,
+          -2308
+        ],
+        [
+          -408,
+          -2240
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-78",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -246,
+          -2511
+        ],
+        [
+          -302,
+          -2515
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-79",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -221,
+          -2363
+        ],
+        [
+          -138,
+          -2383
+        ],
+        [
+          -99,
+          -2401
+        ],
+        [
+          -27,
+          -2447
+        ],
+        [
+          33,
+          -2504
+        ],
+        [
+          84,
+          -2536
+        ],
+        [
+          115,
+          -2486
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-80",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -222,
+          -2274
+        ],
+        [
+          -102,
+          -2264
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-81",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -194,
+          -2640
+        ],
+        [
+          -248,
+          -2632
+        ],
+        [
+          -269,
+          -2637
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-82",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -125,
+          -2658
+        ],
+        [
+          -135,
+          -2693
+        ],
+        [
+          -182,
+          -2668
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-83",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -64,
+          -2696
+        ],
+        [
+          -84,
+          -2726
+        ],
+        [
+          -60,
+          -2752
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-84",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -3,
+          -2734
+        ],
+        [
+          8,
+          -2700
+        ],
+        [
+          1,
+          -2662
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-85",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -909,
+          -1638
+        ],
+        [
+          -896,
+          -1671
+        ],
+        [
+          -900,
+          -1690
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-86",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -880,
+          -1951
+        ],
+        [
+          -952,
+          -1956
+        ],
+        [
+          -969,
+          -1964
+        ],
+        [
+          -978,
+          -1998
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-87",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -848,
+          -1958
+        ],
+        [
+          -826,
+          -1930
+        ],
+        [
+          -814,
+          -1896
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-88",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1081,
+          -2275
+        ],
+        [
+          -1104,
+          -2247
+        ],
+        [
+          -1057,
+          -2193
+        ],
+        [
+          -1006,
+          -2118
+        ],
+        [
+          -992,
+          -2085
+        ],
+        [
+          -981,
+          -2032
+        ],
+        [
+          -978,
+          -1998
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-89",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1017,
+          -2334
+        ],
+        [
+          -1047,
+          -2315
+        ],
+        [
+          -1081,
+          -2275
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-90",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -983,
+          -2251
+        ],
+        [
+          -1015,
+          -2235
+        ],
+        [
+          -1031,
+          -2218
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-91",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1195,
+          -2384
+        ],
+        [
+          -1107,
+          -2401
+        ],
+        [
+          -1063,
+          -2388
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-92",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1160,
+          -2343
+        ],
+        [
+          -1183,
+          -2316
+        ],
+        [
+          -1189,
+          -2288
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-93",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -938,
+          -2318
+        ],
+        [
+          -920,
+          -2351
+        ],
+        [
+          -919,
+          -2380
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-94",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -877,
+          -2098
+        ],
+        [
+          -904,
+          -2074
+        ],
+        [
+          -950,
+          -2045
+        ],
+        [
+          -983,
+          -2039
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-95",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1213,
+          -2598
+        ],
+        [
+          -1229,
+          -2630
+        ],
+        [
+          -1247,
+          -2631
+        ],
+        [
+          -1267,
+          -2597
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-96",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -764,
+          -2360
+        ],
+        [
+          -757,
+          -2450
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-97",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -837,
+          -2367
+        ],
+        [
+          -861,
+          -2317
+        ],
+        [
+          -889,
+          -2286
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-98",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -793,
+          -2279
+        ],
+        [
+          -776,
+          -2316
+        ],
+        [
+          -764,
+          -2360
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-99",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -677,
+          -2533
+        ],
+        [
+          -691,
+          -2500
+        ],
+        [
+          -688,
+          -2476
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-100",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -731,
+          -2537
+        ],
+        [
+          -727,
+          -2501
+        ],
+        [
+          -734,
+          -2464
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-101",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -784,
+          -2543
+        ],
+        [
+          -795,
+          -2509
+        ],
+        [
+          -830,
+          -2503
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-102",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -499,
+          -2587
+        ],
+        [
+          -463,
+          -2590
+        ],
+        [
+          -462,
+          -2570
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-103",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -517,
+          -2586
+        ],
+        [
+          -534,
+          -2554
+        ],
+        [
+          -538,
+          -2529
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-104",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -420,
+          -2447
+        ],
+        [
+          -418,
+          -2501
+        ],
+        [
+          -411,
+          -2521
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-105",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -408,
+          -2405
+        ],
+        [
+          -397,
+          -2311
+        ],
+        [
+          -368,
+          -2283
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-106",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -138,
+          -2383
+        ],
+        [
+          -107,
+          -2298
+        ],
+        [
+          -102,
+          -2264
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-107",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          66,
+          -2527
+        ],
+        [
+          91,
+          -2449
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-108",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -84,
+          -2726
+        ],
+        [
+          -107,
+          -2698
+        ],
+        [
+          -134,
+          -2693
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-109",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -969,
+          -1964
+        ],
+        [
+          -976,
+          -1911
+        ],
+        [
+          -975,
+          -1881
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-110",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1038,
+          -2162
+        ],
+        [
+          -1067,
+          -2141
+        ],
+        [
+          -1060,
+          -2124
+        ],
+        [
+          -1070,
+          -2085
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-111",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -998,
+          -2102
+        ],
+        [
+          -1024,
+          -2077
+        ],
+        [
+          -1036,
+          -2089
+        ],
+        [
+          -1070,
+          -2085
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-112",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1125,
+          -2398
+        ],
+        [
+          -1113,
+          -2364
+        ],
+        [
+          -1103,
+          -2348
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-113",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -397,
+          -2311
+        ],
+        [
+          -343,
+          -2342
+        ],
+        [
+          -313,
+          -2351
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "d0-114",
+      "kind": "street",
+      "bridge": false,
+      "district": "downtown",
+      "points": [
+        [
+          -1067,
+          -2141
+        ],
+        [
+          -1088,
+          -2190
+        ],
+        [
+          -1077,
+          -2218
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
     }
   ],
   "savedAt": "2026-09-30T23:15:10.032412Z",
