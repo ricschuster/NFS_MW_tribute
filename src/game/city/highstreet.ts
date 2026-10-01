@@ -16,7 +16,7 @@ const M = UNITS_PER_METRE;
  * something worked out: which boulevard becomes a high street is the whole
  * character of the area.
  */
-export const HIGH_STREETS: Record<number, readonly string[]> = {};
+export const HIGH_STREETS: Record<number, readonly string[]> = { 0: ['n100'] };
 
 /** From the kerb to the shopfront: what the drafter stands shops behind. */
 export const PAVEMENT = 4;

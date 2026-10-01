@@ -433,6 +433,25 @@ const LATER_ROUTES: PlacedRoute[] = [
       [-1100, -1455],
     ],
   },
+  // Main Street Sprint (#488): Midtown south-west's event, the owner's pick -
+  // a sprint down the main street from downtown's edge to Tidewater Park.
+  // In from downtown on n99, east along the top boulevard (r39), and down the
+  // high street (n100) between the shopfronts to where it enters the park.
+  // The high street is the draft's choice of boulevard; the owner's pick
+  // moves the last two way points with it.
+  {
+    name: 'Main Street Sprint',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [-75, -2207],
+      [110, -2075],
+      [700, -1850],
+      [981, -2150],
+      [844, -2428],
+      [703, -2664],
+    ],
+  },
 ];
 
 /**
