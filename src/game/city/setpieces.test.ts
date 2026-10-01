@@ -8,6 +8,7 @@ import { WHARF_PROPS } from './wharfprops';
 import { FORT_PROPS } from './fortprops';
 import { HIGHMOOR_PROPS } from './highmoorprops';
 import { TIDEWATER_PROPS } from './tidewaterprops';
+import { MIDTOWN_PROPS } from './midtownprops';
 import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
@@ -233,10 +234,10 @@ describe('Highmoor Park (#460)', () => {
   it('puts its own props in first, then a wood of a thousand trees and more', () => {
     expect(pieces.slice(0, piecesOf(HIGHMOOR_PROPS)).every((p) => p.kind !== 'tree')).toBe(true);
     expect(trees.length).toBeGreaterThan(1000);
-    // Everything after the placed props is generated: Highmoor's woods, then
-    // Tidewater Park's trees (#461), whose buildings are placed after
-    // Highmoor's, then Midtown north's houses (#477).
-    expect(pieces.slice(piecesOf(HIGHMOOR_PROPS) + piecesOf(TIDEWATER_PROPS)).every((p) => ['tree', 'house', 'apartment'].includes(p.kind))).toBe(true);
+    // Everything after the placed props is a tree: Highmoor's woods, then
+    // Tidewater Park's (#461). Tidewater's buildings and Midtown north's
+    // houses (#477) are placed props, after Highmoor's.
+    expect(pieces.slice(piecesOf(HIGHMOOR_PROPS) + piecesOf(TIDEWATER_PROPS) + piecesOf(MIDTOWN_PROPS)).every((p) => p.kind === 'tree')).toBe(true);
   });
 
   it('keeps the woods in the park or on unclaimed ground just past it, off the roads, out of the castle and below the meadow', () => {

@@ -36,7 +36,9 @@ const houses = !HOUSES && inFile.length ? inFile.map(({ id, ...p }) => p) : subu
   city.roads,
   city.nodes,
   (x, z) => inWater(city, x, z),
-  city.setPieces.filter((p) => !homes.has(p.kind)),
+  // Without anything this tool drafted: last time's hedges and trees would
+  // otherwise stand in the way of the houses they were drafted round.
+  city.setPieces.filter((p) => !drafted.has(p.kind)),
   [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at)],
   city.routes.map((r) => r.points),
 );
