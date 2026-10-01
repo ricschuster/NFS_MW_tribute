@@ -3,7 +3,7 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, end of session).** Nine areas are done and
+- **Start here (2026-10-01, end of session).** Seven areas are done and
   signed off (Marrow Field, Sablet Wharf, Halloway Quarry, Kestrel Head,
   Highmoor Park, Tidewater Park, Midtown north); three are audited **with the
   owner's answers in** and nothing built; Ashford Point is parked (#293, never
