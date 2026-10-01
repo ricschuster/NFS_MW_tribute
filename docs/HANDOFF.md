@@ -3,7 +3,50 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, night; Industrial and Ashford Point done - every
+- **Start here (2026-10-01, late night; downtown (#268) built, its events
+  in progress).**
+  - **Done and merged:** the audit and the owner's answers are on #268. #524
+    trimmed the plan polygon to the shore and moved the wharf's ten
+    containers off the downtown bank. #525 is the street drafter
+    (`suburbdraft --district downtown`, `tools/downtowngrow.mjs`), and #526
+    the 114 grown streets, kept by the owner unedited. #527 adds 15 building
+    kinds (`scene/downtownmodels.ts`), drawn from Vancouver's downtown as
+    originals; `SOLID_REACH` went from 70 to 120 for the stadium. #528 is
+    the building drafter (`city/downtown.ts`, `housedraft --place
+    downtown`). #529 is the 462 buildings and landmarks with the owner's
+    edits; the editor's checks now measure round pieces as round and let
+    the cruise terminal stand over water.
+  - **Open: #530**, the pavements (`city/pavements.ts`, `City.pavements`,
+    drawn with the drives). `onApron` now counts drives and pavements as
+    paved. Junction corners are still grass.
+  - **Next: the events**, on the pushed branch `downtown-events` (no PR), on
+    top of #530: the Harbour Sprint (n104 then r57 into the old core) and
+    the Old Town Circuit (r57, the old-core streets, n102, n99), with
+    `CAR_EVENTS_MAX` at 16. Both routes are wrong:
+    - The sprint leaves r57 at the n99/n104 junction (-731,-2469), detours
+      north via (-688,-2374) and (-876,-2379), and only rejoins r57 at
+      (-866,-2450). The route graph seems to miss r57's first 130 m, so find
+      out why first; it may be a real gap in the network.
+    - The circuit takes r30 instead of the old core's streets. Its way
+      points need to sit on street junctions. A route snaps each way point
+      to the nearest road vertex, and builds every leg from shortest paths
+      that never reuse a road.
+    - Then run `citylap` (re-record, don't chase), and open the PR.
+  - **Then:** the owner's drive-through and sign-off, and `docs/map-areas.md`
+    (downtown's content column). Possible polish: paving at junction
+    corners; fewer art-deco towers near the lookout; gaps in the old core's
+    terraces. Owner's note: revisit Marrow Field and Halloway Quarry
+    afterwards (scope not given).
+  - **Editors:** the Downtown Props editor is
+    https://claude.ai/artifact/2BZVXzmzstf1tbctnKDbAY. Its store
+    (`edits/props` v3) carries six roads that differ only where the editor
+    clips them at its crop edge (n102, n108-n112, p1). They were not
+    synced, so never let `propsync` take roads from that save. The Road
+    Editor store (`edits/roads` v69) matched main after #526.
+  - **Running:** the dev server on :5176 runs from `../crosstown-play-downtown`
+    (detached at origin/downtown-pavements), with a LOCAL ONLY downtown
+    spawn. Work happens in `../crosstown-downtown`.
+- **Earlier (2026-10-01, night; Industrial and Ashford Point done - every
   area but downtown is finished).**
   - **Industrial (#489): done** (#522), the owner's approval with no edits.
   - **Ashford Point (#293): done**, unparked by the owner and taken through
