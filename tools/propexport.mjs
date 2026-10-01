@@ -155,8 +155,15 @@ const onLine = (q, pts) => {
   return false;
 };
 const drawnWidths = {};
+// A road whose loose end `roadsync` pulled onto the road it was reaching for
+// (`stitch`) has its last segment end somewhere the drawing does not: one end
+// on the drawn line, the other within the stitch reach of the drawn road's own
+// end. That segment is the road too, and is replaced by the road as drawn,
+// rather than left as a stray piece the editor cannot move.
+const nearEnd = (q, pts) => [pts[0], pts[pts.length - 1]].some((e) => Math.hypot(e[0] - q[0], e[1] - q[1]) <= 70);
 for (const seg of roads) {
-  const owner = drawn.find((r) => onLine(seg.a, r.points) && onLine(seg.b, r.points));
+  const owner = drawn.find((r) => onLine(seg.a, r.points) && onLine(seg.b, r.points))
+    ?? drawn.find((r) => (onLine(seg.a, r.points) && nearEnd(seg.b, r.points)) || (onLine(seg.b, r.points) && nearEnd(seg.a, r.points)));
   if (!owner) continue;
   seg.road = owner.id;
   drawnWidths[owner.id] = Math.max(drawnWidths[owner.id] ?? 0, seg.width);
