@@ -3,6 +3,7 @@ import { distanceToSegment } from './grid';
 import { cellRandom } from './highmoor';
 import { PLAN_DISTRICTS, inArea } from './plan';
 import { HOUSE_GROWN, hitsSetPiece } from './setpieces';
+import { PAVEMENT } from './highstreet';
 import { groundAt, type Terrain } from './terrain';
 import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
 
@@ -10,12 +11,13 @@ const M = UNITS_PER_METRE;
 
 /**
  * Which midtowns are suburbs with houses on their streets, by their place in
- * the plan's list of midtowns: Midtown north (#477) and Midtown south (#487).
+ * the plan's list of midtowns: Midtown north (#477), Midtown south (#487)
+ * and Midtown south-west (#488).
  * The drafts take one at a time (`npm run housedraft -- --place P`, whose
  * table in `tools/suburbs.mjs` carries the same indices), since each area's
  * houses go to its own props file.
  */
-export const SUBURB_AREAS = [2, 1];
+export const SUBURB_AREAS = [2, 1, 0];
 
 /**
  * A house and a low apartment block, at the size their models are drawn: real
@@ -25,14 +27,26 @@ export const SUBURB_AREAS = [2, 1];
  */
 export const HOUSE = { w: 10 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
 export const APARTMENT = { w: 24 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
+/** A high street's shop with flats over it, and its block of flats (#488). */
+export const SHOP = { w: 8 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
+export const FLAT = { w: 16 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
 const HOUSE_COLOURS = ['cream', 'brick', 'blue', 'green'];
 const APARTMENT_COLOURS = ['brick', 'render'];
+const SHOP_COLOURS = ['red', 'green', 'blue', 'black'];
+type HomeKind = 'house' | 'apartment' | 'shop' | 'flat';
+/** The footprint each home kind is drafted at. */
+const SIZES: Record<HomeKind, { w: number; l: number }> = { house: HOUSE, apartment: APARTMENT, shop: SHOP, flat: FLAT };
+const isHome = (kind: string): kind is HomeKind => kind in SIZES;
 
 /** Along the street, from one house's middle to the next. */
 const HOUSE_FRONTAGE = 27;
 const APARTMENT_FRONTAGE = 52;
 /** From the kerb to the front wall: the front garden. */
 const GARDEN = 7;
+/** Between two shops on a high street: a terrace, not a row of houses. */
+const SHOP_GAP = 1;
+/** How many of a high street's lots are a block of flats rather than a shop. */
+const FLATS = 0.25;
 /**
  * The garden on a road a race runs on. A driver who runs a corner wide goes
  * further than a front garden - `citylap`'s reference driver leaves the
@@ -84,10 +98,13 @@ export function suburbHousesFor(
   clear: readonly Vec2[],
   raced: readonly Vec2[][] = [],
   areas: readonly number[] = SUBURB_AREAS,
+  high: readonly Vec2[][] = [],
 ): AuthoredProp[] {
   const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
   const houses: AuthoredProp[] = [];
-  const placed: { at: Vec2; r: number }[] = [];
+  // `inner` is the half-width a terrace may close up to; zero for anything
+  // that is not on a high street, which keeps its circle of garden.
+  const placed: { at: Vec2; r: number; inner: number }[] = [];
   for (const index of areas) {
     const area = midtowns[index];
     if (!area) continue;
@@ -105,51 +122,97 @@ export function suburbHousesFor(
     const racing = raced.flatMap((line) => line.slice(1).map((b, k) => ({ a: line[k], b })));
     const onRace = (a: Vec2, b: Vec2): boolean =>
       racing.some((s) => distanceToSegment(a.x, a.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M && distanceToSegment(b.x, b.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M);
+    const highSegments = high.flatMap((line) => line.slice(1).map((b, k) => ({ a: line[k], b })));
+    const onHigh = (a: Vec2, b: Vec2): boolean =>
+      highSegments.some((s) => distanceToSegment(a.x, a.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M && distanceToSegment(b.x, b.z, s.a.x, s.a.z, s.b.x, s.b.z) < 3 * M);
 
     // A road is walked as a run from one junction to the next, not segment by
     // segment: a drawn road is split at every vertex, and most of its pieces
     // are shorter than a house's frontage.
     for (const run of runsOf(local, nodes)) {
       const boulevard = run.road.class === 'boulevard';
-      const size = boulevard ? APARTMENT : HOUSE;
-      const frontage = boulevard ? APARTMENT_FRONTAGE : HOUSE_FRONTAGE;
-      const garden = run.raced(onRace) ? RACED_GARDEN : GARDEN;
+      const highStreet = run.raced(onHigh);
       const length = run.length / M;
-      const startClear = run.junctionAtStart ? CORNER + size.w / 2 : size.w / 2;
-      const endClear = run.junctionAtEnd ? CORNER + size.w / 2 : size.w / 2;
-      for (let d = startClear; d <= length - endClear; d += frontage) {
-        const here = run.at(d * M);
+      const lots: { d: number; side: number; kind: HomeKind; cx: number; cz: number }[] = [];
+      const cellAt = (d: number, side: number) => {
+        const p = run.at(d * M).p;
+        return { cx: Math.round((p.x / M) * 2 + side), cz: Math.round((p.z / M) * 2) };
+      };
+      if (highStreet) {
+        // A high street (#488), lot by lot down each side, since a shop and a
+        // block of flats are not the same width: a terrace, no gaps.
         for (const side of [1, -1]) {
-          const cx = Math.round((here.p.x / M) * 2 + side);
-          const cz = Math.round((here.p.z / M) * 2);
-          if (cellRandom(cx, cz, 11) < EMPTY) continue;
-          const n = { x: -here.dir.z * side, z: here.dir.x * side };
-          const out = run.road.width / 2 / M + garden + size.l / 2;
-          const at = { x: here.p.x + n.x * out * M, z: here.p.z + n.z * out * M };
-          // Facing the street: the model's front is along its heading.
-          const angle = Math.round(Math.atan2(-n.x, -n.z) * 1000) / 1000;
-          const corners = footprint(at, angle, size);
-          if (![at, ...corners].every((p) => inArea(area.poly, p) && !isWater(p.x, p.z))) continue;
-          // Nothing between a road and the water close behind it: that side
-          // of a waterfront road is the view, not a lot (#487's promenade).
-          const behind = out + size.l / 2 + WATERFRONT;
-          let onTheWater = false;
-          for (let d = run.road.width / 2 / M; d <= behind && !onTheWater; d += 5) onTheWater = isWater(here.p.x + n.x * d * M, here.p.z + n.z * d * M);
-          if (onTheWater) continue;
-          const r = Math.hypot(size.w, size.l) / 2;
-          if (placed.some((p) => Math.hypot(p.at.x - at.x, p.at.z - at.z) / M < (p.r + r) * 0.82 + HOUSE_GAP)) continue;
-          // Clear of every road's edge; the road it faces is already a garden away.
-          const probe = [at, ...corners, ...edgeMiddles(corners)];
-          if (segments.some((s) => probe.some((p) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) < s.half + ROAD_CLEAR * M))) continue;
-          if (clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < r + 6)) continue;
-          if (probe.some((p) => hitsSetPiece(pieces, p.x, p.z, -Infinity, 2 * M, Infinity))) continue;
-          const heights = probe.map((p) => groundAt(terrain, p.x, p.z) / M);
-          if (Math.max(...heights) - Math.min(...heights) > MAX_FALL) continue;
-          const colours = boulevard ? APARTMENT_COLOURS : HOUSE_COLOURS;
-          const variant = colours[Math.floor(cellRandom(cx, cz, 12) * colours.length)];
-          houses.push({ kind: boulevard ? 'apartment' : 'house', x: Math.round((at.x / M) * 10) / 10, z: Math.round((at.z / M) * 10) / 10, angle, variant });
-          placed.push({ at, r });
+          let d = run.junctionAtStart ? CORNER : 0;
+          for (;;) {
+            const { cx, cz } = cellAt(Math.min(length, d + SHOP.w / 2), side);
+            const kind: HomeKind = cellRandom(cx, cz, 13) < FLATS ? 'flat' : 'shop';
+            const w = SIZES[kind].w;
+            if (d + w / 2 > length - (run.junctionAtEnd ? CORNER + w / 2 : w / 2)) break;
+            lots.push({ d: d + w / 2, side, kind, cx, cz });
+            d += w + SHOP_GAP;
+          }
         }
+      } else {
+        // Anything else at a fixed frontage, both sides at once, a gap left
+        // now and then: a suburb rather than a terrace.
+        const kind: HomeKind = boulevard ? 'apartment' : 'house';
+        const size = SIZES[kind];
+        const frontage = boulevard ? APARTMENT_FRONTAGE : HOUSE_FRONTAGE;
+        const startClear = run.junctionAtStart ? CORNER + size.w / 2 : size.w / 2;
+        const endClear = run.junctionAtEnd ? CORNER + size.w / 2 : size.w / 2;
+        for (let d = startClear; d <= length - endClear; d += frontage) {
+          for (const side of [1, -1]) {
+            const { cx, cz } = cellAt(d, side);
+            if (cellRandom(cx, cz, 11) < EMPTY) continue;
+            lots.push({ d, side, kind, cx, cz });
+          }
+        }
+      }
+      // A high street's shops stand at the back of its pavement, on a race
+      // too: the sprint down a high street is between the shopfronts, and one
+      // set back eighteen metres is a boulevard.
+      const garden = highStreet ? PAVEMENT : run.raced(onRace) ? RACED_GARDEN : GARDEN;
+      for (const { d, side, kind, cx, cz } of lots) {
+        const size = SIZES[kind];
+        const here = run.at(d * M);
+        const n = { x: -here.dir.z * side, z: here.dir.x * side };
+        const out = run.road.width / 2 / M + garden + size.l / 2;
+        const at = { x: here.p.x + n.x * out * M, z: here.p.z + n.z * out * M };
+        // Facing the street: the model's front is along its heading.
+        const angle = Math.round(Math.atan2(-n.x, -n.z) * 1000) / 1000;
+        const corners = footprint(at, angle, size);
+        if (![at, ...corners].every((p) => inArea(area.poly, p) && !isWater(p.x, p.z))) continue;
+        // Nothing between a road and the water close behind it: that side
+        // of a waterfront road is the view, not a lot (#487's promenade).
+        const behind = out + size.l / 2 + WATERFRONT;
+        let onTheWater = false;
+        for (let d = run.road.width / 2 / M; d <= behind && !onTheWater; d += 5) onTheWater = isWater(here.p.x + n.x * d * M, here.p.z + n.z * d * M);
+        if (onTheWater) continue;
+        const r = Math.hypot(size.w, size.l) / 2;
+        const inner = highStreet ? Math.min(size.w, size.l) / 2 : 0;
+        if (
+          placed.some((p) => {
+            const apart = Math.hypot(p.at.x - at.x, p.at.z - at.z) / M;
+            // Two shops on one high street close up to a terrace; anything
+            // else keeps its garden's distance.
+            return p.inner && inner ? apart < p.inner + inner : apart < (p.r + r) * 0.82 + HOUSE_GAP;
+          })
+        )
+          continue;
+        // Clear of every road's edge; the road it faces is already a garden
+        // away, or on a high street a pavement, which is narrower than the
+        // clearance and would rule out the street the shop is on.
+        const probe = [at, ...corners, ...edgeMiddles(corners)];
+        const roadClear = highStreet ? PAVEMENT - 1 : ROAD_CLEAR;
+        if (segments.some((s) => probe.some((p) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) < s.half + roadClear * M))) continue;
+        if (clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < r + 6)) continue;
+        if (probe.some((p) => hitsSetPiece(pieces, p.x, p.z, -Infinity, 2 * M, Infinity))) continue;
+        const heights = probe.map((p) => groundAt(terrain, p.x, p.z) / M);
+        if (Math.max(...heights) - Math.min(...heights) > MAX_FALL) continue;
+        const colours = kind === 'shop' ? SHOP_COLOURS : kind === 'house' ? HOUSE_COLOURS : APARTMENT_COLOURS;
+        const variant = colours[Math.floor(cellRandom(cx, cz, 12) * colours.length)];
+        houses.push({ kind, x: Math.round((at.x / M) * 10) / 10, z: Math.round((at.z / M) * 10) / 10, angle, variant });
+        placed.push({ at, r, inner });
       }
     }
   }
@@ -289,7 +352,7 @@ export function suburbExtrasFor(
     .filter((r) => onTheStreet(nodes, r))
     .map((r) => ({ a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 }));
   const kerbGap = (p: Vec2) => Math.min(...segments.map((s) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) - s.half)) / M;
-  const homes = houses.filter((h) => h.kind === 'house' || h.kind === 'apartment').map((h) => ({ h, size: h.kind === 'house' ? HOUSE : APARTMENT }));
+  const homes = houses.flatMap((h) => (isHome(h.kind) ? [{ h, size: SIZES[h.kind] }] : []));
   const inHome = (p: Vec2, margin: number) =>
     homes.some(({ h, size }) => {
       const dx = p.x / M - h.x, dz = p.z / M - h.z;

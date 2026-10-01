@@ -10,6 +10,7 @@
 // Usage:
 //   npm run cityshot                      # all viewpoints -> screenshots/city-*.png
 //   npm run cityshot -- --view downtown   # just one
+//   npm run cityshot -- --view at --at -926,-543,90   # the car anywhere: x,z in metres, heading in degrees
 //
 // `drive`, `pursuit`, `crash` and `takedown` are not viewpoints but modes: they
 // put a car in the city and photograph what the player would be looking at.
@@ -30,7 +31,7 @@ const DRIVING = new Set([
   'drive', 'pursuit', 'crash', 'takedown', 'roadblock', 'enforcer', 'spikes',
   'billboard', 'collection', 'streetfind', 'newcar', 'race', 'speedrun',
   'ambush', 'repair', 'claim', 'wheel', 'touch', 'breaker', 'radio', 'stuck', 'patrol', 'busted', 'signage', 'hour',
-  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies', 'guide',
+  'unseen', 'banner', 'card', 'nitro', 'startline', 'burnout', 'flyover', 'rivalstart', 'bodies', 'guide', 'at',
 ]);
 const VIEWS = flag('--view')
   ? [flag('--view')]
@@ -750,6 +751,26 @@ for (const view of VIEWS) {
       world.damage = 0.85;
       world.rep.total = 48300;
     });
+    await page.waitForTimeout(2400);
+  }
+
+  if (view === 'at') {
+    // The car anywhere (#488): for looking at an area being built, where no
+    // fixed viewpoint goes. Heading in degrees, 0 up the map (+z).
+    const [x, z, heading = 0] = (flag('--at') ?? '').split(',').map(Number);
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', { timeout: 60000 });
+    await page.evaluate(
+      ({ x, z, heading }) => {
+        const { world } = globalThis.crosstown;
+        world.x = x * 135;
+        world.z = z * 135;
+        world.heading = (heading * Math.PI) / 180;
+        world.recover();
+        world.heading = (heading * Math.PI) / 180;
+        world.speed = 0;
+      },
+      { x, z, heading },
+    );
     await page.waitForTimeout(2400);
   }
 

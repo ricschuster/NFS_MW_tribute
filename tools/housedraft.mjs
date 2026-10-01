@@ -29,12 +29,15 @@ const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
 const { CITY_SEED } = await server.ssrLoadModule('/src/game/constants.ts');
 const { inWater } = await server.ssrLoadModule('/src/game/city/grid.ts');
 const { suburbHousesFor, suburbExtrasFor } = await server.ssrLoadModule('/src/game/city/suburb.ts');
+const { highStreetLines } = await server.ssrLoadModule('/src/game/city/highstreet.ts');
 const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 await server.close();
 
 const old = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : { props: [] };
-const homes = new Set(['house', 'apartment']);
-const drafted = new Set(['house', 'apartment', 'hedge', 'street-tree']);
+const homes = new Set(['house', 'apartment', 'shop', 'flat']);
+const drafted = new Set([...homes, 'hedge', 'street-tree']);
+// The suburb's high street (#488), if it has one: `HIGH_STREETS` in `city/highstreet.ts`.
+const high = highStreetLines(suburb.index);
 const inFile = (old.props ?? []).filter((p) => homes.has(p.kind));
 const houses = !HOUSES && inFile.length ? inFile.map(({ id, ...p }) => p) : suburbHousesFor(
   city.terrain,
@@ -47,6 +50,7 @@ const houses = !HOUSES && inFile.length ? inFile.map(({ id, ...p }) => p) : subu
   [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at)],
   city.routes.map((r) => r.points),
   [suburb.index],
+  high,
 );
 const extras = suburbExtrasFor(houses, city.roads, city.nodes, (x, z) => inWater(city, x, z), city.routes.map((r) => r.points), [
   ...city.collectibles.map((c) => c.at),
@@ -60,7 +64,7 @@ const props = [
   ...extras.map((e, i) => ({ id: `${e.kind === 'hedge' ? 'g' : 't'}${i + 1}`, ...e })),
 ];
 const count = (k) => props.filter((p) => p.kind === k).length;
-console.log(`${count('house')} houses, ${count('apartment')} apartments${HOUSES || !inFile.length ? ' (drafted)' : ' (kept)'}; ${count('hedge')} hedges, ${count('street-tree')} street trees; ${kept.length} other props kept`);
+console.log(`${count('house')} houses, ${count('apartment')} apartments, ${count('shop')} shops, ${count('flat')} flats${HOUSES || !inFile.length ? ' (drafted)' : ' (kept)'}; ${count('hedge')} hedges, ${count('street-tree')} street trees; ${kept.length} other props kept`);
 if (!DRY) {
   // Everything else in the file is kept: an editor save carries the area's
   // roads in it too, which `propsync` merges, and a draft is not a reason to lose them.

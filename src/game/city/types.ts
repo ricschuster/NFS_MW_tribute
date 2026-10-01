@@ -514,6 +514,8 @@ export type SetPieceKind =
   | 'cafe'
   | 'house'
   | 'apartment'
+  | 'shop'
+  | 'flat'
   | 'hedge'
   | 'street-tree';
 

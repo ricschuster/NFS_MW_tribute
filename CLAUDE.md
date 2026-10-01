@@ -57,7 +57,8 @@ what the city is shaped like.
   found, and the cheapest place to answer the next question about the shape of
   the city
 - `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
-  own server, so nothing else needs running
+  own server, so nothing else needs running. `-- --view at --at x,z,heading`
+  stands the car anywhere, for an area no fixed viewpoint covers
 - `npm run citylap` — drive a reference driver round every generated route,
   twice: empty, and with traffic, and then race it against all ten ladder
   rivals, clean and with the boost (#166). Compare against `docs/city-baseline.json`
@@ -158,8 +159,11 @@ what the city is shaped like.
   street trees (#477) round the houses in its props file, keeping those
   houses and any hand edits to them; `-- --houses` redrafts the houses too,
   losing their hand edits. The suburbs are a table in `tools/suburbs.mjs`
-  (`midtown` for Midtown north, the default, and `midtown-south`), which
-  `propexport` and `propsync` read too. Generated once by `city/suburb.ts`,
+  (`midtown` for Midtown north, the default, `midtown-south` and
+  `midtown-sw`), which `propexport` and `propsync` read too. On a midtown's
+  high street (`HIGH_STREETS` in `city/highstreet.ts`, the owner's pick, #488)
+  it drafts terraced shops and flats instead of houses, and the game paves
+  the pavement in front of them. Generated once by `city/suburb.ts`,
   then edited in the area editor (`npm run propexport -- --place P`) and
   synced with `npm run propsync -- --place P`
 - `npm run propexport -- --place P` — crop an area out of the generated city
