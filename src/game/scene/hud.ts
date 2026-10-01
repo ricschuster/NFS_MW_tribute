@@ -27,7 +27,7 @@ import { DISPLAY_MAX_KMH } from '../hudscale';
 import { toMap } from './mapping';
 import { RIVALS } from '../rivals';
 import { MODS } from '../mods';
-import { FIND_COLOUR, HAZARD, MAP_LEGEND, RIVAL_COLOUR, SIGHT_COLOUR } from './legend';
+import { FIND_COLOUR, HAZARD, MAP_LEGEND, RAIL_COLOUR, RIVAL_COLOUR, SIGHT_COLOUR } from './legend';
 import { NITRO_LABELS } from '../nitrofill';
 import { guideLeft } from '../guide';
 import type { CityWorld } from '../cityworld';
@@ -472,6 +472,10 @@ export class Hud {
     for (const road of near) {
       const a = world.city.nodes[road.a].pos;
       const b = world.city.nodes[road.b].pos;
+      if (road.surface === 'rail') {
+        track(ctx, toMap(a, world).x * scale, toMap(a, world).y * scale, toMap(b, world).x * scale, toMap(b, world).y * scale, 1.6);
+        continue;
+      }
       ctx.beginPath();
       ctx.moveTo(toMap(a, world).x * scale, toMap(a, world).y * scale);
       ctx.lineTo(toMap(b, world).x * scale, toMap(b, world).y * scale);
@@ -1633,9 +1637,16 @@ export class Hud {
       // the street and the interstate, and skipping them drew the loop as a
       // ring nobody can get onto. Streets stay out - three thousand of them at
       // this scale is a grey rectangle.
-      if (road.class === 'street') continue;
       const a = world.city.nodes[road.a].pos;
       const b = world.city.nodes[road.b].pos;
+      // The railway is drawn as track, street or not: a way out of a pursuit
+      // that the map does not show is one nobody takes.
+      if (road.surface === 'rail') {
+        track(ctx, px(a.x), py(a.z), px(b.x), py(b.z), 1.2);
+        ctx.lineWidth = 1;
+        continue;
+      }
+      if (road.class === 'street') continue;
       ctx.strokeStyle =
         road.class === 'interstate'
           ? 'rgba(200, 135, 214, 0.75)'
@@ -1934,6 +1945,8 @@ export class Hud {
         ctx.moveTo(x - 7, y);
         ctx.lineTo(x + 7, y);
         ctx.stroke();
+      } else if (shape === 'track') {
+        track(ctx, x - 8, y, x + 8, y, 1.4, colour);
       } else {
         ctx.beginPath();
         ctx.moveTo(x - 5, y);
@@ -2278,4 +2291,30 @@ export class Hud {
     ctx.fillText(banner.text, WIDTH / 2, y + 30);
     ctx.globalAlpha = 1;
   }
+}
+
+/**
+ * A stretch of railway on a map (#514): a line with sleepers across it every
+ * few pixels, which is what tells it from a road at a glance. Leaves the
+ * stroke style set to the railway's colour.
+ */
+function track(ctx: CanvasRenderingContext2D, ax: number, ay: number, bx: number, by: number, width: number, colour = RAIL_COLOUR): void {
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(bx, by);
+  const length = Math.hypot(bx - ax, by - ay);
+  if (length > 0) {
+    const ux = (bx - ax) / length;
+    const uy = (by - ay) / length;
+    const half = width * 1.8;
+    for (let d = 2; d < length; d += 5) {
+      const cx = ax + ux * d;
+      const cy = ay + uy * d;
+      ctx.moveTo(cx - uy * half, cy + ux * half);
+      ctx.lineTo(cx + uy * half, cy - ux * half);
+    }
+  }
+  ctx.stroke();
 }

@@ -24,13 +24,18 @@
  *   amber, they are searching. A shape of its own, so it clashes with nothing.
  * - **violet** is the interstate and the ramps that are the only way onto it.
  * - **pink** is a car waiting to be taken.
+ * - **tan** is the railway (#514), drawn as track: a line with sleepers across
+ *   it, the one shape that says "not a road" without a word.
  *
  * White carries three: you, what the police laid in the road, and the cars you
  * are racing. That is the cap, and it is only tolerable because the last of
  * them exists for the two minutes an event lasts and the first is a ring rather
  * than a dot.
  */
-export type LegendShape = 'dot' | 'line' | 'cross' | 'ring' | 'target' | 'rim';
+/** The railway (#514): tan, and drawn as track rather than as a road. */
+export const RAIL_COLOUR = '#c2a27c';
+
+export type LegendShape = 'dot' | 'line' | 'cross' | 'ring' | 'target' | 'rim' | 'track';
 
 /** Anything the police have laid across the road. */
 export const HAZARD = '#ffffff';
@@ -77,5 +82,6 @@ export const MAP_LEGEND: [string, string, LegendShape][] = [
   ['the one you are chasing down', '#ffd166', 'ring'],
   ['interstate', 'rgba(200, 135, 214, 0.75)', 'line'],
   ['ramp - the only way up', '#e6b3ff', 'line'],
+  ['railway - a way out', RAIL_COLOUR, 'track'],
   ['where you said to go', '#7fe3ff', 'ring'],
 ];
