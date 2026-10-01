@@ -725,7 +725,13 @@ export class CityWorld {
       // bay with a couple of hundred metres of road in front of it.
       const a = this.city.nodes[road.a].pos;
       const b = this.city.nodes[road.b].pos;
-      const gap = Math.hypot((a.x + b.x) / 2 - middle.x, (a.z + b.z) / 2 - middle.z);
+      // Not in a repair shop: a shop stands at a road's middle too, and a car
+      // started inside one is repaired on its first step - which in a
+      // pursuit is the search called off (#293: Ashford Point's spawn road
+      // became the one its shop is on once the generated driveways went).
+      const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+      if (this.city.repairs.some((shop) => Math.hypot(shop.at.x - mid.x, shop.at.z - mid.z) < REPAIR_RANGE * 2)) continue;
+      const gap = Math.hypot(mid.x - middle.x, mid.z - middle.z);
       if (gap < bestGap) {
         bestGap = gap;
         best = road;

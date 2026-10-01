@@ -3,7 +3,49 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, late; Midtown south-west done, Industrial redrafted).**
+- **Start here (2026-10-01, night; Industrial and Ashford Point done - every
+  area but downtown is finished).**
+  - **Industrial (#489): done** (#522), the owner's approval with no edits.
+  - **Ashford Point (#293): done**, unparked by the owner and taken through
+    the same pipeline as the other areas: audit and answers on #293
+    (affluent estates; a coast sprint and a circuit), lanes drafted by
+    `suburbdraft --district waterfront` and edited to the owner's sketch
+    (coast road `a-west`, ridge roads `a-ridge`/`a-ridge-sw`, `a0-3`
+    removed), estates drafted by `housedraft --place ashford` - 86 villas,
+    40 houses, 9 manors (two new set pieces, on footings) - then thinned on
+    the owner's word: half the villas, no hedges, street trees at two in
+    five and set back from the lanes, lamps set back too. Landscaping
+    (`city/ashford.ts`): drives (`City.drives`, a mesh of their own in
+    `scene/drives.ts`, because as aprons the ground shader paid for every
+    one on every fragment and the page stopped rendering), garden trees,
+    copses and three ponds. Events: the **Ashford Coast Sprint** (4.9 km,
+    73% of top empty, 25% in traffic - traffic triples the time on the
+    coast road; recorded, not chased) and the **Estates Circuit** (2.8 km,
+    47%/33%); `CAR_EVENTS_MAX` 14. The generated driveways are off
+    (`CITY_LOCAL_STREETS_KINDS` empty).
+  - **Changed after the owner's approval, to say so:** the street trees on
+    the roads the two new races use were removed by the drafter's race rule
+    (256 to 154), and two ponds moved inland off near-sea-level ground,
+    which their banks were pulling under sea level.
+  - **Found and fixed on the way:** `connect` returned early without
+    trimming water stubs once the network joined first time (the driveways
+    had always prevented that), leaving eight streets stopping at the water;
+    `spawnIn` started the car inside Ashford's repair shop, which ended a
+    search on the first step back; the junction-sign tests were skipped
+    since the grid went off and run again now.
+  - **Next:** downtown (#268), the last area, needs the owner's audit
+    answers first. Offered and unblocked: why the Works Circuit's traffic
+    lap crashes (22); the coast road's traffic on the Coast Sprint; a
+    tidier level crossing; a report on #484's moved road ends; the rest of
+    the railway (#514). Parked: #500, #469.
+  - **Running:** dev server :5174 from `../crosstown-ashford`; :5175 from
+    `../crosstown-south` (Industrial, merged - stale). Stale worktrees,
+    removable on the owner's word: `../crosstown-play`,
+    `../crosstown-industrial`, `../crosstown-main`, `../crosstown-sw`,
+    `../crosstown-south`. The Ashford Point Props editor is
+    https://claude.ai/artifact/4ctpAcd897DVp81gnRRCNG (store empty: the
+    owner approved the draft as published).
+- **Earlier (2026-10-01, late; Midtown south-west done, Industrial redrafted).**
   - **Midtown south-west (#488): done** (#513), with the owner's one edit
     (n99's west end joined to r57). The Road Editor's store matches main (v68).
   - **The railway (#514).** The owner's call: Industrial first, the rest of

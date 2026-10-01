@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
-import { CHAPEL_GROWN, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
+import { CHAPEL_GROWN, ESTATE_FOOTING, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
 
 const M = UNITS_PER_METRE;
 
@@ -783,6 +783,66 @@ function wagon(variant?: string): Part[] {
   return [...bogies, frame, { geometry: at(box(2.9, 2.7, 13.6), 0, 2.95, 0), colour: RUST }, { geometry: at(box(2.95, 2.3, 2.6), 0, 2.85, 0), colour: '#6f4a33' }];
 }
 
+/**
+ * A hipped roof over a `w` by `l` box: a four-sided pyramid squashed to the
+ * plan, which reads as a grander house than the suburbs' gables.
+ */
+const hipRoof = (w: number, h: number, l: number) =>
+  new THREE.ConeGeometry(Math.SQRT1_2, 1, 4).rotateY(Math.PI / 4).scale(w, h, l);
+const WINDOW = '#3a4a52';
+/** Wall from its footing, so the downhill side of a slope shows no daylight under it. */
+const walled = (w: number, h: number, l: number, x: number, z: number) =>
+  at(box(w, h + ESTATE_FOOTING, l), x, (h - ESTATE_FOOTING) / 2, z);
+
+/**
+ * A villa (#293), a size up from a suburb house: two full storeys under a
+ * hipped roof, a door off-centre, and a garage to one side with its own flat
+ * roof. The front faces +z, like the house's.
+ */
+function villa(variant?: string): Part[] {
+  const wall = WALLS[variant ?? 'cream'] ?? WALLS.cream;
+  const roof = ROOFS[variant ?? 'cream'] ?? ROOFS.cream;
+  const windows = [-8.5, -5.5, -0.5, 2.5].flatMap((x) => [1.6, 4.9].map((y) => ({ geometry: at(box(1.6, 1.4, 0.1), x, y, 6.02), colour: WINDOW })));
+  return [
+    { geometry: walled(15, 7, 12, -3, 0), colour: wall },
+    { geometry: at(hipRoof(15.8, 3.4, 12.8), -3, 7 + 1.7, 0), colour: roof },
+    { geometry: at(box(1.6, 2.4, 0.12), -3, 1.2, 6.03), colour: '#5a3e2e' },
+    { geometry: at(box(2.4, 0.2, 1.4), -3, 2.7, 6.7), colour: roof },
+    ...windows,
+    { geometry: walled(6, 3.6, 7, 7.5, 2.5), colour: wall },
+    { geometry: at(box(6.3, 0.3, 7.3), 7.5, 3.75, 2.5), colour: roof },
+    { geometry: at(box(4.6, 2.6, 0.1), 7.5, 1.3, 6.03), colour: '#d8d4cc' },
+    { geometry: at(box(1, 2.6, 1), -8, 9.4, -2.5), colour: '#7a4c3a' },
+  ];
+}
+
+/**
+ * A manor (#293), the few really big houses, alone on the ridge: a
+ * three-storey main block under a hipped roof, two wings forward round a
+ * forecourt, a columned porch at the door and chimneys at either end.
+ */
+function manor(variant?: string): Part[] {
+  const wall = WALLS[variant ?? 'cream'] ?? WALLS.cream;
+  const roof = ROOFS[variant ?? 'cream'] ?? ROOFS.cream;
+  const front = [-12, -9, -6, 6, 9, 12].flatMap((x) => [2, 5.3, 8.4].map((y) => ({ geometry: at(box(1.6, 1.6, 0.1), x, y, 3.02), colour: WINDOW })));
+  const wings = [-12.5, -9.5, 9.5, 12.5].flatMap((x) => [2, 5.3].map((y) => ({ geometry: at(box(1.6, 1.6, 0.1), x, y, 11.02), colour: WINDOW })));
+  const columns = [-3, -1, 1, 3].map((x) => ({ geometry: at(upright(0.35, 0.4, 6), x, 3, 4.6), colour: '#ece6d8' }));
+  return [
+    { geometry: walled(30, 10, 14, 0, -4), colour: wall },
+    { geometry: at(hipRoof(30.8, 4, 14.8), 0, 12, -4), colour: roof },
+    ...[-11, 11].flatMap((x) => [
+      { geometry: walled(8, 8, 12, x, 5), colour: wall },
+      { geometry: at(hipRoof(8.6, 3, 12.6), x, 9.5, 5), colour: roof },
+    ]),
+    ...columns,
+    { geometry: at(box(8.4, 0.9, 3), 0, 6.45, 4.4), colour: '#ece6d8' },
+    { geometry: at(box(2, 3.2, 0.12), 0, 1.6, 3.03), colour: '#4a3426' },
+    ...front,
+    ...wings,
+    ...[-13, 13].map((x) => ({ geometry: at(box(1.4, 3.4, 1.4), x, 13.2, -6), colour: '#7a4c3a' })),
+  ];
+}
+
 /** A clipped privet hedge either side of the path to a front door (#477). */
 function hedge(): Part[] {
   return [-5, 5].map((x) => ({ geometry: at(box(6, 1.3, 1.2), x, 0.65, 0), colour: '#3f6a37' }));
@@ -855,6 +915,8 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   apartment: grown(apartment, HOUSE_GROWN),
   shop: grown(shop, HOUSE_GROWN),
   flat: grown(flat, HOUSE_GROWN),
+  villa: grown(villa, HOUSE_GROWN),
+  manor: grown(manor, HOUSE_GROWN),
   chimney,
   tank,
   gantry,

@@ -1105,7 +1105,9 @@ describe('street furniture', () => {
   // without the grid too.
   it('puts lamps and barriers on the streets', () => {
     const kinds = new Set(city.furniture.map((p) => p.kind));
-    const realStreets = CITY_STREET_GRID || CITY_LOCAL_STREETS_KINDS.length > 0;
+    // Or drawn streets (#477 on): the suburbs' and Ashford Point's (#293)
+    // cross each other too.
+    const realStreets = CITY_STREET_GRID || CITY_LOCAL_STREETS_KINDS.length > 0 || AUTHORED_ROADS.some((r) => r.kind === 'street');
     // 'fence' and 'weed' are Marrow Field's own (#295), added regardless of
     // which street-laying path is on: the airfield is an authored place, not
     // a district the grid or the local streets touch.
@@ -1227,7 +1229,7 @@ describe('street furniture', () => {
   // There were none of those while the grid was off (ADR-0009) and nothing
   // else crossed a 'street'; Ashford Point's interior roads (#268) are the
   // first thing that does without the grid.
-  it.skipIf(!CITY_STREET_GRID && CITY_LOCAL_STREETS_KINDS.length === 0)('signs only a real junction, not every cut in a road', () => {
+  it.skipIf(!CITY_STREET_GRID && CITY_LOCAL_STREETS_KINDS.length === 0 && !AUTHORED_ROADS.some((r) => r.kind === 'street'))('signs only a real junction, not every cut in a road', () => {
     const signs = city.furniture.filter((p) => p.kind === 'sign');
     const junctions = city.nodes.filter(
       (n) =>

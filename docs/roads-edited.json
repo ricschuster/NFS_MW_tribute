@@ -21304,6 +21304,438 @@
         ]
       ],
       "isNew": true
+    },
+    {
+      "id": "a0-1",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3976,
+          1864
+        ],
+        [
+          -3858,
+          1780
+        ],
+        [
+          -3734,
+          1733
+        ],
+        [
+          -3602,
+          1738
+        ],
+        [
+          -3463,
+          1781
+        ],
+        [
+          -3417,
+          1890
+        ],
+        [
+          -3430,
+          2007
+        ],
+        [
+          -3576,
+          1991
+        ],
+        [
+          -3708,
+          2011
+        ],
+        [
+          -3818,
+          2085
+        ],
+        [
+          -3914,
+          2197
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-2",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3008,
+          1108
+        ],
+        [
+          -3136,
+          1055
+        ],
+        [
+          -3243,
+          980
+        ],
+        [
+          -3318,
+          873
+        ],
+        [
+          -3371,
+          744
+        ]
+      ],
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-4",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3575,
+          815
+        ],
+        [
+          -3608,
+          933
+        ],
+        [
+          -3609,
+          1045
+        ],
+        [
+          -3566,
+          1149
+        ],
+        [
+          -3491,
+          1247
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-5",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3903,
+          897
+        ],
+        [
+          -3958,
+          846
+        ],
+        [
+          -3999,
+          789
+        ],
+        [
+          -4022,
+          722
+        ],
+        [
+          -4031,
+          647
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-6",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -4031,
+          1190
+        ],
+        [
+          -4103,
+          1242
+        ],
+        [
+          -4174,
+          1262
+        ],
+        [
+          -4243,
+          1237
+        ],
+        [
+          -4310,
+          1179
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-7",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3983,
+          1524
+        ],
+        [
+          -4052,
+          1552
+        ],
+        [
+          -4122,
+          1564
+        ],
+        [
+          -4192,
+          1553
+        ],
+        [
+          -4263,
+          1527
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-8",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3685,
+          2422
+        ],
+        [
+          -3673,
+          2352
+        ],
+        [
+          -3655,
+          2284
+        ],
+        [
+          -3629,
+          2219
+        ],
+        [
+          -3597,
+          2156
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-9",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3372,
+          2554
+        ],
+        [
+          -3276,
+          2455
+        ],
+        [
+          -3205,
+          2345
+        ],
+        [
+          -3167,
+          2220
+        ],
+        [
+          -3153,
+          2083
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a0-10",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3053,
+          2667
+        ],
+        [
+          -3085,
+          2565
+        ],
+        [
+          -3084,
+          2472
+        ],
+        [
+          -3038,
+          2392
+        ],
+        [
+          -2958,
+          2320
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true,
+      "draft": "suburb",
+      "area": 0
+    },
+    {
+      "id": "a-west",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -1972,
+          2668
+        ],
+        [
+          -1992,
+          2510
+        ],
+        [
+          -2029,
+          2364
+        ],
+        [
+          -2077,
+          2218
+        ],
+        [
+          -2138,
+          2097
+        ],
+        [
+          -2211,
+          1975
+        ],
+        [
+          -2260,
+          1878
+        ],
+        [
+          -2291,
+          1781
+        ],
+        [
+          -2308,
+          1684
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true
+    },
+    {
+      "id": "a-ridge",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3200,
+          1600
+        ],
+        [
+          -3147,
+          1684
+        ],
+        [
+          -3110,
+          1756
+        ],
+        [
+          -3037,
+          1805
+        ],
+        [
+          -2964,
+          1854
+        ],
+        [
+          -2904,
+          1914
+        ],
+        [
+          -2879,
+          1958
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true
+    },
+    {
+      "id": "a-ridge-sw",
+      "kind": "street",
+      "bridge": false,
+      "district": "waterfront",
+      "points": [
+        [
+          -3110,
+          1756
+        ],
+        [
+          -3025,
+          1708
+        ],
+        [
+          -3001,
+          1611
+        ],
+        [
+          -2989,
+          1501
+        ],
+        [
+          -2952,
+          1404
+        ],
+        [
+          -2891,
+          1348
+        ],
+        [
+          -2789,
+          1319
+        ]
+      ],
+      "deadEnd": true,
+      "isNew": true
     }
   ],
   "savedAt": "2026-09-30T23:15:10.032412Z",

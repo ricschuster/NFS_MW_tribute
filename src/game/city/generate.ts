@@ -57,8 +57,10 @@ import { HIGHMOOR_PROPS } from './highmoorprops';
 import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
+import { ashfordWoodsFor, digAshfordPonds, estateDrives, gardenTreesFor } from './ashford';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
+import { ASHFORD_PROPS } from './ashfordprops';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
 import { INDUSTRIAL_PROPS, INDUSTRIAL_YARDS } from './industrialprops';
 import { yardAprons } from './yards';
@@ -91,7 +93,7 @@ import { AUTHORED_ROADS } from './roads';
 import { deckSpans, pierOf, withoutDeck } from './piers';
 import { insideOrNear } from './aprons';
 import { cutAndFill } from './cutfill';
-import { SegmentIndex, segmentIntersection, segmentToRect } from './grid';
+import { SegmentIndex, inWater as inWaterAt, segmentIntersection, segmentToRect } from './grid';
 import { allWater, anyWater, centre, divide, layRoute, pullClear, type Span } from './spans';
 import type {
   Axis,
@@ -168,6 +170,8 @@ export function generateCity(seed: number): City {
   shapeForPlaces(terrain, water);
   // Tidewater Park's ponds (#461) sit in hollows dug the same way.
   const parkPonds = digTidewaterPonds(terrain);
+  // And Ashford Point's (#293), among its estates.
+  const estatePonds = digAshfordPonds(terrain);
   // And cut and fill the roads into it (#252). After the places, because a road
   // to the quarry is graded against the quarry and not the hill it replaced;
   // before anything is laid, so the network, the blocks and the sim's own
@@ -599,12 +603,14 @@ export function generateCity(seed: number): City {
     CITY_AUTHORED_ROADS &&
     PLAN_PLACES.some((p) => p.kind === 'docks') &&
     ['w1', 'w2'].every((id) => AUTHORED_ROADS.some((road) => road.id === id));
+  // Ashford Point's drives (#293), from the estates as they stand.
+  const drives = estateDrives(ASHFORD_PROPS, roads, nodes);
   const city: City = {
     seed,
     bounds,
     // The quarry's and the park's ponds are added to the finished city (#329,
     // #461), not to the water everything was routed against.
-    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : []), ...parkPonds],
+    water: [...water.bodies, ...(hasQuarry ? quarryPonds(terrain) : []), ...parkPonds, ...estatePonds],
     terrain,
     nodes,
     roads,
@@ -622,6 +628,7 @@ export function generateCity(seed: number): City {
     setPieces: [],
     aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS)],
     jumps: [],
+    drives,
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
@@ -686,6 +693,8 @@ export function generateCity(seed: number): City {
     ...MIDTOWN_SW_PROPS,
     // Industrial's works (#489), placed by hand in the area editor.
     ...INDUSTRIAL_PROPS,
+    // Ashford Point's estates (#293), drafted and edited the same way.
+    ...ASHFORD_PROPS,
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:
@@ -697,6 +706,12 @@ export function generateCity(seed: number): City {
       // And Tidewater Park's trees (#461), on the same terms.
       ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced),
     ];
+    // And Ashford Point's gardens and copses (#293), round its estates and drives.
+    const gardens = gardenTreesFor(ASHFORD_PROPS, roads, nodes, drives, (x, z) => inWaterAt(city, x, z));
+    woods.push(
+      ...gardens,
+      ...ashfordWoodsFor(terrain, roads, nodes, first.pieces, [...ASHFORD_PROPS, ...gardens], drives, [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at), ...gardens.map((g) => ({ x: g.x * UNITS_PER_METRE, z: g.z * UNITS_PER_METRE }))], raced),
+    );
     const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));
@@ -1502,7 +1517,12 @@ function connect(
 
   for (let attempt = 0; attempt < gaps.length; attempt++) {
     const parts = components(graph);
-    if (parts.count === 1) return graph;
+    // Whole: stop bridging, but still trim. This used to return the graph
+    // as it stood, which skipped `trimWaterStubs` and was only ever correct
+    // by accident - Ashford Point's generated driveways always left a piece
+    // to bridge, so the loop never ended here until they went (#293), and
+    // eight streets across the city were left stopping at the water.
+    if (parts.count === 1) break;
 
     let best = -1;
     for (let i = 0; i < gaps.length; i++) {

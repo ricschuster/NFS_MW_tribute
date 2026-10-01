@@ -474,6 +474,47 @@ const LATER_ROUTES: PlacedRoute[] = [
       [1530, -2100],
     ],
   },
+  // Ashford Coast Sprint (#293): Ashford Point's first event, the owner's
+  // pick - the coast road (n103) end to end, from the junction in off the
+  // south-east, along the south shore, up the west coast and along the north
+  // shore to where the owner's coast road carries on south.
+  {
+    name: 'Ashford Coast Sprint',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [-2326, 893],
+      [-2826, 771],
+      [-3226, 691],
+      [-3845, 867],
+      [-4025, 1044],
+      [-3983, 1507],
+      [-3929, 2159],
+      [-3781, 2390],
+      [-3235, 2618],
+      [-2776, 2714],
+      [-2233, 2706],
+    ],
+  },
+  // Estates Circuit (#293): its second, a circuit through the lanes and on
+  // the shore road. Out along r89 under the ridge, down the one lane that
+  // joins it to the coast (a0-2), east along the south shore and back up
+  // through the junction at the way in.
+  {
+    name: 'Estates Circuit',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [-2434, 1050],
+      [-2884, 1050],
+      [-3136, 1055],
+      [-3318, 873],
+      [-3226, 691],
+      [-2826, 771],
+      [-2452, 889],
+      [-2200, 1000],
+    ],
+  },
 ];
 
 /**

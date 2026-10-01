@@ -2,10 +2,11 @@ import { UNITS_PER_METRE } from '../constants';
 import { distanceToSegment } from './grid';
 import { cellRandom } from './highmoor';
 import { PLAN_DISTRICTS, inArea } from './plan';
-import { HOUSE_GROWN, hitsSetPiece } from './setpieces';
+import { ESTATE_FOOTING, HOUSE_GROWN, hitsSetPiece } from './setpieces';
 import { PAVEMENT } from './highstreet';
+import { insideOrNear } from './aprons';
 import { groundAt, type Terrain } from './terrain';
-import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
+import type { AuthoredProp, CityNode, CityRoad, DistrictKind, SetPiece, Vec2 } from './types';
 
 const M = UNITS_PER_METRE;
 
@@ -30,12 +31,16 @@ export const APARTMENT = { w: 24 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
 /** A high street's shop with flats over it, and its block of flats (#488). */
 export const SHOP = { w: 8 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
 export const FLAT = { w: 16 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
+/** Ashford Point's villa and manor (#293), across their garage or wings. */
+export const VILLA = { w: 21 * HOUSE_GROWN, l: 12 * HOUSE_GROWN };
+export const MANOR = { w: 30 * HOUSE_GROWN, l: 22 * HOUSE_GROWN };
 const HOUSE_COLOURS = ['cream', 'brick', 'blue', 'green'];
 const APARTMENT_COLOURS = ['brick', 'render'];
 const SHOP_COLOURS = ['red', 'green', 'blue', 'black'];
-type HomeKind = 'house' | 'apartment' | 'shop' | 'flat';
+const ESTATE_COLOURS = ['cream', 'render', 'brick', 'blue'];
+type HomeKind = 'house' | 'apartment' | 'shop' | 'flat' | 'villa' | 'manor';
 /** The footprint each home kind is drafted at. */
-const SIZES: Record<HomeKind, { w: number; l: number }> = { house: HOUSE, apartment: APARTMENT, shop: SHOP, flat: FLAT };
+const SIZES: Record<HomeKind, { w: number; l: number }> = { house: HOUSE, apartment: APARTMENT, shop: SHOP, flat: FLAT, villa: VILLA, manor: MANOR };
 const isHome = (kind: string): kind is HomeKind => kind in SIZES;
 
 /** Along the street, from one house's middle to the next. */
@@ -70,6 +75,30 @@ const WATERFRONT = 40;
 const MAX_FALL = 1.5;
 
 /**
+ * Ashford Point's estates (#293, the owner's brief): mostly villas, a size up
+ * from a suburb house, some suburb houses among them, and a few manors, which
+ * have the ridge to themselves. Lots are wider and gardens deeper than a
+ * suburb's, more of them are left empty, and a villa or a manor stands on a
+ * footing (`ESTATE_FOOTING`), so it takes ground that falls further across it.
+ */
+const ESTATE = {
+  frontage: 64,
+  garden: 14,
+  empty: 0.2,
+  /** Of the lots off the ridge, how many are suburb houses, and how many manors. */
+  houses: 0.22,
+  manors: 0.02,
+  /** Of the villas, how many are built: the owner found the first draft too dense. */
+  villas: 0.5,
+  /** Ground this high is the ridge: manors only, far apart, well back. */
+  ridge: 32,
+  ridgeFrontage: 230,
+  ridgeGarden: 30,
+  /** Hidden by the footing, with a little left over for the lowest corner. */
+  maxFall: ESTATE_FOOTING * HOUSE_GROWN * 1.5,
+};
+
+/**
  * Houses on Midtown north's streets (#477): the owner's quiet suburb. Each
  * street, and each boulevard through the area, is walked on both sides, and a
  * house stands every `HOUSE_FRONTAGE` metres facing it across a front garden;
@@ -99,8 +128,10 @@ export function suburbHousesFor(
   raced: readonly Vec2[][] = [],
   areas: readonly number[] = SUBURB_AREAS,
   high: readonly Vec2[][] = [],
+  district: DistrictKind = 'midtown',
 ): AuthoredProp[] {
-  const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
+  const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === district);
+  const estates = district === 'waterfront';
   const houses: AuthoredProp[] = [];
   // `inner` is the half-width a terrace may close up to; zero for anything
   // that is not on a high street, which keeps its circle of garden.
@@ -152,6 +183,23 @@ export function suburbHousesFor(
             d += w + SHOP_GAP;
           }
         }
+      } else if (estates) {
+        // An estate (#293): one kind per lot, chosen by the lot, and the
+        // ridge kept for manors.
+        const ridge = groundAt(terrain, run.at(run.length / 2).p.x, run.at(run.length / 2).p.z) / M > ESTATE.ridge;
+        const frontage = ridge ? ESTATE.ridgeFrontage : ESTATE.frontage;
+        const clear = (run.junctionAtStart ? CORNER : 0) + (ridge ? MANOR.w / 2 : VILLA.w / 2);
+        const endClear = (run.junctionAtEnd ? CORNER : 0) + (ridge ? MANOR.w / 2 : VILLA.w / 2);
+        for (let d = clear; d <= length - endClear; d += frontage) {
+          for (const side of [1, -1]) {
+            const { cx, cz } = cellAt(d, side);
+            if (cellRandom(cx, cz, 11) < ESTATE.empty) continue;
+            const roll = cellRandom(cx, cz, 14);
+            const kind: HomeKind = ridge || roll < ESTATE.manors ? 'manor' : roll < ESTATE.manors + ESTATE.houses ? 'house' : 'villa';
+            if (kind === 'villa' && cellRandom(cx, cz, 15) >= ESTATE.villas) continue;
+            lots.push({ d, side, kind, cx, cz });
+          }
+        }
       } else {
         // Anything else at a fixed frontage, both sides at once, a gap left
         // now and then: a suburb rather than a terrace.
@@ -171,12 +219,13 @@ export function suburbHousesFor(
       // A high street's shops stand at the back of its pavement, on a race
       // too: the sprint down a high street is between the shopfronts, and one
       // set back eighteen metres is a boulevard.
-      const garden = highStreet ? PAVEMENT : run.raced(onRace) ? RACED_GARDEN : GARDEN;
+      const garden = highStreet ? PAVEMENT : run.raced(onRace) ? RACED_GARDEN : estates ? ESTATE.garden : GARDEN;
       for (const { d, side, kind, cx, cz } of lots) {
         const size = SIZES[kind];
+        const setBack = kind === 'manor' ? Math.max(garden, ESTATE.ridgeGarden) : garden;
         const here = run.at(d * M);
         const n = { x: -here.dir.z * side, z: here.dir.x * side };
-        const out = run.road.width / 2 / M + garden + size.l / 2;
+        const out = run.road.width / 2 / M + setBack + size.l / 2;
         const at = { x: here.p.x + n.x * out * M, z: here.p.z + n.z * out * M };
         // Facing the street: the model's front is along its heading.
         const angle = Math.round(Math.atan2(-n.x, -n.z) * 1000) / 1000;
@@ -208,8 +257,9 @@ export function suburbHousesFor(
         if (clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < r + 6)) continue;
         if (probe.some((p) => hitsSetPiece(pieces, p.x, p.z, -Infinity, 2 * M, Infinity))) continue;
         const heights = probe.map((p) => groundAt(terrain, p.x, p.z) / M);
-        if (Math.max(...heights) - Math.min(...heights) > MAX_FALL) continue;
-        const colours = kind === 'shop' ? SHOP_COLOURS : kind === 'house' ? HOUSE_COLOURS : APARTMENT_COLOURS;
+        const footed = kind === 'villa' || kind === 'manor';
+        if (Math.max(...heights) - Math.min(...heights) > (footed ? ESTATE.maxFall : MAX_FALL)) continue;
+        const colours = kind === 'shop' ? SHOP_COLOURS : kind === 'house' ? HOUSE_COLOURS : footed ? ESTATE_COLOURS : APARTMENT_COLOURS;
         const variant = colours[Math.floor(cellRandom(cx, cz, 12) * colours.length)];
         houses.push({ kind, x: Math.round((at.x / M) * 10) / 10, z: Math.round((at.z / M) * 10) / 10, angle, variant });
         placed.push({ at, r, inner });
@@ -311,6 +361,10 @@ function makeRun(road: CityRoad, points: Vec2[], junctionAtStart: boolean, junct
 const VERGE = 2.5;
 const TREE_SPACING = 30;
 const AVENUE_SPACING = 36;
+/** Of the street trees an estate's lanes could take, how many they get: the owner's 40%. */
+const ESTATE_TREES = 0.4;
+/** An estate's street trees stand back from the lane, the owner's call: the first of these that fits. */
+const ESTATE_VERGES = [VERGE + 4, VERGE + 2, VERGE];
 /** A hedge stands this far back from the kerb, along the front of the garden. */
 const HEDGE_BACK = 1.6;
 
@@ -346,8 +400,12 @@ export function suburbExtrasFor(
   raced: readonly Vec2[][] = [],
   clear: readonly Vec2[] = [],
   areas: readonly number[] = SUBURB_AREAS,
+  district: DistrictKind = 'midtown',
+  /** Ground a tree may not stand on: Ashford Point's drives (#293). */
+  avoid: readonly Vec2[][] = [],
 ): AuthoredProp[] {
-  const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown');
+  const midtowns = PLAN_DISTRICTS.filter((a) => a.kind === district);
+  const estates = district === 'waterfront';
   const segments = roads
     .filter((r) => onTheStreet(nodes, r))
     .map((r) => ({ a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 }));
@@ -365,7 +423,8 @@ export function suburbExtrasFor(
 
   // Hedges: out from each house's front until the kerb, and back a little.
   const hedges: Vec2[] = [];
-  for (const { h, size } of homes) {
+  // None on Ashford Point's estates (#293): the owner took them out.
+  for (const { h, size } of estates ? [] : homes) {
     if (h.kind !== 'house') continue;
     const f = { x: Math.sin(h.angle), z: Math.cos(h.angle) };
     for (let d = size.l / 2 + 2; d < size.l / 2 + 30; d += 0.5) {
@@ -402,16 +461,31 @@ export function suburbExtrasFor(
         const here = run.at(d * M);
         for (const side of [1, -1]) {
           const n = { x: -here.dir.z * side, z: here.dir.x * side };
-          const out1 = run.road.width / 2 / M + VERGE;
-          const at = { x: here.p.x + n.x * out1 * M, z: here.p.z + n.z * out1 * M };
-          if (!inArea(area.poly, at) || isWater(at.x, at.z)) continue;
-          if (kerbGap(at) < VERGE - 0.5) continue;
-          if (inHome(at, 2)) continue;
-          if (hedges.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 7)) continue;
-          if (trees.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 10)) continue;
-          // Not on a billboard, a speed camera or a breakable.
-          if (clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < 6)) continue;
-          const angle = Math.round(cellRandom(Math.round(at.x / M), Math.round(at.z / M), 13) * Math.PI * 2 * 1000) / 1000;
+          const spot = (verge: number) => {
+            const out1 = run.road.width / 2 / M + verge;
+            return { x: here.p.x + n.x * out1 * M, z: here.p.z + n.z * out1 * M };
+          };
+          // Which trees there are is settled at the verge, wherever each one
+          // then stands, so moving them back does not change the set.
+          const base = spot(VERGE);
+          const cell = { x: Math.round(base.x / M), z: Math.round(base.z / M) };
+          // Ashford Point keeps two in five (#293): estates, not an avenue.
+          if (estates && cellRandom(cell.x, cell.z, 16) >= ESTATE_TREES) continue;
+          const fits = (at: Vec2, verge: number) =>
+            inArea(area.poly, at) &&
+            !isWater(at.x, at.z) &&
+            kerbGap(at) >= verge - 0.5 &&
+            !inHome(at, 2) &&
+            !hedges.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 7) &&
+            !trees.some((q) => Math.hypot(q.x - at.x, q.z - at.z) / M < 10) &&
+            // Not on a billboard, a speed camera or a breakable.
+            !clear.some((c) => Math.hypot(c.x - at.x, c.z - at.z) / M < 6) &&
+            !avoid.some((outline) => insideOrNear(outline, at.x, at.z, 3 * M));
+          // And on an estate, further back from the lane where there is room.
+          const verge = (estates ? ESTATE_VERGES : [VERGE]).find((v) => fits(spot(v), v));
+          if (verge === undefined) continue;
+          const at = spot(verge);
+          const angle = Math.round(cellRandom(cell.x, cell.z, 13) * Math.PI * 2 * 1000) / 1000;
           out.push({ kind: 'street-tree', x: r1(at.x / M), z: r1(at.z / M), angle });
           trees.push(at);
         }

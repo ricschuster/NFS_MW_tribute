@@ -48,6 +48,13 @@ export const HOUSE_GROWN = 1.6;
  * across a shed is hidden.
  */
 export const WAREHOUSE_FOOTING = 3;
+/**
+ * An estate house's plinth (#293), in model metres before `HOUSE_GROWN`:
+ * Ashford Point is hillier than the midtowns and a villa or a manor is wider
+ * than a house, so they stand on a footing the way the sheds do (#516)
+ * rather than being left off every slope a suburb house would be.
+ */
+export const ESTATE_FOOTING = 2;
 
 export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'plane-belly': [
@@ -161,6 +168,24 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   // over it, and a four-storey block of flats, solid to their parapets.
   shop: grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 10.4 }], HOUSE_GROWN),
   flat: grown([{ u: 0, v: 0, w: 16, l: 12, y0: 0, y1: 13 }], HOUSE_GROWN),
+  // Ashford Point's estates (#293), a size and two sizes up from a house: a
+  // villa and its garage, and a manor's main block with two wings forward
+  // round a forecourt, each from its footing.
+  villa: grown(
+    [
+      { u: -3, v: 0, w: 15, l: 12, y0: -ESTATE_FOOTING, y1: 7 },
+      { u: 7.5, v: 2.5, w: 6, l: 7, y0: -ESTATE_FOOTING, y1: 3.6 },
+    ],
+    HOUSE_GROWN,
+  ),
+  manor: grown(
+    [
+      { u: 0, v: -4, w: 30, l: 14, y0: -ESTATE_FOOTING, y1: 10 },
+      { u: -11, v: 5, w: 8, l: 12, y0: -ESTATE_FOOTING, y1: 8 },
+      { u: 11, v: 5, w: 8, l: 12, y0: -ESTATE_FOOTING, y1: 8 },
+    ],
+    HOUSE_GROWN,
+  ),
   // The works (#489), at real size. A chimney is its plinth and its stack; a
   // tank its drum; a gantry crane its four legs and the beam fourteen metres
   // up, so a car drives under it between the legs; rail track is ground, flat

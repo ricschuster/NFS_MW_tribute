@@ -22,6 +22,7 @@
 //
 // Industrial (#489) drafts the same way with straight service roads instead
 // of curving ones: `--district industrial --area 0`, bowing as `--bow` says.
+// Ashford Point (#293) as estates: `--district waterfront --area 0 --prefix a`.
 //
 // Usage:
 //   npm run suburbdraft -- --area 2            # the third midtown in plan.ts
@@ -37,19 +38,22 @@ const AREA = Number(flag('--area', '2'));
 const DRY = args.includes('--dry');
 const PREFIX = flag('--prefix', 's');
 
-const SPACING = 150; // between streets along a boulevard
-const JUNCTION_CLEAR = 60; // no street this near another road's junction
-const LENGTHS = [300, 250, 200, 160];
+// Ashford Point's estates (#293) are the same streets at a looser grain:
+// fewer lanes, longer and windier, far enough apart for grounds between them.
+const ESTATES = DISTRICT === 'waterfront';
+const SPACING = ESTATES ? 340 : 150; // between streets along a boulevard
+const JUNCTION_CLEAR = ESTATES ? 90 : 60; // no street this near another road's junction
+const LENGTHS = ESTATES ? [520, 440, 360, 280, 220] : [300, 250, 200, 160];
 const CROSS_MIN = 110; // a boulevard opposite at least this far off is crossed to, not dead-ended short of
-const CROSS_MAX = 420;
+const CROSS_MAX = ESTATES ? 700 : 420;
 // How far a street bows, as a fraction of its length: a suburb's curve, a
 // works road's near-straight.
-const BOW = Number(flag('--bow', DISTRICT === 'midtown' ? '0.22' : '0.03'));
-const STREET_GAP = 55; // centre to centre, from any road but the one it leaves
+const BOW = Number(flag('--bow', ESTATES ? '0.3' : DISTRICT === 'midtown' ? '0.22' : '0.03'));
+const STREET_GAP = ESTATES ? 130 : 55; // centre to centre, from any road but the one it leaves
 const SHORE_CLEAR = 25;
 const MAX_GRADE = 0.09;
 const THROUGH_REACH = 70; // a far end this near a boulevard runs on to it
-const CRESCENT_MAX = 260; // far ends further apart than this are left as cul-de-sacs
+const CRESCENT_MAX = ESTATES ? 420 : 260; // far ends further apart than this are left as cul-de-sacs
 // The far end of a crossing street is let off `STREET_GAP` from the boulevard
 // it arrives at for this far back: it has to get within the gap to meet it,
 // and at a slant it is within it for longer than the gap itself.

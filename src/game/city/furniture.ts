@@ -7,6 +7,9 @@ import {
   WATER_END_REACH,
 } from '../constants';
 import { distanceToRoad, inWater } from './grid';
+import { insideOrNear } from './aprons';
+import { planDistrictAt } from './plan';
+import { groundAt } from './terrain';
 import type { Rng } from './rng';
 import type { City, CityRoad, StreetProp } from './types';
 
@@ -143,6 +146,9 @@ function frame(city: City, road: CityRoad) {
   return { a, along, across: { x: -along.z, z: along.x }, y };
 }
 
+/** How much further back from the kerb an estate's lamps stand (#293), the owner's call. */
+const ESTATE_LAMP_BACK = 4 * UNITS_PER_METRE;
+
 /**
  * Lamps down each kerb, alternating sides. Alternating rather than paired is
  * both how most streets are actually lit and half as many instances.
@@ -158,20 +164,41 @@ function lamps(rng: Rng, city: City, road: CityRoad, props: StreetProp[]): void 
   const { a, along, across, y } = frame(city, road);
   const offset = road.width / 2 + LAMP_KERB_GAP;
   const angle = Math.atan2(along.x, along.z);
+  // Ashford Point's lanes (#293) are lit from back in the verge, in line with
+  // its street trees, where the ground is there: the first of these that is
+  // dry and clear of every other road.
+  const b = city.nodes[road.b].pos;
+  const estate = planDistrictAt({ x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }) === 'waterfront';
+  const offsets = estate ? [offset + ESTATE_LAMP_BACK, offset + ESTATE_LAMP_BACK / 2, offset] : [offset];
 
   // Leave the junction ends clear, where the kerb is a corner rather than a run.
   const first = Math.min(LAMP_SPACING, road.length / 2);
   let side = rng.chance(0.5) ? 1 : -1;
 
   for (let at = first; at < road.length - first * 0.5; at += LAMP_SPACING) {
+    const spot = (o: number) => ({ x: a.x + along.x * at + across.x * o * side, z: a.z + along.z * at + across.z * o * side });
+    const onDrive = (p: { x: number; z: number }) => city.drives.some((d) => insideOrNear(d.outline, p.x, p.z, 1.5 * UNITS_PER_METRE));
+    const back = offsets.find((o) => {
+      const p = spot(o);
+      return !inWater(city, p.x, p.z) && !inSomeRoad(city, { at: p } as StreetProp) && !onDrive(p);
+    });
+    const where = spot(back ?? offset);
+    // Not across somebody's drive (#293): the lamp goes, the rest stay where they were.
+    const variant = rng.float();
+    if (estate && onDrive(where)) {
+      side = -side;
+      continue;
+    }
     props.push({
-      at: { x: a.x + along.x * at + across.x * offset * side, z: a.z + along.z * at + across.z * offset * side },
-      y,
+      at: where,
+      // Back from the kerb it stands on the ground there, which on a slope
+      // is not the road's height.
+      y: (back ?? offset) === offset ? y : groundAt(city.terrain, where.x, where.z),
       angle,
       // The arm reaches back over the road the lamp was offset from.
       reach: -side as -1 | 1,
       kind: 'lamp',
-      variant: rng.float(),
+      variant,
     });
     side = -side;
   }

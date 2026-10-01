@@ -9,7 +9,9 @@
 // after moving streets. Either way a prop in the file that the draft does not
 // make is kept. Then `npm run propsync -- --place <the same place>`.
 //
-// The area is a suburb from `tools/suburbs.mjs`, Midtown north by default.
+// The area is a suburb from `tools/suburbs.mjs`, Midtown north by default;
+// Ashford Point (`--place ashford`, #293) drafts estates: villas, some houses
+// and a few manors.
 //
 // Usage:
 //   npm run housedraft                 # hedges and trees round Midtown north's houses
@@ -23,7 +25,7 @@ import { suburbFrom } from './suburbs.mjs';
 const DRY = process.argv.includes('--dry');
 const HOUSES = process.argv.includes('--houses');
 const suburb = suburbFrom(process.argv);
-if (suburb.district !== 'midtown') throw new Error(`${suburb.name} is not a suburb: its props are placed by hand in the area editor`);
+if (suburb.district !== 'midtown' && suburb.district !== 'waterfront') throw new Error(`${suburb.name} is not a suburb: its props are placed by hand in the area editor`);
 const FILE = suburb.json;
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true }, logLevel: 'error' });
 const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
@@ -35,7 +37,7 @@ const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 await server.close();
 
 const old = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : { props: [] };
-const homes = new Set(['house', 'apartment', 'shop', 'flat']);
+const homes = new Set(['house', 'apartment', 'shop', 'flat', 'villa', 'manor']);
 const drafted = new Set([...homes, 'hedge', 'street-tree']);
 // The suburb's high street (#488), if it has one: `HIGH_STREETS` in `city/highstreet.ts`.
 const high = highStreetLines(suburb.index);
@@ -52,11 +54,12 @@ const houses = !HOUSES && inFile.length ? inFile.map(({ id, ...p }) => p) : subu
   city.routes.map((r) => r.points),
   [suburb.index],
   high,
+  suburb.district,
 );
 const extras = suburbExtrasFor(houses, city.roads, city.nodes, (x, z) => inWater(city, x, z), city.routes.map((r) => r.points), [
   ...city.collectibles.map((c) => c.at),
   ...city.breakables.map((b) => b.at),
-], [suburb.index]);
+], [suburb.index], suburb.district, (city.drives ?? []).map((d) => d.outline));
 const kept = (old.props ?? []).filter((p) => !drafted.has(p.kind));
 const keptIds = new Map(inFile.map((p) => [`${p.kind}:${p.x}:${p.z}`, p.id]));
 const props = [
@@ -65,7 +68,7 @@ const props = [
   ...extras.map((e, i) => ({ id: `${e.kind === 'hedge' ? 'g' : 't'}${i + 1}`, ...e })),
 ];
 const count = (k) => props.filter((p) => p.kind === k).length;
-console.log(`${count('house')} houses, ${count('apartment')} apartments, ${count('shop')} shops, ${count('flat')} flats${HOUSES || !inFile.length ? ' (drafted)' : ' (kept)'}; ${count('hedge')} hedges, ${count('street-tree')} street trees; ${kept.length} other props kept`);
+console.log(`${count('manor')} manors, ${count('villa')} villas, ${count('house')} houses, ${count('apartment')} apartments, ${count('shop')} shops, ${count('flat')} flats${HOUSES || !inFile.length ? ' (drafted)' : ' (kept)'}; ${count('hedge')} hedges, ${count('street-tree')} street trees; ${kept.length} other props kept`);
 if (!DRY) {
   // Everything else in the file is kept: an editor save carries the area's
   // roads in it too, which `propsync` merges, and a draft is not a reason to lose them.
