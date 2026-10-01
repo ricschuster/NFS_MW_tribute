@@ -59,7 +59,7 @@ if (!KIND) throw new Error(`unknown place '${which}': airfield, quarry, docks, l
 const parkArea = KIND === 'highmoor' || KIND === 'tidewater'
   ? plan.PLAN_DISTRICTS.find((a) => a.name === (KIND === 'highmoor' ? 'Highmoor Park' : 'Tidewater Park'))
   : KIND === 'midtown'
-    ? { ...plan.PLAN_DISTRICTS.filter((a) => a.kind === 'midtown')[suburb.index], name: suburb.name }
+    ? { ...plan.PLAN_DISTRICTS.filter((a) => a.kind === (suburb.district ?? 'midtown'))[suburb.index], name: suburb.name }
     : null;
 const field = parkArea
   ? (() => {
@@ -144,25 +144,15 @@ const roads = city.roads
 
 // The freeway over and under the crop, to look at and not to edit: its line
 // is `city/freeway.ts`, changed in the freeway editor. Each segment says
-// whether it is on the deck or in a tunnel, and the deck's pillars go where
-// the scene stands them (`viaduct` in `scene/cityscape.ts`), because a street
-// under the deck (#487) has to find its way between them.
-const PILLAR_SPACING = C.INTERSTATE_PILLAR_SPACING;
-const DECK_THICKNESS = 1.1 * U;
-const pillars = [];
+// whether it is on the deck or in a tunnel, and the deck's pillars are the
+// city's own (`city/pillars.ts`, pairs under the deck's edges since #487),
+// because a street under the deck has to find its way between them.
+const pillars = city.pillars.filter((p) => inBox(p.at, 50)).map((p) => [r1(toM(p.at.x)), r1(toM(p.at.z))]);
 const freeway = city.roads
   .filter((r) => r.class === 'interstate' || r.class === 'ramp')
   .filter((r) => inBox(city.nodes[r.a].pos, 50) || inBox(city.nodes[r.b].pos, 50))
   .map((r) => {
     const a = city.nodes[r.a], b = city.nodes[r.b];
-    if (r.class === 'interstate') {
-      const count = Math.max(1, Math.round(r.length / PILLAR_SPACING));
-      for (let k = 0; k < count; k++) {
-        const t = (k + 0.5) / count;
-        if (a.y + (b.y - a.y) * t < DECK_THICKNESS * 2) continue;
-        pillars.push([r1(toM(a.pos.x + (b.pos.x - a.pos.x) * t)), r1(toM(a.pos.z + (b.pos.z - a.pos.z) * t))]);
-      }
-    }
     const level = a.level === 'tunnel' || b.level === 'tunnel' ? 'tunnel' : a.level === 'elevated' || b.level === 'elevated' ? 'elevated' : 'surface';
     return { a: [r1(toM(a.pos.x)), r1(toM(a.pos.z))], b: [r1(toM(b.pos.x)), r1(toM(b.pos.z))], width: r1(toM(r.width)), class: r.class, level };
   });
