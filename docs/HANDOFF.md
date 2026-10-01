@@ -3,33 +3,79 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01).** Tidewater Park, Halloway Quarry and Midtown
-  north are signed off; the three remaining areas are audited with their
-  questions open.
-  - **Races wait for the map** (owner, 2026-09-30; `docs/map-areas.md`): no
-    race tuning while areas are built. A `citylap` shift from area work is
-    re-recorded, not chased; the ladder stays on Halloway Rim and Sablet Quay
-    (`RIVAL_CIRCUITS`) until the race exploration.
-  - **Never move the owner's roads.** `roadsync`'s stitch pulls any loose end
-    within 70 m onto a road, and moved four of theirs; the area editor now
-    shows a red dash for every end a sync would pull and snaps a dragged point
-    onto a road (#483). Nineteen older moved ends elsewhere are #484, the
-    owner's to fix.
-  - **Midtown north (#477): done, signed off by the owner on 2026-10-01.** A
-    quiet suburb: 14 streets drafted by `npm run suburbdraft` and edited by
-    the owner; about 290 houses and apartment blocks, hedges and street trees
-    drafted by `npm run housedraft` (generate once, then edit: they are props
-    in `docs/midtown-props-edited.json`); two circuits, the Midtown Crescents
-    (1.6 km, one 134-degree corner the owner kept) and the Northshore Loop
-    (3.3 km). Street trees are kept off race roads, or the Crescents is not
-    drivable.
-  - **The area editor** (`npm run propexport -- --place midtown`, published as
-    Midtown north Props) edits roads, houses and props together; `propsync`
-    merges its roads into `docs/roads-edited.json` by id and runs `roadsync`.
-    After a sync, write the file back into the Road Editor's store.
-  - **Next:** the owner's answers on Midtown south (#487), Midtown south-west (#488) and Industrial (#489).
-    The dev server serves `../crosstown-play` (main plus a local-only spawn in
-    Midtown north) until the owner says to switch back to following main.
+- **Start here (2026-10-01, end of session).** Seven areas are done and
+  signed off (Marrow Field, Sablet Wharf, Halloway Quarry, Kestrel Head,
+  Highmoor Park, Tidewater Park, Midtown north); three are audited **with the
+  owner's answers in** and nothing built; Ashford Point is parked (#293, never
+  pick it up) and downtown (#268) is last. Everything is merged; no PR is open.
+  - **Build next, in this order** (the owner agreed the order on 2026-10-01):
+    1. **Midtown south (#487).** A **waterfront strip**: a promenade road along
+       the channel bank with houses and low apartment blocks behind it,
+       looking across at Sablet Wharf's container port; **streets under the
+       freeway deck**, crossing and running between its pillars; a **sprint
+       along the bank**, the length of the strip on the promenade; and **one
+       repair shop** (the nearest is 2 km away). The second `midtown` area in
+       `plan.ts` (index 1).
+    2. **Midtown south-west (#488).** A **main street**: one boulevard becomes
+       a high street of shops and flats from downtown's edge down to Tidewater
+       Park, quiet houses on the streets behind; a **sprint down the main
+       street**. The first `midtown` area (index 0). Shops and flats are new
+       kinds.
+    3. **Industrial (#489).** **Heavy industry**: a works with chimneys, tanks,
+       gantries and rail sidings; **open yards with no traffic**, drivable like
+       Sablet Wharf's (`CityRoad.yard`, `City.aprons`); a **circuit** round the
+       works and through a yard. Only 60% of its land is within 150 m of a
+       road, so it needs streets most. Every building here is a new kind.
+  - **The pipeline Midtown north proved** (#477), for every remaining area:
+    1. Draft streets: `npm run suburbdraft -- --area N` writes them into
+       `docs/roads-edited.json`; put them in the Road Editor's store
+       (`edits/roads`) for the owner, or straight into the area editor.
+    2. Draft houses, hedges, street trees: `npm run housedraft` writes the
+       area's props file; with `--houses` it redrafts the houses too.
+    3. The owner edits roads and props in the **area editor**
+       (`npm run propexport -- --place P`, published as an Artifact with the
+       `db` capability; it saves to `edits/props`).
+    4. Sync from the owner's save: write it into the props file, then
+       `npm run propsync -- --place P`, which merges its roads by id and runs
+       `roadsync`. **Check no drawn road end moved more than 4 m** (compare
+       `docs/roads-edited.json` with `src/game/city/roads.ts`) before
+       committing, then write the roads back into the Road Editor's store and
+       the save back into the area editor's store (each pinned to the version
+       read), so both editors open on what the city is.
+    5. The area's event via `LATER_ROUTES` in `city/routes.ts` (appended, so
+       old ids hold), checked only for being drivable: every `citylap` lap
+       finishes, none faster in traffic. Keep street trees off race roads.
+       One event per route: raise `CAR_EVENTS_MAX` and add the route's words
+       in `carevents.ts`.
+  - **First jobs for Midtown south**, because the tools still assume Midtown
+    north: `housedraft` writes `docs/midtown-props-edited.json` and
+    `SUBURB_AREAS` is `[2]`; `propexport`/`propsync`'s `midtown` place is the
+    third midtown only. Give them an area argument (e.g. `--place
+    midtown-south`, its own props file and generated module). `suburbdraft`
+    grows streets square off boulevards, so the promenade (one road along
+    the water) and streets under the deck are new modes or drawn by hand.
+  - **Rules that hold:** races are not tuned while the map is built ("Races
+    wait for the map" in `docs/map-areas.md`; `RIVAL_CIRCUITS` keeps the
+    ladder on Halloway Rim and Sablet Quay); **never move a road the owner
+    drew** - report a problem and let them edit it; questions to the owner
+    one at a time; deploy only when asked. The 19 older drawn ends the sync
+    moves are #484, the owner's.
+  - **Midtown north (#477): done, signed off on 2026-10-01.** A quiet suburb:
+    14 streets drafted by `suburbdraft` and edited by the owner; about 290
+    houses and apartment blocks, hedges and street trees (props in
+    `docs/midtown-props-edited.json`, set pieces turned to face their
+    streets); two circuits, the Midtown Crescents (1.6 km, one 134-degree
+    corner the owner kept) and the Northshore Loop (3.3 km).
+  - **Editors** (Artifacts, owned by the owner's account): Road Editor; the
+    area editors Marrow Field, Halloway Quarry, Sablet Wharf, Kestrel Head,
+    Highmoor Park, Tidewater Park and **Midtown north Props** (the one with
+    road editing). As of this handoff the Road Editor's `edits/roads` is at
+    version 63 and Midtown north's `edits/props` at 18, both matching the
+    files.
+  - **Dev environment:** the dev server serves `../crosstown-play`, detached
+    at Midtown north's circuits with a `LOCAL ONLY` spawn on its north-coast
+    boulevard - never commit that line. When the owner says, switch it back
+    to `../crosstown-main`, which a 30 s watcher keeps on `origin/main`.
 - **Earlier (2026-09-30, end of day).** Kestrel Head and Highmoor Park are
   both finished and signed off by the owner.
   Everything is merged or armed; the owner's dev server follows main.
