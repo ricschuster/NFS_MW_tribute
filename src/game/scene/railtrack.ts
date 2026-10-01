@@ -19,6 +19,13 @@ import type { City, CityRoad } from '../city/types';
  */
 
 const M = UNITS_PER_METRE;
+/**
+ * How far a railway's ballast stands proud of the ground (#489). The ground
+ * mesh is drawn at `TERRAIN_RENDER_STEP` and wanders a few centimetres off the
+ * graded height across a line, which a road's 2 cm hides and a railway did
+ * not: one track sat on grass. A ballast bed is raised anyway.
+ */
+export const RAIL_BED = 0.12 * M;
 /** Centre of each track from the middle of the line, in metres, on a line wide enough for two. */
 const TRACKS = [-2.25, 2.25];
 /** Narrower than this and a line is one track down its middle. */
@@ -89,7 +96,7 @@ export function railTrack(
             .clone()
             .addScaledVector(forward, along * M)
             .addScaledVector(right, (track + side) * M)
-            .addScaledVector(normal, 0.06 * M);
+            .addScaledVector(normal, RAIL_BED + 0.04 * M);
           positions.push(p.x, p.y, p.z);
           normals.push(normal.x, normal.y, normal.z);
           uvs.push(u, v);
@@ -140,7 +147,7 @@ export function railTrack(
         const at = mid
           .clone()
           .addScaledVector(right, (track + rail) * M)
-          .addScaledVector(normal, 0.18 * M);
+          .addScaledVector(normal, RAIL_BED + 0.16 * M);
         matrix.setPosition(at);
         rails.setMatrixAt(i++, matrix);
       }
