@@ -3,7 +3,47 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, evening; two areas drafted for the owner).**
+- **Start here (2026-10-01, late; Midtown south-west done, Industrial redrafted).**
+  - **Midtown south-west (#488): done** (#513), with the owner's one edit
+    (n99's west end joined to r57). The Road Editor's store matches main (v68).
+  - **The railway (#514).** The owner's call: Industrial first, the rest of
+    the loop later in #514, parked wagons only. A railway is a road with
+    surface `rail` (#515): double track on a raised ballast bed (#517, #518),
+    driven like gravel, closed to traffic, never a race route, never where a
+    ramp's connector or a `roadsync` stitch lands.
+  - **Industrial (#489): redrafted for the owner**, on the branch
+    `industrial-works` (pushed, no PR), in the Industrial Props editor (v5)
+    and on a dev server at :5175 from `../crosstown-south`. The owner liked
+    the crest works and wanted "way more stuff": `npm run worksdraft` fills
+    the district - about a hundred works (tank farms, sheds on footings
+    (#516), chimneys, rail yards with sidings, gantries and wagons) - and
+    lays `rail1`, 1.8 km of main line 35 m off the freeway. The Works
+    Circuit is 54% of top empty; with traffic 31% and 22 crashes (4 before),
+    recorded, not chased (races wait for the map).
+  - **The owner decides** in the editor; then sync, PR, and the second dev
+    server and the old `industrial-draft` branch can go.
+  - **Also this session:** the maps draw the railway as track, with a
+    legend row (#520); #514 carries a progress note. The ballast-bed commit
+    missed #517's merge and landed as #518 - a commit pushed to a PR after it
+    merges is lost, so check `gh pr view N` before pushing more to it.
+  - **To pick up Industrial:** read the owner's save from the Industrial
+    Props editor store (`edits/props`, empty until they save) into
+    `docs/industrial-props-edited.json` on `industrial-works`, `propsync
+    --place industrial`, rebase on main (the branch has #518's commit
+    cherry-picked; drop it in the rebase), re-run `citylap -- --out`, mark
+    #489's row done in `docs/map-areas.md` once played, and open the PR.
+    The `industrial-works` branch carries `industrial.test.ts`, the
+    `worksdraft` tool and its CLAUDE.md entry, and the routing, stitch and
+    connector guards against the railway.
+  - **Unasked, unblocked, offered:** why the Works Circuit's traffic lap
+    crashes 22 times (4 before the redraft); a tidier level crossing (road
+    surface over the ballast); a report, not a fix, on #484's moved road ends.
+  - **Running:** dev servers on :5173 (`../crosstown-play`, Midtown
+    south-west draft, local spawn hack), :5174 (`../crosstown-industrial`,
+    the old Industrial draft, local spawn hack) and :5175
+    (`../crosstown-south`, `industrial-works`). The first two are stale now
+    that #513 has merged and the redraft exists; stop them on the owner's word.
+- **Earlier (2026-10-01, evening; two areas drafted for the owner).**
   The owner said to keep going while away. Both remaining areas before
   downtown are drafted and wait for the owner; everything else is merged.
   - **Midtown south-west (#488): a draft to review.** Merged: shops with
