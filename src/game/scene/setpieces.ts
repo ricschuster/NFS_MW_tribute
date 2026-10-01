@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
-import { CHAPEL_GROWN, HOUSE_GROWN, PALAS_GROWN } from '../city/setpieces';
+import { CHAPEL_GROWN, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
 
 const M = UNITS_PER_METRE;
 
@@ -340,7 +340,8 @@ function warehouse(variant?: string): Part[] {
   const [w, l, h] = variant === 'small' ? [30, 60, 10] : [50, 130, 14];
   const doors = Math.floor(l / 16);
   const parts: Part[] = [
-    { geometry: at(box(w, h, l), 0, h / 2, 0), colour: '#9aa3a8' },
+    // Down to its footing, so a shed on a slope does not show daylight under it.
+    { geometry: at(box(w, h + WAREHOUSE_FOOTING, l), 0, (h - WAREHOUSE_FOOTING) / 2, 0), colour: '#9aa3a8' },
     { geometry: at(box(w + 1.2, 0.8, l + 1.2), 0, h + 0.4, 0), colour: '#6f787d' },
     { geometry: at(box(w * 0.5, 1.6, l), 0, h + 1.2, 0), colour: '#6f787d' },
   ];

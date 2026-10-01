@@ -39,6 +39,15 @@ const grown = (solids: Solid[], k: number): Solid[] =>
 export const PALAS_GROWN = 1.6;
 export const CHAPEL_GROWN = 2;
 export const HOUSE_GROWN = 1.6;
+/**
+ * How far a warehouse's walls run below the ground at its middle (#489). A
+ * set piece stands at the height under its centre, and a 130 m shed across a
+ * rise of a few metres has its downhill end in the air; Industrial's ground
+ * rolls, and holding every shed to dead-flat ground left the works one shed.
+ * Below the ground the walls are simply buried, so a fall of up to twice this
+ * across a shed is hidden.
+ */
+export const WAREHOUSE_FOOTING = 3;
 
 export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'plane-belly': [
@@ -100,7 +109,9 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
     post(14, 12, 0.8, 38),
     { u: 0, v: 0, w: 30, l: 26, y0: 36, y1: 40 },
   ],
-  warehouse: [{ u: 0, v: 0, w: 50, l: 130, y0: 0, y1: 14 }],
+  // From its footing (`WAREHOUSE_FOOTING`, below), so the downhill end of a
+  // shed on a slope is wall to a car and not a gap under it.
+  warehouse: [{ u: 0, v: 0, w: 50, l: 130, y0: -WAREHOUSE_FOOTING, y1: 14 }],
   // Legs a car cannot fit between, and the frame fifteen metres up.
   'straddle-carrier': [post(-2.2, -4.2, 0.4, 15), post(2.2, -4.2, 0.4, 15), post(-2.2, 4.2, 0.4, 15), post(2.2, 4.2, 0.4, 15)],
   'reach-stacker': [{ u: 0, v: 0, w: 4.5, l: 11, y0: 0, y1: 3.6 }],
@@ -179,7 +190,7 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
 const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'container-block:three high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 7.8 }],
   'container-block:four high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 10.4 }],
-  'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: 0, y1: 10 }],
+  'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: -WAREHOUSE_FOOTING, y1: 10 }],
   'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
   'ruin-house:small': grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }], HOUSE_GROWN),
   'tank:small': [{ u: 0, v: 0, r: 7, y0: 0, y1: 10 }],
