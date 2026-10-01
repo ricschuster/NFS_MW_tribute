@@ -90,7 +90,7 @@ export class Cityscape {
   readonly breakables: CityBreakables;
   readonly setPieces: CitySetPieces;
   readonly jumps: CityJumps;
-  private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
+  private readonly owned: (THREE.BufferGeometry | THREE.Material | THREE.Texture)[] = [];
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
     this.provider = provider;
@@ -238,8 +238,8 @@ export class Cityscape {
       });
     }
     // And the wharf's yard is concrete (#410).
-    wharfGround(material, city.aprons, UNITS_PER_METRE);
-    this.owned.push(geometry, material);
+    const aprons = wharfGround(material, city.aprons, UNITS_PER_METRE);
+    this.owned.push(geometry, material, ...(aprons ? [aprons] : []));
 
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(midX, 0, midZ);

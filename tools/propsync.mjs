@@ -66,6 +66,7 @@ const KINDS = [
   'picnic-table', 'bench', 'telescope',
   'bandstand', 'toilet-block', 'cafe',
   'house', 'apartment', 'shop', 'flat', 'hedge', 'street-tree',
+  'chimney', 'tank', 'gantry', 'rails', 'wagon',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {
