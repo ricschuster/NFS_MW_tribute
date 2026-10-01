@@ -65,7 +65,7 @@ const KINDS = [
   'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon', 'keep', 'palas', 'chapel', 'wall-tower', 'ruin-house', 'masonry', 'well',
   'picnic-table', 'bench', 'telescope',
   'bandstand', 'toilet-block', 'cafe',
-  'house', 'apartment', 'hedge', 'street-tree',
+  'house', 'apartment', 'shop', 'flat', 'hedge', 'street-tree',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

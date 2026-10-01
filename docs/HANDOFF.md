@@ -3,6 +3,15 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Start here (2026-10-01, the owner away; Midtown south-west drafted).**
+  The owner said to keep going while away. Midtown south-west (#488) is
+  built up to the owner's review: the tools and two new kinds are merged
+  (shops with flats over them, blocks of flats, a high-street mode in the
+  drafter, pavements paved; `HIGH_STREETS` is empty on main), and a draft
+  waits on a branch and in a new area editor (URL in the agent's memory):
+  7 streets, houses, and n100 as the high street, the draft's pick. **The
+  owner's to decide:** which boulevard is the high street, and the streets
+  and props in the editor. Then the sprint down it.
 - **Start here (2026-10-01, Midtown south signed off).** Eight areas are
   done and signed off; Midtown south (#487) is the eighth, driven and
   approved by the owner on 2026-10-01. Next is **Midtown south-west (#488)**,

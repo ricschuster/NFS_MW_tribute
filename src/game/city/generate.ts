@@ -59,6 +59,8 @@ import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
+import { MIDTOWN_SW_PROPS } from './midtownswprops';
+import { highStreetAprons } from './highstreet';
 import { CASTLE_AREAS } from './castle';
 import { addInterstate } from './interstate';
 import { rampConnectors } from './rampconnectors';
@@ -616,7 +618,7 @@ export function generateCity(seed: number): City {
     pillars: [],
     breakables: [],
     setPieces: [],
-    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons()],
+    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes)],
     jumps: [],
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
@@ -678,6 +680,8 @@ export function generateCity(seed: number): City {
     ...MIDTOWN_PROPS,
     // And Midtown south's (#487), the same way.
     ...MIDTOWN_SOUTH_PROPS,
+    // And Midtown south-west's high street and the houses behind it (#488).
+    ...MIDTOWN_SW_PROPS,
   ];
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:

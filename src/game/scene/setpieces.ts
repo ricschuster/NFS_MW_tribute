@@ -657,6 +657,55 @@ function apartment(variant?: string): Part[] {
   ];
 }
 
+/**
+ * The shop's sign and awning, and the wall it goes with, by variant: a high
+ * street is a row of fronts that do not match.
+ */
+const FASCIAS: Record<string, { fascia: string; wall: string }> = {
+  red: { fascia: '#a8352c', wall: WALLS.brick },
+  green: { fascia: '#2f5e46', wall: WALLS.render },
+  blue: { fascia: '#2f4d7a', wall: WALLS.cream },
+  black: { fascia: '#26292b', wall: WALLS.brick },
+};
+
+/**
+ * A high-street shop (#488): a glazed shopfront under a painted fascia and an
+ * awning, and two floors of flats above it behind a parapet. Narrow, so a
+ * row of them reads as a terrace of separate shops rather than one block.
+ */
+function shop(variant?: string): Part[] {
+  const look = FASCIAS[variant ?? 'red'] ?? FASCIAS.red;
+  const windows = [5.6, 8.4].flatMap((y) => [-2, 2].map((x) => ({ geometry: at(box(1.4, 1.6, 0.1), x, y, 6.02), colour: '#3a4a52' })));
+  return [
+    { geometry: at(box(8, 10.4, 12), 0, 5.2, 0), colour: look.wall },
+    { geometry: at(box(8.2, 0.5, 12.2), 0, 10.65, 0), colour: '#5b5f60' },
+    { geometry: at(box(6.6, 2.6, 0.1), 0, 1.9, 6.02), colour: '#2f3e46' },
+    { geometry: at(box(8, 0.8, 0.2), 0, 3.7, 6.06), colour: look.fascia },
+    { geometry: at(box(7.6, 0.08, 1.6).rotateX(0.3), 0, 3.05, 6.8), colour: look.fascia },
+    ...windows,
+  ];
+}
+
+/**
+ * A block of flats on the high street (#488): four storeys, a stone band over
+ * the ground floor, a door in the middle, windows front and back. Taller than
+ * the suburbs' apartment blocks, because a high street is where the town
+ * gets denser on its way to downtown.
+ */
+function flat(variant?: string): Part[] {
+  const wall = WALLS[variant ?? 'brick'] ?? WALLS.brick;
+  const upper = [4.9, 8, 11.1].flatMap((y) => [-6, -2.5, 2.5, 6].flatMap((x) => [6.02, -6.02].map((z) => ({ geometry: at(box(1.6, 1.6, 0.1), x, y, z), colour: '#3a4a52' }))));
+  const ground = [-6, -3.5, 3.5, 6].map((x) => ({ geometry: at(box(1.6, 1.6, 0.1), x, 1.8, 6.02), colour: '#3a4a52' }));
+  return [
+    { geometry: at(box(16, 13, 12), 0, 6.5, 0), colour: wall },
+    { geometry: at(box(16.4, 0.5, 12.4), 0, 13.25, 0), colour: ROOFS[variant ?? 'brick'] ?? ROOFS.brick },
+    { geometry: at(box(16.1, 0.3, 12.1), 0, 3.3, 0), colour: '#d8d2c6' },
+    { geometry: at(box(2.4, 2.8, 0.14), 0, 1.4, 6.04), colour: '#3d3a36' },
+    ...ground,
+    ...upper,
+  ];
+}
+
 /** A clipped privet hedge either side of the path to a front door (#477). */
 function hedge(): Part[] {
   return [-5, 5].map((x) => ({ geometry: at(box(6, 1.3, 1.2), x, 0.65, 0), colour: '#3f6a37' }));
@@ -727,6 +776,8 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   cafe: grown(cafe, HOUSE_GROWN),
   house: grown(house, HOUSE_GROWN),
   apartment: grown(apartment, HOUSE_GROWN),
+  shop: grown(shop, HOUSE_GROWN),
+  flat: grown(flat, HOUSE_GROWN),
   hedge,
   'street-tree': streetTree,
 };

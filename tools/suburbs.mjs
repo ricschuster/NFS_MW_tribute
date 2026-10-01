@@ -1,4 +1,4 @@
-// The midtowns with houses on their streets (#477, #487): each one's place in
+// The midtowns with houses on their streets (#477, #487, #488): each one's place in
 // the plan's list of midtowns, which has no names of its own there, and the
 // files its props go through. One table for `housedraft`, `propexport` and
 // `propsync`, so the next area is a row here rather than a branch in each.
@@ -13,6 +13,10 @@ export const SUBURBS = {
     index: 1, name: 'Midtown south', issue: '#487',
     json: 'docs/midtown-south-props-edited.json', module: 'midtownsouthprops', exportName: 'MIDTOWN_SOUTH_PROPS', prefix: 'midtown-south-',
     route: 'Promenade Sprint',
+  },
+  'midtown-sw': {
+    index: 0, name: 'Midtown south-west', issue: '#488',
+    json: 'docs/midtown-sw-props-edited.json', module: 'midtownswprops', exportName: 'MIDTOWN_SW_PROPS', prefix: 'midtown-sw-',
   },
 };
 
