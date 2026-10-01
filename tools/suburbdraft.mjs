@@ -20,14 +20,19 @@
 //   - Neighbouring cul-de-sacs off the same side of the same boulevard are
 //     joined at their far ends into a crescent, where the join is clear.
 //
+// Industrial (#489) drafts the same way with straight service roads instead
+// of curving ones: `--district industrial --area 0`, bowing as `--bow` says.
+//
 // Usage:
 //   npm run suburbdraft -- --area 2            # the third midtown in plan.ts
 //   npm run suburbdraft -- --area 2 --dry      # report, write nothing
+//   npm run suburbdraft -- --district industrial --area 0 --prefix i   # works roads
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'vite';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
+const DISTRICT = flag('--district', 'midtown');
 const AREA = Number(flag('--area', '2'));
 const DRY = args.includes('--dry');
 const PREFIX = flag('--prefix', 's');
@@ -37,7 +42,9 @@ const JUNCTION_CLEAR = 60; // no street this near another road's junction
 const LENGTHS = [300, 250, 200, 160];
 const CROSS_MIN = 110; // a boulevard opposite at least this far off is crossed to, not dead-ended short of
 const CROSS_MAX = 420;
-const BOW = 0.22; // how far a street bows, as a fraction of its length
+// How far a street bows, as a fraction of its length: a suburb's curve, a
+// works road's near-straight.
+const BOW = Number(flag('--bow', DISTRICT === 'midtown' ? '0.22' : '0.03'));
 const STREET_GAP = 55; // centre to centre, from any road but the one it leaves
 const SHORE_CLEAR = 25;
 const MAX_GRADE = 0.09;
@@ -58,8 +65,8 @@ const U = K.UNITS_PER_METRE;
 const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 await server.close();
 
-const area = PLAN_DISTRICTS.filter((a) => a.kind === 'midtown')[AREA];
-if (!area) throw new Error(`no midtown ${AREA} in the plan`);
+const area = PLAN_DISTRICTS.filter((a) => a.kind === DISTRICT)[AREA];
+if (!area) throw new Error(`no ${DISTRICT} ${AREA} in the plan`);
 const poly = area.poly.map((p) => ({ x: p.x / U, z: p.z / U }));
 const inside = (p) => inArea(poly, p);
 const wet = (p) => inWater(city, p.x * U, p.z * U);
@@ -69,7 +76,10 @@ const docPath = 'docs/roads-edited.json';
 const raw = readFileSync(docPath, 'utf8');
 const doc = JSON.parse(raw);
 // Start from a clean slate: a rerun replaces the last draft instead of adding to it.
-const kept = doc.roads.filter((r) => !(r.draft === 'suburb' && r.area === AREA));
+// A redraft replaces this area's own earlier draft and nothing else: area
+// numbers repeat across kinds of district (Midtown south-west and Industrial
+// are both 0), so the district is part of which draft is whose.
+const kept = doc.roads.filter((r) => !(r.draft === 'suburb' && r.area === AREA && (r.district ?? 'midtown') === DISTRICT));
 const drawn = kept.map((r) => ({ id: r.id, kind: r.kind, points: r.points.map(([x, z]) => ({ x, z })) }));
 
 const seg = (p, a, b) => {
@@ -217,7 +227,7 @@ const roads = out.map((s, i) => ({
   id: `${PREFIX}${AREA}-${i + 1}`,
   kind: 'street',
   bridge: false,
-  district: 'midtown',
+  district: DISTRICT,
   points: s.points.map((p) => [r0(p.x), r0(p.z)]),
   ...(s.deadEnd ? { deadEnd: true } : {}),
   isNew: true,
@@ -226,7 +236,7 @@ const roads = out.map((s, i) => ({
 }));
 const km = roads.reduce((sum, r) => sum + lengthOf(r.points.map(([x, z]) => ({ x, z }))), 0) / 1000;
 console.log(
-  `midtown ${AREA}: ${roads.length} streets, ${km.toFixed(2)} km · ` +
+  `${DISTRICT} ${AREA}: ${roads.length} streets, ${km.toFixed(2)} km · ` +
     `${out.filter((s) => s.crescent).length} crescents, ${out.filter((s) => s.deadEnd).length} cul-de-sacs, ` +
     `${out.filter((s) => !s.deadEnd && !s.crescent).length} through`,
 );
