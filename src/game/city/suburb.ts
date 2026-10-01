@@ -58,10 +58,15 @@ const MAX_FALL = 1.5;
  *
  * Set pieces rather than `Building`s, because a building is an axis-aligned
  * box and these streets curve and run at every angle: a house turned to face
- * its street is a set piece, the way the castle's buildings are. Generated,
- * not placed, for the reason the woods are: three hundred houses and none of
- * them a decision. The numbers come from each lot's own position
- * (`cellRandom`), so moving one street moves only the houses on it.
+ * its street is a set piece, the way the castle's buildings are.
+ *
+ * A draft, not what the game builds (#477, the owner's call): `npm run
+ * housedraft` runs this once and writes the houses into the area's props
+ * file, the area editor is where they are moved, turned, added and deleted,
+ * and `propsync` makes the saved set the city - so a road change no longer
+ * moves a house by itself. The numbers come from each lot's own position
+ * (`cellRandom`), so a redraft after a street moves changes only the houses
+ * on it.
  */
 export function suburbHousesFor(
   terrain: Terrain,

@@ -154,6 +154,11 @@ what the city is shaped like.
   boulevards, added to `docs/roads-edited.json` for the road editor. A
   drawing tool, not a generator the game runs: once edited and synced by
   `roadsync`, a street is authored data like any other
+- `npm run housedraft` - draft Midtown north's houses (#477) into
+  `docs/midtown-props-edited.json`: generated once by `city/suburb.ts`, then
+  edited in the area editor (`npm run propexport -- --place midtown`) and
+  synced with `npm run propsync -- --place midtown`. A rerun replaces every
+  house in the file, hand edits included
 - `npm run propexport` — crop Marrow Field out of the generated city and write
   `screenshots/propeditor.html`, the prop placement editor with the field
   inlined; `npm run propsync` writes `city/marrowprops.ts` from the placements
