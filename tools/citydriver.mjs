@@ -148,6 +148,25 @@ export function faults(skill) {
     misjudge: off * 0.26,
     /** Seconds between perceiving and doing. */
     reaction: human * 0.42,
+    /**
+     * How much of what the car and the corner allow they are willing to use.
+     * Once the driver planned its braking at the car's real rate and stopped
+     * steering against its own reaction time (#545 and after), the faults above
+     * stopped costing time: a beginner and an advanced driver lapped within a
+     * percent of each other and the tiers read as one driver. What separates
+     * them on a real lap is commitment - a newcomer lifts well short of what
+     * the car can do, on the straights and in the bends - so it is modelled
+     * directly, and like the others it is exactly 1 at full skill.
+     */
+    pace: 1 - off * 0.6,
+    /**
+     * How much more clear road they want before they pull out to pass, and how
+     * much quicker the pass has to be. On a road full of traffic the car in
+     * front sets everybody's pace, so commitment alone did not separate the
+     * tiers there: what does is that a newcomer sits behind a slower car that
+     * an expert would already be past.
+     */
+    caution: 1 + off * 2,
     /** Roughly how often attention goes, in seconds. Infinity at full skill. */
     lapseEvery: off === 0 ? Infinity : 22 / off,
     /** How long one lasts. */
@@ -335,7 +354,7 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
     // is the half that costs: it is what running wide into the outside of a
     // bend looks like from the inside of the car.
     const judged = CORNER_MARGIN * (1 + fault.misjudge * misjudge(at));
-    return judged * Math.sqrt(K.LATERAL_GRIP * effective);
+    return fault.pace * judged * Math.sqrt(K.LATERAL_GRIP * effective);
   };
 
   return {
@@ -344,6 +363,7 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
     length: open ? cumulative[segments] - 1 : length,
     at,
     progress,
+    fault,
     /** Concentrate: hold the line exactly for a moment. Called after a scrape. */
     concentrate(seconds) {
       focus = Math.max(focus, seconds);
@@ -356,8 +376,15 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
      * in the window from. That is what makes it lift before a corner.
      */
     target(along, speed, maxSpeed) {
-      const brake = maxSpeed; // `braking` in the sim is -maxSpeed
-      let limit = maxSpeed;
+      // The car's real braking, `BRAKE_RATE`. This was `maxSpeed`, the sim's
+      // braking before #14 measured the reference game and set it to a sixth
+      // of that, and the planner went on braking for every corner as if it
+      // could stop from 300 km/h in 44 m. The perfect driver mostly got away
+      // with it by steering exactly; anyone with a reaction time arrived at
+      // the Old Town Circuit's right angles at twice the speed they could
+      // take and ran wide into the buildings at nearly every one.
+      const brake = K.BRAKE_RATE ?? maxSpeed;
+      let limit = maxSpeed * fault.pace;
       // Stepped finely enough not to walk over a junction: the route's
       // vertices are the corners, and a sample that steps past one reports a
       // straight where there is a right-angle turn.
@@ -581,7 +608,9 @@ function overtake(world, K, driver, found, along, lane, passing, routeTarget) {
   // road is nowhere near straight ahead of the car - measured in the car's
   // frame, an oncoming car round the bend sat in the verge and never counted.
   // A car more than a lane's width off the route is on some other road.
-  const window = PASS_MAX_TIME * world.maxSpeed * PASS_MARGIN;
+  const caution = driver.fault?.caution ?? 1;
+  const margin = PASS_MARGIN * caution;
+  const window = PASS_MAX_TIME * world.maxSpeed * margin;
   const placed = [];
   for (const { car, width } of cars) {
     if (Math.hypot(car.x - world.x, car.z - world.z) > window * 1.5) continue;
@@ -609,12 +638,12 @@ function overtake(world, K, driver, found, along, lane, passing, routeTarget) {
     // From where we are to a following distance clear in front of it.
     const relative = blocker.ahead + K.TRAFFIC_GAP + R * 4;
     const time = relative / closing;
-    if (time > PASS_MAX_TIME) return null;
+    if (time > PASS_MAX_TIME / caution) return null;
     const ground = vAvg * time;
-    if (!driver.bendsAllow(along, ground * PASS_MARGIN, vAvg, far)) return null;
+    if (!driver.bendsAllow(along, ground * margin, vAvg, far)) return null;
     for (const p of placed) {
       if (p === blocker || !inLine(p, far)) continue;
-      const reach = (ground + (p.sameWay ? 0 : Math.abs(p.car.speed) * time)) * PASS_MARGIN + K.TRAFFIC_GAP;
+      const reach = (ground + (p.sameWay ? 0 : Math.abs(p.car.speed) * time)) * margin + K.TRAFFIC_GAP;
       if (p.ahead > -R * 4 && p.ahead < reach) return null;
     }
     return vPass;
@@ -638,7 +667,7 @@ function overtake(world, K, driver, found, along, lane, passing, routeTarget) {
   // Something coming the other way, nearer than the time it takes to tuck in.
   const tuck = 1.5;
   const threat = placed.some(
-    (p) => !p.sameWay && inLine(p, far) && p.ahead > 0 && p.ahead < (Math.max(0, world.speed) + Math.abs(p.car.speed)) * tuck * PASS_MARGIN + K.TRAFFIC_GAP,
+    (p) => !p.sameWay && inLine(p, far) && p.ahead > 0 && p.ahead < (Math.max(0, world.speed) + Math.abs(p.car.speed)) * tuck * margin + K.TRAFFIC_GAP,
   );
   if (laneFree) {
     if (threat) return null;
@@ -651,6 +680,11 @@ function overtake(world, K, driver, found, along, lane, passing, routeTarget) {
   if (threat && blocker && blocker.ahead > R * 3) return null;
   return -out;
 }
+
+/** A heading error, in radians, past which the car is still turning and is not put on the power. */
+const TURNING = 0.35;
+/** The speed, in km/h, the car may always have while it turns. */
+const TURN_CRAWL = 25;
 
 /** A heading error, in radians, past which the steering is held hard over rather than tapped. */
 const STEER_FULL = 0.15;
@@ -882,7 +916,18 @@ export function driveRoute(
     escape = 0;
 
     // Whichever is lower wins.
-    const target = Math.min(routeTarget, carAheadLimit(world, K));
+    let target = Math.min(routeTarget, carAheadLimit(world, K));
+    // Not on the power until the car points down the road. The planner only
+    // looks ahead along the route, so the moment the car passes a corner's
+    // vertex the corner is behind it and the target jumps back to the
+    // straight's - with the car still pointing at the buildings on the
+    // outside. Measured on the Old Town Circuit, the expert went from 60 to
+    // 210 km/h of target sixty degrees into a right angle and drove into the
+    // wall. Holding the speed it has until the heading is within `TURNING` of
+    // the road is what a person does on the way out of a corner.
+    // Never below a crawl, though: a car only turns while it is moving, so
+    // holding a standstill pointed the wrong way is never getting out of it.
+    if (Math.abs(error) > TURNING) target = Math.min(target, Math.max(world.speed, TURN_CRAWL * K.UNITS_PER_METRE / 3.6));
     // Left *increases* heading: the sim steers with `heading -= steer`, and a
     // driver facing +z has their right hand pointing at -x. Getting this the
     // other way round is a driver that steers away from every corner, which
