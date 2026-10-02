@@ -15,6 +15,7 @@
 //   npm run playtest                     # everything
 //   npm run playtest -- --only drivers   # drivers | heat | events | ambushes
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 import { driveRoute, DRIVERS } from './citydriver.mjs';
 
 const flag = (name) => {
@@ -29,7 +30,8 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every run on an empty save, in the starter car (#533).
+const { CityWorld, freshWorld } = await worldFactory(server);
 const { RIVALS } = await server.ssrLoadModule('/src/game/rivals.ts');
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 
@@ -133,7 +135,7 @@ if (want('drivers')) {
 
   for (const driver of DRIVERS) {
     for (const route of circuits.slice(0, 2)) {
-      const world = new CityWorld(undefined, { drift: false });
+      const world = freshWorld({ drift: false });
       const eye = watcher(world);
       let elapsed = 0;
       const run = driveRoute(world, route, K, {
@@ -181,7 +183,7 @@ if (want('heat')) {
   console.log('a pursuit opened at each, driven by an expert until it ends\n');
 
   for (let level = 1; level <= K.HEAT_LEVEL_COUNT; level++) {
-    const world = new CityWorld(undefined, { drift: false });
+    const world = freshWorld({ drift: false });
     const route = circuits[0];
     // Placed on the line first, then lit up: `rammed` is the one provocation
     // that needs no witness, so it is the only way to start a pursuit at a
@@ -245,7 +247,7 @@ if (want('events')) {
   console.log('every circuit and speed run, entered the way a player enters one\n');
 
   for (const route of city.routes) {
-    const world = new CityWorld(undefined, { drift: false });
+    const world = freshWorld({ drift: false });
     // Enough Rep that every rival takes the call, so the event under test is
     // the event and not the gate in front of it (#91).
     world.rep.total = RIVALS[RIVALS.length - 1].rep + 1000;
@@ -311,7 +313,7 @@ if (want('ambushes')) {
   console.log('parked on each trap and sprung, then driven out\n');
 
   for (const spot of city.ambushes) {
-    const world = new CityWorld(undefined, { drift: false });
+    const world = freshWorld({ drift: false });
     world.x = spot.at.x;
     world.z = spot.at.z;
     world.y = 0;
