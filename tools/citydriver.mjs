@@ -240,13 +240,11 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
    * of a loop that passes near itself, and the driver spends the rest of the
    * lap aiming backwards.
    */
-  function progress(x, z, hint) {
+  function progress(x, z, hint, back = 6000, forward = 14000) {
     let best = hint;
     let bestGap = Infinity;
     let bestHeading = 0;
     let bestSide = 0;
-    const back = 6000;
-    const forward = 14000;
 
     for (let i = 0; i < segments; i++) {
       const from = cumulative[i];
@@ -330,9 +328,9 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
    * bend. Measured: at traffic's own offset it takes building impacts on a
    * traffic-on lap from 89 to 66, and the damage that goes with them.
    */
-  const cornerSpeed = (radius, at = 0) => {
+  const cornerSpeed = (radius, at = 0, offset = lane) => {
     if (radius === Infinity) return Infinity;
-    const effective = Math.max(radius * 0.25, radius - Math.abs(lane));
+    const effective = Math.max(radius * 0.25, radius - Math.abs(offset));
     // A misjudged corner is entered too fast or too slow, and the too-fast half
     // is the half that costs: it is what running wide into the outside of a
     // bend looks like from the inside of the car.
@@ -376,6 +374,18 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
       return limit;
     },
     /**
+     * Whether every bend in the next `distance` can be taken at `speed` while
+     * holding `offset` off the centreline: the test an overtake has to pass
+     * before it starts, because a pass is committed to a line on the other
+     * side of the road and `target` only ever plans for this driver's own.
+     */
+    bendsAllow(along, distance, speed, offset) {
+      for (let ahead = 0; ahead < distance; ahead += 1200) {
+        if (cornerSpeed(radiusAt(along + ahead), along + ahead, offset) < speed) return false;
+      }
+      return true;
+    },
+    /**
      * Which way to point, given where the car is relative to the line.
      *
      * This follows the path rather than aiming at a point on it, and the
@@ -387,7 +397,7 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
      * speed, so a metre off at 300 km/h is a nudge and a metre off at walking
      * pace is a turn.
      */
-    steer(found, speed) {
+    steer(found, speed, passing = null) {
       // Aim for the lane, not the line. `side` is positive on the far side of
       // the centreline from traffic (see `progress`), so keeping right is a
       // negative target and the error is measured against that rather than
@@ -397,8 +407,12 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
       // the lane and puts the held line over the kerb - which is a driver that
       // aims at the pavement rather than one that drives untidily, and it is
       // most of why the beginner tier read as a pinball rather than a person.
+      //
+      // An overtake (`passing`, see `overtake`) is held exactly and without
+      // the wander: it is a line chosen a moment ago with a car beside it, and
+      // nobody pulling out past one lets their attention drift while they do.
       const drift = focus > 0 ? 0 : fault.wander * wanderAt(found.along);
-      const held = Math.max(0, Math.min(lane * 1.35, lane + drift));
+      const held = passing ?? Math.max(0, Math.min(lane * 1.35, lane + drift));
       const error = found.side - -held;
       const correction = Math.atan2(CROSS_GAIN * -error, Math.max(1200, Math.abs(speed)));
       return found.heading + correction;
@@ -436,27 +450,12 @@ export function routeDriver(route, K, { lane = DRIVER_LANE, skill = 1, seed = 1 
  * matters.
  */
 export function carAheadLimit(world, K) {
-  // The quarry's haul trucks too (#330): they are traffic on the only roads
-  // civilians are kept off, and a driver blind to them rammed every one on the
-  // Halloway Rim and finished each race a wreck. Wider than a car, so the cone
-  // is widened by the difference.
-  const cars = [
-    ...(world.traffic?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
-    ...(world.trucks?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 1.2 + K.TRUCK_RADIUS })),
-    // And police (#349): a race now runs through a pursuit, and its search
-    // sweeps the lap. Blind to them, the driver met a searching unit head-on,
-    // slowed to walking pace beside it and was busted - a crash no person
-    // racing would have driven into.
-    ...(world.police?.cops ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
-    // And the race field, now that it has bodies (#350).
-    ...(world.fieldBodies === false ? [] : (world.race?.field ?? []))
-      .filter((car) => !car.out)
-      .map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
-  ];
+  const cars = obstacles(world, K);
   if (cars.length === 0) return Infinity;
 
   // Look as far ahead as it would take to stop, plus a car's length of room.
-  const reach = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * world.maxSpeed));
+  const brake = brakeOf(world, K);
+  const reach = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * brake));
   const fx = Math.sin(world.heading);
   const fz = Math.cos(world.heading);
 
@@ -474,10 +473,195 @@ export function carAheadLimit(world, K) {
     if (room <= 0) return Math.min(limit, car.speed * 0.6);
     // Fastest we can be here and still match their speed by the time we
     // arrive: the same braking-window arithmetic the route target uses.
-    limit = Math.min(limit, Math.sqrt(car.speed * car.speed + 2 * world.maxSpeed * room));
+    limit = Math.min(limit, Math.sqrt(car.speed * car.speed + 2 * brake * room));
   }
   return limit;
 }
+
+/**
+ * How hard the car can actually brake, in units per second per second.
+ *
+ * This used to be `maxSpeed`, which was the sim's braking until #14 measured
+ * the reference game and set `BRAKE_RATE` to 55 km/h a second - a sixth of
+ * it. The car-ahead limit went on planning a stop from 300 km/h in 44 m that
+ * takes 260, which cost nothing while the driver only ever sat behind the car
+ * in front at its speed, and everything once it could pull out past one and
+ * come back in at twice that speed: it rear-ended the next car down the road
+ * on the first lap it overtook on (#537).
+ */
+const brakeOf = (world, K) => K.BRAKE_RATE ?? world.maxSpeed;
+
+/**
+ * Everything on the road the driver has to keep out of, with how wide a berth
+ * each one needs.
+ */
+function obstacles(world, K) {
+  // The quarry's haul trucks too (#330): they are traffic on the only roads
+  // civilians are kept off, and a driver blind to them rammed every one on the
+  // Halloway Rim and finished each race a wreck. Wider than a car, so the cone
+  // is widened by the difference.
+  return [
+    ...(world.traffic?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
+    ...(world.trucks?.cars ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 1.2 + K.TRUCK_RADIUS })),
+    // And police (#349): a race now runs through a pursuit, and its search
+    // sweeps the lap. Blind to them, the driver met a searching unit head-on,
+    // slowed to walking pace beside it and was busted - a crash no person
+    // racing would have driven into.
+    ...(world.police?.cops ?? []).map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
+    // And the race field, now that it has bodies (#350).
+    ...(world.fieldBodies === false ? [] : (world.race?.field ?? []))
+      .filter((car) => !car.out)
+      .map((car) => ({ car, width: K.CAR_RADIUS * 2.2 })),
+  ];
+}
+
+/**
+ * The longest an overtake may take, in seconds, from deciding to pull out to
+ * being a following distance clear of the car passed. A pass that would take
+ * longer is a car going nearly as fast as you, and is not worth the other side
+ * of the road.
+ */
+const PASS_MAX_TIME = 5;
+/**
+ * How much more clear road a pass asks for than the arithmetic says it needs.
+ * The arithmetic assumes the car ahead and anything oncoming hold their speed,
+ * and traffic eases up and down; half again is the margin for that.
+ */
+const PASS_MARGIN = 1.5;
+
+/**
+ * Where to be across the road: in lane, or out on the other side of it
+ * passing whoever is in the way. Returns the offset `steer` should hold, as
+ * `routeDriver`'s `lane` reads it (positive is right), or null for the lane.
+ *
+ * Without this the driver had one answer to a slower car, which was to sit
+ * behind it, and on Kestrel Bay's boulevards that answer was most of every
+ * traffic lap. Measured (#537): on the Ashford Coast Sprint it spent 210 s of
+ * a 224 s lap held by a civilian at 24% of top speed - the road's 80 km/h
+ * less traffic's own margin - with the oncoming half of the road clear for
+ * 300 m ahead in 88% of those seconds. The Promenade Sprint lost 69 s of 85
+ * that way (oncoming half clear 99% of the time), the Works Circuit 88 s of
+ * 137. Every route that traffic tripled was this one thing. A person overtakes
+ * there - in the reference game the ONCOMING counter "runs almost constantly"
+ * (docs/research/nfs-most-wanted-2012-gameplay.md) - so a driver that queues
+ * was measuring its own patience, not the traffic.
+ *
+ * Overtaking is on the oncoming half, at traffic's own line there, and the
+ * rules are the ones a careful person uses. Pull out only behind a car going
+ * the same way and slower than the road allows; only if the pass can be done
+ * in `PASS_MAX_TIME`; only if no bend in the distance it covers is slower than
+ * the pass, taken on that side of the road; and only if the other side is
+ * clear for that distance plus however far anything coming the other way
+ * covers meanwhile, with `PASS_MARGIN` on top. Once out, it pulls back in as
+ * soon as its own lane is clear beside it, unless the next car in that lane
+ * is one it could pass on the same terms; and if something appears coming
+ * the other way, it tucks back in wherever its lane has room. It never uses
+ * the near-side lanes of a wide road: traffic keeps right by `TRAFFIC_LANE`,
+ * which on a four-lane road leaves the outer lane only a hand's width wider
+ * than two cars, and passing on the inside is not something to model as the
+ * normal case.
+ *
+ * Nothing here does anything without a car in the way, so an empty lap - and
+ * the empty half of `docs/city-baseline.json` - does not move. A quarry truck
+ * is never passed: it is wider than the gap between the two lines.
+ */
+function overtake(world, K, driver, found, along, lane, passing, routeTarget) {
+  const road = world.onRoad;
+  if (!road || world.airborne) return passing;
+  const cars = obstacles(world, K);
+  if (cars.length === 0) return null;
+
+  const out = Math.min(K.TRAFFIC_LANE, road.width / 2 - K.CAR_RADIUS * 1.1);
+  // Line positions in `side`'s convention, where the lane is -lane.
+  const own = -lane;
+  const far = out;
+  // Every car is put on the route, not in front of the bonnet: how far along
+  // it and how far across it. A pass is decided over a couple of hundred
+  // metres, and on a boulevard that bends the oncoming lane that far up the
+  // road is nowhere near straight ahead of the car - measured in the car's
+  // frame, an oncoming car round the bend sat in the verge and never counted.
+  // A car more than a lane's width off the route is on some other road.
+  const window = PASS_MAX_TIME * world.maxSpeed * PASS_MARGIN;
+  const placed = [];
+  for (const { car, width } of cars) {
+    if (Math.hypot(car.x - world.x, car.z - world.z) > window * 1.5) continue;
+    const at = driver.progress(car.x, car.z, along, 3000, window);
+    if (at.off > road.width) continue;
+    let ahead = at.along - along;
+    if (ahead < -driver.length / 2) ahead += driver.length;
+    if (ahead > driver.length / 2) ahead -= driver.length;
+    const heading = car.heading ?? at.heading + Math.PI;
+    const sameWay = Math.cos(heading - at.heading) > 0.5;
+    placed.push({ car, width, ahead, side: at.side, sameWay });
+  }
+  const inLine = (p, line) => Math.abs(p.side - line) < p.width;
+  const R = K.CAR_RADIUS;
+
+  /**
+   * Whether the far side is clear to pass `blocker`, at what is planned.
+   * Null when it is not; the speed of the pass when it is.
+   */
+  const canPass = (blocker) => {
+    const vPass = Math.min(routeTarget, world.maxSpeed);
+    const vAvg = (Math.max(0, world.speed) + vPass) / 2;
+    const closing = vAvg - blocker.car.speed;
+    if (closing < world.maxSpeed * 0.1) return null;
+    // From where we are to a following distance clear in front of it.
+    const relative = blocker.ahead + K.TRAFFIC_GAP + R * 4;
+    const time = relative / closing;
+    if (time > PASS_MAX_TIME) return null;
+    const ground = vAvg * time;
+    if (!driver.bendsAllow(along, ground * PASS_MARGIN, vAvg, far)) return null;
+    for (const p of placed) {
+      if (p === blocker || !inLine(p, far)) continue;
+      const reach = (ground + (p.sameWay ? 0 : Math.abs(p.car.speed) * time)) * PASS_MARGIN + K.TRAFFIC_GAP;
+      if (p.ahead > -R * 4 && p.ahead < reach) return null;
+    }
+    return vPass;
+  };
+
+  // The nearest car in our own lane ahead, going our way.
+  const stopping = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * brakeOf(world, K)));
+  let blocker = null;
+  for (const p of placed) {
+    if (!inLine(p, own) || p.ahead <= 0 || p.ahead > stopping + K.TRAFFIC_GAP) continue;
+    if (!blocker || p.ahead < blocker.ahead) blocker = p;
+  }
+  const worth = (b) => b && b.sameWay && b.car.speed < routeTarget * 0.9;
+
+  if (passing === null) {
+    return worth(blocker) && canPass(blocker) !== null ? -out : null;
+  }
+
+  // Out on the far side. Is our lane free beside us to go back to?
+  const laneFree = !placed.some((p) => inLine(p, own) && p.ahead > -R * 4 && p.ahead < K.TRAFFIC_GAP);
+  // Something coming the other way, nearer than the time it takes to tuck in.
+  const tuck = 1.5;
+  const threat = placed.some(
+    (p) => !p.sameWay && inLine(p, far) && p.ahead > 0 && p.ahead < (Math.max(0, world.speed) + Math.abs(p.car.speed)) * tuck * PASS_MARGIN + K.TRAFFIC_GAP,
+  );
+  if (laneFree) {
+    if (threat) return null;
+    // Past it. Stay out only to take the next one on the same terms.
+    return worth(blocker) && canPass(blocker) !== null ? -out : null;
+  }
+  // Not yet level with the car being passed: drop back behind it rather than
+  // race something coming the other way to the gap. The car-ahead limit does
+  // the braking once the driver is back in its lane.
+  if (threat && blocker && blocker.ahead > R * 3) return null;
+  return -out;
+}
+
+/** A heading error, in radians, past which the steering is held hard over rather than tapped. */
+const STEER_FULL = 0.15;
+
+/** The signed angle from `a` to `b`, the short way round. */
+const angleBetween = (a, b) => {
+  let d = b - a;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return d;
+};
 
 export function driveRoute(
   world,
@@ -557,6 +741,17 @@ export function driveRoute(
   let sinceHit = 1;
   /** Whether confirm went down last step, so the next one is a fresh press. */
   let pressedConfirm = false;
+  /** Last step's heading, and how fast a held key turns the car (see the steering below). */
+  let lastHeading = world.heading;
+  let turnRate = 0;
+  /** The key the hands actually pressed last step: 1 left, -1 right, 0 neither. */
+  let lastHands = 0;
+  /** How much of a key press the steering has owed since it last pressed (see below). */
+  let steerDuty = 0;
+  /** The offset an overtake is holding (see `overtake`), or null in lane. */
+  let passing = null;
+  let wasPassing = null;
+  let passes = 0;
 
   const trace = process.env.TRACE === route.name;
   for (let t = 0; t < seconds && covered < driver.length; t += K.STEP) {
@@ -591,9 +786,9 @@ export function driveRoute(
     if (step < -driver.length / 2) step += driver.length;
     if (step > 0 && step < driver.length / 4) covered += step;
     along = found.along;
-    // Measured against the lane the driver is holding, not the centreline,
-    // or every run would report the lane offset as an error.
-    offRoute = Math.max(offRoute, Math.abs(found.side + lane));
+    // Measured against the line the driver is holding, not the centreline,
+    // or every run would report the lane offset - or an overtake - as an error.
+    offRoute = Math.max(offRoute, Math.abs(found.side + (passing ?? lane)));
 
     sinceHit += K.STEP;
     if (world.crashFlash > 0.9 && sinceHit > 0.5) {
@@ -601,8 +796,30 @@ export function driveRoute(
       sinceHit = 0;
     }
 
-    const want = driver.steer(found, world.speed);
-    let error = want - world.heading;
+    // The route says how fast the road allows; the car in front says how fast
+    // the road is actually going, unless there is room to go round it.
+    const routeTarget = driver.target(along, world.speed, world.maxSpeed);
+    passing = overtake(world, K, driver, found, along, lane, passing, routeTarget);
+    if (passing !== null && passing !== wasPassing) passes++;
+    wasPassing = passing;
+    const want = driver.steer(found, world.speed, passing);
+    // Steer off where the car will be pointing when the hands catch up, not
+    // where it points now. The steering is on or off, and a driver with a
+    // reaction time acts on what it saw that long ago: aimed at the heading of
+    // this instant, every correction lands after the car has already swung past
+    // the line, and the next one is late the other way. Measured on the Marrow
+    // Field Run's opening straight, the advanced driver swung 30 degrees either
+    // side of the road at 100 km/h and put the car into a wall six seconds in,
+    // where the perfect driver, with no lag, held its heading to the degree.
+    // A person with slow hands knows what they have already asked the wheel
+    // for, so the error is taken against the heading those queued presses will
+    // leave the car at, turning at the rate the car has been seen to turn.
+    const turned = angleBetween(lastHeading, world.heading) / K.STEP;
+    if (lastHands !== 0 && Math.abs(turned) > 0) turnRate += (Math.abs(turned) - turnRate) * 0.2;
+    lastHeading = world.heading;
+    let ahead = world.heading;
+    for (const p of pending) ahead += ((p.left ? 1 : 0) - (p.right ? 1 : 0)) * turnRate * K.STEP;
+    let error = want - ahead;
     while (error > Math.PI) error -= Math.PI * 2;
     while (error < -Math.PI) error += Math.PI * 2;
 
@@ -629,6 +846,7 @@ export function driveRoute(
       // half-metre box until the clock runs out. Pick a direction once and
       // commit to it. Reversing swings the nose the other way, so the escape
       // steers opposite to where the car wants to end up pointing.
+      passing = null;
       if (escape === 0) escape = error > 0 ? -1 : 1;
       const backing = stuck < 1.6;
       const turn = backing ? escape : -escape;
@@ -663,25 +881,36 @@ export function driveRoute(
     }
     escape = 0;
 
-    // The route says how fast the road allows; the car in front says how fast
-    // the road is actually going. Whichever is lower wins.
-    const target = Math.min(
-      driver.target(along, world.speed, world.maxSpeed),
-      carAheadLimit(world, K),
-    );
+    // Whichever is lower wins.
+    const target = Math.min(routeTarget, carAheadLimit(world, K));
     // Left *increases* heading: the sim steers with `heading -= steer`, and a
     // driver facing +z has their right hand pointing at -x. Getting this the
     // other way round is a driver that steers away from every corner, which
     // is exactly what it did.
+    // Small errors get a touch of the wheel, not full lock: the key is held
+    // for a share of the steps that grows with the error and is held outright
+    // past `STEER_FULL`. Full lock for a two-degree error is the other half of
+    // the weave above - every correction overshoots - and no person corrects a
+    // straight line by sawing at the wheel.
+    let steerKey = 0;
+    if (Math.abs(error) > 0.02) {
+      steerDuty += Math.min(1, Math.abs(error) / STEER_FULL);
+      if (steerDuty >= 1) {
+        steerDuty -= 1;
+        steerKey = Math.sign(error);
+      }
+    } else steerDuty = 0;
     const intent = {
       ...none,
-      left: error > 0.02,
-      right: error < -0.02,
+      left: steerKey > 0,
+      right: steerKey < 0,
       up: world.speed < target * 0.98,
       down: world.speed > target * 1.08,
       confirm: press,
     };
-    world.step(K.STEP, { ...throughHands(intent, K.STEP), ...hold(world, intent, target) });
+    const hands = throughHands(intent, K.STEP);
+    lastHands = (hands.left ? 1 : 0) - (hands.right ? 1 : 0);
+    world.step(K.STEP, { ...hands, ...hold(world, intent, target) });
     elapsed += K.STEP;
   }
 
@@ -692,5 +921,6 @@ export function driveRoute(
     average: covered / Math.max(K.STEP, elapsed),
     crashes,
     offRoute,
+    passes,
   };
 }
