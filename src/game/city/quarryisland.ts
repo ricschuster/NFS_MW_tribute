@@ -40,8 +40,12 @@ const CELL = 13;
 const QUARRY_DRESSED = 260, BLEND = 160;
 /** Off a road's edge: a dirt track gets a verge a rally car can run wide on; the coast road its tarmac's. */
 const TRACK_CLEAR = 9, ROAD_CLEAR = 18;
-/** From the middle of a race line. */
-const RACED_CLEAR = 23;
+/**
+ * From the middle of a race line. The Halloway Coast Rally runs the island's
+ * tracks, and a wood kept 23 m back, as Highmoor's is, left it running between
+ * lawns; at 12 no driver tier touched a trunk more than at 23.
+ */
+const RACED_CLEAR = 12;
 const PROP_CLEAR = 10;
 /** Above this, a wood thins out to the bare top; below `SHORE_LOW` it thins to the beach. */
 const TOPS = 30, TOPS_BARE = 42, SHORE_LOW = 4;

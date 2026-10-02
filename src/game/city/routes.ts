@@ -563,6 +563,33 @@ const LATER_ROUTES: PlacedRoute[] = [
       [-731, -2539],
     ],
   },
+  // Halloway Coast Rally: the quarry island's event, a rally sprint on its
+  // dirt the whole way - the owner's call when the island's tracks were laid
+  // (2026-10-02). From the coast road's end at the south tip down n116, up
+  // the far coast on the coastal track, out along the owner's n117 on the
+  // north-west shore, and east along the north shore to where the track
+  // meets the coast road again. Five and a half kilometres of loose surface,
+  // the woods and the outcrops close on either side.
+  {
+    name: 'Halloway Coast Rally',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [-2771, -2710],
+      [-2927, -2603],
+      [-3241, -2313],
+      [-3448, -1980],
+      [-3571, -1608],
+      [-3648, -1224],
+      [-3676, -830],
+      [-3872, 4],
+      [-3245, 300],
+      [-2872, 404],
+      [-2500, 507],
+      [-2125, 606],
+      [-1727, 596],
+    ],
+  },
 ];
 
 /**
