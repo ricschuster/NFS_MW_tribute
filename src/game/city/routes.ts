@@ -668,16 +668,60 @@ const NAMES = [
   'Old Quarter',
 ];
 
-function nearestNode(city: City, graph: Graph, to: Vec2): number | null {
-  let best: number | null = null;
-  let bestGap = Infinity;
+/**
+ * The graph's nodes in 250 m buckets, built once per graph. `nearestNode` runs
+ * hundreds of times a build - every waypoint of every route, every corner a
+ * circuit tries - and scanning every node for each was most of `routesFor`.
+ */
+const NODE_BUCKET = 250 * UNITS_PER_METRE;
+const nodeIndex = new WeakMap<Graph, { buckets: Map<string, number[]>; order: Map<number, number> }>();
+function bucketsOf(city: City, graph: Graph): { buckets: Map<string, number[]>; order: Map<number, number> } {
+  const known = nodeIndex.get(graph);
+  if (known) return known;
+  const index = new Map<string, number[]>();
   for (const id of graph.nodes) {
     const pos = city.nodes[id].pos;
+    const k = `${Math.floor(pos.x / NODE_BUCKET)},${Math.floor(pos.z / NODE_BUCKET)}`;
+    const list = index.get(k);
+    if (list) list.push(id);
+    else index.set(k, [id]);
+  }
+  const order = new Map<number, number>();
+  graph.nodes.forEach((id, i) => order.set(id, i));
+  const built = { buckets: index, order };
+  nodeIndex.set(graph, built);
+  return built;
+}
+
+/**
+ * The graph node nearest `to`, ties to the one listed first - the same answer
+ * as scanning every node, found by searching outward ring by ring until no
+ * ring further out could hold anything nearer.
+ */
+function nearestNode(city: City, graph: Graph, to: Vec2): number | null {
+  if (graph.nodes.length === 0) return null;
+  const { buckets: index, order } = bucketsOf(city, graph);
+  const ci = Math.floor(to.x / NODE_BUCKET);
+  const cj = Math.floor(to.z / NODE_BUCKET);
+  let best: number | null = null;
+  let bestGap = Infinity;
+  const consider = (id: number) => {
+    const pos = city.nodes[id].pos;
     const gap = Math.hypot(pos.x - to.x, pos.z - to.z);
-    if (gap < bestGap) {
+    if (gap < bestGap || (gap === bestGap && best !== null && order.get(id)! < order.get(best)!)) {
       bestGap = gap;
       best = id;
     }
+  };
+  for (let ring = 0; ; ring++) {
+    // Anything in this ring or beyond is at least (ring - 1) buckets away.
+    if (best !== null && (ring - 1) * NODE_BUCKET > bestGap) break;
+    if (ring > 400) break;
+    for (let i = ci - ring; i <= ci + ring; i++)
+      for (let j = cj - ring; j <= cj + ring; j++) {
+        if (Math.max(Math.abs(i - ci), Math.abs(j - cj)) !== ring) continue;
+        for (const id of index.get(`${i},${j}`) ?? []) consider(id);
+      }
   }
   return best;
 }

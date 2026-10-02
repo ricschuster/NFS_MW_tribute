@@ -60,8 +60,20 @@ function surfaceSegments(roads: readonly CityRoad[], nodes: readonly CityNode[])
 const kerbGap = (segs: readonly Seg[], p: Vec2): number =>
   Math.min(...segs.map((s) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) - s.half));
 
+/**
+ * The segments whose kerb is within `reach` of `p`: everything a question
+ * asked within `reach - r` of `p` about a gap under `r` can see. Asking the
+ * whole city's roads at every metre of every drive was a second of every
+ * build; the answers are the same.
+ */
+const segsNear = (segs: readonly Seg[], p: Vec2, reach: number): Seg[] =>
+  segs.filter((s) => distanceToSegment(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) - s.half <= reach);
+
 /** A strip `width` wide from `from` along `dir` until it is `DRIVE_INTO` into a lane, or nothing if no lane is in reach. */
-function stripTo(segs: readonly Seg[], from: Vec2, dir: Vec2, width: number): Vec2[] | null {
+function stripTo(all: readonly Seg[], from: Vec2, dir: Vec2, width: number): Vec2[] | null {
+  // A point along the drive is within DRIVE_MAX of its start, and the lane it
+  // is looking for is within DRIVE_INTO of that point.
+  const segs = segsNear(all, from, (DRIVE_MAX + 1) * M);
   for (let d = 0; d <= DRIVE_MAX; d += 1) {
     const p = { x: from.x + dir.x * d * M, z: from.z + dir.z * d * M };
     if (kerbGap(segs, p) > -DRIVE_INTO * M) continue;
@@ -164,6 +176,9 @@ export function gardenTreesFor(
     const size = SIZES[home.kind];
     const want = GARDEN_TREES[home.kind];
     const cx = Math.round(home.x), cz = Math.round(home.z);
+    // A garden tree is never further from its house than this, and a road
+    // further than ROAD_CLEAR beyond it cannot be too close to one.
+    const near = segsNear(segs, { x: home.x * M, z: home.z * M }, (Math.hypot(size.w, size.l) / 2 + 30 + ROAD_CLEAR) * M);
     let placed = 0;
     for (let k = 0; k < want * 6 && placed < want; k++) {
       const r1 = cellRandom(cx, cz, 40 + k * 3), r2 = cellRandom(cx, cz, 41 + k * 3), r3 = cellRandom(cx, cz, 42 + k * 3);
@@ -174,7 +189,7 @@ export function gardenTreesFor(
       const at = local(home, u, v);
       if (!inArea(area.poly, at) || isWater(at.x, at.z)) continue;
       if (inHome(homes, at, 3)) continue;
-      if (kerbGap(segs, at) < ROAD_CLEAR * M) continue;
+      if (kerbGap(near, at) < ROAD_CLEAR * M) continue;
       if (drives.some((d) => insideOrNear(d.outline, at.x, at.z, 3 * M))) continue;
       if (trees.some((t) => Math.hypot(t.x - at.x / M, t.z - at.z / M) < TREE_GAP)) continue;
       if (streetTrees.some((t) => Math.hypot(t.x - at.x / M, t.z - at.z / M) < TREE_GAP)) continue;

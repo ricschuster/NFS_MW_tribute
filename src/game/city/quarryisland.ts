@@ -86,11 +86,43 @@ export function quarryIslandWildsFor(
   const woods = valueNoise(CITY_WOODS_STREAM ^ 0x48616c6c, 170);
   const rocks = valueNoise(CITY_WOODS_STREAM ^ 0x526f636b, 60);
 
+  // Everything clearOf asks about, bucketed in 100 m cells, so a tree asks
+  // the few roads and props round it rather than the island's every one.
+  // The furthest anything can matter is a road's half-width plus its verge
+  // and the extra an outcrop asks for, which stays well inside one cell.
+  const BUCKET = 100;
+  const key = (i: number, j: number) => i * 100003 + j;
+  const segBuckets = new Map<number, number[]>();
+  const raceBuckets = new Map<number, number[]>();
+  const propBuckets = new Map<number, number[]>();
+  const file = (into: Map<number, number[]>, id: number, ax: number, az: number, bx: number, bz: number) => {
+    for (let i = Math.floor(Math.min(ax, bx) / BUCKET) - 1; i <= Math.floor(Math.max(ax, bx) / BUCKET) + 1; i++)
+      for (let j = Math.floor(Math.min(az, bz) / BUCKET) - 1; j <= Math.floor(Math.max(az, bz) / BUCKET) + 1; j++) {
+        const k = key(i, j);
+        const list = into.get(k);
+        if (list) list.push(id);
+        else into.set(k, [id]);
+      }
+  };
+  segs.forEach((sg, id) => file(segBuckets, id, sg.a.x / M, sg.a.z / M, sg.b.x / M, sg.b.z / M));
+  racing.forEach((sg, id) => file(raceBuckets, id, sg.a.x / M, sg.a.z / M, sg.b.x / M, sg.b.z / M));
+  props.forEach((pr, id) => file(propBuckets, id, pr.x, pr.z, pr.x, pr.z));
+  const around = (into: Map<number, number[]>, x: number, z: number) => into.get(key(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? [];
+
   const clearOf = (x: number, z: number, verge: number): boolean => {
     const at = { x: x * M, z: z * M };
-    if (segs.some((s) => distanceToSegment(at.x, at.z, s.a.x, s.a.z, s.b.x, s.b.z) / M < s.half + verge)) return false;
-    if (racing.some(({ a, b }) => distanceToSegment(at.x, at.z, a.x, a.z, b.x, b.z) / M < RACED_CLEAR + verge)) return false;
-    if (props.some((p) => Math.hypot(p.x - x, p.z - z) < PROP_CLEAR + verge)) return false;
+    for (const id of around(segBuckets, x, z)) {
+      const sg = segs[id];
+      if (distanceToSegment(at.x, at.z, sg.a.x, sg.a.z, sg.b.x, sg.b.z) / M < sg.half + verge) return false;
+    }
+    for (const id of around(raceBuckets, x, z)) {
+      const { a, b } = racing[id];
+      if (distanceToSegment(at.x, at.z, a.x, a.z, b.x, b.z) / M < RACED_CLEAR + verge) return false;
+    }
+    for (const id of around(propBuckets, x, z)) {
+      const pr = props[id];
+      if (Math.hypot(pr.x - x, pr.z - z) < PROP_CLEAR + verge) return false;
+    }
     if (hitsSetPiece(pieces, at.x, at.z, -Infinity, 3 * M, Infinity)) return false;
     return true;
   };

@@ -1419,13 +1419,42 @@ function buildGraph(spans: Span[], terrain: Terrain): Graph {
     return node;
   };
 
-  for (const span of spans) {
+  // Which spans can cross which: two spans cross only where their boxes
+  // overlap, so each is filed in the cells its box covers and only spans
+  // sharing a cell are tried. Every pair used to be, and it was the biggest
+  // single cost of a build; the crossings, and so the graph, are the same.
+  const GRAPH_CELL = 400 * UNITS_PER_METRE;
+  const cellKey = (i: number, j: number) => i * 1_000_003 + j;
+  const cells = new Map<number, number[]>();
+  const boxes = spans.map((sp) => ({
+    minX: Math.min(sp.from.x, sp.to.x), maxX: Math.max(sp.from.x, sp.to.x),
+    minZ: Math.min(sp.from.z, sp.to.z), maxZ: Math.max(sp.from.z, sp.to.z),
+  }));
+  boxes.forEach((b, id) => {
+    for (let i = Math.floor(b.minX / GRAPH_CELL); i <= Math.floor(b.maxX / GRAPH_CELL); i++)
+      for (let j = Math.floor(b.minZ / GRAPH_CELL); j <= Math.floor(b.maxZ / GRAPH_CELL); j++) {
+        const list = cells.get(cellKey(i, j));
+        if (list) list.push(id);
+        else cells.set(cellKey(i, j), [id]);
+      }
+  });
+  const neighbours = (id: number): number[] => {
+    const b = boxes[id];
+    const out = new Set<number>();
+    for (let i = Math.floor(b.minX / GRAPH_CELL); i <= Math.floor(b.maxX / GRAPH_CELL); i++)
+      for (let j = Math.floor(b.minZ / GRAPH_CELL); j <= Math.floor(b.maxZ / GRAPH_CELL); j++)
+        for (const other of cells.get(cellKey(i, j)) ?? []) out.add(other);
+    return [...out].sort((p, q) => p - q);
+  };
+
+  for (const [spanId, span] of spans.entries()) {
     const length = spanLength(span);
     if (length < 1) continue;
 
     // Everything crossing this span, as fractions along it, plus its own ends.
     const cuts = new Set([0, 1]);
-    for (const other of spans) {
+    for (const otherId of neighbours(spanId)) {
+      const other = spans[otherId];
       if (other === span) continue;
       const at = crossing(span, other);
       if (!at) continue;

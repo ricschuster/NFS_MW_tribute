@@ -41,12 +41,13 @@ export function parksFor(city: City, water: Water, land: LandBodies): CityBlock[
   // of that took longer than the rest of generation put together.
   const claimed = new Set<number>();
   for (const block of city.blocks) mark(claimed, block.bounds, bounds, cols, rows);
+  const clearAt = new Map<string, boolean>();
 
   for (let j = 0; j < rows; j++) {
     for (let i = 0; i < cols; i++) {
       if (claimed.has(at(i, j))) continue;
       const cell = cellRect(i, j, bounds);
-      if (!vacant(city, grid, water, cell)) continue;
+      if (!vacant(city, grid, water, cell, clearAt)) continue;
       free[at(i, j)] = 1;
     }
   }
@@ -169,7 +170,7 @@ function mark(into: Set<number>, r: Rect, bounds: Rect, cols: number, rows: numb
  * quarter of itself on the tarmac. `PARK_ROAD_CLEAR` widens the road for the
  * test so the grass stops short of the kerb rather than at it.
  */
-function vacant(city: City, grid: CityGrid, water: Water, cell: Rect): boolean {
+function vacant(city: City, grid: CityGrid, water: Water, cell: Rect, known: Map<string, boolean>): boolean {
   // The same three-by-three the city's own water invariant samples a block
   // with. Corners and centre alone let a river bend cross the middle of an
   // edge, and three parks went into the water that way.
@@ -179,15 +180,28 @@ function vacant(city: City, grid: CityGrid, water: Water, cell: Rect): boolean {
       points.push({ x, z });
     }
   }
-  for (const p of points) {
-    if (water.isWater(p.x, p.z)) return false;
-    for (const road of grid.roadsNear(p.x, p.z)) {
-      // Surface roads only. A park under the elevated interstate is a park, and
-      // a deck twelve metres up is not something the grass is in the way of.
-      if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
-      if (onRoad(city, { ...road, width: road.width + PARK_ROAD_CLEAR * 2 }, p.x, p.z)) return false;
+  // A cell shares its edge and corner points with its neighbours, so each
+  // point's answer is kept: the same answer, asked once rather than four times.
+  const clear = (p: { x: number; z: number }): boolean => {
+    const k = `${p.x},${p.z}`;
+    const was = known.get(k);
+    if (was !== undefined) return was;
+    let ok = !water.isWater(p.x, p.z);
+    if (ok) {
+      for (const road of grid.roadsNear(p.x, p.z)) {
+        // Surface roads only. A park under the elevated interstate is a park, and
+        // a deck twelve metres up is not something the grass is in the way of.
+        if (city.nodes[road.a].level !== 'surface' || city.nodes[road.b].level !== 'surface') continue;
+        if (onRoad(city, { ...road, width: road.width + PARK_ROAD_CLEAR * 2 }, p.x, p.z)) {
+          ok = false;
+          break;
+        }
+      }
     }
-  }
+    known.set(k, ok);
+    return ok;
+  };
+  for (const p of points) if (!clear(p)) return false;
   return true;
 }
 
