@@ -737,6 +737,63 @@ describe('the police', () => {
     expect(world.busted || world.police.state === 'clear').toBe(true);
   });
 
+  // A unit coming back from open ground (#220) rejoins its road where it
+  // stands, whichever way along it it was going. `t` runs the way the car is
+  // going, and rejoining measured it from `road.a` regardless, so a unit
+  // driving towards `a` came back at the mirror of where it was: one that cut
+  // ten metres toward a car stopped just off the end of a dirt road was put
+  // back forty metres further away, and did it again, for ever. That was
+  // `npm run endings`' stalemates at heat 3 and 6 once #549's driver began
+  // stopping there.
+  it('brings a unit back on its road beside itself, either way along it', () => {
+    const world = new CityWorld(undefined, { traffic: false });
+    const { city } = world;
+    const mid = (road: (typeof city.roads)[number]) => {
+      const a = city.nodes[road.a].pos;
+      const b = city.nodes[road.b].pos;
+      return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+    };
+    const surface = city.roads.filter((r) => city.nodes[r.a].level === 'surface');
+    // A long road near the car whose own midpoint is the nearest one to a
+    // spot a quarter of the way along it, so the road it rejoins is its own
+    // and the only question is where along it.
+    const cop: Cop = {
+      road: surface[0],
+      t: 0.25,
+      forward: false,
+      speed: 0,
+      damage: 0,
+      x: 0,
+      z: 0,
+      y: 0,
+      heading: 0,
+      kind: 'cruiser',
+      role: 'chase',
+      offRoad: 0,
+    };
+    const road = surface.find((r) => {
+      if (r.length < 60 * M) return false;
+      cop.road = r;
+      placeOnRoad(city, cop, TRAFFIC_LANE);
+      if (Math.hypot(cop.x - world.x, cop.z - world.z) > CITY_COP_LOSE / 2) return false;
+      const own = Math.hypot(mid(r).x - cop.x, mid(r).z - cop.z);
+      return surface.every((o) => o === r || Math.hypot(mid(o).x - cop.x, mid(o).z - cop.z) > own);
+    });
+    expect(road).toBeDefined();
+    cop.road = road!;
+    placeOnRoad(city, cop, TRAFFIC_LANE);
+    // Out over open ground and past its road's width, so the next step finds
+    // road underneath and rejoins.
+    cop.offRoad = road!.width + M;
+    const before = { x: cop.x, z: cop.z };
+    world.police.cops.push(cop);
+    world.step(STEP, NONE);
+
+    expect(cop.offRoad).toBe(0);
+    expect(cop.road).toBe(road);
+    expect(Math.hypot(cop.x - before.x, cop.z - before.z)).toBeLessThan(2 * M);
+  });
+
   it('busts a car that never moves, and lets go afterwards', () => {
     const world = provoke(new CityWorld(undefined, { traffic: false }));
     drive(world, 120, NONE);
