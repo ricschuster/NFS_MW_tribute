@@ -3,7 +3,51 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-02; the map nearly done, the driver fixed, two drafts
+- **Start here (2026-10-02, late; every area done, Marrow Field approved).**
+  - **Merged:** haul trucks a real width (#555: `HAUL_TRUCK_GROWN` 1.5,
+    9.6 x 15 m, their own `TRUCK_LANE` 5 m out; the real fault was two trucks
+    on the spiral each holding back for the other for good; `drivers` keeps
+    them off sprints as `citylap` does; every tier 17/17); fewer free-roam
+    pursuits (#556: the speeding clock runs only while a unit sees you,
+    `SPEEDING_OVER` 3; `patrol` 5 pursuits in 20 min to 2); the stalemates
+    (#557: `CityPolice.rejoin` put a unit back at the mirror of where it stood
+    when heading towards `road.a`, a bug since #220 exposed by #549's driver).
+    Vitest excludes `.claude/**` (a bare run was running every agent
+    worktree's copy, 682 files, load 60).
+  - **Open, auto-merging:** #558, Marrow Field approved by the owner: aircraft
+    1.8x (`AIRCRAFT_GROWN`; the Cargo Plane Jump's plane stays life size,
+    variant `jump`), the field hangar 80 x 50 m, 168 drafted units over the
+    whole field and between the runway and the taxiways, 2.8 km of dirt
+    tracks east (`npm run marrowtracks`), citylap re-recorded. Marrow Field
+    Props is v8 = the PR. With it, every area on the map is done.
+  - **Waiting for the owner:**
+    - **Road tilt across** (branch `visual-audit`, worktree
+      `.claude/worktrees/agent-ac4028b5b0939a183`, WIP commit a384a79 on
+      #556): road pieces tilted across to the ground at their edges, the
+      centre line painted on the tarmac as drawn (`piecesOf` in
+      `scene/cityscape.ts`), by its comment 7.4% of road edges under the
+      grass down to 0.1%. Before/after shots of three hillside boulevards are
+      in that worktree's `screenshots/tilt/`, not looked at yet. Next: look,
+      run the tests, PR with the shots. Its `tools/_views.mjs` and
+      `tools/_slopes.mjs` are scratch, not for the PR.
+    - **The last heat-6 "neither" in `endings`** (#557's report): a stopped
+      car inside the search area, never found, escapes at 180.7 s, 0.7 s past
+      the probe's three minutes. Leave it, shorten heat-6 searches
+      (`SEARCH_INSIDE_RATE` / search time per level), search nearer the last
+      sighting, or lengthen the probe.
+    - **Traffic downtown** (1.71 civilians a second on screen against the
+      reference's 0.60), #484's moved road ends, and the railway (#514),
+      parked by the owner.
+  - **This session's account** (natureconservancy.ca) can republish the
+    editors (writer by share) but cannot read their stores; `/login` to
+    ric.schuster@proton.me to read a save.
+  - **Worktrees:** cleaned on the owner's word; left: `crosstown-main` (the
+    served copy), `crosstown-marrow` (#558's branch), the railway draft, and
+    `visual-audit`. No dev servers running.
+  - **Next, per the owner's order:** the map is done once #558 merges, so
+    races: tune rival pace and speed-run targets against #347's human pace,
+    `RIVAL_CIRCUITS` beyond Rim and Quay, then unpark #469 (collectibles).
+- **Earlier (2026-10-02; the map nearly done, the driver fixed, two drafts
   waiting for the owner).**
   - **Merged:** downtown signed off (#539); the quarry once-over (#540 -
     reverted by accident in #541's squash and restored by #542: never squash
