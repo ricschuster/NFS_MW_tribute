@@ -164,9 +164,16 @@ describe('off-road tyres on the field', () => {
   const FLOOR = { left: false, right: false, up: true, down: false, confirm: false, nitro: false };
   const M = UNITS_PER_METRE;
 
+  /**
+   * The field without what stands on it. The strips beside the runway are
+   * strewn with wreckage since the once-over (2026-10-02), and this measures
+   * the ground under it, not how soon a car meets a fuselage.
+   */
+  const bare = { ...city, setPieces: [] };
+
   /** Top speed held down the runway's line, `across` metres off its centre. */
   function flatOut(tyres: boolean, across: number): number {
-    const world = new CityWorld(city, { traffic: false, police: false });
+    const world = new CityWorld(bare, { traffic: false, police: false });
     if (tyres) {
       world.finds.loadParts([[world.car.id, ['offroad-tyres']]], [[world.car.id, ['offroad-tyres']]]);
       world.drive(world.car);

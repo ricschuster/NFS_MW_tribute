@@ -47,10 +47,27 @@ const TRACK_CLEAR = 9, ROAD_CLEAR = 18;
  */
 const RACED_CLEAR = 12;
 const PROP_CLEAR = 10;
-/** Above this, a wood thins out to the bare top; below `SHORE_LOW` it thins to the beach. */
-const TOPS = 30, TOPS_BARE = 42, SHORE_LOW = 4;
-/** A boulder of an outcrop stands this high up, or higher. */
-const ROCK_HIGH = 22;
+/**
+ * What makes one stretch of country differ from another: where it is, how
+ * much of it each point may carry, and the heights its woods and rock keep to.
+ */
+export interface CountrySpec {
+  /** The ground it covers, in world units. */
+  area: Vec2[];
+  /** How much of the country a point may carry, 0 to 1, given its metres and ground height. */
+  reach: (x: number, z: number, h: number) => number;
+  /** A wood thins from `tops` to nothing at `topsBare`, and to the beach below `shoreLow`. */
+  tops: number;
+  topsBare: number;
+  shoreLow: number;
+  /** An outcrop stands this high up, or higher. */
+  rockHigh: number;
+  /** How thick a wood gets where its noise peaks, and how often a lone tree stands in the open. */
+  woodShare: number;
+  scrub: number;
+  /** Keeps two stretches of country from being the same pattern. */
+  salt: number;
+}
 
 export function quarryIslandWildsFor(
   terrain: Terrain,
@@ -66,13 +83,42 @@ export function quarryIslandWildsFor(
   // channel are other places' ground.
   const quarry = PLAN_PLACES.find((p) => p.kind === 'quarry');
   if (!quarry || !quarry.area) return [];
-  const island = quarry.area;
+  const qx = quarry.at.x / M, qz = quarry.at.z / M;
+  const dressed = quarry.radius / M + QUARRY_DRESSED;
+  return countrysideFor(terrain, roads, nodes, pieces, clear, wet, raced, {
+    area: quarry.area,
+    // The quarry's own ground, blending out of it.
+    reach: (x, z) => Math.max(0, Math.min(1, (Math.hypot(x - qx, z - qz) - dressed) / BLEND)),
+    tops: 30,
+    topsBare: 42,
+    shoreLow: 4,
+    rockHigh: 22,
+    woodShare: 0.8,
+    scrub: 0.035,
+    salt: 0,
+  });
+}
+
+/**
+ * Country over a place's open ground: woods, scrub and rock, generated on a
+ * fixed lattice. The quarry island's hills were the first (above), and Marrow
+ * Field's rise the second.
+ */
+export function countrysideFor(
+  terrain: Terrain,
+  roads: readonly CityRoad[],
+  nodes: readonly CityNode[],
+  pieces: readonly SetPiece[],
+  clear: readonly AuthoredProp[],
+  wet: (x: number, z: number) => boolean,
+  raced: readonly Vec2[][],
+  spec: CountrySpec,
+): AuthoredProp[] {
+  const island = spec.area;
   const BOX = {
     minX: Math.min(...island.map((p) => p.x)) / M, maxX: Math.max(...island.map((p) => p.x)) / M,
     minZ: Math.min(...island.map((p) => p.z)) / M, maxZ: Math.max(...island.map((p) => p.z)) / M,
   };
-  const qx = quarry.at.x / M, qz = quarry.at.z / M;
-  const dressed = quarry.radius / M + QUARRY_DRESSED;
   const inBox = (x: number, z: number) => x > BOX.minX && x < BOX.maxX && z > BOX.minZ && z < BOX.maxZ;
   const onIsland = (x: number, z: number) => inArea(island, { x: x * M, z: z * M });
   const segs = roads
@@ -83,8 +129,8 @@ export function quarryIslandWildsFor(
     .flatMap((line) => line.slice(1).map((b, k) => ({ a: line[k], b })))
     .filter(({ a, b }) => inBox(a.x / M, a.z / M) || inBox(b.x / M, b.z / M));
   const props = clear.filter((p) => inBox(p.x, p.z));
-  const woods = valueNoise(CITY_WOODS_STREAM ^ 0x48616c6c, 170);
-  const rocks = valueNoise(CITY_WOODS_STREAM ^ 0x526f636b, 60);
+  const woods = valueNoise((CITY_WOODS_STREAM ^ 0x48616c6c) + spec.salt, 170);
+  const rocks = valueNoise((CITY_WOODS_STREAM ^ 0x526f636b) + spec.salt, 60);
 
   // Everything clearOf asks about, bucketed in 100 m cells, so a tree asks
   // the few roads and props round it rather than the island's every one.
@@ -130,25 +176,24 @@ export function quarryIslandWildsFor(
   const out: AuthoredProp[] = [];
   for (let i = Math.floor(BOX.minX / CELL); i * CELL < BOX.maxX; i++) {
     for (let j = Math.floor(BOX.minZ / CELL); j * CELL < BOX.maxZ; j++) {
-      const x = (i + 0.1 + 0.8 * cellRandom(i, j, 31)) * CELL;
-      const z = (j + 0.1 + 0.8 * cellRandom(i, j, 32)) * CELL;
+      const x = (i + 0.1 + 0.8 * cellRandom(i, j, 31 + spec.salt)) * CELL;
+      const z = (j + 0.1 + 0.8 * cellRandom(i, j, 32 + spec.salt)) * CELL;
       const at = { x: x * M, z: z * M };
-      // The quarry's own ground, blending out of it.
-      const reach = Math.max(0, Math.min(1, (Math.hypot(x - qx, z - qz) - dressed) / BLEND));
-      if (reach <= 0) continue;
       if (!onIsland(x, z) || wet(at.x, at.z) || planDistrictAt(at) !== null) continue;
       const h = groundAt(terrain, at.x, at.z) / M;
+      const reach = spec.reach(x, z, h);
+      if (reach <= 0) continue;
       if (h < 1.5) continue;
-      const roll = cellRandom(i, j, 33);
-      const angle = Math.round(cellRandom(i, j, 34) * Math.PI * 2 * 1000) / 1000;
+      const roll = cellRandom(i, j, 33 + spec.salt);
+      const angle = Math.round(cellRandom(i, j, 34 + spec.salt) * Math.PI * 2 * 1000) / 1000;
 
       // Rock on the high ground, in outcrops where a second noise peaks: one
       // boulder in a cell big enough for it, and clear of what a car runs on.
       // The owner liked these (2026-10-02) and asked for more: they reach
       // further down the hills, and the patches are wider and fuller.
-      if (h >= ROCK_HIGH && (i + j) % 2 === 0) {
-        const outcrop = Math.max(0, (rocks(x, z) - 0.5) / 0.25) * Math.min(1, (h - ROCK_HIGH) / 8 + 0.4);
-        if (cellRandom(i, j, 35) < 0.85 * Math.min(1, outcrop) * reach && clearOf(x, z, 8)) {
+      if (h >= spec.rockHigh && (i + j) % 2 === 0) {
+        const outcrop = Math.max(0, (rocks(x, z) - 0.5) / 0.25) * Math.min(1, (h - spec.rockHigh) / 8 + 0.4);
+        if (cellRandom(i, j, 35 + spec.salt) < 0.85 * Math.min(1, outcrop) * reach && clearOf(x, z, 8)) {
           out.push({ kind: 'outcrop', x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, angle });
           continue;
         }
@@ -156,10 +201,10 @@ export function quarryIslandWildsFor(
 
       // Woods where the noise peaks, thinning over the tops and to the shore.
       const height =
-        Math.max(0, Math.min(1, (TOPS_BARE - h) / (TOPS_BARE - TOPS))) * Math.max(0, Math.min(1, (h - 1.5) / (SHORE_LOW - 1.5)));
+        Math.max(0, Math.min(1, (spec.topsBare - h) / (spec.topsBare - spec.tops))) * Math.max(0, Math.min(1, (h - 1.5) / (spec.shoreLow - 1.5)));
       const wood = Math.max(0, Math.min(1, (woods(x, z) - 0.5) / 0.22));
       // And scrub: a lone tree over the open ground now and then.
-      const keep = (0.8 * wood * height + 0.035) * reach;
+      const keep = (spec.woodShare * wood * height + spec.scrub) * reach;
       if (roll >= keep) continue;
       if (!clearOf(x, z, 0)) continue;
       out.push({ kind: 'tree', x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, angle });
@@ -167,3 +212,38 @@ export function quarryIslandWildsFor(
   }
   return out;
 }
+
+/**
+ * Marrow Field's rise (2026-10-02): the ridge that runs the length of the
+ * airfield island between the runway strips and the shore, which the owner
+ * wanted as countryside rather than more airfield. It starts where the ground
+ * climbs off the field, so the line between the two is the foot of the rise
+ * rather than a fence drawn on the map: copses on its flanks, scrub, and rock
+ * along the crest.
+ */
+export function airfieldRiseFor(
+  terrain: Terrain,
+  roads: readonly CityRoad[],
+  nodes: readonly CityNode[],
+  pieces: readonly SetPiece[],
+  clear: readonly AuthoredProp[],
+  wet: (x: number, z: number) => boolean,
+  raced: readonly Vec2[][] = [],
+): AuthoredProp[] {
+  const field = PLAN_PLACES.find((p) => p.kind === 'airfield');
+  if (!field || !field.area) return [];
+  return countrysideFor(terrain, roads, nodes, pieces, clear, wet, raced, {
+    area: field.area,
+    reach: (_x, _z, h) => Math.max(0, Math.min(1, (h - RISE_FOOT) / 2)),
+    tops: 13.5,
+    topsBare: 17,
+    shoreLow: 4,
+    rockHigh: 12.5,
+    woodShare: 0.55,
+    scrub: 0.05,
+    salt: 101,
+  });
+}
+
+/** Where Marrow Field's rise starts, in metres of ground: the field is 5 to 10 m, the rise 10 to 15. */
+const RISE_FOOT = 10;

@@ -1,4 +1,4 @@
-import { HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
+import { AIRCRAFT_GROWN, HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
 import { MARROW_PROPS } from './marrowprops';
 import { groundAt } from './terrain';
 import type { Terrain } from './terrain';
@@ -70,22 +70,30 @@ export const WAREHOUSE_FOOTING = 3;
  */
 export const ESTATE_FOOTING = 2;
 
+/**
+ * The cargo plane at life size, 32 m across the wing. Drawn bigger everywhere
+ * (`AIRCRAFT_GROWN`) but on the Cargo Plane Jump (variant `jump`), which was
+ * laid out to be cleared at speed over this one: grown, its wing is 58 m of
+ * the jump's line, eight metres up, and nothing clears it.
+ */
+const CARGO_PLANE: Solid[] = [
+  { u: 0, v: 0, w: 4.4, l: 30, y0: 0, y1: 4.4 },
+  { u: 0, v: 2, w: 32, l: 4, y0: 4.45, y1: 4.95 },
+  { u: 0, v: -15.5, w: 0.4, l: 3.6, y0: 3.5, y1: 9 },
+];
+
 export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
-  'plane-belly': [
-    { u: 0, v: 0, w: 4.4, l: 30, y0: 0, y1: 4.4 },
-    { u: 0, v: 2, w: 32, l: 4, y0: 4.45, y1: 4.95 },
-    { u: 0, v: -15.5, w: 0.4, l: 3.6, y0: 3.5, y1: 9 },
-  ],
-  'plane-nose': [{ u: 0, v: 3, w: 4, l: 10, y0: 0, y1: 7 }],
-  fuselage: [{ u: 0, v: 0, w: 4, l: 18, y0: 0, y1: 3.8 }],
-  'fuselage-hung': [
+  'plane-belly': grown(CARGO_PLANE, AIRCRAFT_GROWN),
+  'plane-nose': grown([{ u: 0, v: 3, w: 4, l: 10, y0: 0, y1: 7 }], AIRCRAFT_GROWN),
+  fuselage: grown([{ u: 0, v: 0, w: 4, l: 18, y0: 0, y1: 3.8 }], AIRCRAFT_GROWN),
+  'fuselage-hung': grown([
     post(-3.5, -7.3, 0.4, 8.5),
     post(3.5, -7.3, 0.4, 8.5),
     post(-3.5, 7.3, 0.4, 8.5),
     post(3.5, 7.3, 0.4, 8.5),
     { u: 0, v: 0, w: 4, l: 22, y0: 3.8, y1: 7.8 },
-  ],
-  helicopter: [{ u: 0, v: 1.5, w: 2.6, l: 6, y0: 0, y1: 3 }],
+  ], AIRCRAFT_GROWN),
+  helicopter: grown([{ u: 0, v: 1.5, w: 2.6, l: 6, y0: 0, y1: 3 }], AIRCRAFT_GROWN),
   silo: [post(0, 0, 4, 18.6)],
   'water-tower': [
     post(-3.5, -3.5, 0.4, 14.5),
@@ -250,6 +258,7 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
  * is not a large one.
  */
 const VARIANT_SOLIDS: Record<string, Solid[]> = {
+  'plane-belly:jump': CARGO_PLANE,
   'container-block:three high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 7.8 }],
   'container-block:four high': [{ u: 0, v: 0, w: 30, l: 12.5, y0: 0, y1: 10.4 }],
   'warehouse:small': [{ u: 0, v: 0, w: 30, l: 60, y0: -WAREHOUSE_FOOTING, y1: 10 }],

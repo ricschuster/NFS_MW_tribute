@@ -602,11 +602,16 @@ export const RUNWAY_APRON = m(70);
  * put the hangar's block on top of it. 150 m clears that with margin and
  * still lands inside the gentle outer third of `RUNWAY_APRON`'s blend rather
  * than its flat plateau, which is not a cliff to build a foundation on.
+ *
+ * 80 m by 50 m and 16 m high, up from 55 by 35 by 11 (the owner, 2026-10-02:
+ * the hangars read as small beside a field this size), and so 175 m out
+ * rather than 150, which keeps the bigger block's corner as far off the
+ * taxiway as the old one's was.
  */
-export const HANGAR_WIDTH = m(55);
-export const HANGAR_DEPTH = m(35);
-export const HANGAR_HEIGHT = m(11);
-export const HANGAR_CLEAR = m(150);
+export const HANGAR_WIDTH = m(80);
+export const HANGAR_DEPTH = m(50);
+export const HANGAR_HEIGHT = m(16);
+export const HANGAR_CLEAR = m(175);
 /**
  * Halloway Quarry, a working one: the opposite call from Marrow Field's
  * disused airfield, so the two places do not read as the same place twice.
@@ -664,6 +669,15 @@ export const POND_LIFT = m(0.12);
  */
 export const TRUCK_COUNT = 4;
 export const TRUCK_SPEED = kmh(30);
+/**
+ * How much bigger than life Marrow Field's aircraft are drawn: the cargo plane,
+ * a nose-down wreck, the fuselages lying and hung, and the helicopter. At their
+ * real sizes, 32 m across the wing, a field 2 km long made them look like
+ * toys (the owner, 2026-10-02), the same thing #323 found with the quarry's
+ * plant. Growing the hung fuselages and the wing grows the room under them
+ * too, so what you drive under still lets you.
+ */
+export const AIRCRAFT_GROWN = 1.8;
 /**
  * How much bigger than its 6.4 m by 10 m model a haul truck is drawn, parked or
  * driving. It was 2.5 (#323), 16 m by 25 m, which made the machinery read as

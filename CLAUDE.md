@@ -209,6 +209,18 @@ what the city is shaped like.
   round the hand-placed plant, the rim's yard by its gravel roads, conifers
   on the hillside. Its own ids (`qo…`) are replaced on a re-run. Then
   `propsync --place quarry`
+- `npm run marrowdraft` - Marrow Field's once-over: a derelict airfield and
+  stunt playground drafted round the owner's props (crash sites, a boneyard,
+  ruined hangars, fuel farms, bunkers, a helipad, things to drive under, and
+  jumps on the taxiways the Marrow Field Run does not use), over the whole
+  field and down the strips between the runway and the taxiways. Its own ids
+  (`mo…`) are replaced on a re-run. The rise beside the field is country the
+  game generates (`airfieldRiseFor` in `city/quarryisland.ts`). Then
+  `propsync`
+- `npm run marrowtracks` - draft dirt tracks over Marrow Field's east side
+  (`mt…` in `docs/roads-edited.json`, then `roadsync`, then `marrowdraft`
+  so the props keep clear of them): `islanddraft`'s least-cost paths, a loop
+  and two across, joined to the taxiway
 - `npm run islanddraft` - draft dirt tracks over the quarry island (`qi…`
   in `docs/roads-edited.json`, then `roadsync`): least-cost paths over the
   terrain, round the far coast and across the north, joined exactly to the
