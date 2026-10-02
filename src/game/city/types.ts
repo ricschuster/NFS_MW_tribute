@@ -637,4 +637,29 @@ export interface City {
   pavements: Apron[];
   /** Things to launch off (#307). */
   jumps: Jump[];
+  /** Where a railway crosses a street on the level (#514): see `levelcrossings.ts`. */
+  crossings: LevelCrossing[];
+}
+
+/**
+ * A railway crossing a street on the level (#514). Drawing only: the sim
+ * drives it as the street it is, and this says how the renderer should cut
+ * the ballast round the street and where the warning posts stand.
+ */
+export interface LevelCrossing {
+  /** The node the line and the street share. */
+  node: number;
+  at: Vec2;
+  /** Height of that node: 0 on the street. */
+  y: number;
+  /** The `rail` roads meeting at it. */
+  rails: number[];
+  /** The street's roads meeting at it. */
+  streets: number[];
+  /** Which way the street runs through it, as a unit vector. */
+  through: Vec2;
+  /** The street's width: the band the ballast stops either side of. */
+  width: number;
+  /** Warning posts, one each side of the street on each side of the line, facing the traffic coming at it. */
+  posts: { at: Vec2; angle: number }[];
 }

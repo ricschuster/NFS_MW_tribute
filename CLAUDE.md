@@ -195,11 +195,6 @@ what the city is shaped like.
   what stands on it. Its own ids (`dw…`, `dy…`, `rail1`) are replaced on a
   re-run and everything else in the file is kept. Then `propsync --place
   industrial`
-- `npm run quarrydraft` - the same for Halloway Quarry's once-over: working
-  faces, spoil and plant walked along the haul roads, heaps on the floor
-  round the hand-placed plant, the rim's yard by its gravel roads, conifers
-  on the hillside. Its own ids (`qo…`) are replaced on a re-run. Then
-  `propsync --place quarry`
 - `npm run propexport -- --place P` — crop an area out of the generated city
   and write `screenshots/<area>-propeditor.html`, the area editor with the
   ground inlined: props, houses and the area's drawn roads, all editable

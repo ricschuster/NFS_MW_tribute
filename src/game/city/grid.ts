@@ -1,4 +1,4 @@
-import { CITY_GRID_CELL, SURFACE_REACH } from '../constants';
+import { CITY_GRID_CELL, SURFACE_REACH, UNITS_PER_METRE } from '../constants';
 import { groundAt } from './terrain';
 import type { Building, City, CityNode, CityRoad, Rect, Vec2 } from './types';
 
@@ -319,6 +319,24 @@ export interface Surface {
   y: number;
 }
 
+/** Two decks this close in height are one place: a level crossing (#514). */
+const LEVEL_TIE = 0.1 * UNITS_PER_METRE;
+/** Below this the two are running along each other rather than across: `levelCrossingsFor`'s `MIN_SINE`. */
+const LEVEL_SINE = 0.25;
+
+/** The sine of the angle between two roads, end to end. */
+function crossSine(city: City, a: CityRoad, b: CityRoad): number {
+  const dir = (road: CityRoad) => {
+    const p = city.nodes[road.a].pos;
+    const q = city.nodes[road.b].pos;
+    const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+    return { x: (q.x - p.x) / l, z: (q.z - p.z) / l };
+  };
+  const u = dir(a);
+  const v = dir(b);
+  return Math.abs(u.x * v.z - u.z * v.x);
+}
+
 /**
  * What is at this point, at about this height (#86).
  *
@@ -340,7 +358,19 @@ export function surfaceAt(city: City, grid: CityGrid, x: number, z: number, near
     // A road far above or below is not the road you are on. This is what makes
     // driving under an overpass different from driving on it.
     if (gap > SURFACE_REACH) continue;
-    if (gap < bestGap) {
+    // A level crossing is the street's (#514). The line and the street meet at
+    // one height, so the tie used to go to whichever the grid listed first,
+    // and a car driving the street over the line got the ballast's grip and
+    // top speed for a few metres - a crossing a road surface carries over is
+    // tarmac, and is drawn as tarmac.
+    // Only where they cross: a line and a street meeting end to end at a node
+    // overlap there too, and the car on the line keeps the line.
+    const railTie =
+      best !== null &&
+      Math.abs(gap - bestGap) <= LEVEL_TIE &&
+      (best.surface === 'rail') !== (road.surface === 'rail') &&
+      crossSine(city, best, road) >= LEVEL_SINE;
+    if (railTie ? road.surface !== 'rail' : gap < bestGap) {
       bestGap = gap;
       best = road;
       bestY = y;
