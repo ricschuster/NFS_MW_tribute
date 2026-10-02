@@ -57,8 +57,8 @@ describe('what a jump is (#307)', () => {
     expect(lipSlope('mound')).toBeGreaterThan(rise / l);
   });
 
-  it('builds the jumps the editors placed: four on Marrow Field, one in Halloway Quarry, two at Sablet Wharf, one at Kestrel Head, one in Highmoor Park', () => {
-    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'mound', 'ramp', 'ramp', 'ramp', 'slab', 'slab', 'slab', 'slab']);
+  it('builds the jumps the editors placed: six on Marrow Field (two from its once-over), one in Halloway Quarry, two at Sablet Wharf, one at Kestrel Head, one in Highmoor Park', () => {
+    expect(city.jumps.map((jump) => jump.kind).sort()).toEqual(['mound', 'mound', 'mound', 'ramp', 'ramp', 'ramp', 'ramp', 'slab', 'slab', 'slab', 'slab']);
   });
 });
 
