@@ -40,6 +40,7 @@ import {
 import { Rng } from './rng';
 import { buildingsOn } from './buildings';
 import { furnitureFor } from './furniture';
+import { levelCrossingsFor } from './levelcrossings';
 import { collectiblesFor } from './collectibles';
 import { parksFor } from './parks';
 import { findsFor } from './streetfinds';
@@ -630,6 +631,7 @@ export function generateCity(seed: number): City {
     setPieces: [],
     aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS)],
     jumps: [],
+    crossings: [],
     drives,
     pavements: downtownPavements(roads, nodes, DOWNTOWN_PROPS),
   };
@@ -746,6 +748,9 @@ export function generateCity(seed: number): City {
       if (ends.some((p) => insideOrNear(apron.outline, p.x, p.z, YARD_REACH))) road.yard = true;
     }
   }
+  // Level crossings last, off the finished graph (#514): drawing only, and
+  // drawn from no stream.
+  city.crossings = levelCrossingsFor(city);
   return city;
 }
 

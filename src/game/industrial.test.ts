@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { UNITS_PER_METRE } from './constants';
 import { CityWorld } from './cityworld';
 import { PLAN_DISTRICTS, inArea } from './city/plan';
+import { surfaceAt } from './city/grid';
 
 const M = UNITS_PER_METRE;
-const city = new CityWorld(undefined, { traffic: false, police: false }).city;
+const world = new CityWorld(undefined, { traffic: false, police: false });
+const city = world.city;
 const industrial = PLAN_DISTRICTS.find((a) => a.kind === 'industrial')!;
 const rail = city.roads.filter((r) => r.surface === 'rail');
 
@@ -48,4 +50,17 @@ describe("Industrial's railway (#489, #514)", () => {
     expect(count('warehouse')).toBeGreaterThan(20);
     expect(count('gantry')).toBeGreaterThan(5);
   });
+
+  // A street over the line on the level is the street's: tarmac under the
+  // car, not a few metres of ballast's grip and top speed (#514).
+  it('drives a level crossing as the street it is', () => {
+    expect(city.crossings.length).toBeGreaterThan(0);
+    for (const crossing of city.crossings) {
+      const { x, z } = crossing.at;
+      const at = surfaceAt(city, world.grid, x, z, crossing.y);
+      expect(at.road?.surface).not.toBe('rail');
+      expect(crossing.streets).toContain(at.road!.id);
+    }
+  });
+
 });
