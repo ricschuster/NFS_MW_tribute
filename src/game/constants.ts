@@ -2453,9 +2453,10 @@ export const RIVAL_CIRCUITS = ['Halloway Rim', 'Sablet Quay'];
  * (#461), nine since Midtown north's two circuits (#477), ten since the
  * Promenade Sprint (#487), eleven since the Main Street Sprint (#488),
  * twelve with the Works Circuit (#489), fourteen with Ashford Point's
- * Coast Sprint and Estates Circuit (#293).
+ * Coast Sprint and Estates Circuit (#293), sixteen with downtown's Harbour
+ * Sprint and Old Town Circuit (#268).
  */
-export const CAR_EVENTS_MAX = 14;
+export const CAR_EVENTS_MAX = 16;
 export const EVENT_DIFFICULTY_PER_TOP_SPEED = 1.5;
 /** How close you have to pass a checkpoint. Generous: this is not a test of aim. */
 export const CHECKPOINT_RANGE = m(26);
