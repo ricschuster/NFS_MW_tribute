@@ -539,15 +539,14 @@ const LATER_ROUTES: PlacedRoute[] = [
   // streets between the terraces. West down r57, a dog-leg south round the
   // streets below it to the flatiron and back up, on west to where r57 bends
   // for the shore, north to the street along the water and east along it,
-  // and down the short street that comes out at r57's start. It starts on
-  // r57 itself rather than at the junction under the towers, because r57 is
-  // not joined to that junction yet (#484).
+  // and down the short street that comes out at the junction under the
+  // towers where r57 begins.
   {
     name: 'Old Town Circuit',
     kind: 'circuit',
     difficulty: 0.2,
     via: [
-      [-734, -2464],
+      [-731, -2469],
       [-866, -2450],
       [-877, -2379],
       [-889, -2286],
