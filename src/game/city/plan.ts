@@ -73,7 +73,19 @@ export interface PlanPlace {
    * shape is its runway instead.
    */
   radius: number;
+  /**
+   * The ground the place owns, traced by the owner in the District Plan
+   * (2026-10-02): the whole of its island, not just the works at its middle.
+   * Not a district - a district says the ground is built up, and these
+   * islands are the places and the country round them - so the generator's
+   * routing and `planDistrictAt` never see it. What is placed over the
+   * island's open ground asks this.
+   */
+  area?: Vec2[];
 }
+
+/** Metres in, world units out, for a place's outline. */
+const places = (poly: [number, number][]): Vec2[] => poly.map(([x, z]) => ({ x: m(x), z: m(z) }));
 
 /** Metres in, world units out, so the plan reads as it was drawn. */
 const area = (
@@ -107,11 +119,13 @@ export const PLAN_DISTRICTS: PlanArea[] = [
   // #268: it used to take in 0.4 km² of the bay and the channel beside Sablet
   // Wharf. The inland edges are unchanged, and the strip on the downtown bank
   // of the channel is downtown's to its tip; the wharf ends at the water.
+  // Redrawn by the owner in the District Plan (2026-10-02): the north-west
+  // edge out to midtown's corner and the shore edge down to the water.
 
   area('downtown', [
-    [125, -2500], [-124, -1899], [-1100, -1525], [-1090, -1800],
-    [-1050, -1870], [-1170, -2190], [-1735, -2823], [-1516, -2785],
-    [-1310, -2710], [-960, -2610], [-570, -2610], [-30, -2830],
+    [125, -2500], [-124, -1899], [-1220, -1514], [-1150, -1799],
+    [-1115, -1919], [-1170, -2190], [-1735, -2823], [-1516, -2785],
+    [-1310, -2710], [-950, -2699], [-605, -2734], [-63, -2886],
   ], 1.35),
 
   // The industrial edge, inland of downtown. Unchanged in character.
@@ -149,7 +163,7 @@ export const PLAN_DISTRICTS: PlanArea[] = [
     [-75, -1875], [125, -2350], [700, -2400], [1150, -2480],
   ]),
   area('midtown', [
-    [-275, -1775], [-1175, -1500], [-1450, -875], [-1225, 50],
+    [-275, -1775], [-1248, -1484], [-1450, -875], [-1225, 50],
     [-1200, 750], [-975, 775], [-825, 125], [-775, -750], [-200, -1525],
   ]),
   area('midtown', [
@@ -167,9 +181,12 @@ export const PLAN_DISTRICTS: PlanArea[] = [
   // out with the densest street grid on it, which is the opposite of affluent -
   // 4.2 km² at midtown's grain is more city than downtown, laid where the plan
   // asks for the fewest roads anywhere.
+  //
+  // Its corners pulled out to the shore by the owner (2026-10-02), where the
+  // traced outline used to stop short of the point and the north beaches.
   area('waterfront', [
-    [-2325, 1575], [-1900, 2675], [-3250, 2675], [-4050, 2250],
-    [-4475, 1650], [-4275, 600], [-3225, 525], [-2000, 825],
+    [-2172, 1584], [-1895, 2675], [-3340, 2750], [-4045, 2250],
+    [-4470, 1650], [-4330, 495], [-3220, 525], [-1840, 815],
   ], 0.7, 'Ashford Point'),
 ];
 
@@ -183,12 +200,57 @@ export const PLAN_PLACES: PlanPlace[] = [
   // The port, on the 0.7 km² south-east island: flat, a kilometre off downtown,
   // one bridge in. Somewhere you can be trapped is worth more than somewhere you
   // drive through, which is the best pursuit geography the map can offer.
-  { kind: 'docks', name: 'Sablet Wharf', at: { x: m(-1634), z: m(-1955) }, radius: m(450) },
+  { kind: 'docks', name: 'Sablet Wharf', at: { x: m(-1634), z: m(-1955) }, radius: m(450),
+    area: places([
+      [-1652, -980], [-1561, -1169], [-1512, -1281], [-1407, -1491],
+      [-1344, -1701], [-1302, -1848], [-1302, -1995], [-1330, -2156],
+      [-1414, -2296], [-1533, -2450], [-1673, -2597], [-1792, -2723],
+      [-1897, -2835], [-1988, -2912], [-2079, -2870], [-2114, -2758],
+      [-2093, -2527], [-2058, -2268], [-1981, -1981], [-1869, -1624],
+      [-1806, -1372], [-1736, -1106],
+    ]),
+  },
   // The airfield's island. Its shape is the runway, not a radius.
-  { kind: 'airfield', name: 'Marrow Field', at: { x: m(-1269), z: m(2012) }, radius: m(700) },
+  { kind: 'airfield', name: 'Marrow Field', at: { x: m(-1269), z: m(2012) }, radius: m(700),
+    area: places([
+      [-747, 3087], [-855, 3069], [-972, 3051], [-1116, 2988],
+      [-1260, 2934], [-1368, 2871], [-1467, 2844], [-1557, 2808],
+      [-1638, 2745], [-1647, 2610], [-1638, 2484], [-1647, 2385],
+      [-1674, 2310], [-1710, 2214], [-1758, 2124], [-1800, 2028],
+      [-1830, 1950], [-1872, 1878], [-1914, 1770], [-1938, 1692],
+      [-1944, 1566], [-1938, 1416], [-1914, 1232], [-1848, 1136],
+      [-1796, 1084], [-1748, 1024], [-1708, 976], [-1672, 920],
+      [-1612, 876], [-1524, 872], [-1452, 880], [-1368, 888],
+      [-1288, 904], [-1228, 928], [-1176, 944], [-1132, 1004],
+      [-1120, 1076], [-1096, 1164], [-1068, 1260], [-1038, 1320],
+      [-1002, 1422], [-960, 1530], [-950, 1605], [-935, 1695],
+      [-915, 1790], [-885, 1910], [-865, 1945], [-835, 2120],
+      [-810, 2215], [-780, 2370], [-745, 2560], [-725, 2660],
+      [-690, 2785], [-686, 2880], [-686, 2954], [-694, 3012],
+      [-714, 3054],
+    ]),
+  },
   // The quarry, on the eastern body: hill country rather than canyon country,
   // and a quarry cuts its own walls, so it does not need pre-existing drama.
-  { kind: 'quarry', name: 'Halloway Quarry', at: { x: m(-2704), z: m(-812) }, radius: m(600) },
+  { kind: 'quarry', name: 'Halloway Quarry', at: { x: m(-2704), z: m(-812) }, radius: m(600),
+    area: places([
+      [-1764, 729], [-2043, 684], [-2223, 648], [-2466, 603],
+      [-2790, 522], [-3123, 405], [-3384, 333], [-3654, 234],
+      [-3906, 126], [-4032, 36], [-4077, -72], [-4014, -261],
+      [-3924, -477], [-3888, -765], [-3843, -1062], [-3816, -1224],
+      [-3771, -1476], [-3762, -1665], [-3699, -1890], [-3627, -2070],
+      [-3546, -2232], [-3447, -2376], [-3384, -2475], [-3290, -2550],
+      [-3215, -2635], [-3150, -2670], [-3055, -2725], [-2950, -2790],
+      [-2890, -2820], [-2810, -2855], [-2715, -2865], [-2670, -2855],
+      [-2600, -2820], [-2545, -2720], [-2460, -2555], [-2380, -2400],
+      [-2316, -2280], [-2238, -2082], [-2154, -1914], [-2088, -1770],
+      [-2022, -1560], [-1968, -1404], [-1904, -1253], [-1820, -1008],
+      [-1743, -805], [-1694, -644], [-1638, -448], [-1568, -245],
+      [-1524, -120], [-1464, 18], [-1446, 114], [-1398, 234],
+      [-1386, 342], [-1446, 486], [-1578, 606], [-1670, 672],
+      [-1708, 704],
+    ]),
+  },
   // The top of the canyon run, on the hill park's high ground.
   { kind: 'lookout', name: 'Kestrel Head', at: { x: m(1250), z: m(-250) }, radius: m(150) },
 ];

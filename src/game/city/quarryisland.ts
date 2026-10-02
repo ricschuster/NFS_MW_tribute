@@ -1,7 +1,7 @@
 import { CITY_WOODS_STREAM, UNITS_PER_METRE } from '../constants';
 import { distanceToSegment } from './grid';
 import { cellRandom, valueNoise } from './highmoor';
-import { PLAN_PLACES, planDistrictAt } from './plan';
+import { PLAN_PLACES, inArea, planDistrictAt } from './plan';
 import { hitsSetPiece } from './setpieces';
 import { groundAt, type Terrain } from './terrain';
 import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
@@ -35,10 +35,6 @@ const M = UNITS_PER_METRE;
  * can be driven through between the trunks, at some risk, as Highmoor's can.
  */
 
-/** Round the island, in metres: its land is found inside this by filling out from the quarry. */
-const BOX = { minX: -4000, maxX: -1300, minZ: -2900, maxZ: 800 };
-/** The fill's cell: fine enough that the island's edge is the beach, not a staircase. */
-const FILL = 20;
 const CELL = 13;
 /** Past the quarry's own dressing, which runs out to its radius and 260 m beyond, blending in over this. */
 const QUARRY_DRESSED = 260, BLEND = 160;
@@ -61,25 +57,20 @@ export function quarryIslandWildsFor(
   wet: (x: number, z: number) => boolean,
   raced: readonly Vec2[][] = [],
 ): AuthoredProp[] {
+  // The island is the ground the quarry owns, as the owner traced it in the
+  // District Plan: the wharf across the strait and Ashford Point across the
+  // channel are other places' ground.
   const quarry = PLAN_PLACES.find((p) => p.kind === 'quarry');
-  if (!quarry) return [];
+  if (!quarry || !quarry.area) return [];
+  const island = quarry.area;
+  const BOX = {
+    minX: Math.min(...island.map((p) => p.x)) / M, maxX: Math.max(...island.map((p) => p.x)) / M,
+    minZ: Math.min(...island.map((p) => p.z)) / M, maxZ: Math.max(...island.map((p) => p.z)) / M,
+  };
   const qx = quarry.at.x / M, qz = quarry.at.z / M;
   const dressed = quarry.radius / M + QUARRY_DRESSED;
   const inBox = (x: number, z: number) => x > BOX.minX && x < BOX.maxX && z > BOX.minZ && z < BOX.maxZ;
-  // The island is the land joined to the quarry: a flood fill over the box,
-  // so the wharf's island across the strait and Ashford Point's across the
-  // channel, both inside it, take none of this.
-  const cols = Math.ceil((BOX.maxX - BOX.minX) / FILL) + 1, rows = Math.ceil((BOX.maxZ - BOX.minZ) / FILL) + 1;
-  const island = new Uint8Array(cols * rows);
-  const stack = [[Math.round((qx - BOX.minX) / FILL), Math.round((qz - BOX.minZ) / FILL)]];
-  while (stack.length) {
-    const [i, j] = stack.pop()!;
-    if (i < 0 || j < 0 || i >= cols || j >= rows || island[j * cols + i]) continue;
-    if (wet((BOX.minX + i * FILL) * M, (BOX.minZ + j * FILL) * M)) continue;
-    island[j * cols + i] = 1;
-    stack.push([i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]);
-  }
-  const onIsland = (x: number, z: number) => island[Math.round((z - BOX.minZ) / FILL) * cols + Math.round((x - BOX.minX) / FILL)] === 1;
+  const onIsland = (x: number, z: number) => inArea(island, { x: x * M, z: z * M });
   const segs = roads
     .filter((r) => r.class !== 'interstate' && r.class !== 'ramp' && nodes[r.a].level === 'surface' && nodes[r.b].level === 'surface')
     .map((r) => ({ a: nodes[r.a].pos, b: nodes[r.b].pos, half: r.width / 2 / M + (r.surface === 'asphalt' || !r.surface ? ROAD_CLEAR : TRACK_CLEAR) }))
