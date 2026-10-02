@@ -78,6 +78,18 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       2377,-2000,-90`; the last shot showed no rails because of a
       metres/units bug, now fixed but not yet seen), then test, citylap and
       the PR.
+    - `quarry-once-over` (WIP eca579c, no PR, nothing published):
+      `npm run quarrydraft` adds 621 set pieces (`qo` ids, re-runnable,
+      everything else kept) and is propsynced on the branch. The bowl went
+      from 0.45 to 2.1 things per hectare, ground cover from 1.2% to 5.5%
+      (Industrial has 20%), and pieces squared to the roads from 13% to 63%.
+      citylap is unchanged. Left to do: lay the bench units along the haul
+      road (like worksdraft) instead of out from the pit's centre, raise the
+      density, street-level shots, the full test suite, then publish the
+      Halloway Quarry Props editor with the draft for the owner. Trees are
+      64% of what was added. The report has model polish proposals
+      (stockpile, haul truck, excavator, crusher, conveyor, cabin, silo,
+      shed, rubble); none were built.
   - **Races, after the map:** fix the reference driver first. It brakes for a
     corner, then speeds up again once past the corner's vertex while still
     turning, and sweeps wide into the corner buildings (the Old Town
