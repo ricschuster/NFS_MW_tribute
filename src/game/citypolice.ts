@@ -995,8 +995,14 @@ export class CityPolice {
     const dx = b.x - a.x;
     const dz = b.z - a.z;
     const span = Math.max(1, dx * dx + dz * dz);
-    const along = ((cop.x - a.x) * dx + (cop.z - a.z) * dz) / span;
-    cop.t = Math.max(0, Math.min(1, along));
+    const along = Math.max(0, Math.min(1, ((cop.x - a.x) * dx + (cop.z - a.z) * dz) / span));
+    // `t` is measured the way the car is going, not from `road.a`. Taken from
+    // `a` regardless, a unit heading towards `a` rejoined at the mirror of
+    // where it stood: one that had cut ten metres toward a car stopped off the
+    // end of a dirt road was put back forty metres further away, set off
+    // toward it again, and did that for ever, so a stopped car was neither
+    // busted nor escaped.
+    cop.t = cop.forward ? along : 1 - along;
     placeOnRoad(this.city, cop, TRAFFIC_LANE);
   }
 
