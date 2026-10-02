@@ -3,7 +3,43 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-01, evening session 3; downtown's events in, the map
+- **Start here (2026-10-02; the map nearly done, the driver fixed, two drafts
+  waiting for the owner).**
+  - **Merged:** downtown signed off (#539); the quarry once-over (#540 -
+    reverted by accident in #541's squash and restored by #542: never squash
+    with `reset --soft origin/main` unless the branch is rebased on it first);
+    level crossings drawn and driven as the street (#541); the quarry island's
+    dirt tracks, woods and rock outcrops with a new `outcrop` set piece
+    (#543); the District Plan's place outlines, `PlanPlace.area`, and the
+    owner's downtown/midtown/Ashford edits (#544); the reference driver
+    overtakes, brakes at `BRAKE_RATE` and anticipates its own reaction lag
+    (#545 - every tier faster, fewer crashes, no route under the quality
+    floor); the Halloway Coast Rally, 5.4 km of the island's dirt (#546).
+  - **Waiting for the owner (drafts, no PR):**
+    - **Marrow Field once-over**, branch `marrow-draft`, in the Marrow Field
+      Props editor (store v6): `npm run marrowdraft` (32 units, `mo` ids:
+      crash sites, a boneyard, ruined hangars, fuel farms, bunkers, a helipad,
+      things to drive under, two jumps) and the rise as country
+      (`airfieldRiseFor`, generalised from the island as `countrysideFor`).
+      The owner's answers: ~2/ha, derelict airfield + stunt playground,
+      the rise as countryside. Nothing saved moves; citylap unchanged. On the
+      owner's word: read the editor's save, `propsync`, PR, mark map-areas.
+    - **Haul trucks on the Halloway Drop**, branch `driver-bends`: with the
+      world populated every driver tier wrecks on an oncoming haul truck on
+      the spiral haul road (16 m truck, 20 m road). The branch has a partial
+      fix (truck collides as its drawn box; driver brakes for traffic along
+      the route; pulls over for wide oncoming) but the car still clips the
+      truck's corner on the bends. Owner's call: narrower trucks (real ~10 m),
+      passing bays or a wider road, or no trucks on the haul road during the
+      Drop.
+  - **Still the owner's to answer:** the railway round the loop (#514, Q1-Q3);
+    #484's moved road ends.
+  - **Editors:** Road Editor store v73 = main; District Plan
+    (https://claude.ai/artifact/Gip4gLFNAy2GA8jQrSgn2Q) now has Quarry,
+    Airfield and Wharf kinds and zoom; store v8 = main.
+  - **Running:** no dev servers (all hit their two-hour limit); restart the
+    main server and its watcher on the owner's word.
+- **Earlier (2026-10-01, evening session 3; downtown's events in, the map
   next, races after).**
   - **The owner's order:** finish the map first, races after. Map work left:
     (1) the owner drives downtown (#268) and signs it off; polish is their
