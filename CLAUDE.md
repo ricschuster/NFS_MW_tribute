@@ -143,6 +143,15 @@ what the city is shaped like.
   generator makes? Reproduces #271's audit and reports where the plan and the
   generator disagree; `-- --draw` puts it over the relief. A guard, not a probe:
   a polygon that leaves the land is a failure
+- `npm run groundfit` - how every set piece sits on the ground: a report, not
+  a gate. Each piece's footprint (its solids that start at the ground) is
+  sampled against the height field, and anything with a corner more than a
+  metre off its base, standing on a road or in the water is listed by area
+  and kind, owner-placed (by id, to find in the area editor) apart from
+  generated. A footing (`WAREHOUSE_FOOTING`, `ESTATE_FOOTING`) is allowed its
+  depth of float. Some entries are by design: the cruise terminal over the
+  bay on its pier, a conveyor that climbs, Kestrel Head's walls on the
+  castle's raised platform
 - `npm run mapfit` — does the map carry the reference game's pace? A pace
   profile of the live network with the game's own physics: what routes allow a
   careful driver (a median fraction of top speed; ADR-0011 wants about 60%),
