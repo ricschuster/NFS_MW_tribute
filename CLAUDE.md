@@ -32,6 +32,13 @@ the footage lives in `reference/`, which is git-ignored.
 Studying a map is not copying one. The test is whether anything third-party is
 *in* what we ship, and the answer stays no.
 
+**The target look is the reference game's**, and it is a question of assets,
+not of engine: the reference is 2012 console tech, within WebGL2's reach, so
+the recommendation is to stay in the browser. Discussion only, nothing decided;
+[docs/design/03_the_look.md](docs/design/03_the_look.md) has what is in a
+reference frame, why not Unreal or Godot, where the work is, and the first
+step, so read it before #11 or any talk of an engine.
+
 **There is one game and one simulation.** It used to be two - a pseudo-3D
 projected-segment racer on a single closed track, and the city replacing it -
 and the track was deleted in [ADR-0006](docs/decisions/0006-the-city-is-the-game.md)
