@@ -32,6 +32,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { driveRoute, driverNamed } from './citydriver.mjs';
+import { worldFactory } from './freshworld.mjs';
 
 const flag = (name) => {
   const i = process.argv.indexOf(name);
@@ -43,27 +44,9 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every lap starts in the starter car on an empty save (#533).
+const { CityWorld, freshWorld } = await worldFactory(server);
 const K = await server.ssrLoadModule('/src/game/constants.ts');
-const { memoryStore, setStore } = await server.ssrLoadModule('/src/game/storage.ts');
-
-/**
- * A world with a save of its own, so every lap starts in the starter car.
- *
- * Node has no `localStorage`, so the game falls back to an in-memory save that
- * lasts as long as the process - and every world built here used to load the
- * last one's. A lap that drove past a parked car was put in it (#352), and the
- * next lap, and every route after it, started in that car instead. The Works
- * Circuit's traffic lap read 22 crashes when #489 recorded it (4 before) and
- * none of that was the works: its own empty lap had just picked up the
- * Monolith, and the traffic lap was driven in that. Started fresh it crashed
- * 2 times. Which car a row was driven in depended on every row above it, so
- * adding a route moved the numbers of every route after it.
- */
-const freshWorld = (options) => {
-  setStore(memoryStore());
-  return new CityWorld(undefined, options);
-};
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const M = K.UNITS_PER_METRE;

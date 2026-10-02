@@ -51,6 +51,7 @@
 //   npm run drivers -- --driver beginner   # just one
 //   npm run drivers -- --route "Old Quarter"
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 import { driveRoute, DRIVERS, driverNamed } from './citydriver.mjs';
 
 const flag = (name) => {
@@ -64,9 +65,8 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+const { CityWorld, freshWorld } = await worldFactory(server);
 const K = await server.ssrLoadModule('/src/game/constants.ts');
-const { memoryStore, setStore } = await server.ssrLoadModule('/src/game/storage.ts');
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
 const M = K.UNITS_PER_METRE;
@@ -115,10 +115,7 @@ const QUALITY_FLOOR = 0.5;
 for (const route of routes) {
   for (const traffic of conditions) {
     for (const driver of drivers) {
-      // A save of its own, or every run starts in whatever car the last one
-      // drove past and was put in (`freshWorld` in citylap.mjs has the story).
-      setStore(memoryStore());
-      const world = new CityWorld(undefined, { traffic, police: false, drift: false });
+      const world = freshWorld({ traffic, police: false, drift: false });
       let damage = 0;
       // Seeded off the route as well as the driver, so two routes are not the
       // same mistakes in the same order.

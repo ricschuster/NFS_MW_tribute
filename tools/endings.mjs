@@ -33,6 +33,7 @@
 //   npm run endings -- --runs 4        # quicker
 //   npm run endings -- --minutes 2     # how long a pursuit gets to end
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 import { routeDriver, carAheadLimit } from './citydriver.mjs';
 
 const flag = (name) => {
@@ -59,7 +60,8 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every run on an empty save, in the starter car (#533).
+const { CityWorld, freshWorld } = await worldFactory(server);
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
@@ -75,7 +77,7 @@ const NONE = { left: false, right: false, up: false, down: false, confirm: false
  * ends.
  */
 function pursuit(route, level, seed, stopAfter = Infinity) {
-  const world = new CityWorld(undefined, { drift: false });
+  const world = freshWorld({ drift: false });
   const driver = routeDriver(route, K, { seed });
   const start = driver.at(0);
   const facing = driver.at(400);
@@ -170,7 +172,7 @@ function pursuit(route, level, seed, stopAfter = Infinity) {
   return { how: 'neither', at: LIMIT, level: world.police.level, searches };
 }
 
-const world = new CityWorld(undefined, { traffic: false, police: false });
+const world = freshWorld({ traffic: false, police: false });
 const routes = world.city.routes;
 
 console.log(
