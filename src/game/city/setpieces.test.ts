@@ -18,6 +18,7 @@ import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
 import { SET_PIECE_SOLIDS, SOLID_REACH, airfieldProps, hitsSetPiece } from './setpieces';
+import type { CityRoad } from './types';
 import { groundAt } from './terrain';
 import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea, planDistrictAt } from './plan';
 import { distanceToSegment } from './grid';
@@ -242,7 +243,7 @@ describe('Highmoor Park (#460)', () => {
     expect(pieces.slice(0, piecesOf(HIGHMOOR_PROPS)).every((p) => p.kind !== 'tree')).toBe(true);
     expect(trees.length).toBeGreaterThan(1000);
     // Everything after the placed props is a tree: Highmoor's woods, then
-    // Tidewater Park's (#461). Tidewater's buildings and Midtown north's
+    // Tidewater Park's (#461), then the quarry island's, among its outcrops. Tidewater's buildings and Midtown north's
     // houses (#477), Midtown south's (#487), Midtown south-west's (#488),
     // Industrial's works (#489), Ashford Point's estates (#293) and
     // downtown's (#268) are placed props, after Highmoor's.
@@ -258,7 +259,7 @@ describe('Highmoor Park (#460)', () => {
             piecesOf(ASHFORD_PROPS) +
             piecesOf(DOWNTOWN_PROPS),
         )
-        .every((p) => p.kind === 'tree'),
+        .every((p) => p.kind === 'tree' || p.kind === 'outcrop'),
     ).toBe(true);
   });
 
@@ -419,9 +420,12 @@ describe('the roads to Marrow Field', () => {
   const dirt = city.roads.filter((r) => r.surface === 'dirt');
 
   it('are dirt right up to where they meet somebody else\'s road', () => {
+    // The field's dirt only: the park's tracks (Highmoor's paths, the quarry
+    // island's) run on from wherever they were drawn, a road's end included.
+    const field = (r: CityRoad) => r.surface === 'dirt' && r.district !== 'park';
     for (const node of city.nodes) {
       const here = node.roads.map((id) => city.roads[id]);
-      if (!here.some((r) => r.surface === 'dirt') || !here.some((r) => r.surface !== 'dirt')) continue;
+      if (!here.some(field) || !here.some((r) => r.surface !== 'dirt')) continue;
       // Where dirt meets paving, the paving is a bridge or a real junction.
       const paved = here.filter((r) => r.surface !== 'dirt');
       expect(paved.every((r) => r.bridge) || node.roads.length >= 3).toBe(true);

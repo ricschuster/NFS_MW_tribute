@@ -292,6 +292,25 @@ function rubble(): Part[] {
 }
 
 /**
+ * Bedrock showing through the grass on a hilltop (the quarry island, 2026-10-02):
+ * two weathered slabs tilted out of the ground and a scatter of fallen stones
+ * round them. Angular and grey with a little lichen, where the quarry's rubble
+ * is pale and fresh-broken, so a hill's rock does not read as a heap of spoil.
+ */
+function outcrop(): Part[] {
+  const stone = (r: number, sx: number, sy: number, sz: number, tilt = 0, turn = 0) =>
+    new THREE.DodecahedronGeometry(r, 0).scale(sx, sy, sz).rotateZ(tilt).rotateY(turn);
+  return [
+    { geometry: at(stone(3.2, 1.25, 1.1, 0.8, 0.35, 0.4), -1.2, 1.9, 0.3), colour: '#8b8d88' },
+    { geometry: at(stone(2.6, 1, 1.25, 0.75, -0.3, 1.9), 2.1, 1.7, -0.9), colour: '#7c7f7b' },
+    { geometry: at(stone(1.4, 1.2, 0.7, 1), 0.6, 0.5, 3.4), colour: '#94968f' },
+    { geometry: at(stone(1.1, 1, 0.6, 1.3, 0.2, 0.8), -3.9, 0.4, -2.2), colour: '#868a80' },
+    { geometry: at(stone(0.9, 1.2, 0.6, 1, 0, 2.6), 4.2, 0.3, 2.1), colour: '#7f8a6e' },
+    { geometry: at(stone(1.6, 1.1, 0.35, 1, 0.1, 1.2), -0.4, 3.4, 0.6), colour: '#7f8a6e' },
+  ];
+}
+
+/**
  * A row of forty-foot containers, twelve side by side and stacked two to four
  * high (#410). Coloured the way a real yard is, a few shipping lines' colours
  * in no order, so a block is not a brick. The colours are a fixed pattern
@@ -892,6 +911,7 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   cabin: grown(cabin, 1.8),
   crusher: grown(crusher, 2),
   rubble: grown(rubble, 3),
+  outcrop,
   'container-block': containerBlock,
   'sts-crane': stsCrane,
   warehouse,

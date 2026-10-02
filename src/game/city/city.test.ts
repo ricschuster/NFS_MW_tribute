@@ -172,7 +172,13 @@ describe('generateCity', () => {
   // called from three block sweeps that each scanned every road of a class for
   // every block - were 47%. Indexing those left the city byte-identical and the
   // generator three times faster. Nothing dominates the profile now.
-  const SLOW = 30_000;
+  //
+  // A city takes about nine seconds now that the areas are dressed - a few
+  // thousand generated trees and every area's props - and a CI runner is
+  // slower again: two builds and a deep compare ran past 30 s there on
+  // 2026-10-02. The headroom is kept by raising the budget, not by trimming
+  // the city.
+  const SLOW = 90_000;
 
   it(
     'is a pure function of its seed',
@@ -241,15 +247,20 @@ describe('the street network', () => {
 
   // Marrow Field (#295) is dirt and Halloway Quarry (#327) is gravel, each in
   // its own describe block below; everything else on the current seed should
-  // still come out paved, but for Industrial's railway (#489).
+  // still come out paved, but for Industrial's railway (#489) and the quarry
+  // island's dirt tracks.
   it('defaults every road to an asphalt surface, dirt being the exception', () => {
     for (const road of city.roads) {
       expect(['asphalt', 'dirt', 'gravel', 'rail']).toContain(road.surface);
     }
     const dirt = city.roads.filter((r) => r.surface === 'dirt');
-    const unpaved = city.roads.filter((r) => r.surface !== 'asphalt');
     expect(dirt.length).toBeGreaterThan(0);
-    expect(unpaved.length).toBeLessThan(city.roads.length / 8);
+    // By length, not by count: a winding track drawn a point every 40 m (the
+    // quarry island's) is many short roads, and is no more of the map for it.
+    // Paving is still the bulk of the network: the quarry's benches, the
+    // airfield, the railway and the island's tracks are a quarter of it.
+    const total = (roads: typeof city.roads) => roads.reduce((sum, r) => sum + r.length, 0);
+    expect(total(city.roads.filter((r) => r.surface !== 'asphalt'))).toBeLessThan(total(city.roads) / 3);
   });
 
   // Roads used to be axis-aligned and this test used to say so. Boulevards

@@ -27,6 +27,7 @@
     "suburbdraft": "node tools/suburbdraft.mjs",
     "worksdraft": "node tools/worksdraft.mjs",
     "quarrydraft": "node tools/quarrydraft.mjs",
+    "islanddraft": "node tools/islanddraft.mjs",
     "housedraft": "node tools/housedraft.mjs",
     "freewayexport": "node tools/freewayexport.mjs",
     "freewaysync": "node tools/freewaysync.mjs",
