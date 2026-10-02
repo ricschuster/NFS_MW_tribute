@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 /**
  * What is copied out of `public/` and never passes through the bundle.
@@ -120,5 +120,8 @@ export default defineConfig({
     // A save now survives within a process (#101), which is right for a tab
     // and wrong for a test runner. This gives every test a fresh one.
     setupFiles: ['./src/test-setup.ts'],
+    // Agents check the repo out again under `.claude/worktrees/`, and without
+    // this every one of them is a second copy of the suite in the same run.
+    exclude: [...configDefaults.exclude, '.claude/**'],
   },
 });

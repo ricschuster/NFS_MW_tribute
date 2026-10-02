@@ -1,4 +1,4 @@
-import { UNITS_PER_METRE } from '../constants';
+import { HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
 import { MARROW_PROPS } from './marrowprops';
 import { groundAt } from './terrain';
 import type { Terrain } from './terrain';
@@ -113,7 +113,7 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   stockpile: grown([post(0, 0, 6, 7)], 2),
   // Legs only. The belt is eight metres up at its low end, which is over a car.
   conveyor: grown([post(0, -20, 0.6, 4), post(0, -7, 0.6, 8.5), post(0, 6, 0.6, 13), post(0, 19, 0.6, 17.5)], 2),
-  'haul-truck': grown([{ u: 0, v: 0, w: 6.4, l: 10, y0: 0, y1: 4.9 }], 2.5),
+  'haul-truck': grown([{ u: 0, v: 0, w: 6.4, l: 10, y0: 0, y1: 4.9 }], HAUL_TRUCK_GROWN),
   excavator: grown([{ u: 0, v: 0.5, w: 3.8, l: 8, y0: 0, y1: 4.2 }], 2.5),
   cabin: grown([{ u: 0, v: 0, w: 3.2, l: 8.4, y0: 0, y1: 2.9 }], 1.8),
   crusher: grown([{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }], 2),

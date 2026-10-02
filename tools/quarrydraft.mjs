@@ -119,7 +119,7 @@ const inJump = (p) =>
 
 /** The editor's sizes (`tools/propeditor.html`), across (`w`) and along (`l`) a piece's heading. */
 const SIZE = {
-  stockpile: [44, 44], conveyor: [3.2, 84], 'haul-truck': [16, 25], excavator: [9.5, 20], cabin: [5.8, 15.5],
+  stockpile: [44, 44], conveyor: [3.2, 84], 'haul-truck': [9.6, 15], excavator: [9.5, 20], cabin: [5.8, 15.5],
   crusher: [16, 16], rubble: [16, 16], silo: [8, 8], 'water-tower': [10, 10], crane: [6, 6], mast: [4, 4],
   bunker: [12, 8], 'blast-wall': [6, 1.2], shed: [9, 14], cone: [0.6, 0.6], tree: [6, 6], stack: [3, 2],
   'tank:small': [14, 14], 'tank:large': [28, 28], 'warehouse:small': [30, 60], gate: [10, 1.2], jump: [8, 12], billboard: [11, 0.6],

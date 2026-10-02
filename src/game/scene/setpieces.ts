@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { UNITS_PER_METRE } from '../constants';
+import { HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
 import { CHAPEL_GROWN, ESTATE_FOOTING, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
 
@@ -906,7 +906,7 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   tree,
   stockpile: grown(stockpile, 2),
   conveyor: grown(conveyor, 2),
-  'haul-truck': grown(haulTruck, 2.5),
+  'haul-truck': grown(haulTruck, HAUL_TRUCK_GROWN),
   excavator: grown(excavator, 2.5),
   cabin: grown(cabin, 1.8),
   crusher: grown(crusher, 2),

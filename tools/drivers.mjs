@@ -116,6 +116,10 @@ for (const route of routes) {
   for (const traffic of conditions) {
     for (const driver of drivers) {
       const world = freshWorld({ traffic, police: false, drift: false });
+      // As `citylap` does: a sprint down the haul road is raced with the
+      // trucks stood aside (#397), so a lap with them on it is a lap nobody
+      // races. Every tier stalled on the Halloway Drop behind one for that.
+      if (route.kind === 'sprint') world.trucks.keptOff = true;
       let damage = 0;
       // Seeded off the route as well as the driver, so two routes are not the
       // same mistakes in the same order.
