@@ -3,6 +3,104 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Start here (2026-10-01, evening session 3; downtown's events in, the map
+  next, races after).**
+  - **The owner's order:** finish the map first, races after. Map work left:
+    (1) the owner drives downtown (#268) and signs it off; polish is their
+    call in the Downtown Props editor (fewer art-deco towers near the
+    lookout, gaps in the old core's terraces); (2) #484's 11 moved road ends,
+    fixed by the owner in the editor, r39 first (its last 67 m are cut off);
+    the report is on the issue; (3) a once-over of Marrow Field and Halloway
+    Quarry ("they look sparse; more stuff and more polished things", copying
+    what worked in the later areas); (4) the railway round the loop (#514).
+  - **Merged this session:** #536, downtown's Harbour Sprint (1.9 km) and
+    Old Town Circuit (1.4 km, the old core only). r57 had been cut off from
+    the n99/n104 junction since #526: d0-100's end sat on r57's drawn start,
+    so the stitch skipped it. The owner approved moving d0-100's end onto the
+    junction, and the Road Editor store (`edits/roads`) is v70, equal to
+    main. #535: downtown's pavements turn junction corners. #533/#534: every
+    probe that builds several worlds gives each a fresh save
+    (`tools/freshworld.mjs`); finds used to swap the car between laps, which
+    was all of the Works Circuit's 22 crashes. #537: citylap re-recorded
+    after #535.
+  - **The railway (#514), waiting on the owner.** The proposal is a comment on
+    #514, and the draft is on branch `railway-loop-draft` (no PR; `npm run
+    raildraft`, rail2-rail9, 13.2 km, inside the loop except 1.6 km through
+    Tidewater, 1.8 km under the viaduct through Midtown south and downtown).
+    Nine tests fail on it on purpose, because they are the owner's questions,
+    asked one at a time. Q1 was asked and not answered: level crossings
+    everywhere, or grade-separate some? The crossing at (1600,1753) cuts the
+    only >700 m asphalt road the roadblock playtests need (8 of the 9
+    failures). Q2: the strait, a bridge (a tenth water crossing, against
+    ADR-0005 rule 2; the chokepoint test fails) or a rail tunnel (new
+    mechanism)? Q3: the downtown alignment (under the viaduct, a reserved
+    corridor, or not a closed loop)?
+  - **Agents still running when the session ended**, each on its own branch:
+    `marrow-once-over` and `quarry-once-over` (audit against the later areas,
+    a re-runnable drafter, the draft in the props file and editor HTML, no
+    PR, nothing synced; next: publish each area editor with its draft for
+    the owner's review, plus a list of rough models worth polishing);
+    `sprint-traffic` (why traffic costs the boulevard sprints 2.5-3x with few
+    crashes: a reference-driver fix PR, or a report); `level-crossing`
+    (rail crossings drawn as level crossings, a PR on #514). Check
+    `gh pr list` and those branches first.
+  - **What two of the agents found before the session ended:**
+    - `marrow-once-over`: the audit only, with no draft (an empty WIP
+      commit). Marrow Field is the sparsest area on the map: 0.69 things per
+      hectare against 4-13 in the later areas, 37% of its land over 60 m
+      from anything, clustered (Clark-Evans 0.46), and only 20% squared to
+      the roads. The empty part is the eastern rise and the strips beside the
+      runway. Don't add billboards there: Marrow's props load first, so new
+      ones shift every later area's saved billboard ids. Owner questions:
+      how dense should a disused airfield be (the target was Industrial's
+      3-4 per hectare), and should the eastern rise be filled or left as
+      countryside?
+    - `sprint-traffic` (WIP 0c7f2e1, no PR): traffic costs the sprints
+      2.5-3x because the reference driver never overtakes. It sits behind
+      one civilian doing 77 km/h on a four-lane road while the oncoming half
+      is clear 79-100% of the time. The WIP lets the perfect driver pass
+      (Ashford Coast Sprint 224 s to 102 s, Harbour Sprint 81 s to 48 s), but
+      the lower tiers weave at low speed and gain nothing, and the advanced
+      driver no longer finishes the Marrow Field Run. Left to do: bound that
+      weave, settle `carAheadLimit`'s reach, remove the debug switches, and
+      replace the placeholder "#537" tag in the commit and comments. Also
+      found: the driver brakes for corners and cars as if braking were about
+      9 g, while `BRAKE_RATE` is about a sixth of that (worth its own issue).
+      The live traffic reads 1.00 cars on screen a second against the
+      reference game's 0.60; `TRAFFIC_IN_CITY` was set when it read 0.58,
+      before the drawn roads grew. Whether to retune it is the owner's call.
+    - `level-crossing` (WIP 776aa53, no PR): Industrial's 10 crossings get
+      a ballast bed cut at the kerbs and eased down to road level, rails
+      through concrete panels, and warning posts (city data,
+      `City.crossings`, in `city/levelcrossings.ts`), plus a tie-break in
+      `surfaceAt` so the street wins over rail at equal height. Typecheck
+      only. Left to do: re-take the after shots (`cityshot -- --view at --at
+      2377,-2000,-90`; the last shot showed no rails because of a
+      metres/units bug, now fixed but not yet seen), then test, citylap and
+      the PR.
+    - `quarry-once-over` (WIP eca579c, no PR, nothing published):
+      `npm run quarrydraft` adds 621 set pieces (`qo` ids, re-runnable,
+      everything else kept) and is propsynced on the branch. The bowl went
+      from 0.45 to 2.1 things per hectare, ground cover from 1.2% to 5.5%
+      (Industrial has 20%), and pieces squared to the roads from 13% to 63%.
+      citylap is unchanged. Left to do: lay the bench units along the haul
+      road (like worksdraft) instead of out from the pit's centre, raise the
+      density, street-level shots, the full test suite, then publish the
+      Halloway Quarry Props editor with the draft for the owner. Trees are
+      64% of what was added. The report has model polish proposals
+      (stockpile, haul truck, excavator, crusher, conveyor, cabin, silo,
+      shed, rubble); none were built.
+  - **Races, after the map:** fix the reference driver first. It brakes for a
+    corner, then speeds up again once past the corner's vertex while still
+    turning, and sweeps wide into the corner buildings (the Old Town
+    Circuit's crashes are all this). Then tune against #347's human pace,
+    widen `RIVAL_CIRCUITS`, and unpark #469.
+  - **Running:** the dev server on :5173 from `../crosstown-main` with a 30 s
+    watcher following origin/main (both started by this session, 2 h cap).
+    Worktrees: `../crosstown-downtown` (this handoff),
+    `../crosstown-play-downtown` (stale, local spawn hack), the agents'
+    under `.claude/worktrees/`. Branch `fresh-save-tools` on origin is equal
+    to main and can go.
 - **Start here (2026-10-01, late night; downtown (#268) built, its events
   in progress).**
   - **Done and merged:** the audit and the owner's answers are on #268. #524
