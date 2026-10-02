@@ -653,8 +653,9 @@ export const POND_LIFT = m(0.12);
  * The quarry's haul trucks (#330): a few of them, running the haul road and the
  * rim road all day, much bigger and slower than a car.
  *
- * `TRUCK_RADIUS` is the size of the thing you hit: about 16 m by 25 m drawn, so
- * a circle of 10 m round its middle. `TRUCK_GAP` is how far behind another truck
+ * It is about 16 m by 25 m drawn, and that box is what a car hits
+ * (`TRUCK_HALF_WIDTH`, `TRUCK_HALF_LENGTH`); `TRUCK_RADIUS`, the circle round
+ * it, keeps trucks apart. `TRUCK_GAP` is how far behind another truck
  * one holds, wide enough that a truck's own length is not the gap. A hit is a
  * wall rather than a shunt: it costs the car `TRUCK_HURT` times what the same
  * closing speed costs against a civilian car, and nearly all its speed
@@ -663,6 +664,14 @@ export const POND_LIFT = m(0.12);
 export const TRUCK_COUNT = 4;
 export const TRUCK_SPEED = kmh(30);
 export const TRUCK_RADIUS = m(10);
+/**
+ * The truck's body, half its width and half its length: what a car actually
+ * hits. `TRUCK_RADIUS` is the circle round it, which is right for keeping
+ * trucks apart and wrong for a car going past one - 2 m too wide at each side,
+ * which on a 20 m quarry road made an oncoming truck impossible to pass.
+ */
+export const TRUCK_HALF_WIDTH = m(8);
+export const TRUCK_HALF_LENGTH = m(12.5);
 export const TRUCK_GAP = m(70);
 export const TRUCK_HURT = 3;
 export const TRUCK_SPEED_KEPT = 0.15;

@@ -506,6 +506,83 @@ export function carAheadLimit(world, K) {
 }
 
 /**
+ * The car-ahead limit again, measured along the route rather than straight
+ * out of the bonnet.
+ *
+ * `carAheadLimit` looks for cars in a cone ahead of the car, which on a
+ * straight road is the same thing. On a bend it is not: the car that matters
+ * is round the curve and the cone points at the verge. Measured on the
+ * Halloway Drop, whose haul road spirals down the quarry, the perfect driver
+ * met a haul truck at 278 km/h - in sight along the road for the five seconds
+ * it would have taken to stop, and never in the cone - and every driver tier
+ * finished the lap that way, wrecked against a truck. This asks the route
+ * where each car is - how far along and how far across - and brakes for any
+ * in the driver's line within its stopping distance, the same arithmetic as
+ * the cone.
+ */
+function routeAheadLimit(world, K, driver, along, line) {
+  const cars = obstacles(world, K);
+  if (cars.length === 0) return Infinity;
+  const brake = brakeOf(world, K);
+  const reach = Math.max(20 * K.UNITS_PER_METRE, (world.speed * world.speed) / (2 * brake)) + K.TRAFFIC_GAP;
+  let limit = Infinity;
+  for (const { car, width } of cars) {
+    if (Math.hypot(car.x - world.x, car.z - world.z) > reach * 1.2) continue;
+    const at = driver.progress(car.x, car.z, along, 0, reach * 1.2);
+    let ahead = at.along - along;
+    if (ahead < -driver.length / 2) ahead += driver.length;
+    if (ahead > driver.length / 2) ahead -= driver.length;
+    if (ahead <= 0 || ahead > reach) continue;
+    // Going our way: something coming the other way is passed, not followed
+    // (`giveWay` moves over for the ones too wide to pass at the lane).
+    if (Math.cos((car.heading ?? at.heading) - at.heading) < 0.5) continue;
+    // In the line the driver is holding: `side` is measured as `steer` holds it.
+    if (Math.abs(at.side + line) > width) continue;
+    const room = ahead - K.TRAFFIC_GAP;
+    const speed = Math.max(0, car.speed ?? 0);
+    if (room <= 0) return Math.min(limit, speed * 0.6);
+    limit = Math.min(limit, Math.sqrt(speed * speed + 2 * brake * room));
+  }
+  return limit;
+}
+
+/**
+ * Pull over for something wide coming the other way. Returns the line to hold
+ * (as `steer` reads it), or null to keep the lane.
+ *
+ * A haul truck is a lane and a half wide, and the quarry's roads are two
+ * lanes: at the driver's own lane offset its centre passes 5 m from the
+ * truck's, which is a collision. On the Halloway Drop every driver tier met
+ * one head-on like that and wrecked on it, and with the truck stopped for the
+ * wreck and the wreck waiting for the truck, none of them finished. A person
+ * meeting a truck on a quarry road moves over to the edge until it has gone
+ * by, so the driver does too, when anything wider than a car is coming within
+ * the distance it covers in a few seconds.
+ */
+function giveWay(world, K, driver, along, lane) {
+  const road = world.onRoad;
+  if (!road || world.airborne) return null;
+  const R = K.CAR_RADIUS;
+  const edge = road.width / 2 - R * 1.3;
+  if (edge <= lane) return null;
+  const look = Math.max(40 * K.UNITS_PER_METRE, Math.max(0, world.speed) * 4);
+  for (const { car, width } of obstacles(world, K)) {
+    if (width <= R * 2.2 + 0.01) continue;
+    if (Math.hypot(car.x - world.x, car.z - world.z) > look * 1.5) continue;
+    const at = driver.progress(car.x, car.z, along, 0, look * 1.5);
+    let ahead = at.along - along;
+    if (ahead < -driver.length / 2) ahead += driver.length;
+    if (ahead > driver.length / 2) ahead -= driver.length;
+    if (ahead < -R * 4 || ahead > look) continue;
+    const sameWay = Math.cos((car.heading ?? at.heading + Math.PI) - at.heading) > 0.5;
+    if (sameWay) continue;
+    // Close enough to our line to touch: pull over as far as the road allows.
+    if (Math.abs(at.side + lane) < width + R) return edge;
+  }
+  return null;
+}
+
+/**
  * How hard the car can actually brake, in units per second per second.
  *
  * This used to be `maxSpeed`, which was the sim's braking until #14 measured
@@ -834,9 +911,10 @@ export function driveRoute(
     // the road is actually going, unless there is room to go round it.
     const routeTarget = driver.target(along, world.speed, world.maxSpeed);
     passing = overtake(world, K, driver, found, along, lane, passing, routeTarget);
+    const tucked = passing === null ? giveWay(world, K, driver, along, lane) : null;
     if (passing !== null && passing !== wasPassing) passes++;
     wasPassing = passing;
-    const want = driver.steer(found, world.speed, passing);
+    const want = driver.steer(found, world.speed, passing ?? tucked);
     // Steer off where the car will be pointing when the hands catch up, not
     // where it points now. The steering is on or off, and a driver with a
     // reaction time acts on what it saw that long ago: aimed at the heading of
@@ -916,7 +994,7 @@ export function driveRoute(
     escape = 0;
 
     // Whichever is lower wins.
-    let target = Math.min(routeTarget, carAheadLimit(world, K));
+    let target = Math.min(routeTarget, carAheadLimit(world, K), routeAheadLimit(world, K, driver, along, passing ?? tucked ?? lane));
     // Not on the power until the car points down the road. The planner only
     // looks ahead along the route, so the moment the car passes a corner's
     // vertex the corner is behind it and the target jumps back to the
