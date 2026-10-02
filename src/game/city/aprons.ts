@@ -16,7 +16,10 @@ const EDGE = 0.85;
 const boxes = new WeakMap<Vec2[], { minX: number; minZ: number; maxX: number; maxZ: number }>();
 
 export function onApron(city: City, x: number, z: number): boolean {
-  for (const apron of city.aprons) {
+  // The drives and downtown's pavements are paved ground too (#293, #268),
+  // drawn as a mesh rather than in the ground's shader; what looks paved
+  // drives paved, whichever of the two draws it.
+  for (const list of [city.aprons, city.drives, city.pavements]) for (const apron of list) {
     let box = boxes.get(apron.outline);
     if (!box) {
       box = { minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity };

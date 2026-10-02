@@ -62,6 +62,7 @@ import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { ASHFORD_PROPS } from './ashfordprops';
 import { DOWNTOWN_PROPS } from './downtownprops';
+import { downtownPavements } from './pavements';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
 import { INDUSTRIAL_PROPS, INDUSTRIAL_YARDS } from './industrialprops';
 import { yardAprons } from './yards';
@@ -630,6 +631,7 @@ export function generateCity(seed: number): City {
     aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS)],
     jumps: [],
     drives,
+    pavements: downtownPavements(roads, nodes, DOWNTOWN_PROPS),
   };
   // Whatever the street grid did not claim becomes parkland (#185). After the
   // blocks and before anything that reads them, and before the furniture in
