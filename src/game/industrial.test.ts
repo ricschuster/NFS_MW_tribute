@@ -6,7 +6,8 @@ import { PLAN_DISTRICTS, inArea } from './city/plan';
 const M = UNITS_PER_METRE;
 const city = new CityWorld(undefined, { traffic: false, police: false }).city;
 const industrial = PLAN_DISTRICTS.find((a) => a.kind === 'industrial')!;
-const rail = city.roads.filter((r) => r.surface === 'rail');
+// Industrial's own stretch: the line runs on round the loop from both ends (#514).
+const rail = city.roads.filter((r) => r.surface === 'rail' && inArea(industrial.poly, city.nodes[r.a].pos));
 
 describe("Industrial's railway (#489, #514)", () => {
   it('runs a main line through the district beside the freeway', () => {

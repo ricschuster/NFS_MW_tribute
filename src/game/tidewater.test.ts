@@ -16,7 +16,7 @@ describe('Tidewater Park (#461)', () => {
     const drives = city.roads.filter((road) => {
       const a = city.nodes[road.a].pos;
       const b = city.nodes[road.b].pos;
-      return road.class === 'street' && inArea(park.poly, { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
+      return road.class === 'street' && road.surface !== 'rail' && inArea(park.poly, { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
     });
     const length = drives.reduce((sum, road) => sum + road.length, 0) / M;
     expect(length).toBeGreaterThan(1500);
