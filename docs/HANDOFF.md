@@ -32,6 +32,17 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       truck's corner on the bends. Owner's call: narrower trucks (real ~10 m),
       passing bays or a wider road, or no trucks on the haul road during the
       Drop.
+  - **Later the same day (owner away):** a city builds in two thirds of the
+    time, byte for byte the same (#548: span grid in `buildGraph`, roads
+    looked up near a house in Ashford Point, bucketed countryside, a ring
+    search for `nearestNode`); the reference driver brakes for corners at
+    `BRAKE_RATE`, holds the throttle until it points down the road, and its
+    tiers differ again through `pace` and `caution` (#549 - Old Town Circuit
+    fixed, damage roughly halved for every tier). `marrow-draft` is rebased on
+    both and its tests pass; re-record `citylap` when it merges. Every guard
+    passed on main after #547: ramps, grades, pace, plan, build, pwa, and
+    `endings` shows no stalemates. The water field is what is left of a
+    build's cost, and only rasterising it would cut that, which is not exact.
   - **Still the owner's to answer:** the railway round the loop (#514, Q1-Q3);
     #484's moved road ends.
   - **Editors:** Road Editor store v73 = main; District Plan
