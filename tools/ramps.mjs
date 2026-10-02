@@ -21,13 +21,15 @@
 //   npm run ramps
 //   npm run ramps -- --trace 4    # watch one climb
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 
 const server = await createServer({
   appType: 'custom',
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every run on an empty save, in the starter car (#533).
+const { CityWorld, freshWorld } = await worldFactory(server);
 const { surfaceAt } = await server.ssrLoadModule('/src/game/city/grid.ts');
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 const M = K.UNITS_PER_METRE;
@@ -57,7 +59,7 @@ for (const [i, ramp] of ramps.entries()) {
   // A fresh world each time: damage carries over otherwise, and a car at full
   // damage has less top speed and less grip, so ramp 5 would be measuring the
   // crashes from ramp 1.
-  const world = new CityWorld(undefined, { traffic: false, police: false });
+  const world = freshWorld({ traffic: false, police: false });
   const a = city.nodes[ramp.a];
   const b = city.nodes[ramp.b];
   const bottom = a.y <= b.y ? a : b;

@@ -25,6 +25,7 @@
 //   npm run nitro -- --traffic off     # empty road: is it the bends or the cars?
 //   npm run nitro -- --race            # what the ladder table actually measures
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 import { driveRoute, DRIVERS, driverNamed } from './citydriver.mjs';
 
 const flag = (name) => {
@@ -37,7 +38,8 @@ const server = await createServer({
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every run on an empty save, in the starter car (#533).
+const { CityWorld, freshWorld } = await worldFactory(server);
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
@@ -120,7 +122,7 @@ function angleTo(a, b) {
 }
 
 function lap(policy, skill, traffic) {
-  const world = new CityWorld(undefined, { traffic, police: false });
+  const world = freshWorld({ traffic, police: false });
   const s = { turned: 0, was: world.heading };
   let steps = 0;
   let onThrottle = 0;
@@ -199,7 +201,7 @@ function lap(policy, skill, traffic) {
 async function raceLap(policy, skill) {
   const { RIVALS } = await server.ssrLoadModule('/src/game/rivals.ts');
   const rival = RIVALS[RIVALS.length - 1];
-  const world = new CityWorld(undefined, { traffic: true, police: false });
+  const world = freshWorld({ traffic: true, police: false });
   world.beaten = RIVALS.length - 1;
   world.rep.total = Math.max(world.rep.total, rival.rep);
   world.x = route.start.x;
