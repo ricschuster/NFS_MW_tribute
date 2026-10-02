@@ -57,6 +57,7 @@ import { FORT_PROPS } from './fortprops';
 import { HIGHMOOR_PROPS } from './highmoorprops';
 import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
+import { quarryIslandWildsFor } from './quarryisland';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
 import { ashfordWoodsFor, digAshfordPonds, estateDrives, gardenTreesFor } from './ashford';
 import { MIDTOWN_PROPS } from './midtownprops';
@@ -712,6 +713,8 @@ export function generateCity(seed: number): City {
       ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced) : []),
       // And Tidewater Park's trees (#461), on the same terms.
       ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced),
+      // And the quarry island's wild hills round the quarry (2026-10-02).
+      ...(hasQuarry ? quarryIslandWildsFor(terrain, roads, nodes, first.pieces, placed, (x, z) => inWaterAt(city, x, z), raced) : []),
     ];
     // And Ashford Point's gardens and copses (#293), round its estates and drives.
     const gardens = gardenTreesFor(ASHFORD_PROPS, roads, nodes, drives, (x, z) => inWaterAt(city, x, z));

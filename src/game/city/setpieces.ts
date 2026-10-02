@@ -118,6 +118,9 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   cabin: grown([{ u: 0, v: 0, w: 3.2, l: 8.4, y0: 0, y1: 2.9 }], 1.8),
   crusher: grown([{ u: 0, v: 0, w: 8, l: 8, y0: 0, y1: 9 }], 2),
   rubble: grown([post(0, 0, 2, 1.5)], 3),
+  // Bedrock through the grass on the quarry island's hills: the two tall slabs
+  // in the middle are what a car hits; the low stones round them it rides over.
+  outcrop: [post(0, 0, 4.5, 4.2)],
   // Sablet Wharf's container port (#410), at real size. A block is a row of
   // forty-foot containers stacked two to four high (`VARIANT_SOLIDS`); a
   // ship-to-shore crane is solid at its legs, which stand either side of the

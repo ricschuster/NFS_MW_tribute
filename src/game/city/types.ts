@@ -495,6 +495,7 @@ export type SetPieceKind =
   | 'cabin'
   | 'crusher'
   | 'rubble'
+  | 'outcrop'
   | 'container-block'
   | 'sts-crane'
   | 'warehouse'

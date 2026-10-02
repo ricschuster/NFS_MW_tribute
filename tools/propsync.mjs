@@ -65,7 +65,7 @@ if (props.length === 0 && !Array.isArray(doc.roads)) {
 const KINDS = [
   'gate', 'stack', 'plane-belly', 'plane-nose', 'fuselage', 'fuselage-hung', 'helicopter',
   'silo', 'water-tower', 'crane', 'mast', 'bunker', 'blast-wall', 'shed', 'cone', 'tree', 'jump', 'billboard',
-  'stockpile', 'conveyor', 'haul-truck', 'excavator', 'cabin', 'crusher', 'rubble',
+  'stockpile', 'conveyor', 'haul-truck', 'excavator', 'cabin', 'crusher', 'rubble', 'outcrop',
   'container-block', 'sts-crane', 'warehouse', 'straddle-carrier', 'reach-stacker',
   'rampart', 'bastion', 'fort-gate', 'signal-tower', 'cannon', 'keep', 'palas', 'chapel', 'wall-tower', 'ruin-house', 'masonry', 'well',
   'picnic-table', 'bench', 'telescope',
