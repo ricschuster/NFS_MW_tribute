@@ -59,6 +59,8 @@ const ROUTE_WORDS: Record<string, string[]> = {
   'Works Circuit': ['Furnace', 'Gantry', 'Siding', 'Foundry', 'Smokestack', 'Ironworks'],
   'Ashford Coast Sprint': ['Coastline', 'Cliffside', 'Saltmarsh', 'Shingle', 'Seaview', 'Point'],
   'Estates Circuit': ['Manor', 'Villa', 'Gatehouse', 'Orchard', 'Paddock', 'Ridge'],
+  'Harbour Sprint': ['Harbour', 'Quayside', 'Waterfront', 'Pier', 'Seawall', 'Dockside'],
+  'Old Town Circuit': ['Old Town', 'Cobblestone', 'Skyline', 'Clocktower', 'Flatiron', 'Lamplight'],
 };
 const DRIVE_WORDS = ['Run', 'Line', 'Rush', 'Circle', 'Dash', 'Call', 'Break', 'Shift'];
 

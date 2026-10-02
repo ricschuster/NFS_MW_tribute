@@ -515,6 +515,55 @@ const LATER_ROUTES: PlacedRoute[] = [
       [-2200, 1000],
     ],
   },
+  // Harbour Sprint (#268): downtown's first event, the owner's pick - along
+  // the bank boulevard into the old core. In from the west on the shore
+  // boulevard (n104), the bay on the right the whole way, round onto r57 at
+  // the junction under the towers and down the old core's high street
+  // between the terraces, to finish in the heart of it.
+  {
+    name: 'Harbour Sprint',
+    kind: 'sprint',
+    difficulty: 0.2,
+    via: [
+      [653, -3011],
+      [367, -2894],
+      [161, -2738],
+      [-88, -2620],
+      [-340, -2532],
+      [-731, -2469],
+      [-903, -2450],
+      [-1103, -2450],
+    ],
+  },
+  // Old Town Circuit (#268): its second, a lap of the old core's crooked
+  // streets between the terraces. West down r57, a dog-leg south round the
+  // streets below it to the flatiron and back up, on west to where r57 bends
+  // for the shore, north to the street along the water and east along it,
+  // and down the short street that comes out at r57's start. It starts on
+  // r57 itself rather than at the junction under the towers, because r57 is
+  // not joined to that junction yet (#484).
+  {
+    name: 'Old Town Circuit',
+    kind: 'circuit',
+    difficulty: 0.2,
+    via: [
+      [-734, -2464],
+      [-866, -2450],
+      [-877, -2379],
+      [-889, -2286],
+      [-937, -2319],
+      [-979, -2376],
+      [-1029, -2352],
+      [-1062, -2387],
+      [-1031, -2450],
+      [-1164, -2465],
+      [-1138, -2535],
+      [-1098, -2522],
+      [-946, -2498],
+      [-833, -2534],
+      [-731, -2539],
+    ],
+  },
 ];
 
 /**
