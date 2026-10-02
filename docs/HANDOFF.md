@@ -43,6 +43,17 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     passed on main after #547: ramps, grades, pace, plan, build, pwa, and
     `endings` shows no stalemates. The water field is what is left of a
     build's cost, and only rasterising it would cut that, which is not exact.
+  - **Instrument sweep on main (7ff678b)**, written up for the owner at
+    https://claude.ai/artifact/5a4NMFyynMeUxx8pWnBrsu: `trafficview` 0.99
+    civilians a second on screen and 47% of seconds with none (reference
+    0.60 / 60%; downtown 1.71); `patrol` 5 pursuits in 20 minutes, the first
+    at 0:13, four for speeding (the reference game starts none in free roam);
+    `mapfit` median sampled route 63% of top on a careful line (target ~60%,
+    70% at #363), 98 of 160 routes meet it (128 then), 12 distinct target
+    routes; `drivers` tiers in order (30/32/37/40%), no route below the
+    floor, all 16/17 - the Halloway Drop's haul trucks; `pace` passes.
+    Owner's calls it raises: traffic density downtown, free-roam pursuit
+    triggers (#177), the haul trucks.
   - **Still the owner's to answer:** the railway round the loop (#514, Q1-Q3);
     #484's moved road ends.
   - **Editors:** Road Editor store v73 = main; District Plan
