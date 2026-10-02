@@ -44,6 +44,31 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     crashes: a reference-driver fix PR, or a report); `level-crossing`
     (rail crossings drawn as level crossings, a PR on #514). Check
     `gh pr list` and those branches first.
+  - **What two of the agents found before the session ended:**
+    - `marrow-once-over`: the audit only, with no draft (an empty WIP
+      commit). Marrow Field is the sparsest area on the map: 0.69 things per
+      hectare against 4-13 in the later areas, 37% of its land over 60 m
+      from anything, clustered (Clark-Evans 0.46), and only 20% squared to
+      the roads. The empty part is the eastern rise and the strips beside the
+      runway. Don't add billboards there: Marrow's props load first, so new
+      ones shift every later area's saved billboard ids. Owner questions:
+      how dense should a disused airfield be (the target was Industrial's
+      3-4 per hectare), and should the eastern rise be filled or left as
+      countryside?
+    - `sprint-traffic` (WIP 0c7f2e1, no PR): traffic costs the sprints
+      2.5-3x because the reference driver never overtakes. It sits behind
+      one civilian doing 77 km/h on a four-lane road while the oncoming half
+      is clear 79-100% of the time. The WIP lets the perfect driver pass
+      (Ashford Coast Sprint 224 s to 102 s, Harbour Sprint 81 s to 48 s), but
+      the lower tiers weave at low speed and gain nothing, and the advanced
+      driver no longer finishes the Marrow Field Run. Left to do: bound that
+      weave, settle `carAheadLimit`'s reach, remove the debug switches, and
+      replace the placeholder "#537" tag in the commit and comments. Also
+      found: the driver brakes for corners and cars as if braking were about
+      9 g, while `BRAKE_RATE` is about a sixth of that (worth its own issue).
+      The live traffic reads 1.00 cars on screen a second against the
+      reference game's 0.60; `TRAFFIC_IN_CITY` was set when it read 0.58,
+      before the drawn roads grew. Whether to retune it is the owner's call.
   - **Races, after the map:** fix the reference driver first. It brakes for a
     corner, then speeds up again once past the corner's vertex while still
     turning, and sweeps wide into the corner buildings (the Old Town
