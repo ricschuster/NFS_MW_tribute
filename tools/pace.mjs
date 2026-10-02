@@ -29,13 +29,16 @@
 // Usage:
 //   npm run pace
 import { createServer } from 'vite';
+import { worldFactory } from './freshworld.mjs';
 
 const server = await createServer({
   appType: 'custom',
   server: { middlewareMode: true },
   logLevel: 'error',
 });
-const { CityWorld, roadHeightAt } = await server.ssrLoadModule('/src/game/cityworld.ts');
+const { roadHeightAt } = await server.ssrLoadModule('/src/game/cityworld.ts');
+// Every run on an empty save, in the starter car (#533).
+const { freshWorld } = await worldFactory(server);
 const K = await server.ssrLoadModule('/src/game/constants.ts');
 
 const NONE = { left: false, right: false, up: false, down: false, confirm: false, nitro: false };
@@ -134,7 +137,7 @@ function loopStraight(world, placed) {
  * catch. Traffic and police are off, so nothing gets in the way.
  */
 function topSpeed({ damage = 0, shredded = false, nitro = false }, endless = true) {
-  const world = new CityWorld(undefined, { traffic: false, police: false });
+  const world = freshWorld({ traffic: false, police: false });
   const placed = placeOnLongestStraight(world);
   world.damage = damage;
   let best = 0;
@@ -214,7 +217,7 @@ if (wrecked.mine < slowest) {
 {
   // Reported, not asserted: how fast a clean car gets on the longest real
   // straight the map has, before it runs out (#14, #363).
-  const probe = new CityWorld(undefined, { traffic: false, police: false });
+  const probe = freshWorld({ traffic: false, police: false });
   const placed = placeOnLongestStraight(probe);
   const metres = placed ? Math.round(placed.road.length / K.UNITS_PER_METRE) : 0;
   console.log(`on the map: the longest clean straight is ${metres} m, and a clean car reaches`);
