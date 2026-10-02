@@ -2002,9 +2002,31 @@ export const PATROL_PACE = 0.85;
  * over the limit - the game is arcade and the limits are not - so the
  * multiplier is high on purpose. What it has to separate is *getting somewhere*
  * from *showing off in front of a patrol car*.
+ *
+ * Fewer free-roam pursuits (owner's call, 2 October): the reference game
+ * starts next to none in free roam, and speeding stays a trigger. It was 2.4,
+ * and `npm run patrol` read 5 pursuits in twenty minutes, 4 of them speeding.
+ * Making `SPEEDING_TIME` mean what it says (below) made that 9, 8 speeding:
+ * the old clock reset every time it filled out of sight, which by luck kept
+ * most of it from ever landing on a moment a patrol was looking. At 3 the
+ * default route reads 2 (1 damage at 00:13, 1 speeding at 03:07), and
+ * Midtown Crescents, Harbour Sprint, Works Circuit and Old Town Circuit start
+ * none for speeding, against 2, 1, 3 and 4 at 2.4. 2.7 still gave the default
+ * route 3 for speeding.
+ *
+ * The lever is this rather than the time because the time is what decides
+ * whether a deliberate pass works. Flat out (320 km/h) past a patrol on a
+ * 60 km/h street is over five times the limit, but a car that fast is in a
+ * unit's `SEEN_RANGE` for under two seconds from the moment it draws level,
+ * so a `SPEEDING_TIME` of 4, which also gave 2, would have let anybody blast
+ * straight past one.
  */
-export const SPEEDING_OVER = 2.4;
-/** Seconds over the limit, in view, before they take an interest. */
+export const SPEEDING_OVER = 3;
+/**
+ * Seconds over the limit, *in view*, before they take an interest. The clock
+ * only runs while a unit can see the car (`CityPolice.watching`) and restarts
+ * when none can.
+ */
 export const SPEEDING_TIME = 1.5;
 /** Seconds out of sight before the pursuit drops into a search. */
 export const LOSE_CONTACT_TIME = 4;
