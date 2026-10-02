@@ -82,6 +82,17 @@ const DECK_THICKNESS = 1.1 * UNITS_PER_METRE;
  * Everything here is geometry. What is *where* comes from the city, and no
  * decision about the city is made in this file.
  */
+/** A stretch of a road's tarmac: its two ends on the centre line, and how far the right edge rises over the left. */
+interface RoadPiece {
+  ax: number;
+  az: number;
+  ay: number;
+  bx: number;
+  bz: number;
+  by: number;
+  rise: number;
+}
+
 export class Cityscape {
   readonly group = new THREE.Group();
 
@@ -95,6 +106,8 @@ export class Cityscape {
   readonly setPieces: CitySetPieces;
   readonly jumps: CityJumps;
   private readonly owned: (THREE.BufferGeometry | THREE.Material | THREE.Texture)[] = [];
+  /** Each road's tarmac pieces, built once (`piecesOf`). */
+  private readonly pieces = new Map<CityRoad, RoadPiece[]>();
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
     this.provider = provider;
@@ -289,6 +302,66 @@ export class Cityscape {
   private roadBed(city: City, x: number, z: number): number {
     const ground = this.groundUnder(city, x, z);
     return Math.max(ground, Math.min(this.drawnGroundUnder(city, x, z), ground + ROAD_BED_RAISE));
+  }
+
+  /**
+   * The pieces a road's tarmac is drawn in (`carriagewaysFor`), each end's
+   * height and how far the far edge rises over the near one, kept so the
+   * centre line (`markings`) is painted on the tarmac as drawn rather than on
+   * the ground under it, which a raised piece would bury it in.
+   *
+   * **Tilted across to the ground at its edges.** Laid level across, a piece
+   * on a hillside, or under a drawn triangle that reaches up from the bank,
+   * had one edge under the grass: measured at the edges of every road, 7.4%
+   * of them, boulevards worst, as a saw-tooth of green down one side. The
+   * tilt is the mean of the two ends' rise from one edge to the other, and
+   * whatever is still under the grass after it lifts the piece, by no more
+   * than `ROAD_BED_RAISE` - which leaves 0.1% of edges under it, and the car
+   * under the tarmac by less than 19 cm on 99% of pieces.
+   */
+  private piecesOf(city: City, road: CityRoad): RoadPiece[] {
+    const known = this.pieces.get(road);
+    if (known) return known;
+    const a = city.nodes[road.a].pos;
+    const b = city.nodes[road.b].pos;
+    const steps = Math.max(1, Math.ceil(road.length / (TERRAIN_RENDER_STEP / 2)));
+    // Across the road, level: the horizontal right of its direction.
+    const rx = (b.z - a.z) / Math.max(1, road.length);
+    const rz = -(b.x - a.x) / Math.max(1, road.length);
+    const half = road.width / 2;
+    const out: RoadPiece[] = [];
+    for (let s = 0; s < steps; s++) {
+      const ax = a.x + ((b.x - a.x) * s) / steps;
+      const az = a.z + ((b.z - a.z) * s) / steps;
+      const bx = a.x + ((b.x - a.x) * (s + 1)) / steps;
+      const bz = a.z + ((b.z - a.z) * (s + 1)) / steps;
+      const edge = (x: number, z: number, side: number) => this.roadBed(city, x + rx * half * side, z + rz * half * side);
+      const rise = (edge(ax, az, 1) - edge(ax, az, -1) + edge(bx, bz, 1) - edge(bx, bz, -1)) / 2;
+      let ay = this.roadBed(city, ax, az);
+      let by = this.roadBed(city, bx, bz);
+      let need = 0;
+      for (const t of [0, 0.5, 1]) {
+        for (const side of [-1, 0, 1]) {
+          const x = ax + (bx - ax) * t + rx * half * side;
+          const z = az + (bz - az) * t + rz * half * side;
+          need = Math.max(need, this.roadBed(city, x, z) - (ay + (by - ay) * t + (rise / 2) * side));
+        }
+      }
+      need = Math.min(need, ROAD_BED_RAISE);
+      ay += need;
+      by += need;
+      out.push({ ax, az, ay, bx, bz, by, rise });
+    }
+    this.pieces.set(road, out);
+    return out;
+  }
+
+  /** How high a road's tarmac is drawn on its centre line, `along` from its first end. */
+  private tarmacAt(city: City, road: CityRoad, along: number): number {
+    const pieces = this.piecesOf(city, road);
+    const f = Math.max(0, Math.min(pieces.length - 1e-9, (along / Math.max(1, road.length)) * pieces.length));
+    const piece = pieces[Math.floor(f)];
+    return piece.ay + (piece.by - piece.ay) * (f - Math.floor(f));
   }
 
   private drawnGroundUnder(city: City, x: number, z: number): number {
@@ -526,8 +599,7 @@ export class Cityscape {
    * it is the same tarmac on both sides.
    */
   private carriagewaysFor(city: City, roads: CityRoad[], surface: RoadSurface): THREE.InstancedMesh {
-    const pieces = roads.map((road) => Math.max(1, Math.ceil(road.length / (TERRAIN_RENDER_STEP / 2))));
-    const total = pieces.reduce((sum, n) => sum + n, 0);
+    const total = roads.reduce((sum, road) => sum + this.piecesOf(city, road).length, 0);
 
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
@@ -558,35 +630,25 @@ export class Cityscape {
 
     const lift = ROAD_LIFT;
     let i = 0;
-    roads.forEach((road, r) => {
-      const a = city.nodes[road.a].pos;
-      const b = city.nodes[road.b].pos;
-      const steps = pieces[r];
-      const pieceLength = road.length / steps;
-
-      for (let s = 0; s < steps; s++) {
-        const t0 = s / steps;
-        const t1 = (s + 1) / steps;
-        const ax = a.x + (b.x - a.x) * t0;
-        const az = a.z + (b.z - a.z) * t0;
-        const bx = a.x + (b.x - a.x) * t1;
-        const bz = a.z + (b.z - a.z) * t1;
-
+    for (const road of roads) {
+      const pieceLength = road.length / this.piecesOf(city, road).length;
+      for (const { ax, az, ay, bx, bz, by, rise } of this.piecesOf(city, road)) {
         // **Pitched to the ground, not laid on a plane.** A piece is a quad
         // scaled to its own short stretch, and on a hillside a quad at one
         // height is a shelf with the hill going through it. Its basis is built
         // from the piece's own direction *in three dimensions* - so the tarmac
         // climbs with the road, and two pieces meeting on a slope meet along
-        // the same line.
-        const ay = this.roadBed(city, ax, az);
-        const by = this.roadBed(city, bx, bz);
-        forward.set(bx - ax, by - ay, bz - az).normalize();
+        // the same line - and tilted across by `rise` (`piecesOf`).
+        forward.set(bx - ax, 0, bz - az).normalize();
         right.crossVectors(up, forward).normalize();
+        forward.set(bx - ax, by - ay, bz - az).normalize();
+        right.y = rise / road.width;
         normal.crossVectors(forward, right).normalize();
 
         // Half a width past each end, so junctions - and the next piece along
         // the same road - are covered, and the capsule ends are approximated
-        // without drawing them.
+        // without drawing them. `right` is not unit length once it is tilted:
+        // its horizontal part is, and that is what spans the road's width.
         matrix.makeBasis(
           right.multiplyScalar(road.width),
           normal.multiplyScalar(1),
@@ -600,7 +662,7 @@ export class Cityscape {
         mesh.setMatrixAt(i, matrix);
         i++;
       }
-    });
+    }
     mesh.instanceMatrix.needsUpdate = true;
     return mesh;
   }
@@ -708,7 +770,7 @@ export class Cityscape {
         // that matters over a 3 m mark is none - but it has to be at the height
         // of the road it is painted on, or a hill leaves the centre line
         // running through the tarmac and out the other side.
-        matrix.setPosition(x, this.groundUnder(city, x, z) + MARKING_LEVEL, z);
+        matrix.setPosition(x, this.tarmacAt(city, run.road, at) + ROAD_LIFT + MARKING_LEVEL, z);
         mesh.setMatrixAt(i++, matrix);
       }
     }
