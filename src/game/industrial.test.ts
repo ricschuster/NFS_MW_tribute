@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { UNITS_PER_METRE } from './constants';
 import { CityWorld } from './cityworld';
 import { PLAN_DISTRICTS, inArea } from './city/plan';
-import { surfaceAt } from './city/grid';
+import { distanceToSegment, surfaceAt } from './city/grid';
 
 const M = UNITS_PER_METRE;
 const world = new CityWorld(undefined, { traffic: false, police: false });
@@ -63,4 +63,37 @@ describe("Industrial's railway (#489, #514)", () => {
     }
   });
 
+  // A crossing is where a line and a street share a node, and only that:
+  // what the renderer cuts the ballast round has to be a real meeting.
+  it('makes a crossing only where a line and a street meet', () => {
+    for (const crossing of city.crossings) {
+      const here = city.nodes[crossing.node].roads;
+      expect(crossing.rails.length).toBeGreaterThan(0);
+      expect(crossing.streets.length).toBeGreaterThan(0);
+      for (const id of crossing.rails) {
+        expect(city.roads[id].surface).toBe('rail');
+        expect(here).toContain(id);
+      }
+      for (const id of crossing.streets) {
+        expect(city.roads[id].surface).not.toBe('rail');
+        expect(here).toContain(id);
+      }
+    }
+  });
+
+  // Its warning posts stand off the kerb: a post in the carriageway is a
+  // post a car drives into crossing the line.
+  it('stands the warning posts off the street', () => {
+    for (const crossing of city.crossings) {
+      expect(crossing.posts.length).toBe(4);
+      for (const post of crossing.posts) {
+        for (const id of crossing.streets) {
+          const road = city.roads[id];
+          const a = city.nodes[road.a].pos;
+          const b = city.nodes[road.b].pos;
+          expect(distanceToSegment(post.at.x, post.at.z, a.x, a.z, b.x, b.z)).toBeGreaterThan(road.width / 2);
+        }
+      }
+    }
+  });
 });
