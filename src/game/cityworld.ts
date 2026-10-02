@@ -1646,9 +1646,12 @@ export class CityWorld {
    * street is not. Only on a road at all: open ground caps you at a quarter of
    * top speed anyway, and cutting across a car park is not a traffic offence.
    *
-   * The clock is what keeps it from firing on a blip. It restarts either way,
-   * so a car held over the limit past a patrol gets looked at about once a
-   * second and a half rather than once a pursuit.
+   * The clock is what keeps it from firing on a blip, and it only runs while a
+   * unit has the car in view: `SPEEDING_TIME` is seconds of speeding *seen*,
+   * not seconds of speeding with a glance at the end. It used to run out of
+   * sight too, so a patrol that caught a frame of you as it filled started a
+   * pursuit. Out of view it restarts, like slowing down or leaving the road:
+   * what they take an interest in is a car they watched do it.
    */
   private speeding(dt: number): void {
     if (!this.onRoad) {
@@ -1656,6 +1659,10 @@ export class CityWorld {
       return;
     }
     if (Math.abs(this.speed) < this.onRoad.speed * SPEEDING_OVER) {
+      this.overLimit = 0;
+      return;
+    }
+    if (!this.police.watching(this)) {
       this.overLimit = 0;
       return;
     }

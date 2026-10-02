@@ -1128,6 +1128,21 @@ export class CityPolice {
     if (heat > 0) this.provoke(heat);
   }
 
+  /**
+   * Would doing something now be seen? The clear-street half of `witness`,
+   * asked ahead of time so a provocation that takes a while - speeding is held
+   * for `SPEEDING_TIME` - can be timed only while somebody is watching it. A
+   * clock that ran out of sight and checked line of sight only as it filled
+   * started a pursuit off a glimpse at the right moment.
+   *
+   * Cheap on purpose: the cooldown and the state go first, and `watchedBy`
+   * rejects on distance before it ever casts a line of sight.
+   */
+  watching(player: Chased): boolean {
+    if (this.state !== 'clear' || this.cooldown > 0) return false;
+    return this.watchedBy(player);
+  }
+
   /** Is any unit at all, patrol included, looking at this? */
   private watchedBy(player: Chased): boolean {
     for (const cop of this.cops) {
