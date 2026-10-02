@@ -18,7 +18,9 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     the cruise terminal stand over water.
   - **Open: #530**, the pavements (`city/pavements.ts`, `City.pavements`,
     drawn with the drives). `onApron` now counts drives and pavements as
-    paved. Junction corners are still grass.
+    paved. Junction corners are paved since `downtown-corners` (`corners`
+    in `city/pavements.ts`), which also paved the boulevard whose short
+    segments used to trim every strip away.
   - **Next: the events**, on the pushed branch `downtown-events` (no PR), on
     top of #530: the Harbour Sprint (n104 then r57 into the old core) and
     the Old Town Circuit (r57, the old-core streets, n102, n99), with
