@@ -69,6 +69,15 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       The live traffic reads 1.00 cars on screen a second against the
       reference game's 0.60; `TRAFFIC_IN_CITY` was set when it read 0.58,
       before the drawn roads grew. Whether to retune it is the owner's call.
+    - `level-crossing` (WIP 776aa53, no PR): Industrial's 10 crossings get
+      a ballast bed cut at the kerbs and eased down to road level, rails
+      through concrete panels, and warning posts (city data,
+      `City.crossings`, in `city/levelcrossings.ts`), plus a tie-break in
+      `surfaceAt` so the street wins over rail at equal height. Typecheck
+      only. Left to do: re-take the after shots (`cityshot -- --view at --at
+      2377,-2000,-90`; the last shot showed no rails because of a
+      metres/units bug, now fixed but not yet seen), then test, citylap and
+      the PR.
   - **Races, after the map:** fix the reference driver first. It brakes for a
     corner, then speeds up again once past the corner's vertex while still
     turning, and sweeps wide into the corner buildings (the Old Town
