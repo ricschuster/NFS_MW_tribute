@@ -210,6 +210,9 @@ furniture.tree = city.setPieces.filter((p) => p.kind === 'tree' && inBox(p.at)).
 
 const out = {
   seed: `0x${(CITY_SEED >>> 0).toString(16)}`,
+  // When this page was built: a save older than it is a save of an earlier
+  // draft, and the editor opens on this one instead (`propeditor.html`).
+  exportedAt: new Date().toISOString(),
   place: field.name,
   box,
   centre: [r1(centre.x), r1(centre.z)],

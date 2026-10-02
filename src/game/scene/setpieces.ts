@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
+import { AIRCRAFT_GROWN, HAUL_TRUCK_GROWN, UNITS_PER_METRE } from '../constants';
 import type { SetPiece, SetPieceKind } from '../city/types';
 import { CHAPEL_GROWN, ESTATE_FOOTING, HOUSE_GROWN, PALAS_GROWN, WAREHOUSE_FOOTING } from '../city/setpieces';
 
@@ -890,11 +890,12 @@ const grown = (model: (variant?: string) => Part[], k: number) => (variant?: str
   model(variant).map((part) => ({ ...part, geometry: part.geometry.scale(k, k, k) }));
 
 const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
-  'plane-belly': cargoPlane,
-  'plane-nose': noseBuried,
-  fuselage,
-  'fuselage-hung': hungFuselage,
-  helicopter,
+  // Life size on the Cargo Plane Jump, which is cleared over it (`CARGO_PLANE`).
+  'plane-belly': (variant?: string) => (variant === 'jump' ? cargoPlane() : grown(cargoPlane, AIRCRAFT_GROWN)(variant)),
+  'plane-nose': grown(noseBuried, AIRCRAFT_GROWN),
+  fuselage: grown(fuselage, AIRCRAFT_GROWN),
+  'fuselage-hung': grown(hungFuselage, AIRCRAFT_GROWN),
+  helicopter: grown(helicopter, AIRCRAFT_GROWN),
   silo,
   'water-tower': waterTower,
   crane,

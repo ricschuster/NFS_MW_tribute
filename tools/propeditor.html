@@ -289,11 +289,11 @@
     // Faces along its heading, so a board placed at a jump's heading faces
     // the car coming off the lip. Smashed from within `BILLBOARD_HIT`.
     { id: 'billboard', group: 'Collectibles', name: 'Billboard', w: 11, l: 0.6, shape: 'board', color: '#ffd54f', road: 'ok' },
-    { id: 'plane-belly', group: 'Planes', name: 'Cargo plane, on its belly', w: 32, l: 30, shape: 'plane', color: '#d6dcdf', flat: true },
-    { id: 'plane-nose', group: 'Planes', name: 'Plane, nose-buried', w: 28, l: 16, shape: 'planeNose', color: '#d6dcdf' },
-    { id: 'fuselage', group: 'Planes', name: 'Fuselage wreck', w: 4, l: 18, shape: 'fuselage', color: '#d6dcdf', flat: true },
-    { id: 'fuselage-hung', group: 'Planes', name: 'Hanging fuselage', w: 8, l: 22, shape: 'hung', color: '#d6dcdf' },
-    { id: 'helicopter', group: 'Planes', name: 'Helicopter', w: 14, l: 16, shape: 'heli', color: '#d6dcdf', flat: true },
+    { id: 'plane-belly', group: 'Planes', name: 'Cargo plane, on its belly', w: 57.6, l: 54, shape: 'plane', color: '#d6dcdf', flat: true },
+    { id: 'plane-nose', group: 'Planes', name: 'Plane, nose-buried', w: 50.4, l: 28.8, shape: 'planeNose', color: '#d6dcdf' },
+    { id: 'fuselage', group: 'Planes', name: 'Fuselage wreck', w: 7.2, l: 32.4, shape: 'fuselage', color: '#d6dcdf', flat: true },
+    { id: 'fuselage-hung', group: 'Planes', name: 'Hanging fuselage', w: 14.4, l: 39.6, shape: 'hung', color: '#d6dcdf' },
+    { id: 'helicopter', group: 'Planes', name: 'Helicopter', w: 25.2, l: 28.8, shape: 'heli', color: '#d6dcdf', flat: true },
     { id: 'silo', group: 'Structures', name: 'Silo or tank', w: 8, l: 8, shape: 'circle', color: '#c9925c', flat: true },
     { id: 'water-tower', group: 'Structures', name: 'Water tower', w: 10, l: 10, shape: 'tower', color: '#c9925c', flat: true },
     { id: 'crane', group: 'Structures', name: 'Crane', w: 6, l: 6, shape: 'crane', color: '#c9925c', flat: true, jib: 30 },
@@ -1726,6 +1726,14 @@
       const snap = await db.doc(DOC).get();
       const doc = snap && snap.exists ? snap.data() : null;
       if (!doc || !Array.isArray(doc.props) || doc.seed !== DATA.seed) return;
+      // A save from before this page was exported is a save of an earlier
+      // draft: what was in it is already in the props file the page was built
+      // from, synced, or it was set aside on purpose. Opening it would hide
+      // the draft the page was republished to show.
+      if (DATA.exportedAt && doc.savedAt && doc.savedAt < DATA.exportedAt) {
+        toast('Showing the new draft · your last save is older than it');
+        return;
+      }
       const hadEdits = props.length > 0;
       if (hadEdits) remember();
       props = doc.props.map((p) => ({ ...p }));

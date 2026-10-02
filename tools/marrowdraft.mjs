@@ -36,7 +36,7 @@ const FILE = 'docs/props-edited.json';
 
 const server = await createServer({ appType: 'custom', server: { middlewareMode: true, hmr: false }, logLevel: 'error' });
 const { CityWorld } = await server.ssrLoadModule('/src/game/cityworld.ts');
-const { CITY_SEED, UNITS_PER_METRE: M } = await server.ssrLoadModule('/src/game/constants.ts');
+const { AIRCRAFT_GROWN, CITY_SEED, UNITS_PER_METRE: M } = await server.ssrLoadModule('/src/game/constants.ts');
 const { inWater } = await server.ssrLoadModule('/src/game/city/grid.ts');
 const { groundAt } = await server.ssrLoadModule('/src/game/city/terrain.ts');
 const { PLAN_PLACES, PLAN_RUNWAY, inArea } = await server.ssrLoadModule('/src/game/city/plan.ts');
@@ -88,8 +88,14 @@ const keep = [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) 
 const buildings = city.buildings
   .map((b) => ({ minX: b.footprint.minX / M, maxX: b.footprint.maxX / M, minZ: b.footprint.minZ / M, maxZ: b.footprint.maxZ / M }))
   .filter((b) => inBox({ x: (b.minX + b.maxX) / 2, z: (b.minZ + b.maxZ) / 2 }));
+// Less this tool's own last draft, which the city was built with: a re-run
+// would otherwise keep clear of the jumps it is replacing.
+const ownJumps = (old.props ?? []).filter((p) => mine(p.id) && p.kind === 'jump');
 const jumps = [
-  ...city.jumps.map((j) => ({ x: j.at.x / M, z: j.at.z / M, dx: Math.sin(j.angle), dz: Math.cos(j.angle) })).filter(inBox),
+  ...city.jumps
+    .map((j) => ({ x: j.at.x / M, z: j.at.z / M, dx: Math.sin(j.angle), dz: Math.cos(j.angle) }))
+    .filter(inBox)
+    .filter((j) => !ownJumps.some((p) => Math.hypot(p.x - j.x, p.z - j.z) < 1)),
 ];
 
 /** Back from a road's edge: a car that runs a corner wide on dirt goes further than a pavement. */
@@ -118,13 +124,15 @@ const inJump = (p) =>
 
 // ---- Footprints ----------------------------------------------------------------
 
+/** How much bigger than life the aircraft are drawn (`AIRCRAFT_GROWN`). */
+const A = AIRCRAFT_GROWN;
 /** The editor's sizes (`tools/propeditor.html`), across (`w`) and along (`l`) a piece's heading. */
 const SIZE = {
   stockpile: [44, 44], conveyor: [3.2, 84], 'haul-truck': [16, 25], excavator: [9.5, 20], cabin: [5.8, 15.5],
   crusher: [16, 16], rubble: [16, 16], silo: [8, 8], 'water-tower': [10, 10], crane: [6, 6], mast: [4, 4],
   bunker: [12, 8], 'blast-wall': [6, 1.2], shed: [9, 14], cone: [0.6, 0.6], tree: [6, 6], stack: [3, 2],
-  'tank:small': [14, 14], 'tank:large': [28, 28], 'warehouse:small': [30, 60], gate: [10, 1.2], jump: [8, 12], billboard: [11, 0.6],
-  'plane-belly': [32, 30], 'plane-nose': [28, 16], fuselage: [4, 18], 'fuselage-hung': [8, 22], helicopter: [14, 16], outcrop: [13, 10],
+  'tank:small': [14, 14], 'tank:large': [28, 28], 'warehouse:small': [30, 60], warehouse: [50, 130], gate: [10, 1.2], jump: [8, 12], billboard: [11, 0.6],
+  'plane-belly': [32 * A, 30 * A], 'plane-belly:jump': [32, 30], 'plane-nose': [28 * A, 16 * A], fuselage: [4 * A, 18 * A], 'fuselage-hung': [8 * A, 22 * A], helicopter: [14 * A, 16 * A], outcrop: [13, 10],
 };
 const ROUND = new Set(['stockpile', 'rubble', 'silo', 'water-tower', 'tree', 'cone', 'tank']);
 const sizeOf = (p) => SIZE[`${p.kind}:${p.variant}`] ?? SIZE[p.kind] ?? [4, 4];
@@ -133,7 +141,7 @@ const sizeOf = (p) => SIZE[`${p.kind}:${p.variant}`] ?? SIZE[p.kind] ?? [4, 4];
  * the editor holds to flat ground (it reads heights to the whole metre, so a
  * fall of 1.1 m shows there as 2); a heap or a tree can sit on a gentle slope.
  */
-const FALL = { stockpile: 4, rubble: 3, tree: 3, cone: 2, tank: 2, conveyor: 1.8, 'haul-truck': 1.5, excavator: 1.5, 'blast-wall': 1.5 };
+const FALL = { warehouse: 3, stockpile: 4, rubble: 3, tree: 3, cone: 2, tank: 2, conveyor: 1.8, 'haul-truck': 1.5, excavator: 1.5, 'blast-wall': 1.5 };
 const fallOf = (kind) => FALL[kind] ?? 1;
 
 /** A piece's footprint as four corners, grown by `pad`. */
@@ -223,26 +231,35 @@ const piece = (kind, u, v, face = 'along', variant) => ({ kind, u, v, face, ...(
 
 /** Where an airframe came down: the nose in the ground, the fuselage that broke off it, the debris. */
 const crashSite = (r) => [
-  piece('plane-nose', 18, 0, r(1) < 0.5 ? 'along' : 'back'),
-  piece('fuselage', 44, r(2) < 0.5 ? -14 : 14, Math.PI / 6 + r(3)),
-  piece('rubble', 30, r(4) < 0.5 ? 26 : -26),
-  piece('rubble', 60, r(5) < 0.5 ? -6 : 8),
+  piece('plane-nose', 18 * A, 0, r(1) < 0.5 ? 'along' : 'back'),
+  piece('fuselage', 44 * A, r(2) < 0.5 ? -14 * A : 14 * A, Math.PI / 6 + r(3)),
+  piece('rubble', 30 * A, r(4) < 0.5 ? 26 * A : -26 * A),
+  piece('rubble', 60 * A, r(5) < 0.5 ? -6 : 8),
   piece('cone', 1, -10), piece('cone', 1, 0), piece('cone', 1, 10),
 ];
 /** The boneyard: stored airframes in a row, square to the taxiway, waiting for a buyer that never came. */
 const boneyard = (r) => {
   const n = 3 + Math.floor(r(1) * 3);
   const out = [];
-  for (let i = 0; i < n; i++) out.push(piece('fuselage', 14, (i - (n - 1) / 2) * 11, 'out'));
-  if (r(2) < 0.5) out.push(piece('plane-nose', 36, ((n - 1) / 2) * 11 + 8, 'in'));
+  for (let i = 0; i < n; i++) out.push(piece('fuselage', 14 * A, (i - (n - 1) / 2) * 11 * A, 'out'));
+  if (r(2) < 0.5) out.push(piece('plane-nose', 36 * A, ((n - 1) / 2) * 11 * A + 8 * A, 'in'));
   return out;
 };
-/** A hangar gone to ruin: the shell, its fallen bits, a shed beside it. */
+/**
+ * A hangar gone to ruin: the shell, big enough for what stood in it (the
+ * large warehouse, 50 m by 130 m, its long side to the taxiway), its fallen bits,
+ * a shed beside it, and now and then the airframe it never got back.
+ */
 const hangar = (r) => [
+  piece('warehouse', 35, 0, 'along'),
+  piece('rubble', 80, r(1) < 0.5 ? -40 : 40),
+  piece('shed', 6, r(2) < 0.5 ? 78 : -78, 'out'),
+  ...(r(3) < 0.5 ? [piece('fuselage', 94, r(4) < 0.5 ? 14 : -14, 'out')] : []),
+];
+/** A smaller hangar, for a light aircraft: the small shell, door end to the taxiway, and its heap. */
+const smallHangar = (r) => [
   piece('warehouse', 40, 0, 'out', 'small'),
   piece('rubble', 14, r(1) < 0.5 ? -30 : 30),
-  piece('shed', 30, r(2) < 0.5 ? 30 : -30, 'out'),
-  ...(r(3) < 0.5 ? [piece('fuselage', 8, r(4) < 0.5 ? 6 : -6, 'along')] : []),
 ];
 /** The fuel farm: tanks in a bund of blast walls, and the mast that lit it. */
 const fuelFarm = (r) => {
@@ -257,10 +274,10 @@ const fuelFarm = (r) => {
 };
 /** A helipad and what is left of the last thing to land on it. */
 const helipad = (r) => {
-  const out = [piece('helicopter', 16, 0, r(1) * 6.28)];
+  const out = [piece('helicopter', 16 * A, 0, r(1) * 6.28)];
   for (let k = 0; k < 8; k++) {
     const t = (k / 8) * Math.PI * 2;
-    out.push(piece('cone', 16 + Math.cos(t) * 13, Math.sin(t) * 13));
+    out.push(piece('cone', 16 * A + Math.cos(t) * 13 * A, Math.sin(t) * 13 * A));
   }
   return out;
 };
@@ -278,9 +295,39 @@ const bunkers = (r) => [
   ...(r(1) < 0.6 ? [piece('bunker', 10, 22, 'out')] : []),
 ];
 /** Something to drive under: a cargo plane down on its belly, wing held up off the ground. */
-const underWing = () => [piece('plane-belly', 22, 0, 'along')];
+const underWing = () => [piece('plane-belly', 22 * A, 0, 'along')];
 /** And a pair of hanging fuselages, one behind the other, to drive under both. */
-const underPair = () => [piece('fuselage-hung', 14, -18, 'along'), piece('fuselage-hung', 14, 18, 'along')];
+const underPair = () => [piece('fuselage-hung', 14 * A, -18 * A, 'along'), piece('fuselage-hung', 14 * A, 18 * A, 'along')];
+/**
+ * The clutter between the runways (the owner, 2026-10-02: "more clutter in
+ * the middle"): small things a dead airfield is strewn with, laid out over
+ * the open field rather than beside a road.
+ */
+/** Wreckage scattered where something broke up: a hull section, heaps, cones. */
+const debris = (r) => [
+  piece('fuselage', 10, 0, r(1) * 6.28),
+  piece('rubble', 26 + r(2) * 10, r(3) < 0.5 ? -18 : 18),
+  ...(r(4) < 0.6 ? [piece('rubble', 8, r(5) < 0.5 ? 26 : -26)] : []),
+  piece('cone', 2, -6), piece('cone', 2, 6),
+];
+/** An airframe parked and forgotten, its nose section lying beside it. */
+const stored = (r) => [
+  piece('fuselage', 16, 0, 'along'),
+  piece(r(1) < 0.5 ? 'plane-nose' : 'fuselage', 16 + 22 * A, r(2) < 0.5 ? -10 : 10, r(3) < 0.5 ? 'out' : 'in'),
+];
+/** A stand of ground kit left where the last shift parked it. */
+const kitStand = (r) => [
+  piece('cabin', 6, 0, 'out'),
+  piece('tank', 20, r(1) < 0.5 ? -12 : 12, 'along', 'small'),
+  ...(r(2) < 0.5 ? [piece('mast', 4, 12)] : [piece('silo', 4, 14)]),
+];
+/** A length of blast wall standing on its own, the building it shielded gone. */
+const wallRun = (r) => {
+  const n = 3 + Math.floor(r(1) * 4);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(piece('blast-wall', 2, (i - (n - 1) / 2) * 6.5, 'out'));
+  return out;
+};
 
 // ---- Placing one ---------------------------------------------------------------
 
@@ -373,12 +420,12 @@ for (const s of stretches) {
 // 3. The derelict field, square to the runway, either way round.
 const ORIENT = [[RD, RN], [{ x: -RD.x, z: -RD.z }, { x: -RN.x, z: -RN.z }], [RN, { x: -RD.x, z: -RD.z }], [{ x: -RN.x, z: -RN.z }, RD]];
 const MENU = [
-  [cap(underWing, 2), 1], [cap(underPair, 2), 2],
-  [cap(crashSite, 5), 3], [cap(boneyard, 4), 4], [cap(hangar, 3), 5], [cap(fuelFarm, 2), 6],
-  [cap(helipad, 2), 7], [cap(groundKit, 6), 8], [cap(bunkers, 4), 9],
+  [cap(underWing, 3), 1], [cap(underPair, 3), 2],
+  [cap(crashSite, 7), 3], [cap(boneyard, 5), 4], [cap(hangar, 5), 5], [cap(smallHangar, 4), 18], [cap(fuelFarm, 3), 6],
+  [cap(helipad, 2), 7], [cap(groundKit, 8), 8], [cap(bunkers, 6), 9],
 ];
 /** How often a spot is left as open field, so the apron stays open. */
-const OPEN = 0.35;
+const OPEN = 0.25;
 for (const a of anchors(18, 61)) {
   if (cellRandom(a.x, a.z, 62) < OPEN) continue;
   // The strips beside the taxiways, not the middle of nowhere.
@@ -392,6 +439,60 @@ for (const a of anchors(18, 61)) {
       done = tryUnit(make, seed, a, dir, out);
     }
     if (done) break;
+  }
+}
+
+// 4. The middle: the open field between the runway and the taxiways, the
+// whole of it, the small units first-come and the big ones where they fit.
+const MIDDLE = [
+  [cap(debris, 40), 10], [cap(stored, 16), 11], [cap(kitStand, 16), 12], [cap(wallRun, 14), 13],
+  [cap(crashSite, 10), 14], [cap(boneyard, 7), 15], [cap(underWing, 4), 16], [cap(hangar, 5), 17],
+];
+for (const a of anchors(30, 71)) {
+  if (cellRandom(a.x, a.z, 72) < 0.3) continue;
+  if (roadEdge(a).d < ROAD_CLEAR + 10) continue;
+  const menu = pick(a.x, a.z, 73, MIDDLE);
+  let done = false;
+  for (const [make, seed] of menu) {
+    for (let t = 0; t < 4 && !done; t++) {
+      const [dir, out] = ORIENT[(t + Math.floor(a.k * 4)) % 4];
+      done = tryUnit(make, seed, a, dir, out);
+    }
+    if (done) break;
+  }
+}
+
+// 5. Between the lanes (the owner, 2026-10-02): the grass strips between the
+// runway and the taxiway on either side of it, walked down their middles.
+// Small units only - a strip is 65 m across, less a road's clearance at each
+// edge - and the race lines and jump runs kept clear as everywhere else.
+const LANES = [
+  [cap(debris, 60), 20], [cap(stored, 24), 21], [cap(wallRun, 24), 22], [cap(kitStand, 24), 23],
+];
+for (const side of [-1, 1]) {
+  for (let t = 40; t < RL - 40; t += 38) {
+    const centre = { x: ra.x + RD.x * t, z: ra.z + RD.z * t };
+    // The strip's middle: halfway out from the runway's edge to the taxiway's.
+    let edge = 12;
+    while (edge < 160 && roadEdge({ x: centre.x + RN.x * side * edge, z: centre.z + RN.z * side * edge }).d < 0) edge += 2;
+    let far = edge + 4;
+    while (far < 200 && roadEdge({ x: centre.x + RN.x * side * far, z: centre.z + RN.z * side * far }).d > 0) far += 2;
+    if (far >= 200) continue;
+    const mid = (edge + far) / 2;
+    const a = { x: Math.round(centre.x + RN.x * side * mid), z: Math.round(centre.z + RN.z * side * mid) };
+    if (cellRandom(a.x, a.z, 82) < 0.15) continue;
+    const menu = pick(a.x, a.z, 83, LANES);
+    let done = false;
+    for (const [make, seed] of menu) {
+      // Square to the runway, the front edge facing either taxiway.
+      for (let k = 0; k < 2 && !done; k++) {
+        const dir = k === 0 ? RD : { x: -RD.x, z: -RD.z };
+        const out = { x: RN.x * side * (k === 0 ? 1 : -1), z: RN.z * side * (k === 0 ? 1 : -1) };
+        const front = { x: a.x - out.x * 12, z: a.z - out.z * 12 };
+        done = tryUnit(make, seed, front, dir, out, 6);
+      }
+      if (done) break;
+    }
   }
 }
 
