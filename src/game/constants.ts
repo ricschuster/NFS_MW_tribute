@@ -653,8 +653,10 @@ export const POND_LIFT = m(0.12);
  * The quarry's haul trucks (#330): a few of them, running the haul road and the
  * rim road all day, much bigger and slower than a car.
  *
- * `TRUCK_RADIUS` is the size of the thing you hit: about 16 m by 25 m drawn, so
- * a circle of 10 m round its middle. `TRUCK_GAP` is how far behind another truck
+ * The model is drawn `HAUL_TRUCK_GROWN` times its real size, about 9.6 m by
+ * 15 m, and that box is what a car hits (`TRUCK_HALF_WIDTH`,
+ * `TRUCK_HALF_LENGTH`); `TRUCK_RADIUS`, the circle round its middle, keeps
+ * trucks apart. `TRUCK_GAP` is how far behind another truck
  * one holds, wide enough that a truck's own length is not the gap. A hit is a
  * wall rather than a shunt: it costs the car `TRUCK_HURT` times what the same
  * closing speed costs against a civilian car, and nearly all its speed
@@ -662,7 +664,31 @@ export const POND_LIFT = m(0.12);
  */
 export const TRUCK_COUNT = 4;
 export const TRUCK_SPEED = kmh(30);
-export const TRUCK_RADIUS = m(10);
+/**
+ * How much bigger than its 6.4 m by 10 m model a haul truck is drawn, parked or
+ * driving. It was 2.5 (#323), 16 m by 25 m, which made the machinery read as
+ * machinery and made an oncoming truck on the Halloway Drop's 20 m spiral
+ * impossible to pass on a bend: every driver tier wrecked on one. 1.5 is about
+ * the width of a real one, and two of them meet on the haul road in their own
+ * lanes (`TRUCK_LANE`) with nothing between them.
+ */
+export const HAUL_TRUCK_GROWN = 1.5;
+export const TRUCK_RADIUS = m(6);
+/**
+ * The truck's body, half its width and half its length: what a car actually
+ * hits. `TRUCK_RADIUS` is the circle round it, which is right for keeping
+ * trucks apart and wrong for a car going past one, which it would hit a metre
+ * and more out from the truck's side.
+ */
+export const TRUCK_HALF_WIDTH = m(3.2 * HAUL_TRUCK_GROWN);
+export const TRUCK_HALF_LENGTH = m(5 * HAUL_TRUCK_GROWN);
+/**
+ * How far off the centre line a truck drives. Not `TRAFFIC_LANE`: a car's lane
+ * is 3 m out, and two trucks meeting there overlapped by four metres. Half a
+ * truck and a little more puts two side by side on the 20 m haul road with
+ * 0.4 m between them and both still on the gravel.
+ */
+export const TRUCK_LANE = m(5);
 export const TRUCK_GAP = m(70);
 export const TRUCK_HURT = 3;
 export const TRUCK_SPEED_KEPT = 0.15;

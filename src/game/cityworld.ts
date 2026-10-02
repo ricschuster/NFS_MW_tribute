@@ -8,7 +8,8 @@ import {
   REVERSE_SPEED_FRAC,
   DIRT_GRIP_FRAC,
   DIRT_SPEED_FRAC,
-  TRUCK_RADIUS,
+  TRUCK_HALF_LENGTH,
+  TRUCK_HALF_WIDTH,
   TRUCK_HURT,
   TRUCK_SPEED_KEPT,
   GRAVEL_GRIP_FRAC,
@@ -2019,7 +2020,13 @@ export class CityWorld {
     // and nearly all its speed.
     for (const truck of this.trucks.cars) {
       if (Math.abs(this.y - truck.y) > CAR_RADIUS * 2) continue;
-      if (Math.hypot(this.x - truck.x, this.z - truck.z) >= CAR_RADIUS + TRUCK_RADIUS) continue;
+      // Against its body as drawn, turned the way it is driving, not the circle
+      // round it: a car tucked in at the edge of a quarry road goes past.
+      const dx = this.x - truck.x;
+      const dz = this.z - truck.z;
+      const along = dx * Math.sin(truck.heading) + dz * Math.cos(truck.heading);
+      const across = dx * Math.cos(truck.heading) - dz * Math.sin(truck.heading);
+      if (Math.abs(across) >= TRUCK_HALF_WIDTH + CAR_RADIUS || Math.abs(along) >= TRUCK_HALF_LENGTH + CAR_RADIUS) continue;
       // Priced on the speed you hit it at, so before the speed is taken.
       this.takeDamage(impactDamage(this, truck, this.maxSpeed, null) * TRUCK_HURT);
       this.speed *= TRUCK_SPEED_KEPT;

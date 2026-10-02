@@ -1,7 +1,7 @@
 import {
-  TRAFFIC_LANE,
   TRUCK_COUNT,
   TRUCK_GAP,
+  TRUCK_LANE,
   TRUCK_SPEED,
 } from './constants';
 import { haulRoad } from './city/haulroad';
@@ -51,7 +51,7 @@ export class QuarryTrucks {
         heading: 0,
         damage: 0,
       };
-      placeOnRoad(city, car, TRAFFIC_LANE);
+      placeOnRoad(city, car, TRUCK_LANE);
       this.cars.push(car);
     }
   }
@@ -78,11 +78,16 @@ export class QuarryTrucks {
   update(dt: number): void {
     for (const car of this.cars) {
       this.follow(car, dt);
-      advanceAlong(this.city, car, dt, (c, node) => this.nextRoad(c, node), TRAFFIC_LANE);
+      advanceAlong(this.city, car, dt, (c, node) => this.nextRoad(c, node), TRUCK_LANE);
     }
   }
 
-  /** Hold back from a truck in front, and ease up to pace otherwise. */
+  /**
+   * Hold back from a truck in front going the same way, and ease up to pace
+   * otherwise. Only the same way: on the spiral a truck coming down is in front
+   * of one going up for a whole turn, each is in front of the other, and both
+   * used to stop there for good with a car queued behind them.
+   */
   private follow(car: GraphCar, dt: number): void {
     const heading = directionOf(this.city, car);
     let ahead = false;
@@ -92,6 +97,8 @@ export class QuarryTrucks {
       const dz = other.z - car.z;
       const distance = Math.hypot(dx, dz);
       if (distance > TRUCK_GAP || distance < 1) continue;
+      const theirs = directionOf(this.city, other);
+      if (theirs.x * heading.x + theirs.z * heading.z <= 0) continue;
       if ((dx / distance) * heading.x + (dz / distance) * heading.z > 0.5) ahead = true;
     }
     const target = ahead ? 0 : TRUCK_SPEED;

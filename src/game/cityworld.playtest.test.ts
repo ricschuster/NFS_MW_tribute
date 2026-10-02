@@ -4141,8 +4141,15 @@ describe('quarry haul trucks (#330)', () => {
     const world = new CityWorld(undefined, { police: false });
     expect(world.trucks.cars.length).toBe(TRUCK_COUNT);
     const start = world.trucks.cars.map((c) => ({ x: c.x, z: c.z }));
+    // How long each has stood still. Two meeting on the spiral used to each
+    // see the other in front and both wait there for good.
+    const stood = world.trucks.cars.map(() => 0);
     for (let second = 0; second < 240; second++) {
       drive(world, 1, NONE);
+      world.trucks.cars.forEach((truck, i) => {
+        stood[i] = truck.speed < (1000 * M) / 3600 ? stood[i] + 1 : 0;
+        expect(stood[i]).toBeLessThan(30);
+      });
       for (const truck of world.trucks.cars) {
         expect(truck.road.surface).toBe('gravel');
         expect(world.city.roads).toContain(truck.road);

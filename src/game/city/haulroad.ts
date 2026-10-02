@@ -1,4 +1,4 @@
-import { QUARRY_DIRT_REACH, TRUCK_RADIUS } from '../constants';
+import { QUARRY_DIRT_REACH, TRUCK_HALF_LENGTH } from '../constants';
 import { PLAN_PLACES } from './plan';
 import type { City, CityRoad } from './types';
 
@@ -53,7 +53,7 @@ export function haulRoad(city: City): CityRoad[] {
   // Turn round short of the rim rather than in its junction, which the
   // Halloway Rim runs through: a truck swinging round there sat on the racing
   // line. Two truck lengths of the top of the haul road are left empty.
-  let spare = TRUCK_RADIUS * 3;
+  let spare = TRUCK_HALF_LENGTH * 4;
   while (chain.length > 1 && spare > 0) spare -= chain.pop()!.length;
   return chain;
 }
