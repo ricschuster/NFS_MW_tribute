@@ -18,7 +18,10 @@ export const SHOTS = [
   { name: 'crowns', ref: 'none', place: 'skyline', hour: 13, lift: 25, back: 150 },
   // Houses, villas and manor (#583): the densest cluster of them, from the road.
   { name: 'suburb', ref: 'none', place: 'suburb', hour: 13, lift: 2, back: 40 },
-  { name: 'silos', ref: 'none', place: 'industrial', hour: 13, lift: 2 },
+  { name: 'silos', ref: 'none', place: 'silos', hour: 13, lift: 3, back: 35 },
+  // The kit at dusk, where lit windows meet sills and mullions that the kit does not light.
+  { name: 'terracedusk', ref: 'none', place: 'terrace', hour: 19.5, lift: 2 },
+  { name: 'civic', ref: 'none', place: 'civic', hour: 13, lift: 4, back: 130 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -67,6 +70,30 @@ export function place({ place, hour, bearing, lift, back }) {
     const homes = city.setPieces.filter((p) => ['house', 'villa', 'manor'].includes(p.kind));
     const near = (p) => homes.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
     approach(homes.sort((a, b) => near(b) - near(a))[0].at, back ?? 40);
+  } else if (place === 'silos' || place === 'docks' || place === 'civic') {
+    // Stand on the nearest road and face the thing itself, not along the road.
+    const kinds = { silos: ['silo'], docks: ['warehouse'], civic: ['city-hall', 'cathedral', 'gallery'] }[place];
+    const things = city.setPieces.filter((p) => kinds.includes(p.kind) && (place !== 'docks' || p.variant !== 'small'));
+    const near = (p) => things.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;
+    const target = things.sort((a, b) => near(b) - near(a))[0];
+    // Stand off from it on the side that shows most: a warehouse's loading
+    // doors face its local +x, which `angle` turns; anything else from the
+    // side nearest a road. The car may stand off-road: the shot only needs it there.
+    let dx, dz;
+    if (place === 'docks') {
+      dx = Math.cos(target.angle);
+      dz = Math.sin(target.angle);
+    } else {
+      approach(target.at, 0);
+      dx = x - target.at.x;
+      dz = z - target.at.z;
+      const len = Math.hypot(dx, dz) || 1;
+      dx /= len;
+      dz /= len;
+    }
+    x = target.at.x + dx * (back ?? 45) * M;
+    z = target.at.z + dz * (back ?? 45) * M;
+    heading = Math.atan2(-dx, -dz);
   } else if (place === 'industrial') {
     // The silo with the most silos around it, then the road nearest them.
     const silos = city.setPieces.filter((p) => p.kind === 'silo');

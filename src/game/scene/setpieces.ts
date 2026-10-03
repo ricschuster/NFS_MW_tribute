@@ -1640,7 +1640,7 @@ const GROWTH: Partial<Record<SetPieceKind, number>> = {
   townhouse: HOUSE_GROWN, loft: HOUSE_GROWN, midrise: HOUSE_GROWN, shop: HOUSE_GROWN,
   flat: HOUSE_GROWN, apartment: HOUSE_GROWN, house: HOUSE_GROWN, villa: HOUSE_GROWN, manor: HOUSE_GROWN,
 };
-const RAW: Record<keyof typeof KIT_KINDS, (variant?: string) => Part[]> = { townhouse, loft, midrise, shop, flat, apartment, tower, warehouse, house, villa, manor, silo };
+const RAW: Record<keyof typeof KIT_KINDS, (variant?: string) => Part[]> = { townhouse, loft, midrise, shop, flat, apartment, tower, warehouse, house, villa, manor, silo, 'lookout-tower': lookoutTower, 'twist-tower': twistTower, 'chateau-hotel': chateauHotel, stadium, library, gallery, cathedral, 'city-hall': cityHall, 'cruise-terminal': cruiseTerminal, 'geodesic-dome': geodesicDome };
 function kitted(kind: keyof typeof KIT_KINDS, variant?: string): Part[] {
   const parts = RAW[kind](variant);
   const all = [...parts, ...kitFor(kind, variant, parts)];

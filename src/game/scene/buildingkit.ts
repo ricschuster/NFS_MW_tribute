@@ -36,9 +36,10 @@ const PLINTH = '#8a857a';
 const SHUTTER = '#3f5a4a';
 const CHIMNEY = '#7a4c3a';
 const TANK_BAND = '#7f8888';
+const STONE_FINIAL = '#8b857a';
 
 /** The kinds the kit dresses, and what each gets. */
-export type KitStyle = 'street' | 'curtain' | 'shed' | 'house' | 'tank';
+export type KitStyle = 'street' | 'curtain' | 'shed' | 'house' | 'tank' | 'landmark';
 export const KIT_KINDS = {
   townhouse: 'street',
   loft: 'street',
@@ -52,6 +53,16 @@ export const KIT_KINDS = {
   villa: 'house',
   manor: 'house',
   silo: 'tank',
+  'lookout-tower': 'landmark',
+  'twist-tower': 'landmark',
+  'chateau-hotel': 'landmark',
+  stadium: 'landmark',
+  library: 'landmark',
+  gallery: 'landmark',
+  cathedral: 'landmark',
+  'city-hall': 'landmark',
+  'cruise-terminal': 'landmark',
+  'geodesic-dome': 'landmark',
 } as const satisfies Record<string, KitStyle>;
 
 type Box = { cx: number; cy: number; cz: number; sx: number; sy: number; sz: number };
@@ -211,8 +222,7 @@ function curtain(parts: Part[], seed: number): Part[] {
  * bays between piers on each face, and a cap. It stays within half a metre
  * of the wall, because the sim collides with the tower's footprint.
  */
-function podium(body: Box): Part[] {
-  const height = 6;
+function podium(body: Box, height = 6): Part[] {
   const added: Part[] = [];
   const hx = body.sx / 2;
   const hz = body.sz / 2;
@@ -309,12 +319,114 @@ function shed(parts: Part[]): Part[] {
     if (part.colour !== BAY_DOORS) continue;
     const door = boxOf(part.geometry);
     added.push(slab(CANOPY, 1.2, 0.2, door.sz + 1.4, door.cx + 0.6, door.cy + door.sy / 2 + 0.5, door.cz));
+    // The dock: a rubber bumper either side of the door, a yellow frame over it, a leveller plate flush with the ground.
+    for (const dz of [-1, 1]) added.push(slab('#1b1d1e', 0.3, 0.9, 0.5, door.cx + 0.15, 1.2, door.cz + dz * (door.sz / 2 + 0.3)));
+    added.push(slab(SAFETY, 0.12, 0.35, door.sz + 0.8, door.cx + 0.06, door.cy + door.sy / 2 + 0.2, door.cz));
+    added.push(slab('#5d6468', 2.4, 0.06, door.sz - 0.6, door.cx + 1.2, 0.03, door.cz));
     for (const dz of [-1, 1]) {
       added.push({ geometry: new THREE.CylinderGeometry(0.18, 0.18, 1.1, 8).translate(door.cx + 1.3, 0.55, door.cz + dz * (door.sz / 2 + 0.5)), colour: SAFETY });
     }
   }
+  // Roof vents along the ridge, and a rain-water pipe at each end of the long walls.
+  for (let z = -body.sz / 2 + 10; z < body.sz / 2 - 5; z += 14) added.push(slab('#8c9195', 1.6, 0.9, 1.6, 0, top + 2.4, z));
+  for (const sz of [-1, 1]) added.push({ geometry: new THREE.CylinderGeometry(0.12, 0.12, body.sy, 6).translate(body.sx / 2 + 0.14, body.cy, sz * (body.sz / 2 - 0.3)), colour: '#7f888d' });
   return added;
 }
+
+/** The landmarks, one by one: each is a single building, so its dressing is written against its own model. */
+const LANDMARKS: Record<string, (parts: Part[]) => Part[]> = {
+  'chateau-hotel': (parts) => {
+    const out: Part[] = [];
+    for (const y of [12, 21, 30]) out.push(slab(KIT_TRIM, 45, 0.4, 33, 0, y, 0));
+    for (const x of [-1, 1]) for (const z of [-1, 1]) {
+      for (let y = 1; y < 40; y += 2.4) out.push(slab(KIT_TRIM, y % 4.8 < 2.4 ? 1.4 : 1, 1.2, 1.4, x * 21.9, y + 0.6, z * 15.9));
+    }
+    for (const part of parts) if (part.colour === WINDOW) out.push(...dress(boxOf(part.geometry)));
+    return out;
+  },
+  'city-hall': (parts) => {
+    const out: Part[] = [];
+    for (const y of [7.5, 12.5, 17.5]) out.push(slab(KIT_TRIM, 77, 0.4, 35, 0, y, 0));
+    for (const part of parts) if (part.colour === WINDOW) {
+      const win = boxOf(part.geometry);
+      if (win.sy < 4) out.push(...dress(win));
+    }
+    return out;
+  },
+  gallery: () => {
+    const out: Part[] = [slab(PLINTH, 73, 1, 43, 0, 0.5, -3), slab(KIT_TRIM, 73, 0.9, 43, 0, 18.5, -3)];
+    // Pilasters along the long walls, and across the back.
+    for (let x = -32; x <= 32; x += 8) {
+      out.push(slab(KIT_TRIM, 1.2, 17, 0.5, x, 9.5, -24.2));
+      for (const s of [-1, 1]) out.push(slab(KIT_TRIM, 0.5, 17, 1.2, s * 36.2, 9.5, -3 + x * 0.5));
+    }
+    return out;
+  },
+  cathedral: () => {
+    const out: Part[] = [];
+    // A pinnacle on every buttress, a mullion down every nave window, a finial on the spire.
+    for (const z of [-26, -17, -8, 1, 10]) for (const s of [-1, 1]) out.push(slab(STONE_FINIAL, 1.2, 2.6, 1.2, s * 11, 17.3, z));
+    for (const z of [-21.5, -12.5, -3.5, 5.5, 14.5]) for (const s of [-1, 1]) {
+      out.push(slab(MULLION, 0.1, 10, 0.12, s * 10.12, 11, z));
+      out.push(slab(MULLION, 0.1, 0.12, 2.4, s * 10.12, 12, z));
+    }
+    out.push({ geometry: new THREE.ConeGeometry(0.5, 4, 6).translate(0, 68, 26), colour: STONE_FINIAL });
+    return out;
+  },
+  library: () => {
+    const out: Part[] = [];
+    // A string course round the curve between each tier of arches.
+    for (const y of [6.2, 11.7, 17.2, 22.7, 28.2]) {
+      out.push({ geometry: new THREE.CylinderGeometry(1, 1, 0.5, 40, 1, true, -Math.PI / 2, Math.PI).scale(40.45, 1, 30.45).translate(0, y, 0), colour: '#e6d8bf' });
+    }
+    return out;
+  },
+  stadium: () => {
+    const out: Part[] = [];
+    // Fins round the bowl, each turned to face along the ellipse's normal.
+    const [a, b] = [115, 95];
+    for (let k = 0; k < 64; k++) {
+      const t = (k / 64) * Math.PI * 2;
+      const face = Math.atan2(Math.cos(t) * a, Math.sin(t) * b);
+      out.push({ geometry: new THREE.BoxGeometry(0.7, 30, 0.5).rotateY(face).translate(Math.cos(t) * (a + 0.3), 15, Math.sin(t) * (b + 0.3)), colour: '#e6e6e0' });
+    }
+    out.push({ geometry: new THREE.CylinderGeometry(1, 1, 1.2, 64).scale(a + 0.5, 1, b + 0.5).translate(0, 0.6, 0), colour: PLINTH });
+    return out;
+  },
+  'cruise-terminal': () => {
+    const out: Part[] = [];
+    // Mullions down the band of glass, along both long sides.
+    for (let z = -98; z <= 98; z += 4) for (const s of [-1, 1]) out.push(slab(MULLION, 0.3, 5, 0.2, s * 28.15, 9, z));
+    for (let x = -26; x <= 26; x += 4) for (const s of [-1, 1]) out.push(slab(MULLION, 0.2, 5, 0.3, x, 9, s * 100.15));
+    return out;
+  },
+  'geodesic-dome': () => {
+    // Great circles over the facets, so the ball reads as a frame.
+    const ring = () => new THREE.TorusGeometry(22.15, 0.22, 6, 48).translate(0, 24, 0);
+    return [
+      { geometry: ring().rotateX(Math.PI / 2), colour: '#eef1f3' },
+      { geometry: new THREE.TorusGeometry(22.15, 0.22, 6, 48).rotateY(Math.PI / 2).translate(0, 24, 0), colour: '#eef1f3' },
+      { geometry: new THREE.TorusGeometry(22.15, 0.22, 6, 48).rotateY(Math.PI / 4).translate(0, 24, 0), colour: '#eef1f3' },
+      { geometry: new THREE.TorusGeometry(22.15, 0.22, 6, 48).rotateY(-Math.PI / 4).translate(0, 24, 0), colour: '#eef1f3' },
+    ];
+  },
+  'lookout-tower': () => {
+    const out: Part[] = [];
+    // Piers up the office block, and a canopy at its foot.
+    for (let u = -14; u <= 14; u += 4) {
+      for (const s of [-1, 1]) {
+        out.push(slab(KIT_TRIM, 0.5, 112, 0.35, u, 61, s * 16.2));
+        out.push(slab(KIT_TRIM, 0.35, 112, 0.5, s * 16.2, 61, u));
+      }
+    }
+    out.push(slab(CANOPY, 14, 0.4, 4, 0, 6, 18));
+    return out;
+  },
+  'twist-tower': () => {
+    // The stone podium gets the same treatment as a glass tower's: bays between piers, a cap.
+    return podium({ cx: 0, cy: 4, cz: 0, sx: 36, sy: 8, sz: 36 }, 8);
+  },
+};
 
 /**
  * The kit's additions for one model. Returns the new parts only; the caller
@@ -335,5 +447,7 @@ export function kitFor(kind: keyof typeof KIT_KINDS, variant: string | undefined
       return house(parts, kind as 'house' | 'villa' | 'manor');
     case 'tank':
       return tank(parts);
+    case 'landmark':
+      return LANDMARKS[kind]?.(parts) ?? [];
   }
 }

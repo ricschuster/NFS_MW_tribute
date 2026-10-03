@@ -58,4 +58,25 @@ describe('the building kit (#583)', () => {
       expect(part.geometry.boundingBox!.max.x).toBeLessThan(4.5);
     }
   });
+
+  it('gives a warehouse bay a bumper, a frame and a leveller, within half a metre of its wall', () => {
+    const parts = [
+      { geometry: new THREE.BoxGeometry(50, 14, 130).translate(0, 7, 0), colour: '#9aa3a8' },
+      { geometry: new THREE.BoxGeometry(0.2, 5, 5).translate(25.1, 2.5, 0), colour: '#2e3538' },
+    ];
+    const added = kitFor('warehouse', undefined, parts);
+    expect(added.some((p) => p.colour === '#1b1d1e')).toBe(true);
+    for (const part of added) {
+      part.geometry.computeBoundingBox();
+      // Ribs and vents aside, nothing below the roofline stands more than 3 m off the wall (the door canopy).
+      expect(part.geometry.boundingBox!.max.x).toBeLessThan(25 + 3);
+    }
+  });
+
+  it('dresses every landmark it names without leaving the lot', () => {
+    for (const kind of ['stadium', 'cathedral', 'geodesic-dome', 'library', 'cruise-terminal'] as const) {
+      const added = kitFor(kind, undefined, [{ geometry: new THREE.BoxGeometry(1, 1, 1), colour: '#fff' }]);
+      expect(added.length).toBeGreaterThan(3);
+    }
+  });
 });

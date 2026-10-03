@@ -23,8 +23,17 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     door surround and step, chimney caps, manor quoins), silo (seam rings,
     ladder, rail, hatch). Shots `suburb` (seen) and `silos` (aimed along the
     road, silos out of frame: unseen, only unit-tested).
-  - **Not done:** loading bays beyond the warehouse, the landmarks, `unit` test for shopfront parts, a dusk
-    look (lit windows are untouched by the kit).
+  - **Third pass:** loading docks (bumpers, yellow frame, leveller plate, roof
+    vents, downpipes), landmarks (`LANDMARKS` in `buildingkit.ts`: chateau,
+    city hall, gallery, cathedral, library, stadium, cruise terminal, dome,
+    lookout and twist towers; the flatiron already had its cornice). Shots
+    `silos` (rings seen), `civic`, `terracedusk` (kit reads at dusk; windows
+    are lit by the sim, untouched). Landmarks and docks are seen only in part:
+    `civic` shows the lookout tower's piers, not the cathedral or hall; a
+    `docks` shot never framed a warehouse door (the stand-off by `angle` did
+    not work), so it was dropped and the dock kit is unit-tested only.
+  - **Not done:** a framed still of each landmark and of a loading dock;
+    a unit test per landmark beyond a count.
   - After the merge: `git log origin/main..look-buildings` for stranded commits.
 - **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:
   #597-#603 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
