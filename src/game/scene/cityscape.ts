@@ -55,6 +55,8 @@ const BLOCK_FOOTING = 14 * UNITS_PER_METRE;
 /** Metres of aggregate per texture tile. */
 const ROAD_TILE = 6 * UNITS_PER_METRE;
 /** A photo tile covers less ground than the procedural one: 1K pixels over 3 m. */
+const TUNNEL_DECK = new THREE.Color(0.4, 0.4, 0.4);
+const DECK_OPEN = new THREE.Color(1, 1, 1);
 const PHOTO_ROAD_TILE = 3 * UNITS_PER_METRE;
 /**
  * Water sits a little *above* the ground rather than below it, which is
@@ -897,9 +899,13 @@ export class Cityscape {
       );
       matrix.compose(position, quaternion, scale);
       deck.setMatrixAt(i, matrix);
+      // Inside a tunnel the sun does not reach, but this material is lit as if
+      // it did; darken the deck so it sits with the lining (`tunnels.ts`).
+      deck.setColorAt(i, a.level === 'tunnel' && b.level === 'tunnel' ? TUNNEL_DECK : DECK_OPEN);
 
     });
     deck.instanceMatrix.needsUpdate = true;
+    if (deck.instanceColor) deck.instanceColor.needsUpdate = true;
 
     const pillarGeometry = new THREE.BoxGeometry(1, 1, 1);
     pillarGeometry.translate(0, -0.5, 0); // hang down from the deck
