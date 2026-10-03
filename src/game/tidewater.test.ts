@@ -146,7 +146,7 @@ describe("Tidewater Park's once-over (2026-10-02)", () => {
   });
 
   it('makes its picnic shelters breakable', () => {
-    const shelters = city.breakables.filter((b) => b.kind === 'picnic-shelter');
+    const shelters = city.breakables.filter((b) => b.kind === 'picnic-shelter' && inArea(park.poly, b.at));
     expect(shelters.length).toBe(TIDEWATER_PROPS.filter((p) => p.kind === 'picnic-shelter').length);
     for (const s of shelters) expect(inArea(park.poly, s.at)).toBe(true);
   });

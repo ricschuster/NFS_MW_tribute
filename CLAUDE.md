@@ -114,7 +114,7 @@ Authoring (an editor loop: export, edit in the browser, sync back):
   `housedraft` (houses, hedges, trees, downtown's buildings), `worksdraft`
   (Industrial and the railway), `quarrydraft`, `marrowdraft`, `marrowtracks`,
   `islanddraft`, `downtowndraft` (downtown's trees, furniture, plazas and lawns),
-  `tidewaterdraft` (Tidewater Park's once-over). Each replaces only its own ids on a re-run
+  `tidewaterdraft` (Tidewater Park's once-over), `highmoordraft` (Highmoor Park's). Each replaces only its own ids on a re-run
 
 ## Architecture (read before touching game code)
 

@@ -77,6 +77,8 @@ const KINDS = [
   'bus-shelter', 'bollard', 'planter', 'bin', 'fountain', 'statue', 'kiosk', 'dumpster', 'food-truck', 'cafe-tables', 'lawn',
   'playground', 'boathouse', 'jetty', 'rowing-boat', 'football-pitch', 'tennis-court', 'picnic-shelter', 'beach-hut',
   'lifeguard-tower', 'lighthouse', 'railing', 'path', 'plaza', 'beach',
+  'waymarker', 'field-gate', 'stone-wall', 'log', 'log-pile', 'boulder', 'ranger-hut', 'timber-lookout',
+  'tent', 'campfire', 'camper-van', 'radio-mast',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

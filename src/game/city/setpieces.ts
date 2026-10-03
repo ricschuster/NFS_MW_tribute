@@ -295,6 +295,39 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'lifeguard-tower': grown([{ u: 0, v: 0, w: 2.4, l: 2.4, y0: 0, y1: 4.6 }], HOUSE_GROWN),
   lighthouse: [{ u: 0, v: 0, r: 4.5, y0: 0, y1: 31 }, { u: 0, v: -9, w: 8, l: 9, y0: 0, y1: 5 }],
   railing: grown([{ u: 0, v: 0, w: 5, l: 0.15, y0: 0, y1: 1.1 }], 2),
+  // Highmoor Park's once-over (2026-10-03). Small things are grown like the
+  // park's benches, buildings and walls like its houses; the mast is sized in
+  // game metres. A gate stands open beside its path, never across it; a wall,
+  // a log and a boulder are solid to their height, so a wall along the
+  // meadow is a wall to a car and a log is something to go round. The fire
+  // ring is solid at its stones, not at the log seats round it. The lookout
+  // is solid at its legs and its cabin, which is over a car, so it can be
+  // driven under; the mast's compound is solid at its fence, which a car
+  // does not get through, and at the mast.
+  waymarker: grown([post(0, 0, 0.15, 1.4)], 2),
+  'field-gate': grown([{ u: 0, v: 0, w: 4.4, l: 0.3, y0: 0, y1: 1.3 }], 2),
+  'stone-wall': grown([{ u: 0, v: 0, w: 6.25, l: 0.7, y0: 0, y1: 1.1 }], HOUSE_GROWN),
+  log: grown([{ u: 0, v: 0, w: 0.5, l: 6, y0: 0, y1: 0.5 }], 2),
+  'log-pile': grown([{ u: 0, v: 0, w: 3, l: 2, y0: 0, y1: 1.2 }], 2),
+  boulder: grown([post(0, 0, 1.1, 1.5)], 2),
+  'ranger-hut': grown([{ u: 0, v: -0.5, w: 4.5, l: 6, y0: 0, y1: 3 }], HOUSE_GROWN),
+  'timber-lookout': grown(
+    [
+      ...[-2, 2].flatMap((u) => [-2, 2].map((v) => post(u, v, 0.2, 9))),
+      { u: 0, v: 0, w: 5, l: 5, y0: 9, y1: 12 },
+    ],
+    HOUSE_GROWN,
+  ),
+  tent: grown([{ u: 0, v: 0, w: 2.4, l: 3, y0: 0, y1: 1.5 }], 2),
+  campfire: grown([post(0, 0, 0.8, 0.35)], 2),
+  'camper-van': grown([{ u: 0, v: 0, w: 2.1, l: 5.5, y0: 0, y1: 2.7 }], 2),
+  'radio-mast': [
+    { u: 0, v: 8, w: 16, l: 0.2, y0: 0, y1: 2.4 },
+    { u: 0, v: -8, w: 16, l: 0.2, y0: 0, y1: 2.4 },
+    { u: 8, v: 0, w: 0.2, l: 16, y0: 0, y1: 2.4 },
+    { u: -8, v: 0, w: 0.2, l: 16, y0: 0, y1: 2.4 },
+    post(0, 2, 1.4, 46),
+  ],
 };
 
 /**
@@ -310,6 +343,7 @@ const VARIANT_SOLIDS: Record<string, Solid[]> = {
   'rampart:broken': [{ u: 0, v: 0, w: 3, l: 20, y0: 0, y1: 3.2 }],
   'ruin-house:small': grown([{ u: 0, v: 0, w: 8, l: 12, y0: 0, y1: 4.5 }], HOUSE_GROWN),
   'tank:small': [{ u: 0, v: 0, r: 7, y0: 0, y1: 10 }],
+  'boulder:large': grown([post(0, 0, 1.9, 2.4)], 2),
   ...Object.fromEntries(Object.entries(TOWER_HEIGHTS).map(([v, h]) => [`tower:${v}`, [{ u: 0, v: 0, w: TOWER.w, l: TOWER.l, y0: 0, y1: h }]])),
 };
 

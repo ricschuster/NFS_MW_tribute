@@ -616,6 +616,8 @@ export function generateCity(seed: number): City {
   const drives = estateDrives(ASHFORD_PROPS, roads, nodes);
   // And Tidewater Park's paths, promenade, plaza and beach (2026-10-02).
   if (parkPonds.length > 0) drives.push(...tidewaterGround(TIDEWATER_PROPS));
+  // And Highmoor Park's trails (2026-10-03), the same kind of ground.
+  if (PLAN_DISTRICTS.some((a) => a.name === 'Highmoor Park')) drives.push(...tidewaterGround(HIGHMOOR_PROPS));
   const city: City = {
     seed,
     bounds,
@@ -719,7 +721,7 @@ export function generateCity(seed: number): City {
     const first = airfieldProps(terrain, city.breakables.length, placed, afloat);
     const raced = city.routes.map((route) => route.points);
     const woods = [
-      ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced) : []),
+      ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced, drives) : []),
       // And Tidewater Park's trees (#461), on the same terms.
       ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced, drives),
       // And the quarry island's wild hills round the quarry (2026-10-02).

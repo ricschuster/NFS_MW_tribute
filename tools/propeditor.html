@@ -411,12 +411,30 @@
     { id: 'lifeguard-tower', group: 'Park', name: 'Lifeguard tower', w: 3.8, l: 7, shape: 'box', color: '#c94f3d' },
     { id: 'lighthouse', group: 'Park', name: 'Lighthouse', w: 9, l: 9, shape: 'circle', color: '#b8382e' },
     { id: 'railing', group: 'Park', name: 'Seafront railing', w: 10, l: 0.3, shape: 'box', color: '#2f6b7a', road: 'ok' },
-    { id: 'path', group: 'Park', name: 'Path or promenade', w: 30, l: 5, shape: 'box', color: '#b8b4a8', road: 'ok', water: 'ok',
-      variants: ['path', 'promenade'], sizes: { path: [30, 5], promenade: [30, 12] } },
+    { id: 'path', group: 'Park', name: 'Path, promenade or trail', w: 30, l: 5, shape: 'box', color: '#b8b4a8', road: 'ok', water: 'ok',
+      variants: ['path', 'promenade', 'trail'], sizes: { path: [30, 5], promenade: [30, 12], trail: [30, 4] } },
     { id: 'plaza', group: 'Park', name: 'Plaza', w: 45, l: 35, shape: 'box', color: '#a8a49a',
       variants: ['small', 'medium', 'large'], sizes: { small: [30, 30], medium: [45, 35], large: [60, 45] } },
     { id: 'beach', group: 'Park', name: 'Beach', w: 40, l: 45, shape: 'box', color: '#d6c69a', water: 'ok',
       variants: ['narrow', 'medium', 'wide'], sizes: { narrow: [40, 30], medium: [40, 45], wide: [40, 60] } },
+    // Highmoor Park's once-over (2026-10-03), at the size the game draws
+    // them. A field gate stands open beside its path, its stile at the +x
+    // end; a wall, a log and a fallen trunk run along their length; a tent's
+    // door, a hut's porch and a camper van's cab face the way it is turned.
+    // A trail is a path variant, gravel through the woods.
+    { id: 'waymarker', group: 'Hill', name: 'Waymarker', w: 0.6, l: 0.6, shape: 'circle', color: '#d9a62e', road: 'ok' },
+    { id: 'field-gate', group: 'Hill', name: 'Field gate + stile', w: 9.6, l: 1.2, shape: 'box', color: '#cfc8b8' },
+    { id: 'stone-wall', group: 'Hill', name: 'Dry-stone wall', w: 10, l: 1.1, shape: 'box', color: '#8e8a7e' },
+    { id: 'log', group: 'Hill', name: 'Fallen log', w: 1.1, l: 12, shape: 'box', color: '#5e4630' },
+    { id: 'log-pile', group: 'Hill', name: 'Log pile', w: 6, l: 4, shape: 'box', color: '#8a6440' },
+    { id: 'boulder', group: 'Hill', name: 'Boulder', w: 4.4, l: 4.4, shape: 'circle', color: '#8b8d88',
+      variants: ['small', 'large'], sizes: { small: [4.4, 4.4], large: [7.6, 7.6] } },
+    { id: 'ranger-hut', group: 'Hill', name: 'Ranger hut', w: 7.4, l: 10.4, shape: 'box', color: '#8a6440' },
+    { id: 'timber-lookout', group: 'Hill', name: 'Timber lookout', w: 8, l: 8, shape: 'box', color: '#3f5d4a' },
+    { id: 'tent', group: 'Hill', name: 'Tent', w: 5.2, l: 6.6, shape: 'box', color: '#d9772e', variants: ['orange', 'green', 'blue', 'red'] },
+    { id: 'campfire', group: 'Hill', name: 'Fire ring + seats', w: 8, l: 8, shape: 'circle', color: '#2a2522' },
+    { id: 'camper-van', group: 'Hill', name: 'Camper van', w: 4.2, l: 11, shape: 'box', color: '#e8dcc0', variants: ['cream', 'teal', 'orange', 'white'] },
+    { id: 'radio-mast', group: 'Hill', name: 'Radio mast (compound)', w: 16, l: 16, shape: 'box', color: '#c0392b' },
     { id: 'hedge', group: 'Suburb', name: 'Front hedge', w: 16, l: 1.2, shape: 'box', color: '#3f6a37' },
     // Sized to its trunk and the low part of its crown, not the canopy that
     // hangs over the verge: the canopy is over a car and blocks nothing.
