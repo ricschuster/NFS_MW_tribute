@@ -8,6 +8,7 @@ import {
   townhouse, loft, midrise, tower, lookoutTower, twistTower, chateauHotel, stadium,
   library, gallery, cathedral, cityHall, cruiseTerminal, geodesicDome, flatiron,
 } from './downtownmodels';
+import { KIT_KINDS, kitFor } from './buildingkit';
 import { triplanar } from './triplanar';
 import { wallFinish, type WallKind } from './materials';
 import { LEAF_KIND_BY_PIECE, disposeLeafTextures, isTrunk, leafGeometries, leafMaterial } from './leafcards';
@@ -1630,6 +1631,23 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'gas-holder': gasHolder,
 };
 
+/**
+ * A building with the kit's detail (`?look=buildings`, #583). The kit works in
+ * metres, so it dresses the model before `grown` scales it, and the sizes of
+ * a cornice or a sill grow with the building they belong to.
+ */
+const GROWTH: Partial<Record<SetPieceKind, number>> = {
+  townhouse: HOUSE_GROWN, loft: HOUSE_GROWN, midrise: HOUSE_GROWN, shop: HOUSE_GROWN,
+  flat: HOUSE_GROWN, apartment: HOUSE_GROWN,
+};
+const RAW: Record<keyof typeof KIT_KINDS, (variant?: string) => Part[]> = { townhouse, loft, midrise, shop, flat, apartment, tower, warehouse };
+function kitted(kind: keyof typeof KIT_KINDS, variant?: string): Part[] {
+  const parts = RAW[kind](variant);
+  const all = [...parts, ...kitFor(kind, variant, parts)];
+  const k = GROWTH[kind] ?? 1;
+  return k === 1 ? all : all.map((part) => ({ ...part, geometry: part.geometry.scale(k, k, k) }));
+}
+
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */
 export const haulTruckParts = (): Part[] => MODELS['haul-truck']();
 
@@ -1647,7 +1665,7 @@ export class CitySetPieces {
   readonly meshes: THREE.InstancedMesh[] = [];
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
-  constructor(pieces: readonly SetPiece[], options: { photo?: boolean; leaves?: boolean } = {}) {
+  constructor(pieces: readonly SetPiece[], options: { photo?: boolean; leaves?: boolean; kit?: boolean } = {}) {
     // By what it looks like, not just what it is: a stockpile's rock is a
     // variant, and one mesh has one colour per part.
     const byKind = new Map<string, SetPiece[]>();
@@ -1660,7 +1678,7 @@ export class CitySetPieces {
     const dummy = new THREE.Object3D();
     for (const [key, list] of byKind) {
       const kind = list[0].kind;
-      const parts = MODELS[kind](list[0].variant);
+      const parts = options.kit && kind in KIT_KINDS ? kitted(kind as keyof typeof KIT_KINDS, list[0].variant) : MODELS[kind](list[0].variant);
       // `?look=trees` (#582): the foliage of a tree is rebuilt from cut-out
       // cards (leafcards.ts); the trunk stays a flat-coloured part.
       const leafKind = options.leaves ? LEAF_KIND_BY_PIECE[key] : undefined;

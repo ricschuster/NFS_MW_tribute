@@ -11,6 +11,7 @@ export const SHOTS = [
   // Bearing is the sun's at that hour: the 17:00 and 19:00 keys are -0.4 and
   // -1.2 (daylight.ts), so 18:00 is -0.8. Keep the two in step.
   { name: 'sunhaze', ref: 'Screenshot_20261003_050141.png', place: 'sunhaze', hour: 18, bearing: -0.8 },
+  { name: 'terrace', ref: 'none', place: 'terrace', hour: 13 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -44,7 +45,13 @@ export function place({ place, hour, bearing }) {
     x = best.px - ((dx * sign) / len) * back * M;
     z = best.pz - ((dz * sign) / len) * back * M;
   };
-  if (place === 'industrial') {
+  if (place === 'terrace') {
+    // The building kit (#583): the densest run of street-wall buildings
+    // (shops, flats, townhouses, lofts), seen from the road in front of it.
+    const wall = city.setPieces.filter((p) => ['shop', 'flat', 'townhouse', 'loft', 'midrise', 'apartment'].includes(p.kind));
+    const near = (p) => wall.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
+    approach(wall.sort((a, b) => near(b) - near(a))[0].at, 45);
+  } else if (place === 'industrial') {
     // The silo with the most silos around it, then the road nearest them.
     const silos = city.setPieces.filter((p) => p.kind === 'silo');
     const near = (p) => silos.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;

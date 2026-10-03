@@ -287,7 +287,7 @@ export class CityView {
     this.skyDome = this.sky();
     this.scene.add(this.skyDome);
 
-    this.cityscape = new Cityscape(city, undefined, { photo: this.switches.has('materials'), leaves: this.switches.has('trees'), wires: this.switches.has('clutter') });
+    this.cityscape = new Cityscape(city, undefined, { photo: this.switches.has('materials'), leaves: this.switches.has('trees'), wires: this.switches.has('clutter'), kit: this.switches.has('buildings') });
     this.scene.add(this.cityscape.group);
 
     this.car.visible = false;

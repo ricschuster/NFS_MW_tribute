@@ -3,6 +3,15 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, late night): #583 building kit started, `?look=buildings`.**
+  `scene/buildingkit.ts` derives detail from a model's own parts, in metres,
+  before `grown` scales it: sills and lintels from the window boxes, mullions
+  on ribbon windows and glass towers, cornice, parapet and roof plant, ground
+  floor piers and door canopies; sheds get ribs, canopies and bollards. Kinds:
+  townhouse, loft, midrise, shop, flat, apartment, tower, warehouse (not
+  house, villa, manor or the landmarks). `lookshots.mjs` has a `terrace` shot.
+  First pass, judged on stills only; sills are faint and the roofline is not yet
+  seen from any shot. Not a default.
 - **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:
   #597-#603 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
   dust, photo asphalt as default). This branch adds autumn broadleaves and lamp
