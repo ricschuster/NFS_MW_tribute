@@ -18,7 +18,7 @@ import { CAR_PAINT } from './carshape';
 import { makeGradePass, setGradeHour } from './grade';
 import { DEFAULT_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
-import { makeCar, CarPool } from './cars';
+import { makeCar, CarPool, COP_BODY, trafficBody } from './cars';
 import { CityTrucks } from './trucks';
 import { RouteLines } from './routelines';
 import { carById, type CarBody } from '../cars';
@@ -832,7 +832,7 @@ export class CityView {
 
     this.trafficCars.begin();
     for (const car of world.traffic.cars) {
-      this.trafficCars.place(car.x, car.y, car.z, car.colour).rotation.y = car.heading;
+      this.trafficCars.place(car.x, car.y, car.z, car.colour, 1, 1, trafficBody(car)).rotation.y = car.heading;
     }
     this.trafficCars.end();
     this.haulTrucks.update(world.trucks.cars);
@@ -845,20 +845,20 @@ export class CityView {
     for (const cop of world.police.cops) {
       if (cop.role !== 'patrol') continue;
       const unit = COP_UNITS[cop.kind];
-      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
+      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale, 1, COP_BODY[cop.kind]).rotation.y = cop.heading;
       lit++;
     }
     for (const cop of world.police.cops) {
       if (cop.role === 'patrol') continue;
       const unit = COP_UNITS[cop.kind];
-      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale).rotation.y = cop.heading;
+      this.copCars.place(cop.x, cop.y, cop.z, unit.colour, unit.scale, 1, COP_BODY[cop.kind]).rotation.y = cop.heading;
     }
     // Parked cruisers come out of the same pool: they are cop cars, lightbars
     // and all, and a roadblock reads at distance because the lights do (#59).
     for (const block of world.police.roadblocks) {
       for (const car of block.cars) {
         const unit = COP_UNITS[car.kind];
-        this.copCars.place(car.x, car.y, car.z, unit.colour, unit.scale).rotation.y = car.heading;
+        this.copCars.place(car.x, car.y, car.z, unit.colour, unit.scale, 1, COP_BODY[car.kind]).rotation.y = car.heading;
       }
     }
     this.siren += dt;
@@ -867,7 +867,7 @@ export class CityView {
 
     this.wreckCars.begin();
     for (const wreck of world.wrecks) {
-      const car = this.wreckCars.place(wreck.x, wreck.y, wreck.z, wreck.colour, wreck.scale, 0.34);
+      const car = this.wreckCars.place(wreck.x, wreck.y, wreck.z, wreck.colour, wreck.scale, 0.34, wreck.scale >= 1.2 ? 'suv' : 'saloon');
       // Rolled onto its side rather than sitting level, so a wreck reads as a
       // wreck from the far end of the street.
       car.rotation.set(0, wreck.heading, wreck.roll);

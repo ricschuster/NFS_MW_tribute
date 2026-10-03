@@ -63,7 +63,7 @@ describe('the shape of a car', () => {
   });
 
   it('is solid: every shape has faces pointing out of it', () => {
-    for (const style of ['coupe', 'hatch', 'saloon', 'roadster', 'frame', 'wedge', 'suv', 'pickup'] as const) {
+    for (const style of ['coupe', 'hatch', 'saloon', 'roadster', 'frame', 'wedge', 'suv', 'pickup', 'fastback', 'muscle', 'gt', 'hyper', 'cobra'] as const) {
       const { body, glass } = carParts(WIDTH, ASPECT, style);
       for (const mesh of [body, glass]) {
         const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
@@ -76,6 +76,14 @@ describe('the shape of a car', () => {
         expect(nor.getY(top), style).toBeGreaterThan(0);
         expect(Number.isFinite(centre.x + centre.y + centre.z)).toBe(true);
       }
+    }
+  });
+
+  it('keeps every tyre under its own bodywork', () => {
+    // A low shape with a big wheel is a tyre standing out of the bonnet.
+    for (const style of ['coupe', 'hatch', 'saloon', 'roadster', 'cobra', 'wedge', 'suv', 'pickup', 'fastback', 'muscle', 'gt', 'hyper', 'cobra'] as const) {
+      const { wheels, floor, height } = carParts(WIDTH, ASPECT, style);
+      for (const wheel of wheels) expect(boxOf(wheel).max.y, style).toBeLessThan(floor + height * 0.8);
     }
   });
 

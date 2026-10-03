@@ -140,3 +140,17 @@ not their car (#71), so none of this moves a race.
 
 Generated from the figures above by a throwaway script; the numbers in
 `cars.ts` are its output, and a change to the rule is a change to all of them.
+
+## How each is drawn (#584)
+
+Thirteen body shapes in `scene/carshape.ts`, each a loft with a greenhouse
+(see the file's header), and every car takes the one that fits its class:
+**fastback** (Kestrel, Backfire, Monolith, Nightjar, Hatchling), **muscle**
+(Verso, Ridgeback, Brawler, Outrider, Fang), **gt** (Ardent, Aria, Upswing,
+Velvet, Harrier, Corona), **hyper** (Castling, Arcline, Obsidian, Apparition,
+Nightfall, Wideboy), **wedge** (Halcyon, Enduro), **cobra** (Emberline: a roadster with stripes), **roadster**, **frame**,
+**hatch**, **saloon**, **suv**, **pickup**. `coupe` is the plain base shape the
+others derive from and is what traffic is drawn with. Sourcing is procedural:
+nothing third-party ships, so there is no `CREDITS.md` row. `npm run looksheet
+-- --shot body-<shape>` draws one car of each; `carclose`, `carrear` and
+`carsun` are the three standing views.

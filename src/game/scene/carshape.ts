@@ -154,12 +154,14 @@ interface BodyShape {
   bpillar: boolean;
   /** Height of a rear wing over the boot, as a share of the height; 0 for none. */
   spoiler: number;
+  /** Twin racing stripes down the bonnet and the boot. */
+  stripe: boolean;
 }
 
 const COUPE: BodyShape = {
   length: 1, height: 1, nose: 0.22, taper: 0.9, width: 1, glassLength: 0.5, glassHeight: 0.72,
   roofFront: 0.34, roofBack: 0.66, glassAt: -0.04, tyre: 0.175, track: 0.4, lift: 1,
-  tail: 0.9, bed: false, open: false, pillar: 0.5, bpillar: false, spoiler: 0,
+  tail: 0.9, bed: false, open: false, pillar: 0.5, bpillar: false, spoiler: 0, stripe: false,
 };
 
 const BODIES: Record<CarBody, BodyShape> = {
@@ -167,9 +169,19 @@ const BODIES: Record<CarBody, BodyShape> = {
   hatch: { ...COUPE, length: 0.9, height: 1.12, nose: 0.14, glassLength: 0.6, glassHeight: 0.8, roofFront: 0.4, roofBack: 0.95, glassAt: -0.1, tail: 1, pillar: 0.3 },
   saloon: { ...COUPE, length: 1.1, height: 1.02, nose: 0.16, glassHeight: 0.75, roofFront: 0.45, roofBack: 0.5, glassAt: 0, pillar: 0.2, bpillar: true },
   roadster: { ...COUPE, length: 0.95, height: 0.9, nose: 0.2, glassLength: 0.22, glassHeight: 0.4, roofFront: 0.3, roofBack: 0.25, glassAt: 0.1, tail: 0.95, open: true },
+  // A roadster with the haunches and the stripes of the car it stands in for.
+  cobra: { ...COUPE, length: 0.9, height: 0.92, nose: 0.12, taper: 0.96, width: 1.06, glassLength: 0.2, glassHeight: 0.4, roofFront: 0.3, roofBack: 0.25, glassAt: 0.1, tyre: 0.19, track: 0.43, tail: 0.95, open: true, stripe: true },
   frame: { ...COUPE, length: 0.9, height: 0.55, nose: 0.1, taper: 0.7, width: 0.72, glassLength: 0.12, glassHeight: 0.5, roofFront: 0.2, roofBack: 0.3, glassAt: 0.05, tyre: 0.2, track: 0.5, open: true },
   wedge: { ...COUPE, length: 1.05, height: 0.8, nose: 0.32, glassLength: 0.45, glassHeight: 0.62, roofFront: 0.3, roofBack: 0.6, glassAt: 0.02, pillar: 0.7, spoiler: 0.2 },
   suv: { ...COUPE, length: 1.03, height: 1.55, nose: 0.08, taper: 0.94, glassLength: 0.62, glassHeight: 0.85, roofFront: 0.55, roofBack: 0.95, glassAt: -0.05, tyre: 0.21, lift: 1.4, tail: 1, pillar: 0.2, bpillar: true },
+  // A rear-engined fastback: the roof runs back in one slope to a high tail.
+  fastback: { ...COUPE, length: 0.95, nose: 0.26, glassLength: 0.56, glassHeight: 0.74, roofFront: 0.38, roofBack: 0.2, glassAt: -0.1, tail: 0.94, pillar: 0.6 },
+  // Long bonnet, cabin set back, short deck, broad: the muscle car's proportions.
+  muscle: { ...COUPE, length: 1.12, nose: 0.1, width: 1.04, glassLength: 0.42, glassHeight: 0.66, roofFront: 0.5, roofBack: 0.45, glassAt: -0.14, tail: 0.92, pillar: 0.35, track: 0.41, stripe: true },
+  // Grand tourer: long and low, with the cabin well back and a fastback tail.
+  gt: { ...COUPE, length: 1.12, height: 0.9, nose: 0.2, width: 1.02, glassLength: 0.4, glassHeight: 0.66, roofFront: 0.4, roofBack: 0.35, glassAt: -0.12, tail: 0.9, pillar: 0.55 },
+  // Mid-engined and flat: the lowest and widest closed shape, with a wing.
+  hyper: { ...COUPE, length: 1.08, height: 0.66, nose: 0.34, taper: 0.82, width: 1.08, glassLength: 0.4, glassHeight: 0.55, roofFront: 0.26, roofBack: 0.5, glassAt: 0.04, tyre: 0.15, track: 0.42, tail: 0.95, pillar: 0.85, spoiler: 0.24 },
   pickup: { ...COUPE, length: 1.2, height: 1.45, nose: 0.06, taper: 0.95, glassLength: 0.3, glassHeight: 0.85, roofFront: 0.6, roofBack: 0.95, glassAt: 0.12, tyre: 0.22, lift: 1.5, bed: true, pillar: 0, bpillar: false },
 };
 
@@ -383,7 +395,9 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   // Wheel arches: the dark gap round a tyre, drawn as the top half of a disc
   // on the flank. A frame's wheels stand outside its body, so it has none.
   if (b.track * w < half) {
-    const arch = new THREE.CircleGeometry(tyre * 1.16, 12, 0, Math.PI);
+    // No taller than the flank above the axle: a low car's wheel is nearly as
+    // tall as its body, and a full-size arch is then a black blot.
+    const arch = new THREE.CircleGeometry(Math.min(tyre * 1.1, (deckAt(wheelZ) - tyre) * 0.85), 12, 0, Math.PI);
     for (const side of [-1, 1]) {
       for (const end of [-1, 1]) {
         const mesh = add(arch.clone().rotateY((side * Math.PI) / 2), trim, side * (half + 1), tyre, end * wheelZ);
@@ -403,6 +417,35 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   // colours them), at the foot of the screen.
   for (const side of [-1, 1]) {
     add(new THREE.BoxGeometry(w * 0.07, height * 0.09, length * 0.035), bodyMaterial, side * (baseHalf + w * 0.04), deckAt(zA) + height * 0.04, zA - length * 0.04);
+  }
+
+  // The stretch of the car that is road-facing from behind, which is where the
+  // chase camera spends the whole game: a plate between the tail lamps and a
+  // pair of exhaust tips under the bumper.
+  add(new THREE.BoxGeometry(w * 0.21, height * 0.08, 2), new THREE.MeshLambertMaterial({ color: '#d9d6c8' }), 0, floor + height * 0.4, -length * 0.5 - 1);
+  const pipe = new THREE.CylinderGeometry(w * 0.03, w * 0.03, length * 0.05, 8).rotateX(Math.PI / 2);
+  const steel = new THREE.MeshLambertMaterial({ color: '#8d9299' });
+  for (const side of [-1, 1]) add(pipe, steel, side * w * 0.2, floor + height * 0.08, -length * 0.5);
+
+  // Racing stripes: two thin runs along the deck, over the bonnet and over
+  // the boot, left off the roof so the glass line stays clean.
+  if (b.stripe) {
+    const white = new THREE.MeshLambertMaterial({ color: '#eceef0' });
+    const run = (z0: number, z1: number, side: number) => {
+      const rows: V3[][] = [];
+      for (let i = 0; i <= 6; i++) {
+        const z = z0 + ((z1 - z0) * i) / 6;
+        const y = deckAt(z);
+        const x0 = side * w * 0.045;
+        const x1 = side * w * 0.115;
+        rows.push([[x0, y - 3, z], [x0, y + w * 0.006, z], [x1, y + w * 0.006, z], [x1, y - 3, z]]);
+      }
+      add(loft(rows), white, 0, 0, 0);
+    };
+    for (const side of [-1, 1]) {
+      run(zA, length * 0.5 - 4, side);
+      run(-length * 0.5 + 4, zD, side);
+    }
   }
 
   // A load bed: a dark floor and low painted walls round it, on the deck the

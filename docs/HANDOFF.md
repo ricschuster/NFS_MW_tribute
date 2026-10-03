@@ -3,6 +3,22 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, night): cars pass started (#584), procedural shapes.**
+  Owner said "go as far as you can without asking", so the open questions were
+  decided: sourcing is **better procedural shapes** (no asset, no CREDITS row),
+  all 44 cars at once. #610 (merged): `carshape.ts` bodies are lofts (14 stations
+  x 8 points, deck line, rounded plan) with a 4-ring greenhouse, painted roof
+  and pillars that share the body material, arches, rims, bumpers, grille,
+  mirrors, wing, pickup bed; `makeCar` adds `parts.extras`. #611 (stripes, plate,
+  exhausts; shapes fastback, muscle, gt, hyper, cobra; roster assignments in
+  `docs/research/car-roster.md`; traffic is dealt shapes by `trafficBody`, cops
+  by `COP_BODY`, both view-side so the sim and RNG are untouched). Shots in
+  `tools/lookshots.mjs`: `carclose`, `carrear`, `carsun`, `carnight`,
+  `body-<shape>`, `body-pickup-rear` (the shot drives a named roster car with
+  `world.drive`). **Left:** #579-#583 still open on GitHub (ask); headlights are
+  still boxes; wrecks are drawn as saloon or suv by scale; the 6 hypers and 5
+  muscle cars still share a silhouette each (only colour tells them apart);
+  the owner has not seen any of it in motion. Next: HUD (#586) waits for them.
 - **Update (2026-10-03, close of the day): every look switch is a default; next is cars (#584).**
   - **State:** #607 (building kit) and #608 (all seven switches default:
     env, pbr, materials, trees, particles, clutter, buildings; `?look=none` is

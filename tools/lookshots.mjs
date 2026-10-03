@@ -28,9 +28,10 @@ export const SHOTS = [
   // (`orbit` is the bearing round the car from its nose, `reach` metres out, `lift` metres up).
   { name: 'carclose', ref: 'none', place: 'downtown', hour: 13, orbit: 0.9, reach: 12, lift: 2.6 },
   { name: 'carrear', ref: 'none', place: 'downtown', hour: 13, orbit: 3.1, reach: 13, lift: 2.8 },
+  { name: 'carnight', ref: 'none', place: 'downtown', hour: 21, orbit: 0.5, reach: 13, lift: 2.4 },
   { name: 'carsun', ref: 'none', place: 'downtown', hour: 17, orbit: 0.7, reach: 13, lift: 2.4 },
   // One car of each body shape, three-quarter, for `--shot body-wedge` and the like (#584).
-  ...Object.entries({ coupe: 'kestrel', hatch: 'sparrow', saloon: 'switchback', roadster: 'current', frame: 'kite', wedge: 'halcyon', suv: 'bulwark', pickup: 'bighorn' }).map(
+  ...Object.entries({ hatch: 'sparrow', saloon: 'switchback', roadster: 'current', frame: 'kite', wedge: 'halcyon', fastback: 'kestrel', muscle: 'ridgeback', gt: 'aria', hyper: 'nightfall', cobra: 'emberline', suv: 'bulwark', pickup: 'bighorn' }).map(
     ([body, car]) => ({ name: `body-${body}`, ref: 'none', place: 'downtown', hour: 13, orbit: 0.8, reach: body === 'suv' || body === 'pickup' ? 14 : 13, lift: 2.6, fov: body === 'suv' || body === 'pickup' ? 62 : 40, car }),
   ),
   { name: 'body-pickup-rear', ref: 'none', place: 'downtown', hour: 13, orbit: -2.4, reach: 14, lift: 4, fov: 62, car: 'bighorn' },
