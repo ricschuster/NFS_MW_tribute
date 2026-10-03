@@ -253,7 +253,6 @@ function samples(f, step = 2.5) {
 
 const taken = new Hash();
 const take = (f, kind) => taken.add({ f, kind }, f.x, f.z, f.round ? f.r : Math.hypot(f.hw, f.hl));
-for (const p of kept) take(footprint(p, 1), p.kind);
 const hitsTaken = (q, ignore) => [...taken.near(q.x, q.z, 2)].some((t) => t.kind !== ignore && inPrint(t.f, q));
 
 const why = new Map();
@@ -317,6 +316,92 @@ function placeNear(kind, at, { radius = 80, step = 6, angles = [0], angleAt = nu
 const [bigPond, smallPond] = ponds;
 const toward = (from, to) => facing(to.x - from.x, to.z - from.z);
 const KEPT = Object.fromEntries(kept.filter((p) => ['cafe', 'bandstand', 'toilet-block'].includes(p.kind)).map((p) => [p.kind, p]));
+
+// ---- Footpath helpers, and the rings round the ponds first -----------------------
+
+/**
+ * A path from `a` to `b`, in straight pieces of at most 30 m overlapping at
+ * the joints. A piece that would cross a pond, a building or the water is
+ * left out, and a piece running along a road rather than across it too.
+ */
+const PATH_W = TIDEWATER_GROUND_SIZES.path.path[1];
+let pathPieces = 0;
+function path(a, b, { ignore = null, force = false } = {}) {
+  const placed = [];
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  if (len < 6) return placed;
+  const n = Math.max(1, Math.ceil(len / 30));
+  for (let i = 0; i < n; i++) {
+    const p0 = { x: a.x + ((b.x - a.x) * i) / n, z: a.z + ((b.z - a.z) * i) / n };
+    const p1 = { x: a.x + ((b.x - a.x) * (i + 1)) / n, z: a.z + ((b.z - a.z) * (i + 1)) / n };
+    const piece = { kind: 'path', variant: 'path', x: (p0.x + p1.x) / 2, z: (p0.z + p1.z) / 2, angle: across(p1.x - p0.x, p1.z - p0.z), w: len / n + PATH_W };
+    const f = footprint(piece, 0);
+    const pts = samples(f, 2);
+    if (pts.some((q) => wet(q) || inPond(q))) { refuse('path', 'into the water'); continue; }
+    // A ring round a pond (`force`) is laid before anything else and wins:
+    // what stood on its line is moved off it. Every other path joins the
+    // rings rather than stopping short of them.
+    const solid = (t) => t.kind !== ignore && t.kind !== 'ring' && !GROUND.has(t.kind) && t.kind !== 'plaza';
+    if (!force && pts.some((q) => [...taken.near(q.x, q.z, 2)].some((t) => solid(t) && inPrint(t.f, q)))) { refuse('path', 'through something placed'); continue; }
+    if (pts.filter((q) => roadEdge(q) < 0).length > pts.length * 0.3) { refuse('path', 'along a road'); continue; }
+    placed.push(put({ ...piece, note: pathPieces++ ? undefined : 'Footpaths, in straight pieces that overlap at the joints' }));
+  }
+  return placed;
+}
+/** A ring round a pond, `gap` off its furthest shore. */
+function ring(pond, gap, opts = {}) {
+  const r = pond.r + gap;
+  const n = Math.ceil((2 * Math.PI * r) / 28);
+  const placed = [];
+  for (let k = 0; k < n; k++) {
+    const a0 = (k / n) * 2 * Math.PI, a1 = ((k + 1) / n) * 2 * Math.PI;
+    placed.push(...path({ x: pond.c.x + Math.cos(a0) * r, z: pond.c.z + Math.sin(a0) * r }, { x: pond.c.x + Math.cos(a1) * r, z: pond.c.z + Math.sin(a1) * r }, opts));
+  }
+  return placed;
+}
+/** From a point to the nearest drive's edge. */
+function toDrive(p) {
+  const e = nearestRoadEdge(p);
+  if (e && e.d < 160) path(p, e.at);
+}
+/** The point on a pond's ring nearest `p`. */
+const onRing = (pond, gap, p) => {
+  const d = unit(p.x - pond.c.x, p.z - pond.c.z);
+  return { x: pond.c.x + d.x * (pond.r + gap), z: pond.c.z + d.z * (pond.r + gap) };
+};
+const front = (p, by) => ({ x: p.x + Math.sin(p.angle) * by, z: p.z + Math.cos(p.angle) * by });
+
+// The owner's call: the path round the big pond closes, and the buildings
+// move for it. The rings go down before anything else, the big pond's far
+// enough out for the boathouse to stand between it and the water; whatever
+// was placed by hand on a ring's line moves off it, towards the water if it
+// stood inside the ring (a bench by the shore) and away from it if not.
+const RING_GAP = [16, 12];
+const ringPieces = ponds.slice(0, 2).flatMap((pond, i) => ring(pond, RING_GAP[i], { force: true }));
+const ringPrints = ringPieces.map((p) => footprint(p, 0));
+const onARing = (f) => samples(f, 2).some((q) => ringPrints.some((r) => inPrint(r, q)));
+const moved = [];
+for (const p of kept) {
+  if (GROUND.has(p.kind) || !onARing(footprint(p, 1))) continue;
+  const i = ponds.slice(0, 2).reduce((best, w, k) => (Math.hypot(p.x - w.c.x, p.z - w.c.z) < Math.hypot(p.x - ponds[best].c.x, p.z - ponds[best].c.z) ? k : best), 0);
+  const pond = ponds[i];
+  const d = unit(p.x - pond.c.x, p.z - pond.c.z);
+  const r0 = Math.hypot(p.x - pond.c.x, p.z - pond.c.z);
+  const sign = r0 < pond.r + RING_GAP[i] ? -1 : 1;
+  for (let step = 1; step <= 60; step++) {
+    const r = r0 + sign * step;
+    const q = { ...p, x: pond.c.x + d.x * r, z: pond.c.z + d.z * r };
+    const f = footprint(q, 1);
+    if (onARing(f)) continue;
+    if (samples(f).some((t) => wet(t) || inPond(t) || roadEdge(t) < 3)) continue;
+    moved.push(`${p.kind} ${p.id} ${step} m ${sign < 0 ? 'in' : 'out'}`);
+    p.x = r1(q.x);
+    p.z = r1(q.z);
+    break;
+  }
+}
+for (const p of kept) take(footprint(p, 1), p.kind);
+for (const p of ringPieces) take(footprint(p, 1), 'ring');
 
 // ---- The pitches, the courts and the playground: the biggest first --------------
 
@@ -467,12 +552,17 @@ for (const s of roads) {
   const dir = unit(s.b.x - s.a.x, s.b.z - s.a.z);
   for (let t = 0; t < len; t += 8) {
     const p = { x: s.a.x + dir.x * t, z: s.a.z + dir.z * t };
-    if (!inPark(p)) continue;
+    if (!inBox(p)) continue;
     for (const sign of [-1, 1]) {
       const n = { x: -dir.z * sign, z: dir.x * sign };
+      // The road may run just outside the park's outline where its shore is
+      // inside it, out to the point: what counts is the ground seaward of it.
+      if (!inPark({ x: p.x + n.x * (s.half + 40), z: p.z + n.z * (s.half + 40) })) continue;
       let d = s.half;
       let blocked = false;
-      while (d < 240 && !wet({ x: p.x + n.x * d, z: p.z + n.z * d })) {
+      // The sea, not a pond: the north drive has the big pond close on its side.
+      const sea = (q) => wet(q) && !inPond(q);
+      while (d < 240 && !sea({ x: p.x + n.x * d, z: p.z + n.z * d })) {
         // Another road between this one and the water: this is not the coast road.
         if (d > s.half + 4 && roadEdge({ x: p.x + n.x * d, z: p.z + n.z * d }, 30) < 0) { blocked = true; break; }
         d += 2;
@@ -499,9 +589,16 @@ for (const k of prom) {
 // more than 40 m (the road leaves the shore, a junction) breaks the line.
 const promPieces = [];
 for (let i = 1; i < promLine.length; i++) {
-  const a = promLine[i - 1].c, b = promLine[i].c;
-  const len = Math.hypot(b.x - a.x, b.z - a.z);
-  if (len > 40) continue;
+  const a0 = promLine[i - 1].c, b0 = promLine[i].c;
+  const span = Math.hypot(b0.x - a0.x, b0.z - a0.z);
+  // A gap of more than 90 m is the road leaving the shore; a shorter one (a
+  // junction's mouth) is bridged, in pieces of no more than 40 m.
+  if (span > 90) continue;
+  const parts = Math.ceil(span / 40);
+  for (let j = 0; j < parts; j++) {
+  const a = { x: a0.x + ((b0.x - a0.x) * j) / parts, z: a0.z + ((b0.z - a0.z) * j) / parts };
+  const b = { x: a0.x + ((b0.x - a0.x) * (j + 1)) / parts, z: a0.z + ((b0.z - a0.z) * (j + 1)) / parts };
+  const len = span / parts;
   const p = { kind: 'path', variant: 'promenade', x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: across(b.x - a.x, b.z - a.z), w: len + 4 };
   // A lamp on the verge stands on the promenade, as a seafront's do.
   if (!fits(p, { pad: 0, road: 0.5, race: 0, water: true, park: false, lamps: false })) continue;
@@ -510,13 +607,15 @@ for (let i = 1; i < promLine.length; i++) {
   const side = along.z * promLine[i].n.x - along.x * promLine[i].n.z > 0 ? 1 : -1;
   const n = { x: along.z * side, z: -along.x * side };
   promPieces.push({ piece: put({ ...p, note: promPieces.length ? undefined : 'The promenade, along the seaward side of the coast road' }), k: { ...promLine[i], n, dir: along }, a, b });
+  }
 }
 // The beach below it: from the promenade's seaward edge out past the water's
 // edge, in pieces along the shore. Where the sand is deeper than the deepest
 // piece, a second row goes behind the first, overlapping it.
 const DEPTHS = Object.entries(TIDEWATER_GROUND_SIZES.beach).sort((a, b) => a[1][1] - b[1][1]);
 const beachPieces = [];
-for (const { k, a, b } of promPieces) {
+/** Sand from the promenade line between `a` and `b` out to the sea, `k` the coast there. */
+function beachAt(k, a, b) {
   const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   // From the promenade's centre line: sand from its seaward edge to 6 m into the water.
@@ -528,13 +627,29 @@ for (const { k, a, b } of promPieces) {
     const [variant, [, l]] = DEPTHS.find(([, s]) => s[1] >= depth) ?? DEPTHS.at(-1);
     const from = Math.max(back, outer - l);
     const c = { x: mid.x + k.n.x * (from + l / 2), z: mid.z + k.n.z * (from + l / 2) };
-    const p = { kind: 'beach', variant, x: c.x, z: c.z, angle: facing(k.n.x, k.n.z), w: len + 12 };
+    const p = { kind: 'beach', variant, x: c.x, z: c.z, angle: facing(k.n.x, k.n.z), w: len + 24 };
     outer = from + 2;
     if (!fits(p, { pad: 0, road: 1, race: 0, water: true, park: false })) break;
     const piece = put({ ...p, note: beachPieces.length ? undefined : 'The beach below the promenade' });
     if (first) beachPieces.push({ piece, k, mid, back });
     first = false;
     if (from === back) break;
+  }
+}
+for (const { k, a, b } of promPieces) beachAt(k, a, b);
+// And on past the promenade's east end, out to the point, where the coast
+// road runs just outside the park: the sand goes the whole way (the owner's
+// call), from where the promenade line would run down to the sea.
+if (promPieces.length) {
+  const { k, b } = promPieces.at(-1);
+  for (let j = 0; j < 8; j++) {
+    const a = { x: b.x + k.dir.x * 30 * j, z: b.z + k.dir.z * 30 * j };
+    const e = { x: a.x + k.dir.x * 30, z: a.z + k.dir.z * 30 };
+    const m = { x: (a.x + e.x) / 2, z: (a.z + e.z) / 2 };
+    let d = 0;
+    while (d < 240 && !(wet({ x: m.x + k.n.x * d, z: m.z + k.n.z * d }) && !inPond({ x: m.x + k.n.x * d, z: m.z + k.n.z * d }))) d += 2;
+    if (d < PROM / 2 + 6 || d >= 240 || !inPark({ x: m.x + k.n.x * (d / 2), z: m.z + k.n.z * (d / 2) })) break;
+    beachAt({ ...k, sea: d + k.half + PROM_OFF + PROM / 2 }, a, e);
   }
 }
 // The railing along the promenade's seaward edge, with a gap down to the
@@ -619,66 +734,19 @@ for (const { k, mid } of widest.slice(Math.floor(widest.length / 3))) {
 
 // ---- Footpaths -------------------------------------------------------------------
 
-/**
- * A path from `a` to `b`, in straight pieces of at most 30 m overlapping at
- * the joints. A piece that would cross a pond, a building or the water is
- * left out, and a piece running along a road rather than across it too.
- */
-const PATH_W = TIDEWATER_GROUND_SIZES.path.path[1];
-let pathPieces = 0;
-function path(a, b, { ignore = null } = {}) {
-  const len = Math.hypot(b.x - a.x, b.z - a.z);
-  if (len < 6) return;
-  const n = Math.max(1, Math.ceil(len / 30));
-  for (let i = 0; i < n; i++) {
-    const p0 = { x: a.x + ((b.x - a.x) * i) / n, z: a.z + ((b.z - a.z) * i) / n };
-    const p1 = { x: a.x + ((b.x - a.x) * (i + 1)) / n, z: a.z + ((b.z - a.z) * (i + 1)) / n };
-    const piece = { kind: 'path', variant: 'path', x: (p0.x + p1.x) / 2, z: (p0.z + p1.z) / 2, angle: across(p1.x - p0.x, p1.z - p0.z), w: len / n + PATH_W };
-    const f = footprint(piece, 0);
-    const pts = samples(f, 2);
-    if (pts.some((q) => wet(q) || inPond(q))) { refuse('path', 'into the water'); continue; }
-    if (pts.some((q) => [...taken.near(q.x, q.z, 2)].some((t) => t.kind !== ignore && !GROUND.has(t.kind) && t.kind !== 'plaza' && inPrint(t.f, q)))) { refuse('path', 'through something placed'); continue; }
-    if (pts.filter((q) => roadEdge(q) < 0).length > pts.length * 0.3) { refuse('path', 'along a road'); continue; }
-    put({ ...piece, note: pathPieces++ ? undefined : 'Footpaths, in straight pieces that overlap at the joints' });
-  }
-}
-/** A ring round a pond, `gap` off its furthest shore. */
-function ring(pond, gap) {
-  const r = pond.r + gap;
-  const n = Math.ceil((2 * Math.PI * r) / 28);
-  for (let k = 0; k < n; k++) {
-    const a0 = (k / n) * 2 * Math.PI, a1 = ((k + 1) / n) * 2 * Math.PI;
-    path({ x: pond.c.x + Math.cos(a0) * r, z: pond.c.z + Math.sin(a0) * r }, { x: pond.c.x + Math.cos(a1) * r, z: pond.c.z + Math.sin(a1) * r });
-  }
-}
-/** From a point to the nearest drive's edge. */
-function toDrive(p) {
-  const e = nearestRoadEdge(p);
-  if (e && e.d < 160) path(p, e.at);
-}
-/** The point on a pond's ring nearest `p`. */
-const onRing = (pond, gap, p) => {
-  const d = unit(p.x - pond.c.x, p.z - pond.c.z);
-  return { x: pond.c.x + d.x * (pond.r + gap), z: pond.c.z + d.z * (pond.r + gap) };
-};
-const front = (p, by) => ({ x: p.x + Math.sin(p.angle) * by, z: p.z + Math.cos(p.angle) * by });
-if (bigPond) {
-  ring(bigPond, 12);
-  for (const a of [Math.PI / 2, -Math.PI / 2, 0, Math.PI]) toDrive({ x: bigPond.c.x + Math.cos(a) * (bigPond.r + 12), z: bigPond.c.z + Math.sin(a) * (bigPond.r + 12) });
-}
-if (smallPond) {
-  ring(smallPond, 12);
-  for (const a of [Math.PI / 2, -Math.PI / 2, 0, Math.PI]) toDrive({ x: smallPond.c.x + Math.cos(a) * (smallPond.r + 12), z: smallPond.c.z + Math.sin(a) * (smallPond.r + 12) });
-}
+// The rings are down already; these join them to the drives.
+ponds.slice(0, 2).forEach((pond, i) => {
+  for (const a of [Math.PI / 2, -Math.PI / 2, 0, Math.PI]) toDrive({ x: pond.c.x + Math.cos(a) * (pond.r + RING_GAP[i]), z: pond.c.z + Math.sin(a) * (pond.r + RING_GAP[i]) });
+});
 if (plaza) {
-  if (bigPond) path(plaza, onRing(bigPond, 12, plaza), { ignore: 'fountain' });
+  if (bigPond) path(plaza, onRing(bigPond, RING_GAP[0], plaza), { ignore: 'fountain' });
   if (band) path(plaza, band, { ignore: 'bandstand' });
   toDrive(plaza);
 }
 if (band) toDrive(band);
 if (KEPT.cafe) toDrive(front(KEPT.cafe, 0));
 if (playground) {
-  if (bigPond) path(playground, onRing(bigPond, 12, playground), { ignore: 'playground' });
+  if (bigPond) path(playground, onRing(bigPond, RING_GAP[0], playground), { ignore: 'playground' });
   toDrive(playground);
 }
 if (pitch) toDrive(pitch);
@@ -757,6 +825,7 @@ for (const s of roads) {
 const counts = {};
 for (const p of out) counts[`${p.kind}${p.variant && GROUND.has(p.kind) ? ` (${p.variant})` : ''}`] = (counts[`${p.kind}${p.variant && GROUND.has(p.kind) ? ` (${p.variant})` : ''}`] ?? 0) + 1;
 console.log(`Tidewater Park once-over: ${out.length} props (${kept.length} kept)`);
+for (const m of moved) console.log(`  moved off a ring: ${m}`);
 for (const [k, n] of Object.entries(counts).sort()) console.log(`  ${k.padEnd(22)} ${n}`);
 if (WHY) {
   console.log('\nRefused:');
