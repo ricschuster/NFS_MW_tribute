@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CAR_WIDTH_WORLD, CAR_ASPECT } from '../constants';
-import { carParts } from './carshape';
+import { carParts, CAR_PAINT } from './carshape';
 import type { CarBody } from '../cars';
 import { lampGlowTexture } from './signage';
 
@@ -70,6 +70,31 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     lamp.name = 'headlight';
     lamp.position.set(side * BODY_W * 0.32, parts.floor + bodyH * 0.4, bodyL * 0.49);
     car.add(lamp);
+  }
+
+  // Contact shadow (#580, behind `?look=pbr` with the car paint): the sun's
+  // shadow map does not reach the dark crease under a car, which is what stops
+  // it floating. A black quad on the road under it, made of the lamp glow's
+  // radial falloff (black times a warm alpha texture is a soft black blot),
+  // a little bigger than the footprint. Under the beam's height, over the road.
+  if (CAR_PAINT.clearcoat) {
+    const blot = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({
+        color: '#000000',
+        map: lampGlowTexture(),
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+        fog: true,
+      }),
+    );
+    blot.name = 'contact';
+    blot.position.y = 4;
+    blot.scale.set(BODY_W * 1.9, 1, BODY_L * 1.45);
+    blot.castShadow = false;
+    blot.receiveShadow = false;
+    car.add(blot);
   }
 
   // The light the headlights actually throw, which is the half that makes a
