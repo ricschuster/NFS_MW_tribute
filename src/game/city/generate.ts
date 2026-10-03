@@ -64,6 +64,7 @@ import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
 import { ASHFORD_PROPS } from './ashfordprops';
 import { DOWNTOWN_PROPS } from './downtownprops';
+import { downtownAprons } from './downtownground';
 import { downtownPavements } from './pavements';
 import { MIDTOWN_SW_PROPS } from './midtownswprops';
 import { INDUSTRIAL_PROPS, INDUSTRIAL_YARDS } from './industrialprops';
@@ -630,7 +631,7 @@ export function generateCity(seed: number): City {
     pillars: [],
     breakables: [],
     setPieces: [],
-    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS)],
+    aprons: [...(hasDocksApron ? [wharfApron()] : []), ...castleAprons(), ...highmoorAprons(), ...highStreetAprons(roads, nodes), ...yardAprons(INDUSTRIAL_YARDS), ...downtownAprons(DOWNTOWN_PROPS)],
     jumps: [],
     crossings: [],
     drives,

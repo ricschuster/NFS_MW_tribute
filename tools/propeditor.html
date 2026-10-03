@@ -377,6 +377,22 @@
     { id: 'cruise-terminal', group: 'Downtown', name: 'Cruise terminal', w: 56, l: 200, shape: 'box', color: '#f4f4f0', water: 'ok' },
     { id: 'geodesic-dome', group: 'Downtown', name: 'Geodesic dome', w: 44, l: 44, shape: 'circle', color: '#c9ced4' },
     { id: 'flatiron', group: 'Downtown', name: 'Flatiron', w: 26, l: 44, shape: 'box', color: '#cbbfa6', variants: ['stone', 'brick'] },
+    // Downtown's once-over (2026-10-02), at the size the game draws them. A
+    // shelter's open front, a kiosk's counter and a food truck's hatch side
+    // face the way the prop is turned. A lawn is ground: a pocket park left
+    // as grass in downtown's paving, its width editable.
+    { id: 'bus-shelter', group: 'Street', name: 'Bus shelter', w: 8, l: 3.2, shape: 'box', color: '#9fc0cc' },
+    { id: 'bollard', group: 'Street', name: 'Bollard', w: 0.5, l: 0.5, shape: 'circle', color: '#2f3336', road: 'ok' },
+    { id: 'planter', group: 'Street', name: 'Planter', w: 4.8, l: 2.4, shape: 'box', color: '#6f8f5a', road: 'ok' },
+    { id: 'bin', group: 'Street', name: 'Litter bin', w: 1.2, l: 1.2, shape: 'circle', color: '#2f4a3a' },
+    { id: 'fountain', group: 'Street', name: 'Fountain', w: 14.4, l: 14.4, shape: 'circle', color: '#4f86a0' },
+    { id: 'statue', group: 'Street', name: 'Statue or obelisk', w: 4.4, l: 4.4, shape: 'box', color: '#b9b2a4', variants: ['figure', 'obelisk'] },
+    { id: 'kiosk', group: 'Street', name: 'Kiosk', w: 4.8, l: 4, shape: 'box', color: '#2f5d45', variants: ['green', 'red', 'blue'] },
+    { id: 'cafe-tables', group: 'Breakables', name: 'Café tables', w: 4.4, l: 6, shape: 'box', color: '#ff8a4c', road: 'ok' },
+    { id: 'dumpster', group: 'Street', name: 'Dumpster', w: 3.2, l: 2.9, shape: 'box', color: '#3b5e3a', road: 'ok', variants: ['green', 'blue', 'grey'] },
+    { id: 'food-truck', group: 'Street', name: 'Food truck', w: 4.6, l: 13, shape: 'box', color: '#e2b33c', road: 'ok', variants: ['white', 'yellow', 'teal', 'pink'] },
+    { id: 'lawn', group: 'Street', name: 'Lawn (pocket park)', w: 40, l: 40, shape: 'box', color: '#5f9d5a',
+      variants: ['small', 'medium', 'large'], sizes: { small: [30, 30], medium: [45, 45], large: [70, 50] } },
     { id: 'hedge', group: 'Suburb', name: 'Front hedge', w: 16, l: 1.2, shape: 'box', color: '#3f6a37' },
     // Sized to its trunk and the low part of its crown, not the canopy that
     // hangs over the verge: the canopy is over a car and blocks nothing.
@@ -453,7 +469,8 @@
   const dims = (p) => {
     const k = KIND[p.kind];
     const sized = k.sizes && k.sizes[p.variant];
-    return sized ? { w: sized[0], l: sized[1] } : { w: p.w ?? k.w, l: k.l };
+    // A width set by hand wins over a variant's (a lawn's, sized to its gap).
+    return sized ? { w: p.w ?? sized[0], l: sized[1] } : { w: p.w ?? k.w, l: k.l };
   };
   const snapshot = () => JSON.stringify(ROADS ? { props: props.map(clean), roads: roads.map(cleanRoad), removedRoads } : props.map(clean));
   /** Put a snapshot back: the props, and the roads when this editor has them. */
@@ -1424,8 +1441,9 @@
     if (document.activeElement !== $('d-x')) $('d-x').value = Math.round(p.x);
     if (document.activeElement !== $('d-z')) $('d-z').value = Math.round(p.z);
     if (document.activeElement !== $('d-a')) $('d-a').value = Math.round(((p.angle * 180) / Math.PI + 360) % 360);
-    $('f-w').hidden = p.kind !== 'gate';
-    if (p.kind === 'gate') $('d-w').value = dims(p).w;
+    const spanned = p.kind === 'gate' || p.kind === 'lawn';
+    $('f-w').hidden = !spanned;
+    if (spanned && document.activeElement !== $('d-w')) $('d-w').value = dims(p).w;
     if (document.activeElement !== $('d-note')) $('d-note').value = p.note ?? '';
     const list = checks.get(p) ?? check(p);
     const g = heightAt(p.x, p.z);

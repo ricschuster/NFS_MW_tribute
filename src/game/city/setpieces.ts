@@ -250,6 +250,20 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   'cruise-terminal': [{ u: 0, v: 0, w: 56, l: 200, y0: 0, y1: 14 }],
   'geodesic-dome': [{ u: 0, v: 0, r: 24, y0: 0, y1: 46 }],
   flatiron: [{ u: 0, v: -11, w: 26, l: 22, y0: 0, y1: 34 }, { u: 0, v: 11, w: 14, l: 22, y0: 0, y1: 34 }],
+  // Downtown's once-over (2026-10-02). Street furniture is grown like the
+  // park's benches, so a bin reads as one beside a car 4.8 m across; a
+  // kiosk like the old core's buildings; a fountain and a statue are sized
+  // in game metres against the squares they stand in. A shelter's front, open
+  // to the kerb, faces the way it is turned.
+  'bus-shelter': grown([{ u: 0, v: 0, w: 4, l: 1.6, y0: 0, y1: 2.5 }], 2),
+  bollard: grown([post(0, 0, 0.12, 1)], 2),
+  planter: grown([{ u: 0, v: 0, w: 2.4, l: 1.2, y0: 0, y1: 0.8 }], 2),
+  bin: grown([post(0, 0, 0.3, 1)], 2),
+  fountain: [{ u: 0, v: 0, r: 7, y0: 0, y1: 0.9 }, post(0, 0, 1.5, 4.5)],
+  statue: [{ u: 0, v: 0, w: 3.4, l: 3.4, y0: 0, y1: 7 }],
+  kiosk: grown([{ u: 0, v: 0, w: 3, l: 2.5, y0: 0, y1: 3 }], HOUSE_GROWN),
+  dumpster: grown([{ u: 0, v: 0, w: 2, l: 1.8, y0: 0, y1: 1.6 }], HOUSE_GROWN),
+  'food-truck': grown([{ u: 0, v: 0, w: 2.3, l: 6.5, y0: 0, y1: 3.2 }], 2),
 };
 
 /**
@@ -297,7 +311,7 @@ export const SOLID_REACH = 120;
 /**
  * Marrow Field's hand-placed props (#295), as city data.
  *
- * Gates and stacks join the breakables that already exist, numbered on from
+ * Gates, stacks and café tables join the breakables that already exist, numbered on from
  * `firstId` so a smashed one is remembered by the same id the sim uses for
  * every other. Jumps become `Jump`s (#307), their kind read off the variant
  * the editor saved; billboards are handed back as positions, for `generate.ts`
@@ -327,10 +341,13 @@ export function airfieldProps(
       jumps.push({ kind: JUMP_VARIANTS[prop.variant ?? ''] ?? 'ramp', at, y, angle: prop.angle });
       continue;
     }
-    if (prop.kind === 'gate' || prop.kind === 'stack') {
+    // A lawn is ground, not a thing: `city/downtownground.ts` reads it.
+    if (prop.kind === 'lawn') continue;
+    if (prop.kind === 'gate' || prop.kind === 'stack' || prop.kind === 'cafe-tables') {
       // The same half-widths `breakablesFor` gives its own, except that a gate
       // placed in the editor was sized to the road it was snapped across.
-      const half = prop.kind === 'gate' ? ((prop.w ?? 12) / 2) * M : 2.2 * M;
+      // Café tables are a terrace of three under parasols, about as wide as a stack.
+      const half = prop.kind === 'gate' ? ((prop.w ?? 12) / 2) * M : prop.kind === 'cafe-tables' ? 3 * M : 2.2 * M;
       breakables.push({ id: id++, kind: prop.kind, at, y, angle: prop.angle, half, placed: true });
       continue;
     }

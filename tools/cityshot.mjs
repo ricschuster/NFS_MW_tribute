@@ -181,7 +181,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -201,7 +201,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -220,7 +220,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -240,7 +240,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -263,7 +263,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
 
@@ -306,7 +306,7 @@ for (const view of VIEWS) {
       world.speed = 0;
       world.crashFlash = 0;
     });
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.waitForTimeout(1200);
@@ -318,7 +318,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
 
@@ -375,7 +375,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(7000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
 
@@ -412,7 +412,7 @@ for (const view of VIEWS) {
     // (#90). The furthest Quick Wheel destination, which is the case the line
     // exists for: an arrow across a city with a river in it points at plenty
     // of places you cannot reach from where you stand.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -435,7 +435,7 @@ for (const view of VIEWS) {
   if (view === 'billboard' || view === 'collection') {
     // Stand the car in front of a billboard it has not had yet. Waiting for a
     // scripted drive to find one of ninety is waiting a long time.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -468,7 +468,7 @@ for (const view of VIEWS) {
     // stood beside: the banner is the thing being photographed, and it is what
     // a playtest saw as "the colour of my car just changed and I don't know
     // why".
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -491,7 +491,7 @@ for (const view of VIEWS) {
   if (view === 'streetfind') {
     // Stand off a parked car, looking at it. Finding one of seven by driving
     // is the player's job, not the screenshot's.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -515,7 +515,7 @@ for (const view of VIEWS) {
   if (view === 'startline') {
     // Parked on an event's start, not started (#357): the invite, and under it
     // the difficulty and what each place pays.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -533,7 +533,7 @@ for (const view of VIEWS) {
   if (view === 'rivalstart') {
     // Parked on a rival's own line (#419), with the Rep to be taken seriously:
     // their invite and card, and their amber target on the minimap.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -557,7 +557,7 @@ for (const view of VIEWS) {
   if (view === 'bodies') {
     // One parked car of each body style in a row across the road ahead (#434),
     // so the shapes can be judged side by side.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -590,7 +590,7 @@ for (const view of VIEWS) {
   if (view === 'guide') {
     // In a race, stopped on the route and facing along it, so the lines on
     // the road (#443) run away from the camera the way they do while racing.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -631,7 +631,7 @@ for (const view of VIEWS) {
     // Wheels spinning on the spot (#360), away from any marker so it smokes
     // and starts nothing. The frames are real time here, so the keys are held
     // for real time too.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -646,7 +646,7 @@ for (const view of VIEWS) {
   if (view === 'race' || view === 'speedrun') {
     // Start a circuit and run a few seconds of it, so the shot has the lap
     // counter, the position, the arrow, the gate and the rival in it.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate((which) => { globalThis.__shotView = which; }, view);
@@ -689,7 +689,7 @@ for (const view of VIEWS) {
     // Put a circuit's lights on and let the director take the camera up over
     // the course (#359). The world holds still under it, so the shot is of the
     // course and the card, partway round.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -703,7 +703,7 @@ for (const view of VIEWS) {
       const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
       world.step(1 / 60, { ...none, confirm: true });
     });
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'flyover', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'flyover', undefined, {
       timeout: 20000,
     });
     await page.waitForTimeout(5000);
@@ -712,7 +712,7 @@ for (const view of VIEWS) {
   if (view === 'ambush') {
     // Park on a trap and spring it: the shot is of four cars already around
     // the car with the clock running, which is the whole event.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -733,7 +733,7 @@ for (const view of VIEWS) {
   if (view === 'repair') {
     // Stand a beaten-up car short of a repair gantry, looking at it: the shot
     // is of the damage bar, the dulled paint and the thing that fixes both.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -758,7 +758,7 @@ for (const view of VIEWS) {
     // The car anywhere (#488): for looking at an area being built, where no
     // fixed viewpoint goes. Heading in degrees, 0 up the map (+z).
     const [x, z, heading = 0] = (flag('--at') ?? '').split(',').map(Number);
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', { timeout: 60000 });
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, { timeout: 60000 });
     await page.evaluate(
       ({ x, z, heading }) => {
         const { world } = globalThis.crosstown;
@@ -781,7 +781,7 @@ for (const view of VIEWS) {
     // What a bust costs (#178). Stepped by hand: a bust needs a unit holding
     // station on a stopped car for `BUST_TIME`, and waiting for one to happen
     // by driving is waiting for the thing the issue says never happens.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -812,7 +812,7 @@ for (const view of VIEWS) {
     // the map, and 22 m back from one at a junction puts the camera inside a
     // block. So: the sign nearest the middle of the city, and the first of
     // eight bearings that leaves the car on a road.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -855,7 +855,7 @@ for (const view of VIEWS) {
     // hour that shows both halves - the lamps and the windows on, and enough
     // sky left to see the city against.
     const hour = Number(process.env.HOUR ?? 19.5);
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate((at) => {
@@ -890,7 +890,7 @@ for (const view of VIEWS) {
     // marked car going about its business, and nothing after you. The shot is
     // of the state that did not exist before - twelve seconds in, this used to
     // be a pursuit whatever anyone did.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -918,7 +918,7 @@ for (const view of VIEWS) {
     // building, and holding the throttle there is exactly the state a player
     // gets into. Physics runs off real elapsed time rather than frames, so the
     // stuck clock keeps its own time however slowly this renders.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -977,7 +977,7 @@ for (const view of VIEWS) {
   if (view === 'claim') {
     // Start the second half by hand: the first half is a three-lap race, and
     // waiting for a scripted driver to win one is waiting a long time.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -1006,7 +1006,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(6000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -1041,7 +1041,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(6000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -1077,7 +1077,7 @@ for (const view of VIEWS) {
   if (view === 'breaker') {
     // Line the car up short of a gate with a cruiser on its bumper, so the
     // shot has the thing about to come down and the thing about to be under it.
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {
@@ -1121,7 +1121,7 @@ for (const view of VIEWS) {
     await page.keyboard.down('ArrowUp');
     await page.waitForTimeout(6000);
     await page.keyboard.up('ArrowUp');
-    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', {
+    await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, {
       timeout: 60000,
     });
     await page.evaluate(() => {

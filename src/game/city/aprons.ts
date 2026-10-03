@@ -1,4 +1,4 @@
-import type { City, Vec2 } from './types';
+import type { Apron, City, Vec2 } from './types';
 
 /**
  * Is this point on paved ground that is not a road (#410)?
@@ -16,26 +16,34 @@ const EDGE = 0.85;
 const boxes = new WeakMap<Vec2[], { minX: number; minZ: number; maxX: number; maxZ: number }>();
 
 export function onApron(city: City, x: number, z: number): boolean {
+  // A lawn left in downtown's paving is grass whatever it lies on.
+  for (const apron of city.aprons) if (apron.look === 'grass' && within(apron, x, z)) return false;
+
   // The drives and downtown's pavements are paved ground too (#293, #268),
   // drawn as a mesh rather than in the ground's shader; what looks paved
   // drives paved, whichever of the two draws it.
   for (const list of [city.aprons, city.drives, city.pavements]) for (const apron of list) {
-    let box = boxes.get(apron.outline);
-    if (!box) {
-      box = { minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity };
-      for (const p of apron.outline) {
-        box.minX = Math.min(box.minX, p.x);
-        box.minZ = Math.min(box.minZ, p.z);
-        box.maxX = Math.max(box.maxX, p.x);
-        box.maxZ = Math.max(box.maxZ, p.z);
-      }
-      boxes.set(apron.outline, box);
-    }
-    const reach = apron.margin * EDGE;
-    if (x < box.minX - reach || x > box.maxX + reach || z < box.minZ - reach || z > box.maxZ + reach) continue;
-    if (insideOrNear(apron.outline, x, z, reach)) return true;
+    if (apron.look !== 'grass' && within(apron, x, z)) return true;
   }
   return false;
+}
+
+/** Is the point on this apron, out to the part of its margin that still looks paved? */
+function within(apron: Apron, x: number, z: number): boolean {
+  let box = boxes.get(apron.outline);
+  if (!box) {
+    box = { minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity };
+    for (const p of apron.outline) {
+      box.minX = Math.min(box.minX, p.x);
+      box.minZ = Math.min(box.minZ, p.z);
+      box.maxX = Math.max(box.maxX, p.x);
+      box.maxZ = Math.max(box.maxZ, p.z);
+    }
+    boxes.set(apron.outline, box);
+  }
+  const reach = apron.margin * EDGE;
+  if (x < box.minX - reach || x > box.maxX + reach || z < box.minZ - reach || z > box.maxZ + reach) return false;
+  return insideOrNear(apron.outline, x, z, reach);
 }
 
 export function insideOrNear(outline: Vec2[], x: number, z: number, reach: number): boolean {
