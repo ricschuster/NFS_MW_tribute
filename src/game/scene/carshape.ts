@@ -244,32 +244,36 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
     : [[0, b.tail - 0.04], [0.14, b.tail], [0.36, 1], [0.62, 1], [0.84, (1 + noseY) / 2], [1, noseY]];
   const deckAt = (z: number) => floor + height * keyed(deck, z / length + 0.5);
 
-  // The shell: fourteen stations, each eight points round. The plan rounds in
-  // over the last third at each end and the underside lifts there too, which
-  // is the approach and departure angle.
+  // The shell: 26 stations, each fifteen points round (seven up each side and
+  // one on the crown). The plan rounds in over the last third at each end and
+  // the underside lifts there too, which is the approach and departure angle.
+  // The flank swells over each wheel, and the deck is crowned a little, which
+  // is most of the difference between a moulded car and a lofted box.
   const rings: V3[][] = [];
-  const stations = 14;
+  const stations = 26;
   for (let i = 0; i <= stations; i++) {
     const t = i / stations;
     const z = (t - 0.5) * length;
     const u = Math.abs(2 * t - 1);
     const plan = u < 0.7 ? 1 : 1 - 0.2 * ((u - 0.7) / 0.3) ** 2;
-    const hw = half * plan;
+    const haunch = 1 + 0.04 * Math.exp(-(((Math.abs(z) - wheelZ) / (length * 0.13)) ** 2));
+    const hw = half * plan * haunch;
     const top = deckAt(z);
     const lift = u < 0.8 ? 0 : 0.14 * ((u - 0.8) / 0.2) ** 2;
     const bottom = floor + height * lift;
     const span = top - bottom;
     const sh = hw * b.taper * 0.93;
-    rings.push([
-      [-hw * 0.9, bottom, z],
-      [-hw, bottom + span * 0.12, z],
-      [-hw, bottom + span * 0.62, z],
-      [-sh, top, z],
-      [sh, top, z],
-      [hw, bottom + span * 0.62, z],
-      [hw, bottom + span * 0.12, z],
-      [hw * 0.9, bottom, z],
-    ]);
+    const crown = height * 0.03;
+    const left: V3[] = [
+      [-hw * 0.86, bottom, z],
+      [-hw * 0.98, bottom + span * 0.06, z],
+      [-hw, bottom + span * 0.25, z],
+      [-hw, bottom + span * 0.55, z],
+      [-hw * 0.975, bottom + span * 0.8, z],
+      [-sh, top - span * 0.04, z],
+      [-sh * 0.55, top + crown * 0.7, z],
+    ];
+    rings.push([...left, [0, top + crown, z], ...left.map(([x, y, zz]): V3 => [-x, y, zz]).reverse()]);
   }
   const painted: THREE.BufferGeometry[] = [loft(rings)];
 
@@ -374,8 +378,11 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   // a dark dish in it, which is enough to read as a wheel at chase distance.
   const rimGeometry = new THREE.CylinderGeometry(tyre * 0.62, tyre * 0.62, w * 0.178, 10).rotateZ(Math.PI / 2);
   const rimMaterial = new THREE.MeshLambertMaterial({ color: '#aab0b9' });
-  const dishGeometry = new THREE.CylinderGeometry(tyre * 0.36, tyre * 0.36, w * 0.184, 10).rotateZ(Math.PI / 2);
+  const dishGeometry = new THREE.CylinderGeometry(tyre * 0.4, tyre * 0.4, w * 0.184, 5).rotateZ(Math.PI / 2);
   const dishMaterial = new THREE.MeshLambertMaterial({ color: '#30343b' });
+  // A wheel sits so its outer face stands just proud of the swollen flank; a
+  // frame's stand clear of the body altogether.
+  const wheelX = b.track * w < half ? half * 1.04 - w * 0.07 : b.track * w;
   const wheels: THREE.Mesh[] = [];
   for (const side of [-1, 1]) {
     for (const end of [-1, 1]) {
@@ -383,7 +390,7 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
       // Just inside the flank, so the car sits on its wheels rather than
       // beside them, and set in from the ends: overhang is what makes a car
       // look like a van.
-      wheel.position.set(side * w * b.track, tyre, end * wheelZ);
+      wheel.position.set(side * wheelX, tyre, end * wheelZ);
       wheel.add(new THREE.Mesh(rimGeometry, rimMaterial), new THREE.Mesh(dishGeometry, dishMaterial));
       wheels.push(wheel);
     }
@@ -406,9 +413,21 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
     const arch = new THREE.CircleGeometry(Math.min(tyre * 1.1, (deckAt(wheelZ) - tyre) * 0.85), 12, 0, Math.PI);
     for (const side of [-1, 1]) {
       for (const end of [-1, 1]) {
-        const mesh = add(arch.clone().rotateY((side * Math.PI) / 2), trim, side * (half + 1), tyre, end * wheelZ);
+        const mesh = add(arch.clone().rotateY((side * Math.PI) / 2), trim, side * (half * 1.04 + 1), tyre, end * wheelZ);
         mesh.name = 'arch';
       }
+    }
+  }
+
+  // Door shut lines and a sill: thin dark marks on the flank, so a side reads
+  // as doors rather than one slab. Only on closed cars with a real cabin.
+  if (!b.open && !b.bed) {
+    const lineH = height * 0.42;
+    for (const side of [-1, 1]) {
+      for (const k of [0.3, -0.16]) {
+        add(new THREE.BoxGeometry(2, lineH, w * 0.012), trim, side * (half * 1.0 + 1), floor + height * 0.28 + lineH / 2, cMid + cLen * k);
+      }
+      add(new THREE.BoxGeometry(2, height * 0.05, length * 0.46), trim, side * (half * 0.99 + 1), floor + height * 0.17, 0);
     }
   }
 
