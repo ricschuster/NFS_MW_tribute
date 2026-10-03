@@ -9,7 +9,7 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   on ribbon windows and glass towers, cornice, parapet and roof plant, ground
   floor piers and door canopies; sheds get ribs, canopies and bollards. Kinds:
   townhouse, loft, midrise, shop, flat, apartment, tower, warehouse (not
-  house, villa, manor or the landmarks). `lookshots.mjs` has a `terrace` shot.
+  house, villa, manor or the landmarks). `lookshots.mjs` has `terrace`, `skyline` and `roofs` (the chase camera lifted 7 m, since a car-height camera cannot see a cornice).
   First pass, judged on stills only; sills are faint and the roofline is not yet
   seen from any shot. Not a default.
 - **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:

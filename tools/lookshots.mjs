@@ -13,10 +13,12 @@ export const SHOTS = [
   { name: 'sunhaze', ref: 'Screenshot_20261003_050141.png', place: 'sunhaze', hour: 18, bearing: -0.8 },
   { name: 'terrace', ref: 'none', place: 'terrace', hour: 13 },
   { name: 'skyline', ref: 'none', place: 'skyline', hour: 13 },
+  // The same street from 7 m above the chase camera, for rooflines: a car-height camera cannot see a cornice.
+  { name: 'roofs', ref: 'none', place: 'terrace', hour: 13, lift: 7, back: 60 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
-export function place({ place, hour, bearing }) {
+export function place({ place, hour, bearing, lift, back }) {
   const { world } = globalThis.crosstown;
   const M = 135;
   const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
@@ -56,7 +58,7 @@ export function place({ place, hour, bearing }) {
     // (shops, flats, townhouses, lofts), seen from the road in front of it.
     const wall = city.setPieces.filter((p) => ['shop', 'flat', 'townhouse', 'loft', 'midrise', 'apartment'].includes(p.kind));
     const near = (p) => wall.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
-    approach(wall.sort((a, b) => near(b) - near(a))[0].at, 45);
+    approach(wall.sort((a, b) => near(b) - near(a))[0].at, back ?? 45);
   } else if (place === 'industrial') {
     // The silo with the most silos around it, then the road nearest them.
     const silos = city.setPieces.filter((p) => p.kind === 'silo');
@@ -157,4 +159,14 @@ export function place({ place, hour, bearing }) {
   globalThis.crosstown.view.director.started = false;
   for (let t = 0; t < 2; t += 1 / 60) world.step(1 / 60, none);
   world.hour = hour;
+  if (lift) {
+    // Wrap the director so its shot is raised, then looks down at the car.
+    const director = globalThis.crosstown.view.director;
+    const plain = director.update.bind(director);
+    director.update = (dt, w) => {
+      const shot = plain(dt, w);
+      shot.position.y += lift * M;
+      return shot;
+    };
+  }
 }

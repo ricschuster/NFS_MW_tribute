@@ -111,10 +111,11 @@ function street(parts: Part[], seed: number): Part[] {
   const units = 1 + Math.floor(hash(seed, 1) * 3);
   for (let i = 0; i < units; i++) {
     const ux = (hash(seed, 2 + i) - 0.5) * (w - 4);
-    const uz = (hash(seed, 7 + i) - 0.5) * (l - 4);
+    // The models put their own tanks and plant at the back (-z), so the kit keeps to the front.
+    const uz = hash(seed, 7 + i) * (l / 2 - 2);
     added.push(slab(PLANT, 1.6 + hash(seed, 11 + i) * 1.2, 1, 1.4, ux, top + 0.6 + 0.2, uz));
   }
-  if (hash(seed, 20) > 0.5 && w > 10) added.push(slab(TRIM_DARK, 2.6, 2.4, 2.6, w * 0.25, top + 1.3, -l * 0.25));
+  if (hash(seed, 20) > 0.5 && w > 10) added.push(slab(TRIM_DARK, 2.6, 2.4, 2.6, -w * 0.3, top + 1.3, l * 0.25));
 
   // Ground-floor piers along the front, and a canopy over each door.
   const groundTop = 3.4;
