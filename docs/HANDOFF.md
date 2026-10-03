@@ -3,7 +3,33 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-02, late; every area done, Marrow Field approved).**
+- **Start here (2026-10-02, night; the map is done, road tilt in review).**
+  - **Merged:** Marrow Field approved (#558), so every area on the map is
+    done; the previous handoff (#559).
+  - **Open, auto-merging:** #560, road pieces tilted across to the ground at
+    their edges (`piecesOf` / `tarmacAt` in `scene/cityscape.ts`, rendering
+    only; 7.4% of road edges under the grass down to 0.1%). Rebased on main,
+    typecheck and 767 tests pass. The earlier session's before/after shots
+    were unusable, so they were reshot at the four boulevards with the most
+    cross-fall: at the container port (`-1725,-2449,-47`) and a hillside
+    junction (`902,-1825,-11`), the saw-tooth of pavement and grass biting
+    into the tarmac is gone. The pairs are in the `visual-audit` worktree's
+    `screenshots/tilt2/` (git-ignored); the PR describes them.
+  - **A `cityshot --view at` flake:** two runs at the same `--at`
+    (`-799,1032,-45`) put the car in two different places, once on a
+    bridge and once on the waterfront. Shoot a pair twice before trusting it.
+  - **Waiting for the owner** (unchanged): the last heat-6 "neither" in
+    `endings` (a stopped car escapes 0.7 s past the probe's three minutes);
+    traffic downtown (1.71 civilians a second on screen against 0.60); #484's
+    moved road ends and the railway (#514), parked.
+  - **Worktrees:** `crosstown-main` (the served copy), `crosstown-marrow`
+    (#558 merged; removable), the railway draft, `visual-audit` (#560; its
+    `tools/_views.mjs` and `tools/_slopes.mjs` are scratch), and the merged
+    `endings-stalemates` and `fewer-pursuits` (removable). No dev servers.
+  - **Next, per the owner's order:** races: tune rival pace and speed-run
+    targets against #347's human pace, `RIVAL_CIRCUITS` beyond Rim and Quay,
+    then unpark #469 (collectibles).
+- **Earlier (2026-10-02, late; every area done, Marrow Field approved).**
   - **Merged:** haul trucks a real width (#555: `HAUL_TRUCK_GROWN` 1.5,
     9.6 x 15 m, their own `TRUCK_LANE` 5 m out; the real fault was two trucks
     on the spiral each holding back for the other for good; `drivers` keeps
