@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { LOOK_SWITCHES, NO_LOOK, parseLook } from './look';
+import { DEFAULT_LOOK, LOOK_SWITCHES, NO_LOOK, parseLook } from './look';
 
 describe('look switches (#579)', () => {
-  it('are all off unless asked for', () => {
-    expect(parseLook(null).size).toBe(0);
-    expect(parseLook('').size).toBe(0);
-    expect(parseLook(null)).toBe(NO_LOOK);
+  it('are all on by default, off for ?look=none', () => {
+    expect(parseLook(null)).toBe(DEFAULT_LOOK);
+    expect(parseLook('')).toBe(DEFAULT_LOOK);
+    expect(parseLook(null).size).toBe(LOOK_SWITCHES.length);
+    expect(parseLook('none')).toBe(NO_LOOK);
   });
 
   it('turn on by name, in any order', () => {

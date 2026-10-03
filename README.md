@@ -86,8 +86,7 @@ comparable between runs, and they are the quickest tour of the city:
 | `street` | Street level, looking down a downtown block to the bay. |
 | `bridge` | One of the three river crossings. |
 
-`&look=env,pbr` (or `all`) turns on look-development switches for
-the renderer, off by default (#579). The colour grade, sun shadows and AO are the look now, not switches. A switch whose phase of the look is not
+`&look=none` turns the look-development switches off for the plain city (they are all on by default, #579); `&look=env,pbr` picks some. The colour grade, sun shadows and AO are the look now, not switches. A switch whose phase of the look is not
 built yet does nothing. `npm run looksheet` and `npm run looktime` use them.
 
 ## Install it
