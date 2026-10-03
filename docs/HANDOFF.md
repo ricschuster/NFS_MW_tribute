@@ -3,6 +3,15 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, later): #580's cloud layer and tunnel interior merged
+  (#597); #581 slice one is #598** (ADR-0012, Asphalt 031 behind
+  `?look=materials`). `LOOK_SWITCHES` is env, pbr, materials; the owner has not
+  yet seen the car in motion, so ask before making any a default. Next:
+  concrete, brick and corrugated sets for buildings (`facades.ts`), procedural
+  weathering, wet roads after #585's weather state; a second shadow cascade only
+  if a low-sun frame needs it (dusk and sunhaze showed none). The tunnel tube is
+  `scene/tunnels.ts`: 7-8 m high because the chase camera is 6 m up, and it
+  stands proud of the riverbed, under the water.
 - **Start here (2026-10-03; #580 defaults chosen: grade, shadow, ao).**
   - **What changed:** the owner chose `grade`, `shadow` and `ao` as the look.
     They are no longer switches: `LOOK_SWITCHES` is `env`, `pbr`, and
