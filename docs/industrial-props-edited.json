@@ -1,7 +1,7 @@
 {
   "seed": "0x4b657374",
   "place": "Industrial",
-  "savedAt": "2026-10-01T16:58:16.087Z",
+  "savedAt": "2026-10-03T10:39:09.175Z",
   "props": [
     {
       "id": "w1",
@@ -286,14 +286,6 @@
       "variant": "small"
     },
     {
-      "id": "dw16",
-      "kind": "tank",
-      "x": 1482.6,
-      "z": -2139.5,
-      "angle": 0,
-      "variant": "small"
-    },
-    {
       "id": "dw17",
       "kind": "tank",
       "x": 1482.6,
@@ -356,13 +348,6 @@
       "angle": 0
     },
     {
-      "id": "dw25",
-      "kind": "chimney",
-      "x": 1586.9,
-      "z": -2220,
-      "angle": 0
-    },
-    {
       "id": "dw26",
       "kind": "warehouse",
       "x": 1496.1,
@@ -378,34 +363,11 @@
       "angle": 0
     },
     {
-      "id": "dw28",
-      "kind": "chimney",
-      "x": 1473.1,
-      "z": -2220,
-      "angle": 0
-    },
-    {
       "id": "dw29",
       "kind": "tank",
       "x": 1459.1,
       "z": -2206.2,
       "angle": 0,
-      "variant": "small"
-    },
-    {
-      "id": "dw30",
-      "kind": "tank",
-      "x": 1557.7,
-      "z": -2413.9,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
-      "id": "dw31",
-      "kind": "tank",
-      "x": 1555.7,
-      "z": -2432.8,
-      "angle": 0.105,
       "variant": "small"
     },
     {
@@ -421,14 +383,6 @@
       "kind": "tank",
       "x": 1576.5,
       "z": -2415.9,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
-      "id": "dw34",
-      "kind": "tank",
-      "x": 1574.6,
-      "z": -2434.8,
       "angle": 0.105,
       "variant": "small"
     },
@@ -449,22 +403,6 @@
       "variant": "small"
     },
     {
-      "id": "dw37",
-      "kind": "tank",
-      "x": 1593.5,
-      "z": -2436.8,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
-      "id": "dw38",
-      "kind": "tank",
-      "x": 1591.5,
-      "z": -2455.7,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
       "id": "dw39",
       "kind": "chimney",
       "x": 1607.7,
@@ -472,26 +410,10 @@
       "angle": 0.105
     },
     {
-      "id": "dw40",
-      "kind": "tank",
-      "x": 1495.9,
-      "z": -2457.7,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
       "id": "dw41",
       "kind": "tank",
       "x": 1493.9,
       "z": -2476.6,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
-      "id": "dw42",
-      "kind": "tank",
-      "x": 1491.9,
-      "z": -2495.5,
       "angle": 0.105,
       "variant": "small"
     },
@@ -528,14 +450,6 @@
       "variant": "small"
     },
     {
-      "id": "dw47",
-      "kind": "tank",
-      "x": 1456.1,
-      "z": -2472.6,
-      "angle": 0.105,
-      "variant": "small"
-    },
-    {
       "id": "dw48",
       "kind": "tank",
       "x": 1454.1,
@@ -566,14 +480,6 @@
       "angle": 0.1
     },
     {
-      "id": "dw52",
-      "kind": "tank",
-      "x": 1589.4,
-      "z": -2518.9,
-      "angle": 0.1,
-      "variant": "small"
-    },
-    {
       "id": "dw53",
       "kind": "warehouse",
       "x": 1478.8,
@@ -593,14 +499,6 @@
       "kind": "tank",
       "x": 1478.7,
       "z": -2627.5,
-      "angle": 0.1,
-      "variant": "small"
-    },
-    {
-      "id": "dw56",
-      "kind": "tank",
-      "x": 1476.8,
-      "z": -2646.4,
       "angle": 0.1,
       "variant": "small"
     },
@@ -675,13 +573,6 @@
       "angle": 0.033
     },
     {
-      "id": "dw66",
-      "kind": "chimney",
-      "x": 1528.7,
-      "z": -2687.8,
-      "angle": 0.033
-    },
-    {
       "id": "dw67",
       "kind": "tank",
       "x": 1549.6,
@@ -702,20 +593,6 @@
       "kind": "chimney",
       "x": 1478,
       "z": -2712.1,
-      "angle": 0.033
-    },
-    {
-      "id": "dw70",
-      "kind": "chimney",
-      "x": 1477.2,
-      "z": -2736.1,
-      "angle": 0.033
-    },
-    {
-      "id": "dw71",
-      "kind": "chimney",
-      "x": 1463.6,
-      "z": -2723.7,
       "angle": 0.033
     },
     {
@@ -816,13 +693,6 @@
       "kind": "chimney",
       "x": 1809.2,
       "z": -2857.7,
-      "angle": 2.678
-    },
-    {
-      "id": "dw85",
-      "kind": "chimney",
-      "x": 1800.2,
-      "z": -2839.8,
       "angle": 2.678
     },
     {
@@ -986,41 +856,12 @@
       "angle": 2.926
     },
     {
-      "id": "dw107",
-      "kind": "chimney",
-      "x": 1683.9,
-      "z": -2869.4,
-      "angle": 2.926
-    },
-    {
-      "id": "dw108",
-      "kind": "tank",
-      "x": 1669.6,
-      "z": -2869.8,
-      "angle": 2.926,
-      "variant": "small"
-    },
-    {
       "id": "dw109",
       "kind": "warehouse",
       "x": 1798.9,
       "z": -2960.7,
       "angle": 2.9,
       "variant": "small"
-    },
-    {
-      "id": "dw110",
-      "kind": "chimney",
-      "x": 1818.8,
-      "z": -2945.5,
-      "angle": 2.9
-    },
-    {
-      "id": "dw111",
-      "kind": "chimney",
-      "x": 1823.6,
-      "z": -2964.9,
-      "angle": 2.9
     },
     {
       "id": "dw112",
@@ -1035,13 +876,6 @@
       "kind": "chimney",
       "x": 1696.3,
       "z": -2924.2,
-      "angle": 2.9
-    },
-    {
-      "id": "dw114",
-      "kind": "chimney",
-      "x": 1701.1,
-      "z": -2943.6,
       "angle": 2.9
     },
     {
@@ -1090,20 +924,6 @@
       "angle": 2.342
     },
     {
-      "id": "dw121",
-      "kind": "chimney",
-      "x": 2236.2,
-      "z": -1937.7,
-      "angle": 2.342
-    },
-    {
-      "id": "dw122",
-      "kind": "chimney",
-      "x": 2217.8,
-      "z": -1939.3,
-      "angle": 2.342
-    },
-    {
       "id": "dw123",
       "kind": "tank",
       "x": 2202.1,
@@ -1127,28 +947,6 @@
       "angle": 2.37
     },
     {
-      "id": "dw126",
-      "kind": "chimney",
-      "x": 2305.7,
-      "z": -1937.1,
-      "angle": 2.37
-    },
-    {
-      "id": "dw127",
-      "kind": "chimney",
-      "x": 2307.3,
-      "z": -1918.8,
-      "angle": 2.37
-    },
-    {
-      "id": "dw128",
-      "kind": "tank",
-      "x": 2300.5,
-      "z": -1903.1,
-      "angle": 2.37,
-      "variant": "small"
-    },
-    {
       "id": "dw129",
       "kind": "tank",
       "x": 2322.8,
@@ -1165,55 +963,11 @@
       "variant": "small"
     },
     {
-      "id": "dw131",
-      "kind": "chimney",
-      "x": 2285,
-      "z": -1821.5,
-      "angle": 2.356
-    },
-    {
-      "id": "dw132",
-      "kind": "chimney",
-      "x": 2299.2,
-      "z": -1835.7,
-      "angle": 2.356
-    },
-    {
       "id": "dw133",
       "kind": "chimney",
       "x": 2361.9,
       "z": -1782.8,
       "angle": 2.347
-    },
-    {
-      "id": "dw134",
-      "kind": "chimney",
-      "x": 2379,
-      "z": -1799.6,
-      "angle": 2.347
-    },
-    {
-      "id": "dw135",
-      "kind": "chimney",
-      "x": 2380.3,
-      "z": -1781.2,
-      "angle": 2.347
-    },
-    {
-      "id": "dw136",
-      "kind": "tank",
-      "x": 2373.1,
-      "z": -1765.7,
-      "angle": 2.347,
-      "variant": "small"
-    },
-    {
-      "id": "dw137",
-      "kind": "tank",
-      "x": 2395.9,
-      "z": -1788.2,
-      "angle": 2.347,
-      "variant": "small"
     },
     {
       "id": "dw138",
@@ -1267,22 +1021,6 @@
       "kind": "tank",
       "x": 1962.3,
       "z": -2077.3,
-      "angle": 0.093,
-      "variant": "small"
-    },
-    {
-      "id": "dw145",
-      "kind": "tank",
-      "x": 1960.6,
-      "z": -2096.2,
-      "angle": 0.093,
-      "variant": "small"
-    },
-    {
-      "id": "dw146",
-      "kind": "tank",
-      "x": 1983,
-      "z": -2060.2,
       "angle": 0.093,
       "variant": "small"
     },
@@ -1341,20 +1079,6 @@
       "angle": 0.093
     },
     {
-      "id": "dw154",
-      "kind": "chimney",
-      "x": 1910.4,
-      "z": -2059.4,
-      "angle": 0.093
-    },
-    {
-      "id": "dw155",
-      "kind": "chimney",
-      "x": 1897.6,
-      "z": -2046.2,
-      "angle": 0.093
-    },
-    {
       "id": "dw156",
       "kind": "tank",
       "x": 1893.1,
@@ -1363,129 +1087,10 @@
       "variant": "small"
     },
     {
-      "id": "dw157",
-      "kind": "tank",
-      "x": 1890.1,
-      "z": -2061.5,
-      "angle": 0.093,
-      "variant": "small"
-    },
-    {
-      "id": "dw158",
-      "kind": "rails",
-      "x": 1905.9,
-      "z": -2103.9,
-      "angle": 0.04
-    },
-    {
-      "id": "dw159",
-      "kind": "rails",
-      "x": 1904.3,
-      "z": -2143.9,
-      "angle": 0.04
-    },
-    {
-      "id": "dw160",
-      "kind": "wagon",
-      "x": 1905.7,
-      "z": -2107.9,
-      "angle": 0.04,
-      "variant": "box"
-    },
-    {
-      "id": "dw161",
-      "kind": "wagon",
-      "x": 1905.1,
-      "z": -2123.9,
-      "angle": 0.04,
-      "variant": "box"
-    },
-    {
-      "id": "dw162",
-      "kind": "rails",
-      "x": 1898.9,
-      "z": -2103.6,
-      "angle": 0.04
-    },
-    {
-      "id": "dw163",
-      "kind": "rails",
-      "x": 1897.3,
-      "z": -2143.6,
-      "angle": 0.04
-    },
-    {
-      "id": "dw164",
-      "kind": "wagon",
-      "x": 1898.7,
-      "z": -2107.6,
-      "angle": 0.04,
-      "variant": "tank"
-    },
-    {
-      "id": "dw165",
-      "kind": "wagon",
-      "x": 1896.8,
-      "z": -2155.6,
-      "angle": 0.04,
-      "variant": "box"
-    },
-    {
-      "id": "dw166",
-      "kind": "rails",
-      "x": 1891.9,
-      "z": -2103.3,
-      "angle": 0.04
-    },
-    {
-      "id": "dw167",
-      "kind": "rails",
-      "x": 1890.3,
-      "z": -2143.3,
-      "angle": 0.04
-    },
-    {
-      "id": "dw168",
-      "kind": "wagon",
-      "x": 1891.7,
-      "z": -2107.3,
-      "angle": 0.04,
-      "variant": "box"
-    },
-    {
-      "id": "dw169",
-      "kind": "wagon",
-      "x": 1889.8,
-      "z": -2155.3,
-      "angle": 0.04,
-      "variant": "tank"
-    },
-    {
-      "id": "dw170",
-      "kind": "gantry",
-      "x": 1897.5,
-      "z": -2137.1,
-      "angle": 0.04
-    },
-    {
       "id": "dw171",
       "kind": "chimney",
       "x": 1955.4,
       "z": -2137,
-      "angle": 3.102
-    },
-    {
-      "id": "dw172",
-      "kind": "chimney",
-      "x": 1956.4,
-      "z": -2161,
-      "angle": 3.102
-    },
-    {
-      "id": "dw173",
-      "kind": "chimney",
-      "x": 1969.9,
-      "z": -2148.4,
       "angle": 3.102
     },
     {
@@ -1520,13 +1125,6 @@
       "angle": 3.102
     },
     {
-      "id": "dw178",
-      "kind": "chimney",
-      "x": 1991.3,
-      "z": -2232.7,
-      "angle": 3.102
-    },
-    {
       "id": "dw179",
       "kind": "tank",
       "x": 2004.9,
@@ -1540,21 +1138,6 @@
       "x": 1910.2,
       "z": -2239.9,
       "angle": 3.062
-    },
-    {
-      "id": "dw181",
-      "kind": "chimney",
-      "x": 1912.1,
-      "z": -2263.9,
-      "angle": 3.062
-    },
-    {
-      "id": "dw182",
-      "kind": "tank",
-      "x": 1889.9,
-      "z": -2237.6,
-      "angle": 3.062,
-      "variant": "small"
     },
     {
       "id": "dw183",
@@ -1643,13 +1226,6 @@
       "angle": 3.128
     },
     {
-      "id": "dw194",
-      "kind": "chimney",
-      "x": 2448.7,
-      "z": -2134.2,
-      "angle": 3.128
-    },
-    {
       "id": "dw195",
       "kind": "tank",
       "x": 2462.6,
@@ -1712,13 +1288,6 @@
       "angle": 0.013
     },
     {
-      "id": "dw203",
-      "kind": "chimney",
-      "x": 2447.1,
-      "z": -2285.8,
-      "angle": 0.013
-    },
-    {
       "id": "dw204",
       "kind": "warehouse",
       "x": 2356.1,
@@ -1731,13 +1300,6 @@
       "kind": "chimney",
       "x": 2333.2,
       "z": -2289.2,
-      "angle": 0.013
-    },
-    {
-      "id": "dw206",
-      "kind": "chimney",
-      "x": 2332.9,
-      "z": -2309.2,
       "angle": 0.013
     },
     {
@@ -1764,110 +1326,12 @@
       "angle": 0.025
     },
     {
-      "id": "dw210",
-      "kind": "chimney",
-      "x": 2621,
-      "z": -1873.6,
-      "angle": 0.025
-    },
-    {
       "id": "dw211",
       "kind": "tank",
       "x": 2607,
       "z": -1869.7,
       "angle": 0.025,
       "variant": "small"
-    },
-    {
-      "id": "dw212",
-      "kind": "rails",
-      "x": 2704.1,
-      "z": -1905.7,
-      "angle": 0.025
-    },
-    {
-      "id": "dw213",
-      "kind": "rails",
-      "x": 2705.1,
-      "z": -1865.7,
-      "angle": 0.025
-    },
-    {
-      "id": "dw214",
-      "kind": "wagon",
-      "x": 2703.8,
-      "z": -1917.7,
-      "angle": 0.025,
-      "variant": "tank"
-    },
-    {
-      "id": "dw215",
-      "kind": "wagon",
-      "x": 2704.2,
-      "z": -1901.7,
-      "angle": 0.025,
-      "variant": "tank"
-    },
-    {
-      "id": "dw216",
-      "kind": "wagon",
-      "x": 2705.4,
-      "z": -1853.7,
-      "angle": 0.025,
-      "variant": "tank"
-    },
-    {
-      "id": "dw217",
-      "kind": "rails",
-      "x": 2711.1,
-      "z": -1905.8,
-      "angle": 0.025
-    },
-    {
-      "id": "dw218",
-      "kind": "rails",
-      "x": 2712.1,
-      "z": -1865.9,
-      "angle": 0.025
-    },
-    {
-      "id": "dw219",
-      "kind": "wagon",
-      "x": 2710.8,
-      "z": -1917.8,
-      "angle": 0.025,
-      "variant": "box"
-    },
-    {
-      "id": "dw220",
-      "kind": "wagon",
-      "x": 2711.2,
-      "z": -1901.9,
-      "angle": 0.025,
-      "variant": "tank"
-    },
-    {
-      "id": "dw221",
-      "kind": "wagon",
-      "x": 2711.6,
-      "z": -1885.9,
-      "angle": 0.025,
-      "variant": "tank"
-    },
-    {
-      "id": "dw222",
-      "kind": "wagon",
-      "x": 2712,
-      "z": -1869.9,
-      "angle": 0.025,
-      "variant": "box"
-    },
-    {
-      "id": "dw223",
-      "kind": "gantry",
-      "x": 2708.2,
-      "z": -1880.5,
-      "angle": 0.025
     },
     {
       "id": "dw224",
@@ -1885,25 +1349,10 @@
       "angle": 3.092
     },
     {
-      "id": "dw226",
-      "kind": "chimney",
-      "x": 2618.4,
-      "z": -1797.9,
-      "angle": 3.092
-    },
-    {
       "id": "dw227",
       "kind": "tank",
       "x": 2605.5,
       "z": -1820.9,
-      "angle": 3.092,
-      "variant": "small"
-    },
-    {
-      "id": "dw228",
-      "kind": "tank",
-      "x": 2705.1,
-      "z": -1822.6,
       "angle": 3.092,
       "variant": "small"
     },
@@ -2011,14 +1460,6 @@
       "variant": "small"
     },
     {
-      "id": "dw242",
-      "kind": "tank",
-      "x": 2086.2,
-      "z": -2201.6,
-      "angle": 0.861,
-      "variant": "small"
-    },
-    {
       "id": "dw243",
       "kind": "tank",
       "x": 2071.8,
@@ -2058,132 +1499,6 @@
       "angle": 0.861
     },
     {
-      "id": "dw248",
-      "kind": "rails",
-      "x": 2110.6,
-      "z": -2278.3,
-      "angle": 0.909
-    },
-    {
-      "id": "dw249",
-      "kind": "rails",
-      "x": 2079.1,
-      "z": -2302.9,
-      "angle": 0.909
-    },
-    {
-      "id": "dw250",
-      "kind": "wagon",
-      "x": 2120.1,
-      "z": -2270.9,
-      "angle": 0.909,
-      "variant": "box"
-    },
-    {
-      "id": "dw251",
-      "kind": "wagon",
-      "x": 2082.2,
-      "z": -2300.5,
-      "angle": 0.909,
-      "variant": "tank"
-    },
-    {
-      "id": "dw252",
-      "kind": "rails",
-      "x": 2114.9,
-      "z": -2283.8,
-      "angle": 0.909
-    },
-    {
-      "id": "dw253",
-      "kind": "rails",
-      "x": 2083.4,
-      "z": -2308.4,
-      "angle": 0.909
-    },
-    {
-      "id": "dw254",
-      "kind": "wagon",
-      "x": 2111.8,
-      "z": -2286.3,
-      "angle": 0.909,
-      "variant": "box"
-    },
-    {
-      "id": "dw255",
-      "kind": "wagon",
-      "x": 2099.2,
-      "z": -2296.1,
-      "angle": 0.909,
-      "variant": "box"
-    },
-    {
-      "id": "dw256",
-      "kind": "gantry",
-      "x": 2090.1,
-      "z": -2298.8,
-      "angle": 0.909
-    },
-    {
-      "id": "dw257",
-      "kind": "rails",
-      "x": 2031.2,
-      "z": -2339.6,
-      "angle": 0.927
-    },
-    {
-      "id": "dw258",
-      "kind": "rails",
-      "x": 1999.2,
-      "z": -2363.6,
-      "angle": 0.927
-    },
-    {
-      "id": "dw259",
-      "kind": "wagon",
-      "x": 2002.4,
-      "z": -2361.2,
-      "angle": 0.927,
-      "variant": "tank"
-    },
-    {
-      "id": "dw260",
-      "kind": "rails",
-      "x": 2035.4,
-      "z": -2345.2,
-      "angle": 0.927
-    },
-    {
-      "id": "dw261",
-      "kind": "rails",
-      "x": 2003.4,
-      "z": -2369.2,
-      "angle": 0.927
-    },
-    {
-      "id": "dw262",
-      "kind": "wagon",
-      "x": 2045,
-      "z": -2338,
-      "angle": 0.927,
-      "variant": "box"
-    },
-    {
-      "id": "dw263",
-      "kind": "wagon",
-      "x": 1993.8,
-      "z": -2376.4,
-      "angle": 0.927,
-      "variant": "box"
-    },
-    {
-      "id": "dw264",
-      "kind": "gantry",
-      "x": 2006.5,
-      "z": -2362.4,
-      "angle": 0.927
-    },
-    {
       "id": "dw265",
       "kind": "warehouse",
       "x": 1918.6,
@@ -2199,104 +1514,6 @@
       "angle": 0.975
     },
     {
-      "id": "dw267",
-      "kind": "chimney",
-      "x": 1897.4,
-      "z": -2331.5,
-      "angle": 0.975
-    },
-    {
-      "id": "dw268",
-      "kind": "rails",
-      "x": 2456.5,
-      "z": -2385.1,
-      "angle": 1.432
-    },
-    {
-      "id": "dw269",
-      "kind": "rails",
-      "x": 2496.1,
-      "z": -2379.5,
-      "angle": 1.432
-    },
-    {
-      "id": "dw270",
-      "kind": "wagon",
-      "x": 2444.6,
-      "z": -2386.8,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw271",
-      "kind": "wagon",
-      "x": 2460.4,
-      "z": -2384.5,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw272",
-      "kind": "wagon",
-      "x": 2492.1,
-      "z": -2380.1,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw273",
-      "kind": "wagon",
-      "x": 2508,
-      "z": -2377.9,
-      "angle": 1.432,
-      "variant": "tank"
-    },
-    {
-      "id": "dw274",
-      "kind": "rails",
-      "x": 2455.5,
-      "z": -2378.2,
-      "angle": 1.432
-    },
-    {
-      "id": "dw275",
-      "kind": "rails",
-      "x": 2495.1,
-      "z": -2372.6,
-      "angle": 1.432
-    },
-    {
-      "id": "dw276",
-      "kind": "wagon",
-      "x": 2443.6,
-      "z": -2379.8,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw277",
-      "kind": "wagon",
-      "x": 2459.4,
-      "z": -2377.6,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw278",
-      "kind": "wagon",
-      "x": 2507,
-      "z": -2371,
-      "angle": 1.432,
-      "variant": "box"
-    },
-    {
-      "id": "dw279",
-      "kind": "gantry",
-      "x": 2473,
-      "z": -2379.2,
-      "angle": 1.432
-    },
-    {
       "id": "dw280",
       "kind": "warehouse",
       "x": 2301.1,
@@ -2309,13 +1526,6 @@
       "kind": "chimney",
       "x": 2304.9,
       "z": -2637,
-      "angle": 1.825
-    },
-    {
-      "id": "dw282",
-      "kind": "chimney",
-      "x": 2285.6,
-      "z": -2632,
       "angle": 1.825
     },
     {
@@ -2349,28 +1559,6 @@
       "angle": 1.787
     },
     {
-      "id": "dw287",
-      "kind": "chimney",
-      "x": 2278.6,
-      "z": -2546.1,
-      "angle": 1.787
-    },
-    {
-      "id": "dw288",
-      "kind": "chimney",
-      "x": 2293.3,
-      "z": -2535,
-      "angle": 1.787
-    },
-    {
-      "id": "dw289",
-      "kind": "tank",
-      "x": 2310.3,
-      "z": -2532.5,
-      "angle": 1.787,
-      "variant": "small"
-    },
-    {
       "id": "dw290",
       "kind": "tank",
       "x": 2279,
@@ -2391,13 +1579,6 @@
       "kind": "chimney",
       "x": 2105.1,
       "z": -2483.7,
-      "angle": 1.69
-    },
-    {
-      "id": "dw293",
-      "kind": "chimney",
-      "x": 2085.2,
-      "z": -2481.3,
       "angle": 1.69
     },
     {
@@ -2424,13 +1605,6 @@
       "angle": 2.576
     },
     {
-      "id": "dw297",
-      "kind": "chimney",
-      "x": 2070.8,
-      "z": -2769.9,
-      "angle": 2.576
-    },
-    {
       "id": "dw298",
       "kind": "warehouse",
       "x": 2152.9,
@@ -2444,21 +1618,6 @@
       "x": 2177.6,
       "z": -2725.7,
       "angle": 2.576
-    },
-    {
-      "id": "dw300",
-      "kind": "chimney",
-      "x": 2166.9,
-      "z": -2708.8,
-      "angle": 2.576
-    },
-    {
-      "id": "dw301",
-      "kind": "tank",
-      "x": 1982.4,
-      "z": -2598.5,
-      "angle": 2.469,
-      "variant": "small"
     },
     {
       "id": "dw302",
@@ -2501,14 +1660,6 @@
       "variant": "small"
     },
     {
-      "id": "dw307",
-      "kind": "tank",
-      "x": 1952.7,
-      "z": -2622.1,
-      "angle": 2.469,
-      "variant": "small"
-    },
-    {
       "id": "dw308",
       "kind": "tank",
       "x": 1940.9,
@@ -2540,33 +1691,10 @@
       "angle": 2.469
     },
     {
-      "id": "dw312",
-      "kind": "chimney",
-      "x": 2046.7,
-      "z": -2542.1,
-      "angle": 2.469
-    },
-    {
-      "id": "dw313",
-      "kind": "tank",
-      "x": 2034.6,
-      "z": -2839.9,
-      "angle": 2.413,
-      "variant": "small"
-    },
-    {
       "id": "dw314",
       "kind": "tank",
       "x": 2021.9,
       "z": -2825.8,
-      "angle": 2.413,
-      "variant": "small"
-    },
-    {
-      "id": "dw315",
-      "kind": "tank",
-      "x": 2009.3,
-      "z": -2811.6,
       "angle": 2.413,
       "variant": "small"
     },
@@ -2579,34 +1707,10 @@
       "variant": "small"
     },
     {
-      "id": "dw317",
-      "kind": "tank",
-      "x": 2036.1,
-      "z": -2813.1,
-      "angle": 2.413,
-      "variant": "small"
-    },
-    {
       "id": "dw318",
       "kind": "tank",
       "x": 2023.4,
       "z": -2798.9,
-      "angle": 2.413,
-      "variant": "small"
-    },
-    {
-      "id": "dw319",
-      "kind": "tank",
-      "x": 2062.9,
-      "z": -2814.6,
-      "angle": 2.413,
-      "variant": "small"
-    },
-    {
-      "id": "dw320",
-      "kind": "tank",
-      "x": 2050.3,
-      "z": -2800.5,
       "angle": 2.413,
       "variant": "small"
     },
@@ -2619,40 +1723,11 @@
       "variant": "small"
     },
     {
-      "id": "dw322",
-      "kind": "chimney",
-      "x": 2051.1,
-      "z": -2778.2,
-      "angle": 2.413
-    },
-    {
       "id": "dw323",
       "kind": "chimney",
       "x": 1939.7,
       "z": -2815.9,
       "angle": 2.375
-    },
-    {
-      "id": "dw324",
-      "kind": "chimney",
-      "x": 1923,
-      "z": -2798.6,
-      "angle": 2.375
-    },
-    {
-      "id": "dw325",
-      "kind": "chimney",
-      "x": 1921.3,
-      "z": -2817,
-      "angle": 2.375
-    },
-    {
-      "id": "dw326",
-      "kind": "tank",
-      "x": 1928,
-      "z": -2832.7,
-      "angle": 2.375,
-      "variant": "small"
     },
     {
       "id": "dw327",
@@ -2670,25 +1745,10 @@
       "angle": 2.375
     },
     {
-      "id": "dw329",
-      "kind": "chimney",
-      "x": 1959,
-      "z": -2764,
-      "angle": 2.375
-    },
-    {
       "id": "dw330",
       "kind": "tank",
       "x": 1992.8,
       "z": -2770.3,
-      "angle": 2.375,
-      "variant": "small"
-    },
-    {
-      "id": "dw331",
-      "kind": "tank",
-      "x": 1970.6,
-      "z": -2747.3,
       "angle": 2.375,
       "variant": "small"
     },
@@ -2708,108 +1768,10 @@
       "angle": 2.337
     },
     {
-      "id": "dw334",
-      "kind": "rails",
-      "x": 2056.7,
-      "z": -2054.7,
-      "angle": 0.009
-    },
-    {
-      "id": "dw335",
-      "kind": "rails",
-      "x": 2056.3,
-      "z": -2094.7,
-      "angle": 0.009
-    },
-    {
-      "id": "dw336",
-      "kind": "wagon",
-      "x": 2056.8,
-      "z": -2042.7,
-      "angle": 0.009,
-      "variant": "tank"
-    },
-    {
-      "id": "dw337",
-      "kind": "wagon",
-      "x": 2056.6,
-      "z": -2058.7,
-      "angle": 0.009,
-      "variant": "box"
-    },
-    {
-      "id": "dw338",
-      "kind": "wagon",
-      "x": 2056.5,
-      "z": -2074.7,
-      "angle": 0.009,
-      "variant": "box"
-    },
-    {
-      "id": "dw339",
-      "kind": "wagon",
-      "x": 2056.3,
-      "z": -2090.7,
-      "angle": 0.009,
-      "variant": "tank"
-    },
-    {
-      "id": "dw340",
-      "kind": "wagon",
-      "x": 2056.2,
-      "z": -2106.7,
-      "angle": 0.009,
-      "variant": "box"
-    },
-    {
-      "id": "dw341",
-      "kind": "rails",
-      "x": 2049.7,
-      "z": -2054.7,
-      "angle": 0.009
-    },
-    {
-      "id": "dw342",
-      "kind": "rails",
-      "x": 2049.3,
-      "z": -2094.7,
-      "angle": 0.009
-    },
-    {
-      "id": "dw343",
-      "kind": "wagon",
-      "x": 2049.5,
-      "z": -2074.7,
-      "angle": 0.009,
-      "variant": "box"
-    },
-    {
-      "id": "dw344",
-      "kind": "wagon",
-      "x": 2049.2,
-      "z": -2106.7,
-      "angle": 0.009,
-      "variant": "box"
-    },
-    {
-      "id": "dw345",
-      "kind": "gantry",
-      "x": 2052.9,
-      "z": -2087.9,
-      "angle": 0.009
-    },
-    {
       "id": "dw346",
       "kind": "chimney",
       "x": 2165.1,
       "z": -2168.9,
-      "angle": 2.491
-    },
-    {
-      "id": "dw347",
-      "kind": "chimney",
-      "x": 2179.6,
-      "z": -2188,
       "angle": 2.491
     },
     {
@@ -2836,25 +1798,10 @@
       "angle": 2.49
     },
     {
-      "id": "dw351",
-      "kind": "chimney",
-      "x": 2299.3,
-      "z": -2443.1,
-      "angle": 2.49
-    },
-    {
       "id": "dw352",
       "kind": "tank",
       "x": 2266.4,
       "z": -2432.9,
-      "angle": 2.49,
-      "variant": "small"
-    },
-    {
-      "id": "dw353",
-      "kind": "tank",
-      "x": 2285.8,
-      "z": -2458.4,
       "angle": 2.49,
       "variant": "small"
     },
@@ -2889,308 +1836,6 @@
       "angle": 2.929
     },
     {
-      "id": "dw358",
-      "kind": "chimney",
-      "x": 2424,
-      "z": -2563.9,
-      "angle": 2.929
-    },
-    {
-      "id": "dw359",
-      "kind": "rails",
-      "x": 2381.8,
-      "z": -2664.3,
-      "angle": 0.951
-    },
-    {
-      "id": "dw360",
-      "kind": "rails",
-      "x": 2349.3,
-      "z": -2687.6,
-      "angle": 0.951
-    },
-    {
-      "id": "dw361",
-      "kind": "wagon",
-      "x": 2352.5,
-      "z": -2685.2,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw362",
-      "kind": "wagon",
-      "x": 2339.5,
-      "z": -2694.5,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw363",
-      "kind": "rails",
-      "x": 2385.9,
-      "z": -2670,
-      "angle": 0.951
-    },
-    {
-      "id": "dw364",
-      "kind": "rails",
-      "x": 2353.3,
-      "z": -2693.3,
-      "angle": 0.951
-    },
-    {
-      "id": "dw365",
-      "kind": "wagon",
-      "x": 2382.6,
-      "z": -2672.3,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw366",
-      "kind": "wagon",
-      "x": 2369.6,
-      "z": -2681.6,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw367",
-      "kind": "wagon",
-      "x": 2343.6,
-      "z": -2700.2,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw368",
-      "kind": "rails",
-      "x": 2389.9,
-      "z": -2675.7,
-      "angle": 0.951
-    },
-    {
-      "id": "dw369",
-      "kind": "rails",
-      "x": 2357.4,
-      "z": -2699,
-      "angle": 0.951
-    },
-    {
-      "id": "dw370",
-      "kind": "wagon",
-      "x": 2399.7,
-      "z": -2668.7,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw371",
-      "kind": "wagon",
-      "x": 2386.7,
-      "z": -2678,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw372",
-      "kind": "wagon",
-      "x": 2373.7,
-      "z": -2687.3,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw373",
-      "kind": "wagon",
-      "x": 2360.6,
-      "z": -2696.6,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw374",
-      "kind": "gantry",
-      "x": 2381.3,
-      "z": -2673.3,
-      "angle": 0.951
-    },
-    {
-      "id": "dw375",
-      "kind": "rails",
-      "x": 2300.4,
-      "z": -2722.4,
-      "angle": 0.951
-    },
-    {
-      "id": "dw376",
-      "kind": "rails",
-      "x": 2267.9,
-      "z": -2745.7,
-      "angle": 0.951
-    },
-    {
-      "id": "dw377",
-      "kind": "wagon",
-      "x": 2310.2,
-      "z": -2715.5,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw378",
-      "kind": "wagon",
-      "x": 2297.2,
-      "z": -2724.8,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw379",
-      "kind": "wagon",
-      "x": 2284.2,
-      "z": -2734.1,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw380",
-      "kind": "rails",
-      "x": 2304.5,
-      "z": -2728.1,
-      "angle": 0.951
-    },
-    {
-      "id": "dw381",
-      "kind": "rails",
-      "x": 2271.9,
-      "z": -2751.4,
-      "angle": 0.951
-    },
-    {
-      "id": "dw382",
-      "kind": "wagon",
-      "x": 2314.3,
-      "z": -2721.2,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw383",
-      "kind": "wagon",
-      "x": 2301.2,
-      "z": -2730.5,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw384",
-      "kind": "wagon",
-      "x": 2275.2,
-      "z": -2749.1,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw385",
-      "kind": "gantry",
-      "x": 2289.3,
-      "z": -2734.7,
-      "angle": 0.951
-    },
-    {
-      "id": "dw386",
-      "kind": "rails",
-      "x": 2219.1,
-      "z": -2780.6,
-      "angle": 0.951
-    },
-    {
-      "id": "dw387",
-      "kind": "rails",
-      "x": 2186.5,
-      "z": -2803.8,
-      "angle": 0.951
-    },
-    {
-      "id": "dw388",
-      "kind": "wagon",
-      "x": 2228.8,
-      "z": -2773.6,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw389",
-      "kind": "wagon",
-      "x": 2215.8,
-      "z": -2782.9,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw390",
-      "kind": "wagon",
-      "x": 2202.8,
-      "z": -2792.2,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw391",
-      "kind": "wagon",
-      "x": 2176.7,
-      "z": -2810.8,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw392",
-      "kind": "rails",
-      "x": 2223.1,
-      "z": -2786.3,
-      "angle": 0.951
-    },
-    {
-      "id": "dw393",
-      "kind": "rails",
-      "x": 2190.6,
-      "z": -2809.5,
-      "angle": 0.951
-    },
-    {
-      "id": "dw394",
-      "kind": "wagon",
-      "x": 2232.9,
-      "z": -2779.3,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw395",
-      "kind": "wagon",
-      "x": 2219.9,
-      "z": -2788.6,
-      "angle": 0.951,
-      "variant": "box"
-    },
-    {
-      "id": "dw396",
-      "kind": "wagon",
-      "x": 2180.8,
-      "z": -2816.5,
-      "angle": 0.951,
-      "variant": "tank"
-    },
-    {
-      "id": "dw397",
-      "kind": "gantry",
-      "x": 2206,
-      "z": -2794.2,
-      "angle": 0.951
-    },
-    {
       "id": "dw398",
       "kind": "chimney",
       "x": 2237.7,
@@ -3198,32 +1843,10 @@
       "angle": 0.951
     },
     {
-      "id": "dw399",
-      "kind": "chimney",
-      "x": 2218.2,
-      "z": -2705.3,
-      "angle": 0.951
-    },
-    {
-      "id": "dw400",
-      "kind": "chimney",
-      "x": 2219.8,
-      "z": -2687,
-      "angle": 0.951
-    },
-    {
       "id": "dw401",
       "kind": "tank",
       "x": 2229.3,
       "z": -2672.8,
-      "angle": 0.951,
-      "variant": "small"
-    },
-    {
-      "id": "dw402",
-      "kind": "tank",
-      "x": 2203.3,
-      "z": -2691.4,
       "angle": 0.951,
       "variant": "small"
     },
@@ -3251,135 +1874,6 @@
       "variant": "small"
     },
     {
-      "id": "dw406",
-      "kind": "rails",
-      "x": 2070.6,
-      "z": -2890.9,
-      "angle": 0.8
-    },
-    {
-      "id": "dw407",
-      "kind": "rails",
-      "x": 2041.8,
-      "z": -2918.8,
-      "angle": 0.8
-    },
-    {
-      "id": "dw408",
-      "kind": "wagon",
-      "x": 2079.2,
-      "z": -2882.6,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw409",
-      "kind": "wagon",
-      "x": 2044.7,
-      "z": -2916,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw410",
-      "kind": "rails",
-      "x": 2075.4,
-      "z": -2896,
-      "angle": 0.8
-    },
-    {
-      "id": "dw411",
-      "kind": "rails",
-      "x": 2046.7,
-      "z": -2923.8,
-      "angle": 0.8
-    },
-    {
-      "id": "dw412",
-      "kind": "wagon",
-      "x": 2084,
-      "z": -2887.6,
-      "angle": 0.8,
-      "variant": "box"
-    },
-    {
-      "id": "dw413",
-      "kind": "wagon",
-      "x": 2072.6,
-      "z": -2898.8,
-      "angle": 0.8,
-      "variant": "box"
-    },
-    {
-      "id": "dw414",
-      "kind": "wagon",
-      "x": 2061.1,
-      "z": -2909.9,
-      "angle": 0.8,
-      "variant": "box"
-    },
-    {
-      "id": "dw415",
-      "kind": "wagon",
-      "x": 2049.6,
-      "z": -2921,
-      "angle": 0.8,
-      "variant": "box"
-    },
-    {
-      "id": "dw416",
-      "kind": "wagon",
-      "x": 2038.1,
-      "z": -2932.2,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw417",
-      "kind": "rails",
-      "x": 2080.3,
-      "z": -2901,
-      "angle": 0.8
-    },
-    {
-      "id": "dw418",
-      "kind": "rails",
-      "x": 2051.6,
-      "z": -2928.9,
-      "angle": 0.8
-    },
-    {
-      "id": "dw419",
-      "kind": "wagon",
-      "x": 2088.9,
-      "z": -2892.6,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw420",
-      "kind": "wagon",
-      "x": 2065.9,
-      "z": -2914.9,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw421",
-      "kind": "wagon",
-      "x": 2054.5,
-      "z": -2926.1,
-      "angle": 0.8,
-      "variant": "tank"
-    },
-    {
-      "id": "dw422",
-      "kind": "gantry",
-      "x": 2055.9,
-      "z": -2914.9,
-      "angle": 0.8
-    },
-    {
       "id": "dw423",
       "kind": "warehouse",
       "x": 1944.3,
@@ -3394,123 +1888,11 @@
       "angle": 1.143
     },
     {
-      "id": "dw425",
-      "kind": "chimney",
-      "x": 1958,
-      "z": -3058.5,
-      "angle": 1.143
-    },
-    {
       "id": "dw426",
       "kind": "chimney",
       "x": 1928.4,
       "z": -3072,
       "angle": 1.143
-    },
-    {
-      "id": "dw427",
-      "kind": "rails",
-      "x": 1837.1,
-      "z": -3062.1,
-      "angle": 1.326
-    },
-    {
-      "id": "dw428",
-      "kind": "rails",
-      "x": 1798.3,
-      "z": -3071.8,
-      "angle": 1.326
-    },
-    {
-      "id": "dw429",
-      "kind": "wagon",
-      "x": 1848.8,
-      "z": -3059.2,
-      "angle": 1.326,
-      "variant": "tank"
-    },
-    {
-      "id": "dw430",
-      "kind": "wagon",
-      "x": 1802.2,
-      "z": -3070.8,
-      "angle": 1.326,
-      "variant": "box"
-    },
-    {
-      "id": "dw431",
-      "kind": "rails",
-      "x": 1838.8,
-      "z": -3068.9,
-      "angle": 1.326
-    },
-    {
-      "id": "dw432",
-      "kind": "rails",
-      "x": 1800,
-      "z": -3078.6,
-      "angle": 1.326
-    },
-    {
-      "id": "dw433",
-      "kind": "wagon",
-      "x": 1819.4,
-      "z": -3073.7,
-      "angle": 1.326,
-      "variant": "tank"
-    },
-    {
-      "id": "dw434",
-      "kind": "wagon",
-      "x": 1788.4,
-      "z": -3081.5,
-      "angle": 1.326,
-      "variant": "box"
-    },
-    {
-      "id": "dw435",
-      "kind": "rails",
-      "x": 1840.5,
-      "z": -3075.7,
-      "angle": 1.326
-    },
-    {
-      "id": "dw436",
-      "kind": "rails",
-      "x": 1801.7,
-      "z": -3085.4,
-      "angle": 1.326
-    },
-    {
-      "id": "dw437",
-      "kind": "wagon",
-      "x": 1836.6,
-      "z": -3076.6,
-      "angle": 1.326,
-      "variant": "tank"
-    },
-    {
-      "id": "dw438",
-      "kind": "wagon",
-      "x": 1821.1,
-      "z": -3080.5,
-      "angle": 1.326,
-      "variant": "tank"
-    },
-    {
-      "id": "dw439",
-      "kind": "wagon",
-      "x": 1805.6,
-      "z": -3084.4,
-      "angle": 1.326,
-      "variant": "box"
-    },
-    {
-      "id": "dw440",
-      "kind": "gantry",
-      "x": 1825,
-      "z": -3072.3,
-      "angle": 1.326
     },
     {
       "id": "dw441",
@@ -3520,47 +1902,10 @@
       "angle": 1.198
     },
     {
-      "id": "dw442",
-      "kind": "chimney",
-      "x": 1319.1,
-      "z": -2860.4,
-      "angle": 1.198
-    },
-    {
-      "id": "dw443",
-      "kind": "chimney",
-      "x": 1302.8,
-      "z": -2851.7,
-      "angle": 1.198
-    },
-    {
-      "id": "dw444",
-      "kind": "tank",
-      "x": 1285.7,
-      "z": -2852,
-      "angle": 1.198,
-      "variant": "small"
-    },
-    {
-      "id": "dw445",
-      "kind": "tank",
-      "x": 1315.5,
-      "z": -2840.3,
-      "angle": 1.198,
-      "variant": "small"
-    },
-    {
       "id": "dw446",
       "kind": "chimney",
       "x": 1390.4,
       "z": -2834.1,
-      "angle": 1.212
-    },
-    {
-      "id": "dw447",
-      "kind": "chimney",
-      "x": 1412.9,
-      "z": -2825.7,
       "angle": 1.212
     },
     {
@@ -3654,20 +1999,6 @@
       "angle": 1.236
     },
     {
-      "id": "dw460",
-      "kind": "chimney",
-      "x": 1699.1,
-      "z": -2731.5,
-      "angle": 1.236
-    },
-    {
-      "id": "dw461",
-      "kind": "chimney",
-      "x": 1683.2,
-      "z": -2722.2,
-      "angle": 1.236
-    },
-    {
       "id": "dw462",
       "kind": "tank",
       "x": 1666.1,
@@ -3699,13 +2030,6 @@
       "angle": 0.322
     },
     {
-      "id": "dw466",
-      "kind": "chimney",
-      "x": 2143.1,
-      "z": -2403.5,
-      "angle": 0.322
-    },
-    {
       "id": "dw467",
       "kind": "tank",
       "x": 2128.3,
@@ -3718,13 +2042,6 @@
       "kind": "chimney",
       "x": 2191.5,
       "z": -2363.8,
-      "angle": 0.322
-    },
-    {
-      "id": "dw469",
-      "kind": "chimney",
-      "x": 2199,
-      "z": -2341,
       "angle": 0.322
     },
     {
@@ -3751,20 +2068,6 @@
       "angle": 0.373
     },
     {
-      "id": "dw473",
-      "kind": "chimney",
-      "x": 2373.1,
-      "z": -1870.7,
-      "angle": 0.373
-    },
-    {
-      "id": "dw474",
-      "kind": "chimney",
-      "x": 2355.7,
-      "z": -1876.8,
-      "angle": 0.373
-    },
-    {
       "id": "dw475",
       "kind": "tank",
       "x": 2344.3,
@@ -3788,24 +2091,9 @@
       "angle": 1.571
     },
     {
-      "id": "dw478",
-      "kind": "chimney",
-      "x": 1496,
-      "z": -1920.1,
-      "angle": 1.571
-    },
-    {
       "id": "dw479",
       "kind": "tank",
       "x": 1468,
-      "z": -1900.1,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw480",
-      "kind": "tank",
-      "x": 1500,
       "z": -1900.1,
       "angle": 1.571,
       "variant": "small"
@@ -3849,24 +2137,10 @@
       "angle": 1.571
     },
     {
-      "id": "dw486",
-      "kind": "chimney",
-      "x": 1638,
-      "z": -1888.1,
-      "angle": 1.571
-    },
-    {
       "id": "dw487",
       "kind": "chimney",
       "x": 1898.4,
       "z": -1909.4,
-      "angle": 0.785
-    },
-    {
-      "id": "dw488",
-      "kind": "chimney",
-      "x": 1915.4,
-      "z": -1892.4,
       "angle": 0.785
     },
     {
@@ -3893,36 +2167,6 @@
       "angle": 1.571
     },
     {
-      "id": "dw492",
-      "kind": "chimney",
-      "x": 2003,
-      "z": -1870.1,
-      "angle": 1.571
-    },
-    {
-      "id": "dw493",
-      "kind": "chimney",
-      "x": 1991,
-      "z": -1856.1,
-      "angle": 1.571
-    },
-    {
-      "id": "dw494",
-      "kind": "tank",
-      "x": 1975,
-      "z": -1850.1,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw495",
-      "kind": "tank",
-      "x": 2007,
-      "z": -1850.1,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw496",
       "kind": "chimney",
       "x": 1979,
@@ -3930,56 +2174,11 @@
       "angle": 1.571
     },
     {
-      "id": "dw497",
-      "kind": "chimney",
-      "x": 2003,
-      "z": -1929.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw498",
-      "kind": "tank",
-      "x": 1975,
-      "z": -1949.9,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw499",
-      "kind": "tank",
-      "x": 2007,
-      "z": -1949.9,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw500",
       "kind": "chimney",
       "x": 2047,
       "z": -1929.9,
       "angle": 1.571
-    },
-    {
-      "id": "dw501",
-      "kind": "chimney",
-      "x": 2071,
-      "z": -1929.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw502",
-      "kind": "chimney",
-      "x": 2059,
-      "z": -1943.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw503",
-      "kind": "tank",
-      "x": 2043,
-      "z": -1949.9,
-      "angle": 1.571,
-      "variant": "small"
     },
     {
       "id": "dw504",
@@ -3993,13 +2192,6 @@
       "id": "dw505",
       "kind": "chimney",
       "x": 2066,
-      "z": -1870.1,
-      "angle": 1.571
-    },
-    {
-      "id": "dw506",
-      "kind": "chimney",
-      "x": 2090,
       "z": -1870.1,
       "angle": 1.571
     },
@@ -4027,13 +2219,6 @@
       "angle": 1.571
     },
     {
-      "id": "dw510",
-      "kind": "chimney",
-      "x": 2128,
-      "z": -1929.9,
-      "angle": 1.571
-    },
-    {
       "id": "dw511",
       "kind": "tank",
       "x": 2100,
@@ -4057,47 +2242,10 @@
       "angle": 0.785
     },
     {
-      "id": "dw514",
-      "kind": "chimney",
-      "x": 2165.4,
-      "z": -1842.4,
-      "angle": 0.785
-    },
-    {
-      "id": "dw515",
-      "kind": "tank",
-      "x": 2131.4,
-      "z": -1848,
-      "angle": 0.785,
-      "variant": "small"
-    },
-    {
-      "id": "dw516",
-      "kind": "tank",
-      "x": 2154,
-      "z": -1825.4,
-      "angle": 0.785,
-      "variant": "small"
-    },
-    {
       "id": "dw517",
       "kind": "chimney",
       "x": 2198.4,
       "z": -1809.4,
-      "angle": 0.785
-    },
-    {
-      "id": "dw518",
-      "kind": "chimney",
-      "x": 2215.4,
-      "z": -1792.4,
-      "angle": 0.785
-    },
-    {
-      "id": "dw519",
-      "kind": "chimney",
-      "x": 2197,
-      "z": -1791,
       "angle": 0.785
     },
     {
@@ -4124,31 +2272,9 @@
       "angle": 1.571
     },
     {
-      "id": "dw523",
-      "kind": "chimney",
-      "x": 1403,
-      "z": -2029.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw524",
-      "kind": "chimney",
-      "x": 1391,
-      "z": -2043.9,
-      "angle": 1.571
-    },
-    {
       "id": "dw525",
       "kind": "tank",
       "x": 1375,
-      "z": -2049.9,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw526",
-      "kind": "tank",
-      "x": 1407,
       "z": -2049.9,
       "angle": 1.571,
       "variant": "small"
@@ -4184,31 +2310,9 @@
       "angle": 1.571
     },
     {
-      "id": "dw531",
-      "kind": "chimney",
-      "x": 1719,
-      "z": -2061.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw532",
-      "kind": "tank",
-      "x": 1717.1,
-      "z": -2075.9,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw533",
       "kind": "chimney",
       "x": 1760,
-      "z": -2029.9,
-      "angle": 1.571
-    },
-    {
-      "id": "dw534",
-      "kind": "chimney",
-      "x": 1784,
       "z": -2029.9,
       "angle": 1.571
     },
@@ -4251,13 +2355,6 @@
       "angle": 1.571
     },
     {
-      "id": "dw540",
-      "kind": "chimney",
-      "x": 2446,
-      "z": -2029.9,
-      "angle": 1.571
-    },
-    {
       "id": "dw541",
       "kind": "tank",
       "x": 2418,
@@ -4289,32 +2386,9 @@
       "angle": 1.107
     },
     {
-      "id": "dw545",
-      "kind": "chimney",
-      "x": 2527.6,
-      "z": -2048.9,
-      "angle": 1.107
-    },
-    {
-      "id": "dw546",
-      "kind": "tank",
-      "x": 2568.5,
-      "z": -1983.4,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw547",
       "kind": "tank",
       "x": 2587.5,
-      "z": -1983.4,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw548",
-      "kind": "tank",
-      "x": 2606.5,
       "z": -1983.4,
       "angle": 1.571,
       "variant": "small"
@@ -4328,25 +2402,9 @@
       "variant": "small"
     },
     {
-      "id": "dw550",
-      "kind": "tank",
-      "x": 2568.5,
-      "z": -2002.4,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw551",
       "kind": "tank",
       "x": 2587.5,
-      "z": -2002.4,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
-      "id": "dw552",
-      "kind": "tank",
-      "x": 2606.5,
       "z": -2002.4,
       "angle": 1.571,
       "variant": "small"
@@ -4384,14 +2442,6 @@
       "variant": "small"
     },
     {
-      "id": "dw557",
-      "kind": "tank",
-      "x": 2625.5,
-      "z": -2021.4,
-      "angle": 1.571,
-      "variant": "small"
-    },
-    {
       "id": "dw558",
       "kind": "warehouse",
       "x": 2672,
@@ -4407,95 +2457,6996 @@
       "angle": 1.571
     },
     {
-      "id": "dw560",
-      "kind": "rails",
-      "x": 1334.3,
-      "z": -2692.8,
-      "angle": 1.983
+      "id": "di1",
+      "kind": "pipe-rack",
+      "x": 1566.9,
+      "z": -2130,
+      "angle": 1.571
     },
     {
-      "id": "dw561",
-      "kind": "rails",
-      "x": 1371,
-      "z": -2708.8,
-      "angle": 1.983
+      "id": "di2",
+      "kind": "pipe-rack",
+      "x": 1602.9,
+      "z": -2130,
+      "angle": 1.571
     },
     {
-      "id": "dw562",
-      "kind": "wagon",
-      "x": 1352.7,
-      "z": -2700.8,
-      "angle": 1.983,
-      "variant": "tank"
+      "id": "di3",
+      "kind": "pipe-rack",
+      "x": 1501.6,
+      "z": -2111,
+      "angle": 1.571
     },
     {
-      "id": "dw563",
-      "kind": "wagon",
-      "x": 1367.3,
-      "z": -2707.2,
-      "angle": 1.983,
-      "variant": "tank"
+      "id": "di4",
+      "kind": "pipe-rack",
+      "x": 1501.6,
+      "z": -2149,
+      "angle": 1.571
     },
     {
-      "id": "dw564",
-      "kind": "wagon",
-      "x": 1382,
-      "z": -2713.6,
-      "angle": 1.983,
-      "variant": "box"
+      "id": "di5",
+      "kind": "pipe-rack",
+      "x": 1473.1,
+      "z": -2101.5,
+      "angle": 0
     },
     {
-      "id": "dw565",
-      "kind": "rails",
-      "x": 1337.2,
+      "id": "di6",
+      "kind": "pipe-rack",
+      "x": 1476,
+      "z": -2465.1,
+      "angle": 1.676
+    },
+    {
+      "id": "di7",
+      "kind": "pipe-rack",
+      "x": 1463.6,
+      "z": -2492.5,
+      "angle": 0.105
+    },
+    {
+      "id": "di8",
+      "kind": "pipe-rack",
+      "x": 1469.3,
+      "z": -2626.5,
+      "angle": 0.1
+    },
+    {
+      "id": "di9",
+      "kind": "pipe-rack",
+      "x": 1457,
+      "z": -2653.9,
+      "angle": 1.671
+    },
+    {
+      "id": "di10",
+      "kind": "pipe-rack",
+      "x": 1536.9,
+      "z": -2921.7,
+      "angle": 1.571
+    },
+    {
+      "id": "di11",
+      "kind": "pipe-rack",
+      "x": 1980.4,
+      "z": -2088.5,
+      "angle": 1.666
+    },
+    {
+      "id": "di12",
+      "kind": "pipe-rack",
+      "x": 2202.6,
+      "z": -2056,
+      "angle": 1.596
+    },
+    {
+      "id": "di13",
+      "kind": "pipe-rack",
+      "x": 2201.8,
+      "z": -2092,
+      "angle": 1.596
+    },
+    {
+      "id": "di14",
+      "kind": "pipe-rack",
+      "x": 2166.6,
+      "z": -2055.1,
+      "angle": 1.596
+    },
+    {
+      "id": "di15",
+      "kind": "pipe-rack",
+      "x": 2165.8,
+      "z": -2091.1,
+      "angle": 1.596
+    },
+    {
+      "id": "di16",
+      "kind": "pipe-rack",
+      "x": 2464.3,
+      "z": -2201,
+      "angle": 1.585
+    },
+    {
+      "id": "di17",
+      "kind": "pipe-rack",
+      "x": 2713.6,
+      "z": -1803.1,
+      "angle": 3.094
+    },
+    {
+      "id": "di18",
+      "kind": "pipe-rack",
+      "x": 2105.8,
+      "z": -2209.8,
+      "angle": 2.434
+    },
+    {
+      "id": "di19",
+      "kind": "pipe-rack",
+      "x": 2078,
+      "z": -2221.2,
+      "angle": 0.864
+    },
+    {
+      "id": "di20",
+      "kind": "pipe-rack",
+      "x": 2094.4,
+      "z": -2182,
+      "angle": 0.86
+    },
+    {
+      "id": "di21",
+      "kind": "pipe-rack",
+      "x": 2066.6,
+      "z": -2193.4,
+      "angle": 2.431
+    },
+    {
+      "id": "di22",
+      "kind": "pipe-rack",
+      "x": 1964.7,
+      "z": -2576.2,
+      "angle": 0.898
+    },
+    {
+      "id": "di23",
+      "kind": "pipe-rack",
+      "x": 2587.5,
+      "z": -2011.9,
+      "angle": 1.571
+    },
+    {
+      "id": "di24",
+      "kind": "cabin",
+      "x": 2703.3,
+      "z": -1920.2,
+      "angle": 1.604
+    },
+    {
+      "id": "di25",
+      "kind": "cabin",
+      "x": 2704,
+      "z": -1900.2,
+      "angle": 1.604
+    },
+    {
+      "id": "di26",
+      "kind": "shed",
+      "x": 2717.7,
+      "z": -1910.6,
+      "angle": 1.604
+    },
+    {
+      "id": "di27",
+      "kind": "stack",
+      "x": 2715.1,
+      "z": -1926.6,
+      "angle": 0.033,
+      "variant": "pallets"
+    },
+    {
+      "id": "di28",
+      "kind": "stack",
+      "x": 2715.2,
+      "z": -1923.6,
+      "angle": 0.033,
+      "variant": "drums"
+    },
+    {
+      "id": "di29",
+      "kind": "stack",
+      "x": 2715.3,
+      "z": -1920.6,
+      "angle": 0.033,
+      "variant": "pallets"
+    },
+    {
+      "id": "di30",
+      "kind": "blast-wall",
+      "x": 2697.3,
+      "z": -1921.1,
+      "angle": 1.604
+    },
+    {
+      "id": "di31",
+      "kind": "blast-wall",
+      "x": 2698,
+      "z": -1899.1,
+      "angle": 1.604
+    },
+    {
+      "id": "di32",
+      "kind": "fence-line",
+      "x": 2725,
+      "z": -1929.7,
+      "angle": 0.033
+    },
+    {
+      "id": "di33",
+      "kind": "fence-line",
+      "x": 2725.2,
+      "z": -1923.4,
+      "angle": 0.033
+    },
+    {
+      "id": "di34",
+      "kind": "fence-line",
+      "x": 2725.4,
+      "z": -1917.1,
+      "angle": 0.033
+    },
+    {
+      "id": "di35",
+      "kind": "fence-line",
+      "x": 2725.7,
+      "z": -1910.8,
+      "angle": 0.033
+    },
+    {
+      "id": "di36",
+      "kind": "fence-line",
+      "x": 2725.9,
+      "z": -1904.6,
+      "angle": 0.033
+    },
+    {
+      "id": "di37",
+      "kind": "fence-line",
+      "x": 2726.1,
+      "z": -1898.3,
+      "angle": 0.033
+    },
+    {
+      "id": "di38",
+      "kind": "fence-line",
+      "x": 2726.3,
+      "z": -1892,
+      "angle": 0.033
+    },
+    {
+      "id": "di39",
+      "kind": "fence-line",
+      "x": 2698.8,
+      "z": -1932.1,
+      "angle": 1.604
+    },
+    {
+      "id": "di40",
+      "kind": "fence-line",
+      "x": 2704.6,
+      "z": -1932.3,
+      "angle": 1.604
+    },
+    {
+      "id": "di41",
+      "kind": "fence-line",
+      "x": 2710.4,
+      "z": -1932.4,
+      "angle": 1.604
+    },
+    {
+      "id": "di42",
+      "kind": "fence-line",
+      "x": 2716.2,
+      "z": -1932.6,
+      "angle": 1.604
+    },
+    {
+      "id": "di43",
+      "kind": "fence-line",
+      "x": 2722,
+      "z": -1932.8,
+      "angle": 1.604
+    },
+    {
+      "id": "di44",
+      "kind": "fence-line",
+      "x": 2700.3,
+      "z": -1888.1,
+      "angle": 1.604
+    },
+    {
+      "id": "di45",
+      "kind": "fence-line",
+      "x": 2706.1,
+      "z": -1888.3,
+      "angle": 1.604
+    },
+    {
+      "id": "di46",
+      "kind": "fence-line",
+      "x": 2711.9,
+      "z": -1888.5,
+      "angle": 1.604
+    },
+    {
+      "id": "di47",
+      "kind": "fence-line",
+      "x": 2717.7,
+      "z": -1888.6,
+      "angle": 1.604
+    },
+    {
+      "id": "di48",
+      "kind": "fence-line",
+      "x": 2723.5,
+      "z": -1888.8,
+      "angle": 1.604
+    },
+    {
+      "id": "di49",
+      "kind": "fence-line",
+      "x": 2696,
+      "z": -1928.9,
+      "angle": 0.033
+    },
+    {
+      "id": "di50",
+      "kind": "fence-line",
+      "x": 2696.2,
+      "z": -1922.6,
+      "angle": 0.033
+    },
+    {
+      "id": "di51",
+      "kind": "fence-line",
+      "x": 2697.1,
+      "z": -1897.5,
+      "angle": 0.033
+    },
+    {
+      "id": "di52",
+      "kind": "fence-line",
+      "x": 2697.3,
+      "z": -1891.2,
+      "angle": 0.033
+    },
+    {
+      "id": "di53",
+      "kind": "dumpster",
+      "x": 2698.2,
+      "z": -1924.6,
+      "angle": 0.033,
+      "variant": "grey"
+    },
+    {
+      "id": "di54",
+      "kind": "cone",
+      "x": 2698.9,
+      "z": -1902.1,
+      "angle": 0.033
+    },
+    {
+      "id": "di55",
+      "kind": "cone",
+      "x": 2699,
+      "z": -1899.9,
+      "angle": 0.033
+    },
+    {
+      "id": "di56",
+      "kind": "cone",
+      "x": 2699.1,
+      "z": -1897.7,
+      "angle": 0.033
+    },
+    {
+      "id": "di57",
+      "kind": "bollard",
+      "x": 2696.9,
+      "z": -1918,
+      "angle": 0.033
+    },
+    {
+      "id": "di58",
+      "kind": "bollard",
+      "x": 2697.4,
+      "z": -1902.1,
+      "angle": 0.033
+    },
+    {
+      "id": "di59",
+      "kind": "silo",
+      "x": 2140.1,
+      "z": -2270.6,
+      "angle": 0.912
+    },
+    {
+      "id": "di60",
+      "kind": "silo",
+      "x": 2129,
+      "z": -2279.2,
+      "angle": 0.912
+    },
+    {
+      "id": "di61",
+      "kind": "silo",
+      "x": 2117.9,
+      "z": -2287.8,
+      "angle": 0.912
+    },
+    {
+      "id": "di62",
+      "kind": "silo",
+      "x": 2106.9,
+      "z": -2296.3,
+      "angle": 0.912
+    },
+    {
+      "id": "di63",
+      "kind": "water-tower",
+      "x": 2097.4,
+      "z": -2303.7,
+      "angle": 0.912
+    },
+    {
+      "id": "di64",
+      "kind": "cabin",
+      "x": 2137.5,
+      "z": -2254.9,
+      "angle": 2.483
+    },
+    {
+      "id": "di65",
+      "kind": "mast",
+      "x": 2156.2,
+      "z": -2280.9,
+      "angle": 0.912
+    },
+    {
+      "id": "di66",
+      "kind": "shed",
+      "x": 2133.3,
+      "z": -2298.6,
+      "angle": 2.483
+    },
+    {
+      "id": "di67",
+      "kind": "shed",
+      "x": 2119.1,
+      "z": -2309.6,
+      "angle": 2.483
+    },
+    {
+      "id": "di68",
+      "kind": "fence-line",
+      "x": 2172.5,
+      "z": -2283.4,
+      "angle": 0.912
+    },
+    {
+      "id": "di69",
+      "kind": "fence-line",
+      "x": 2167.6,
+      "z": -2287.2,
+      "angle": 0.912
+    },
+    {
+      "id": "di70",
+      "kind": "fence-line",
+      "x": 2162.8,
+      "z": -2291,
+      "angle": 0.912
+    },
+    {
+      "id": "di71",
+      "kind": "fence-line",
+      "x": 2157.9,
+      "z": -2294.7,
+      "angle": 0.912
+    },
+    {
+      "id": "di72",
+      "kind": "fence-line",
+      "x": 2153.1,
+      "z": -2298.5,
+      "angle": 0.912
+    },
+    {
+      "id": "di73",
+      "kind": "fence-line",
+      "x": 2148.2,
+      "z": -2302.2,
+      "angle": 0.912
+    },
+    {
+      "id": "di74",
+      "kind": "fence-line",
+      "x": 2143.4,
+      "z": -2306,
+      "angle": 0.912
+    },
+    {
+      "id": "di75",
+      "kind": "fence-line",
+      "x": 2138.5,
+      "z": -2309.8,
+      "angle": 0.912
+    },
+    {
+      "id": "di76",
+      "kind": "fence-line",
+      "x": 2133.6,
+      "z": -2313.5,
+      "angle": 0.912
+    },
+    {
+      "id": "di77",
+      "kind": "fence-line",
+      "x": 2128.8,
+      "z": -2317.3,
+      "angle": 0.912
+    },
+    {
+      "id": "di78",
+      "kind": "fence-line",
+      "x": 2123.9,
+      "z": -2321.1,
+      "angle": 0.912
+    },
+    {
+      "id": "di79",
+      "kind": "fence-line",
+      "x": 2119.1,
+      "z": -2324.8,
+      "angle": 0.912
+    },
+    {
+      "id": "di80",
+      "kind": "fence-line",
+      "x": 2114.2,
+      "z": -2328.6,
+      "angle": 0.912
+    },
+    {
+      "id": "di81",
+      "kind": "fence-line",
+      "x": 2109.4,
+      "z": -2332.3,
+      "angle": 0.912
+    },
+    {
+      "id": "di82",
+      "kind": "fence-line",
+      "x": 2145.8,
+      "z": -2246.1,
+      "angle": 2.483
+    },
+    {
+      "id": "di83",
+      "kind": "fence-line",
+      "x": 2149.6,
+      "z": -2250.8,
+      "angle": 2.483
+    },
+    {
+      "id": "di84",
+      "kind": "fence-line",
+      "x": 2153.5,
+      "z": -2255.5,
+      "angle": 2.483
+    },
+    {
+      "id": "di85",
+      "kind": "fence-line",
+      "x": 2157.4,
+      "z": -2260.3,
+      "angle": 2.483
+    },
+    {
+      "id": "di86",
+      "kind": "fence-line",
+      "x": 2161.3,
+      "z": -2265,
+      "angle": 2.483
+    },
+    {
+      "id": "di87",
+      "kind": "fence-line",
+      "x": 2165.2,
+      "z": -2269.7,
+      "angle": 2.483
+    },
+    {
+      "id": "di88",
+      "kind": "fence-line",
+      "x": 2169.1,
+      "z": -2274.5,
+      "angle": 2.483
+    },
+    {
+      "id": "di89",
+      "kind": "fence-line",
+      "x": 2173,
+      "z": -2279.2,
+      "angle": 2.483
+    },
+    {
+      "id": "di90",
+      "kind": "fence-line",
+      "x": 2077.8,
+      "z": -2298.7,
+      "angle": 2.483
+    },
+    {
+      "id": "di91",
+      "kind": "fence-line",
+      "x": 2081.7,
+      "z": -2303.5,
+      "angle": 2.483
+    },
+    {
+      "id": "di92",
+      "kind": "fence-line",
+      "x": 2085.5,
+      "z": -2308.2,
+      "angle": 2.483
+    },
+    {
+      "id": "di93",
+      "kind": "fence-line",
+      "x": 2089.4,
+      "z": -2312.9,
+      "angle": 2.483
+    },
+    {
+      "id": "di94",
+      "kind": "fence-line",
+      "x": 2093.3,
+      "z": -2317.7,
+      "angle": 2.483
+    },
+    {
+      "id": "di95",
+      "kind": "fence-line",
+      "x": 2097.2,
+      "z": -2322.4,
+      "angle": 2.483
+    },
+    {
+      "id": "di96",
+      "kind": "fence-line",
+      "x": 2101.1,
+      "z": -2327.1,
+      "angle": 2.483
+    },
+    {
+      "id": "di97",
+      "kind": "fence-line",
+      "x": 2105,
+      "z": -2331.9,
+      "angle": 2.483
+    },
+    {
+      "id": "di98",
+      "kind": "fence-line",
+      "x": 2141.4,
+      "z": -2245.6,
+      "angle": 0.912
+    },
+    {
+      "id": "di99",
+      "kind": "fence-line",
+      "x": 2136.5,
+      "z": -2249.3,
+      "angle": 0.912
+    },
+    {
+      "id": "di100",
+      "kind": "fence-line",
+      "x": 2131.7,
+      "z": -2253.1,
+      "angle": 0.912
+    },
+    {
+      "id": "di101",
+      "kind": "fence-line",
+      "x": 2126.8,
+      "z": -2256.9,
+      "angle": 0.912
+    },
+    {
+      "id": "di102",
+      "kind": "fence-line",
+      "x": 2122,
+      "z": -2260.6,
+      "angle": 0.912
+    },
+    {
+      "id": "di103",
+      "kind": "fence-line",
+      "x": 2117.1,
+      "z": -2264.4,
+      "angle": 0.912
+    },
+    {
+      "id": "di104",
+      "kind": "fence-line",
+      "x": 2102.5,
+      "z": -2275.7,
+      "angle": 0.912
+    },
+    {
+      "id": "di105",
+      "kind": "fence-line",
+      "x": 2097.7,
+      "z": -2279.4,
+      "angle": 0.912
+    },
+    {
+      "id": "di106",
+      "kind": "fence-line",
+      "x": 2092.8,
+      "z": -2283.2,
+      "angle": 0.912
+    },
+    {
+      "id": "di107",
+      "kind": "fence-line",
+      "x": 2088,
+      "z": -2286.9,
+      "angle": 0.912
+    },
+    {
+      "id": "di108",
+      "kind": "fence-line",
+      "x": 2083.1,
+      "z": -2290.7,
+      "angle": 0.912
+    },
+    {
+      "id": "di109",
+      "kind": "fence-line",
+      "x": 2078.3,
+      "z": -2294.5,
+      "angle": 0.912
+    },
+    {
+      "id": "di110",
+      "kind": "dumpster",
+      "x": 2135.2,
+      "z": -2252.9,
+      "angle": 0.912,
+      "variant": "grey"
+    },
+    {
+      "id": "di111",
+      "kind": "cone",
+      "x": 2104.8,
+      "z": -2276.5,
+      "angle": 0.912
+    },
+    {
+      "id": "di112",
+      "kind": "cone",
+      "x": 2103,
+      "z": -2277.8,
+      "angle": 0.912
+    },
+    {
+      "id": "di113",
+      "kind": "cone",
+      "x": 2101.3,
+      "z": -2279.2,
+      "angle": 0.912
+    },
+    {
+      "id": "di114",
+      "kind": "bollard",
+      "x": 2116.5,
+      "z": -2265.5,
+      "angle": 0.912
+    },
+    {
+      "id": "di115",
+      "kind": "bollard",
+      "x": 2103.8,
+      "z": -2275.3,
+      "angle": 0.912
+    },
+    {
+      "id": "di116",
+      "kind": "crane",
+      "x": 2429.6,
+      "z": -2372.2,
+      "angle": 1.437
+    },
+    {
+      "id": "di117",
+      "kind": "stockpile",
+      "x": 2408.7,
+      "z": -2367,
+      "angle": 1.437,
+      "variant": "rust"
+    },
+    {
+      "id": "di118",
+      "kind": "excavator",
+      "x": 2452.8,
+      "z": -2379.2,
+      "angle": 0.937
+    },
+    {
+      "id": "di119",
+      "kind": "haul-truck",
+      "x": 2449.4,
+      "z": -2355.4,
+      "angle": 2.337
+    },
+    {
+      "id": "di120",
+      "kind": "stack",
+      "x": 2405.8,
+      "z": -2389.6,
+      "angle": 1.437,
+      "variant": "drums"
+    },
+    {
+      "id": "di121",
+      "kind": "stack",
+      "x": 2408.2,
+      "z": -2385.2,
+      "angle": 1.437,
+      "variant": "drums"
+    },
+    {
+      "id": "di122",
+      "kind": "stack",
+      "x": 2411.8,
+      "z": -2388.8,
+      "angle": 1.437,
+      "variant": "drums"
+    },
+    {
+      "id": "di123",
+      "kind": "stack",
+      "x": 2414.2,
+      "z": -2384.4,
+      "angle": 1.437,
+      "variant": "drums"
+    },
+    {
+      "id": "di124",
+      "kind": "cabin",
+      "x": 2411.3,
+      "z": -2392.9,
+      "angle": 3.008
+    },
+    {
+      "id": "di125",
+      "kind": "fence-line",
+      "x": 2395.9,
+      "z": -2348.5,
+      "angle": 1.437
+    },
+    {
+      "id": "di126",
+      "kind": "fence-line",
+      "x": 2401.9,
+      "z": -2347.7,
+      "angle": 1.437
+    },
+    {
+      "id": "di127",
+      "kind": "fence-line",
+      "x": 2407.8,
+      "z": -2346.9,
+      "angle": 1.437
+    },
+    {
+      "id": "di128",
+      "kind": "fence-line",
+      "x": 2413.8,
+      "z": -2346.1,
+      "angle": 1.437
+    },
+    {
+      "id": "di129",
+      "kind": "fence-line",
+      "x": 2419.7,
+      "z": -2345.3,
+      "angle": 1.437
+    },
+    {
+      "id": "di130",
+      "kind": "fence-line",
+      "x": 2425.6,
+      "z": -2344.5,
+      "angle": 1.437
+    },
+    {
+      "id": "di131",
+      "kind": "fence-line",
+      "x": 2431.6,
+      "z": -2343.7,
+      "angle": 1.437
+    },
+    {
+      "id": "di132",
+      "kind": "fence-line",
+      "x": 2437.5,
+      "z": -2342.9,
+      "angle": 1.437
+    },
+    {
+      "id": "di133",
+      "kind": "fence-line",
+      "x": 2443.5,
+      "z": -2342.1,
+      "angle": 1.437
+    },
+    {
+      "id": "di134",
+      "kind": "fence-line",
+      "x": 2449.4,
+      "z": -2341.3,
+      "angle": 1.437
+    },
+    {
+      "id": "di135",
+      "kind": "fence-line",
+      "x": 2455.4,
+      "z": -2340.5,
+      "angle": 1.437
+    },
+    {
+      "id": "di136",
+      "kind": "fence-line",
+      "x": 2399.8,
+      "z": -2396.6,
+      "angle": 3.008
+    },
+    {
+      "id": "di137",
+      "kind": "fence-line",
+      "x": 2399,
+      "z": -2391,
+      "angle": 3.008
+    },
+    {
+      "id": "di138",
+      "kind": "fence-line",
+      "x": 2398.2,
+      "z": -2385.4,
+      "angle": 3.008
+    },
+    {
+      "id": "di139",
+      "kind": "fence-line",
+      "x": 2397.3,
+      "z": -2379.8,
+      "angle": 3.008
+    },
+    {
+      "id": "di140",
+      "kind": "fence-line",
+      "x": 2396.5,
+      "z": -2374.2,
+      "angle": 3.008
+    },
+    {
+      "id": "di141",
+      "kind": "fence-line",
+      "x": 2395.7,
+      "z": -2368.6,
+      "angle": 3.008
+    },
+    {
+      "id": "di142",
+      "kind": "fence-line",
+      "x": 2394.9,
+      "z": -2363,
+      "angle": 3.008
+    },
+    {
+      "id": "di143",
+      "kind": "fence-line",
+      "x": 2394.1,
+      "z": -2357.3,
+      "angle": 3.008
+    },
+    {
+      "id": "di144",
+      "kind": "fence-line",
+      "x": 2393.3,
+      "z": -2351.7,
+      "angle": 3.008
+    },
+    {
+      "id": "di145",
+      "kind": "fence-line",
+      "x": 2465.2,
+      "z": -2387.8,
+      "angle": 3.008
+    },
+    {
+      "id": "di146",
+      "kind": "fence-line",
+      "x": 2464.4,
+      "z": -2382.2,
+      "angle": 3.008
+    },
+    {
+      "id": "di147",
+      "kind": "fence-line",
+      "x": 2463.6,
+      "z": -2376.6,
+      "angle": 3.008
+    },
+    {
+      "id": "di148",
+      "kind": "fence-line",
+      "x": 2462.8,
+      "z": -2371,
+      "angle": 3.008
+    },
+    {
+      "id": "di149",
+      "kind": "fence-line",
+      "x": 2462,
+      "z": -2365.4,
+      "angle": 3.008
+    },
+    {
+      "id": "di150",
+      "kind": "fence-line",
+      "x": 2461.2,
+      "z": -2359.7,
+      "angle": 3.008
+    },
+    {
+      "id": "di151",
+      "kind": "fence-line",
+      "x": 2460.4,
+      "z": -2354.1,
+      "angle": 3.008
+    },
+    {
+      "id": "di152",
+      "kind": "fence-line",
+      "x": 2459.6,
+      "z": -2348.5,
+      "angle": 3.008
+    },
+    {
+      "id": "di153",
+      "kind": "fence-line",
+      "x": 2458.8,
+      "z": -2342.9,
+      "angle": 3.008
+    },
+    {
+      "id": "di154",
+      "kind": "fence-line",
+      "x": 2403.1,
+      "z": -2399,
+      "angle": 1.437
+    },
+    {
+      "id": "di155",
+      "kind": "fence-line",
+      "x": 2409.1,
+      "z": -2398.2,
+      "angle": 1.437
+    },
+    {
+      "id": "di156",
+      "kind": "fence-line",
+      "x": 2415,
+      "z": -2397.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di157",
+      "kind": "fence-line",
+      "x": 2421,
+      "z": -2396.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di158",
+      "kind": "fence-line",
+      "x": 2444.8,
+      "z": -2393.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di159",
+      "kind": "fence-line",
+      "x": 2450.7,
+      "z": -2392.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di160",
+      "kind": "fence-line",
+      "x": 2456.6,
+      "z": -2391.8,
+      "angle": 1.437
+    },
+    {
+      "id": "di161",
+      "kind": "fence-line",
+      "x": 2462.6,
+      "z": -2391,
+      "angle": 1.437
+    },
+    {
+      "id": "di162",
+      "kind": "dumpster",
+      "x": 2410.4,
+      "z": -2396,
+      "angle": 1.437,
+      "variant": "blue"
+    },
+    {
+      "id": "di163",
+      "kind": "cone",
+      "x": 2440.5,
+      "z": -2392,
+      "angle": 1.437
+    },
+    {
+      "id": "di164",
+      "kind": "cone",
+      "x": 2442.7,
+      "z": -2391.7,
+      "angle": 1.437
+    },
+    {
+      "id": "di165",
+      "kind": "cone",
+      "x": 2444.9,
+      "z": -2391.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di166",
+      "kind": "bollard",
+      "x": 2424.9,
+      "z": -2395.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di167",
+      "kind": "bollard",
+      "x": 2440.7,
+      "z": -2393.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di168",
+      "kind": "stockpile",
+      "x": 2497.8,
+      "z": -2355,
+      "angle": 1.437,
+      "variant": "rust"
+    },
+    {
+      "id": "di169",
+      "kind": "crusher",
+      "x": 2534.4,
+      "z": -2370.2,
+      "angle": 1.437
+    },
+    {
+      "id": "di170",
+      "kind": "excavator",
+      "x": 2531.8,
+      "z": -2338.3,
+      "angle": 2.537
+    },
+    {
+      "id": "di171",
+      "kind": "haul-truck",
+      "x": 2485.1,
+      "z": -2378.9,
+      "angle": 1.737
+    },
+    {
+      "id": "di172",
+      "kind": "fence-line",
+      "x": 2472.3,
+      "z": -2332.2,
+      "angle": 1.437
+    },
+    {
+      "id": "di173",
+      "kind": "fence-line",
+      "x": 2478.1,
+      "z": -2331.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di174",
+      "kind": "fence-line",
+      "x": 2483.8,
+      "z": -2330.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di175",
+      "kind": "fence-line",
+      "x": 2489.6,
+      "z": -2329.8,
+      "angle": 1.437
+    },
+    {
+      "id": "di176",
+      "kind": "fence-line",
+      "x": 2495.4,
+      "z": -2329.1,
+      "angle": 1.437
+    },
+    {
+      "id": "di177",
+      "kind": "fence-line",
+      "x": 2501.2,
+      "z": -2328.3,
+      "angle": 1.437
+    },
+    {
+      "id": "di178",
+      "kind": "fence-line",
+      "x": 2507,
+      "z": -2327.5,
+      "angle": 1.437
+    },
+    {
+      "id": "di179",
+      "kind": "fence-line",
+      "x": 2512.8,
+      "z": -2326.7,
+      "angle": 1.437
+    },
+    {
+      "id": "di180",
+      "kind": "fence-line",
+      "x": 2518.5,
+      "z": -2325.9,
+      "angle": 1.437
+    },
+    {
+      "id": "di181",
+      "kind": "fence-line",
+      "x": 2524.3,
+      "z": -2325.2,
+      "angle": 1.437
+    },
+    {
+      "id": "di182",
+      "kind": "fence-line",
+      "x": 2530.1,
+      "z": -2324.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di183",
+      "kind": "fence-line",
+      "x": 2535.9,
+      "z": -2323.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di184",
+      "kind": "fence-line",
+      "x": 2477.1,
+      "z": -2386.2,
+      "angle": 3.008
+    },
+    {
+      "id": "di185",
+      "kind": "fence-line",
+      "x": 2476.2,
+      "z": -2380.5,
+      "angle": 3.008
+    },
+    {
+      "id": "di186",
+      "kind": "fence-line",
+      "x": 2475.4,
+      "z": -2374.9,
+      "angle": 3.008
+    },
+    {
+      "id": "di187",
+      "kind": "fence-line",
+      "x": 2474.6,
+      "z": -2369.2,
+      "angle": 3.008
+    },
+    {
+      "id": "di188",
+      "kind": "fence-line",
+      "x": 2473.8,
+      "z": -2363.6,
+      "angle": 3.008
+    },
+    {
+      "id": "di189",
+      "kind": "fence-line",
+      "x": 2473,
+      "z": -2358,
+      "angle": 3.008
+    },
+    {
+      "id": "di190",
+      "kind": "fence-line",
+      "x": 2472.2,
+      "z": -2352.3,
+      "angle": 3.008
+    },
+    {
+      "id": "di191",
+      "kind": "fence-line",
+      "x": 2471.4,
+      "z": -2346.7,
+      "angle": 3.008
+    },
+    {
+      "id": "di192",
+      "kind": "fence-line",
+      "x": 2470.6,
+      "z": -2341,
+      "angle": 3.008
+    },
+    {
+      "id": "di193",
+      "kind": "fence-line",
+      "x": 2469.8,
+      "z": -2335.4,
+      "angle": 3.008
+    },
+    {
+      "id": "di194",
+      "kind": "fence-line",
+      "x": 2546.4,
+      "z": -2376.8,
+      "angle": 3.008
+    },
+    {
+      "id": "di195",
+      "kind": "fence-line",
+      "x": 2545.6,
+      "z": -2371.2,
+      "angle": 3.008
+    },
+    {
+      "id": "di196",
+      "kind": "fence-line",
+      "x": 2544.8,
+      "z": -2365.5,
+      "angle": 3.008
+    },
+    {
+      "id": "di197",
+      "kind": "fence-line",
+      "x": 2544,
+      "z": -2359.9,
+      "angle": 3.008
+    },
+    {
+      "id": "di198",
+      "kind": "fence-line",
+      "x": 2543.2,
+      "z": -2354.3,
+      "angle": 3.008
+    },
+    {
+      "id": "di199",
+      "kind": "fence-line",
+      "x": 2542.4,
+      "z": -2348.6,
+      "angle": 3.008
+    },
+    {
+      "id": "di200",
+      "kind": "fence-line",
+      "x": 2541.6,
+      "z": -2343,
+      "angle": 3.008
+    },
+    {
+      "id": "di201",
+      "kind": "fence-line",
+      "x": 2540.8,
+      "z": -2337.3,
+      "angle": 3.008
+    },
+    {
+      "id": "di202",
+      "kind": "fence-line",
+      "x": 2540,
+      "z": -2331.7,
+      "angle": 3.008
+    },
+    {
+      "id": "di203",
+      "kind": "fence-line",
+      "x": 2539.2,
+      "z": -2326,
+      "angle": 3.008
+    },
+    {
+      "id": "di204",
+      "kind": "fence-line",
+      "x": 2480.3,
+      "z": -2388.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di205",
+      "kind": "fence-line",
+      "x": 2486.1,
+      "z": -2387.8,
+      "angle": 1.437
+    },
+    {
+      "id": "di206",
+      "kind": "fence-line",
+      "x": 2491.9,
+      "z": -2387,
+      "angle": 1.437
+    },
+    {
+      "id": "di207",
+      "kind": "fence-line",
+      "x": 2497.7,
+      "z": -2386.3,
+      "angle": 1.437
+    },
+    {
+      "id": "di208",
+      "kind": "fence-line",
+      "x": 2526.6,
+      "z": -2382.4,
+      "angle": 1.437
+    },
+    {
+      "id": "di209",
+      "kind": "fence-line",
+      "x": 2532.4,
+      "z": -2381.6,
+      "angle": 1.437
+    },
+    {
+      "id": "di210",
+      "kind": "fence-line",
+      "x": 2538.2,
+      "z": -2380.8,
+      "angle": 1.437
+    },
+    {
+      "id": "di211",
+      "kind": "fence-line",
+      "x": 2543.9,
+      "z": -2380,
+      "angle": 1.437
+    },
+    {
+      "id": "di212",
+      "kind": "dumpster",
+      "x": 2491,
+      "z": -2385.2,
+      "angle": 1.437,
+      "variant": "green"
+    },
+    {
+      "id": "di213",
+      "kind": "bollard",
+      "x": 2504.1,
+      "z": -2384.9,
+      "angle": 1.437
+    },
+    {
+      "id": "di214",
+      "kind": "bollard",
+      "x": 2520,
+      "z": -2382.8,
+      "angle": 1.437
+    },
+    {
+      "id": "di215",
+      "kind": "cabin",
+      "x": 2056.9,
+      "z": -2039.8,
+      "angle": 1.582
+    },
+    {
+      "id": "di216",
+      "kind": "cabin",
+      "x": 2056.7,
+      "z": -2059.8,
+      "angle": 1.582
+    },
+    {
+      "id": "di217",
+      "kind": "shed",
+      "x": 2042.8,
+      "z": -2049.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di218",
+      "kind": "stack",
+      "x": 2045,
+      "z": -2033.4,
+      "angle": 0.011,
+      "variant": "pallets"
+    },
+    {
+      "id": "di219",
+      "kind": "stack",
+      "x": 2044.9,
+      "z": -2036.4,
+      "angle": 0.011,
+      "variant": "drums"
+    },
+    {
+      "id": "di220",
+      "kind": "stack",
+      "x": 2044.9,
+      "z": -2039.4,
+      "angle": 0.011,
+      "variant": "pallets"
+    },
+    {
+      "id": "di221",
+      "kind": "blast-wall",
+      "x": 2062.9,
+      "z": -2038.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di222",
+      "kind": "blast-wall",
+      "x": 2062.7,
+      "z": -2060.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di223",
+      "kind": "fence-line",
+      "x": 2035,
+      "z": -2030.3,
+      "angle": 0.011
+    },
+    {
+      "id": "di224",
+      "kind": "fence-line",
+      "x": 2034.9,
+      "z": -2036.6,
+      "angle": 0.011
+    },
+    {
+      "id": "di225",
+      "kind": "fence-line",
+      "x": 2034.9,
+      "z": -2042.9,
+      "angle": 0.011
+    },
+    {
+      "id": "di226",
+      "kind": "fence-line",
+      "x": 2034.8,
+      "z": -2049.2,
+      "angle": 0.011
+    },
+    {
+      "id": "di227",
+      "kind": "fence-line",
+      "x": 2034.7,
+      "z": -2055.5,
+      "angle": 0.011
+    },
+    {
+      "id": "di228",
+      "kind": "fence-line",
+      "x": 2034.6,
+      "z": -2061.7,
+      "angle": 0.011
+    },
+    {
+      "id": "di229",
+      "kind": "fence-line",
+      "x": 2034.6,
+      "z": -2068,
+      "angle": 0.011
+    },
+    {
+      "id": "di230",
+      "kind": "fence-line",
+      "x": 2061.1,
+      "z": -2027.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di231",
+      "kind": "fence-line",
+      "x": 2055.3,
+      "z": -2027.7,
+      "angle": 1.582
+    },
+    {
+      "id": "di232",
+      "kind": "fence-line",
+      "x": 2049.5,
+      "z": -2027.6,
+      "angle": 1.582
+    },
+    {
+      "id": "di233",
+      "kind": "fence-line",
+      "x": 2043.7,
+      "z": -2027.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di234",
+      "kind": "fence-line",
+      "x": 2037.9,
+      "z": -2027.2,
+      "angle": 1.582
+    },
+    {
+      "id": "di235",
+      "kind": "fence-line",
+      "x": 2060.6,
+      "z": -2071.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di236",
+      "kind": "fence-line",
+      "x": 2054.8,
+      "z": -2071.7,
+      "angle": 1.582
+    },
+    {
+      "id": "di237",
+      "kind": "fence-line",
+      "x": 2049,
+      "z": -2071.6,
+      "angle": 1.582
+    },
+    {
+      "id": "di238",
+      "kind": "fence-line",
+      "x": 2043.2,
+      "z": -2071.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di239",
+      "kind": "fence-line",
+      "x": 2037.4,
+      "z": -2071.2,
+      "angle": 1.582
+    },
+    {
+      "id": "di240",
+      "kind": "fence-line",
+      "x": 2064,
+      "z": -2031.1,
+      "angle": 0.011
+    },
+    {
+      "id": "di241",
+      "kind": "fence-line",
+      "x": 2063.9,
+      "z": -2037.4,
+      "angle": 0.011
+    },
+    {
+      "id": "di242",
+      "kind": "fence-line",
+      "x": 2063.6,
+      "z": -2062.5,
+      "angle": 0.011
+    },
+    {
+      "id": "di243",
+      "kind": "fence-line",
+      "x": 2063.6,
+      "z": -2068.8,
+      "angle": 0.011
+    },
+    {
+      "id": "di244",
+      "kind": "dumpster",
+      "x": 2061.9,
+      "z": -2040.5,
+      "angle": 0.011,
+      "variant": "blue"
+    },
+    {
+      "id": "di245",
+      "kind": "cone",
+      "x": 2061.7,
+      "z": -2057.9,
+      "angle": 0.011
+    },
+    {
+      "id": "di246",
+      "kind": "cone",
+      "x": 2061.7,
+      "z": -2060.1,
+      "angle": 0.011
+    },
+    {
+      "id": "di247",
+      "kind": "cone",
+      "x": 2061.6,
+      "z": -2062.3,
+      "angle": 0.011
+    },
+    {
+      "id": "di248",
+      "kind": "bollard",
+      "x": 2063.4,
+      "z": -2042,
+      "angle": 0.011
+    },
+    {
+      "id": "di249",
+      "kind": "bollard",
+      "x": 2063.2,
+      "z": -2058,
+      "angle": 0.011
+    },
+    {
+      "id": "di250",
+      "kind": "cabin",
+      "x": 2056.2,
+      "z": -2099.8,
+      "angle": 1.582
+    },
+    {
+      "id": "di251",
+      "kind": "cabin",
+      "x": 2056,
+      "z": -2119.8,
+      "angle": 1.582
+    },
+    {
+      "id": "di252",
+      "kind": "shed",
+      "x": 2042.1,
+      "z": -2109.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di253",
+      "kind": "stack",
+      "x": 2044.3,
+      "z": -2093.4,
+      "angle": 0.011,
+      "variant": "pallets"
+    },
+    {
+      "id": "di254",
+      "kind": "stack",
+      "x": 2044.3,
+      "z": -2096.4,
+      "angle": 0.011,
+      "variant": "drums"
+    },
+    {
+      "id": "di255",
+      "kind": "stack",
+      "x": 2044.2,
+      "z": -2099.4,
+      "angle": 0.011,
+      "variant": "pallets"
+    },
+    {
+      "id": "di256",
+      "kind": "blast-wall",
+      "x": 2062.2,
+      "z": -2098.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di257",
+      "kind": "blast-wall",
+      "x": 2062,
+      "z": -2120.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di258",
+      "kind": "fence-line",
+      "x": 2034.3,
+      "z": -2090.3,
+      "angle": 0.011
+    },
+    {
+      "id": "di259",
+      "kind": "fence-line",
+      "x": 2034.3,
+      "z": -2096.6,
+      "angle": 0.011
+    },
+    {
+      "id": "di260",
+      "kind": "fence-line",
+      "x": 2034.2,
+      "z": -2102.9,
+      "angle": 0.011
+    },
+    {
+      "id": "di261",
+      "kind": "fence-line",
+      "x": 2034.1,
+      "z": -2109.2,
+      "angle": 0.011
+    },
+    {
+      "id": "di262",
+      "kind": "fence-line",
+      "x": 2034.1,
+      "z": -2115.4,
+      "angle": 0.011
+    },
+    {
+      "id": "di263",
+      "kind": "fence-line",
+      "x": 2034,
+      "z": -2121.7,
+      "angle": 0.011
+    },
+    {
+      "id": "di264",
+      "kind": "fence-line",
+      "x": 2033.9,
+      "z": -2128,
+      "angle": 0.011
+    },
+    {
+      "id": "di265",
+      "kind": "fence-line",
+      "x": 2060.5,
+      "z": -2087.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di266",
+      "kind": "fence-line",
+      "x": 2054.7,
+      "z": -2087.7,
+      "angle": 1.582
+    },
+    {
+      "id": "di267",
+      "kind": "fence-line",
+      "x": 2048.9,
+      "z": -2087.6,
+      "angle": 1.582
+    },
+    {
+      "id": "di268",
+      "kind": "fence-line",
+      "x": 2043.1,
+      "z": -2087.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di269",
+      "kind": "fence-line",
+      "x": 2037.3,
+      "z": -2087.2,
+      "angle": 1.582
+    },
+    {
+      "id": "di270",
+      "kind": "fence-line",
+      "x": 2060,
+      "z": -2131.9,
+      "angle": 1.582
+    },
+    {
+      "id": "di271",
+      "kind": "fence-line",
+      "x": 2054.2,
+      "z": -2131.7,
+      "angle": 1.582
+    },
+    {
+      "id": "di272",
+      "kind": "fence-line",
+      "x": 2048.4,
+      "z": -2131.6,
+      "angle": 1.582
+    },
+    {
+      "id": "di273",
+      "kind": "fence-line",
+      "x": 2042.6,
+      "z": -2131.4,
+      "angle": 1.582
+    },
+    {
+      "id": "di274",
+      "kind": "fence-line",
+      "x": 2036.8,
+      "z": -2131.2,
+      "angle": 1.582
+    },
+    {
+      "id": "di275",
+      "kind": "fence-line",
+      "x": 2063.3,
+      "z": -2091.1,
+      "angle": 0.011
+    },
+    {
+      "id": "di276",
+      "kind": "fence-line",
+      "x": 2063.3,
+      "z": -2097.4,
+      "angle": 0.011
+    },
+    {
+      "id": "di277",
+      "kind": "fence-line",
+      "x": 2063,
+      "z": -2122.5,
+      "angle": 0.011
+    },
+    {
+      "id": "di278",
+      "kind": "fence-line",
+      "x": 2062.9,
+      "z": -2128.8,
+      "angle": 0.011
+    },
+    {
+      "id": "di279",
+      "kind": "bollard",
+      "x": 2062.7,
+      "z": -2102,
+      "angle": 0.011
+    },
+    {
+      "id": "di280",
+      "kind": "bollard",
+      "x": 2062.5,
+      "z": -2118,
+      "angle": 0.011
+    },
+    {
+      "id": "di281",
+      "kind": "cabin",
+      "x": 2409.7,
+      "z": -2643.7,
+      "angle": 2.514
+    },
+    {
+      "id": "di282",
+      "kind": "cabin",
+      "x": 2393.5,
+      "z": -2655.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di283",
+      "kind": "shed",
+      "x": 2409.6,
+      "z": -2661,
+      "angle": 2.514
+    },
+    {
+      "id": "di284",
+      "kind": "stack",
+      "x": 2421.4,
+      "z": -2650,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di285",
+      "kind": "stack",
+      "x": 2419,
+      "z": -2651.7,
+      "angle": 0.943,
+      "variant": "drums"
+    },
+    {
+      "id": "di286",
+      "kind": "stack",
+      "x": 2416.6,
+      "z": -2653.5,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di287",
+      "kind": "blast-wall",
+      "x": 2407,
+      "z": -2638.2,
+      "angle": 2.514
+    },
+    {
+      "id": "di288",
+      "kind": "blast-wall",
+      "x": 2389.2,
+      "z": -2651.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di289",
+      "kind": "fence-line",
+      "x": 2429.5,
+      "z": -2656.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di290",
+      "kind": "fence-line",
+      "x": 2424.4,
+      "z": -2660.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di291",
+      "kind": "fence-line",
+      "x": 2419.3,
+      "z": -2663.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di292",
+      "kind": "fence-line",
+      "x": 2414.2,
+      "z": -2667.6,
+      "angle": 0.943
+    },
+    {
+      "id": "di293",
+      "kind": "fence-line",
+      "x": 2409.1,
+      "z": -2671.3,
+      "angle": 0.943
+    },
+    {
+      "id": "di294",
+      "kind": "fence-line",
+      "x": 2404,
+      "z": -2675,
+      "angle": 0.943
+    },
+    {
+      "id": "di295",
+      "kind": "fence-line",
+      "x": 2398.9,
+      "z": -2678.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di296",
+      "kind": "fence-line",
+      "x": 2417,
+      "z": -2633.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di297",
+      "kind": "fence-line",
+      "x": 2420.4,
+      "z": -2638,
+      "angle": 2.514
+    },
+    {
+      "id": "di298",
+      "kind": "fence-line",
+      "x": 2423.7,
+      "z": -2642.8,
+      "angle": 2.514
+    },
+    {
+      "id": "di299",
+      "kind": "fence-line",
+      "x": 2427,
+      "z": -2647.5,
+      "angle": 2.514
+    },
+    {
+      "id": "di300",
+      "kind": "fence-line",
+      "x": 2430.3,
+      "z": -2652.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di301",
+      "kind": "fence-line",
+      "x": 2381.4,
+      "z": -2659.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di302",
+      "kind": "fence-line",
+      "x": 2384.8,
+      "z": -2663.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di303",
+      "kind": "fence-line",
+      "x": 2388.1,
+      "z": -2668.6,
+      "angle": 2.514
+    },
+    {
+      "id": "di304",
+      "kind": "fence-line",
+      "x": 2391.4,
+      "z": -2673.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di305",
+      "kind": "fence-line",
+      "x": 2394.7,
+      "z": -2678.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di306",
+      "kind": "fence-line",
+      "x": 2412.8,
+      "z": -2632.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di307",
+      "kind": "fence-line",
+      "x": 2407.7,
+      "z": -2636.4,
+      "angle": 0.943
+    },
+    {
+      "id": "di308",
+      "kind": "fence-line",
+      "x": 2387.4,
+      "z": -2651.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di309",
+      "kind": "fence-line",
+      "x": 2382.3,
+      "z": -2654.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di310",
+      "kind": "dumpster",
+      "x": 2407,
+      "z": -2639.5,
+      "angle": 0.943,
+      "variant": "grey"
+    },
+    {
+      "id": "di311",
+      "kind": "bollard",
+      "x": 2404.3,
+      "z": -2639.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di312",
+      "kind": "bollard",
+      "x": 2391.4,
+      "z": -2648.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di313",
+      "kind": "cabin",
+      "x": 2361.1,
+      "z": -2678.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di314",
+      "kind": "cabin",
+      "x": 2344.9,
+      "z": -2690.7,
+      "angle": 2.514
+    },
+    {
+      "id": "di315",
+      "kind": "shed",
+      "x": 2361.1,
+      "z": -2696.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di316",
+      "kind": "stack",
+      "x": 2372.9,
+      "z": -2685.2,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di317",
+      "kind": "stack",
+      "x": 2370.4,
+      "z": -2687,
+      "angle": 0.943,
+      "variant": "drums"
+    },
+    {
+      "id": "di318",
+      "kind": "stack",
+      "x": 2368,
+      "z": -2688.8,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di319",
+      "kind": "blast-wall",
+      "x": 2358.5,
+      "z": -2673.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di320",
+      "kind": "blast-wall",
+      "x": 2340.7,
       "z": -2686.4,
-      "angle": 1.983
+      "angle": 2.514
     },
     {
-      "id": "dw566",
-      "kind": "rails",
-      "x": 1373.8,
-      "z": -2702.4,
-      "angle": 1.983
+      "id": "di321",
+      "kind": "fence-line",
+      "x": 2380.9,
+      "z": -2691.7,
+      "angle": 0.943
     },
     {
-      "id": "dw567",
-      "kind": "wagon",
-      "x": 1326.2,
-      "z": -2681.6,
-      "angle": 1.983,
-      "variant": "tank"
+      "id": "di322",
+      "kind": "fence-line",
+      "x": 2375.8,
+      "z": -2695.4,
+      "angle": 0.943
     },
     {
-      "id": "dw568",
-      "kind": "wagon",
-      "x": 1340.8,
+      "id": "di323",
+      "kind": "fence-line",
+      "x": 2370.7,
+      "z": -2699.1,
+      "angle": 0.943
+    },
+    {
+      "id": "di324",
+      "kind": "fence-line",
+      "x": 2365.7,
+      "z": -2702.8,
+      "angle": 0.943
+    },
+    {
+      "id": "di325",
+      "kind": "fence-line",
+      "x": 2360.6,
+      "z": -2706.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di326",
+      "kind": "fence-line",
+      "x": 2355.5,
+      "z": -2710.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di327",
+      "kind": "fence-line",
+      "x": 2350.4,
+      "z": -2713.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di328",
+      "kind": "fence-line",
+      "x": 2368.5,
+      "z": -2668.5,
+      "angle": 2.514
+    },
+    {
+      "id": "di329",
+      "kind": "fence-line",
+      "x": 2371.8,
+      "z": -2673.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di330",
+      "kind": "fence-line",
+      "x": 2375.1,
+      "z": -2678,
+      "angle": 2.514
+    },
+    {
+      "id": "di331",
+      "kind": "fence-line",
+      "x": 2378.5,
+      "z": -2682.8,
+      "angle": 2.514
+    },
+    {
+      "id": "di332",
+      "kind": "fence-line",
+      "x": 2381.8,
+      "z": -2687.5,
+      "angle": 2.514
+    },
+    {
+      "id": "di333",
+      "kind": "fence-line",
+      "x": 2332.9,
+      "z": -2694.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di334",
+      "kind": "fence-line",
+      "x": 2336.2,
+      "z": -2699.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di335",
+      "kind": "fence-line",
+      "x": 2339.5,
+      "z": -2703.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di336",
+      "kind": "fence-line",
+      "x": 2342.9,
+      "z": -2708.6,
+      "angle": 2.514
+    },
+    {
+      "id": "di337",
+      "kind": "fence-line",
+      "x": 2346.2,
+      "z": -2713.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di338",
+      "kind": "fence-line",
+      "x": 2364.3,
+      "z": -2668,
+      "angle": 0.943
+    },
+    {
+      "id": "di339",
+      "kind": "fence-line",
+      "x": 2359.2,
+      "z": -2671.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di340",
+      "kind": "fence-line",
+      "x": 2338.8,
+      "z": -2686.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di341",
+      "kind": "fence-line",
+      "x": 2333.8,
+      "z": -2690.1,
+      "angle": 0.943
+    },
+    {
+      "id": "di342",
+      "kind": "dumpster",
+      "x": 2362.9,
+      "z": -2671.5,
+      "angle": 0.943,
+      "variant": "green"
+    },
+    {
+      "id": "di343",
+      "kind": "cone",
+      "x": 2343.7,
+      "z": -2685.4,
+      "angle": 0.943
+    },
+    {
+      "id": "di344",
+      "kind": "cone",
+      "x": 2341.9,
+      "z": -2686.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di345",
+      "kind": "cone",
+      "x": 2340.1,
       "z": -2688,
-      "angle": 1.983,
-      "variant": "box"
+      "angle": 0.943
     },
     {
-      "id": "dw569",
-      "kind": "wagon",
-      "x": 1370.1,
-      "z": -2700.8,
-      "angle": 1.983,
-      "variant": "box"
+      "id": "di346",
+      "kind": "bollard",
+      "x": 2355.8,
+      "z": -2674.8,
+      "angle": 0.943
     },
     {
-      "id": "dw570",
-      "kind": "wagon",
-      "x": 1384.8,
-      "z": -2707.2,
-      "angle": 1.983,
-      "variant": "tank"
+      "id": "di347",
+      "kind": "bollard",
+      "x": 2342.8,
+      "z": -2684.2,
+      "angle": 0.943
     },
     {
-      "id": "dw571",
-      "kind": "gantry",
-      "x": 1361.4,
-      "z": -2700.8,
-      "angle": 1.983
+      "id": "di348",
+      "kind": "cabin",
+      "x": 2312.5,
+      "z": -2713.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di349",
+      "kind": "cabin",
+      "x": 2296.3,
+      "z": -2725.2,
+      "angle": 2.514
+    },
+    {
+      "id": "di350",
+      "kind": "shed",
+      "x": 2312.4,
+      "z": -2730.8,
+      "angle": 2.514
+    },
+    {
+      "id": "di351",
+      "kind": "stack",
+      "x": 2324.2,
+      "z": -2719.7,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di352",
+      "kind": "stack",
+      "x": 2321.8,
+      "z": -2721.5,
+      "angle": 0.943,
+      "variant": "drums"
+    },
+    {
+      "id": "di353",
+      "kind": "stack",
+      "x": 2319.4,
+      "z": -2723.3,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di354",
+      "kind": "blast-wall",
+      "x": 2309.9,
+      "z": -2707.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di355",
+      "kind": "blast-wall",
+      "x": 2292.1,
+      "z": -2720.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di356",
+      "kind": "fence-line",
+      "x": 2332.3,
+      "z": -2726.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di357",
+      "kind": "fence-line",
+      "x": 2327.2,
+      "z": -2729.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di358",
+      "kind": "fence-line",
+      "x": 2322.1,
+      "z": -2733.6,
+      "angle": 0.943
+    },
+    {
+      "id": "di359",
+      "kind": "fence-line",
+      "x": 2317,
+      "z": -2737.3,
+      "angle": 0.943
+    },
+    {
+      "id": "di360",
+      "kind": "fence-line",
+      "x": 2311.9,
+      "z": -2741,
+      "angle": 0.943
+    },
+    {
+      "id": "di361",
+      "kind": "fence-line",
+      "x": 2306.8,
+      "z": -2744.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di362",
+      "kind": "fence-line",
+      "x": 2301.8,
+      "z": -2748.4,
+      "angle": 0.943
+    },
+    {
+      "id": "di363",
+      "kind": "fence-line",
+      "x": 2319.9,
+      "z": -2703,
+      "angle": 2.514
+    },
+    {
+      "id": "di364",
+      "kind": "fence-line",
+      "x": 2323.2,
+      "z": -2707.8,
+      "angle": 2.514
+    },
+    {
+      "id": "di365",
+      "kind": "fence-line",
+      "x": 2326.5,
+      "z": -2712.5,
+      "angle": 2.514
+    },
+    {
+      "id": "di366",
+      "kind": "fence-line",
+      "x": 2329.8,
+      "z": -2717.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di367",
+      "kind": "fence-line",
+      "x": 2333.2,
+      "z": -2722,
+      "angle": 2.514
+    },
+    {
+      "id": "di368",
+      "kind": "fence-line",
+      "x": 2284.2,
+      "z": -2728.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di369",
+      "kind": "fence-line",
+      "x": 2287.6,
+      "z": -2733.6,
+      "angle": 2.514
+    },
+    {
+      "id": "di370",
+      "kind": "fence-line",
+      "x": 2290.9,
+      "z": -2738.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di371",
+      "kind": "fence-line",
+      "x": 2294.2,
+      "z": -2743.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di372",
+      "kind": "fence-line",
+      "x": 2297.6,
+      "z": -2747.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di373",
+      "kind": "fence-line",
+      "x": 2315.6,
+      "z": -2702.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di374",
+      "kind": "fence-line",
+      "x": 2310.6,
+      "z": -2706.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di375",
+      "kind": "fence-line",
+      "x": 2290.2,
+      "z": -2721,
+      "angle": 0.943
+    },
+    {
+      "id": "di376",
+      "kind": "fence-line",
+      "x": 2285.1,
+      "z": -2724.6,
+      "angle": 0.943
+    },
+    {
+      "id": "di377",
+      "kind": "cone",
+      "x": 2295.1,
+      "z": -2719.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di378",
+      "kind": "cone",
+      "x": 2293.3,
+      "z": -2721.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di379",
+      "kind": "cone",
+      "x": 2291.5,
+      "z": -2722.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di380",
+      "kind": "bollard",
+      "x": 2307.1,
+      "z": -2709.3,
+      "angle": 0.943
+    },
+    {
+      "id": "di381",
+      "kind": "bollard",
+      "x": 2294.2,
+      "z": -2718.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di382",
+      "kind": "cabin",
+      "x": 2263.9,
+      "z": -2748.7,
+      "angle": 2.514
+    },
+    {
+      "id": "di383",
+      "kind": "cabin",
+      "x": 2247.8,
+      "z": -2760.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di384",
+      "kind": "shed",
+      "x": 2263.9,
+      "z": -2766,
+      "angle": 2.514
+    },
+    {
+      "id": "di385",
+      "kind": "stack",
+      "x": 2275.7,
+      "z": -2755,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di386",
+      "kind": "stack",
+      "x": 2273.3,
+      "z": -2756.7,
+      "angle": 0.943,
+      "variant": "drums"
+    },
+    {
+      "id": "di387",
+      "kind": "stack",
+      "x": 2270.8,
+      "z": -2758.5,
+      "angle": 0.943,
+      "variant": "pallets"
+    },
+    {
+      "id": "di388",
+      "kind": "blast-wall",
+      "x": 2261.3,
+      "z": -2743.2,
+      "angle": 2.514
+    },
+    {
+      "id": "di389",
+      "kind": "blast-wall",
+      "x": 2243.5,
+      "z": -2756.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di390",
+      "kind": "fence-line",
+      "x": 2283.7,
+      "z": -2761.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di391",
+      "kind": "fence-line",
+      "x": 2278.6,
+      "z": -2765.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di392",
+      "kind": "fence-line",
+      "x": 2273.6,
+      "z": -2768.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di393",
+      "kind": "fence-line",
+      "x": 2268.5,
+      "z": -2772.6,
+      "angle": 0.943
+    },
+    {
+      "id": "di394",
+      "kind": "fence-line",
+      "x": 2263.4,
+      "z": -2776.3,
+      "angle": 0.943
+    },
+    {
+      "id": "di395",
+      "kind": "fence-line",
+      "x": 2258.3,
+      "z": -2780,
+      "angle": 0.943
+    },
+    {
+      "id": "di396",
+      "kind": "fence-line",
+      "x": 2253.2,
+      "z": -2783.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di397",
+      "kind": "fence-line",
+      "x": 2271.3,
+      "z": -2738.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di398",
+      "kind": "fence-line",
+      "x": 2274.6,
+      "z": -2743,
+      "angle": 2.514
+    },
+    {
+      "id": "di399",
+      "kind": "fence-line",
+      "x": 2278,
+      "z": -2747.8,
+      "angle": 2.514
+    },
+    {
+      "id": "di400",
+      "kind": "fence-line",
+      "x": 2281.3,
+      "z": -2752.5,
+      "angle": 2.514
+    },
+    {
+      "id": "di401",
+      "kind": "fence-line",
+      "x": 2284.6,
+      "z": -2757.3,
+      "angle": 2.514
+    },
+    {
+      "id": "di402",
+      "kind": "fence-line",
+      "x": 2235.7,
+      "z": -2764.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di403",
+      "kind": "fence-line",
+      "x": 2239,
+      "z": -2768.9,
+      "angle": 2.514
+    },
+    {
+      "id": "di404",
+      "kind": "fence-line",
+      "x": 2242.3,
+      "z": -2773.6,
+      "angle": 2.514
+    },
+    {
+      "id": "di405",
+      "kind": "fence-line",
+      "x": 2245.7,
+      "z": -2778.4,
+      "angle": 2.514
+    },
+    {
+      "id": "di406",
+      "kind": "fence-line",
+      "x": 2249,
+      "z": -2783.1,
+      "angle": 2.514
+    },
+    {
+      "id": "di407",
+      "kind": "fence-line",
+      "x": 2267.1,
+      "z": -2737.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di408",
+      "kind": "fence-line",
+      "x": 2262,
+      "z": -2741.4,
+      "angle": 0.943
+    },
+    {
+      "id": "di409",
+      "kind": "fence-line",
+      "x": 2241.7,
+      "z": -2756.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di410",
+      "kind": "fence-line",
+      "x": 2236.6,
+      "z": -2759.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di411",
+      "kind": "dumpster",
+      "x": 2264.5,
+      "z": -2742.1,
+      "angle": 0.943,
+      "variant": "blue"
+    },
+    {
+      "id": "di412",
+      "kind": "cone",
+      "x": 2246.5,
+      "z": -2755.2,
+      "angle": 0.943
+    },
+    {
+      "id": "di413",
+      "kind": "cone",
+      "x": 2244.7,
+      "z": -2756.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di414",
+      "kind": "cone",
+      "x": 2242.9,
+      "z": -2757.7,
+      "angle": 0.943
+    },
+    {
+      "id": "di415",
+      "kind": "bollard",
+      "x": 2258.6,
+      "z": -2744.5,
+      "angle": 0.943
+    },
+    {
+      "id": "di416",
+      "kind": "bollard",
+      "x": 2245.6,
+      "z": -2753.9,
+      "angle": 0.943
+    },
+    {
+      "id": "di417",
+      "kind": "cabin",
+      "x": 2215.3,
+      "z": -2783.9,
+      "angle": 2.523
+    },
+    {
+      "id": "di418",
+      "kind": "cabin",
+      "x": 2199,
+      "z": -2795.5,
+      "angle": 2.523
+    },
+    {
+      "id": "di419",
+      "kind": "shed",
+      "x": 2215.3,
+      "z": -2801,
+      "angle": 2.523
+    },
+    {
+      "id": "di420",
+      "kind": "stack",
+      "x": 2227.2,
+      "z": -2790.1,
+      "angle": 0.952,
+      "variant": "pallets"
+    },
+    {
+      "id": "di421",
+      "kind": "stack",
+      "x": 2224.7,
+      "z": -2791.9,
+      "angle": 0.952,
+      "variant": "drums"
+    },
+    {
+      "id": "di422",
+      "kind": "stack",
+      "x": 2222.3,
+      "z": -2793.6,
+      "angle": 0.952,
+      "variant": "pallets"
+    },
+    {
+      "id": "di423",
+      "kind": "blast-wall",
+      "x": 2212.6,
+      "z": -2778.4,
+      "angle": 2.523
+    },
+    {
+      "id": "di424",
+      "kind": "blast-wall",
+      "x": 2194.6,
+      "z": -2791.2,
+      "angle": 2.523
+    },
+    {
+      "id": "di425",
+      "kind": "fence-line",
+      "x": 2235.4,
+      "z": -2796.6,
+      "angle": 0.952
+    },
+    {
+      "id": "di426",
+      "kind": "fence-line",
+      "x": 2230.3,
+      "z": -2800.2,
+      "angle": 0.952
+    },
+    {
+      "id": "di427",
+      "kind": "fence-line",
+      "x": 2225.1,
+      "z": -2803.9,
+      "angle": 0.952
+    },
+    {
+      "id": "di428",
+      "kind": "fence-line",
+      "x": 2220,
+      "z": -2807.5,
+      "angle": 0.952
+    },
+    {
+      "id": "di429",
+      "kind": "fence-line",
+      "x": 2214.9,
+      "z": -2811.2,
+      "angle": 0.952
+    },
+    {
+      "id": "di430",
+      "kind": "fence-line",
+      "x": 2209.8,
+      "z": -2814.8,
+      "angle": 0.952
+    },
+    {
+      "id": "di431",
+      "kind": "fence-line",
+      "x": 2204.7,
+      "z": -2818.4,
+      "angle": 0.952
+    },
+    {
+      "id": "di432",
+      "kind": "fence-line",
+      "x": 2222.6,
+      "z": -2773.6,
+      "angle": 2.523
+    },
+    {
+      "id": "di433",
+      "kind": "fence-line",
+      "x": 2226,
+      "z": -2778.3,
+      "angle": 2.523
+    },
+    {
+      "id": "di434",
+      "kind": "fence-line",
+      "x": 2229.4,
+      "z": -2783,
+      "angle": 2.523
+    },
+    {
+      "id": "di435",
+      "kind": "fence-line",
+      "x": 2232.8,
+      "z": -2787.7,
+      "angle": 2.523
+    },
+    {
+      "id": "di436",
+      "kind": "fence-line",
+      "x": 2236.2,
+      "z": -2792.4,
+      "angle": 2.523
+    },
+    {
+      "id": "di437",
+      "kind": "fence-line",
+      "x": 2186.8,
+      "z": -2799.1,
+      "angle": 2.523
+    },
+    {
+      "id": "di438",
+      "kind": "fence-line",
+      "x": 2190.2,
+      "z": -2803.8,
+      "angle": 2.523
+    },
+    {
+      "id": "di439",
+      "kind": "fence-line",
+      "x": 2193.6,
+      "z": -2808.5,
+      "angle": 2.523
+    },
+    {
+      "id": "di440",
+      "kind": "fence-line",
+      "x": 2197,
+      "z": -2813.2,
+      "angle": 2.523
+    },
+    {
+      "id": "di441",
+      "kind": "fence-line",
+      "x": 2200.4,
+      "z": -2817.9,
+      "angle": 2.523
+    },
+    {
+      "id": "di442",
+      "kind": "fence-line",
+      "x": 2218.4,
+      "z": -2773.1,
+      "angle": 0.952
+    },
+    {
+      "id": "di443",
+      "kind": "fence-line",
+      "x": 2213.2,
+      "z": -2776.7,
+      "angle": 0.952
+    },
+    {
+      "id": "di444",
+      "kind": "fence-line",
+      "x": 2192.8,
+      "z": -2791.3,
+      "angle": 0.952
+    },
+    {
+      "id": "di445",
+      "kind": "fence-line",
+      "x": 2187.6,
+      "z": -2795,
+      "angle": 0.952
+    },
+    {
+      "id": "di446",
+      "kind": "bollard",
+      "x": 2209.8,
+      "z": -2779.8,
+      "angle": 0.952
+    },
+    {
+      "id": "di447",
+      "kind": "bollard",
+      "x": 2196.8,
+      "z": -2789.1,
+      "angle": 0.952
+    },
+    {
+      "id": "di448",
+      "kind": "cabin",
+      "x": 2081.3,
+      "z": -2880.7,
+      "angle": 2.38
+    },
+    {
+      "id": "di449",
+      "kind": "cabin",
+      "x": 2066.8,
+      "z": -2894.5,
+      "angle": 2.38
+    },
+    {
+      "id": "di450",
+      "kind": "shed",
+      "x": 2083.8,
+      "z": -2897.7,
+      "angle": 2.38
+    },
+    {
+      "id": "di451",
+      "kind": "stack",
+      "x": 2094,
+      "z": -2885.2,
+      "angle": 0.809,
+      "variant": "pallets"
+    },
+    {
+      "id": "di452",
+      "kind": "stack",
+      "x": 2091.8,
+      "z": -2887.2,
+      "angle": 0.809,
+      "variant": "drums"
+    },
+    {
+      "id": "di453",
+      "kind": "stack",
+      "x": 2089.6,
+      "z": -2889.3,
+      "angle": 0.809,
+      "variant": "pallets"
+    },
+    {
+      "id": "di454",
+      "kind": "blast-wall",
+      "x": 2077.9,
+      "z": -2875.7,
+      "angle": 2.38
+    },
+    {
+      "id": "di455",
+      "kind": "blast-wall",
+      "x": 2062,
+      "z": -2890.8,
+      "angle": 2.38
+    },
+    {
+      "id": "di456",
+      "kind": "fence-line",
+      "x": 2103,
+      "z": -2890.4,
+      "angle": 0.809
+    },
+    {
+      "id": "di457",
+      "kind": "fence-line",
+      "x": 2098.4,
+      "z": -2894.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di458",
+      "kind": "fence-line",
+      "x": 2093.9,
+      "z": -2899.1,
+      "angle": 0.809
+    },
+    {
+      "id": "di459",
+      "kind": "fence-line",
+      "x": 2089.3,
+      "z": -2903.4,
+      "angle": 0.809
+    },
+    {
+      "id": "di460",
+      "kind": "fence-line",
+      "x": 2084.8,
+      "z": -2907.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di461",
+      "kind": "fence-line",
+      "x": 2080.2,
+      "z": -2912.1,
+      "angle": 0.809
+    },
+    {
+      "id": "di462",
+      "kind": "fence-line",
+      "x": 2075.7,
+      "z": -2916.4,
+      "angle": 0.809
+    },
+    {
+      "id": "di463",
+      "kind": "fence-line",
+      "x": 2087.2,
+      "z": -2869.4,
+      "angle": 2.38
+    },
+    {
+      "id": "di464",
+      "kind": "fence-line",
+      "x": 2091.2,
+      "z": -2873.6,
+      "angle": 2.38
+    },
+    {
+      "id": "di465",
+      "kind": "fence-line",
+      "x": 2095.2,
+      "z": -2877.8,
+      "angle": 2.38
+    },
+    {
+      "id": "di466",
+      "kind": "fence-line",
+      "x": 2099.2,
+      "z": -2882,
+      "angle": 2.38
+    },
+    {
+      "id": "di467",
+      "kind": "fence-line",
+      "x": 2103.2,
+      "z": -2886.2,
+      "angle": 2.38
+    },
+    {
+      "id": "di468",
+      "kind": "fence-line",
+      "x": 2055.3,
+      "z": -2899.8,
+      "angle": 2.38
+    },
+    {
+      "id": "di469",
+      "kind": "fence-line",
+      "x": 2059.3,
+      "z": -2904,
+      "angle": 2.38
+    },
+    {
+      "id": "di470",
+      "kind": "fence-line",
+      "x": 2063.4,
+      "z": -2908.2,
+      "angle": 2.38
+    },
+    {
+      "id": "di471",
+      "kind": "fence-line",
+      "x": 2067.4,
+      "z": -2912.3,
+      "angle": 2.38
+    },
+    {
+      "id": "di472",
+      "kind": "fence-line",
+      "x": 2071.4,
+      "z": -2916.5,
+      "angle": 2.38
+    },
+    {
+      "id": "di473",
+      "kind": "fence-line",
+      "x": 2082.9,
+      "z": -2869.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di474",
+      "kind": "fence-line",
+      "x": 2078.3,
+      "z": -2873.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di475",
+      "kind": "fence-line",
+      "x": 2060.1,
+      "z": -2891.2,
+      "angle": 0.809
+    },
+    {
+      "id": "di476",
+      "kind": "fence-line",
+      "x": 2055.6,
+      "z": -2895.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di477",
+      "kind": "cone",
+      "x": 2064.8,
+      "z": -2889.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di478",
+      "kind": "cone",
+      "x": 2063.2,
+      "z": -2891,
+      "angle": 0.809
+    },
+    {
+      "id": "di479",
+      "kind": "cone",
+      "x": 2061.6,
+      "z": -2892.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di480",
+      "kind": "bollard",
+      "x": 2075.4,
+      "z": -2877.4,
+      "angle": 0.809
+    },
+    {
+      "id": "di481",
+      "kind": "bollard",
+      "x": 2063.8,
+      "z": -2888.4,
+      "angle": 0.809
+    },
+    {
+      "id": "di482",
+      "kind": "cabin",
+      "x": 2037.9,
+      "z": -2922.1,
+      "angle": 2.38
+    },
+    {
+      "id": "di483",
+      "kind": "cabin",
+      "x": 2023.4,
+      "z": -2935.9,
+      "angle": 2.38
+    },
+    {
+      "id": "di484",
+      "kind": "shed",
+      "x": 2040.4,
+      "z": -2939.1,
+      "angle": 2.38
+    },
+    {
+      "id": "di485",
+      "kind": "stack",
+      "x": 2050.6,
+      "z": -2926.6,
+      "angle": 0.809,
+      "variant": "pallets"
+    },
+    {
+      "id": "di486",
+      "kind": "stack",
+      "x": 2048.4,
+      "z": -2928.7,
+      "angle": 0.809,
+      "variant": "drums"
+    },
+    {
+      "id": "di487",
+      "kind": "stack",
+      "x": 2046.2,
+      "z": -2930.7,
+      "angle": 0.809,
+      "variant": "pallets"
+    },
+    {
+      "id": "di488",
+      "kind": "blast-wall",
+      "x": 2034.5,
+      "z": -2917.1,
+      "angle": 2.38
+    },
+    {
+      "id": "di489",
+      "kind": "blast-wall",
+      "x": 2018.5,
+      "z": -2932.3,
+      "angle": 2.38
+    },
+    {
+      "id": "di490",
+      "kind": "fence-line",
+      "x": 2059.5,
+      "z": -2931.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di491",
+      "kind": "fence-line",
+      "x": 2055,
+      "z": -2936.2,
+      "angle": 0.809
+    },
+    {
+      "id": "di492",
+      "kind": "fence-line",
+      "x": 2050.5,
+      "z": -2940.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di493",
+      "kind": "fence-line",
+      "x": 2045.9,
+      "z": -2944.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di494",
+      "kind": "fence-line",
+      "x": 2041.4,
+      "z": -2949.2,
+      "angle": 0.809
+    },
+    {
+      "id": "di495",
+      "kind": "fence-line",
+      "x": 2036.8,
+      "z": -2953.5,
+      "angle": 0.809
+    },
+    {
+      "id": "di496",
+      "kind": "fence-line",
+      "x": 2032.3,
+      "z": -2957.9,
+      "angle": 0.809
+    },
+    {
+      "id": "di497",
+      "kind": "fence-line",
+      "x": 2043.7,
+      "z": -2910.8,
+      "angle": 2.38
+    },
+    {
+      "id": "di498",
+      "kind": "fence-line",
+      "x": 2047.8,
+      "z": -2915,
+      "angle": 2.38
+    },
+    {
+      "id": "di499",
+      "kind": "fence-line",
+      "x": 2051.8,
+      "z": -2919.2,
+      "angle": 2.38
+    },
+    {
+      "id": "di500",
+      "kind": "fence-line",
+      "x": 2055.8,
+      "z": -2923.4,
+      "angle": 2.38
+    },
+    {
+      "id": "di501",
+      "kind": "fence-line",
+      "x": 2059.8,
+      "z": -2927.6,
+      "angle": 2.38
+    },
+    {
+      "id": "di502",
+      "kind": "fence-line",
+      "x": 2011.9,
+      "z": -2941.2,
+      "angle": 2.38
+    },
+    {
+      "id": "di503",
+      "kind": "fence-line",
+      "x": 2015.9,
+      "z": -2945.4,
+      "angle": 2.38
+    },
+    {
+      "id": "di504",
+      "kind": "fence-line",
+      "x": 2019.9,
+      "z": -2949.6,
+      "angle": 2.38
+    },
+    {
+      "id": "di505",
+      "kind": "fence-line",
+      "x": 2024,
+      "z": -2953.8,
+      "angle": 2.38
+    },
+    {
+      "id": "di506",
+      "kind": "fence-line",
+      "x": 2028,
+      "z": -2957.9,
+      "angle": 2.38
+    },
+    {
+      "id": "di507",
+      "kind": "fence-line",
+      "x": 2039.4,
+      "z": -2910.9,
+      "angle": 0.809
+    },
+    {
+      "id": "di508",
+      "kind": "fence-line",
+      "x": 2034.9,
+      "z": -2915.3,
+      "angle": 0.809
+    },
+    {
+      "id": "di509",
+      "kind": "fence-line",
+      "x": 2016.7,
+      "z": -2932.6,
+      "angle": 0.809
+    },
+    {
+      "id": "di510",
+      "kind": "fence-line",
+      "x": 2012.2,
+      "z": -2937,
+      "angle": 0.809
+    },
+    {
+      "id": "di511",
+      "kind": "dumpster",
+      "x": 2032.8,
+      "z": -2920,
+      "angle": 0.809,
+      "variant": "grey"
+    },
+    {
+      "id": "di512",
+      "kind": "bollard",
+      "x": 2031.9,
+      "z": -2918.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di513",
+      "kind": "bollard",
+      "x": 2020.4,
+      "z": -2929.8,
+      "angle": 0.809
+    },
+    {
+      "id": "di514",
+      "kind": "crane",
+      "x": 1845.6,
+      "z": -3076.1,
+      "angle": 1.323
+    },
+    {
+      "id": "di515",
+      "kind": "stockpile",
+      "x": 1867,
+      "z": -3079,
+      "angle": 1.323,
+      "variant": "rust"
+    },
+    {
+      "id": "di516",
+      "kind": "excavator",
+      "x": 1821.8,
+      "z": -3071.9,
+      "angle": 0.823
+    },
+    {
+      "id": "di517",
+      "kind": "haul-truck",
+      "x": 1827.7,
+      "z": -3095.1,
+      "angle": 2.223
+    },
+    {
+      "id": "di518",
+      "kind": "stack",
+      "x": 1867.3,
+      "z": -3056.2,
+      "angle": 1.323,
+      "variant": "drums"
+    },
+    {
+      "id": "di519",
+      "kind": "stack",
+      "x": 1865.4,
+      "z": -3060.8,
+      "angle": 1.323,
+      "variant": "drums"
+    },
+    {
+      "id": "di520",
+      "kind": "stack",
+      "x": 1861.5,
+      "z": -3057.7,
+      "angle": 1.323,
+      "variant": "drums"
+    },
+    {
+      "id": "di521",
+      "kind": "stack",
+      "x": 1859.6,
+      "z": -3062.3,
+      "angle": 1.323,
+      "variant": "drums"
+    },
+    {
+      "id": "di522",
+      "kind": "cabin",
+      "x": 1861.5,
+      "z": -3053.6,
+      "angle": 2.894
+    },
+    {
+      "id": "di523",
+      "kind": "fence-line",
+      "x": 1881.6,
+      "z": -3095.9,
+      "angle": 1.323
+    },
+    {
+      "id": "di524",
+      "kind": "fence-line",
+      "x": 1875.8,
+      "z": -3097.4,
+      "angle": 1.323
+    },
+    {
+      "id": "di525",
+      "kind": "fence-line",
+      "x": 1870,
+      "z": -3098.9,
+      "angle": 1.323
+    },
+    {
+      "id": "di526",
+      "kind": "fence-line",
+      "x": 1864.2,
+      "z": -3100.3,
+      "angle": 1.323
+    },
+    {
+      "id": "di527",
+      "kind": "fence-line",
+      "x": 1858.4,
+      "z": -3101.8,
+      "angle": 1.323
+    },
+    {
+      "id": "di528",
+      "kind": "fence-line",
+      "x": 1852.6,
+      "z": -3103.3,
+      "angle": 1.323
+    },
+    {
+      "id": "di529",
+      "kind": "fence-line",
+      "x": 1846.7,
+      "z": -3104.7,
+      "angle": 1.323
+    },
+    {
+      "id": "di530",
+      "kind": "fence-line",
+      "x": 1840.9,
+      "z": -3106.2,
+      "angle": 1.323
+    },
+    {
+      "id": "di531",
+      "kind": "fence-line",
+      "x": 1835.1,
+      "z": -3107.7,
+      "angle": 1.323
+    },
+    {
+      "id": "di532",
+      "kind": "fence-line",
+      "x": 1829.3,
+      "z": -3109.1,
+      "angle": 1.323
+    },
+    {
+      "id": "di533",
+      "kind": "fence-line",
+      "x": 1823.5,
+      "z": -3110.6,
+      "angle": 1.323
+    },
+    {
+      "id": "di534",
+      "kind": "fence-line",
+      "x": 1872.6,
+      "z": -3048.5,
+      "angle": 2.894
+    },
+    {
+      "id": "di535",
+      "kind": "fence-line",
+      "x": 1874,
+      "z": -3054,
+      "angle": 2.894
+    },
+    {
+      "id": "di536",
+      "kind": "fence-line",
+      "x": 1875.4,
+      "z": -3059.5,
+      "angle": 2.894
+    },
+    {
+      "id": "di537",
+      "kind": "fence-line",
+      "x": 1876.8,
+      "z": -3065,
+      "angle": 2.894
+    },
+    {
+      "id": "di538",
+      "kind": "fence-line",
+      "x": 1878.2,
+      "z": -3070.5,
+      "angle": 2.894
+    },
+    {
+      "id": "di539",
+      "kind": "fence-line",
+      "x": 1879.6,
+      "z": -3076,
+      "angle": 2.894
+    },
+    {
+      "id": "di540",
+      "kind": "fence-line",
+      "x": 1881,
+      "z": -3081.5,
+      "angle": 2.894
+    },
+    {
+      "id": "di541",
+      "kind": "fence-line",
+      "x": 1882.4,
+      "z": -3086.9,
+      "angle": 2.894
+    },
+    {
+      "id": "di542",
+      "kind": "fence-line",
+      "x": 1883.8,
+      "z": -3092.4,
+      "angle": 2.894
+    },
+    {
+      "id": "di543",
+      "kind": "fence-line",
+      "x": 1808.6,
+      "z": -3064.7,
+      "angle": 2.894
+    },
+    {
+      "id": "di544",
+      "kind": "fence-line",
+      "x": 1810,
+      "z": -3070.2,
+      "angle": 2.894
+    },
+    {
+      "id": "di545",
+      "kind": "fence-line",
+      "x": 1811.4,
+      "z": -3075.7,
+      "angle": 2.894
+    },
+    {
+      "id": "di546",
+      "kind": "fence-line",
+      "x": 1812.8,
+      "z": -3081.2,
+      "angle": 2.894
+    },
+    {
+      "id": "di547",
+      "kind": "fence-line",
+      "x": 1814.2,
+      "z": -3086.7,
+      "angle": 2.894
+    },
+    {
+      "id": "di548",
+      "kind": "fence-line",
+      "x": 1815.6,
+      "z": -3092.1,
+      "angle": 2.894
+    },
+    {
+      "id": "di549",
+      "kind": "fence-line",
+      "x": 1817,
+      "z": -3097.6,
+      "angle": 2.894
+    },
+    {
+      "id": "di550",
+      "kind": "fence-line",
+      "x": 1818.5,
+      "z": -3103.1,
+      "angle": 2.894
+    },
+    {
+      "id": "di551",
+      "kind": "fence-line",
+      "x": 1819.9,
+      "z": -3108.6,
+      "angle": 2.894
+    },
+    {
+      "id": "di552",
+      "kind": "fence-line",
+      "x": 1868.9,
+      "z": -3046.5,
+      "angle": 1.323
+    },
+    {
+      "id": "di553",
+      "kind": "fence-line",
+      "x": 1863.1,
+      "z": -3048,
+      "angle": 1.323
+    },
+    {
+      "id": "di554",
+      "kind": "fence-line",
+      "x": 1857.3,
+      "z": -3049.5,
+      "angle": 1.323
+    },
+    {
+      "id": "di555",
+      "kind": "fence-line",
+      "x": 1851.5,
+      "z": -3050.9,
+      "angle": 1.323
+    },
+    {
+      "id": "di556",
+      "kind": "fence-line",
+      "x": 1828.2,
+      "z": -3056.8,
+      "angle": 1.323
+    },
+    {
+      "id": "di557",
+      "kind": "fence-line",
+      "x": 1822.4,
+      "z": -3058.3,
+      "angle": 1.323
+    },
+    {
+      "id": "di558",
+      "kind": "fence-line",
+      "x": 1816.6,
+      "z": -3059.8,
+      "angle": 1.323
+    },
+    {
+      "id": "di559",
+      "kind": "fence-line",
+      "x": 1810.8,
+      "z": -3061.2,
+      "angle": 1.323
+    },
+    {
+      "id": "di560",
+      "kind": "dumpster",
+      "x": 1859.8,
+      "z": -3050.9,
+      "angle": 1.323,
+      "variant": "green"
+    },
+    {
+      "id": "di561",
+      "kind": "bollard",
+      "x": 1847.7,
+      "z": -3052.4,
+      "angle": 1.323
+    },
+    {
+      "id": "di562",
+      "kind": "bollard",
+      "x": 1832.2,
+      "z": -3056.3,
+      "angle": 1.323
+    },
+    {
+      "id": "di563",
+      "kind": "container-block",
+      "x": 1281.7,
+      "z": -2663.3,
+      "angle": 0.409,
+      "variant": "two high"
+    },
+    {
+      "id": "di564",
+      "kind": "container-block",
+      "x": 1345.9,
+      "z": -2691.2,
+      "angle": 0.409,
+      "variant": "four high"
+    },
+    {
+      "id": "di565",
+      "kind": "container-block",
+      "x": 1322.1,
+      "z": -2659,
+      "angle": 0.409,
+      "variant": "three high"
+    },
+    {
+      "id": "di566",
+      "kind": "container-block",
+      "x": 1354.2,
+      "z": -2673,
+      "angle": 0.409,
+      "variant": "two high"
+    },
+    {
+      "id": "di567",
+      "kind": "container-block",
+      "x": 1298.2,
+      "z": -2626.9,
+      "angle": 0.409,
+      "variant": "three high"
+    },
+    {
+      "id": "di568",
+      "kind": "container-block",
+      "x": 1362.5,
+      "z": -2654.8,
+      "angle": 0.409,
+      "variant": "two high"
+    },
+    {
+      "id": "di569",
+      "kind": "straddle-carrier",
+      "x": 1285.4,
+      "z": -2632.2,
+      "angle": 0.409
+    },
+    {
+      "id": "di570",
+      "kind": "reach-stacker",
+      "x": 1351.1,
+      "z": -2697.8,
+      "angle": 0.409
+    },
+    {
+      "id": "di571",
+      "kind": "cabin",
+      "x": 1269.7,
+      "z": -2666.8,
+      "angle": 0.409
+    },
+    {
+      "id": "di572",
+      "kind": "fence-line",
+      "x": 1291.2,
+      "z": -2597.7,
+      "angle": 1.98
+    },
+    {
+      "id": "di573",
+      "kind": "fence-line",
+      "x": 1296.6,
+      "z": -2600.1,
+      "angle": 1.98
+    },
+    {
+      "id": "di574",
+      "kind": "fence-line",
+      "x": 1302.1,
+      "z": -2602.4,
+      "angle": 1.98
+    },
+    {
+      "id": "di575",
+      "kind": "fence-line",
+      "x": 1307.5,
+      "z": -2604.8,
+      "angle": 1.98
+    },
+    {
+      "id": "di576",
+      "kind": "fence-line",
+      "x": 1313,
+      "z": -2607.2,
+      "angle": 1.98
+    },
+    {
+      "id": "di577",
+      "kind": "fence-line",
+      "x": 1318.5,
+      "z": -2609.5,
+      "angle": 1.98
+    },
+    {
+      "id": "di578",
+      "kind": "fence-line",
+      "x": 1323.9,
+      "z": -2611.9,
+      "angle": 1.98
+    },
+    {
+      "id": "di579",
+      "kind": "fence-line",
+      "x": 1329.4,
+      "z": -2614.3,
+      "angle": 1.98
+    },
+    {
+      "id": "di580",
+      "kind": "fence-line",
+      "x": 1334.8,
+      "z": -2616.6,
+      "angle": 1.98
+    },
+    {
+      "id": "di581",
+      "kind": "fence-line",
+      "x": 1340.3,
+      "z": -2619,
+      "angle": 1.98
+    },
+    {
+      "id": "di582",
+      "kind": "fence-line",
+      "x": 1345.7,
+      "z": -2621.4,
+      "angle": 1.98
+    },
+    {
+      "id": "di583",
+      "kind": "fence-line",
+      "x": 1351.2,
+      "z": -2623.7,
+      "angle": 1.98
+    },
+    {
+      "id": "di584",
+      "kind": "fence-line",
+      "x": 1356.6,
+      "z": -2626.1,
+      "angle": 1.98
+    },
+    {
+      "id": "di585",
+      "kind": "fence-line",
+      "x": 1362.1,
+      "z": -2628.5,
+      "angle": 1.98
+    },
+    {
+      "id": "di586",
+      "kind": "fence-line",
+      "x": 1367.6,
+      "z": -2630.8,
+      "angle": 1.98
+    },
+    {
+      "id": "di587",
+      "kind": "fence-line",
+      "x": 1373,
+      "z": -2633.2,
+      "angle": 1.98
+    },
+    {
+      "id": "di588",
+      "kind": "fence-line",
+      "x": 1378.5,
+      "z": -2635.6,
+      "angle": 1.98
+    },
+    {
+      "id": "di589",
+      "kind": "fence-line",
+      "x": 1383.9,
+      "z": -2637.9,
+      "angle": 1.98
+    },
+    {
+      "id": "di590",
+      "kind": "fence-line",
+      "x": 1389.4,
+      "z": -2640.3,
+      "angle": 1.98
+    },
+    {
+      "id": "di591",
+      "kind": "fence-line",
+      "x": 1257.8,
+      "z": -2663.9,
+      "angle": 0.409
+    },
+    {
+      "id": "di592",
+      "kind": "fence-line",
+      "x": 1260.3,
+      "z": -2658.5,
+      "angle": 0.409
+    },
+    {
+      "id": "di593",
+      "kind": "fence-line",
+      "x": 1262.7,
+      "z": -2653.1,
+      "angle": 0.409
+    },
+    {
+      "id": "di594",
+      "kind": "fence-line",
+      "x": 1265.2,
+      "z": -2647.7,
+      "angle": 0.409
+    },
+    {
+      "id": "di595",
+      "kind": "fence-line",
+      "x": 1267.6,
+      "z": -2642.3,
+      "angle": 0.409
+    },
+    {
+      "id": "di596",
+      "kind": "fence-line",
+      "x": 1270.1,
+      "z": -2637,
+      "angle": 0.409
+    },
+    {
+      "id": "di597",
+      "kind": "fence-line",
+      "x": 1272.5,
+      "z": -2631.6,
+      "angle": 0.409
+    },
+    {
+      "id": "di598",
+      "kind": "fence-line",
+      "x": 1275,
+      "z": -2626.2,
+      "angle": 0.409
+    },
+    {
+      "id": "di599",
+      "kind": "fence-line",
+      "x": 1277.4,
+      "z": -2620.8,
+      "angle": 0.409
+    },
+    {
+      "id": "di600",
+      "kind": "fence-line",
+      "x": 1279.9,
+      "z": -2615.4,
+      "angle": 0.409
+    },
+    {
+      "id": "di601",
+      "kind": "fence-line",
+      "x": 1282.3,
+      "z": -2610,
+      "angle": 0.409
+    },
+    {
+      "id": "di602",
+      "kind": "fence-line",
+      "x": 1284.8,
+      "z": -2604.6,
+      "angle": 0.409
+    },
+    {
+      "id": "di603",
+      "kind": "fence-line",
+      "x": 1287.2,
+      "z": -2599.2,
+      "angle": 0.409
+    },
+    {
+      "id": "di604",
+      "kind": "fence-line",
+      "x": 1361.5,
+      "z": -2708.9,
+      "angle": 0.409
+    },
+    {
+      "id": "di605",
+      "kind": "fence-line",
+      "x": 1363.9,
+      "z": -2703.5,
+      "angle": 0.409
+    },
+    {
+      "id": "di606",
+      "kind": "fence-line",
+      "x": 1366.4,
+      "z": -2698.1,
+      "angle": 0.409
+    },
+    {
+      "id": "di607",
+      "kind": "fence-line",
+      "x": 1368.8,
+      "z": -2692.7,
+      "angle": 0.409
+    },
+    {
+      "id": "di608",
+      "kind": "fence-line",
+      "x": 1371.3,
+      "z": -2687.3,
+      "angle": 0.409
+    },
+    {
+      "id": "di609",
+      "kind": "fence-line",
+      "x": 1373.7,
+      "z": -2681.9,
+      "angle": 0.409
+    },
+    {
+      "id": "di610",
+      "kind": "fence-line",
+      "x": 1376.2,
+      "z": -2676.5,
+      "angle": 0.409
+    },
+    {
+      "id": "di611",
+      "kind": "fence-line",
+      "x": 1378.6,
+      "z": -2671.1,
+      "angle": 0.409
+    },
+    {
+      "id": "di612",
+      "kind": "fence-line",
+      "x": 1381.1,
+      "z": -2665.7,
+      "angle": 0.409
+    },
+    {
+      "id": "di613",
+      "kind": "fence-line",
+      "x": 1383.5,
+      "z": -2660.3,
+      "angle": 0.409
+    },
+    {
+      "id": "di614",
+      "kind": "fence-line",
+      "x": 1386,
+      "z": -2655,
+      "angle": 0.409
+    },
+    {
+      "id": "di615",
+      "kind": "fence-line",
+      "x": 1388.4,
+      "z": -2649.6,
+      "angle": 0.409
+    },
+    {
+      "id": "di616",
+      "kind": "fence-line",
+      "x": 1390.9,
+      "z": -2644.2,
+      "angle": 0.409
+    },
+    {
+      "id": "di617",
+      "kind": "fence-line",
+      "x": 1259.3,
+      "z": -2667.8,
+      "angle": 1.98
+    },
+    {
+      "id": "di618",
+      "kind": "fence-line",
+      "x": 1264.8,
+      "z": -2670.2,
+      "angle": 1.98
+    },
+    {
+      "id": "di619",
+      "kind": "fence-line",
+      "x": 1270.2,
+      "z": -2672.5,
+      "angle": 1.98
+    },
+    {
+      "id": "di620",
+      "kind": "fence-line",
+      "x": 1275.7,
+      "z": -2674.9,
+      "angle": 1.98
+    },
+    {
+      "id": "di621",
+      "kind": "fence-line",
+      "x": 1281.1,
+      "z": -2677.3,
+      "angle": 1.98
+    },
+    {
+      "id": "di622",
+      "kind": "fence-line",
+      "x": 1286.6,
+      "z": -2679.6,
+      "angle": 1.98
+    },
+    {
+      "id": "di623",
+      "kind": "fence-line",
+      "x": 1292,
+      "z": -2682,
+      "angle": 1.98
+    },
+    {
+      "id": "di624",
+      "kind": "fence-line",
+      "x": 1297.5,
+      "z": -2684.4,
+      "angle": 1.98
+    },
+    {
+      "id": "di625",
+      "kind": "fence-line",
+      "x": 1319.3,
+      "z": -2693.8,
+      "angle": 1.98
+    },
+    {
+      "id": "di626",
+      "kind": "fence-line",
+      "x": 1324.8,
+      "z": -2696.2,
+      "angle": 1.98
+    },
+    {
+      "id": "di627",
+      "kind": "fence-line",
+      "x": 1330.2,
+      "z": -2698.6,
+      "angle": 1.98
+    },
+    {
+      "id": "di628",
+      "kind": "fence-line",
+      "x": 1335.7,
+      "z": -2700.9,
+      "angle": 1.98
+    },
+    {
+      "id": "di629",
+      "kind": "fence-line",
+      "x": 1341.2,
+      "z": -2703.3,
+      "angle": 1.98
+    },
+    {
+      "id": "di630",
+      "kind": "fence-line",
+      "x": 1346.6,
+      "z": -2705.7,
+      "angle": 1.98
+    },
+    {
+      "id": "di631",
+      "kind": "fence-line",
+      "x": 1352.1,
+      "z": -2708,
+      "angle": 1.98
+    },
+    {
+      "id": "di632",
+      "kind": "fence-line",
+      "x": 1357.5,
+      "z": -2710.4,
+      "angle": 1.98
+    },
+    {
+      "id": "di633",
+      "kind": "cone",
+      "x": 1316.6,
+      "z": -2690.5,
+      "angle": 1.98
+    },
+    {
+      "id": "di634",
+      "kind": "cone",
+      "x": 1318.6,
+      "z": -2691.3,
+      "angle": 1.98
+    },
+    {
+      "id": "di635",
+      "kind": "cone",
+      "x": 1320.6,
+      "z": -2692.2,
+      "angle": 1.98
+    },
+    {
+      "id": "di636",
+      "kind": "bollard",
+      "x": 1301.3,
+      "z": -2685.5,
+      "angle": 1.98
+    },
+    {
+      "id": "di637",
+      "kind": "bollard",
+      "x": 1316,
+      "z": -2691.8,
+      "angle": 1.98
+    },
+    {
+      "id": "di638",
+      "kind": "cooling-tower",
+      "x": 1272,
+      "z": -2498,
+      "angle": 1.571
+    },
+    {
+      "id": "di639",
+      "kind": "cooling-tower",
+      "x": 1316,
+      "z": -2498,
+      "angle": 1.571
+    },
+    {
+      "id": "di640",
+      "kind": "pipe-rack",
+      "x": 1294,
+      "z": -2498,
+      "angle": 0
+    },
+    {
+      "id": "di641",
+      "kind": "fence-line",
+      "x": 1255,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di642",
+      "kind": "fence-line",
+      "x": 1261,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di643",
+      "kind": "fence-line",
+      "x": 1267,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di644",
+      "kind": "fence-line",
+      "x": 1273,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di645",
+      "kind": "fence-line",
+      "x": 1279,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di646",
+      "kind": "fence-line",
+      "x": 1285,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di647",
+      "kind": "fence-line",
+      "x": 1291,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di648",
+      "kind": "fence-line",
+      "x": 1297,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di649",
+      "kind": "fence-line",
+      "x": 1303,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di650",
+      "kind": "fence-line",
+      "x": 1309,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di651",
+      "kind": "fence-line",
+      "x": 1315,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di652",
+      "kind": "fence-line",
+      "x": 1321,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di653",
+      "kind": "fence-line",
+      "x": 1327,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di654",
+      "kind": "fence-line",
+      "x": 1333,
+      "z": -2472,
+      "angle": 1.571
+    },
+    {
+      "id": "di655",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2520.2,
+      "angle": 0
+    },
+    {
+      "id": "di656",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2514.5,
+      "angle": 0
+    },
+    {
+      "id": "di657",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2508.8,
+      "angle": 0
+    },
+    {
+      "id": "di658",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2503.2,
+      "angle": 0
+    },
+    {
+      "id": "di659",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2497.5,
+      "angle": 0
+    },
+    {
+      "id": "di660",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2491.8,
+      "angle": 0
+    },
+    {
+      "id": "di661",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2486.2,
+      "angle": 0
+    },
+    {
+      "id": "di662",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2480.5,
+      "angle": 0
+    },
+    {
+      "id": "di663",
+      "kind": "fence-line",
+      "x": 1252,
+      "z": -2474.8,
+      "angle": 0
+    },
+    {
+      "id": "di664",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2520.2,
+      "angle": 0
+    },
+    {
+      "id": "di665",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2514.5,
+      "angle": 0
+    },
+    {
+      "id": "di666",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2508.8,
+      "angle": 0
+    },
+    {
+      "id": "di667",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2503.2,
+      "angle": 0
+    },
+    {
+      "id": "di668",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2497.5,
+      "angle": 0
+    },
+    {
+      "id": "di669",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2491.8,
+      "angle": 0
+    },
+    {
+      "id": "di670",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2486.2,
+      "angle": 0
+    },
+    {
+      "id": "di671",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2480.5,
+      "angle": 0
+    },
+    {
+      "id": "di672",
+      "kind": "fence-line",
+      "x": 1336,
+      "z": -2474.8,
+      "angle": 0
+    },
+    {
+      "id": "di673",
+      "kind": "fence-line",
+      "x": 1255,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di674",
+      "kind": "fence-line",
+      "x": 1261,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di675",
+      "kind": "fence-line",
+      "x": 1267,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di676",
+      "kind": "fence-line",
+      "x": 1273,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di677",
+      "kind": "fence-line",
+      "x": 1279,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di678",
+      "kind": "fence-line",
+      "x": 1309,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di679",
+      "kind": "fence-line",
+      "x": 1315,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di680",
+      "kind": "fence-line",
+      "x": 1321,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di681",
+      "kind": "fence-line",
+      "x": 1327,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di682",
+      "kind": "fence-line",
+      "x": 1333,
+      "z": -2523,
+      "angle": 1.571
+    },
+    {
+      "id": "di683",
+      "kind": "cooling-tower",
+      "x": 1824,
+      "z": -2210,
+      "angle": 1.571
+    },
+    {
+      "id": "di684",
+      "kind": "cooling-tower",
+      "x": 1868,
+      "z": -2210,
+      "angle": 1.571
+    },
+    {
+      "id": "di685",
+      "kind": "pipe-rack",
+      "x": 1846,
+      "z": -2210,
+      "angle": 0
+    },
+    {
+      "id": "di686",
+      "kind": "chimney",
+      "x": 1846,
+      "z": -2226,
+      "angle": 1.571
+    },
+    {
+      "id": "di687",
+      "kind": "fence-line",
+      "x": 1807,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di688",
+      "kind": "fence-line",
+      "x": 1813,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di689",
+      "kind": "fence-line",
+      "x": 1819,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di690",
+      "kind": "fence-line",
+      "x": 1825,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di691",
+      "kind": "fence-line",
+      "x": 1831,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di692",
+      "kind": "fence-line",
+      "x": 1837,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di693",
+      "kind": "fence-line",
+      "x": 1843,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di694",
+      "kind": "fence-line",
+      "x": 1849,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di695",
+      "kind": "fence-line",
+      "x": 1855,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di696",
+      "kind": "fence-line",
+      "x": 1861,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di697",
+      "kind": "fence-line",
+      "x": 1867,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di698",
+      "kind": "fence-line",
+      "x": 1873,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di699",
+      "kind": "fence-line",
+      "x": 1879,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di700",
+      "kind": "fence-line",
+      "x": 1885,
+      "z": -2184,
+      "angle": 1.571
+    },
+    {
+      "id": "di701",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2232.2,
+      "angle": 0
+    },
+    {
+      "id": "di702",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2226.5,
+      "angle": 0
+    },
+    {
+      "id": "di703",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2220.8,
+      "angle": 0
+    },
+    {
+      "id": "di704",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2215.2,
+      "angle": 0
+    },
+    {
+      "id": "di705",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2209.5,
+      "angle": 0
+    },
+    {
+      "id": "di706",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2203.8,
+      "angle": 0
+    },
+    {
+      "id": "di707",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2198.2,
+      "angle": 0
+    },
+    {
+      "id": "di708",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2192.5,
+      "angle": 0
+    },
+    {
+      "id": "di709",
+      "kind": "fence-line",
+      "x": 1804,
+      "z": -2186.8,
+      "angle": 0
+    },
+    {
+      "id": "di710",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2232.2,
+      "angle": 0
+    },
+    {
+      "id": "di711",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2226.5,
+      "angle": 0
+    },
+    {
+      "id": "di712",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2220.8,
+      "angle": 0
+    },
+    {
+      "id": "di713",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2215.2,
+      "angle": 0
+    },
+    {
+      "id": "di714",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2209.5,
+      "angle": 0
+    },
+    {
+      "id": "di715",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2203.8,
+      "angle": 0
+    },
+    {
+      "id": "di716",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2198.2,
+      "angle": 0
+    },
+    {
+      "id": "di717",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2192.5,
+      "angle": 0
+    },
+    {
+      "id": "di718",
+      "kind": "fence-line",
+      "x": 1888,
+      "z": -2186.8,
+      "angle": 0
+    },
+    {
+      "id": "di719",
+      "kind": "fence-line",
+      "x": 1807,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di720",
+      "kind": "fence-line",
+      "x": 1813,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di721",
+      "kind": "fence-line",
+      "x": 1819,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di722",
+      "kind": "fence-line",
+      "x": 1825,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di723",
+      "kind": "fence-line",
+      "x": 1831,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di724",
+      "kind": "fence-line",
+      "x": 1861,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di725",
+      "kind": "fence-line",
+      "x": 1867,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di726",
+      "kind": "fence-line",
+      "x": 1873,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di727",
+      "kind": "fence-line",
+      "x": 1879,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di728",
+      "kind": "fence-line",
+      "x": 1885,
+      "z": -2235,
+      "angle": 1.571
+    },
+    {
+      "id": "di729",
+      "kind": "gas-holder",
+      "x": 1654,
+      "z": -2194,
+      "angle": 1.571
+    },
+    {
+      "id": "di730",
+      "kind": "flare-stack",
+      "x": 1618,
+      "z": -2180,
+      "angle": 1.571
+    },
+    {
+      "id": "di731",
+      "kind": "tank",
+      "x": 1692,
+      "z": -2184,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "di732",
+      "kind": "tank",
+      "x": 1692,
+      "z": -2202,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "di733",
+      "kind": "pipe-rack",
+      "x": 1624,
+      "z": -2206,
+      "angle": 0
+    },
+    {
+      "id": "di734",
+      "kind": "fence-line",
+      "x": 1699,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di735",
+      "kind": "fence-line",
+      "x": 1693,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di736",
+      "kind": "fence-line",
+      "x": 1687,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di737",
+      "kind": "fence-line",
+      "x": 1681,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di738",
+      "kind": "fence-line",
+      "x": 1675,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di739",
+      "kind": "fence-line",
+      "x": 1669,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di740",
+      "kind": "fence-line",
+      "x": 1663,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di741",
+      "kind": "fence-line",
+      "x": 1657,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di742",
+      "kind": "fence-line",
+      "x": 1651,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di743",
+      "kind": "fence-line",
+      "x": 1645,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di744",
+      "kind": "fence-line",
+      "x": 1639,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di745",
+      "kind": "fence-line",
+      "x": 1633,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di746",
+      "kind": "fence-line",
+      "x": 1627,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di747",
+      "kind": "fence-line",
+      "x": 1621,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di748",
+      "kind": "fence-line",
+      "x": 1615,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di749",
+      "kind": "fence-line",
+      "x": 1609,
+      "z": -2220,
+      "angle": 1.571
+    },
+    {
+      "id": "di750",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2171.8,
+      "angle": 0
+    },
+    {
+      "id": "di751",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2177.5,
+      "angle": 0
+    },
+    {
+      "id": "di752",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2183.2,
+      "angle": 0
+    },
+    {
+      "id": "di753",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2188.8,
+      "angle": 0
+    },
+    {
+      "id": "di754",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2194.5,
+      "angle": 0
+    },
+    {
+      "id": "di755",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2200.2,
+      "angle": 0
+    },
+    {
+      "id": "di756",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2205.8,
+      "angle": 0
+    },
+    {
+      "id": "di757",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2211.5,
+      "angle": 0
+    },
+    {
+      "id": "di758",
+      "kind": "fence-line",
+      "x": 1702,
+      "z": -2217.2,
+      "angle": 0
+    },
+    {
+      "id": "di759",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2171.8,
+      "angle": 0
+    },
+    {
+      "id": "di760",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2177.5,
+      "angle": 0
+    },
+    {
+      "id": "di761",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2183.2,
+      "angle": 0
+    },
+    {
+      "id": "di762",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2188.8,
+      "angle": 0
+    },
+    {
+      "id": "di763",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2194.5,
+      "angle": 0
+    },
+    {
+      "id": "di764",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2200.2,
+      "angle": 0
+    },
+    {
+      "id": "di765",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2205.8,
+      "angle": 0
+    },
+    {
+      "id": "di766",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2211.5,
+      "angle": 0
+    },
+    {
+      "id": "di767",
+      "kind": "fence-line",
+      "x": 1606,
+      "z": -2217.2,
+      "angle": 0
+    },
+    {
+      "id": "di768",
+      "kind": "fence-line",
+      "x": 1699,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di769",
+      "kind": "fence-line",
+      "x": 1693,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di770",
+      "kind": "fence-line",
+      "x": 1687,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di771",
+      "kind": "fence-line",
+      "x": 1681,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di772",
+      "kind": "fence-line",
+      "x": 1675,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di773",
+      "kind": "fence-line",
+      "x": 1669,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di774",
+      "kind": "fence-line",
+      "x": 1639,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di775",
+      "kind": "fence-line",
+      "x": 1633,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di776",
+      "kind": "fence-line",
+      "x": 1627,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di777",
+      "kind": "fence-line",
+      "x": 1621,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di778",
+      "kind": "fence-line",
+      "x": 1615,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di779",
+      "kind": "fence-line",
+      "x": 1609,
+      "z": -2169,
+      "angle": 1.571
+    },
+    {
+      "id": "di780",
+      "kind": "gas-holder",
+      "x": 2614,
+      "z": -2074,
+      "angle": 1.571
+    },
+    {
+      "id": "di781",
+      "kind": "flare-stack",
+      "x": 2578,
+      "z": -2060,
+      "angle": 1.571
+    },
+    {
+      "id": "di782",
+      "kind": "tank",
+      "x": 2652,
+      "z": -2064,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "di783",
+      "kind": "tank",
+      "x": 2652,
+      "z": -2082,
+      "angle": 1.571,
+      "variant": "small"
+    },
+    {
+      "id": "di784",
+      "kind": "pipe-rack",
+      "x": 2584,
+      "z": -2086,
+      "angle": 0
+    },
+    {
+      "id": "di785",
+      "kind": "fence-line",
+      "x": 2659,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di786",
+      "kind": "fence-line",
+      "x": 2653,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di787",
+      "kind": "fence-line",
+      "x": 2647,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di788",
+      "kind": "fence-line",
+      "x": 2641,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di789",
+      "kind": "fence-line",
+      "x": 2635,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di790",
+      "kind": "fence-line",
+      "x": 2629,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di791",
+      "kind": "fence-line",
+      "x": 2623,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di792",
+      "kind": "fence-line",
+      "x": 2617,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di793",
+      "kind": "fence-line",
+      "x": 2611,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di794",
+      "kind": "fence-line",
+      "x": 2605,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di795",
+      "kind": "fence-line",
+      "x": 2599,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di796",
+      "kind": "fence-line",
+      "x": 2593,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di797",
+      "kind": "fence-line",
+      "x": 2587,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di798",
+      "kind": "fence-line",
+      "x": 2581,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di799",
+      "kind": "fence-line",
+      "x": 2575,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di800",
+      "kind": "fence-line",
+      "x": 2569,
+      "z": -2100,
+      "angle": 1.571
+    },
+    {
+      "id": "di801",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2051.8,
+      "angle": 0
+    },
+    {
+      "id": "di802",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2057.5,
+      "angle": 0
+    },
+    {
+      "id": "di803",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2063.2,
+      "angle": 0
+    },
+    {
+      "id": "di804",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2068.8,
+      "angle": 0
+    },
+    {
+      "id": "di805",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2074.5,
+      "angle": 0
+    },
+    {
+      "id": "di806",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2080.2,
+      "angle": 0
+    },
+    {
+      "id": "di807",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2085.8,
+      "angle": 0
+    },
+    {
+      "id": "di808",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2091.5,
+      "angle": 0
+    },
+    {
+      "id": "di809",
+      "kind": "fence-line",
+      "x": 2662,
+      "z": -2097.2,
+      "angle": 0
+    },
+    {
+      "id": "di810",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2051.8,
+      "angle": 0
+    },
+    {
+      "id": "di811",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2057.5,
+      "angle": 0
+    },
+    {
+      "id": "di812",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2063.2,
+      "angle": 0
+    },
+    {
+      "id": "di813",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2068.8,
+      "angle": 0
+    },
+    {
+      "id": "di814",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2074.5,
+      "angle": 0
+    },
+    {
+      "id": "di815",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2080.2,
+      "angle": 0
+    },
+    {
+      "id": "di816",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2085.8,
+      "angle": 0
+    },
+    {
+      "id": "di817",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2091.5,
+      "angle": 0
+    },
+    {
+      "id": "di818",
+      "kind": "fence-line",
+      "x": 2566,
+      "z": -2097.2,
+      "angle": 0
+    },
+    {
+      "id": "di819",
+      "kind": "fence-line",
+      "x": 2659,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di820",
+      "kind": "fence-line",
+      "x": 2653,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di821",
+      "kind": "fence-line",
+      "x": 2647,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di822",
+      "kind": "fence-line",
+      "x": 2641,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di823",
+      "kind": "fence-line",
+      "x": 2635,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di824",
+      "kind": "fence-line",
+      "x": 2629,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di825",
+      "kind": "fence-line",
+      "x": 2599,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di826",
+      "kind": "fence-line",
+      "x": 2593,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di827",
+      "kind": "fence-line",
+      "x": 2587,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di828",
+      "kind": "fence-line",
+      "x": 2581,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di829",
+      "kind": "fence-line",
+      "x": 2575,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di830",
+      "kind": "fence-line",
+      "x": 2569,
+      "z": -2049,
+      "angle": 1.571
+    },
+    {
+      "id": "di831",
+      "kind": "crane",
+      "x": 1892.1,
+      "z": -2098.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di832",
+      "kind": "stockpile",
+      "x": 1884.9,
+      "z": -2078,
+      "angle": 0.04,
+      "variant": "rust"
+    },
+    {
+      "id": "di833",
+      "kind": "excavator",
+      "x": 1901.2,
+      "z": -2120.7,
+      "angle": 2.682
+    },
+    {
+      "id": "di834",
+      "kind": "haul-truck",
+      "x": 1877.2,
+      "z": -2119.8,
+      "angle": 0.94
+    },
+    {
+      "id": "di835",
+      "kind": "stack",
+      "x": 1907.1,
+      "z": -2072.9,
+      "angle": 0.04,
+      "variant": "drums"
+    },
+    {
+      "id": "di836",
+      "kind": "stack",
+      "x": 1903,
+      "z": -2075.8,
+      "angle": 0.04,
+      "variant": "drums"
+    },
+    {
+      "id": "di837",
+      "kind": "stack",
+      "x": 1906.9,
+      "z": -2078.9,
+      "angle": 0.04,
+      "variant": "drums"
+    },
+    {
+      "id": "di838",
+      "kind": "stack",
+      "x": 1902.8,
+      "z": -2081.8,
+      "angle": 0.04,
+      "variant": "drums"
+    },
+    {
+      "id": "di839",
+      "kind": "cabin",
+      "x": 1910.9,
+      "z": -2078.1,
+      "angle": 1.611
+    },
+    {
+      "id": "di840",
+      "kind": "fence-line",
+      "x": 1865.3,
+      "z": -2067.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di841",
+      "kind": "fence-line",
+      "x": 1865.1,
+      "z": -2073.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di842",
+      "kind": "fence-line",
+      "x": 1864.8,
+      "z": -2079.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di843",
+      "kind": "fence-line",
+      "x": 1864.6,
+      "z": -2085.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di844",
+      "kind": "fence-line",
+      "x": 1864.4,
+      "z": -2091.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di845",
+      "kind": "fence-line",
+      "x": 1864.1,
+      "z": -2097.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di846",
+      "kind": "fence-line",
+      "x": 1863.9,
+      "z": -2103.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di847",
+      "kind": "fence-line",
+      "x": 1863.6,
+      "z": -2109.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di848",
+      "kind": "fence-line",
+      "x": 1863.4,
+      "z": -2115.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di849",
+      "kind": "fence-line",
+      "x": 1863.2,
+      "z": -2121.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di850",
+      "kind": "fence-line",
+      "x": 1862.9,
+      "z": -2127.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di851",
+      "kind": "fence-line",
+      "x": 1913.6,
+      "z": -2066.2,
+      "angle": 1.611
+    },
+    {
+      "id": "di852",
+      "kind": "fence-line",
+      "x": 1907.9,
+      "z": -2065.9,
+      "angle": 1.611
+    },
+    {
+      "id": "di853",
+      "kind": "fence-line",
+      "x": 1902.2,
+      "z": -2065.7,
+      "angle": 1.611
+    },
+    {
+      "id": "di854",
+      "kind": "fence-line",
+      "x": 1896.6,
+      "z": -2065.5,
+      "angle": 1.611
+    },
+    {
+      "id": "di855",
+      "kind": "fence-line",
+      "x": 1890.9,
+      "z": -2065.3,
+      "angle": 1.611
+    },
+    {
+      "id": "di856",
+      "kind": "fence-line",
+      "x": 1885.3,
+      "z": -2065,
+      "angle": 1.611
+    },
+    {
+      "id": "di857",
+      "kind": "fence-line",
+      "x": 1879.6,
+      "z": -2064.8,
+      "angle": 1.611
+    },
+    {
+      "id": "di858",
+      "kind": "fence-line",
+      "x": 1873.9,
+      "z": -2064.6,
+      "angle": 1.611
+    },
+    {
+      "id": "di859",
+      "kind": "fence-line",
+      "x": 1868.3,
+      "z": -2064.4,
+      "angle": 1.611
+    },
+    {
+      "id": "di860",
+      "kind": "fence-line",
+      "x": 1910.9,
+      "z": -2132.1,
+      "angle": 1.611
+    },
+    {
+      "id": "di861",
+      "kind": "fence-line",
+      "x": 1905.3,
+      "z": -2131.9,
+      "angle": 1.611
+    },
+    {
+      "id": "di862",
+      "kind": "fence-line",
+      "x": 1899.6,
+      "z": -2131.7,
+      "angle": 1.611
+    },
+    {
+      "id": "di863",
+      "kind": "fence-line",
+      "x": 1893.9,
+      "z": -2131.4,
+      "angle": 1.611
+    },
+    {
+      "id": "di864",
+      "kind": "fence-line",
+      "x": 1888.3,
+      "z": -2131.2,
+      "angle": 1.611
+    },
+    {
+      "id": "di865",
+      "kind": "fence-line",
+      "x": 1882.6,
+      "z": -2131,
+      "angle": 1.611
+    },
+    {
+      "id": "di866",
+      "kind": "fence-line",
+      "x": 1877,
+      "z": -2130.8,
+      "angle": 1.611
+    },
+    {
+      "id": "di867",
+      "kind": "fence-line",
+      "x": 1871.3,
+      "z": -2130.5,
+      "angle": 1.611
+    },
+    {
+      "id": "di868",
+      "kind": "fence-line",
+      "x": 1865.6,
+      "z": -2130.3,
+      "angle": 1.611
+    },
+    {
+      "id": "di869",
+      "kind": "fence-line",
+      "x": 1916.3,
+      "z": -2069.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di870",
+      "kind": "fence-line",
+      "x": 1916,
+      "z": -2075.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di871",
+      "kind": "fence-line",
+      "x": 1915.8,
+      "z": -2081.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di872",
+      "kind": "fence-line",
+      "x": 1915.6,
+      "z": -2087.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di873",
+      "kind": "fence-line",
+      "x": 1914.6,
+      "z": -2111.3,
+      "angle": 0.04
+    },
+    {
+      "id": "di874",
+      "kind": "fence-line",
+      "x": 1914.4,
+      "z": -2117.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di875",
+      "kind": "fence-line",
+      "x": 1914.1,
+      "z": -2123.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di876",
+      "kind": "fence-line",
+      "x": 1913.9,
+      "z": -2129.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di877",
+      "kind": "cone",
+      "x": 1912.8,
+      "z": -2107.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di878",
+      "kind": "cone",
+      "x": 1912.7,
+      "z": -2109.4,
+      "angle": 0.04
+    },
+    {
+      "id": "di879",
+      "kind": "cone",
+      "x": 1912.6,
+      "z": -2111.6,
+      "angle": 0.04
+    },
+    {
+      "id": "di880",
+      "kind": "bollard",
+      "x": 1914.9,
+      "z": -2091.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di881",
+      "kind": "bollard",
+      "x": 1914.3,
+      "z": -2107.2,
+      "angle": 0.04
+    },
+    {
+      "id": "di882",
+      "kind": "crane",
+      "x": 2033.4,
+      "z": -2252.5,
+      "angle": 0.909
+    },
+    {
+      "id": "di883",
+      "kind": "stockpile",
+      "x": 2044.3,
+      "z": -2233.9,
+      "angle": 0.909,
+      "variant": "rust"
+    },
+    {
+      "id": "di884",
+      "kind": "excavator",
+      "x": 2022.2,
+      "z": -2273.9,
+      "angle": 0.409
+    },
+    {
+      "id": "di885",
+      "kind": "haul-truck",
+      "x": 2007.4,
+      "z": -2254.9,
+      "angle": 1.809
+    },
+    {
+      "id": "di886",
+      "kind": "stack",
+      "x": 2062.5,
+      "z": -2247.5,
+      "angle": 0.909,
+      "variant": "drums"
+    },
+    {
+      "id": "di887",
+      "kind": "stack",
+      "x": 2057.7,
+      "z": -2246.2,
+      "angle": 0.909,
+      "variant": "drums"
+    },
+    {
+      "id": "di888",
+      "kind": "stack",
+      "x": 2057.8,
+      "z": -2251.2,
+      "angle": 0.909,
+      "variant": "drums"
+    },
+    {
+      "id": "di889",
+      "kind": "stack",
+      "x": 2053,
+      "z": -2249.9,
+      "angle": 0.909,
+      "variant": "drums"
+    },
+    {
+      "id": "di890",
+      "kind": "cabin",
+      "x": 2061,
+      "z": -2253.7,
+      "angle": 2.479
+    },
+    {
+      "id": "di891",
+      "kind": "fence-line",
+      "x": 2039.8,
+      "z": -2211.9,
+      "angle": 0.909
+    },
+    {
+      "id": "di892",
+      "kind": "fence-line",
+      "x": 2035.1,
+      "z": -2215.6,
+      "angle": 0.909
+    },
+    {
+      "id": "di893",
+      "kind": "fence-line",
+      "x": 2030.4,
+      "z": -2219.3,
+      "angle": 0.909
+    },
+    {
+      "id": "di894",
+      "kind": "fence-line",
+      "x": 2025.6,
+      "z": -2223,
+      "angle": 0.909
+    },
+    {
+      "id": "di895",
+      "kind": "fence-line",
+      "x": 2020.9,
+      "z": -2226.7,
+      "angle": 0.909
+    },
+    {
+      "id": "di896",
+      "kind": "fence-line",
+      "x": 2016.2,
+      "z": -2230.4,
+      "angle": 0.909
+    },
+    {
+      "id": "di897",
+      "kind": "fence-line",
+      "x": 2011.4,
+      "z": -2234.1,
+      "angle": 0.909
+    },
+    {
+      "id": "di898",
+      "kind": "fence-line",
+      "x": 2006.7,
+      "z": -2237.8,
+      "angle": 0.909
+    },
+    {
+      "id": "di899",
+      "kind": "fence-line",
+      "x": 2002,
+      "z": -2241.4,
+      "angle": 0.909
+    },
+    {
+      "id": "di900",
+      "kind": "fence-line",
+      "x": 1997.3,
+      "z": -2245.1,
+      "angle": 0.909
+    },
+    {
+      "id": "di901",
+      "kind": "fence-line",
+      "x": 1992.5,
+      "z": -2248.8,
+      "angle": 0.909
+    },
+    {
+      "id": "di902",
+      "kind": "fence-line",
+      "x": 2071.8,
+      "z": -2248.1,
+      "angle": 2.479
+    },
+    {
+      "id": "di903",
+      "kind": "fence-line",
+      "x": 2068.3,
+      "z": -2243.6,
+      "angle": 2.479
+    },
+    {
+      "id": "di904",
+      "kind": "fence-line",
+      "x": 2064.9,
+      "z": -2239.1,
+      "angle": 2.479
+    },
+    {
+      "id": "di905",
+      "kind": "fence-line",
+      "x": 2061.4,
+      "z": -2234.7,
+      "angle": 2.479
+    },
+    {
+      "id": "di906",
+      "kind": "fence-line",
+      "x": 2057.9,
+      "z": -2230.2,
+      "angle": 2.479
+    },
+    {
+      "id": "di907",
+      "kind": "fence-line",
+      "x": 2054.4,
+      "z": -2225.7,
+      "angle": 2.479
+    },
+    {
+      "id": "di908",
+      "kind": "fence-line",
+      "x": 2050.9,
+      "z": -2221.3,
+      "angle": 2.479
+    },
+    {
+      "id": "di909",
+      "kind": "fence-line",
+      "x": 2047.4,
+      "z": -2216.8,
+      "angle": 2.479
+    },
+    {
+      "id": "di910",
+      "kind": "fence-line",
+      "x": 2043.9,
+      "z": -2212.3,
+      "angle": 2.479
+    },
+    {
+      "id": "di911",
+      "kind": "fence-line",
+      "x": 2019.8,
+      "z": -2288.7,
+      "angle": 2.479
+    },
+    {
+      "id": "di912",
+      "kind": "fence-line",
+      "x": 2016.3,
+      "z": -2284.2,
+      "angle": 2.479
+    },
+    {
+      "id": "di913",
+      "kind": "fence-line",
+      "x": 2012.8,
+      "z": -2279.7,
+      "angle": 2.479
+    },
+    {
+      "id": "di914",
+      "kind": "fence-line",
+      "x": 2009.3,
+      "z": -2275.2,
+      "angle": 2.479
+    },
+    {
+      "id": "di915",
+      "kind": "fence-line",
+      "x": 2005.8,
+      "z": -2270.8,
+      "angle": 2.479
+    },
+    {
+      "id": "di916",
+      "kind": "fence-line",
+      "x": 2002.4,
+      "z": -2266.3,
+      "angle": 2.479
+    },
+    {
+      "id": "di917",
+      "kind": "fence-line",
+      "x": 1998.9,
+      "z": -2261.8,
+      "angle": 2.479
+    },
+    {
+      "id": "di918",
+      "kind": "fence-line",
+      "x": 1995.4,
+      "z": -2257.4,
+      "angle": 2.479
+    },
+    {
+      "id": "di919",
+      "kind": "fence-line",
+      "x": 1991.9,
+      "z": -2252.9,
+      "angle": 2.479
+    },
+    {
+      "id": "di920",
+      "kind": "fence-line",
+      "x": 2071.2,
+      "z": -2252.2,
+      "angle": 0.909
+    },
+    {
+      "id": "di921",
+      "kind": "fence-line",
+      "x": 2066.5,
+      "z": -2255.8,
+      "angle": 0.909
+    },
+    {
+      "id": "di922",
+      "kind": "fence-line",
+      "x": 2061.7,
+      "z": -2259.5,
+      "angle": 0.909
+    },
+    {
+      "id": "di923",
+      "kind": "fence-line",
+      "x": 2057,
+      "z": -2263.2,
+      "angle": 0.909
+    },
+    {
+      "id": "di924",
+      "kind": "fence-line",
+      "x": 2038.1,
+      "z": -2278,
+      "angle": 0.909
+    },
+    {
+      "id": "di925",
+      "kind": "fence-line",
+      "x": 2033.3,
+      "z": -2281.7,
+      "angle": 0.909
+    },
+    {
+      "id": "di926",
+      "kind": "fence-line",
+      "x": 2028.6,
+      "z": -2285.4,
+      "angle": 0.909
+    },
+    {
+      "id": "di927",
+      "kind": "fence-line",
+      "x": 2023.9,
+      "z": -2289,
+      "angle": 0.909
+    },
+    {
+      "id": "di928",
+      "kind": "dumpster",
+      "x": 2064,
+      "z": -2255.2,
+      "angle": 0.909,
+      "variant": "green"
+    },
+    {
+      "id": "di929",
+      "kind": "bollard",
+      "x": 2053.5,
+      "z": -2265.3,
+      "angle": 0.909
+    },
+    {
+      "id": "di930",
+      "kind": "bollard",
+      "x": 2040.9,
+      "z": -2275.1,
+      "angle": 0.909
+    },
+    {
+      "id": "di931",
+      "kind": "silo",
+      "x": 2059.6,
+      "z": -2330.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di932",
+      "kind": "silo",
+      "x": 2048.4,
+      "z": -2339.2,
+      "angle": 0.927
+    },
+    {
+      "id": "di933",
+      "kind": "silo",
+      "x": 2037.2,
+      "z": -2347.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di934",
+      "kind": "silo",
+      "x": 2026,
+      "z": -2356,
+      "angle": 0.927
+    },
+    {
+      "id": "di935",
+      "kind": "water-tower",
+      "x": 2016.4,
+      "z": -2363.2,
+      "angle": 0.927
+    },
+    {
+      "id": "di936",
+      "kind": "cabin",
+      "x": 2057.6,
+      "z": -2314.8,
+      "angle": 2.498
+    },
+    {
+      "id": "di937",
+      "kind": "mast",
+      "x": 2075.2,
+      "z": -2341.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di938",
+      "kind": "shed",
+      "x": 2052,
+      "z": -2359,
+      "angle": 2.498
+    },
+    {
+      "id": "di939",
+      "kind": "shed",
+      "x": 2037.6,
+      "z": -2369.8,
+      "angle": 2.498
+    },
+    {
+      "id": "di940",
+      "kind": "fence-line",
+      "x": 2091.1,
+      "z": -2344.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di941",
+      "kind": "fence-line",
+      "x": 2086.2,
+      "z": -2348.3,
+      "angle": 0.927
+    },
+    {
+      "id": "di942",
+      "kind": "fence-line",
+      "x": 2081.3,
+      "z": -2352,
+      "angle": 0.927
+    },
+    {
+      "id": "di943",
+      "kind": "fence-line",
+      "x": 2076.4,
+      "z": -2355.7,
+      "angle": 0.927
+    },
+    {
+      "id": "di944",
+      "kind": "fence-line",
+      "x": 2071.4,
+      "z": -2359.3,
+      "angle": 0.927
+    },
+    {
+      "id": "di945",
+      "kind": "fence-line",
+      "x": 2066.5,
+      "z": -2363,
+      "angle": 0.927
+    },
+    {
+      "id": "di946",
+      "kind": "fence-line",
+      "x": 2061.6,
+      "z": -2366.7,
+      "angle": 0.927
+    },
+    {
+      "id": "di947",
+      "kind": "fence-line",
+      "x": 2056.7,
+      "z": -2370.4,
+      "angle": 0.927
+    },
+    {
+      "id": "di948",
+      "kind": "fence-line",
+      "x": 2051.8,
+      "z": -2374.1,
+      "angle": 0.927
+    },
+    {
+      "id": "di949",
+      "kind": "fence-line",
+      "x": 2046.9,
+      "z": -2377.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di950",
+      "kind": "fence-line",
+      "x": 2042,
+      "z": -2381.5,
+      "angle": 0.927
+    },
+    {
+      "id": "di951",
+      "kind": "fence-line",
+      "x": 2037,
+      "z": -2385.1,
+      "angle": 0.927
+    },
+    {
+      "id": "di952",
+      "kind": "fence-line",
+      "x": 2032.1,
+      "z": -2388.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di953",
+      "kind": "fence-line",
+      "x": 2027.2,
+      "z": -2392.5,
+      "angle": 0.927
+    },
+    {
+      "id": "di954",
+      "kind": "fence-line",
+      "x": 2066,
+      "z": -2306,
+      "angle": 2.498
+    },
+    {
+      "id": "di955",
+      "kind": "fence-line",
+      "x": 2069.7,
+      "z": -2310.9,
+      "angle": 2.498
+    },
+    {
+      "id": "di956",
+      "kind": "fence-line",
+      "x": 2073.4,
+      "z": -2315.8,
+      "angle": 2.498
+    },
+    {
+      "id": "di957",
+      "kind": "fence-line",
+      "x": 2077,
+      "z": -2320.7,
+      "angle": 2.498
+    },
+    {
+      "id": "di958",
+      "kind": "fence-line",
+      "x": 2080.7,
+      "z": -2325.6,
+      "angle": 2.498
+    },
+    {
+      "id": "di959",
+      "kind": "fence-line",
+      "x": 2084.4,
+      "z": -2330.5,
+      "angle": 2.498
+    },
+    {
+      "id": "di960",
+      "kind": "fence-line",
+      "x": 2088.1,
+      "z": -2335.4,
+      "angle": 2.498
+    },
+    {
+      "id": "di961",
+      "kind": "fence-line",
+      "x": 2091.7,
+      "z": -2340.3,
+      "angle": 2.498
+    },
+    {
+      "id": "di962",
+      "kind": "fence-line",
+      "x": 1997.2,
+      "z": -2357.6,
+      "angle": 2.498
+    },
+    {
+      "id": "di963",
+      "kind": "fence-line",
+      "x": 2000.9,
+      "z": -2362.5,
+      "angle": 2.498
+    },
+    {
+      "id": "di964",
+      "kind": "fence-line",
+      "x": 2004.6,
+      "z": -2367.4,
+      "angle": 2.498
+    },
+    {
+      "id": "di965",
+      "kind": "fence-line",
+      "x": 2008.2,
+      "z": -2372.3,
+      "angle": 2.498
+    },
+    {
+      "id": "di966",
+      "kind": "fence-line",
+      "x": 2011.9,
+      "z": -2377.2,
+      "angle": 2.498
+    },
+    {
+      "id": "di967",
+      "kind": "fence-line",
+      "x": 2015.6,
+      "z": -2382.1,
+      "angle": 2.498
+    },
+    {
+      "id": "di968",
+      "kind": "fence-line",
+      "x": 2019.3,
+      "z": -2387,
+      "angle": 2.498
+    },
+    {
+      "id": "di969",
+      "kind": "fence-line",
+      "x": 2022.9,
+      "z": -2391.9,
+      "angle": 2.498
+    },
+    {
+      "id": "di970",
+      "kind": "fence-line",
+      "x": 2061.7,
+      "z": -2305.4,
+      "angle": 0.927
+    },
+    {
+      "id": "di971",
+      "kind": "fence-line",
+      "x": 2056.8,
+      "z": -2309.1,
+      "angle": 0.927
+    },
+    {
+      "id": "di972",
+      "kind": "fence-line",
+      "x": 2051.9,
+      "z": -2312.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di973",
+      "kind": "fence-line",
+      "x": 2047,
+      "z": -2316.5,
+      "angle": 0.927
+    },
+    {
+      "id": "di974",
+      "kind": "fence-line",
+      "x": 2042,
+      "z": -2320.1,
+      "angle": 0.927
+    },
+    {
+      "id": "di975",
+      "kind": "fence-line",
+      "x": 2037.1,
+      "z": -2323.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di976",
+      "kind": "fence-line",
+      "x": 2022.4,
+      "z": -2334.9,
+      "angle": 0.927
+    },
+    {
+      "id": "di977",
+      "kind": "fence-line",
+      "x": 2017.5,
+      "z": -2338.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di978",
+      "kind": "fence-line",
+      "x": 2012.6,
+      "z": -2342.3,
+      "angle": 0.927
+    },
+    {
+      "id": "di979",
+      "kind": "fence-line",
+      "x": 2007.6,
+      "z": -2345.9,
+      "angle": 0.927
+    },
+    {
+      "id": "di980",
+      "kind": "fence-line",
+      "x": 2002.7,
+      "z": -2349.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di981",
+      "kind": "fence-line",
+      "x": 1997.8,
+      "z": -2353.3,
+      "angle": 0.927
+    },
+    {
+      "id": "di982",
+      "kind": "cone",
+      "x": 2024.6,
+      "z": -2335.8,
+      "angle": 0.927
+    },
+    {
+      "id": "di983",
+      "kind": "cone",
+      "x": 2022.8,
+      "z": -2337.1,
+      "angle": 0.927
+    },
+    {
+      "id": "di984",
+      "kind": "cone",
+      "x": 2021,
+      "z": -2338.4,
+      "angle": 0.927
+    },
+    {
+      "id": "di985",
+      "kind": "bollard",
+      "x": 2036.5,
+      "z": -2325,
+      "angle": 0.927
+    },
+    {
+      "id": "di986",
+      "kind": "bollard",
+      "x": 2023.7,
+      "z": -2334.6,
+      "angle": 0.927
+    },
+    {
+      "id": "di987",
+      "kind": "jump",
+      "x": 1947,
+      "z": -1972,
+      "angle": 1.571,
+      "variant": "built ramp",
+      "note": "Spoil heap beside the Works Circuit"
+    },
+    {
+      "id": "di988",
+      "kind": "jump",
+      "x": 1966,
+      "z": -1972,
+      "angle": 1.571,
+      "variant": "built ramp",
+      "note": "Spoil heap beside the Works Circuit"
     }
   ],
   "roads": [
@@ -4901,281 +9852,6 @@
       "isNew": true
     },
     {
-      "id": "dy2",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          1915,
-          -2079
-        ],
-        [
-          1879,
-          -2078
-        ],
-        [
-          1875,
-          -2168
-        ],
-        [
-          1911,
-          -2169
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy3",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2695,
-          -1930
-        ],
-        [
-          2731,
-          -1931
-        ],
-        [
-          2734,
-          -1841
-        ],
-        [
-          2698,
-          -1840
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy4",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2125,
-          -2257
-        ],
-        [
-          2148,
-          -2285
-        ],
-        [
-          2077,
-          -2340
-        ],
-        [
-          2054,
-          -2312
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy5",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2046,
-          -2318
-        ],
-        [
-          2068,
-          -2347
-        ],
-        [
-          1996,
-          -2401
-        ],
-        [
-          1974,
-          -2372
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy6",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2433,
-          -2396
-        ],
-        [
-          2428,
-          -2361
-        ],
-        [
-          2517,
-          -2348
-        ],
-        [
-          2522,
-          -2384
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy7",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2065,
-          -2030
-        ],
-        [
-          2029,
-          -2029
-        ],
-        [
-          2028,
-          -2119
-        ],
-        [
-          2064,
-          -2120
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy8",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2397,
-          -2643
-        ],
-        [
-          2418,
-          -2673
-        ],
-        [
-          2345,
-          -2725
-        ],
-        [
-          2324,
-          -2696
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy9",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2316,
-          -2701
-        ],
-        [
-          2337,
-          -2731
-        ],
-        [
-          2264,
-          -2783
-        ],
-        [
-          2243,
-          -2754
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy10",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2235,
-          -2760
-        ],
-        [
-          2256,
-          -2789
-        ],
-        [
-          2182,
-          -2841
-        ],
-        [
-          2162,
-          -2812
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy11",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          2083,
-          -2868
-        ],
-        [
-          2108,
-          -2894
-        ],
-        [
-          2043,
-          -2956
-        ],
-        [
-          2018,
-          -2930
-        ]
-      ],
-      "isNew": true
-    },
-    {
-      "id": "dy12",
-      "kind": "yard",
-      "district": "industrial",
-      "bridge": false,
-      "points": [
-        [
-          1859,
-          -3048
-        ],
-        [
-          1868,
-          -3083
-        ],
-        [
-          1781,
-          -3105
-        ],
-        [
-          1772,
-          -3070
-        ]
-      ],
-      "isNew": true
-    },
-    {
       "id": "dy13",
       "kind": "yard",
       "district": "industrial",
@@ -5201,26 +9877,451 @@
       "isNew": true
     },
     {
-      "id": "dy14",
+      "id": "dz1",
       "kind": "yard",
       "district": "industrial",
       "bridge": false,
       "points": [
         [
-          1308,
-          -2690
+          2695,
+          -1934
         ],
         [
-          1323,
+          2725,
+          -1935
+        ],
+        [
+          2726,
+          -1887
+        ],
+        [
+          2696,
+          -1886
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz2",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2145,
+          -2242
+        ],
+        [
+          2177,
+          -2280
+        ],
+        [
+          2105,
+          -2335
+        ],
+        [
+          2074,
+          -2297
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz3",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2398,
+          -2401
+        ],
+        [
+          2391,
+          -2349
+        ],
+        [
+          2460,
+          -2340
+        ],
+        [
+          2468,
+          -2391
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz4",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2476,
+          -2390
+        ],
+        [
+          2467,
+          -2333
+        ],
+        [
+          2541,
+          -2323
+        ],
+        [
+          2549,
+          -2380
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz5",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2065,
+          -2026
+        ],
+        [
+          2035,
+          -2025
+        ],
+        [
+          2035,
+          -2073
+        ],
+        [
+          2065,
+          -2074
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz6",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2064,
+          -2086
+        ],
+        [
+          2034,
+          -2085
+        ],
+        [
+          2034,
+          -2133
+        ],
+        [
+          2064,
+          -2134
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz7",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2416,
+          -2629
+        ],
+        [
+          2434,
+          -2653
+        ],
+        [
+          2395,
+          -2682
+        ],
+        [
+          2378,
           -2657
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz8",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2368,
+          -2664
         ],
         [
-          1405,
-          -2693
+          2385,
+          -2689
         ],
         [
-          1391,
-          -2726
+          2346,
+          -2717
+        ],
+        [
+          2329,
+          -2692
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz9",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2319,
+          -2699
+        ],
+        [
+          2336,
+          -2723
+        ],
+        [
+          2298,
+          -2751
+        ],
+        [
+          2280,
+          -2727
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz10",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2271,
+          -2734
+        ],
+        [
+          2288,
+          -2758
+        ],
+        [
+          2249,
+          -2787
+        ],
+        [
+          2232,
+          -2762
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz11",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2222,
+          -2769
+        ],
+        [
+          2240,
+          -2794
+        ],
+        [
+          2200,
+          -2821
+        ],
+        [
+          2183,
+          -2797
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz12",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2086,
+          -2865
+        ],
+        [
+          2107,
+          -2887
+        ],
+        [
+          2072,
+          -2920
+        ],
+        [
+          2051,
+          -2898
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz13",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2042,
+          -2907
+        ],
+        [
+          2063,
+          -2928
+        ],
+        [
+          2029,
+          -2961
+        ],
+        [
+          2008,
+          -2940
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz14",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1874,
+          -3044
+        ],
+        [
+          1886,
+          -3095
+        ],
+        [
+          1819,
+          -3112
+        ],
+        [
+          1806,
+          -3061
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz15",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1254,
+          -2667
+        ],
+        [
+          1287,
+          -2596
+        ],
+        [
+          1394,
+          -2642
+        ],
+        [
+          1362,
+          -2713
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz16",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          1917,
+          -2064
+        ],
+        [
+          1866,
+          -2062
+        ],
+        [
+          1863,
+          -2132
+        ],
+        [
+          1915,
+          -2134
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz17",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2076,
+          -2250
+        ],
+        [
+          2044,
+          -2209
+        ],
+        [
+          1989,
+          -2252
+        ],
+        [
+          2021,
+          -2293
+        ]
+      ],
+      "isNew": true
+    },
+    {
+      "id": "dz18",
+      "kind": "yard",
+      "district": "industrial",
+      "bridge": false,
+      "points": [
+        [
+          2065,
+          -2302
+        ],
+        [
+          2095,
+          -2342
+        ],
+        [
+          2023,
+          -2396
+        ],
+        [
+          1993,
+          -2356
         ]
       ],
       "isNew": true

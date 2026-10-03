@@ -595,7 +595,14 @@ export type SetPieceKind =
   | 'tent'
   | 'campfire'
   | 'camper-van'
-  | 'radio-mast';
+  | 'radio-mast'
+  // Industrial's once-over (2026-10-03): the plant that joins a works up, and
+  // the landmarks that make its skyline.
+  | 'pipe-rack'
+  | 'cooling-tower'
+  | 'fence-line'
+  | 'flare-stack'
+  | 'gas-holder';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by

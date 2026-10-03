@@ -17,7 +17,7 @@ import { INDUSTRIAL_PROPS } from './industrialprops';
 import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
-import { SET_PIECE_SOLIDS, SOLID_REACH, airfieldProps, hitsSetPiece } from './setpieces';
+import { SET_PIECE_SOLIDS, SOLID_REACH, WAREHOUSE_FOOTING, airfieldProps, hitsSetPiece } from './setpieces';
 import type { CityRoad } from './types';
 import { groundAt } from './terrain';
 import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea, planDistrictAt } from './plan';
@@ -55,6 +55,13 @@ describe('Marrow Field props (#295)', () => {
       if (piece.kind === 'rowing-boat' || piece.kind === 'jetty') {
         const pond = city.water.find((w) => w.kind === 'pond' && inArea(w.outline, piece.at));
         expect(piece.y).toBeCloseTo(pond ? Math.max(ground, pond.level!) : ground, 6);
+        continue;
+      }
+      // A warehouse comes up to meet the high ground under its edges, never
+      // more than its footing above the lowest (`warehouseBase`).
+      if (piece.kind === 'warehouse') {
+        expect(piece.y).toBeGreaterThanOrEqual(ground - 1e-6);
+        expect(piece.y - ground).toBeLessThan((WAREHOUSE_FOOTING + 1) * M);
         continue;
       }
       // Bar a cruise terminal (#268), out on its pier over the bay: at sea level, not on the bed.
@@ -376,6 +383,18 @@ describe('the works (#489)', () => {
     expect(hitsSetPiece([piece('chimney')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
     expect(hitsSetPiece([piece('tank')], 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
     expect(hitsSetPiece([piece('tank', 'small')], 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(false);
+  });
+
+  // Industrial's once-over (2026-10-03).
+  it('lets a car drive under a pipe rack, and not through its legs, a fence or a tower', () => {
+    const rack = [piece('pipe-rack')];
+    expect(hitsSetPiece(rack, 0, 4.5 * M, 0, r, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece(rack, 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece(rack, 0, 4.5 * M, 0, r, 7 * M)).toBe(true);
+    expect(hitsSetPiece([piece('fence-line')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('cooling-tower')], 10 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('gas-holder')], 15 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('flare-stack')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
   });
 
   it('lets a car drive over rail track, and not through a wagon on it', () => {
