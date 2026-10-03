@@ -355,7 +355,22 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
         specularIntensity: 0.15,
       })
     : new THREE.MeshLambertMaterial();
-  const body = new THREE.Mesh(mergeGeometries(painted.map((g) => g.toNonIndexed()))!, bodyMaterial);
+  const shell = mergeGeometries(painted.map((g) => g.toNonIndexed()))!;
+  // Baked shading: the paint is multiplied by a colour per vertex, darker low
+  // on the flank and towards the ends, which is the dirt and shadow a sunlit
+  // car has under its sills. It costs nothing at run time, and the pool's
+  // repaint still works because the material's own colour multiplies it.
+  const at = shell.attributes.position as THREE.BufferAttribute;
+  const shade = new Float32Array(at.count * 3);
+  for (let i = 0; i < at.count; i++) {
+    const low = THREE.MathUtils.smoothstep(at.getY(i), floor, floor + height * 0.55);
+    const end = THREE.MathUtils.smoothstep(Math.abs(at.getZ(i)), length * 0.4, length * 0.5);
+    const k = 0.55 + 0.45 * low - 0.1 * end;
+    shade.set([k, k, k], i * 3);
+  }
+  shell.setAttribute('color', new THREE.BufferAttribute(shade, 3));
+  bodyMaterial.vertexColors = true;
+  const body = new THREE.Mesh(shell, bodyMaterial);
 
   const glass = new THREE.Mesh(
     glassGeometry,
@@ -399,6 +414,11 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   const extras: THREE.Mesh[] = [];
   const trim = new THREE.MeshLambertMaterial({ color: '#0e0f13' });
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number) => {
+    // Anything in the body's paint shares its vertex-colour material, so it
+    // needs the attribute too, or it renders black.
+    if (material === bodyMaterial) {
+      geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geometry.attributes.position.count * 3).fill(1), 3));
+    }
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     extras.push(mesh);
