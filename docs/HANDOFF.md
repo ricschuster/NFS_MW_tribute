@@ -32,6 +32,23 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   - Screenshots in `screenshots/` are git-ignored. The `reference` symlink in
     the worktree needs `/reference` in its `info/exclude`.
 
+- **Start here (2026-10-03 night; #580 lighting: grade, shadow, env, pbr done in PR #592, AO next).**
+  - **State:** PR #592 (branch `look-haze-gpu-tools`, worktree `../crosstown-lighting`,
+    open, not merged) holds everything below; scene and tools only, the sim and
+    citylap baselines untouched. Switches: `grade` (follows the hour), `shadow`,
+    `env`, `pbr`. All still opt-in via `?look=`; none is the default look yet.
+  - **Next, in order:** (1) AO behind `?look=ao`: a half-resolution screen-space
+    pass in the renderer's effect chain (like `grade.ts`), check with `looktime`
+    before committing; (2) check the sunhaze x1.45 on `env,pbr` (first PMREM cut,
+    or per frame?); (3) a second shadow cascade only if a low-sun canyon frame
+    needs long shadows (fog already hides most of it); (4) owner decides which
+    switches become the default look and are deleted from `LOOK_SWITCHES`.
+  - **Not done:** the grade ignores area (only hour); no looksheet before/after
+    is attached to #592 yet (`npm run looksheet -- --look 'none;grade,shadow,env,pbr'`).
+  - **Gotchas:** `CAR_PAINT` must be set before any car is built (the player
+    car is rebuilt in the constructor for that reason); clearcoat above ~0.3 or
+    low roughness blows the sun glint out through bloom.
+
 - **#580 progress (2026-10-03 night, PR #592):** the grade follows the hour
   (`setGradeHour` in `scene/grade.ts`: a low day sun gets saturation, exposure
   and a warm horizon veil; the area is not used yet). Sun shadows are behind
