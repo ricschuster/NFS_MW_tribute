@@ -578,7 +578,24 @@ export type SetPieceKind =
   | 'beach-hut'
   | 'lifeguard-tower'
   | 'lighthouse'
-  | 'railing';
+  | 'railing'
+  // Highmoor Park's once-over (2026-10-03): waymarkers and a field gate with a
+  // stile where the paths leave the car park, dry-stone walls along the
+  // meadow, logs, log piles and boulders in the woods, a ranger's hut and a
+  // timber lookout, a campsite's tents, fire ring and camper vans, and a
+  // radio mast fenced in on the summit.
+  | 'waymarker'
+  | 'field-gate'
+  | 'stone-wall'
+  | 'log'
+  | 'log-pile'
+  | 'boulder'
+  | 'ranger-hut'
+  | 'timber-lookout'
+  | 'tent'
+  | 'campfire'
+  | 'camper-van'
+  | 'radio-mast';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by

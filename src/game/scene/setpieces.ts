@@ -1205,6 +1205,217 @@ function railing(): Part[] {
   ];
 }
 
+const STONE_WALL = ['#8e8a7e', '#7d7a70', '#9a968a'];
+const BARK = '#5e4630';
+const CUT = '#c8a67a';
+
+/** A waymarker: a timber post with a coloured band and two finger arms. */
+function waymarker(): Part[] {
+  return [
+    { geometry: at(box(0.14, 1.4, 0.14), 0, 0.7, 0), colour: TIMBER },
+    { geometry: at(box(0.16, 0.12, 0.16), 0, 1.15, 0), colour: '#d9a62e' },
+    { geometry: at(box(0.7, 0.14, 0.04), 0.3, 1.3, 0.09).rotateY(0), colour: TIMBER_DARK },
+    { geometry: at(box(0.04, 0.14, 0.6), -0.09, 1.05, -0.25), colour: TIMBER_DARK },
+  ];
+}
+
+/**
+ * A five-bar field gate standing open, swung back along its fence line from
+ * the post it hangs on, and a step stile beside it: across the piece, so it
+ * is placed along the side of a path, not over it.
+ */
+function fieldGate(): Part[] {
+  return [
+    ...[-2.2, 2.2].map((x) => ({ geometry: at(box(0.18, 1.5, 0.18), x, 0.75, 0), colour: TIMBER_DARK })),
+    ...[0.25, 0.5, 0.75, 1, 1.25].map((y) => ({ geometry: at(box(3.6, 0.08, 0.06), -0.2, y, 0), colour: '#cfc8b8' })),
+    ...[-1.9, 1.5].map((x) => ({ geometry: at(box(0.08, 1.1, 0.06), x, 0.75, 0), colour: '#cfc8b8' })),
+    { geometry: at(box(3.8, 0.08, 0.06).rotateZ(0.3), -0.2, 0.75, 0), colour: '#cfc8b8' },
+    // The stile, at the latch end: two steps over a short rail.
+    { geometry: at(box(0.9, 0.08, 0.3), 2.2, 0.35, 0.3), colour: TIMBER },
+    { geometry: at(box(0.9, 0.08, 0.3), 2.2, 0.35, -0.3), colour: TIMBER },
+    { geometry: at(box(0.9, 0.08, 0.06), 2.2, 0.9, 0), colour: TIMBER },
+  ];
+}
+
+/**
+ * A length of dry-stone wall: a battered core of three stone colours and a
+ * row of coping stones set on edge along the top.
+ */
+function stoneWall(): Part[] {
+  const courses = [0, 1, 2].map((i) => ({ geometry: at(box(6.25, 0.32, 0.7 - i * 0.1), 0, 0.16 + i * 0.32, 0), colour: STONE_WALL[i] }));
+  const coping = Array.from({ length: 12 }, (_, i) => ({ geometry: at(box(0.42, 0.18, 0.42).rotateY(i * 0.7), -2.9 + i * 0.53, 1.03, 0), colour: STONE_WALL[(i + 1) % 3] }));
+  return [...courses, ...coping];
+}
+
+/** A fallen trunk lying along the piece, a stub of a branch off it. */
+function log(): Part[] {
+  return [
+    { geometry: at(tube(0.22, 0.27, 6, 9), 0, 0.25, 0), colour: BARK },
+    { geometry: at(upright(0.2, 0.2, 0.02, 9).rotateX(Math.PI / 2), 0, 0.25, 3.01), colour: CUT },
+    { geometry: at(box(0.1, 0.1, 1.2).rotateY(0.7), 0.4, 0.35, -1.2), colour: BARK },
+  ];
+}
+
+/** A woodman's stack of cut logs, three courses of ends to the front. */
+function logPile(): Part[] {
+  const parts: Part[] = [];
+  for (let row = 0; row < 3; row++) {
+    for (let i = 0; i < 6 - row; i++) {
+      const x = -1.25 + row * 0.25 + i * 0.5;
+      const y = 0.22 + row * 0.38;
+      parts.push({ geometry: at(tube(0.2, 0.2, 2, 8), x, y, 0), colour: BARK });
+      parts.push({ geometry: at(upright(0.18, 0.18, 0.02, 8).rotateX(Math.PI / 2), x, y, 1.01), colour: CUT });
+    }
+  }
+  return parts;
+}
+
+/** A boulder, three weathered stones in one, the large one half as big again. */
+function boulder(variant?: string): Part[] {
+  const k = variant === 'large' ? 1.7 : 1;
+  const stone = (r: number, sx: number, sy: number, sz: number, turn: number) =>
+    new THREE.DodecahedronGeometry(r * k, 0).scale(sx, sy, sz).rotateY(turn);
+  return [
+    { geometry: at(stone(1, 1.15, 0.85, 1, 0.4), 0, 0.75 * k, 0), colour: '#8b8d88' },
+    { geometry: at(stone(0.55, 1, 0.8, 1.1, 1.3), 0.7 * k, 0.35 * k, 0.6 * k), colour: '#7c7f7b' },
+    { geometry: at(stone(0.5, 1.2, 0.35, 1, 2.2), -0.3 * k, 1.4 * k, -0.1 * k), colour: '#7f8a6e' },
+  ];
+}
+
+/**
+ * The ranger's hut: a log cabin under a pitched green roof with a porch on
+ * the front and a notice board by the door.
+ */
+function rangerHut(): Part[] {
+  const roof = new THREE.CylinderGeometry(3, 3, 6.6, 3).rotateX(-Math.PI / 2).scale(1, 0.55, 1);
+  return [
+    { geometry: at(box(4.5, 2.8, 5), 0, 1.4, -1), colour: '#8a6440' },
+    ...[0.5, 1.2, 1.9, 2.6].map((y) => ({ geometry: at(box(4.6, 0.08, 5.1), 0, y, -1), colour: TIMBER_DARK })),
+    { geometry: at(roof, 0, 2.8 + 3 * 0.55 * 0.5, -0.5), colour: '#3f5d4a' },
+    { geometry: at(box(4.5, 0.15, 1.6), 0, 0.08, 2.3), colour: TIMBER },
+    ...[-2.1, 2.1].map((x) => ({ geometry: at(box(0.15, 2.6, 0.15), x, 1.3, 2.9), colour: TIMBER_DARK })),
+    { geometry: at(box(0.9, 2, 0.08), -0.8, 1, 1.52), colour: '#4a3a2a' },
+    { geometry: at(box(0.9, 0.7, 0.08), 1.2, 1.7, 1.52), colour: '#d8d2c0' },
+  ];
+}
+
+/**
+ * A timber fire lookout: four splayed legs braced in X's, a stair up one
+ * side, and a glazed cabin under a pyramid roof at the top.
+ */
+function timberLookout(): Part[] {
+  const legs = [-2, 2].flatMap((x) => [-2, 2].map((z) => ({ geometry: at(box(0.25, 9.2, 0.25), x, 4.6, z), colour: TIMBER_DARK })));
+  const braces = [2.2, 6.6].flatMap((y) => [
+    ...[-2, 2].map((z) => ({ geometry: at(box(5.6, 0.12, 0.12).rotateZ(z > 0 ? 0.65 : -0.65), 0, y, z), colour: TIMBER })),
+    ...[-2, 2].map((x) => ({ geometry: at(box(0.12, 0.12, 5.6).rotateX(x > 0 ? 0.65 : -0.65), x, y, 0), colour: TIMBER })),
+  ]);
+  const roof = new THREE.ConeGeometry(4, 1.6, 4).rotateY(Math.PI / 4);
+  return [
+    ...legs,
+    ...braces,
+    { geometry: at(box(5, 0.25, 5), 0, 9.1, 0), colour: TIMBER },
+    { geometry: at(box(4.4, 1, 4.4), 0, 9.7, 0), colour: '#8a6440' },
+    { geometry: at(box(4.5, 1.2, 4.5), 0, 10.8, 0), colour: '#2b3540' },
+    { geometry: at(roof, 0, 12.2, 0), colour: '#3f5d4a' },
+    { geometry: at(box(0.9, 0.08, 10).rotateX(-0.95), 2.9, 4.6, 0), colour: TIMBER },
+  ];
+}
+
+const TENTS: Record<string, string> = { orange: '#d9772e', green: '#3f6b42', blue: '#2f5d8a', red: '#a8463a' };
+
+/** A ridge tent, its door at the front, pegged out on a groundsheet. */
+function tent(variant?: string): Part[] {
+  const canvas = TENTS[variant ?? 'orange'] ?? TENTS.orange;
+  const ridge = new THREE.CylinderGeometry(1.25, 1.25, 3, 3).rotateX(-Math.PI / 2).rotateZ(Math.PI).scale(1, 1.2, 1);
+  return [
+    { geometry: at(box(2.6, 0.03, 3.3), 0, 0.02, 0), colour: '#3a3f3a' },
+    { geometry: at(ridge, 0, 0.75, 0), colour: canvas },
+    { geometry: at(box(0.7, 0.9, 0.04), 0, 0.45, 1.51), colour: '#2b2a28' },
+  ];
+}
+
+/** A fire ring: a circle of stones round the embers, and four log seats round that. */
+function campfire(): Part[] {
+  const stones = Array.from({ length: 9 }, (_, i) => {
+    const a = (i / 9) * 2 * Math.PI;
+    return { geometry: at(new THREE.DodecahedronGeometry(0.2, 0).scale(1.2, 0.8, 1), Math.cos(a) * 0.65, 0.15, Math.sin(a) * 0.65), colour: '#7c7f7b' };
+  });
+  const seats = [0, 1, 2, 3].map((i) => {
+    const a = (i / 4) * 2 * Math.PI + 0.4;
+    return { geometry: at(tube(0.18, 0.18, 1.3, 8).rotateY(a + Math.PI / 2), Math.cos(a) * 1.8, 0.18, Math.sin(a) * 1.8), colour: BARK };
+  });
+  return [
+    ...stones,
+    { geometry: at(upright(0.5, 0.5, 0.05, 10), 0, 0.03, 0), colour: '#2a2522' },
+    { geometry: at(new THREE.ConeGeometry(0.25, 0.5, 6), 0, 0.3, 0), colour: '#d9772e' },
+    ...seats,
+  ];
+}
+
+const CAMPERS: Record<string, string> = { cream: '#e8dcc0', teal: '#5f9c96', orange: '#d9772e', white: '#e8e6df' };
+
+/** A camper van: a two-tone body, a pop-top roof and an awning out on the left. */
+function camperVan(variant?: string): Part[] {
+  const paint = CAMPERS[variant ?? 'cream'] ?? CAMPERS.cream;
+  return [
+    { geometry: at(box(2.1, 1.1, 5.4), 0, 0.95, 0), colour: paint },
+    { geometry: at(box(2.1, 0.9, 5.2), 0, 1.95, -0.1), colour: '#f2efe6' },
+    { geometry: at(box(1.9, 0.5, 3), 0, 2.65, -0.6), colour: paint },
+    { geometry: at(box(1.9, 0.6, 0.05), 0, 2, 2.56), colour: '#2b3540' },
+    { geometry: at(box(0.05, 0.55, 2.8), -1.06, 2, -0.6), colour: '#2b3540' },
+    { geometry: at(box(1.6, 0.05, 3).rotateZ(-0.12), -1.85, 2.3, -0.6), colour: '#c94f3d' },
+    ...[-1.7, 1.8].flatMap((z) => [-1, 1].map((x) => ({ geometry: at(tube(0.36, 0.36, 0.28, 12).rotateY(Math.PI / 2), x, 0.38, z), colour: '#1e2022' }))),
+  ];
+}
+
+/** A round strut of radius `r` from `a` to `b`. */
+function strut(a: THREE.Vector3, b: THREE.Vector3, r: number): THREE.BufferGeometry {
+  const d = b.clone().sub(a);
+  const g = new THREE.CylinderGeometry(r, r, d.length(), 4).translate(0, d.length() / 2, 0);
+  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()));
+  return g.translate(a.x, a.y, a.z);
+}
+
+/**
+ * The radio mast on the summit, in game metres: a guyed lattice mast in red
+ * and white bands, dishes and aerials near the top, and an equipment hut in a
+ * fenced compound at its foot.
+ */
+function radioMast(): Part[] {
+  const H = 46, BANDS = 8;
+  const legs: Part[] = [];
+  for (let i = 0; i < BANDS; i++) {
+    const y0 = (H / BANDS) * i, y1 = (H / BANDS) * (i + 1);
+    const r0 = 1.4 - (0.8 * y0) / H, r1 = 1.4 - (0.8 * y1) / H;
+    const colour = i % 2 ? '#f2f0ea' : '#c0392b';
+    for (let k = 0; k < 3; k++) {
+      const a = (k / 3) * 2 * Math.PI;
+      const x0 = Math.cos(a) * r0, z0 = Math.sin(a) * r0, x1 = Math.cos(a) * r1, z1 = Math.sin(a) * r1;
+      legs.push({ geometry: strut(new THREE.Vector3(x0, y0, z0 + 2), new THREE.Vector3(x1, y1, z1 + 2), 0.1), colour });
+    }
+    // A ring of bracing at the top of each band.
+    legs.push({ geometry: at(new THREE.TorusGeometry(r1, 0.06, 4, 3).rotateX(Math.PI / 2), 0, y1, 2), colour: '#9a9890' });
+  }
+  const fence: Part[] = [];
+  for (let t = -8; t <= 8; t += 2) {
+    for (const [x, z] of [[t, -8], [t, 8], [-8, t], [8, t]]) fence.push({ geometry: at(box(0.08, 2.4, 0.08), x, 1.2, z), colour: '#5b5f60' });
+  }
+  for (const y of [0.3, 2.3]) {
+    fence.push(...[-8, 8].map((z) => ({ geometry: at(box(16, 0.05, 0.05), 0, y, z), colour: '#5b5f60' })));
+    fence.push(...[-8, 8].map((x) => ({ geometry: at(box(0.05, 0.05, 16), x, y, 0), colour: '#5b5f60' })));
+  }
+  return [
+    ...legs,
+    { geometry: at(box(0.25, 6, 0.25), 0, H + 3, 2), colour: '#9a9890' },
+    { geometry: at(upright(1.1, 1.1, 0.25, 16).rotateX(Math.PI / 2), 0, H - 6, 3.2), colour: '#e8e6df' },
+    { geometry: at(upright(0.8, 0.8, 0.25, 16).rotateZ(Math.PI / 2), 1.3, H - 12, 2), colour: '#e8e6df' },
+    { geometry: at(box(4, 3, 3), -4, 1.5, -4), colour: '#c9ccc8' },
+    { geometry: at(box(4.3, 0.2, 3.3), -4, 3.1, -4), colour: '#5b5f60' },
+    { geometry: at(box(15.8, 0.04, 15.8), 0, 0.03, 0), colour: '#8c826f' },
+    ...fence,
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -1312,6 +1523,19 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'lifeguard-tower': grown(lifeguardTower, HOUSE_GROWN),
   lighthouse,
   railing: grown(railing, 2),
+  // Highmoor Park's once-over (2026-10-03), grown as `city/setpieces.ts` grows their solids.
+  waymarker: grown(waymarker, 2),
+  'field-gate': grown(fieldGate, 2),
+  'stone-wall': grown(stoneWall, HOUSE_GROWN),
+  log: grown(log, 2),
+  'log-pile': grown(logPile, 2),
+  boulder: grown(boulder, 2),
+  'ranger-hut': grown(rangerHut, HOUSE_GROWN),
+  'timber-lookout': grown(timberLookout, HOUSE_GROWN),
+  tent: grown(tent, 2),
+  campfire: grown(campfire, 2),
+  'camper-van': grown(camperVan, 2),
+  'radio-mast': radioMast,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

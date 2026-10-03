@@ -11,12 +11,13 @@ const M = UNITS_PER_METRE;
  * editor holds the same table.
  */
 export const TIDEWATER_GROUND_SIZES: Record<string, Record<string, [number, number]>> = {
-  path: { path: [30, 5], promenade: [30, 12] },
+  path: { path: [30, 5], promenade: [30, 12], trail: [30, 4] },
   plaza: { small: [30, 30], medium: [45, 35], large: [60, 45] },
   beach: { narrow: [40, 30], medium: [40, 45], wide: [40, 60] },
 };
 const LOOKS: Record<Exclude<GroundPropKind, 'lawn'>, Record<string, Apron['look']>> = {
-  path: { path: 'concrete', promenade: 'flags' },
+  // A trail is Highmoor Park's (2026-10-03): gravel through the woods.
+  path: { path: 'concrete', promenade: 'flags', trail: 'gravel' },
   plaza: { small: 'flags', medium: 'flags', large: 'flags' },
   beach: { narrow: 'sand', medium: 'sand', wide: 'sand' },
 };
