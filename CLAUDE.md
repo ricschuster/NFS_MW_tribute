@@ -64,6 +64,9 @@ Everyday:
 
 Looking (every real bug in the city so far was found by looking, not by a test):
 
+- `node tools/carview.mjs <body> <colour> <dir>` - one procedural car on a
+  plain background from five angles, the input to the image-to-3D pilot
+  (`tools/trellis/`, docs/research/car-pilot-trellis.md); our own model only
 - `npm run city` - the city from above to `screenshots/citymap.png`;
   `-- --terrain` is the land alone, `-- --seed N` another seed
 - `npm run cityshot` - the 3D city from fixed viewpoints, own server;
