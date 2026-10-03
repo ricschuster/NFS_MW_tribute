@@ -10,6 +10,7 @@ import {
 } from './downtownmodels';
 import { triplanar } from './triplanar';
 import { wallFinish, type WallKind } from './materials';
+import { LEAF_KIND_BY_PIECE, disposeLeafTextures, isTrunk, leafGeometries, leafMaterial } from './leafcards';
 const M = UNITS_PER_METRE;
 
 /**
@@ -1643,7 +1644,7 @@ export class CitySetPieces {
   readonly meshes: THREE.InstancedMesh[] = [];
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
-  constructor(pieces: readonly SetPiece[], options: { photo?: boolean } = {}) {
+  constructor(pieces: readonly SetPiece[], options: { photo?: boolean; leaves?: boolean } = {}) {
     // By what it looks like, not just what it is: a stockpile's rock is a
     // variant, and one mesh has one colour per part.
     const byKind = new Map<string, SetPiece[]>();
@@ -1657,17 +1658,28 @@ export class CitySetPieces {
     for (const [key, list] of byKind) {
       const kind = list[0].kind;
       const parts = MODELS[kind](list[0].variant);
+      // `?look=trees` (#582): the foliage of a tree is rebuilt from cut-out
+      // cards (leafcards.ts); the trunk stays a flat-coloured part.
+      const leafKind = options.leaves ? LEAF_KIND_BY_PIECE[key] : undefined;
       const byColour = new Map<string, THREE.BufferGeometry[]>();
       for (const part of parts) {
+        if (leafKind && !isTrunk(part.colour)) {
+          part.geometry.dispose();
+          continue;
+        }
         if (!byColour.has(part.colour)) byColour.set(part.colour, []);
         byColour.get(part.colour)!.push(part.geometry);
       }
-      for (const [colour, geometries] of byColour) {
+      const layers: [string, THREE.BufferGeometry[]][] = [...byColour];
+      for (const [colour, geometries] of layers.concat(leafKind ? [['leaf', leafGeometries(leafKind)]] : [])) {
+        const isLeaf = colour === 'leaf';
         const geometry = mergeGeometries(geometries.map((g) => (g.index ? g.toNonIndexed() : g)));
         for (const g of geometries) g.dispose();
-        const finish = options.photo ? WALL_FINISH_BY_COLOUR[colour] : undefined;
+        const finish = options.photo && !isLeaf ? WALL_FINISH_BY_COLOUR[colour] : undefined;
         let material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
-        if (finish) {
+        if (isLeaf) {
+          material = leafMaterial(leafKind!);
+        } else if (finish) {
           material = new THREE.MeshStandardMaterial({ color: colour, metalness: 0 });
           triplanar(material, wallFinish(finish), finish);
         } else {
@@ -1697,5 +1709,6 @@ export class CitySetPieces {
   dispose(): void {
     for (const mesh of this.meshes) mesh.dispose();
     for (const thing of this.owned) thing.dispose();
+    disposeLeafTextures();
   }
 }
