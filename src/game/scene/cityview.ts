@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TyreSmoke } from './smoke';
+import { AirDust } from './airdust';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import type { City } from '../city/types';
 import { UNITS_PER_METRE } from '../constants';
@@ -175,6 +176,8 @@ export class CityView {
   private carStyle: CarBody = 'coupe';
   /** Off the rear tyres while they spin on the spot (#360). */
   private readonly smoke = new TyreSmoke();
+  /** `?look=particles` (#582): dust in the air about the camera. */
+  private readonly dust: AirDust | null;
   /** Which profile the player's mesh is currently painted as (#67). */
   private wearing = '';
   private readonly trafficCars: CarPool;
@@ -290,6 +293,8 @@ export class CityView {
     this.car.visible = false;
     this.scene.add(this.car);
     this.scene.add(this.smoke.group);
+    this.dust = this.switches.has('particles') ? new AirDust() : null;
+    if (this.dust) this.scene.add(this.dust.points);
     this.trafficCars = new CarPool(this.scene);
     this.haulTrucks = new CityTrucks(TRUCK_COUNT);
     this.scene.add(this.haulTrucks.group);
@@ -975,6 +980,7 @@ export class CityView {
     fog.near = this.fogNear;
     fog.far = this.fogFar;
     this.lighting(world.hour);
+    this.dust?.update(dt, this.camera.position, this.sun.intensity);
     this.skyDome.position.copy(this.camera.position);
     this.shadows();
     this.renderer.render(this.scene, this.camera);
@@ -1182,6 +1188,7 @@ export class CityView {
 
   dispose(): void {
     this.cityscape.dispose();
+    this.dust?.dispose();
     this.haulTrucks.dispose();
     this.renderer.dispose();
   }

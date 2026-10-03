@@ -28,6 +28,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     cards with a generated canvas texture; trunks stay flat parts. Still owed:
     autumn variants, kerbs, railings, fences, wires, particles. The broadleaf
     crown is a little boxy.
+  - **Particles (#582, `?look=particles`):** `scene/airdust.ts`, 600 dust motes
+    in an 18 m box that follows the camera, dim with the sun. Judge in motion.
   - **Next, in the owner's order:** wet roads
     once #585 gives a weather state; a second shadow cascade only if a low-sun
     frame needs it (dusk and sunhaze showed none). Then #582 trees and clutter.
