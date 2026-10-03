@@ -16,6 +16,31 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   (`blender -b -P`). Nothing is built yet. Check the licence of TRELLIS and
   Hunyuan3D before downloading either (Hunyuan's is believed to exclude some
   territories; unverified). Owner has still not seen the cars in motion.
+- **Update (2026-10-03, evening): the car pilot is set up, not yet run (#584, ADR-0013 route E).**
+  Full notes, licences and gotchas: [docs/research/car-pilot-trellis.md](research/car-pilot-trellis.md).
+  - **Merged first:** ADR-0013 (#616: AI assets allowed, one credits row each,
+    cars are a pilot) and the player's-car motion (#617: lean, dive, squat,
+    wheels turn and steer). Motion is judged in the city by the owner, who has
+    not yet seen it.
+  - **Pilot car: the Kestrel** (`fastback`). Input is a render of our own
+    procedural model (`node tools/carview.mjs fastback '#d8442f' OUT`), never
+    anything from `reference/`. Model: TRELLIS.2 (MIT) with the DINOv3 encoder
+    (gated, Meta's licence, owner's access granted). Both are downloaded
+    (about 16 GB), `hf auth login` is done.
+  - **`tools/trellis/install.sh` is run by the owner by hand**; Claude Code's
+    classifier refused to run it (it builds CUDA code from GitHub). It was
+    mid-build (CuMesh, then FlexGEMM, o-voxel) when the session ended; check
+    `~/trellis-install.log` for `INSTALL-DONE`. `tools/trellis/run.py` has never
+    run, so a first-run error is expected.
+  - **`briaai/RMBG-2.0`** is what TRELLIS's `pipeline.json` uses to remove
+    backgrounds: gated, believed non-commercial, not licence-checked, not
+    downloaded. `run.py` stubs it and cuts the car out itself.
+  - **Gotcha:** the car group has a blob-shadow plane (about 2340 x 6792 units)
+    that wrecks `Box3` measurements; remove it before measuring.
+  - **Next:** run it on `front34.png` at `--type 512`, open the `.glb` in
+    Blender, judge wheels, symmetry and "does it read as a real car", then
+    script the clean-up. No credits row, no merge. If it fails the procedural
+    cars stay.
 - **Update (2026-10-03, night): cars pass (#584), procedural, #610-#614 merged.**
   Owner delegated ("go as far as you can", then "keep going"), so sourcing is
   **better procedural shapes**: no asset, no `CREDITS.md` row, all 44 cars.
