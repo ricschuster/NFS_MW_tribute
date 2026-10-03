@@ -12,6 +12,7 @@ import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
+import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { CityTrucks } from './trucks';
@@ -122,6 +123,8 @@ export class CityView {
   private readonly camera: THREE.PerspectiveCamera;
   private readonly cityscape: Cityscape;
   private readonly city: City;
+  /** Which look-development switches are on (#579); later phases read it. */
+  readonly switches: Look;
   private readonly skyDome: THREE.Mesh;
   private readonly sun: THREE.DirectionalLight;
   private readonly fill: THREE.HemisphereLight;
@@ -183,8 +186,9 @@ export class CityView {
   /** Confirm as of last frame, so a flyover skips on a press and not on the hold that started the race (#359). */
   private confirmWas = false;
 
-  constructor(canvas: HTMLCanvasElement, city: City) {
+  constructor(canvas: HTMLCanvasElement, city: City, look: Look = NO_LOOK) {
     this.city = city;
+    this.switches = look;
 
     // A 5 km city seen from 2 km up spans a depth range a normal buffer cannot
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the

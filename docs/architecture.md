@@ -345,7 +345,10 @@ never recorded speech.
 
 **`?renderer=city` is the only query string for looking** (ADR-0006). It flies
 a free camera over the city with no car in it, and `&view=aerial|downtown|bridge|street|overpass`
-picks a fixed viewpoint. `?debug` is the other one, and it is for tools: it
+picks a fixed viewpoint. `?look=grade,shadow,ao,env,pbr` (#579, `scene/look.ts`)
+turns on look-development switches, all off by default: each phase of the look
+lands behind one so a before/after is a flag away, and the renderer alone reads
+them. `?debug` is another, and it is for tools: it
 turns on the telemetry recorder (#347, F9 to start and stop, always on in dev),
 which saves a sample a second of the car's speed and the traffic on screen as
 JSON for `npm run telemetry`. Looking at the generator is a different job from
