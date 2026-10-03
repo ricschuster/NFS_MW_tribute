@@ -13,7 +13,7 @@
 //
 // Usage (LOOK_SIZE=WxH sets the viewport, default 640x400):
 //   npm run looktime                                   # every shot, switches off
-//   npm run looktime -- --look 'none;grade;all'        # ';'-separated switch sets
+//   npm run looktime -- --look 'none;env,pbr;all'        # ';'-separated switch sets
 //   npm run looktime -- --shot downtown --frames 60
 import { createServer } from 'vite';
 import { chromium } from 'playwright';

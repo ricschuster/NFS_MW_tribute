@@ -145,7 +145,7 @@ export class CityView {
   private readonly shadowX = new THREE.Vector3();
   private readonly shadowRight = new THREE.Vector3();
   private readonly shadowUp = new THREE.Vector3();
-  private gradePass?: ReturnType<typeof makeGradePass>;
+  private readonly gradePass = makeGradePass();
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
   private litAt = -1;
@@ -215,8 +215,8 @@ export class CityView {
   constructor(canvas: HTMLCanvasElement, city: City, look: Look = NO_LOOK) {
     this.city = city;
     this.switches = look;
-    this.fogNear = (look.has('grade') ? 120 : 300) * M;
-    this.fogFar = (look.has('grade') ? 2000 : 2600) * M;
+    this.fogNear = 120 * M;
+    this.fogFar = 2000 * M;
 
     // A 5 km city seen from 2 km up spans a depth range a normal buffer cannot
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the
@@ -261,21 +261,19 @@ export class CityView {
     this.sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
-    if (look.has('shadow')) {
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      this.sun.castShadow = true;
-      this.sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
-      const cam = this.sun.shadow.camera;
-      cam.left = cam.bottom = -SHADOW_REACH;
-      cam.right = cam.top = SHADOW_REACH;
-      cam.near = 1;
-      cam.far = 2400 * M;
-      // Slope-scaled by the normal, because a city of boxes and flat ground
-      // acnes on every face at a low sun.
-      this.sun.shadow.normalBias = 0.35 * M;
-      this.sun.shadow.bias = -0.0004;
-    }
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
+    const shadowCam = this.sun.shadow.camera;
+    shadowCam.left = shadowCam.bottom = -SHADOW_REACH;
+    shadowCam.right = shadowCam.top = SHADOW_REACH;
+    shadowCam.near = 1;
+    shadowCam.far = 2400 * M;
+    // Slope-scaled by the normal, because a city of boxes and flat ground
+    // acnes on every face at a low sun.
+    this.sun.shadow.normalBias = 0.35 * M;
+    this.sun.shadow.bias = -0.0004;
     // Generous fill: under a single hard sun every face turned away goes black
     // and the city reads as silhouettes rather than as buildings. Cooler than
     // the sun and warmer off the ground, which is what daylight by the sea
@@ -324,11 +322,10 @@ export class CityView {
       BLOOM_RADIUS,
       BLOOM_THRESHOLD,
     );
-    if (look.has('grade')) this.gradePass = makeGradePass();
     this.renderer.setEffects([
-      ...(look.has('ao') ? [new AoPass(this.camera)] : []),
+      new AoPass(this.camera),
       this.bloom,
-      ...(this.gradePass ? [this.gradePass] : []),
+      this.gradePass,
     ]);
 
     this.look('aerial');
@@ -365,7 +362,7 @@ export class CityView {
         uniforms: {
           top: { value: new THREE.Color('#3f7fd0') },
           bottom: { value: HAZE },
-          // The sun's glow in the haze (#580): zero unless `grade` is on.
+          // The sun's glow in the haze (#580).
           sunDir: { value: new THREE.Vector3(0, 1, 0) },
           sunTint: { value: new THREE.Color('#ffd9a0') },
           glow: { value: 0 },
@@ -643,7 +640,7 @@ export class CityView {
   }
 
   /**
-   * Sun shadows behind `?look=shadow` (#580): one orthographic frustum around
+   * Sun shadows (#580): one orthographic frustum around
    * the camera's ground point, pushed forward by half its reach so most of it
    * lies in front of the view. The centre is snapped to the shadow texel grid
    * in light space, or the shadow edges crawl as the camera moves.
@@ -965,12 +962,10 @@ export class CityView {
     const dome = this.skyDome.material as THREE.ShaderMaterial;
     dome.uniforms.top.value.set(light.skyTop);
     dome.uniforms.bottom.value.copy(haze);
-    if (this.switches.has('grade')) {
-      dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
-      dome.uniforms.sunTint.value.set(light.sun);
-      dome.uniforms.glow.value = 1;
-      if (this.gradePass) setGradeHour(this.gradePass, light);
-    }
+    dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
+    dome.uniforms.sunTint.value.set(light.sun);
+    dome.uniforms.glow.value = 1;
+    setGradeHour(this.gradePass, light);
 
     if (this.switches.has('env') && Math.abs(hour - this.envAt) > 0.25) this.cutEnvironment();
 
