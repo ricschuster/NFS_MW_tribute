@@ -38,6 +38,8 @@ export function trafficBody(car: object): CarBody {
   return body;
 }
 
+const STRIP_TAIL: ReadonlySet<CarBody> = new Set<CarBody>(['hyper', 'fastback', 'gt', 'wedge', 'viper', 'brute']);
+
 const BODY_W = CAR_WIDTH_WORLD;
 const BODY_H = CAR_WIDTH_WORLD * CAR_ASPECT * 0.62;
 const BODY_L = CAR_WIDTH_WORLD * 1.9;
@@ -106,6 +108,17 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     lamp.name = 'headlight';
     lamp.position.set(side * BODY_W * 0.27, parts.floor + bodyH * 0.4, bodyL * 0.49);
     car.add(lamp);
+  }
+
+  // A light bar across the tail joins the two lamps on the sporty shapes: from
+  // behind, which is the chase camera's whole view, it is the car's signature.
+  if (STRIP_TAIL.has(style)) {
+    const strip = new THREE.Mesh(
+      new THREE.BoxGeometry(BODY_W * 0.5, bodyH * 0.1, bodyL * 0.035),
+      new THREE.MeshBasicMaterial({ color: '#ff4a38' }),
+    );
+    strip.position.set(0, parts.floor + bodyH * 0.52, -bodyL * 0.49);
+    car.add(strip);
   }
 
   // Contact shadow (#580, behind `?look=pbr` with the car paint): the sun's

@@ -447,7 +447,7 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   // The stretch of the car that is road-facing from behind, which is where the
   // chase camera spends the whole game: a plate between the tail lamps and a
   // pair of exhaust tips under the bumper.
-  add(new THREE.BoxGeometry(w * 0.21, height * 0.08, 2), new THREE.MeshLambertMaterial({ color: '#d9d6c8' }), 0, floor + height * 0.4, -length * 0.5 - 1);
+  add(new THREE.BoxGeometry(w * 0.21, height * 0.08, 2), new THREE.MeshLambertMaterial({ color: '#d9d6c8' }), 0, floor + height * 0.35, -length * 0.5 - 1);
   const pipe = new THREE.CylinderGeometry(w * 0.03, w * 0.03, length * 0.05, 8).rotateX(Math.PI / 2);
   const steel = new THREE.MeshLambertMaterial({ color: '#8d9299' });
   for (const side of [-1, 1]) add(pipe, steel, side * w * 0.2, floor + height * 0.08, -length * 0.5);
