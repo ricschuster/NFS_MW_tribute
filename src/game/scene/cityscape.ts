@@ -31,6 +31,7 @@ import { CityBreakables } from './breakables';
 import { CitySetPieces } from './setpieces';
 import { CityJumps } from './jumps';
 import { drivesFor } from './drives';
+import { tunnelMeshes } from './tunnels';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
@@ -126,6 +127,9 @@ export class Cityscape {
     const bridges = this.bridges(city);
     if (bridges) this.group.add(bridges);
     for (const mesh of this.viaduct(city)) this.group.add(mesh);
+    const tunnels = tunnelMeshes(city);
+    this.owned.push(...tunnels.owned);
+    for (const mesh of tunnels.meshes) this.group.add(mesh);
     for (const mesh of provider.build(city.buildings, (x, z) => this.groundUnder(city, x, z))) {
       this.group.add(mesh);
     }
