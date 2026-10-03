@@ -13,7 +13,7 @@
  *
  * Read by the renderer only. Nothing in the sim or `city/` may look at this.
  */
-export const LOOK_SWITCHES = ['env', 'pbr'] as const;
+export const LOOK_SWITCHES = ['env', 'pbr', 'materials'] as const;
 
 export type LookSwitch = (typeof LOOK_SWITCHES)[number];
 
