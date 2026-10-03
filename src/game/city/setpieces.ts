@@ -63,6 +63,30 @@ export const TOWER_HEIGHTS: Record<string, number> = {
  */
 export const WAREHOUSE_FOOTING = 3;
 /**
+ * The height a warehouse stands at. A set piece stands at the ground under its
+ * middle, which on a rise buries the uphill edge of a 130 m shed by metres
+ * (`npm run groundfit`: 28 in Industrial). Its walls run `WAREHOUSE_FOOTING`
+ * below its base, so the base can come up to meet the highest ground under it
+ * (less a metre, which a roof-high wall hides) as long as the lowest ground
+ * stays within the footing.
+ */
+export function warehouseBase(terrain: Terrain, at: { x: number; z: number }, angle: number, variant?: string): number {
+  const [w, l] = variant === 'small' ? [30, 60] : [50, 130];
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  const middle = groundAt(terrain, at.x, at.z);
+  let lo = middle;
+  let hi = middle;
+  for (const fu of [-0.5, 0, 0.5]) {
+    for (const fv of [-0.5, 0, 0.5]) {
+      const h = groundAt(terrain, at.x + (cos * fu * w + sin * fv * l) * M, at.z + (-sin * fu * w + cos * fv * l) * M);
+      lo = Math.min(lo, h);
+      hi = Math.max(hi, h);
+    }
+  }
+  return Math.max(middle, Math.min(hi - 0.9 * M, lo + (WAREHOUSE_FOOTING + 0.9) * M));
+}
+/**
  * An estate house's plinth (#293), in model metres before `HOUSE_GROWN`:
  * Ashford Point is hillier than the midtowns and a villa or a manor is wider
  * than a house, so they stand on a footing the way the sheds do (#516)
@@ -411,7 +435,14 @@ export function airfieldProps(
     // down on the bed: `afloat` is the water's surface there, if there is water.
     const ground = groundAt(terrain, at.x, at.z);
     const surface = prop.kind === 'rowing-boat' || prop.kind === 'jetty' ? afloat(at.x, at.z) : null;
-    const y = prop.kind === 'cruise-terminal' ? Math.max(0, ground) : surface !== null ? Math.max(ground, surface) : ground;
+    const y =
+      prop.kind === 'cruise-terminal'
+        ? Math.max(0, ground)
+        : surface !== null
+          ? Math.max(ground, surface)
+          : prop.kind === 'warehouse'
+            ? warehouseBase(terrain, at, prop.angle, prop.variant)
+            : ground;
     if (prop.kind === 'billboard') {
       billboards.push({ at, y, angle: prop.angle });
       continue;

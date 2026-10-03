@@ -3,6 +3,7 @@ import { UNITS_PER_METRE } from './constants';
 import { CityWorld } from './cityworld';
 import { PLAN_DISTRICTS, inArea } from './city/plan';
 import { distanceToSegment, surfaceAt } from './city/grid';
+import { groundAt } from './city/terrain';
 
 const M = UNITS_PER_METRE;
 const world = new CityWorld(undefined, { traffic: false, police: false });
@@ -60,6 +61,25 @@ describe("Industrial's railway (#489, #514)", () => {
     expect(count('rails')).toBeLessThan(40);
     for (const kind of ['container-block', 'stockpile', 'silo', 'pipe-rack', 'cooling-tower', 'gas-holder', 'flare-stack', 'fence-line']) {
       expect(count(kind), kind).toBeGreaterThan(0);
+    }
+  });
+
+  // `npm run groundfit` found 28 sheds with their uphill edge buried: a shed
+  // is drawn at the ground under its middle, and across a rise that is not the
+  // ground under its edges. Its base now comes up to meet them.
+  it('stands no shed with its uphill edge buried more than a metre', () => {
+    const sheds = city.setPieces.filter((p) => p.kind === 'warehouse' && inArea(industrial.poly, p.at));
+    expect(sheds.length).toBeGreaterThan(20);
+    for (const p of sheds) {
+      const [w, l] = p.variant === 'small' ? [30, 60] : [50, 130];
+      const sin = Math.sin(p.angle), cos = Math.cos(p.angle);
+      let worst = 0;
+      for (const fu of [-0.5, 0, 0.5])
+        for (const fv of [-0.5, 0, 0.5]) {
+          const h = groundAt(city.terrain, p.at.x + (cos * fu * w + sin * fv * l) * M, p.at.z + (-sin * fu * w + cos * fv * l) * M);
+          worst = Math.max(worst, (h - p.y) / M);
+        }
+      expect(worst).toBeLessThanOrEqual(1);
     }
   });
 

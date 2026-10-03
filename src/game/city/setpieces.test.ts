@@ -17,7 +17,7 @@ import { INDUSTRIAL_PROPS } from './industrialprops';
 import { HIGHMOOR_CAR_PARK } from './highmoor';
 import { CASTLE_AREAS } from './castle';
 import { insideOrNear } from './aprons';
-import { SET_PIECE_SOLIDS, SOLID_REACH, airfieldProps, hitsSetPiece } from './setpieces';
+import { SET_PIECE_SOLIDS, SOLID_REACH, WAREHOUSE_FOOTING, airfieldProps, hitsSetPiece } from './setpieces';
 import type { CityRoad } from './types';
 import { groundAt } from './terrain';
 import { PLAN_DISTRICTS, PLAN_PLACES, PLAN_RUNWAY, inArea, planDistrictAt } from './plan';
@@ -55,6 +55,13 @@ describe('Marrow Field props (#295)', () => {
       if (piece.kind === 'rowing-boat' || piece.kind === 'jetty') {
         const pond = city.water.find((w) => w.kind === 'pond' && inArea(w.outline, piece.at));
         expect(piece.y).toBeCloseTo(pond ? Math.max(ground, pond.level!) : ground, 6);
+        continue;
+      }
+      // A warehouse comes up to meet the high ground under its edges, never
+      // more than its footing above the lowest (`warehouseBase`).
+      if (piece.kind === 'warehouse') {
+        expect(piece.y).toBeGreaterThanOrEqual(ground - 1e-6);
+        expect(piece.y - ground).toBeLessThan((WAREHOUSE_FOOTING + 1) * M);
         continue;
       }
       // Bar a cruise terminal (#268), out on its pier over the bay: at sea level, not on the bed.
