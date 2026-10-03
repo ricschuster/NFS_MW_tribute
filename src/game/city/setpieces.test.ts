@@ -295,10 +295,14 @@ describe('Highmoor Park (#460)', () => {
   });
 
   it('leaves the picnic area, the viewpoint and the car park open', () => {
-    const furniture = pieces.filter((p) => ['picnic-table', 'bench', 'telescope'].includes(p.kind));
+    // Highmoor's own furniture: downtown and Tidewater have benches too, and
+    // checking every one of them against every tree timed the test out.
+    const furniture = pieces
+      .slice(0, piecesOf(HIGHMOOR_PROPS))
+      .filter((p) => ['picnic-table', 'bench', 'telescope'].includes(p.kind));
     expect(furniture.length).toBeGreaterThanOrEqual(8);
     for (const piece of furniture) {
-      for (const tree of trees) expect(Math.hypot(tree.at.x - piece.at.x, tree.at.z - piece.at.z)).toBeGreaterThan(12 * M);
+      expect(Math.min(...trees.map((tree) => Math.hypot(tree.at.x - piece.at.x, tree.at.z - piece.at.z)))).toBeGreaterThan(12 * M);
     }
     const lot = city.aprons.find((a) => a.look === 'gravel');
     expect(lot?.outline).toEqual(HIGHMOOR_CAR_PARK);
