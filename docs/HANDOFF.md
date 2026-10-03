@@ -18,8 +18,11 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     wall colour (`WALL_FINISH_BY_COLOUR` in `setpieces.ts`) through
     `scene/triplanar.ts`. Buildings are set pieces: `BoxBuildings` draws only
     five sheds now, so do not work in `facades.ts`.
-  - **Next, in the owner's order:** procedural weathering (dirt at wall bases,
-    streaks, wheel-track wear, by world position in the shader), then wet roads
+  - **Weathering is in (`scene/weathering.ts`, behind `?look=materials`):**
+    base dirt and rain streaks on set-piece walls (through `triplanar`, height
+    measured from the instance origin) and wheel-track wear on photo asphalt
+    (`worldUvs` option `wear`). Strengths are first guesses, judged on a still.
+  - **Next, in the owner's order:** wet roads
     once #585 gives a weather state; a second shadow cascade only if a low-sun
     frame needs it (dusk and sunhaze showed none). Then #582 trees and clutter.
   - **Tunnels (`scene/tunnels.ts`):** a tube 7-8 m high because the chase

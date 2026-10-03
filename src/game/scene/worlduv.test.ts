@@ -76,4 +76,23 @@ describe('the world-unit uv patch', () => {
     ];
     expect(new Set(keys).size).toBe(3);
   });
+
+  // Wheel-track wear (weathering.ts) is a carriageway's own option: the
+  // across-the-road coordinate comes off the instance, the noise off the world.
+  it('adds wheel-track wear only when asked', () => {
+    const plain = patch('top');
+    expect(plain.shader.fragmentShader).not.toContain('roadWeather(');
+    const material = new THREE.MeshStandardMaterial();
+    worldUvs(material, { faces: 'top', tile: { u: 1, v: 1 }, key: 'worn', wear: true });
+    const shader = {
+      uniforms: {} as Record<string, { value: unknown }>,
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+    };
+    (material.onBeforeCompile as (s: typeof shader) => void)(shader);
+    expect(shader.vertexShader).toContain('vWearAt =');
+    expect(shader.fragmentShader).toContain('roadWeather(vWearAt.x');
+    expect(shader.fragmentShader).toContain('roughnessFactor * 0.6');
+    expect(material.customProgramCacheKey!()).toContain('wear');
+  });
 });

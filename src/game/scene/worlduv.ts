@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { UNITS_PER_METRE } from '../constants';
+import { ROAD_WEATHER, WEATHER_NOISE } from './weathering';
 
 /**
  * Texturing an `InstancedMesh` in world units (#11).
@@ -52,16 +54,22 @@ export interface WorldUvOptions {
    * what the city is made of.
    */
   otherFaces?: number;
+  /**
+   * Wheel-track wear (`weathering.ts`), for a carriageway: the instance's X is
+   * across the road and Z along it. Only meaningful with `faces: 'top'`.
+   */
+  wear?: boolean;
 }
 
 /** Patch a material so its `map` is sampled in world units off the instance. */
 export function worldUvs(material: THREE.Material, options: WorldUvOptions): void {
-  const { faces, tile, key, otherFaces = 1 } = options;
+  const { faces, tile, key, otherFaces = 1, wear = false } = options;
 
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTileU = { value: tile.u };
     shader.uniforms.uTileV = { value: tile.v };
     shader.uniforms.uOtherFaces = { value: otherFaces };
+    shader.uniforms.uWearMetre = { value: UNITS_PER_METRE };
 
     // `abs(normal).y` is 1 on the top and bottom of an axis-aligned box and 0
     // on its sides, which is the whole test either mode needs.
@@ -81,7 +89,8 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
         uniform float uTileU;
         uniform float uTileV;
         varying vec2 vWorldUv;
-        varying float vWorldFace;`,
+        varying float vWorldFace;
+        ${wear ? 'varying vec3 vWearAt;\n        varying vec2 vWearXz;' : ''}`,
       )
       .replace(
         '#include <begin_vertex>',
@@ -95,6 +104,14 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
         vec3 worldN = abs(normal);
         ${pick}
         vWorldUv = vec2(worldXy.x / uTileU, worldXy.y / uTileV);
+        ${
+          wear
+            ? `// Across (units from the middle), the width, and the world position.
+        vec4 wearWorld = modelMatrix * instanceMatrix * vec4(position, 1.0);
+        vWearAt = vec3(worldPos.x, worldSize.x, 0.0);
+        vWearXz = wearWorld.xz;`
+            : ''
+        }
         // A photo set (#581): its normal and roughness maps tile with the
         // colour, so they take the same coordinate rather than the geometry's.
         #ifdef USE_NORMALMAP
@@ -110,8 +127,10 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
         '#include <common>',
         `#include <common>
         uniform float uOtherFaces;
+        uniform float uWearMetre;
         varying vec2 vWorldUv;
-        varying float vWorldFace;`,
+        varying float vWorldFace;
+        ${wear ? `varying vec3 vWearAt;\n        varying vec2 vWearXz;\n${WEATHER_NOISE}\n${ROAD_WEATHER}\n        float roadPolish;` : ''}`,
       )
       .replace(
         '#include <map_fragment>',
@@ -119,11 +138,29 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
           vec4 worldTexel = texture2D(map, vWorldUv);
           vec4 worldOther = vec4(vec3(uOtherFaces), 1.0);
           diffuseColor *= mix(worldOther, worldTexel, vWorldFace);
-        #endif`,
+        #endif
+        ${
+          wear
+            ? `{
+          vec2 worn = roadWeather(vWearAt.x / uWearMetre, vWearAt.y / uWearMetre, vWearXz / uWearMetre);
+          diffuseColor.rgb *= 1.0 - worn.x;
+          roadPolish = worn.y;
+        }`
+            : ''
+        }`,
       );
+    // Polished paths are smoother than the tarmac around them. Only a
+    // standard material has a roughness to lower.
+    if (wear) {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <roughnessmap_fragment>',
+        `#include <roughnessmap_fragment>
+        roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.6, roadPolish);`,
+      );
+    }
   };
 
   // Three.js caches compiled programs. Two patches sharing a key share a
   // program, and whichever compiled first would texture the other.
-  material.customProgramCacheKey = () => `worlduv:${faces}:${key}`;
+  material.customProgramCacheKey = () => `worlduv:${faces}:${key}${wear ? ':wear' : ''}`;
 }

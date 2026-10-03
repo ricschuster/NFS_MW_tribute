@@ -46,4 +46,13 @@ describe('the triplanar photo patch', () => {
     expect(shader.uniforms.uPhotoColour.value).toBe(tex);
     expect(shader.uniforms.uPhotoNormal.value).toBe(tex);
   });
+
+  it('weathers walls by height above the instance origin', () => {
+    const shader = patch();
+    expect(shader.vertexShader).toContain('vPhotoBase =');
+    expect(shader.fragmentShader).toContain('wallWeather(');
+    expect(shader.fragmentShader).toContain('vec2 wallWeather(float heightM, float along)');
+    expect(shader.fragmentShader).toContain('photoGrime');
+    expect(shader.uniforms.uMetre.value).toBe(135);
+  });
 });
