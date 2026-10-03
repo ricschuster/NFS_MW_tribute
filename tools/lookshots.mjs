@@ -12,6 +12,7 @@ export const SHOTS = [
   // -1.2 (daylight.ts), so 18:00 is -0.8. Keep the two in step.
   { name: 'sunhaze', ref: 'Screenshot_20261003_050141.png', place: 'sunhaze', hour: 18, bearing: -0.8 },
   { name: 'terrace', ref: 'none', place: 'terrace', hour: 13 },
+  { name: 'skyline', ref: 'none', place: 'skyline', hour: 13 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -45,7 +46,12 @@ export function place({ place, hour, bearing }) {
     x = best.px - ((dx * sign) / len) * back * M;
     z = best.pz - ((dz * sign) / len) * back * M;
   };
-  if (place === 'terrace') {
+  if (place === 'skyline') {
+    // Towers from a distance, for crowns and mullions: the most towers within 80 m of one.
+    const towers = city.setPieces.filter((p) => p.kind === 'tower');
+    const near = (p) => towers.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 80 * M).length;
+    approach(towers.sort((a, b) => near(b) - near(a))[0].at, 110);
+  } else if (place === 'terrace') {
     // The building kit (#583): the densest run of street-wall buildings
     // (shops, flats, townhouses, lofts), seen from the road in front of it.
     const wall = city.setPieces.filter((p) => ['shop', 'flat', 'townhouse', 'loft', 'midrise', 'apartment'].includes(p.kind));

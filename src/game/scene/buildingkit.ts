@@ -24,7 +24,7 @@ const WINDOW = '#3a4a52';
 const DOORS = new Set(['#3d3a36', '#5a3e2e', '#3d3a36']);
 const BAY_DOORS = '#2e3538';
 
-export const KIT_TRIM = '#cfc8b8';
+export const KIT_TRIM = '#dcd6c6';
 const TRIM_DARK = '#8f8878';
 const MULLION = '#1f2a31';
 const PLANT = '#8c9195';
@@ -152,8 +152,7 @@ function street(parts: Part[], seed: number): Part[] {
 function curtain(parts: Part[], seed: number): Part[] {
   const body = boxOf(parts[0].geometry);
   const added: Part[] = [];
-  // Only a tower whose first part is the glass body, which is every look but
-  // stone and deco: those carry their own strips.
+  // A glass body gets a mullion grid.
   if (parts[0].colour === '#3f6074' || parts[0].colour === '#7d9fb2') {
     const height = body.sy;
     const step = 3;
@@ -162,6 +161,13 @@ function curtain(parts: Part[], seed: number): Part[] {
       added.push(slab(MULLION, 0.25, height - 6, 0.5, u, 6 + (height - 6) / 2, -body.sz / 2 - 0.05));
       added.push(slab(MULLION, 0.5, height - 6, 0.25, body.sx / 2 + 0.05, 6 + (height - 6) / 2, u));
       added.push(slab(MULLION, 0.5, height - 6, 0.25, -body.sx / 2 - 0.05, 6 + (height - 6) / 2, u));
+    }
+  }
+  else {
+    // Stone and deco carry their own strips of window; what they lack is
+    // floors. A trim band every twelve metres gives the shaft a rhythm.
+    for (let y = 12; y < body.sy - 3; y += 12) {
+      added.push(slab(KIT_TRIM, body.sx + 0.7, 0.6, body.sz + 0.7, 0, y, 0));
     }
   }
   const top = body.cy + body.sy / 2;
