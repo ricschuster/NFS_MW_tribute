@@ -8,7 +8,30 @@ import {
   townhouse, loft, midrise, tower, lookoutTower, twistTower, chateauHotel, stadium,
   library, gallery, cathedral, cityHall, cruiseTerminal, geodesicDome, flatiron,
 } from './downtownmodels';
+import { triplanar } from './triplanar';
+import { wallFinish, type WallKind } from './materials';
 const M = UNITS_PER_METRE;
+
+/**
+ * Which photo finish a wall colour takes under `?look=materials` (#581).
+ *
+ * Models name their parts by colour and nothing else, so the colour is what
+ * says "this is the wall": the brick tones are brick, the render, stone and
+ * concrete tones are concrete, and the warehouse's grey cladding is corrugated
+ * steel. Glass, roofs, doors and every other colour keep their flat shade.
+ */
+const WALL_FINISH_BY_COLOUR: Record<string, WallKind> = {
+  '#9a5b45': 'brick',
+  '#8c4a3a': 'brick',
+  '#6e4a36': 'brick',
+  '#a3a39b': 'concrete',
+  '#d8d2c6': 'concrete',
+  '#e4dcc4': 'concrete',
+  '#cbbfa6': 'concrete',
+  '#8fa6b8': 'concrete',
+  '#9fb39a': 'concrete',
+  '#9aa3a8': 'steel',
+};
 
 /**
  * The set pieces (#295), on the same provider seam as everything else:
@@ -1620,7 +1643,7 @@ export class CitySetPieces {
   readonly meshes: THREE.InstancedMesh[] = [];
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
 
-  constructor(pieces: readonly SetPiece[]) {
+  constructor(pieces: readonly SetPiece[], options: { photo?: boolean } = {}) {
     // By what it looks like, not just what it is: a stockpile's rock is a
     // variant, and one mesh has one colour per part.
     const byKind = new Map<string, SetPiece[]>();
@@ -1642,7 +1665,14 @@ export class CitySetPieces {
       for (const [colour, geometries] of byColour) {
         const geometry = mergeGeometries(geometries.map((g) => (g.index ? g.toNonIndexed() : g)));
         for (const g of geometries) g.dispose();
-        const material = new THREE.MeshLambertMaterial({ color: colour });
+        const finish = options.photo ? WALL_FINISH_BY_COLOUR[colour] : undefined;
+        let material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
+        if (finish) {
+          material = new THREE.MeshStandardMaterial({ color: colour, metalness: 0 });
+          triplanar(material, wallFinish(finish), finish);
+        } else {
+          material = new THREE.MeshLambertMaterial({ color: colour });
+        }
         this.owned.push(geometry, material);
 
         const mesh = new THREE.InstancedMesh(geometry, material, list.length);
