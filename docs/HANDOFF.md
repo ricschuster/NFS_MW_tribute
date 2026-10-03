@@ -16,8 +16,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   `tools/lookshots.mjs`: `carclose`, `carrear`, `carsun`, `carnight`,
   `body-<shape>`, `body-pickup-rear` (the shot drives a named roster car with
   `world.drive`). **Left:** #579-#583 still open on GitHub (ask); headlights are
-  still boxes; wrecks are drawn as saloon or suv by scale; the 6 hypers and 5
-  muscle cars still share a silhouette each (only colour tells them apart);
+  still boxes; wrecks are drawn as saloon or suv by scale; the 5 hypers and 2
+  muscle cars still share a silhouette each (brute, pony, viper split the rest);
   the owner has not seen any of it in motion. Next: HUD (#586) waits for them.
 - **Update (2026-10-03, close of the day): every look switch is a default; next is cars (#584).**
   - **State:** #607 (building kit) and #608 (all seven switches default:

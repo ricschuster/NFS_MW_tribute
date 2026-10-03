@@ -143,11 +143,12 @@ Generated from the figures above by a throwaway script; the numbers in
 
 ## How each is drawn (#584)
 
-Thirteen body shapes in `scene/carshape.ts`, each a loft with a greenhouse
+Sixteen body shapes in `scene/carshape.ts`, each a loft with a greenhouse
 (see the file's header), and every car takes the one that fits its class:
 **fastback** (Kestrel, Backfire, Monolith, Nightjar, Hatchling), **muscle**
-(Verso, Ridgeback, Brawler, Outrider, Fang), **gt** (Ardent, Aria, Upswing,
-Velvet, Harrier, Corona), **hyper** (Castling, Arcline, Obsidian, Apparition,
+(Ridgeback, Brawler), **pony** (Outrider), **viper** (Fang), **brute**
+(Obsidian), **coupe** (Verso), **gt** (Ardent, Aria, Upswing,
+Velvet, Harrier, Corona), **hyper** (Castling, Arcline, Apparition,
 Nightfall, Wideboy), **wedge** (Halcyon, Enduro), **cobra** (Emberline: a roadster with stripes), **roadster**, **frame**,
 **hatch**, **saloon**, **suv**, **pickup**. `coupe` is the plain base shape the
 others derive from and is what traffic is drawn with. Sourcing is procedural:
