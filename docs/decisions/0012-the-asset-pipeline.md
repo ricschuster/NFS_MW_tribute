@@ -42,7 +42,9 @@ from, what format and size it ships at, how it loads, and how it is credited.
 7. **Level of detail: none yet.** Mipmaps and anisotropy do the work at a
    distance. Revisit with the building kit (#583).
 8. **Behind `?look=materials` until the owner has seen it**, as every look
-   phase has been (#579).
+   phase has been (#579). Asphalt is the exception: the owner made it the
+   default on 2026-10-03, so carriageways are photo asphalt with wheel-track
+   wear whatever the switches say; the walls remain behind the switch.
 
 ## Consequences
 
