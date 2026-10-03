@@ -36,6 +36,8 @@ const GradeShader = {
     lift: { value: GRADE.lift },
     warmth: { value: GRADE.warmth },
     vignette: { value: GRADE.vignette },
+    exposure: { value: 1 },
+    horizon: { value: new THREE.Color(0, 0, 0) },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -50,6 +52,8 @@ const GradeShader = {
     uniform vec3 lift;
     uniform vec3 warmth;
     uniform float vignette;
+    uniform float exposure;
+    uniform vec3 horizon;
     varying vec2 vUv;
     void main() {
       vec4 src = texture2D(tDiffuse, vUv);
@@ -63,6 +67,10 @@ const GradeShader = {
       float lit = smoothstep(0.0, 0.5, luma);
       c *= mix(vec3(2.0) - warmth, warmth, lit);
       c += lift * (1.0 - lit);
+      // Golden hour: a warm veil in the upper-middle of the frame, where the
+      // reference's bright horizon sits, plus a lift in exposure.
+      c *= exposure;
+      c += horizon * smoothstep(0.25, 0.75, vUv.y) * (1.0 - smoothstep(0.75, 1.0, vUv.y));
       float edge = length(vUv - 0.5) * 1.4142;
       c *= 1.0 - vignette * edge * edge;
       gl_FragColor = vec4(c, src.a);
@@ -71,4 +79,30 @@ const GradeShader = {
 
 export function makeGradePass(): ShaderPass {
   return new ShaderPass(GradeShader);
+}
+
+/** How golden the light is, 0 at midday and by night, 1 for a low day sun. */
+export function goldenness(sunHeight: number, sunStrength: number): number {
+  const low = 1 - THREE.MathUtils.smoothstep(sunHeight, 0.1, 0.5);
+  const day = THREE.MathUtils.smoothstep(sunStrength, 1.2, 2.0);
+  return low * day;
+}
+
+const WARM = new THREE.Color();
+
+/**
+ * Move the pass with the hour. Midday keeps `GRADE` as tuned; a low sun gets
+ * its saturation back, a brighter exposure and a warm veil in the haze's
+ * colour, which is what the reference's golden frames have and ours did not.
+ */
+export function setGradeHour(
+  pass: ShaderPass,
+  light: { sun: string; haze: string; sunHeight: number; sunStrength: number },
+): void {
+  const g = goldenness(light.sunHeight, light.sunStrength);
+  const u = pass.uniforms;
+  u.saturation.value = GRADE.saturation + 0.24 * g;
+  u.exposure.value = 1 + 0.5 * g;
+  WARM.set(light.haze).lerp(new THREE.Color(light.sun), 0.4);
+  (u.horizon.value as THREE.Color).copy(WARM).multiplyScalar(0.22 * g);
 }

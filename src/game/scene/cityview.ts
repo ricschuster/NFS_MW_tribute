@@ -12,7 +12,7 @@ import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
-import { makeGradePass } from './grade';
+import { makeGradePass, setGradeHour } from './grade';
 import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
@@ -128,6 +128,7 @@ export class CityView {
   readonly switches: Look;
   private readonly skyDome: THREE.Mesh;
   private readonly sun: THREE.DirectionalLight;
+  private gradePass?: ReturnType<typeof makeGradePass>;
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
   private litAt = -1;
@@ -288,7 +289,12 @@ export class CityView {
       BLOOM_RADIUS,
       BLOOM_THRESHOLD,
     );
-    this.renderer.setEffects(look.has('grade') ? [this.bloom, makeGradePass()] : [this.bloom]);
+    if (look.has('grade')) {
+      this.gradePass = makeGradePass();
+      this.renderer.setEffects([this.bloom, this.gradePass]);
+    } else {
+      this.renderer.setEffects([this.bloom]);
+    }
 
     this.look('aerial');
     this.listen(canvas);
@@ -874,6 +880,7 @@ export class CityView {
       dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
       dome.uniforms.sunTint.value.set(light.sun);
       dome.uniforms.glow.value = 1;
+      if (this.gradePass) setGradeHour(this.gradePass, light);
     }
 
     this.cityscape.setNight(light.lamps);
