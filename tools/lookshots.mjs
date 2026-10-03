@@ -16,6 +16,9 @@ export const SHOTS = [
   // The same street from 7 m above the chase camera, for rooflines: a car-height camera cannot see a cornice.
   { name: 'roofs', ref: 'none', place: 'terrace', hour: 13, lift: 7, back: 60 },
   { name: 'crowns', ref: 'none', place: 'skyline', hour: 13, lift: 25, back: 150 },
+  // Houses, villas and manor (#583): the densest cluster of them, from the road.
+  { name: 'suburb', ref: 'none', place: 'suburb', hour: 13, lift: 2, back: 40 },
+  { name: 'silos', ref: 'none', place: 'industrial', hour: 13, lift: 2 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -60,6 +63,10 @@ export function place({ place, hour, bearing, lift, back }) {
     const wall = city.setPieces.filter((p) => ['shop', 'flat', 'townhouse', 'loft', 'midrise', 'apartment'].includes(p.kind));
     const near = (p) => wall.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
     approach(wall.sort((a, b) => near(b) - near(a))[0].at, back ?? 45);
+  } else if (place === 'suburb') {
+    const homes = city.setPieces.filter((p) => ['house', 'villa', 'manor'].includes(p.kind));
+    const near = (p) => homes.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
+    approach(homes.sort((a, b) => near(b) - near(a))[0].at, back ?? 40);
   } else if (place === 'industrial') {
     // The silo with the most silos around it, then the road nearest them.
     const silos = city.setPieces.filter((p) => p.kind === 'silo');

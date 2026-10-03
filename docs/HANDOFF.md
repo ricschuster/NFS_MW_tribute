@@ -18,8 +18,12 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     lifted 7 m: `lift` is in world units times 135, 45 put it a kilometre up),
     `crowns` (lift 25, back 150). `npm run looksheet -- --shot roofs --look 'none;buildings'`.
   - **Judged on stills only; not a default.** Sills are faint at this wall tone.
-  - **Not done:** silos and loading bays beyond the warehouse, a real podium,
-    houses/villas/manor, the landmarks, `unit` test for shopfront parts, a dusk
+  - **Second pass (same PR):** tower podium (stone skin, glazing bays, piers,
+    cap, within 0.55 m), house/villa/manor (plinth, sills, lintels, shutters,
+    door surround and step, chimney caps, manor quoins), silo (seam rings,
+    ladder, rail, hatch). Shots `suburb` (seen) and `silos` (aimed along the
+    road, silos out of frame: unseen, only unit-tested).
+  - **Not done:** loading bays beyond the warehouse, the landmarks, `unit` test for shopfront parts, a dusk
     look (lit windows are untouched by the kit).
   - After the merge: `git log origin/main..look-buildings` for stranded commits.
 - **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:

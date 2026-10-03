@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { KIT_KINDS, kitFor } from './buildingkit';
 import { loft, midrise, tower } from './downtownmodels';
+import * as THREE from 'three';
 
 describe('the building kit (#583)', () => {
   it('adds a cornice, parapet and sills to a loft, all within a cornice-width of its body', () => {
@@ -30,5 +31,31 @@ describe('the building kit (#583)', () => {
 
   it('covers every kind it names', () => {
     expect(Object.keys(KIT_KINDS)).toContain('warehouse');
+  });
+
+  it('keeps a podium within half a metre of the tower wall', () => {
+    const parts = tower('glass');
+    parts[0].geometry.computeBoundingBox();
+    const body = parts[0].geometry.boundingBox!;
+    const low = kitFor('tower', 'glass', parts).filter((p) => {
+      p.geometry.computeBoundingBox();
+      return p.geometry.boundingBox!.max.y <= 6.3 && p.geometry.boundingBox!.max.y - p.geometry.boundingBox!.min.y >= 0.5;
+    });
+    expect(low.length).toBeGreaterThan(4);
+    for (const part of low) {
+      const b = part.geometry.boundingBox!;
+      expect(b.max.x).toBeLessThanOrEqual(body.max.x + 0.55);
+      expect(b.max.z).toBeLessThanOrEqual(body.max.z + 0.55);
+    }
+  });
+
+  it('dresses a silo with rings and a ladder that hug the drum', () => {
+    const silo = new THREE.CylinderGeometry(4, 4, 16, 18).translate(0, 8, 0);
+    const added = kitFor('silo', undefined, [{ geometry: silo, colour: '#9aa3a3' }]);
+    expect(added.length).toBeGreaterThan(5);
+    for (const part of added) {
+      part.geometry.computeBoundingBox();
+      expect(part.geometry.boundingBox!.max.x).toBeLessThan(4.5);
+    }
   });
 });

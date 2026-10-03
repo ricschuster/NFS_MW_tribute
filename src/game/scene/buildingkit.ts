@@ -31,9 +31,14 @@ const MULLION = '#1f2a31';
 const PLANT = '#8c9195';
 const CANOPY = '#2b2f31';
 const SAFETY = '#d9b21f';
+const PALE_STONE = '#b9b2a4';
+const PLINTH = '#8a857a';
+const SHUTTER = '#3f5a4a';
+const CHIMNEY = '#7a4c3a';
+const TANK_BAND = '#7f8888';
 
 /** The kinds the kit dresses, and what each gets. */
-export type KitStyle = 'street' | 'curtain' | 'shed';
+export type KitStyle = 'street' | 'curtain' | 'shed' | 'house' | 'tank';
 export const KIT_KINDS = {
   townhouse: 'street',
   loft: 'street',
@@ -43,6 +48,10 @@ export const KIT_KINDS = {
   apartment: 'street',
   tower: 'curtain',
   warehouse: 'shed',
+  house: 'house',
+  villa: 'house',
+  manor: 'house',
+  silo: 'tank',
 } as const satisfies Record<string, KitStyle>;
 
 type Box = { cx: number; cy: number; cz: number; sx: number; sy: number; sz: number };
@@ -192,8 +201,97 @@ function curtain(parts: Part[], seed: number): Part[] {
   // An entrance canopy on the front, five metres up: over the car, not in its way.
   added.push(slab(CANOPY, body.sx * 0.4, 0.4, 3.2, 0, 5, body.sz / 2 + 1.6));
   const top = body.cy + body.sy / 2;
-  added.push(slab(MULLION, body.sx + 0.4, 0.5, body.sz + 0.4, 0, 6, 0));
+  added.push(...podium(body));
   added.push(slab(PLANT, 3 + hash(seed, 3), 1.4, 2.2, (hash(seed, 4) - 0.5) * 12, top + 0.7, (hash(seed, 5) - 0.5) * 12));
+  return added;
+}
+
+/**
+ * A podium under a tower: a stone skin two floors high, dark glazing in
+ * bays between piers on each face, and a cap. It stays within half a metre
+ * of the wall, because the sim collides with the tower's footprint.
+ */
+function podium(body: Box): Part[] {
+  const height = 6;
+  const added: Part[] = [];
+  const hx = body.sx / 2;
+  const hz = body.sz / 2;
+  added.push(slab(PALE_STONE, body.sx + 0.4, height, body.sz + 0.4, 0, height / 2, 0));
+  added.push(slab(KIT_TRIM, body.sx + 1, 0.5, body.sz + 1, 0, height, 0));
+  // Glazing strips, one per face, proud of the skin; piers every four metres.
+  const glass = (across: number, onZ: boolean, side: number) => {
+    const pos = (u: number, o: number) => (onZ ? [u, o * side] : [o * side, u]);
+    const [gx, gz] = pos(0, (onZ ? hz : hx) + 0.3);
+    added.push(onZ ? slab(SHOPFRONT, across - 1.5, 3, 0.2, gx, 2.6, gz) : slab(SHOPFRONT, 0.2, 3, across - 1.5, gx, 2.6, gz));
+    const step = 4;
+    for (let u = -across / 2 + 1; u <= across / 2 - 0.9; u += step) {
+      const [px, pz] = pos(u, (onZ ? hz : hx) + 0.3);
+      added.push(onZ ? slab(MULLION, 0.35, height - 1, 0.25, px, (height - 1) / 2 + 0.5, pz) : slab(MULLION, 0.25, height - 1, 0.35, px, (height - 1) / 2 + 0.5, pz));
+    }
+  };
+  for (const side of [-1, 1]) {
+    glass(body.sx, true, side);
+    glass(body.sz, false, side);
+  }
+  return added;
+}
+
+/**
+ * A house, villa or manor: a plinth, sills and lintels, shutters either side
+ * of the windows, a step and surround at the door, a cap on each chimney, and
+ * on a manor, quoins at the corners of the main block. All within a quarter
+ * of a metre of the wall, in metres before the house is grown.
+ */
+function house(parts: Part[], kind: 'house' | 'villa' | 'manor'): Part[] {
+  const body = boxOf(parts[0].geometry);
+  const added: Part[] = [];
+  const front = body.cz + body.sz / 2;
+  added.push(slab(PLINTH, body.sx + 0.3, 0.5, body.sz + 0.3, body.cx, 0.25, body.cz));
+  for (const part of parts) {
+    if (part.colour === WINDOW) {
+      const win = boxOf(part.geometry);
+      if (win.sy >= 4) continue;
+      added.push(...dress(win));
+      if (kind !== 'manor' && win.sz < 0.4 && win.cz > 0) {
+        for (const side of [-1, 1]) {
+          added.push(slab(SHUTTER, 0.5, win.sy, 0.1, win.cx + side * (win.sx / 2 + 0.3), win.cy, win.cz + 0.1));
+        }
+      }
+    } else if (DOORS.has(part.colour) || part.colour === '#4a3426') {
+      const door = boxOf(part.geometry);
+      if (door.cz < 0) continue;
+      added.push(slab(KIT_TRIM, door.sx + 0.5, door.sy + 0.3, 0.1, door.cx, door.cy + 0.15, door.cz + 0.03));
+      added.push(slab(TRIM_DARK, door.sx + 0.8, 0.2, 0.8, door.cx, 0.1, door.cz + 0.4));
+    } else if (part.colour === CHIMNEY) {
+      const stack = boxOf(part.geometry);
+      added.push(slab(TRIM_DARK, stack.sx + 0.3, 0.2, stack.sz + 0.3, stack.cx, stack.cy + stack.sy / 2 + 0.1, stack.cz));
+    }
+  }
+  if (kind === 'manor') {
+    const top = body.cy + body.sy / 2;
+    for (const x of [-1, 1]) {
+      for (let y = 0.6; y < top - 0.5; y += 1.2) {
+        const long = Math.floor(y / 1.2) % 2 === 0;
+        added.push(slab(KIT_TRIM, long ? 1.2 : 0.8, 0.6, 0.15, x * (body.sx / 2 - 0.5), y, front + 0.05));
+      }
+    }
+  }
+  return added;
+}
+
+/** A grain silo: seam rings every three metres, a ladder, a rail round the top and a roof hatch. */
+function tank(parts: Part[]): Part[] {
+  const wall = boxOf(parts[0].geometry);
+  const r = wall.sx / 2;
+  const top = wall.cy + wall.sy / 2;
+  const added: Part[] = [];
+  for (let y = 3; y < top - 0.5; y += 3) {
+    added.push({ geometry: new THREE.CylinderGeometry(r + 0.12, r + 0.12, 0.25, 18).translate(0, y, 0), colour: TANK_BAND });
+  }
+  added.push({ geometry: new THREE.CylinderGeometry(r + 0.2, r + 0.2, 0.2, 18).translate(0, top - 0.2, 0), colour: CANOPY });
+  added.push(slab(MULLION, 0.5, top - 0.5, 0.12, 0, (top - 0.5) / 2, r + 0.1));
+  for (const x of [-0.25, 0.25]) added.push(slab(TANK_BAND, 0.05, top - 0.5, 0.08, x, (top - 0.5) / 2, r + 0.18));
+  added.push(slab(TANK_BAND, 1.2, 0.5, 1.2, 0, top + 2.4, 0));
   return added;
 }
 
@@ -233,5 +331,9 @@ export function kitFor(kind: keyof typeof KIT_KINDS, variant: string | undefined
       return curtain(parts, seed);
     case 'shed':
       return shed(parts);
+    case 'house':
+      return house(parts, kind as 'house' | 'villa' | 'manor');
+    case 'tank':
+      return tank(parts);
   }
 }
