@@ -12,6 +12,7 @@ import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
+import { makeGradePass } from './grade';
 import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
@@ -130,6 +131,13 @@ export class CityView {
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
   private litAt = -1;
+  /**
+   * Fog range at street level. The reference's skylines sit well inside their
+   * haze (#580), so `grade` pulls the near edge in and the far edge too; the
+   * aerial view still scales it up with height.
+   */
+  private readonly fogNear: number;
+  private readonly fogFar: number;
   /** How lit the streets are, so the cars can be told every frame (#221). */
   private lamps = 0;
 
@@ -189,6 +197,8 @@ export class CityView {
   constructor(canvas: HTMLCanvasElement, city: City, look: Look = NO_LOOK) {
     this.city = city;
     this.switches = look;
+    this.fogNear = (look.has('grade') ? 120 : 300) * M;
+    this.fogFar = (look.has('grade') ? 1700 : 2600) * M;
 
     // A 5 km city seen from 2 km up spans a depth range a normal buffer cannot
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the
@@ -278,7 +288,7 @@ export class CityView {
       BLOOM_RADIUS,
       BLOOM_THRESHOLD,
     );
-    this.renderer.setEffects([this.bloom]);
+    this.renderer.setEffects(look.has('grade') ? [this.bloom, makeGradePass()] : [this.bloom]);
 
     this.look('aerial');
     this.listen(canvas);
@@ -311,7 +321,14 @@ export class CityView {
         side: THREE.BackSide,
         depthWrite: false,
         fog: false,
-        uniforms: { top: { value: new THREE.Color('#3f7fd0') }, bottom: { value: HAZE } },
+        uniforms: {
+          top: { value: new THREE.Color('#3f7fd0') },
+          bottom: { value: HAZE },
+          // The sun's glow in the haze (#580): zero unless `grade` is on.
+          sunDir: { value: new THREE.Vector3(0, 1, 0) },
+          sunTint: { value: new THREE.Color('#ffd9a0') },
+          glow: { value: 0 },
+        },
         vertexShader: `
           varying vec3 vWorld;
           void main() {
@@ -322,13 +339,22 @@ export class CityView {
         fragmentShader: `
           uniform vec3 top;
           uniform vec3 bottom;
+          uniform vec3 sunDir;
+          uniform vec3 sunTint;
+          uniform float glow;
           varying vec3 vWorld;
           void main() {
             // A flatter curve than before, so the sky holds its blue overhead
             // and blows out over a wide band at the horizon rather than in a
             // thin strip (#75).
             float h = clamp(pow(max(normalize(vWorld).y, 0.0), 0.42), 0.0, 1.0);
-            gl_FragColor = vec4(mix(bottom, top, h), 1.0);
+            vec3 dir = normalize(vWorld);
+            // The haze is brightest and warmest toward the sun and hugs the
+            // horizon, which is what lets a skyline sit in it (#580).
+            float toSun = pow(max(dot(dir, normalize(sunDir)), 0.0), 5.0);
+            vec3 col = mix(bottom, top, h);
+            col = mix(col, sunTint, glow * toSun * (1.0 - h) * 0.75);
+            gl_FragColor = vec4(col, 1.0);
           }`,
       }),
     );
@@ -567,8 +593,8 @@ export class CityView {
     // street turns a city seen from two kilometres up into a white sheet, and
     // the aerial view exists to be looked at.
     const fog = this.scene.fog as THREE.Fog;
-    fog.near = Math.max(300 * M, this.camera.position.y * 1.3);
-    fog.far = Math.max(2600 * M, this.camera.position.y * 7);
+    fog.near = Math.max(this.fogNear, this.camera.position.y * 1.3);
+    fog.far = Math.max(this.fogFar, this.camera.position.y * 7);
 
     this.aim();
     this.renderer.render(this.scene, this.camera);
@@ -799,8 +825,8 @@ export class CityView {
     }
 
     const fog = this.scene.fog as THREE.Fog;
-    fog.near = 300 * M;
-    fog.far = 2600 * M;
+    fog.near = this.fogNear;
+    fog.far = this.fogFar;
     this.lighting(world.hour);
     this.skyDome.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);
@@ -844,6 +870,11 @@ export class CityView {
     const dome = this.skyDome.material as THREE.ShaderMaterial;
     dome.uniforms.top.value.set(light.skyTop);
     dome.uniforms.bottom.value.copy(haze);
+    if (this.switches.has('grade')) {
+      dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
+      dome.uniforms.sunTint.value.set(light.sun);
+      dome.uniforms.glow.value = 1;
+    }
 
     this.cityscape.setNight(light.lamps);
     // Kept, because the car pools have to be told every frame rather than only

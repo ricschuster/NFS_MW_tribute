@@ -3,7 +3,25 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03; the look's phase 0 done, #580 lighting next).**
+- **Start here (2026-10-03, later; #580 lighting step 1 in review).**
+  - **PR #591 (branch `look-grade-haze`, worktree `../crosstown-lighting`)** is
+    #580's first step behind `?look=grade`: `scene/grade.ts` (a shader pass in
+    the effect chain, linear HDR before ACES: desaturate, mild contrast, cool
+    lifted blacks, warm lights, light vignette) plus a shorter street fog
+    (120-1700 m) and a sun-side glow in the sky dome. Tuned on the downtown and
+    dusk rows (the first numbers crushed dusk to black). No `looktime` reading
+    yet.
+  - **Next, in order:** (1) a sun-facing haze shot in `tools/lookshots.mjs`
+    (the current `haze` row looks along the longest bridge at 13:00, away from
+    the sun, so the fog and glow barely show; add one near 17:00 with the
+    heading on the sun's bearing and a skyline in view) and tune the fog and
+    glow against `reference/Screenshot_20261003_050141.png`; (2) grade that
+    follows the hour and area; (3) cascaded sun shadows, the biggest perf risk,
+    so record a `looktime` baseline first; then AO, env map, car paint.
+  - A looksheet shot takes about 2 minutes (SwiftShader); batch changes and run
+    shots in the background. The owner does not need to supply a haze frame.
+
+- **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
     only, the sim and citylap baselines untouched). `?look=grade,shadow,ao,env,pbr`
     (or `all`) is parsed in `scene/look.ts` and held by `CityView.switches`; all
