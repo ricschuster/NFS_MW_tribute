@@ -47,6 +47,16 @@ describe('the world-unit uv patch', () => {
     expect(shader.fragmentShader).not.toContain('#include <map_fragment>');
   });
 
+  // A photo set (#581) has a normal and a roughness map that must tile with the
+  // colour. The patch assigns three.js's own varyings, so they have to exist.
+  it('hands the world uv to the normal and roughness maps', () => {
+    expect(THREE.ShaderChunk.uv_pars_vertex).toContain('varying vec2 vNormalMapUv;');
+    expect(THREE.ShaderChunk.uv_pars_vertex).toContain('varying vec2 vRoughnessMapUv;');
+    const { shader } = patch('top');
+    expect(shader.vertexShader).toContain('vNormalMapUv = vWorldUv;');
+    expect(shader.vertexShader).toContain('vRoughnessMapUv = vWorldUv;');
+  });
+
   // The two modes are opposites, and getting them the wrong way round is a
   // window grid stretched over a roof or a pavement textured only on its kerb.
   it('textures walls and tops from different axes', () => {

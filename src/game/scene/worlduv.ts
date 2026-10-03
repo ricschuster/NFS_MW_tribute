@@ -94,7 +94,15 @@ export function worldUvs(material: THREE.Material, options: WorldUvOptions): voi
         vec3 worldPos = position * worldSize;
         vec3 worldN = abs(normal);
         ${pick}
-        vWorldUv = vec2(worldXy.x / uTileU, worldXy.y / uTileV);`,
+        vWorldUv = vec2(worldXy.x / uTileU, worldXy.y / uTileV);
+        // A photo set (#581): its normal and roughness maps tile with the
+        // colour, so they take the same coordinate rather than the geometry's.
+        #ifdef USE_NORMALMAP
+          vNormalMapUv = vWorldUv;
+        #endif
+        #ifdef USE_ROUGHNESSMAP
+          vRoughnessMapUv = vWorldUv;
+        #endif`,
       );
 
     shader.fragmentShader = shader.fragmentShader

@@ -32,6 +32,7 @@ import { CitySetPieces } from './setpieces';
 import { CityJumps } from './jumps';
 import { drivesFor } from './drives';
 import { tunnelMeshes } from './tunnels';
+import { asphaltSet, disposeMaterialSets } from './materials';
 
 const PAVEMENT_HEIGHT = 0.18 * UNITS_PER_METRE;
 /** How far the tarmac sits above the bare ground. Enough to win the depth
@@ -53,6 +54,8 @@ const ROAD_BED_RAISE = 0.3 * UNITS_PER_METRE;
 const BLOCK_FOOTING = 14 * UNITS_PER_METRE;
 /** Metres of aggregate per texture tile. */
 const ROAD_TILE = 6 * UNITS_PER_METRE;
+/** A photo tile covers less ground than the procedural one: 1K pixels over 3 m. */
+const PHOTO_ROAD_TILE = 3 * UNITS_PER_METRE;
 /**
  * Water sits a little *above* the ground rather than below it, which is
  * backwards and deliberate. The road surface is the ground plane (see below),
@@ -110,8 +113,12 @@ export class Cityscape {
   /** Each road's tarmac pieces, built once (`piecesOf`). */
   private readonly pieces = new Map<CityRoad, RoadPiece[]>();
 
-  constructor(city: City, provider: BuildingProvider = new BoxBuildings()) {
+  /** `?look=materials` (#581): photo-sourced surfaces where a set exists. */
+  private readonly photo: boolean;
+
+  constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean } = {}) {
     this.provider = provider;
+    this.photo = options.photo ?? false;
 
     this.group.add(this.sea(city));
     this.group.add(this.ground(city));
@@ -607,17 +614,21 @@ export class Cityscape {
 
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
-    const material = new THREE.MeshLambertMaterial({
-      color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : '#4a5057',
-      map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
-    });
+    const photo = this.photo && surface === 'asphalt';
+    const material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial = photo
+      ? new THREE.MeshStandardMaterial({ color: '#b4b8bc', ...asphaltSet(), metalness: 0 })
+      : new THREE.MeshLambertMaterial({
+          color: surface === 'dirt' ? '#7a6a52' : surface === 'gravel' ? '#958f84' : '#4a5057',
+          map: surface === 'dirt' ? dirtTexture(1, 1) : surface === 'gravel' ? gravelTexture(1, 1) : asphaltTexture(1, 1),
+        });
     // One shared quad scaled per piece, so a baked uv would size the aggregate
     // by how long each piece happens to be. Computed from the instance scale
     // instead, the way every other instanced surface here does it.
+    const tile = photo ? PHOTO_ROAD_TILE : ROAD_TILE;
     worldUvs(material, {
       faces: 'top',
-      tile: { u: ROAD_TILE, v: ROAD_TILE },
-      key: surface,
+      tile: { u: tile, v: tile },
+      key: photo ? `${surface}-photo` : surface,
     });
     this.owned.push(geometry, material);
 
@@ -923,6 +934,7 @@ export class Cityscape {
     this.jumps.dispose();
     for (const thing of this.owned) thing.dispose();
     disposeSurfaces();
+    disposeMaterialSets();
     this.group.clear();
   }
 }
