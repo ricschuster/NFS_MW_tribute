@@ -393,6 +393,30 @@
     { id: 'food-truck', group: 'Street', name: 'Food truck', w: 4.6, l: 13, shape: 'box', color: '#e2b33c', road: 'ok', variants: ['white', 'yellow', 'teal', 'pink'] },
     { id: 'lawn', group: 'Street', name: 'Lawn (pocket park)', w: 40, l: 40, shape: 'box', color: '#5f9d5a',
       variants: ['small', 'medium', 'large'], sizes: { small: [30, 30], medium: [45, 45], large: [70, 50] } },
+    // Tidewater Park's once-over (2026-10-02), at the size the game draws
+    // them. A boathouse's doors, a hut's door, a lifeguard tower's ramp and a
+    // jetty's far end face the way the prop is turned; a boat or a jetty
+    // floats on its pond. Paths, the promenade, the plaza and the beach are
+    // ground, like a lawn: a path is laid in straight pieces across its
+    // heading, its length editable, and overlapping pieces join. A pitch,
+    // a court and a playground stand on ground the game levels for them.
+    { id: 'playground', group: 'Park', name: 'Playground', w: 28, l: 20, shape: 'box', color: '#a5523f' },
+    { id: 'boathouse', group: 'Park', name: 'Boathouse', w: 11.2, l: 16, shape: 'box', color: '#e8e4da' },
+    { id: 'jetty', group: 'Park', name: 'Jetty', w: 3.8, l: 28.8, shape: 'box', color: '#7a5a3c', water: 'ok' },
+    { id: 'rowing-boat', group: 'Park', name: 'Rowing boat', w: 2.6, l: 7.2, shape: 'box', color: '#e8e6df', water: 'ok', variants: ['white', 'green', 'red', 'blue'] },
+    { id: 'football-pitch', group: 'Park', name: 'Football pitch', w: 70, l: 110, shape: 'box', color: '#6fae5a' },
+    { id: 'tennis-court', group: 'Park', name: 'Tennis court', w: 28.8, l: 57.6, shape: 'box', color: '#3f6fa0' },
+    { id: 'picnic-shelter', group: 'Breakables', name: 'Picnic shelter', w: 9.6, l: 7.4, shape: 'box', color: '#3f5d4a' },
+    { id: 'beach-hut', group: 'Park', name: 'Beach hut', w: 3.5, l: 4.2, shape: 'box', color: '#4f86b8', variants: ['blue', 'yellow', 'red', 'green', 'mint', 'pink'] },
+    { id: 'lifeguard-tower', group: 'Park', name: 'Lifeguard tower', w: 3.8, l: 7, shape: 'box', color: '#c94f3d' },
+    { id: 'lighthouse', group: 'Park', name: 'Lighthouse', w: 9, l: 9, shape: 'circle', color: '#b8382e' },
+    { id: 'railing', group: 'Park', name: 'Seafront railing', w: 10, l: 0.3, shape: 'box', color: '#2f6b7a', road: 'ok' },
+    { id: 'path', group: 'Park', name: 'Path or promenade', w: 30, l: 5, shape: 'box', color: '#b8b4a8', road: 'ok', water: 'ok',
+      variants: ['path', 'promenade'], sizes: { path: [30, 5], promenade: [30, 12] } },
+    { id: 'plaza', group: 'Park', name: 'Plaza', w: 45, l: 35, shape: 'box', color: '#a8a49a',
+      variants: ['small', 'medium', 'large'], sizes: { small: [30, 30], medium: [45, 35], large: [60, 45] } },
+    { id: 'beach', group: 'Park', name: 'Beach', w: 40, l: 45, shape: 'box', color: '#d6c69a', water: 'ok',
+      variants: ['narrow', 'medium', 'wide'], sizes: { narrow: [40, 30], medium: [40, 45], wide: [40, 60] } },
     { id: 'hedge', group: 'Suburb', name: 'Front hedge', w: 16, l: 1.2, shape: 'box', color: '#3f6a37' },
     // Sized to its trunk and the low part of its crown, not the canopy that
     // hangs over the verge: the canopy is over a car and blocks nothing.
@@ -1441,7 +1465,7 @@
     if (document.activeElement !== $('d-x')) $('d-x').value = Math.round(p.x);
     if (document.activeElement !== $('d-z')) $('d-z').value = Math.round(p.z);
     if (document.activeElement !== $('d-a')) $('d-a').value = Math.round(((p.angle * 180) / Math.PI + 360) % 360);
-    const spanned = p.kind === 'gate' || p.kind === 'lawn';
+    const spanned = p.kind === 'gate' || p.kind === 'lawn' || p.kind === 'path' || p.kind === 'plaza' || p.kind === 'beach';
     $('f-w').hidden = !spanned;
     if (spanned && document.activeElement !== $('d-w')) $('d-w').value = dims(p).w;
     if (document.activeElement !== $('d-note')) $('d-note').value = p.note ?? '';

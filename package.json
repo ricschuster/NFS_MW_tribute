@@ -31,6 +31,7 @@
     "groundfit": "node tools/groundfit.mjs",
     "marrowdraft": "node tools/marrowdraft.mjs",
     "downtowndraft": "node tools/downtowndraft.mjs",
+    "tidewaterdraft": "node tools/tidewaterdraft.mjs",
     "marrowtracks": "node tools/marrowtracks.mjs",
     "housedraft": "node tools/housedraft.mjs",
     "freewayexport": "node tools/freewayexport.mjs",

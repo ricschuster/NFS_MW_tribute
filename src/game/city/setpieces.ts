@@ -264,6 +264,37 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
   kiosk: grown([{ u: 0, v: 0, w: 3, l: 2.5, y0: 0, y1: 3 }], HOUSE_GROWN),
   dumpster: grown([{ u: 0, v: 0, w: 2, l: 1.8, y0: 0, y1: 1.6 }], HOUSE_GROWN),
   'food-truck': grown([{ u: 0, v: 0, w: 2.3, l: 6.5, y0: 0, y1: 3.2 }], 2),
+  // Tidewater Park's once-over (2026-10-02). The playground and the boats are
+  // grown like the park's benches, the buildings like its café; the pitch and
+  // the lighthouse are sized in game metres. A playground is solid at its
+  // frames, not its rubber; a pitch only at its goals, behind each goal line;
+  // a court at its fence, which a car does not get through.
+  playground: grown(
+    [
+      { u: -3, v: 2, w: 3.8, l: 1.8, y0: 0, y1: 2.4 },
+      { u: 3.5, v: 1.5, w: 1.2, l: 3.6, y0: 0, y1: 1.6 },
+      { u: -3, v: -2.5, w: 2.2, l: 2.2, y0: 0, y1: 2 },
+      { u: 3, v: -3, r: 1, y0: 0, y1: 0.4 },
+    ],
+    2,
+  ),
+  boathouse: grown([{ u: 0, v: 0, w: 7, l: 10, y0: 0, y1: 3.4 }], HOUSE_GROWN),
+  jetty: grown([{ u: 0, v: 0, w: 2.4, l: 18, y0: 0, y1: 0.6 }], HOUSE_GROWN),
+  'rowing-boat': grown([{ u: 0, v: 0, w: 1.3, l: 3.4, y0: 0, y1: 0.5 }], 2),
+  'football-pitch': [-1, 1].map((end) => ({ u: 0, v: end * 51.5, w: 11.7, l: 3, y0: 0, y1: 3.9 })),
+  'tennis-court': grown(
+    [
+      { u: 0, v: 18, w: 18, l: 0.2, y0: 0, y1: 3 },
+      { u: 0, v: -18, w: 18, l: 0.2, y0: 0, y1: 3 },
+      { u: 9, v: 0, w: 0.2, l: 36, y0: 0, y1: 3 },
+      { u: -9, v: 0, w: 0.2, l: 36, y0: 0, y1: 3 },
+    ],
+    HOUSE_GROWN,
+  ),
+  'beach-hut': grown([{ u: 0, v: 0, w: 2.2, l: 2.6, y0: 0, y1: 3.2 }], HOUSE_GROWN),
+  'lifeguard-tower': grown([{ u: 0, v: 0, w: 2.4, l: 2.4, y0: 0, y1: 4.6 }], HOUSE_GROWN),
+  lighthouse: [{ u: 0, v: 0, r: 4.5, y0: 0, y1: 31 }, { u: 0, v: -9, w: 8, l: 9, y0: 0, y1: 5 }],
+  railing: grown([{ u: 0, v: 0, w: 5, l: 0.15, y0: 0, y1: 1.1 }], 2),
 };
 
 /**
@@ -311,7 +342,7 @@ export const SOLID_REACH = 120;
 /**
  * Marrow Field's hand-placed props (#295), as city data.
  *
- * Gates, stacks and café tables join the breakables that already exist, numbered on from
+ * Gates, stacks, café tables and picnic shelters join the breakables that already exist, numbered on from
  * `firstId` so a smashed one is remembered by the same id the sim uses for
  * every other. Jumps become `Jump`s (#307), their kind read off the variant
  * the editor saved; billboards are handed back as positions, for `generate.ts`
@@ -322,6 +353,7 @@ export function airfieldProps(
   terrain: Terrain,
   firstId: number,
   props: readonly AuthoredProp[] = MARROW_PROPS,
+  afloat: (x: number, z: number) => number | null = () => null,
 ): { pieces: SetPiece[]; breakables: Breakable[]; jumps: Jump[]; billboards: Placed[] } {
   const pieces: SetPiece[] = [];
   const jumps: Jump[] = [];
@@ -332,7 +364,11 @@ export function airfieldProps(
     const at = { x: prop.x * M, z: prop.z * M };
     // A cruise terminal (#268) stands out over the bay on its pier, level
     // with the shore it comes off rather than down on the sea bed.
-    const y = prop.kind === 'cruise-terminal' ? Math.max(0, groundAt(terrain, at.x, at.z)) : groundAt(terrain, at.x, at.z);
+    // And a rowing boat or a jetty (Tidewater Park) floats on its pond, not
+    // down on the bed: `afloat` is the water's surface there, if there is water.
+    const ground = groundAt(terrain, at.x, at.z);
+    const surface = prop.kind === 'rowing-boat' || prop.kind === 'jetty' ? afloat(at.x, at.z) : null;
+    const y = prop.kind === 'cruise-terminal' ? Math.max(0, ground) : surface !== null ? Math.max(ground, surface) : ground;
     if (prop.kind === 'billboard') {
       billboards.push({ at, y, angle: prop.angle });
       continue;
@@ -341,13 +377,15 @@ export function airfieldProps(
       jumps.push({ kind: JUMP_VARIANTS[prop.variant ?? ''] ?? 'ramp', at, y, angle: prop.angle });
       continue;
     }
-    // A lawn is ground, not a thing: `city/downtownground.ts` reads it.
-    if (prop.kind === 'lawn') continue;
-    if (prop.kind === 'gate' || prop.kind === 'stack' || prop.kind === 'cafe-tables') {
+    // A lawn is ground, not a thing: `city/downtownground.ts` reads it, and
+    // `city/tidewaterground.ts` the park's paths, plaza and beach.
+    if (prop.kind === 'lawn' || prop.kind === 'path' || prop.kind === 'plaza' || prop.kind === 'beach') continue;
+    if (prop.kind === 'gate' || prop.kind === 'stack' || prop.kind === 'cafe-tables' || prop.kind === 'picnic-shelter') {
       // The same half-widths `breakablesFor` gives its own, except that a gate
       // placed in the editor was sized to the road it was snapped across.
-      // Café tables are a terrace of three under parasols, about as wide as a stack.
-      const half = prop.kind === 'gate' ? ((prop.w ?? 12) / 2) * M : prop.kind === 'cafe-tables' ? 3 * M : 2.2 * M;
+      // Café tables are a terrace of three under parasols, about as wide as a
+      // stack; a picnic shelter is a roof on four posts over two tables.
+      const half = prop.kind === 'gate' ? ((prop.w ?? 12) / 2) * M : prop.kind === 'cafe-tables' ? 3 * M : prop.kind === 'picnic-shelter' ? 4.5 * M : 2.2 * M;
       breakables.push({ id: id++, kind: prop.kind, at, y, angle: prop.angle, half, placed: true });
       continue;
     }

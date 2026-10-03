@@ -186,7 +186,20 @@ function cone(): Part[] {
   ];
 }
 
-function tree(): Part[] {
+function tree(variant?: string): Part[] {
+  // A broadleaf (Tidewater Park's once-over, 2026-10-02): a city park's
+  // planes and oaks among the pines, a round crown of three lumps on a
+  // longer trunk.
+  if (variant === 'broadleaf') {
+    return [
+      { geometry: at(upright(0.32, 0.45, 4.4, 7), 0, 2.2, 0), colour: '#5a4230' },
+      ...[
+        [3.2, 0, 7, 0],
+        [2.4, 1.7, 6, 0.8],
+        [2.3, -1.5, 6.2, -1],
+      ].map(([r, x, y, z]) => ({ geometry: at(new THREE.IcosahedronGeometry(r, 1), x, y, z), colour: '#4f7d3a' })),
+    ];
+  }
   const needles = [
     at(new THREE.ConeGeometry(3, 5, 9), 0, 4.8, 0),
     at(new THREE.ConeGeometry(2.4, 4.5, 9), 0, 7.2, 0),
@@ -1002,6 +1015,196 @@ function foodTruck(variant?: string): Part[] {
   ];
 }
 
+const PLAY = { frame: '#d9a62e', slide: '#3a7fc0', climb: '#c94f3d', round: '#3f8f5a' };
+
+/**
+ * A playground (Tidewater Park's once-over): a red rubber pad with a swing
+ * frame, a slide off a little platform, a climbing frame and a roundabout.
+ */
+function playground(): Part[] {
+  const swingLegs = [-1.9, 1.9].flatMap((x) => [-1, 1].map((side) => ({ geometry: at(box(0.08, 2.5, 0.08).rotateX(side * 0.3), -3 + x, 1.2, 2 + side * 0.36), colour: PLAY.frame })));
+  const swings = [-0.8, 0.8].flatMap((x) => [
+    { geometry: at(box(0.5, 0.05, 0.25), -3 + x, 0.5, 2), colour: '#2f3336' },
+    ...[-0.22, 0.22].map((dx) => ({ geometry: at(box(0.02, 1.85, 0.02), -3 + x + dx, 1.45, 2), colour: '#9a9890' })),
+  ]);
+  const climb = [-1.1, 1.1].flatMap((x) => [-1.1, 1.1].map((z) => ({ geometry: at(box(0.08, 2, 0.08), -3 + x, 1, -2.5 + z), colour: PLAY.climb })));
+  const rungs = [0.7, 1.4, 2].flatMap((y) => [
+    { geometry: at(box(2.2, 0.06, 0.06), -3, y, -3.6), colour: PLAY.climb },
+    { geometry: at(box(2.2, 0.06, 0.06), -3, y, -1.4), colour: PLAY.climb },
+    { geometry: at(box(0.06, 0.06, 2.2), -4.1, y, -2.5), colour: PLAY.climb },
+    { geometry: at(box(0.06, 0.06, 2.2), -1.9, y, -2.5), colour: PLAY.climb },
+  ]);
+  return [
+    { geometry: at(box(14, 0.05, 10), 0, 0.03, 0), colour: '#a5523f' },
+    { geometry: at(box(3.8, 0.1, 0.1), -3, 2.4, 2), colour: PLAY.frame },
+    ...swingLegs,
+    ...swings,
+    { geometry: at(box(1.2, 0.1, 1.2), 3.5, 1.5, 3), colour: PLAY.frame },
+    ...[-0.55, 0.55].flatMap((x) => [-0.55, 0.55].map((z) => ({ geometry: at(box(0.08, 1.5, 0.08), 3.5 + x, 0.75, 3 + z), colour: PLAY.frame }))),
+    { geometry: at(box(0.6, 0.06, 2.8).rotateX(-0.5), 3.5, 0.85, 1.15), colour: PLAY.slide },
+    ...climb,
+    ...rungs,
+    { geometry: at(upright(1, 1, 0.12, 16), 3, 0.3, -3), colour: PLAY.round },
+    { geometry: at(upright(0.06, 0.06, 0.8, 6), 3, 0.7, -3), colour: '#2f3336' },
+  ];
+}
+
+/**
+ * A boathouse on the big pond: white weatherboard under a gable roof, its
+ * wide doors on the front, which faces the water.
+ */
+function boathouse(): Part[] {
+  const roof = new THREE.CylinderGeometry(4.6, 4.6, 10.6, 3).rotateX(-Math.PI / 2).scale(1, 0.5, 1);
+  return [
+    { geometry: at(box(7, 3.4, 10), 0, 1.7, 0), colour: '#e8e4da' },
+    { geometry: at(roof, 0, 3.4 + 4.6 * 0.5 * 0.5, 0), colour: '#3f5d6b' },
+    { geometry: at(box(4.2, 2.8, 0.1), 0, 1.4, 5.02), colour: '#3f5d6b' },
+    ...[-2.2, 2.2].map((z) => ({ geometry: at(box(0.1, 1, 1.6), 3.52, 2, z), colour: '#3a4a52' })),
+  ];
+}
+
+/** A timber jetty out over the pond on piles, its deck a step above the water. */
+function jetty(): Part[] {
+  const piles = [-8, -4, 0, 4, 8].flatMap((z) => [-1.05, 1.05].map((x) => ({ geometry: at(upright(0.12, 0.12, 2.2, 6), x, -0.6, z), colour: TIMBER_DARK })));
+  return [{ geometry: at(box(2.4, 0.2, 18), 0, 0.5, 0), colour: TIMBER }, ...piles];
+}
+
+const BOATS: Record<string, string> = { white: '#e8e6df', green: '#3f6b52', red: '#a8463a', blue: '#2d4f73' };
+
+/** A rowing boat, its gunwale just above the water, oars shipped along the thwarts. */
+function rowingBoat(variant?: string): Part[] {
+  const hull = BOATS[variant ?? 'white'] ?? BOATS.white;
+  return [
+    { geometry: at(box(1.3, 0.45, 2.6), 0, 0.12, -0.2), colour: hull },
+    { geometry: at(box(0.8, 0.4, 0.7), 0, 0.14, 1.4), colour: hull },
+    { geometry: at(box(1.2, 0.04, 2.5), 0, 0.3, -0.2), colour: TIMBER },
+    ...[-0.6, 0.6].map((z) => ({ geometry: at(box(1.25, 0.06, 0.25), 0, 0.36, z), colour: TIMBER_DARK })),
+    ...[-0.35, 0.35].map((x) => ({ geometry: at(box(0.06, 0.05, 2.6), x, 0.42, 0), colour: TIMBER })),
+  ];
+}
+
+/**
+ * A football pitch, in game metres, on its levelled pad
+ * (`city/tidewaterground.ts`): white lines on the grass, a goal at each end.
+ */
+function footballPitch(): Part[] {
+  const W = 64, L = 100, T = 0.4, Y = 0.06;
+  const line = (w: number, l: number, x: number, z: number) => ({ geometry: at(box(w, 0.04, l), x, Y, z), colour: '#eef0ea' });
+  const circle = (r: number, z: number) => ({ geometry: at(new THREE.RingGeometry(r - T / 2, r + T / 2, 40).rotateX(-Math.PI / 2), 0, Y + 0.02, z), colour: '#eef0ea' });
+  const goal = (end: number) => [
+    ...[-5.85, 5.85].map((x) => ({ geometry: at(box(0.25, 3.9, 0.25), x, 1.95, end * L / 2), colour: '#f4f4f0' })),
+    { geometry: at(box(11.95, 0.25, 0.25), 0, 3.9, end * L / 2), colour: '#f4f4f0' },
+    // The net's frame, not the net: a solid sheet reads as a grey box.
+    { geometry: at(box(11.7, 0.12, 0.12), 0, 0.06, end * (L / 2 + 3)), colour: '#c9ccc8' },
+    ...[-5.85, 5.85].flatMap((x) => [
+      { geometry: at(box(0.12, 0.12, 3), x, 0.06, end * (L / 2 + 1.5)), colour: '#c9ccc8' },
+      { geometry: at(box(0.1, 0.1, 4.9).rotateX(end * 0.92), x, 1.95, end * (L / 2 + 1.5)), colour: '#c9ccc8' },
+    ]),
+  ];
+  return [
+    ...[-W / 2, W / 2].map((x) => line(T, L, x, 0)),
+    ...[-L / 2, L / 2].map((z) => line(W, T, 0, z)),
+    line(W, T, 0, 0),
+    circle(9, 0),
+    ...[-1, 1].flatMap((end) => [
+      line(40, T, 0, end * (L / 2 - 16.5)),
+      ...[-20, 20].map((x) => line(T, 16.5, x, end * (L / 2 - 8.25))),
+      line(18, T, 0, end * (L / 2 - 5.5)),
+      ...[-9, 9].map((x) => line(T, 5.5, x, end * (L / 2 - 2.75))),
+      ...goal(end),
+    ]),
+  ];
+}
+
+/**
+ * A tennis court in its fenced enclosure: a blue court on a green surround,
+ * white lines, a net across the middle, and a chain-link fence drawn as its
+ * posts and rails so the court is seen through it.
+ */
+function tennisCourt(): Part[] {
+  const Y = 0.05;
+  const line = (w: number, l: number, x: number, z: number) => ({ geometry: at(box(w, 0.02, l), x, Y + 0.03, z), colour: '#eef0ea' });
+  const posts: Part[] = [];
+  for (let z = -18; z <= 18; z += 3) for (const x of [-9, 9]) posts.push({ geometry: at(box(0.08, 3, 0.08), x, 1.5, z), colour: '#2f4a3a' });
+  for (let x = -6; x <= 6; x += 3) for (const z of [-18, 18]) posts.push({ geometry: at(box(0.08, 3, 0.08), x, 1.5, z), colour: '#2f4a3a' });
+  const rails = [1, 3].flatMap((y) => [
+    ...[-9, 9].map((x) => ({ geometry: at(box(0.05, 0.05, 36), x, y, 0), colour: '#2f4a3a' })),
+    ...[-18, 18].map((z) => ({ geometry: at(box(18, 0.05, 0.05), 0, y, z), colour: '#2f4a3a' })),
+  ]);
+  return [
+    { geometry: at(box(18, 0.04, 36), 0, Y - 0.01, 0), colour: '#4f7d5a' },
+    { geometry: at(box(10.97, 0.04, 23.77), 0, Y + 0.01, 0), colour: '#3f6fa0' },
+    ...[-5.44, -4.11, 4.11, 5.44].map((x) => line(0.06, 23.77, x, 0)),
+    ...[-11.88, 11.88].map((z) => line(10.97, 0.06, 0, z)),
+    ...[-6.4, 6.4].map((z) => line(8.23, 0.06, 0, z)),
+    line(0.06, 12.8, 0, 0),
+    { geometry: at(box(12.8, 0.9, 0.03), 0, 0.5, 0), colour: '#2a2d2f' },
+    { geometry: at(box(12.8, 0.06, 0.05), 0, 0.95, 0), colour: '#f4f4f0' },
+    ...[-6.4, 6.4].map((x) => ({ geometry: at(box(0.1, 1.07, 0.1), x, 0.53, 0), colour: '#2f3336' })),
+    ...posts,
+    ...rails,
+  ];
+}
+
+const HUTS: Record<string, string> = { blue: '#4f86b8', yellow: '#e2c24a', red: '#c94f3d', green: '#5f9d6a', mint: '#9fd3c0', pink: '#e39aa8' };
+
+/** A beach hut: a painted timber box under a pitched roof, its door to the sea. */
+function beachHut(variant?: string): Part[] {
+  const paint = HUTS[variant ?? 'blue'] ?? HUTS.blue;
+  const roof = new THREE.CylinderGeometry(1.5, 1.5, 2.9, 3).rotateX(-Math.PI / 2).scale(1, 0.5, 1);
+  return [
+    { geometry: at(box(2.2, 2.4, 2.6), 0, 1.2, 0), colour: paint },
+    { geometry: at(roof, 0, 2.4 + 1.5 * 0.5 * 0.5, 0), colour: '#f4f4f0' },
+    { geometry: at(box(1, 1.9, 0.06), 0, 0.95, 1.31), colour: '#f4f4f0' },
+    { geometry: at(box(2.4, 0.15, 0.8), 0, 0.08, 1.6), colour: TIMBER },
+  ];
+}
+
+/** A lifeguard tower: a cabin on stilts, a ramp up to it, a flag on top. */
+function lifeguardTower(): Part[] {
+  return [
+    ...[-1, 1].flatMap((x) => [-1, 1].map((z) => ({ geometry: at(box(0.15, 2.4, 0.15), x, 1.2, z), colour: '#e8e4da' }))),
+    { geometry: at(box(2.4, 0.15, 2.4), 0, 2.45, 0), colour: TIMBER },
+    { geometry: at(box(1.8, 1.6, 1.8), 0, 3.3, -0.2), colour: '#c94f3d' },
+    { geometry: at(box(2.2, 0.12, 2.2), 0, 4.15, -0.2), colour: '#f4f4f0' },
+    { geometry: at(box(0.8, 0.08, 3.4).rotateX(0.62), 0, 1.25, 2.6), colour: TIMBER },
+    { geometry: at(upright(0.04, 0.04, 1.6, 6), 0.9, 5, -0.9), colour: '#2f3336' },
+    { geometry: at(box(0.05, 0.5, 0.8), 0.9, 5.5, -0.5), colour: '#e2c24a' },
+  ];
+}
+
+/**
+ * A lighthouse on the park's point, in game metres: a tapering tower in red
+ * and white bands, a gallery, a lantern and its cap, and a keeper's store at
+ * its foot, behind it.
+ */
+function lighthouse(): Part[] {
+  const bands = Array.from({ length: 6 }, (_, i) => {
+    const r0 = 4.2 - i * 0.2, r1 = 4.2 - (i + 1) * 0.2;
+    return { geometry: at(upright(r1, r0, 4, 20), 0, 2 + i * 4, 0), colour: i % 2 ? '#b8382e' : '#f2f0ea' };
+  });
+  const roof = new THREE.CylinderGeometry(5, 5, 9.4, 3).rotateX(-Math.PI / 2).scale(1, 0.45, 1);
+  return [
+    ...bands,
+    { geometry: at(upright(4, 4, 0.4, 20), 0, 24.2, 0), colour: '#2f3336' },
+    { geometry: at(upright(3.8, 3.8, 1, 20), 0, 24.9, 0), colour: '#2f3336' },
+    { geometry: at(upright(2.4, 2.4, 3, 12), 0, 26.4, 0), colour: '#f1e9b0' },
+    { geometry: at(new THREE.ConeGeometry(2.9, 2, 12), 0, 28.9, 0), colour: '#7a2620' },
+    { geometry: at(upright(0.1, 0.1, 1.6, 6), 0, 30.6, 0), colour: '#2f3336' },
+    { geometry: at(box(8, 4.4, 9), 0, 2.2, -9), colour: '#f2f0ea' },
+    { geometry: at(roof, 0, 4.4 + 5 * 0.5 * 0.45, -9), colour: '#5b5f60' },
+    { geometry: at(box(1.4, 2.4, 0.1), 0, 1.2, -4.45), colour: '#2f4a3e' },
+  ];
+}
+
+/** A length of seafront railing: posts and two painted rails. */
+function railing(): Part[] {
+  return [
+    ...[-2.5, -1.25, 0, 1.25, 2.5].map((x) => ({ geometry: at(box(0.06, 1.1, 0.06), x, 0.55, 0), colour: '#2f6b7a' })),
+    ...[0.55, 1.05].map((y) => ({ geometry: at(box(5.06, 0.05, 0.05), 0, y, 0), colour: '#2f6b7a' })),
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -1098,6 +1301,17 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   kiosk: grown(kiosk, HOUSE_GROWN),
   dumpster: grown(dumpster, HOUSE_GROWN),
   'food-truck': grown(foodTruck, 2),
+  // Tidewater Park's once-over (2026-10-02), grown as `city/setpieces.ts` grows their solids.
+  playground: grown(playground, 2),
+  boathouse: grown(boathouse, HOUSE_GROWN),
+  jetty: grown(jetty, HOUSE_GROWN),
+  'rowing-boat': grown(rowingBoat, 2),
+  'football-pitch': footballPitch,
+  'tennis-court': grown(tennisCourt, HOUSE_GROWN),
+  'beach-hut': grown(beachHut, HOUSE_GROWN),
+  'lifeguard-tower': grown(lifeguardTower, HOUSE_GROWN),
+  lighthouse,
+  railing: grown(railing, 2),
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

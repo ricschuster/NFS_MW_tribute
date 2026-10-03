@@ -50,7 +50,9 @@ describe('Ashford Point (#293)', () => {
   });
 
   it('keeps lamps and trees off the drives', () => {
-    const onDrive = (at: { x: number; z: number }) => city.drives.some((d) => insideOrNear(d.outline, at.x, at.z, M));
+    // Ashford's own: Tidewater Park's promenade (2026-10-02) is a drive too, and the coast road's lamps stand on it.
+    const drives = city.drives.filter((d) => inArea(ashford.poly, d.outline[0]));
+    const onDrive = (at: { x: number; z: number }) => drives.some((d) => insideOrNear(d.outline, at.x, at.z, M));
     expect(city.furniture.filter((p) => p.kind === 'lamp' && onDrive(p.at))).toHaveLength(0);
     expect(city.setPieces.filter((p) => (p.kind === 'tree' || p.kind === 'street-tree') && onDrive(p.at))).toHaveLength(0);
   });

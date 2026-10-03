@@ -5,7 +5,9 @@ import { lumpyLoop } from './places';
 import { PLAN_DISTRICTS, inArea } from './plan';
 import { hitsSetPiece } from './setpieces';
 import { groundAt, type Terrain } from './terrain';
-import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2, WaterBody } from './types';
+import { insideOrNear } from './aprons';
+import { padOutline } from './tidewaterground';
+import type { Apron, AuthoredProp, CityNode, CityRoad, SetPiece, Vec2, WaterBody } from './types';
 
 const M = UNITS_PER_METRE;
 
@@ -115,6 +117,10 @@ const ROAD_CLEAR = 8;
 const RACED_CLEAR = 5 + 18;
 const POND_CLEAR = 10;
 const PROP_CLEAR = 14;
+/** Off a path, the beach or a pitch's pad by this much, in metres. */
+const GROUND_CLEAR = 5;
+/** The share of the park's trees that are broadleaves. */
+const BROADLEAF_SHARE = 0.6;
 
 export function parkTreesFor(
   terrain: Terrain,
@@ -123,6 +129,7 @@ export function parkTreesFor(
   pieces: readonly SetPiece[],
   clear: readonly AuthoredProp[],
   raced: readonly Vec2[][] = [],
+  ground: readonly Apron[] = [],
 ): AuthoredProp[] {
   const park = PLAN_DISTRICTS.find((a) => a.name === 'Tidewater Park');
   if (!park) return [];
@@ -138,6 +145,12 @@ export function parkTreesFor(
     .filter(({ a, b }) => Math.max(a.x, b.x) / M > minX && Math.min(a.x, b.x) / M < maxX && Math.max(a.z, b.z) / M > minZ && Math.min(a.z, b.z) / M < maxZ);
   const ponds = TIDEWATER_PONDS.map((_, i) => pondOutline(i));
   const clumps = valueNoise(CITY_WOODS_STREAM ^ 0x54696465, 70);
+  // The once-over's paths, beach and plaza, and the pads its pitches stand
+  // on (2026-10-02): a tree stands beside a path, not in it.
+  const kept = [
+    ...ground.filter((g) => g.outline.some((p) => inArea(park.poly, p))).map((g) => g.outline),
+    ...clear.map(padOutline).filter((o): o is Vec2[] => o !== null),
+  ];
 
   const trees: AuthoredProp[] = [];
   for (let i = Math.floor(minX / PARK_CELL); i * PARK_CELL < maxX; i++) {
@@ -157,9 +170,13 @@ export function parkTreesFor(
       if (racing.some(({ a, b }) => distanceToSegment(at.x, at.z, a.x, a.z, b.x, b.z) / M < RACED_CLEAR)) continue;
       if (ponds.some((outline) => inArea(outline, at) || distanceToOutline(outline, at.x, at.z) / M < POND_CLEAR)) continue;
       if (clear.some((p) => Math.hypot(p.x - x, p.z - z) < PROP_CLEAR)) continue;
+      if (kept.some((outline) => insideOrNear(outline, at.x, at.z, GROUND_CLEAR * M))) continue;
       if (hitsSetPiece(pieces, at.x, at.z, -Infinity, 3 * M, Infinity)) continue;
       const angle = Math.round(cellRandom(i, j, 8) * Math.PI * 2 * 1000) / 1000;
-      trees.push({ kind: 'tree', x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, angle });
+      // Broadleaves among the pines, the owner's pick for the once-over: a
+      // city park's planes and oaks, with conifers left among them.
+      const broadleaf = cellRandom(i, j, 9) < BROADLEAF_SHARE;
+      trees.push({ kind: 'tree', x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, angle, ...(broadleaf ? { variant: 'broadleaf' } : {}) });
     }
   }
   return trees;
