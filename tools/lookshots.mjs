@@ -24,10 +24,15 @@ export const SHOTS = [
   { name: 'civic', ref: 'none', place: 'civic', hour: 13, lift: 4, back: 130 },
   // A loading dock framed: the stand-off follows the warehouse's own door side.
   { name: 'docks', ref: 'none', place: 'docks', hour: 13, lift: 0.5, back: 24 },
+  // The car itself (#584): a free camera round it (the car is drawn 4.8 m wide)
+  // (`orbit` is the bearing round the car from its nose, `reach` metres out, `lift` metres up).
+  { name: 'carclose', ref: 'none', place: 'downtown', hour: 13, orbit: 0.9, reach: 12, lift: 2.6 },
+  { name: 'carrear', ref: 'none', place: 'downtown', hour: 13, orbit: 3.1, reach: 13, lift: 2.8 },
+  { name: 'carsun', ref: 'none', place: 'downtown', hour: 17, orbit: 0.7, reach: 13, lift: 2.4 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
-export function place({ place, hour, bearing, lift, back }) {
+export function place({ place, hour, bearing, lift, back, orbit, reach }) {
   const { world } = globalThis.crosstown;
   const M = 135;
   const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
@@ -197,7 +202,20 @@ export function place({ place, hour, bearing, lift, back }) {
   globalThis.crosstown.view.director.started = false;
   for (let t = 0; t < 2; t += 1 / 60) world.step(1 / 60, none);
   world.hour = hour;
-  if (lift) {
+  if (orbit !== undefined) {
+    // A free camera round the car: the car's own position is the pivot, so
+    // wherever it stands the shot is the same car from the same side.
+    const director = globalThis.crosstown.view.director;
+    const plain = director.update.bind(director);
+    director.update = (dt, w) => {
+      const shot = plain(dt, w);
+      const a = w.heading + orbit;
+      shot.position.set(w.x + Math.sin(a) * reach * M, w.y + (lift ?? 1) * M, w.z + Math.cos(a) * reach * M);
+      shot.target.set(w.x, w.y + 1.1 * M, w.z);
+      shot.fov = 40;
+      return shot;
+    };
+  } else if (lift) {
     // Wrap the director so its shot is raised, then looks down at the car.
     const director = globalThis.crosstown.view.director;
     const plain = director.update.bind(director);
