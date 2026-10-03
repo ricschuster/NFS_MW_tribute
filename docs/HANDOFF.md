@@ -3,23 +3,41 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03; look planned, Industrial merged, the look's phase 0 next).**
-  - **The look (#11) is planned, nothing built.** Owner's calls: realistic,
-    matching the reference game (not stylised); start with phases 0 and 1; the
-    HUD waits for their word. #11 stays open as the tracking issue, with a
-    checklist comment. Phase issues: **#579** look-dev harness (cityshot
-    `?look=` switches, contact sheet, a `looktime` frame-time report), **#580**
-    lighting (grade that follows the hour and area, haze, cascaded shadows, AO,
-    env map, cloud layer, clearcoat car paint), **#581** CC0 materials,
-    weathering and wet roads, **#582** trees, clutter, wires, particles,
-    **#583** building kit, **#584** car models (sourcing undecided), **#585**
-    night and weather, **#586** HUD (waiting). The plan is
-    `docs/design/03_the_look.md`. 15 reference frames are in `reference/`
-    (git-ignored, third-party, study only). Still wanted and not yet supplied:
-    an industrial wall close-up, a wide haze shot, a tunnel interior (noted on
-    #579). Work in a sibling worktree, `scene/` only, so the sim and citylap
-    baselines stay untouched. Races are parked behind the look.
-  - **Earlier this session**, no game code changed:
+- **Start here (2026-10-03; the look's phase 0 done, #580 lighting next).**
+  - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
+    only, the sim and citylap baselines untouched). `?look=grade,shadow,ao,env,pbr`
+    (or `all`) is parsed in `scene/look.ts` and held by `CityView.switches`; all
+    off by default and no-ops until their phase lands (delete a name from
+    `LOOK_SWITCHES` once its feature is signed off and becomes the look).
+    `npm run looksheet -- --look 'none;grade;grade,ao'` renders seven shots
+    (downtown, woods, industrial, wall, tunnel, haze, dusk) per switch set beside
+    the matching reference frame, to `screenshots/looksheet.png`; `--shot NAME`
+    for one row. `npm run looktime` reports ms per frame per switch set (a
+    ratio, since SwiftShader draws on the CPU, about 1.5 s a frame). Shots are
+    chosen by rule from the generated city (`tools/lookshots.mjs`), so they
+    survive map edits. Attach a before/after sheet to every later phase PR.
+  - **What the sheet shows today:** tunnels have no roof, lining or lights (the
+    tunnel row is an open trench under sky); no distance haze on the bridge
+    row; the wall row is a plain grey box. Those are the first things #580 and
+    #582 should move.
+  - **Reference frames:** 22 owner screenshots and 16 images in `reference/`
+    (git-ignored, third-party, study only). The tunnel, haze and wall gaps are
+    filled; the cooling towers (screenshot #21) are not used by any shot yet.
+    In a sibling worktree, the `reference` symlink is not covered by the
+    `reference/` ignore rule: add `/reference` to the worktree's
+    `info/exclude` rather than committing it.
+  - **The look (#11) plan:** owner's calls are realistic, matching the reference
+    game, HUD waits for their word; #11 stays open as the tracking issue.
+    Phase issues: **#580** lighting (grade that follows the hour and area, haze,
+    cascaded shadows, AO, env map, cloud layer, clearcoat car paint), **#581**
+    CC0 materials, weathering and wet roads, **#582** trees, clutter, wires,
+    particles, **#583** building kit, **#584** car models (sourcing undecided),
+    **#585** night and weather, **#586** HUD (waiting). The plan is
+    `docs/design/03_the_look.md`. Work in a sibling worktree, `scene/` only.
+  - **Races are parked behind the look** (owner, 2026-10-03). When they
+    resume: tune rival pace and speed-run targets against #347's human pace,
+    `RIVAL_CIRCUITS` beyond Rim and Quay, then unpark #469.
+  - **Earlier today**, no game code changed:
     - **Industrial's once-over (#575) merged.** Re-running `industrialdraft`
       does not redo the cull (what it removed is gone, so a re-run replaces
       the new works with a smaller set): edit in the Industrial Props editor,
@@ -37,17 +55,12 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       blocker #255 shipped.
     - The agent memory folder was trimmed (diary entries cut, five broken
       links fixed); the repo itself is unchanged by that.
-  - **Next, per the owner (2026-10-03): the look's phase 0, #579** (the
-    look-dev harness). Races wait; when they resume:
-    1. Tune rival pace and speed-run targets against #347's human pace.
-    2. `RIVAL_CIRCUITS` beyond Rim and Quay.
-    3. Unpark #469 (collectibles).
   - **Waiting for the owner:** the heat-6 "neither" in `endings`, traffic
     downtown, #484's moved road ends, and the railway (#514, parked).
   - **Branches and worktrees:** `main`, `industrial-dressing` (#575 merged;
     delete on the owner's word), `railway-loop-draft` (#514) and
     `collectibles-frozen` (#469, local). Worktrees: `crosstown-main` (the
-    served copy), `crosstown-industrial` (#575 merged, so it can go; a dev
+    served copy), `crosstown-look` (#579 merged, so it can go once #580 has its own), `crosstown-industrial` (#575 merged, so it can go; a dev
     server on port 5174 may still be running from it) and `crosstown-highmoor`
     (#573 merged, so it can go).
   - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
