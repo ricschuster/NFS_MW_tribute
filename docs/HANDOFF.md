@@ -18,8 +18,12 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     glow against `reference/Screenshot_20261003_050141.png`; (2) grade that
     follows the hour and area; (3) cascaded sun shadows, the biggest perf risk,
     so record a `looktime` baseline first; then AO, env map, car paint.
-  - A looksheet shot takes about 2 minutes (SwiftShader); batch changes and run
-    shots in the background. The owner does not need to supply a haze frame.
+  - **Update:** `looksheet` now renders on the GPU (ANGLE gl-egl, RTX 3090): a
+    shot takes about 25 s, not 2 min. `LOOK_GL=software` gives the SwiftShader
+    path back; `looktime` stays on SwiftShader so its ratios are comparable. The
+    `sunhaze` shot (18:00, facing the sun's bearing from outside downtown) is
+    done and the fog is 120-2000 m with a wider sun glow. The owner does not
+    need to supply a haze frame.
 
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools

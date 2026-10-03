@@ -44,7 +44,12 @@ const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
 const base = `http://localhost:${server.config.server.port ?? server.httpServer?.address()?.port}`;
 const browser = await chromium.launch({
-  args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  // The GPU by default (a shot takes seconds, not two minutes); LOOK_GL=software
+  // falls back to SwiftShader on a machine with no usable GPU.
+  args:
+    process.env.LOOK_GL === 'software'
+      ? ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+      : ['--no-sandbox', '--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist'],
 });
 const page = await browser.newPage({ viewport: { width: 1024, height: 640 } });
 page.setDefaultNavigationTimeout(120000);

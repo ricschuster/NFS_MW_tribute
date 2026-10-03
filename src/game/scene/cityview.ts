@@ -198,7 +198,7 @@ export class CityView {
     this.city = city;
     this.switches = look;
     this.fogNear = (look.has('grade') ? 120 : 300) * M;
-    this.fogFar = (look.has('grade') ? 1700 : 2600) * M;
+    this.fogFar = (look.has('grade') ? 2000 : 2600) * M;
 
     // A 5 km city seen from 2 km up spans a depth range a normal buffer cannot
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the
@@ -351,9 +351,9 @@ export class CityView {
             vec3 dir = normalize(vWorld);
             // The haze is brightest and warmest toward the sun and hugs the
             // horizon, which is what lets a skyline sit in it (#580).
-            float toSun = pow(max(dot(dir, normalize(sunDir)), 0.0), 5.0);
+            float toSun = pow(max(dot(dir, normalize(sunDir)), 0.0), 2.0);
             vec3 col = mix(bottom, top, h);
-            col = mix(col, sunTint, glow * toSun * (1.0 - h) * 0.75);
+            col = mix(col, sunTint, glow * toSun * (1.0 - h) * 0.9);
             gl_FragColor = vec4(col, 1.0);
           }`,
       }),
