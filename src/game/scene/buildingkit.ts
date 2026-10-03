@@ -23,6 +23,7 @@ import type { Part } from './downtownmodels';
 const WINDOW = '#3a4a52';
 const DOORS = new Set(['#3d3a36', '#5a3e2e', '#3d3a36']);
 const BAY_DOORS = '#2e3538';
+const SHOPFRONT = '#2f3e46';
 
 export const KIT_TRIM = '#dcd6c6';
 const TRIM_DARK = '#8f8878';
@@ -130,6 +131,23 @@ function street(parts: Part[], seed: number): Part[] {
     added.push(slab(CANOPY, door.sx + 1.2, 0.18, 1.3, door.cx, door.cy + door.sy / 2 + 0.35, door.cz + 0.6));
   }
 
+  // Shopfronts: a stall riser under the glass, a transom bar over it, and
+  // mullions between the panes, on the street face only.
+  for (const part of parts) {
+    if (part.colour !== SHOPFRONT) continue;
+    const glass = boxOf(part.geometry);
+    const face = glass.cz + glass.sz / 2;
+    if (face < 0) continue;
+    const bottom = glass.cy - glass.sy / 2;
+    const topGlass = glass.cy + glass.sy / 2;
+    added.push(slab(TRIM_DARK, glass.sx, 0.55, 0.2, glass.cx, bottom + 0.275, face + 0.06));
+    added.push(slab(TRIM_DARK, glass.sx, 0.18, 0.2, glass.cx, topGlass - 0.5, face + 0.06));
+    const pane = glass.sx > 12 ? 3 : 1.6;
+    for (let u = -glass.sx / 2 + pane; u < glass.sx / 2 - 0.5; u += pane) {
+      added.push(slab(MULLION, 0.12, glass.sy, 0.18, glass.cx + u, glass.cy, face + 0.05));
+    }
+  }
+
   // Windows: sills and lintels. A ribbon (wider than it is tall by far) gets mullions instead.
   for (const part of parts) {
     if (part.colour !== WINDOW) continue;
@@ -171,6 +189,8 @@ function curtain(parts: Part[], seed: number): Part[] {
       added.push(slab(KIT_TRIM, body.sx + 0.7, 0.6, body.sz + 0.7, 0, y, 0));
     }
   }
+  // An entrance canopy on the front, five metres up: over the car, not in its way.
+  added.push(slab(CANOPY, body.sx * 0.4, 0.4, 3.2, 0, 5, body.sz / 2 + 1.6));
   const top = body.cy + body.sy / 2;
   added.push(slab(MULLION, body.sx + 0.4, 0.5, body.sz + 0.4, 0, 6, 0));
   added.push(slab(PLANT, 3 + hash(seed, 3), 1.4, 2.2, (hash(seed, 4) - 0.5) * 12, top + 0.7, (hash(seed, 5) - 0.5) * 12));

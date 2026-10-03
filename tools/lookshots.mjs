@@ -15,6 +15,7 @@ export const SHOTS = [
   { name: 'skyline', ref: 'none', place: 'skyline', hour: 13 },
   // The same street from 7 m above the chase camera, for rooflines: a car-height camera cannot see a cornice.
   { name: 'roofs', ref: 'none', place: 'terrace', hour: 13, lift: 7, back: 60 },
+  { name: 'crowns', ref: 'none', place: 'skyline', hour: 13, lift: 25, back: 150 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -52,7 +53,7 @@ export function place({ place, hour, bearing, lift, back }) {
     // Towers from a distance, for crowns and mullions: the most towers within 80 m of one.
     const towers = city.setPieces.filter((p) => p.kind === 'tower');
     const near = (p) => towers.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 80 * M).length;
-    approach(towers.sort((a, b) => near(b) - near(a))[0].at, 110);
+    approach(towers.sort((a, b) => near(b) - near(a))[0].at, back ?? 110);
   } else if (place === 'terrace') {
     // The building kit (#583): the densest run of street-wall buildings
     // (shops, flats, townhouses, lofts), seen from the road in front of it.
