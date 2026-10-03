@@ -13,7 +13,7 @@
  *
  * Read by the renderer only. Nothing in the sim or `city/` may look at this.
  */
-export const LOOK_SWITCHES = ['grade', 'shadow', 'ao', 'env', 'pbr'] as const;
+export const LOOK_SWITCHES = ['env', 'pbr'] as const;
 
 export type LookSwitch = (typeof LOOK_SWITCHES)[number];
 
@@ -23,7 +23,7 @@ export type Look = ReadonlySet<LookSwitch>;
 export const NO_LOOK: Look = new Set();
 
 /**
- * `?look=grade,shadow` or `?look=all`. An unknown name is ignored rather than
+ * `?look=env,pbr` or `?look=all`. An unknown name is ignored rather than
  * thrown on: this is a developer's query string, and a typo should give the
  * plain city, not a blank page.
  */

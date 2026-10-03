@@ -19,7 +19,7 @@
 //
 // Usage:
 //   npm run looksheet                                # today's look -> screenshots/looksheet.png
-//   npm run looksheet -- --look 'none;grade;grade,ao'  # one column per ';'-separated switch set ('none' = off)
+//   npm run looksheet -- --look 'none;env;env,pbr'  # one column per ';'-separated switch set ('none' = off)
 //   npm run looksheet -- --shot industrial           # one row (downtown, woods, industrial, wall, tunnel, haze, dusk)
 //   npm run looksheet -- --out screenshots/before.png
 import { createServer } from 'vite';

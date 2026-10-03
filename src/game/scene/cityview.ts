@@ -13,7 +13,8 @@ import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
 import { AoPass } from './ao';
-import { makeGradePass } from './grade';
+import { CAR_PAINT } from './carshape';
+import { makeGradePass, setGradeHour } from './grade';
 import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
@@ -37,6 +38,10 @@ import {
 } from '../constants';
 
 const M = UNITS_PER_METRE;
+
+/** Half-width of the sun shadow frustum, and its map's side in texels (#580). */
+const SHADOW_REACH = 220 * M;
+const SHADOW_MAP = 4096;
 
 /**
  * A camera you can fly around Kestrel Bay with (#84).
@@ -129,6 +134,18 @@ export class CityView {
   readonly switches: Look;
   private readonly skyDome: THREE.Mesh;
   private readonly sun: THREE.DirectionalLight;
+  private readonly sunDir = new THREE.Vector3(0, 1, 0);
+  private shadowFlagTick = 0;
+  /** Sky reflections for lacquered paint (#580), re-cut as the hour moves. */
+  private envMap: THREE.Texture | null = null;
+  private envAt = -99;
+  private pmrem?: THREE.PMREMGenerator;
+  private readonly shadowTmp = new THREE.Vector3();
+  private readonly shadowCentre = new THREE.Vector3();
+  private readonly shadowX = new THREE.Vector3();
+  private readonly shadowRight = new THREE.Vector3();
+  private readonly shadowUp = new THREE.Vector3();
+  private readonly gradePass = makeGradePass();
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
   private litAt = -1;
@@ -198,8 +215,8 @@ export class CityView {
   constructor(canvas: HTMLCanvasElement, city: City, look: Look = NO_LOOK) {
     this.city = city;
     this.switches = look;
-    this.fogNear = (look.has('grade') ? 120 : 300) * M;
-    this.fogFar = (look.has('grade') ? 2000 : 2600) * M;
+    this.fogNear = 120 * M;
+    this.fogFar = 2000 * M;
 
     // A 5 km city seen from 2 km up spans a depth range a normal buffer cannot
     // hold: road markings 6 cm above the asphalt z-fight into streaks by the
@@ -208,6 +225,8 @@ export class CityView {
     // `outputBufferType` is what lets the renderer run post-processing effects
     // at all (#75): it renders into a half-float buffer, applies the effects,
     // and then does the tone mapping and the colour conversion once at the end.
+    CAR_PAINT.clearcoat = look.has('pbr');
+    if (CAR_PAINT.clearcoat) this.car = makeCar('#d8442f');
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
@@ -241,6 +260,20 @@ export class CityView {
     this.sun = new THREE.DirectionalLight('#fff0cf', 3.3);
     this.sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
     this.scene.add(this.sun);
+    this.scene.add(this.sun.target);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
+    const shadowCam = this.sun.shadow.camera;
+    shadowCam.left = shadowCam.bottom = -SHADOW_REACH;
+    shadowCam.right = shadowCam.top = SHADOW_REACH;
+    shadowCam.near = 1;
+    shadowCam.far = 2400 * M;
+    // Slope-scaled by the normal, because a city of boxes and flat ground
+    // acnes on every face at a low sun.
+    this.sun.shadow.normalBias = 0.35 * M;
+    this.sun.shadow.bias = -0.0004;
     // Generous fill: under a single hard sun every face turned away goes black
     // and the city reads as silhouettes rather than as buildings. Cooler than
     // the sun and warmer off the ground, which is what daylight by the sea
@@ -290,9 +323,9 @@ export class CityView {
       BLOOM_THRESHOLD,
     );
     this.renderer.setEffects([
-      ...(look.has('ao') ? [new AoPass(this.camera)] : []),
+      new AoPass(this.camera),
       this.bloom,
-      ...(look.has('grade') ? [makeGradePass()] : []),
+      this.gradePass,
     ]);
 
     this.look('aerial');
@@ -329,7 +362,7 @@ export class CityView {
         uniforms: {
           top: { value: new THREE.Color('#3f7fd0') },
           bottom: { value: HAZE },
-          // The sun's glow in the haze (#580): zero unless `grade` is on.
+          // The sun's glow in the haze (#580).
           sunDir: { value: new THREE.Vector3(0, 1, 0) },
           sunTint: { value: new THREE.Color('#ffd9a0') },
           glow: { value: 0 },
@@ -602,7 +635,59 @@ export class CityView {
     fog.far = Math.max(this.fogFar, this.camera.position.y * 7);
 
     this.aim();
+    this.shadows();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Sun shadows (#580): one orthographic frustum around
+   * the camera's ground point, pushed forward by half its reach so most of it
+   * lies in front of the view. The centre is snapped to the shadow texel grid
+   * in light space, or the shadow edges crawl as the camera moves.
+   */
+  private shadows(): void {
+    if (++this.shadowFlagTick % 60 === 1) this.flagMeshes();
+    if (!this.sun.castShadow) return;
+    const dir = this.sunDir;
+    const cam = this.camera;
+    const fwd = cam.getWorldDirection(this.shadowTmp);
+    fwd.y = 0;
+    fwd.normalize();
+    const centre = this.shadowCentre.copy(cam.position);
+    centre.y = 0;
+    centre.addScaledVector(fwd, SHADOW_REACH * 0.55);
+    // Light-space grid: project onto the two axes perpendicular to the sun.
+    const texel = (2 * SHADOW_REACH) / SHADOW_MAP;
+    const up = Math.abs(dir.y) > 0.99 ? this.shadowX.set(1, 0, 0) : this.shadowX.set(0, 1, 0);
+    const right = this.shadowRight.crossVectors(up, dir).normalize();
+    const above = this.shadowUp.crossVectors(dir, right).normalize();
+    const r = Math.round(centre.dot(right) / texel) * texel;
+    const u = Math.round(centre.dot(above) / texel) * texel;
+    const d = centre.dot(dir);
+    centre.copy(right).multiplyScalar(r).addScaledVector(above, u).addScaledVector(dir, d);
+    this.sun.target.position.copy(centre);
+    this.sun.position.copy(centre).addScaledVector(dir, 1000 * M);
+    this.sun.target.updateMatrixWorld();
+  }
+
+  /** New meshes (traffic, props) turn up all game; mark each one once. */
+  private flagMeshes(): void {
+    const physical = this.switches.has('pbr') && this.switches.has('env');
+    this.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const mat = mesh.material as THREE.Material;
+      if (physical && mat instanceof THREE.MeshPhysicalMaterial && mat.envMap !== this.envMap) {
+        mat.envMap = this.envMap;
+        mat.needsUpdate = true;
+      }
+      if (!this.sun.castShadow || mesh.userData.shadowFlagged) return;
+      mesh.userData.shadowFlagged = true;
+      if (mat instanceof THREE.ShaderMaterial || mat instanceof THREE.MeshBasicMaterial) return;
+      if (mat.transparent) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    });
   }
 
   /**
@@ -834,6 +919,7 @@ export class CityView {
     fog.far = this.fogFar;
     this.lighting(world.hour);
     this.skyDome.position.copy(this.camera.position);
+    this.shadows();
     this.renderer.render(this.scene, this.camera);
     this.hud?.draw(world);
   }
@@ -864,6 +950,7 @@ export class CityView {
         Math.cos(light.sunBearing) * Math.sqrt(Math.max(0, 1 - light.sunHeight ** 2)),
       )
       .multiplyScalar(1000 * M);
+    this.sunDir.copy(this.sun.position).normalize();
 
     this.fill.color.set(light.fill);
     this.fill.groundColor.set(light.bounce);
@@ -875,11 +962,12 @@ export class CityView {
     const dome = this.skyDome.material as THREE.ShaderMaterial;
     dome.uniforms.top.value.set(light.skyTop);
     dome.uniforms.bottom.value.copy(haze);
-    if (this.switches.has('grade')) {
-      dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
-      dome.uniforms.sunTint.value.set(light.sun);
-      dome.uniforms.glow.value = 1;
-    }
+    dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
+    dome.uniforms.sunTint.value.set(light.sun);
+    dome.uniforms.glow.value = 1;
+    setGradeHour(this.gradePass, light);
+
+    if (this.switches.has('env') && Math.abs(hour - this.envAt) > 0.25) this.cutEnvironment();
 
     this.cityscape.setNight(light.lamps);
     // Kept, because the car pools have to be told every frame rather than only
@@ -887,6 +975,18 @@ export class CityView {
     // frame*, and which cars those are changes constantly as traffic comes and
     // goes around the player.
     this.lamps = light.lamps;
+  }
+
+  /** Bake the sky dome as it is now into a reflection map (#580). */
+  private cutEnvironment(): void {
+    this.envAt = this.litAt;
+    this.pmrem ??= new THREE.PMREMGenerator(this.renderer);
+    const probe = new THREE.Scene();
+    probe.add(new THREE.Mesh(this.skyDome.geometry, this.skyDome.material));
+    const old = this.envMap;
+    this.envMap = this.pmrem.fromScene(probe, 0.02, 1 * M, 8000 * M).texture;
+    old?.dispose();
+    this.shadowFlagTick = 0;
   }
 
   /**

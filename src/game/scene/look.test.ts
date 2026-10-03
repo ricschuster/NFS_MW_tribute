@@ -9,11 +9,11 @@ describe('look switches (#579)', () => {
   });
 
   it('turn on by name, in any order', () => {
-    expect([...parseLook('ao,grade')].sort()).toEqual(['ao', 'grade']);
+    expect([...parseLook('pbr,env')].sort()).toEqual(['env', 'pbr']);
   });
 
   it('ignore a name they do not know, rather than losing the rest', () => {
-    expect([...parseLook('grade,nonsense, env ')].sort()).toEqual(['env', 'grade']);
+    expect([...parseLook('pbr,nonsense, env ')].sort()).toEqual(['env', 'pbr']);
   });
 
   it('all turns on every switch', () => {

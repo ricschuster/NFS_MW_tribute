@@ -3,23 +3,26 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03 night; #580 lighting built, defaults not chosen).**
-  - **Merged:** #591 grade+haze, #592 `?look=shadow|env|pbr`, GPU look tools.
-    **PR #593** (branch `look-ao`, worktree `../crosstown-lighting`) adds
-    `?look=ao`: half-res SSAO in `scene/ao.ts`, first in the effect chain,
-    reading the output target's depth texture (the depth buffer is
-    logarithmic: decode with `exp2(d * log2(far + 1)) - 1`; world units are
-    135 per metre). `LOOK_SIZE=WxH` now really works in `looktime`.
-  - **Cost** (GPU, 1920x1080): ao adds about 0-0.6 ms; `env,pbr` is x1.01 (the
-    old x1.45 was not reproduced: first-frame cut or the software path).
-  - **Next:** (1) ask the owner which switches become the default look (my
-    recommendation: grade, shadow, ao yes; env and pbr after seeing the car in
-    motion), then delete those names from `LOOK_SWITCHES`. (2) A second shadow
-    cascade only if a low-sun frame needs it. (3) Then #580's rest: cloud
-    layer, tunnel roof/lining/lights, then #581. The before/after sheet holds
-    git-ignored reference frames, so never attach it to a PR.
-  - **AO gotchas:** `smoothstep` with reversed edges is undefined in GLSL;
-    tune against a raw-AO debug output, not the composited frame.
+- **Start here (2026-10-03; #580 defaults chosen: grade, shadow, ao).**
+  - **What changed:** the owner chose `grade`, `shadow` and `ao` as the look.
+    They are no longer switches: `LOOK_SWITCHES` is `env`, `pbr`, and
+    `cityview.ts` builds the grade, the sun shadow and the AO pass
+    unconditionally. Fog is 120-2000 m for everyone. 1920x1080 on the GPU, the
+    default look costs 1.8-5.9 ms a frame across the looktime shots; `env,pbr`
+    on top is x0.87-1.20.
+  - **A trap that was fixed here:** PR #592 was squash-merged before its last
+    commits were pushed, so the hour-following grade, `?look=shadow` and
+    `?look=env|pbr` never reached main (the earlier note here said they had).
+    They landed with this change, cherry-picked from `look-haze-gpu-tools`.
+  - **Next:** (1) `env` and `pbr` stay switches until the owner has seen the car
+    in motion. (2) A second shadow cascade only if a low-sun frame needs it:
+    the dusk and sunhaze frames show none. (3) #580's rest: cloud layer, tunnel
+    roof/lining/lights (the tunnel row is an open trench under sky), then #581.
+    Looksheets hold git-ignored reference frames: never attach one to a PR.
+  - **AO gotchas:** the depth buffer is logarithmic: decode with
+    `exp2(d * log2(far + 1)) - 1` (135 world units to the metre).
+    `smoothstep` with reversed edges is undefined in GLSL; tune against a raw-AO
+    debug output, not the composited frame.
 - **Earlier today (the entry below predates #592 and #593).**
   - **PR #591 (branch `look-grade-haze`, worktree `../crosstown-lighting`)**
     holds #580's first step behind `?look=grade`: `scene/grade.ts` (a shader
@@ -48,6 +51,26 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     map, clearcoat car paint. Attach a looksheet before/after to each PR.
   - Screenshots in `screenshots/` are git-ignored. The `reference` symlink in
     the worktree needs `/reference` in its `info/exclude`.
+
+- **#580 progress (2026-10-03 night, PR #592):** the grade follows the hour
+  (`setGradeHour` in `scene/grade.ts`: a low day sun gets saturation, exposure
+  and a warm horizon veil; the area is not used yet). Sun shadows are behind
+  `?look=shadow`: one 4096 map, 220 m half-width frustum ahead of the camera,
+  texel-snapped (`CityView.shadows`), not true cascades. `looktime`
+  `grade;grade,shadow`: downtown 3.1/4.8, woods 1.5/2.2, industrial 1.5/2.4,
+  wall 1.3/1.7, tunnel 1.4/2.0, haze 1.9/2.5, sunhaze 4.1/6.1, dusk 2.8/4.8
+  (about x1.4). Still to do: a second cascade for long shadows, AO, env map,
+  clearcoat paint.
+
+- **#580 env + paint (PR #592):** `?look=env` bakes the sky dome into a PMREM
+  map (`CityView.cutEnvironment`, re-cut every 0.25 h) and `?look=pbr` makes
+  car bodies `MeshPhysicalMaterial` with a light clearcoat (`CAR_PAINT` in
+  `carshape.ts`); the map only goes on physical materials, so buildings are
+  untouched. A stronger clearcoat blew the sun's glint out through bloom on the
+  player's rear deck: kept subtle on purpose. `LOOK_SIZE=1920x1080` times at
+  another size (cost barely moves with size: the frame is draw-call bound).
+  `grade,shadow` vs `grade,shadow,env,pbr` at 1080p: x1.01-1.17, sunhaze x1.45
+  (probably the first cut of the map; check). Next: AO.
 
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
