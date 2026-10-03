@@ -5,8 +5,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 - **Update (2026-10-03, night): #581 and #582 are done (#605 merged).** Merged:
   #597-#605 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
-  dust, photo asphalt as default). This branch adds autumn broadleaves and lamp
-  wires. After each merge, `git log origin/main..<branch>` for stranded commits.
+  dust, photo asphalt as default, autumn trees and wires, deck rails, guardrail
+  and bend kerbs). After each merge, `git log origin/main..<branch>` for stranded commits.
   - **`LOOK_SWITCHES` is env, pbr, materials, trees, particles, clutter.**
     The owner has not seen the car in motion; ask before defaulting any. To see
     them: `npm run dev`, then `?look=trees,particles,clutter`, `?look=all` etc.
