@@ -89,7 +89,9 @@ page.on('console', (msg) => {
 for (const view of VIEWS) {
   // `drive` is not a viewpoint but a mode: put a car in the city, hold the
   // throttle for a moment, and photograph what the player would be looking at.
-  const url = DRIVING.has(view) ? `${base}/` : `${base}/?renderer=city&view=${view}`;
+  // LOOK=trees,clutter turns look switches on (#579); none by default.
+  const look = process.env.LOOK ? `look=${process.env.LOOK}` : '';
+  const url = DRIVING.has(view) ? `${base}/${look ? `?${look}` : ''}` : `${base}/?renderer=city&view=${view}${look ? `&${look}` : ''}`;
   await page.goto(url, { waitUntil: 'load' });
   // Generating the city and building its instanced meshes takes a moment, and
   // a screenshot taken before that is a picture of an empty sky.

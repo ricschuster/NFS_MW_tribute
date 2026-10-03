@@ -1640,6 +1640,9 @@ export const haulTruckParts = (): Part[] => MODELS['haul-truck']();
  */
 const treeScale = (angle: number) => 0.8 + (((Math.sin(angle * 12.9898) * 43758.5453) % 1) + 1) % 1 * 0.55;
 
+/** About one broadleaf in four has turned (`?look=trees`), by the same hash. */
+const autumnTree = (angle: number) => (((Math.sin(angle * 78.233) * 12543.531) % 1) + 1) % 1 < 0.26;
+
 export class CitySetPieces {
   readonly meshes: THREE.InstancedMesh[] = [];
   private readonly owned: (THREE.BufferGeometry | THREE.Material)[] = [];
@@ -1676,32 +1679,45 @@ export class CitySetPieces {
         const geometry = mergeGeometries(geometries.map((g) => (g.index ? g.toNonIndexed() : g)));
         for (const g of geometries) g.dispose();
         const finish = options.photo && !isLeaf ? WALL_FINISH_BY_COLOUR[colour] : undefined;
-        let material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
-        if (isLeaf) {
-          material = leafMaterial(leafKind!);
-        } else if (finish) {
-          material = new THREE.MeshStandardMaterial({ color: colour, metalness: 0 });
-          triplanar(material, wallFinish(finish), finish);
-        } else {
-          material = new THREE.MeshLambertMaterial({ color: colour });
-        }
-        this.owned.push(geometry, material);
+        // A broadleaf crown turns in autumn on some trees (#582): the same
+        // cards with a warmer texture, chosen by the heading as the scale is.
+        const groups =
+          isLeaf && leafKind === 'broadleaf'
+            ? [
+                { pieces: list.filter((p) => !autumnTree(p.angle)), autumn: false },
+                { pieces: list.filter((p) => autumnTree(p.angle)), autumn: true },
+              ]
+            : [{ pieces: list, autumn: false }];
+        this.owned.push(geometry);
+        for (const { pieces: group, autumn } of groups) {
+          if (group.length === 0) continue;
+          let material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
+          if (isLeaf) {
+            material = leafMaterial(leafKind!, autumn);
+          } else if (finish) {
+            material = new THREE.MeshStandardMaterial({ color: colour, metalness: 0 });
+            triplanar(material, wallFinish(finish), finish);
+          } else {
+            material = new THREE.MeshLambertMaterial({ color: colour });
+          }
+          this.owned.push(material);
 
-        const mesh = new THREE.InstancedMesh(geometry, material, list.length);
-        mesh.name = `setpiece-${key}`;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        for (let i = 0; i < list.length; i++) {
-          const piece = list[i];
-          dummy.position.set(piece.at.x, piece.y, piece.at.z);
-          dummy.rotation.set(0, piece.angle, 0);
-          dummy.scale.setScalar(M * (kind === 'tree' ? treeScale(piece.angle) : 1));
-          dummy.updateMatrix();
-          mesh.setMatrixAt(i, dummy.matrix);
+          const mesh = new THREE.InstancedMesh(geometry, material, group.length);
+          mesh.name = `setpiece-${key}${autumn ? ':autumn' : ''}`;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          for (let i = 0; i < group.length; i++) {
+            const piece = group[i];
+            dummy.position.set(piece.at.x, piece.y, piece.at.z);
+            dummy.rotation.set(0, piece.angle, 0);
+            dummy.scale.setScalar(M * (kind === 'tree' ? treeScale(piece.angle) : 1));
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+          }
+          mesh.instanceMatrix.needsUpdate = true;
+          mesh.computeBoundingSphere();
+          this.meshes.push(mesh);
         }
-        mesh.instanceMatrix.needsUpdate = true;
-        mesh.computeBoundingSphere();
-        this.meshes.push(mesh);
       }
     }
   }
