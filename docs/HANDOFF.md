@@ -16,9 +16,9 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       now "The look: the reference game's daytime grade, haze and materials",
       the one issue holding the look target, pointing at
       `docs/design/03_the_look.md`. #514 and #368 got status comments.
-    - **Open issues now:** #14, #266, #269, #368 (undulation and 2-3 hill
+    - **Open issues now:** #266, #269, #259, #368 (undulation and 2-3 hill
       roads not done), #469, #484, #500, #514 (rest of the loop is only the
-      `railway-loop-draft` proposal), #11. #14 (car feel) could close: its
+      `railway-loop-draft` proposal), #11. #14 (car feel) was also closed: its
       blocker #255 shipped.
     - The agent memory folder was trimmed (diary entries cut, five broken
       links fixed); the repo itself is unchanged by that.
