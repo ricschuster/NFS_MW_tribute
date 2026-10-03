@@ -5,7 +5,7 @@ import { distanceToSegment } from './grid';
 import { PLAN_DISTRICTS, inArea, planDistrictAt } from './plan';
 import { hitsSetPiece } from './setpieces';
 import { groundAt, type Terrain } from './terrain';
-import type { AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
+import type { Apron, AuthoredProp, CityNode, CityRoad, SetPiece, Vec2 } from './types';
 
 const M = UNITS_PER_METRE;
 const points = (list: [number, number][]): Vec2[] => list.map(([x, z]) => ({ x: x * M, z: z * M }));
@@ -59,6 +59,15 @@ const RACED_CLEAR = 5 + ROAD_CLEAR;
 const CASTLE_CLEAR = 12;
 const PROP_CLEAR = 14;
 /**
+ * The once-over's woodland pieces (2026-10-03) stand among the trees, not in
+ * a clearing of their own: a log or a boulder only keeps a trunk off it,
+ * which `hitsSetPiece` does by its solid. Its trails are kept by their
+ * outline, `GROUND_CLEAR` off it, like Tidewater Park's paths.
+ */
+const AMONG_TREES = new Set<AuthoredProp['kind']>(['waymarker', 'field-gate', 'stone-wall', 'log', 'log-pile', 'boulder']);
+const GROUND_KINDS = new Set<AuthoredProp['kind']>(['path', 'plaza', 'beach', 'lawn']);
+const GROUND_CLEAR = 3;
+/**
  * How far the woods run on past the park's edge (#460), over ground no other
  * district has claimed, thinning to nothing: the owner's call, because the
  * west slope path runs along the park's south-west edge and had woods on one
@@ -73,6 +82,7 @@ export function woodsFor(
   pieces: readonly SetPiece[],
   clear: readonly AuthoredProp[],
   raced: readonly Vec2[][] = [],
+  ground: readonly Apron[] = [],
 ): AuthoredProp[] {
   const park = PLAN_DISTRICTS.find((a) => a.name === 'Highmoor Park');
   if (!park) return [];
@@ -105,6 +115,8 @@ export function woodsFor(
     .filter(({ a, b }) => Math.max(a.x, b.x) / M > minX && Math.min(a.x, b.x) / M < maxX && Math.max(a.z, b.z) / M > minZ && Math.min(a.z, b.z) / M < maxZ);
   const castle = [CASTLE_AREAS.bailey, CASTLE_AREAS.court, CASTLE_AREAS.ward];
   const glade = valueNoise(CITY_WOODS_STREAM, 90);
+  const cleared = clear.filter((p) => !AMONG_TREES.has(p.kind) && !GROUND_KINDS.has(p.kind));
+  const trails = ground.map((g) => g.outline).filter((o) => o.some((p) => p.x / M > minX && p.x / M < maxX && p.z / M > minZ && p.z / M < maxZ));
 
   const trees: AuthoredProp[] = [];
   // A fixed lattice with its own numbers in every cell, drawn from the cell's
@@ -127,7 +139,8 @@ export function woodsFor(
       if (racing.some(({ a, b }) => distanceToSegment(at.x, at.z, a.x, a.z, b.x, b.z) / M < RACED_CLEAR)) continue;
       if (castle.some((area) => insideOrNear(area, at.x, at.z, CASTLE_CLEAR * M))) continue;
       if (insideOrNear(HIGHMOOR_CAR_PARK, at.x, at.z, 8 * M)) continue;
-      if (clear.some((p) => Math.hypot(p.x - x, p.z - z) < PROP_CLEAR)) continue;
+      if (cleared.some((p) => Math.hypot(p.x - x, p.z - z) < PROP_CLEAR)) continue;
+      if (trails.some((outline) => insideOrNear(outline, at.x, at.z, GROUND_CLEAR * M))) continue;
       if (hitsSetPiece(pieces, at.x, at.z, -Infinity, 3 * M, Infinity)) continue;
       trees.push({ kind: 'tree', x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, angle });
     }
