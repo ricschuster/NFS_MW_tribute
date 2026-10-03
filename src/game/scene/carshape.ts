@@ -180,6 +180,12 @@ const BODIES: Record<CarBody, BodyShape> = {
   muscle: { ...COUPE, length: 1.12, nose: 0.1, width: 1.04, glassLength: 0.42, glassHeight: 0.66, roofFront: 0.5, roofBack: 0.45, glassAt: -0.14, tail: 0.92, pillar: 0.35, track: 0.41, stripe: true },
   // Grand tourer: long and low, with the cabin well back and a fastback tail.
   gt: { ...COUPE, length: 1.12, height: 0.9, nose: 0.2, width: 1.02, glassLength: 0.4, glassHeight: 0.66, roofFront: 0.4, roofBack: 0.35, glassAt: -0.12, tail: 0.9, pillar: 0.55 },
+  // The big heavy one: tall for a fast car, wide, with a full glasshouse.
+  brute: { ...COUPE, length: 1.12, height: 0.88, nose: 0.2, width: 1.12, glassLength: 0.5, glassHeight: 0.7, roofFront: 0.4, roofBack: 0.45, glassAt: -0.02, tyre: 0.19, track: 0.43, tail: 0.96, pillar: 0.3, bpillar: true },
+  // A compact muscle car: shorter, with a fastback roof, stripes and a short deck.
+  pony: { ...COUPE, length: 1.0, nose: 0.14, width: 1.03, glassLength: 0.46, glassHeight: 0.66, roofFront: 0.46, roofBack: 0.25, glassAt: -0.1, tail: 0.95, pillar: 0.5, track: 0.41, stripe: true },
+  // Viper's proportions: the longest bonnet and the lowest roof of the lot.
+  viper: { ...COUPE, length: 1.16, height: 0.84, nose: 0.14, width: 1.06, glassLength: 0.34, glassHeight: 0.6, roofFront: 0.42, roofBack: 0.3, glassAt: -0.2, tail: 0.88, pillar: 0.6, track: 0.42, stripe: true, spoiler: 0.12 },
   // Mid-engined and flat: the lowest and widest closed shape, with a wing.
   hyper: { ...COUPE, length: 1.08, height: 0.66, nose: 0.34, taper: 0.82, width: 1.08, glassLength: 0.4, glassHeight: 0.55, roofFront: 0.26, roofBack: 0.5, glassAt: 0.04, tyre: 0.15, track: 0.42, tail: 0.95, pillar: 0.85, spoiler: 0.24 },
   pickup: { ...COUPE, length: 1.2, height: 1.45, nose: 0.06, taper: 0.95, glassLength: 0.3, glassHeight: 0.85, roofFront: 0.6, roofBack: 0.95, glassAt: 0.12, tyre: 0.22, lift: 1.5, bed: true, pillar: 0, bpillar: false },
