@@ -3,22 +3,32 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Update (2026-10-03, night): cars pass started (#584), procedural shapes.**
-  Owner said "go as far as you can without asking", so the open questions were
-  decided: sourcing is **better procedural shapes** (no asset, no CREDITS row),
-  all 44 cars at once. #610 (merged): `carshape.ts` bodies are lofts (14 stations
-  x 8 points, deck line, rounded plan) with a 4-ring greenhouse, painted roof
-  and pillars that share the body material, arches, rims, bumpers, grille,
-  mirrors, wing, pickup bed; `makeCar` adds `parts.extras`. #611 (stripes, plate,
-  exhausts; shapes fastback, muscle, gt, hyper, cobra; roster assignments in
-  `docs/research/car-roster.md`; traffic is dealt shapes by `trafficBody`, cops
-  by `COP_BODY`, both view-side so the sim and RNG are untouched). Shots in
-  `tools/lookshots.mjs`: `carclose`, `carrear`, `carsun`, `carnight`,
-  `body-<shape>`, `body-pickup-rear` (the shot drives a named roster car with
-  `world.drive`). **Left:** #579-#583 still open on GitHub (ask); headlights are
-  still boxes; wrecks are drawn as saloon or suv by scale; the 5 hypers and 2
-  muscle cars still share a silhouette each (brute, pony, viper split the rest);
-  the owner has not seen any of it in motion. Next: HUD (#586) waits for them.
+- **Update (2026-10-03, night): cars pass (#584), procedural, #610-#614 merged.**
+  Owner delegated ("go as far as you can", then "keep going"), so sourcing is
+  **better procedural shapes**: no asset, no `CREDITS.md` row, all 44 cars.
+  - **Shape** (`scene/carshape.ts`): a body is a loft (26 stations x 15 points:
+    deck line, rounded plan, lifted ends, haunches over the wheels, crowned
+    deck) plus a 4-ring greenhouse loft. Roof plate, pillars, mirrors, wing and
+    bed walls are painted and share the body material, so the pool's one
+    repaint colours them; every painted geometry carries a `color` attribute
+    (baked flank shading), so anything added with `bodyMaterial` needs one too
+    (`add` does it). Extras: arches, rims (star dish), bumpers, grille, plate,
+    exhausts, door lines, stripes. Sixteen `BodyShape`s; roster assignments in
+    `docs/research/car-roster.md`. Wheels sit at `wheelX`, proud of the haunch.
+  - **Where it is used** (`scene/cars.ts`): `makeCar` adds `parts.extras`, a tail
+    light bar for `STRIP_TAIL` shapes; traffic shapes are dealt by `trafficBody`
+    and cops by `COP_BODY`, both view-side so the sim and RNG are untouched.
+  - **Shots** (`tools/lookshots.mjs`, `npm run looksheet -- --shot X --look all`;
+    the default column is `none`): `carclose`, `carrear`, `carsun`, `carnight`,
+    `body-<shape>`, `body-pickup-rear`. A shot's `car` drives a roster car with
+    `world.drive`; `orbit`/`reach`/`lift`/`fov` is a free camera round it (the
+    car is 4.8 m wide; suv and pickup need `fov` 62 or they fill the frame).
+    Judged on stills only; **the owner has not seen it in motion.**
+  - **Left:** rims still read as a big dark pentagon; headlights are boxes;
+    wrecks are drawn as saloon or suv by scale; five hypers and two muscle cars
+    share a silhouette each; no interior, no wipers or aerials; the player's car
+    has no model-year touches. #579-#583 are still open on GitHub (close only
+    on the owner's word). HUD (#586), weather (#585) and races stay parked.
 - **Update (2026-10-03, close of the day): every look switch is a default; next is cars (#584).**
   - **State:** #607 (building kit) and #608 (all seven switches default:
     env, pbr, materials, trees, particles, clutter, buildings; `?look=none` is
