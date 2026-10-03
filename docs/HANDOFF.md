@@ -3,8 +3,23 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03; issues triaged, Industrial merged, races next).**
-  - **This session** changed no game code:
+- **Start here (2026-10-03; look planned, Industrial merged, the look's phase 0 next).**
+  - **The look (#11) is planned, nothing built.** Owner's calls: realistic,
+    matching the reference game (not stylised); start with phases 0 and 1; the
+    HUD waits for their word. #11 stays open as the tracking issue, with a
+    checklist comment. Phase issues: **#579** look-dev harness (cityshot
+    `?look=` switches, contact sheet, a `looktime` frame-time report), **#580**
+    lighting (grade that follows the hour and area, haze, cascaded shadows, AO,
+    env map, cloud layer, clearcoat car paint), **#581** CC0 materials,
+    weathering and wet roads, **#582** trees, clutter, wires, particles,
+    **#583** building kit, **#584** car models (sourcing undecided), **#585**
+    night and weather, **#586** HUD (waiting). The plan is
+    `docs/design/03_the_look.md`. 15 reference frames are in `reference/`
+    (git-ignored, third-party, study only). Still wanted and not yet supplied:
+    an industrial wall close-up, a wide haze shot, a tunnel interior (noted on
+    #579). Work in a sibling worktree, `scene/` only, so the sim and citylap
+    baselines stay untouched. Races are parked behind the look.
+  - **Earlier this session**, no game code changed:
     - **Industrial's once-over (#575) merged.** Re-running `industrialdraft`
       does not redo the cull (what it removed is gone, so a re-run replaces
       the new works with a smaller set): edit in the Industrial Props editor,
@@ -22,7 +37,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
       blocker #255 shipped.
     - The agent memory folder was trimmed (diary entries cut, five broken
       links fixed); the repo itself is unchanged by that.
-  - **Next, per the owner's order: races.**
+  - **Next, per the owner (2026-10-03): the look's phase 0, #579** (the
+    look-dev harness). Races wait; when they resume:
     1. Tune rival pace and speed-run targets against #347's human pace.
     2. `RIVAL_CIRCUITS` beyond Rim and Quay.
     3. Unpark #469 (collectibles).
