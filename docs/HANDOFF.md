@@ -3,24 +3,40 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-02, night; the map is done, races next).**
-  - **Merged:** road pieces tilted across to the ground (#560), so nothing
-    is in review. Every area on the map is done (`docs/map-areas.md`).
+- **Start here (2026-10-02, night; housekeeping done, races next).**
+  - **This session was cleanup, no game changes.**
+    - #562: dead exports gone, and this file's dated history cut
+      (`git log -p` has it).
+    - #563: CLAUDE.md's Commands section is one line per tool.
+    - #564: CLAUDE.md's Architecture section is a one-line index per rule.
+      The paragraphs moved verbatim to `docs/architecture.md`. A new rule
+      gets a paragraph there and a line in CLAUDE.md, in the same PR.
+  - **Open, auto-merging:** #564 (docs only), and this handoff.
   - **Branches:** `main`, plus the two parked drafts: `railway-loop-draft`
-    (#514, on GitHub) and `collectibles-frozen` (#469, local only). Every
-    other branch was merged or superseded and has been deleted. Worktrees:
-    `crosstown-main` (the served copy) only.
-  - **Waiting for the owner:** the last heat-6 "neither" in `endings` (a
-    stopped car escapes 0.7 s past the probe's three minutes); traffic
-    downtown (1.71 civilians a second on screen against 0.60); #484's moved
-    road ends; the railway (#514), parked.
+    (#514, on GitHub) and `collectibles-frozen` (#469, local only). The
+    other 14 GitHub branches and about 120 local ones were deleted on the
+    owner's OK, along with the agent worktrees and four old stashes (SHAs
+    in a #562 comment). Worktrees: `crosstown-main` (the served copy) only.
+    No dev servers running.
+  - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
+    keyed off the checkout path, so either Claude account sees it. Artifacts
+    are still owned by the main account only.
+  - **Waiting for the owner:**
+    - the last heat-6 "neither" in `endings` (a stopped car escapes 0.7 s
+      past the probe's three minutes)
+    - traffic downtown (1.71 civilians a second on screen against 0.60)
+    - #484's moved road ends
+    - the railway (#514), parked
   - **A `cityshot --view at` flake:** two runs at the same `--at` can put
     the car in two different places. Shoot a pair twice before trusting it.
-  - **Next, per the owner's order:** races: tune rival pace and speed-run
-    targets against #347's human pace, `RIVAL_CIRCUITS` beyond Rim and Quay,
-    then unpark #469 (collectibles).
-  - **History:** the dated session entries that used to follow this one
-    were cut in the cleanup pass; `git log -p docs/HANDOFF.md` has them.
+  - **Next, per the owner's order: races.**
+    1. Tune rival pace and speed-run targets against #347's human pace.
+    2. `RIVAL_CIRCUITS` beyond Rim and Quay.
+    3. Unpark #469 (collectibles).
+  - **This file's later sections** (architecture, commands, known
+    problems) predate the cleanup and may repeat or contradict
+    `docs/architecture.md` and CLAUDE.md, which are current. Trimming
+    them is a candidate for the next quiet moment.
 
 ## What this is
 
