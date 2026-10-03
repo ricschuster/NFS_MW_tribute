@@ -29,10 +29,15 @@ export const SHOTS = [
   { name: 'carclose', ref: 'none', place: 'downtown', hour: 13, orbit: 0.9, reach: 12, lift: 2.6 },
   { name: 'carrear', ref: 'none', place: 'downtown', hour: 13, orbit: 3.1, reach: 13, lift: 2.8 },
   { name: 'carsun', ref: 'none', place: 'downtown', hour: 17, orbit: 0.7, reach: 13, lift: 2.4 },
+  // One car of each body shape, three-quarter, for `--shot body-wedge` and the like (#584).
+  ...Object.entries({ coupe: 'kestrel', hatch: 'sparrow', saloon: 'switchback', roadster: 'current', frame: 'kite', wedge: 'halcyon', suv: 'bulwark', pickup: 'bighorn' }).map(
+    ([body, car]) => ({ name: `body-${body}`, ref: 'none', place: 'downtown', hour: 13, orbit: 0.8, reach: body === 'suv' || body === 'pickup' ? 14 : 13, lift: 2.6, fov: body === 'suv' || body === 'pickup' ? 62 : 40, car }),
+  ),
+  { name: 'body-pickup-rear', ref: 'none', place: 'downtown', hour: 13, orbit: -2.4, reach: 14, lift: 4, fov: 62, car: 'bighorn' },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
-export function place({ place, hour, bearing, lift, back, orbit, reach }) {
+export async function place({ place, hour, bearing, lift, back, orbit, reach, car, fov }) {
   const { world } = globalThis.crosstown;
   const M = 135;
   const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
@@ -192,6 +197,8 @@ export function place({ place, hour, bearing, lift, back, orbit, reach }) {
     z = a.z + (b.z - a.z) * at;
     heading = Math.atan2(b.x - a.x, b.z - a.z);
   }
+  // Drive a named car from the roster (the sim reads nothing but its multipliers; the view redraws it).
+  if (car) world.drive((await import('/src/game/cars.ts')).carById(car));
   world.x = x;
   world.z = z;
   world.heading = heading;
@@ -212,7 +219,7 @@ export function place({ place, hour, bearing, lift, back, orbit, reach }) {
       const a = w.heading + orbit;
       shot.position.set(w.x + Math.sin(a) * reach * M, w.y + (lift ?? 1) * M, w.z + Math.cos(a) * reach * M);
       shot.target.set(w.x, w.y + 1.1 * M, w.z);
-      shot.fov = 40;
+      shot.fov = fov ?? 40;
       return shot;
     };
   } else if (lift) {

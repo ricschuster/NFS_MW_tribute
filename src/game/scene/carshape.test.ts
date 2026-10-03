@@ -38,25 +38,58 @@ describe('the shape of a car', () => {
   });
 
   it('is a wedge, nose down', () => {
-    const { body } = carParts(WIDTH, ASPECT);
+    const { body, length } = carParts(WIDTH, ASPECT);
     const pos = body.geometry.attributes.position as THREE.BufferAttribute;
     let nose = -Infinity;
     let tail = -Infinity;
     const v = new THREE.Vector3();
+    // The ends only: the roof stands over the middle and is higher than both.
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i);
-      if (v.z > 0) nose = Math.max(nose, v.y);
-      else tail = Math.max(tail, v.y);
+      if (v.z > length * 0.45) nose = Math.max(nose, v.y);
+      else if (v.z < -length * 0.45) tail = Math.max(tail, v.y);
     }
     expect(nose).toBeLessThan(tail);
   });
 
   it('puts the glass above the body and inside it', () => {
-    const { body, glass } = carParts(WIDTH, ASPECT);
+    const { body, glass, floor, height } = carParts(WIDTH, ASPECT);
     const b = boxOf(body);
     const g = boxOf(glass);
-    expect(g.max.y).toBeGreaterThan(b.max.y);
+    expect(g.max.y).toBeGreaterThan(floor + height);
     expect(g.max.x).toBeLessThan(b.max.x);
+    // The painted roof covers the glass's top, so the car's highest point is paint.
+    expect(b.max.y).toBeGreaterThanOrEqual(g.max.y);
+  });
+
+  it('is solid: every shape has faces pointing out of it', () => {
+    for (const style of ['coupe', 'hatch', 'saloon', 'roadster', 'frame', 'wedge', 'suv', 'pickup'] as const) {
+      const { body, glass } = carParts(WIDTH, ASPECT, style);
+      for (const mesh of [body, glass]) {
+        const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
+        const nor = mesh.geometry.attributes.normal as THREE.BufferAttribute;
+        const box = boxOf(mesh);
+        const centre = box.getCenter(new THREE.Vector3());
+        // The topmost vertex's normal must not point into the car.
+        let top = 0;
+        for (let i = 1; i < pos.count; i++) if (pos.getY(i) > pos.getY(top)) top = i;
+        expect(nor.getY(top), style).toBeGreaterThan(0);
+        expect(Number.isFinite(centre.x + centre.y + centre.z)).toBe(true);
+      }
+    }
+  });
+
+  it('keeps every extra on the car', () => {
+    const { body, extras, length, width } = carParts(WIDTH, ASPECT);
+    const car = boxOf(body);
+    for (const extra of extras) {
+      const box = boxOf(extra);
+      expect(box.max.z).toBeLessThan(length * 0.56);
+      expect(box.min.z).toBeGreaterThan(-length * 0.56);
+      expect(Math.abs(box.max.x)).toBeLessThan(width * 0.6);
+      expect(box.min.y).toBeGreaterThan(-1);
+      expect(box.max.y).toBeLessThan(car.max.y * 1.2);
+    }
   });
 
   it('scales entirely off its width', () => {
