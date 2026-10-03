@@ -29,14 +29,16 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
   car.add(body);
   car.add(parts.glass);
   for (const wheel of parts.wheels) car.add(wheel);
+  for (const extra of parts.extras) car.add(extra);
 
   if (cop) {
     // white door band, so a cop reads as a cop rather than a dark car
     const band = new THREE.Mesh(
-      new THREE.BoxGeometry(BODY_W * 1.01, BODY_H * 0.34, BODY_L * 0.9),
+      new THREE.BoxGeometry(BODY_W * 0.955, bodyH * 0.3, bodyL * 0.62),
       new THREE.MeshLambertMaterial({ color: '#e9edf2' }),
     );
-    band.position.y = BODY_H * 0.62;
+    // Over the doors, where the flank is full width: the ends round in.
+    band.position.y = parts.floor + bodyH * 0.4;
     car.add(band);
 
     const bar = new THREE.Mesh(
@@ -47,16 +49,16 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     // On the roof the shape actually has, rather than at a height guessed
     // from the body: the greenhouse is raked now and its top is not the top
     // of a box.
-    bar.position.y = parts.roof;
+    bar.position.y = parts.roof + bodyH * 0.06;
     car.add(bar);
   }
 
   for (const side of [-1, 1]) {
     const light = new THREE.Mesh(
-      new THREE.BoxGeometry(BODY_W * 0.18, BODY_H * 0.2, BODY_L * 0.04),
+      new THREE.BoxGeometry(BODY_W * 0.17, bodyH * 0.2, bodyL * 0.04),
       new THREE.MeshBasicMaterial({ color: '#ff4433' }),
     );
-    light.position.set(side * BODY_W * 0.33, parts.floor + bodyH * 0.45, -bodyL * 0.49);
+    light.position.set(side * BODY_W * 0.27, parts.floor + bodyH * 0.45, -bodyL * 0.49);
     car.add(light);
 
     // And the other end (#221). There were tail lights and no headlights, so
@@ -64,11 +66,11 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     // it. Unlit material, like the tail lights: a lens reads as lit because it
     // is brighter than the paint, not because the sun is on it.
     const lamp = new THREE.Mesh(
-      new THREE.BoxGeometry(BODY_W * 0.2, BODY_H * 0.18, BODY_L * 0.04),
+      new THREE.BoxGeometry(BODY_W * 0.17, bodyH * 0.18, bodyL * 0.04),
       new THREE.MeshBasicMaterial({ color: HEADLIGHT_OFF }),
     );
     lamp.name = 'headlight';
-    lamp.position.set(side * BODY_W * 0.32, parts.floor + bodyH * 0.4, bodyL * 0.49);
+    lamp.position.set(side * BODY_W * 0.27, parts.floor + bodyH * 0.4, bodyL * 0.49);
     car.add(lamp);
   }
 
