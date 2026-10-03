@@ -3,43 +3,47 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Update (2026-10-03, end of day): #580's cloud layer and tunnel interior
-  merged (#597); #581 slice one merged (#598); slice two is #599** (CC0 concrete,
-  brick and corrugated steel on set-piece walls, plus two commits #598 missed:
-  the darker tunnel deck and the 10 MB ADR budget). Check `git log
-  origin/main..` for stranded commits again after #599 merges.
-  - **`LOOK_SWITCHES` is env, pbr, materials.** The owner has not yet seen the
-    car in motion; ask before making any a default. To see them: `npm run dev`
-    in the look worktree, then `?look=env,pbr`, `?look=materials` or `?look=all`.
-    Photo asphalt (with its wear) is the default as of 2026-10-03; only the
-    walls are behind `materials`.
+- **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:
+  #597-#603 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
+  dust, photo asphalt as default). This branch adds autumn broadleaves and lamp
+  wires. After each merge, `git log origin/main..<branch>` for stranded commits.
+  - **`LOOK_SWITCHES` is env, pbr, materials, trees, particles, clutter.**
+    The owner has not seen the car in motion; ask before defaulting any. To see
+    them: `npm run dev`, then `?look=trees,particles,clutter`, `?look=all` etc.
+    `LOOK=trees,clutter npm run cityshot` now honours the switches too.
+    **Photo asphalt with its wheel-track wear is the default** (owner,
+    2026-10-03); walls are the only part of `materials` still switched.
   - **Materials (ADR-0012, `scene/materials.ts`, `materials/CREDITS.md`):**
     CC0 from ambientCG, JPEG via Vite `?url`, 10 MB cap (1.3 MB used), 1K maps.
-    Asphalt goes on carriageways through `worldUvs`; walls go on set pieces by
-    wall colour (`WALL_FINISH_BY_COLOUR` in `setpieces.ts`) through
-    `scene/triplanar.ts`. Buildings are set pieces: `BoxBuildings` draws only
-    five sheds now, so do not work in `facades.ts`.
-  - **Weathering is in (`scene/weathering.ts`, behind `?look=materials`):**
-    base dirt and rain streaks on set-piece walls (through `triplanar`, height
-    measured from the instance origin) and wheel-track wear on photo asphalt
-    (`worldUvs` option `wear`). Strengths are first guesses, judged on a still.
-  - **Trees (#582, slice one, `?look=trees`):** `scene/leafcards.ts` rebuilds
-    the foliage of `tree`, `tree:broadleaf` and `street-tree` from alpha-tested
-    cards with a generated canvas texture; trunks stay flat parts. Still owed:
-    autumn variants, kerbs, railings, fences, wires, particles. The broadleaf
-    crown is a little boxy.
-  - **Particles (#582, `?look=particles`):** `scene/airdust.ts`, 600 dust motes
-    in an 18 m box that follows the camera, dim with the sun. Judge in motion.
-  - **Next, in the owner's order:** wet roads
-    once #585 gives a weather state; a second shadow cascade only if a low-sun
-    frame needs it (dusk and sunhaze showed none). Then #582 trees and clutter.
+    Asphalt on carriageways through `worldUvs`; walls on set pieces by wall
+    colour (`WALL_FINISH_BY_COLOUR`) through `scene/triplanar.ts`. Buildings
+    are set pieces: `BoxBuildings` draws only five sheds, so not `facades.ts`.
+  - **Weathering (`scene/weathering.ts`):** wall base dirt and rain streaks
+    (height from the instance origin), road wheel tracks and oil. Strengths are
+    first guesses judged on stills.
+  - **Trees (`?look=trees`, `scene/leafcards.ts`):** foliage of `tree`,
+    `tree:broadleaf` and `street-tree` as alpha-tested cards with a generated
+    canvas texture; about one broadleaf in four is autumn (heading hash). The
+    broadleaf crown is a little boxy.
+  - **Particles (`?look=particles`, `scene/airdust.ts`):** 600 motes in an 18 m
+    box about the camera, dim with the sun. Judge in motion.
+  - **Clutter (`?look=clutter`, `scene/wires.ts`):** two sagging wires between
+    lamps on the same side of a road. Lamps in the generated city stand 60-70 m
+    apart, not `LAMP_SPACING`, so the pairing allows 90 m and about 25 deg; 564
+    spans from 1409 lamps. Faint by design.
+  - **Still owed for #582:** kerbs, railings and a fence along the whole wall.
+    Their placement is in `city/`, which must not change, so derive it in the
+    renderer from roads or leave it; ask the owner which.
+  - **Next, in the owner's order:** wet roads once #585 gives a weather state
+    (parked; do not pull a weather flag forward); a second shadow cascade only
+    if a low-sun frame needs it (dusk and sunhaze showed none); races are
+    parked behind the look.
   - **Tunnels (`scene/tunnels.ts`):** a tube 7-8 m high because the chase
     camera is 6 m up; under the riverbed it stands proud of the bed, below the
     water. The terrain is single-sided, so a camera under it sees through.
   - **Gotchas:** world units are 135 per metre (`UNITS_PER_METRE`); shots in
     `looksheet` can land differently run to run; never attach a looksheet to a
-    PR (git-ignored third-party frames); kill only your own processes. A dev
-    server for `look-walls` may still be running on port 5175.
+    PR (git-ignored third-party frames); kill only your own processes.
   - **Worktrees:** the old `crosstown-look`, `-industrial`, `-highmoor` and
     `-lighting` were removed (owner's word). `crosstown-lighting-2` is on
     `look-walls`; `crosstown-main` is the served copy.

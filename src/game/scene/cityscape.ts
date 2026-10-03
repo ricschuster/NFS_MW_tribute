@@ -26,6 +26,7 @@ import {
 } from '../constants';
 import { BoxBuildings, type BuildingProvider } from './buildings';
 import { StreetFurniture } from './furniture';
+import { LampWires } from './wires';
 import { CityCollectibles } from './collectibles';
 import { CityBreakables } from './breakables';
 import { CitySetPieces } from './setpieces';
@@ -105,6 +106,8 @@ export class Cityscape {
   private readonly provider: BuildingProvider;
   private readonly rooftops: Rooftops;
   private readonly furniture: StreetFurniture;
+  /** `?look=clutter` (#582): wires between the lamps. */
+  private wires: LampWires | null = null;
   /** Billboards and speed cameras (#93). Public: the sim smashes them. */
   readonly collectibles: CityCollectibles;
   /** Gates and stacks (#57). Public for the same reason. */
@@ -118,7 +121,7 @@ export class Cityscape {
   /** `?look=materials` (#581): photo-sourced walls (the asphalt is always photo). */
   private readonly photo: boolean;
 
-  constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean; leaves?: boolean } = {}) {
+  constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean; leaves?: boolean; wires?: boolean } = {}) {
     this.provider = provider;
     this.photo = options.photo ?? false;
 
@@ -147,6 +150,10 @@ export class Cityscape {
 
     this.furniture = new StreetFurniture(city.furniture);
     for (const mesh of this.furniture.meshes) this.group.add(mesh);
+    if (options.wires) {
+      this.wires = new LampWires(city.furniture);
+      this.group.add(this.wires.lines);
+    }
 
     this.collectibles = new CityCollectibles(city.collectibles);
     for (const mesh of this.collectibles.meshes) this.group.add(mesh);
@@ -937,6 +944,7 @@ export class Cityscape {
     this.provider.dispose();
     this.rooftops.dispose();
     this.furniture.dispose();
+    this.wires?.dispose();
     this.collectibles.dispose();
     this.breakables.dispose();
     this.setPieces.dispose();
