@@ -27,20 +27,34 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     anything from `reference/`. Model: TRELLIS.2 (MIT) with the DINOv3 encoder
     (gated, Meta's licence, owner's access granted). Both are downloaded
     (about 16 GB), `hf auth login` is done.
-  - **`tools/trellis/install.sh` is run by the owner by hand**; Claude Code's
-    classifier refused to run it (it builds CUDA code from GitHub). It was
-    mid-build (CuMesh, then FlexGEMM, o-voxel) when the session ended; check
-    `~/trellis-install.log` for `INSTALL-DONE`. `tools/trellis/run.py` has never
-    run, so a first-run error is expected.
+  - **Update (2026-10-03, night): install finished and `run.py` works.** The
+    env is `trellis2` (`~/micromamba-bin/bin/micromamba run -n trellis2 python
+    tools/trellis/run.py IMG OUT --type 512`); one fix was needed (transformers
+    5 renamed DINOv3's `.layer`, aliased in `run.py`). A 512 run takes about
+    two minutes and 2.8 GB of GPU. Results, with pictures in
+    `~/Pictures/crosstown-compare/`: see the Results section of the research
+    note. Short version: with a detailed photoreal input it looks good at
+    chase-cam distance, but the wheels are fused into the body, the glass is a
+    blob and it is 200k triangles; with our own low-poly Kestrel render as the
+    input it copies the car and adds nothing. So the input must be a detailed
+    concept image from a licence-clean source.
+  - **Not usable, experiment only:** the first concept image came from the
+    owner's employer's Copilot account. It, its .glb and its renders never go
+    in the repo, the credits or the game.
+  - **FLUX.1-schnell** (Apache-2.0) is fully downloaded (23 GB transformer, in
+    the HF cache; `du` on the snapshot folder misleadingly shows 454 MB because
+    of symlinks) and the `flux` micromamba env has diffusers 0.40. Not run yet.
   - **`briaai/RMBG-2.0`** is what TRELLIS's `pipeline.json` uses to remove
     backgrounds: gated, believed non-commercial, not licence-checked, not
     downloaded. `run.py` stubs it and cuts the car out itself.
   - **Gotcha:** the car group has a blob-shadow plane (about 2340 x 6792 units)
     that wrecks `Box3` measurements; remove it before measuring.
-  - **Next:** run it on `front34.png` at `--type 512`, open the `.glb` in
-    Blender, judge wheels, symmetry and "does it read as a real car", then
-    script the clean-up. No credits row, no merge. If it fails the procedural
-    cars stay.
+  - **Next:** generate original-coupe concept images with FLUX.1-schnell
+    (prompt names no real car; keep prompt, seed and date for the credits row),
+    run TRELLIS on the best, then decide the wheels: replace them with our own
+    at the hub positions (reuses #617's spin and steer). Judge in the chase
+    camera, not close up. Nothing merges without a credits row. If it does not
+    beat the procedural cars the procedural cars stay.
 - **Update (2026-10-03, night): cars pass (#584), procedural, #610-#614 merged.**
   Owner delegated ("go as far as you can", then "keep going"), so sourcing is
   **better procedural shapes**: no asset, no `CREDITS.md` row, all 44 cars.
