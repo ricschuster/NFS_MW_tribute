@@ -234,8 +234,8 @@ paragraph there and a line here, in the same PR.
   `TouchControls`
 - Post-processing goes through the renderer, not `EffectComposer` (#75) -
   `scene/cityview.ts`
-- `?renderer=city` (`&view=...`) and `?debug` are the only query strings; keep
-  the README's list current. In dev, `globalThis.crosstown` exposes the sim
+- `?renderer=city` (`&view=...`), `?look=...` (look-development switches,
+  #579) and `?debug` are the only query strings; keep the README's list current. In dev, `globalThis.crosstown` exposes the sim
   for `cityshot`; its gotchas are in docs/architecture.md
 - The service worker is generated, not written (#98) - `vite.config.ts`,
   `npm run pwa`

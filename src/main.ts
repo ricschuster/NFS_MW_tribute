@@ -31,9 +31,10 @@ async function boot(): Promise<void> {
   const stage = canvas.parentElement;
   if (!stage) throw new Error('#game has no stage to draw into');
 
-  const [{ CityView }, { kestrelBay }] = await Promise.all([
+  const [{ CityView }, { kestrelBay }, { parseLook }] = await Promise.all([
     import('./game/scene/cityview'),
     import('./game/city/index'),
+    import('./game/scene/look'),
   ]);
 
   const gl = document.createElement('canvas');
@@ -42,7 +43,7 @@ async function boot(): Promise<void> {
   canvas.style.background = 'transparent';
 
   const city = kestrelBay();
-  const view = new CityView(gl, city);
+  const view = new CityView(gl, city, parseLook(params.get('look')));
 
   if (free) {
     canvas.style.display = 'none'; // nothing to overlay on the free camera

@@ -41,6 +41,8 @@
     "quarryroad": "node tools/quarryroad.mjs",
     "sketch": "node tools/sketch.mjs",
     "cityshot": "node tools/cityshot.mjs",
+    "looksheet": "node tools/looksheet.mjs",
+    "looktime": "node tools/looktime.mjs",
     "icons": "node tools/icons.mjs",
     "pwa": "node tools/pwacheck.mjs",
     "citylap": "node tools/citylap.mjs",
