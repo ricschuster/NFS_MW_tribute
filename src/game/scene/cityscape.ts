@@ -631,6 +631,7 @@ export class Cityscape {
       faces: 'top',
       tile: { u: tile, v: tile },
       key: photo ? `${surface}-photo` : surface,
+      wear: photo,
     });
     this.owned.push(geometry, material);
 
