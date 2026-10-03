@@ -49,195 +49,71 @@ what the city is shaped like.
 
 ## Commands
 
-- `npm run dev` — dev server with HMR (http://localhost:5173)
-- `npm run typecheck` — `tsc --noEmit`; run before considering a change done
-- `npm run test` — unit tests + playtests
-- `npm run playtest` — just the headless playtests (drive `CityWorld`, assert
-  outcomes)
-- `npm run city` — draw the generated city from above to `screenshots/citymap.png`;
-  `-- --seed N` tries another one
-- `npm run city -- --terrain` — the land alone, hill-shaded, with no city drawn
-  on it. Judging a landscape under three thousand roads is judging the roads
-- `npm run sketch` — a *drawing* of what the map could be, not the map: it
-  generates a candidate landmass, terrain and road network from scratch and
-  renders it, touching nothing in `src/`. It is where ADR-0008's two rules were
-  found, and the cheapest place to answer the next question about the shape of
-  the city
-- `npm run cityshot` — screenshot the 3D city from fixed viewpoints; starts its
-  own server, so nothing else needs running. `-- --view at --at x,z,heading`
-  stands the car anywhere, for an area no fixed viewpoint covers
-- `npm run citylap` — drive a reference driver round every generated route,
-  twice: empty, and with traffic, and then race it against all ten ladder
-  rivals, clean and with the boost (#166). Compare against `docs/city-baseline.json`
-  after touching `constants.ts`, and re-record with
-  `-- --out docs/city-baseline.json`. The empty lap says what the road allows;
-  the traffic lap says what the drive is like - traffic costs the Marrow Field
-  Run about a fifth of its pace (#348 thinned it; it used to be half) - so
-  tuning against the empty number alone is tuning against a game nobody plays. This is the only driving baseline; the track's `npm run feel`
-  retired with the track. It is also a guard (#210): traffic can only ever
-  cost a lap time, never buy one back, so a route that comes back *faster*
-  with traffic than empty is not a hard route, it is the driver thrashing on
-  one the generator broke - Foundry Mile did this unnoticed by every other
-  test in the suite, because the seed still built and the route still closed.
-  A route that does not finish a lap at all fails it the same way. Exits
-  non-zero on either, so a seed cannot ship six routes of which one nobody
-  can actually drive. While the map is built area by area, a lap time that
-  moves is re-recorded, not chased: races are tuned once the areas are done
-  (`docs/map-areas.md`, "Races wait for the map").
-- `npm run ramps` — can every ramp be driven up? A guard, not an instrument: it
-  exits non-zero if any ramp cannot be climbed, because the ramps are the only
-  way onto the interstate and an interstate you cannot reach is scenery. Eleven
-  of thirteen were unclimbable when it was written (#212), for two reasons that
-  were both geometry - a ramp laid straight at its junction runs *down* an
-  existing street, and two roads sharing a footprint is a place the car cannot
-  choose between; and a ramp is solid against blocks below `CAR_RADIUS * 2`, so
-  anything it passed over while low walled the car in
-- `npm run grades` — can every road actually be climbed? A guard on
-  `cutAndFill` (#252): it exits non-zero if an arterial or boulevard comes out
-  steeper than the cap cut-and-fill is run with, because a road that only
-  looks climbable on the map is worse than no road. Ramps and the interstate
-  are excluded, since they are graded by their own construction and checked by
-  `npm run ramps` instead; so are Ashford Point's driveways (#287), since
-  `cutAndFill` runs before `localStreetsFor` ever lays one and never promised
-  them anything - their grades are reported, not gated
-- `npm run trafficview` — how much traffic is on screen (#348), headless: a
-  stand-in drives the public roads with the real traffic around it, and a
-  chase camera counts civilians the way the telemetry recorder does. Compare
-  against the reference game's 0.60 a second and 60% of seconds with none;
-  `TRAFFIC_IN_CITY` was set with it. The stand-in never stops or crashes, so a
-  person sees a little more
-- `npm run pace` — can the police be outrun? Compares your real top speed
-  against the quickest unit at every heat level, in every condition. Exits
-  non-zero if an *undamaged* car cannot outrun a level, which is an invariant
-  `HEAT_LEVELS` exists to hold; the damaged rows are reported, not asserted,
-  because whether they should hold is #170
-- `npm run patrol` — put the reference driver in the city with the police live
-  and read what the game does over twenty minutes: what set off each pursuit,
-  how long the first one took to arrive, and how much of the session was free
-  roam. An instrument, not a gate: it asserts nothing, and two of its numbers
-  are skewed by the driver (#171), which the output says on the rows it affects
-- `npm run endings` — how a pursuit ends: busted, escaped, or neither, at each
-  heat level, in two tables - one for a driver who keeps going and one for a
-  car that stops. The stalemate ("neither") is the number to watch; it was 100%
-  of stopped pursuits at heat 6 before #178
-- `npm run playthrough` — play the whole game at every level it has one: four
-  driver tiers with the police live, six heat levels, six events, five
-  ambushes, reported as a session log rather than a table. It goes through
-  `driveRoute`, which is the only driver that applies the skill model - the
-  reaction lag, the lapses and the wander live in its hands, so `patrol` and
-  `endings` are always the perfect driver however they are asked
-- `npm run drivers` — the same routes driven by four people, and a report on
-  route quality that is **not** a gate. It flags a route an advanced driver
-  cannot hold half an expert's pace on, and that flag moves with the *driver*
-  as much as with the route: across three runs that changed only `citydriver`
-  it landed on four different routes, and the expert's own figures moved with
-  it. `citydriver` has no recovery from a wide line - measured, an advanced
-  driver came off a corner 13 m wide of a road 10 m across and ground along the
-  buildings for 29 seconds, and everything after that is a wrecked car rather
-  than a bad route (#210). Read the column as "something about this build makes
-  routes hard to drive", never as "this route is bad". Also: beginner,
-  advanced, expert and perfect. `citylap` measures only the last of those, which
-  is a floor nobody stands on; this is what a change does to somebody who is not
-  perfect. Seeded, so a driver's mistakes land in the same places each run
-- `npm run plan` — does the authored map (#272) still fit the ground the
-  generator makes? Reproduces #271's audit and reports where the plan and the
-  generator disagree; `-- --draw` puts it over the relief. A guard, not a probe:
-  a polygon that leaves the land is a failure
-- `npm run groundfit` - how every set piece sits on the ground: a report, not
-  a gate. Each piece's footprint (its solids that start at the ground) is
-  sampled against the height field, and anything with a corner more than a
-  metre off its base, standing on a road or in the water is listed by area
-  and kind, owner-placed (by id, to find in the area editor) apart from
-  generated. A footing (`WAREHOUSE_FOOTING`, `ESTATE_FOOTING`) is allowed its
-  depth of float. Some entries are by design: the cruise terminal over the
-  bay on its pier, a conveyor that climbs, Kestrel Head's walls on the
-  castle's raised platform
-- `npm run mapfit` — does the map carry the reference game's pace? A pace
-  profile of the live network with the game's own physics: what routes allow a
-  careful driver (a median fraction of top speed; ADR-0011 wants about 60%),
-  where a fast car can be fast, widths, crossings, and pursuit geography.
-  `docs/research/map-fit-363.md` is the audit it was written for, and it
-  matches `citylap`'s driver on the Marrow Field Run to within a point. Use it
-  for an area's pace check (`docs/map-areas.md`)
-- `npm run freewayexport` — build the freeway loop editor
-  (`screenshots/freeway-editor.html` from `tools/freewayeditor.html`): the loop,
-  its tunnels and the ramp markers over the relief, with each marker checked.
-  "Copy path (JSON)" goes to `docs/freeway-edited.json`, and `npm run
-  freewaysync` writes it into `city/freeway.ts`
-- `npm run roadexport` — write the road network, the relief and the plan to
-  `screenshots/roads.json`, for the road editor to load
-- `npm run suburbdraft -- --area N` - draft a midtown's residential streets
-  (#477): curving streets, cul-de-sacs and crescents off its drawn
-  boulevards, added to `docs/roads-edited.json` for the road editor. A
-  drawing tool, not a generator the game runs: once edited and synced by
-  `roadsync`, a street is authored data like any other. `-- --district
-  industrial --area 0 --prefix i` drafts Industrial's straight works roads,
-  and `-- --district waterfront --area 0 --prefix a` Ashford Point's estate
-  lanes (#293), fewer, longer and windier. `-- --district downtown --area 0
-  --prefix d` grows downtown's instead (#268, `tools/downtowngrow.mjs`):
-  streets push out from the boulevards, wander, branch and stop at what they
-  meet, tight and crooked by the water and straighter among the towers inland,
-  and keep clear of the freeway's ramps and of where it passes street level
-- `npm run housedraft -- --place P` - draft a suburb's front hedges and
-  street trees (#477) round the houses in its props file, keeping those
-  houses and any hand edits to them; `-- --houses` redrafts the houses too,
-  losing their hand edits. The suburbs are a table in `tools/suburbs.mjs`
-  (`midtown` for Midtown north, the default, `midtown-south` and
-  `midtown-sw`, `ashford`, `downtown`, and `industrial`, whose works are
-  placed by hand and which it refuses), which `propexport` and `propsync` read too. Ashford
-  Point (#293) drafts estates: villas, some houses and manors, the ridge kept
-  for manors. Downtown (#268) drafts buildings rather than houses
-  (`city/downtown.ts`): its landmarks at marks the drafter fits them near,
-  a flatiron in the sharpest junction, a cruise terminal out over the bay,
-  then terraces, quay lofts, mid-rises and towers by distance from the water,
-  stepping up to the lookout tower. Ashford's drives, garden trees, copses and ponds are generated by the
-  game from those houses (`city/ashford.ts`), so they follow a moved house. On a midtown's
-  high street (`HIGH_STREETS` in `city/highstreet.ts`, the owner's pick, #488)
-  it drafts terraced shops and flats instead of houses, and the game paves
-  the pavement in front of them. Generated once by `city/suburb.ts`,
-  then edited in the area editor (`npm run propexport -- --place P`) and
-  synced with `npm run propsync -- --place P`
-- `npm run worksdraft` - draft Industrial's works and the first stretch of
-  the railway (#489, #514) into its props file: a main line with surface
-  `rail` beside the freeway, rail yards along it, and tank farms, sheds,
-  stacks and yards along every works road, each on ground flat enough for
-  what stands on it. Its own ids (`dw…`, `dy…`, `rail1`) are replaced on a
-  re-run and everything else in the file is kept. Then `propsync --place
-  industrial`
-- `npm run quarrydraft` - the same for Halloway Quarry's once-over: working
-  faces, spoil and plant walked along the haul roads, heaps on the floor
-  round the hand-placed plant, the rim's yard by its gravel roads, conifers
-  on the hillside. Its own ids (`qo…`) are replaced on a re-run. Then
-  `propsync --place quarry`
-- `npm run marrowdraft` - Marrow Field's once-over: a derelict airfield and
-  stunt playground drafted round the owner's props (crash sites, a boneyard,
-  ruined hangars, fuel farms, bunkers, a helipad, things to drive under, and
-  jumps on the taxiways the Marrow Field Run does not use), over the whole
-  field and down the strips between the runway and the taxiways. Its own ids
-  (`mo…`) are replaced on a re-run. The rise beside the field is country the
-  game generates (`airfieldRiseFor` in `city/quarryisland.ts`). Then
-  `propsync`
-- `npm run marrowtracks` - draft dirt tracks over Marrow Field's east side
-  (`mt…` in `docs/roads-edited.json`, then `roadsync`, then `marrowdraft`
-  so the props keep clear of them): `islanddraft`'s least-cost paths, a loop
-  and two across, joined to the taxiway
-- `npm run islanddraft` - draft dirt tracks over the quarry island (`qi…`
-  in `docs/roads-edited.json`, then `roadsync`): least-cost paths over the
-  terrain, round the far coast and across the north, joined exactly to the
-  coast road and the quarry's rings. Its own ids are replaced on a re-run.
-  The island's woods, scrub and rock outcrops are generated by the game
-  (`city/quarryisland.ts`), so they follow a moved track
-- `npm run propexport -- --place P` — crop an area out of the generated city
-  and write `screenshots/<area>-propeditor.html`, the area editor with the
-  ground inlined: props, houses and the area's drawn roads, all editable
-  (#477), and in an area that takes them (Industrial, #489) yards: paved,
-  drivable outlines closed to traffic, synced into the area's module as
-  `<AREA>_YARDS` and paved by `city/yards.ts`. `npm run propsync -- --place P` writes the area's props file from
-  the save, and merges any roads in it into `docs/roads-edited.json` by id
-  and runs `roadsync`; the Road Editor's store is then behind and wants the
-  file written back into it
-- `npm run pwa` — serve `dist/`, cut the network, check the game still loads
-- `npm run build` — typecheck + production build to `dist/`
+Every tool in `tools/` opens with a comment saying what it measures, why it
+exists and how to call it; read that before running one. A **guard** exits
+non-zero and is a gate; a **report** asserts nothing.
+
+Everyday:
+
+- `npm run dev` - dev server with HMR (http://localhost:5173)
+- `npm run typecheck` - `tsc --noEmit`; run before considering a change done
+- `npm run test` - unit tests + playtests; `npm run playtest` is just the
+  headless playtests (drive `CityWorld`, assert outcomes)
+- `npm run build` - typecheck + production build to `dist/`
+- `npm run pwa` - serve `dist/`, cut the network, check the game still loads
+
+Looking (every real bug in the city so far was found by looking, not by a test):
+
+- `npm run city` - the city from above to `screenshots/citymap.png`;
+  `-- --terrain` is the land alone, `-- --seed N` another seed
+- `npm run cityshot` - the 3D city from fixed viewpoints, own server;
+  `-- --view at --at x,z,heading` stands the car anywhere
+- `npm run sketch` - a *drawing* of a candidate map, touching nothing in
+  `src/`; the cheapest place to answer a question about the city's shape
+
+Driving and pursuit:
+
+- `npm run citylap` - guard: a reference driver round every route, empty and
+  with traffic, and against the ladder. The only driving baseline; compare to
+  `docs/city-baseline.json` after touching `constants.ts`, re-record with
+  `-- --out docs/city-baseline.json`. A route that comes back faster with
+  traffic, or does not finish, fails it (#210)
+- `npm run drivers` - report: the same routes for four driver tiers. Its route
+  flag moves with the driver as much as the route; never read it as "this
+  route is bad"
+- `npm run playthrough` - report: the whole game at every level, through the
+  only driver with the skill model (`patrol` and `endings` drive perfectly)
+- `npm run pace` - guard: an undamaged car outruns every heat level
+- `npm run endings` - report: busted / escaped / neither per heat level; watch
+  "neither"
+- `npm run patrol` - report: twenty minutes of free roam with the police live
+- `npm run trafficview` - report: traffic on screen against the reference's
+  0.60 a second
+- `npm run mapfit` - report: the network's pace profile (ADR-0011 wants about
+  60% of top speed); used for an area's pace check
+
+Map guards and reports:
+
+- `npm run ramps` - guard: every ramp can be climbed
+- `npm run grades` - guard: no arterial or boulevard is steeper than
+  `cutAndFill`'s cap
+- `npm run plan` - guard: the authored plan (#272) still fits the generated
+  ground; `-- --draw` over the relief
+- `npm run groundfit` - report: how every set piece sits on the ground
+
+Authoring (an editor loop: export, edit in the browser, sync back):
+
+- `npm run roadexport` / `roadsync` - the road editor and
+  `docs/roads-edited.json`
+- `npm run freewayexport` / `freewaysync` - the freeway loop editor and
+  `city/freeway.ts`
+- `npm run propexport -- --place P` / `propsync -- --place P` - an area's
+  editor (props, houses, roads, yards); places are the table in
+  `tools/suburbs.mjs`
+- Drafters, run once and then edited by hand: `suburbdraft` (streets),
+  `housedraft` (houses, hedges, trees, downtown's buildings), `worksdraft`
+  (Industrial and the railway), `quarrydraft`, `marrowdraft`, `marrowtracks`,
+  `islanddraft`. Each replaces only its own ids on a re-run
 
 ## Architecture (read before touching game code)
 
@@ -257,8 +133,7 @@ city. ADR-0005 is what the city is *shaped* like and is worth reading before
 changing the generator. Water is generated first and the streets are cut
 against it, bridges are few on purpose because they are the pursuit
 chokepoints, and generation ends by proving the city is drivable and bridging
-until it is. Rules 4-7 of that ADR (curved residential streets, the interstate
-loop, landmarks, relief) are partly built: landmarks and relief are not.
+until it is.
 
 **A crossing is chosen for where it is, not for how cheap it is** (issue
 #247, ADR-0005 rule 2). Bridges are the pursuit chokepoints, and "few" is
@@ -384,20 +259,12 @@ pursuit paid and never past where it started - a bust that can re-lock an
 already-earned rival is progress going backwards. `npm run endings` is the
 probe for all of it.
 
-**A pursuit can step off the road, and only just** (issue #220). Police are
-`GraphCar`s and the player deliberately is not, so a pursuit used to end at a
-kerb: cut across a plaza, a car park or #185's parkland and the cars behind you
-had to go round. `CityPolice.cutsCorner` lets a chasing unit leave the road when
-the car it is after is off it and within `COP_LEASH`, drive straight at it, and
-rejoin the network at the nearest road - a step off the kerb and back, not a
-second way of navigating. Two things keep it honest. Open ground costs a unit
-`COP_OFF_ROAD` of its pace, which is worse than the quarter of top speed the
-player is held to, so cutting across still gains you something and no longer
-gains you everything. And "is the car off the road" is the sim's own `onRoad` -
-the same answer that caps the player's speed - rather than a second surface test
-in the pursuit, because asking the grid directly counted a car five metres from
-the centre of a ten-metre street as off-road and sent the whole pursuit over the
-pavement after it.
+**A pursuit can step off the road, and only just** (issue #220). A chasing
+unit may leave the road when the car it is after is off it and within
+`COP_LEASH`, drive straight at it, and rejoin at the nearest road; open ground
+costs it `COP_OFF_ROAD`, more than it costs you. "Is the car off the road" is
+the sim's own `onRoad`, never a second surface test. `CityPolice.cutsCorner`
+has the reasoning.
 
 **Not every cop is chasing you** (issue #61). `Cop.role`'s doc comment in
 `citypolice.ts` has the reasoning for `chase` vs. `enforcer` vs. `patrol`;
@@ -600,29 +467,22 @@ In dev only, `/` hangs the running sim off `globalThis.crosstown`
 (`{ world, view, city }`). That is how `npm run cityshot` sets up shots it
 could otherwise only get by luck: `takedown`, `roadblock` and `enforcer` all
 put the thing being photographed in front of the car rather than driving into
-one. Three things bite when writing one, all of them in the handoff: headless
+one. Three things bite when writing one: headless
 renders this scene at about two frames a second (so a frame is fifteen physics
 steps, and the camera director is still running its opening orbit ten seconds
 in - wait on `director.mode === 'chase'`), a cop pushed in with a position and
 a `t` is teleported onto its road on the next step unless the `t` matches, and
 the police sweep up roadblocks the instant the pursuit stops.
 
-**The map is finished one area at a time, downtown last** - the order,
-what "done" means for an area, and which are done is `docs/map-areas.md`; keep
-it current in the same PR as the work.
-
-**The map is being rebuilt, and the log is `docs/map-exploration.md`.** Read it
-with [ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) before
-touching the generator: the districts and the places are *authored data* in
-`city/plan.ts` now, the landmass and the terrain are frozen (`CITY_LAND_STREAM`),
-and `CITY_STREET_GRID` is **off** while the map is rebuilt from the routed
-roads outward. It is a switch rather than a deletion because `fillSuperblock`
-is the only thing that knows how a district becomes blocks, and that is wanted
-back - just not laid with a ruler. `CITY_FREEWAY` is **on** again (#371): the
-loop, its tunnels and its ramps are all authored (`city/freeway.ts`), each
-ramp's foot is joined to the drawn roads by a boulevard
-(`city/rampconnectors.ts`), and the old rolled spurs are off
-(`FREEWAY_SPURS`).
+**The map is authored, and finished.** Every area is done
+(`docs/map-areas.md`, kept current in the same PR as any work on one). Read
+[ADR-0009](docs/decisions/0009-kestrel-bay-is-an-authored-map.md) and
+`docs/map-exploration.md` before touching the generator: the districts and
+places are authored data in `city/plan.ts`, the landmass and terrain are
+frozen (`CITY_LAND_STREAM`), and the freeway, its tunnels and ramps are
+authored too (`city/freeway.ts`, joined to the roads by
+`city/rampconnectors.ts`). `CITY_STREET_GRID` is off, a switch rather than a
+deletion; its doc comment has why.
 
 Look at what you changed with `npm run city` and `npm run cityshot` - the city
 is much easier to judge as a picture than as a test, and every real bug in it
@@ -657,7 +517,7 @@ top speed, which had nowhere to go once #82 made corners grip-limited.
 `NITRO_TAPER`'s doc comment in `constants.ts` has the reasoning for why the
 acceleration multiplier tapers with speed instead.
 
-Tune feel via `constants.ts` first — most "how it drives / how it looks" knobs
+Tune feel via `constants.ts` first - most "how it drives / how it looks" knobs
 live there.
 
 **Simulation is split from rendering** (ADR-0003). All game state and logic
@@ -665,7 +525,7 @@ live in `cityworld.ts` as a pure `step(dt, input)` with no canvas or DOM;
 `scene/` only draws it. Keep it that way: put new *behaviour* in `CityWorld`
 (so the playtests can cover it) and only *drawing* in the renderer. Playtests
 (`cityworld.playtest.test.ts`) construct a `CityWorld`, feed scripted inputs,
-and assert on state — use `new CityWorld(undefined, { traffic: false, police: false })`
+and assert on state - use `new CityWorld(undefined, { traffic: false, police: false })`
 for a deterministic city. That split is the only reason the renderer rebuild
 was survivable, and it is why the track could be deleted without deleting the
 game.
@@ -693,7 +553,7 @@ string is a different cache entry than `./`.
   `verbatimModuleSyntax`. Import types with `import type { ... }`.
 - Prefer small, single-purpose modules under `src/game/`. Keep rendering pure
   (draw from state; don't mutate game state inside render helpers).
-- Match the surrounding comment density — explain *why*, not *what*.
+- Match the surrounding comment density - explain *why*, not *what*.
 - New runtime dependencies need an ADR saying why. three.js is accepted by
   ADR-0004; that is the bar, not a precedent for adding more.
 
