@@ -78,6 +78,11 @@ from trellis2.pipelines import Trellis2ImageTo3DPipeline  # noqa: E402
 import o_voxel  # noqa: E402
 
 pipeline = Trellis2ImageTo3DPipeline.from_pretrained('microsoft/TRELLIS.2-4B')
+# transformers 5 moved the DINOv3 blocks from .layer to .model.layer; TRELLIS.2
+# still reads .layer. Alias it without registering the blocks twice.
+_dino = pipeline.image_cond_model.model
+if not hasattr(_dino, 'layer'):
+    object.__setattr__(_dino, 'layer', _dino.model.layer)
 pipeline.cuda()
 
 mesh = pipeline.run(image, seed=args.seed, pipeline_type=args.type)[0]
