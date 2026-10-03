@@ -37,6 +37,10 @@ import {
 
 const M = UNITS_PER_METRE;
 
+/** Half-width of the sun shadow frustum, and its map's side in texels (#580). */
+const SHADOW_REACH = 220 * M;
+const SHADOW_MAP = 4096;
+
 /**
  * A camera you can fly around Kestrel Bay with (#84).
  *
@@ -128,6 +132,13 @@ export class CityView {
   readonly switches: Look;
   private readonly skyDome: THREE.Mesh;
   private readonly sun: THREE.DirectionalLight;
+  private readonly sunDir = new THREE.Vector3(0, 1, 0);
+  private shadowFlagTick = 0;
+  private readonly shadowTmp = new THREE.Vector3();
+  private readonly shadowCentre = new THREE.Vector3();
+  private readonly shadowX = new THREE.Vector3();
+  private readonly shadowRight = new THREE.Vector3();
+  private readonly shadowUp = new THREE.Vector3();
   private gradePass?: ReturnType<typeof makeGradePass>;
   private readonly fill: THREE.HemisphereLight;
   /** The hour the lights were last set to, so they are not rebuilt per frame. */
@@ -241,6 +252,22 @@ export class CityView {
     this.sun = new THREE.DirectionalLight('#fff0cf', 3.3);
     this.sun.position.set(-0.55, 0.78, 0.35).multiplyScalar(1000 * M);
     this.scene.add(this.sun);
+    this.scene.add(this.sun.target);
+    if (look.has('shadow')) {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.sun.castShadow = true;
+      this.sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
+      const cam = this.sun.shadow.camera;
+      cam.left = cam.bottom = -SHADOW_REACH;
+      cam.right = cam.top = SHADOW_REACH;
+      cam.near = 1;
+      cam.far = 2400 * M;
+      // Slope-scaled by the normal, because a city of boxes and flat ground
+      // acnes on every face at a low sun.
+      this.sun.shadow.normalBias = 0.35 * M;
+      this.sun.shadow.bias = -0.0004;
+    }
     // Generous fill: under a single hard sun every face turned away goes black
     // and the city reads as silhouettes rather than as buildings. Cooler than
     // the sun and warmer off the ground, which is what daylight by the sea
@@ -603,7 +630,53 @@ export class CityView {
     fog.far = Math.max(this.fogFar, this.camera.position.y * 7);
 
     this.aim();
+    this.shadows();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Sun shadows behind `?look=shadow` (#580): one orthographic frustum around
+   * the camera's ground point, pushed forward by half its reach so most of it
+   * lies in front of the view. The centre is snapped to the shadow texel grid
+   * in light space, or the shadow edges crawl as the camera moves.
+   */
+  private shadows(): void {
+    if (!this.sun.castShadow) return;
+    if (++this.shadowFlagTick % 60 === 1) this.flagShadows();
+    const dir = this.sunDir;
+    const cam = this.camera;
+    const fwd = cam.getWorldDirection(this.shadowTmp);
+    fwd.y = 0;
+    fwd.normalize();
+    const centre = this.shadowCentre.copy(cam.position);
+    centre.y = 0;
+    centre.addScaledVector(fwd, SHADOW_REACH * 0.55);
+    // Light-space grid: project onto the two axes perpendicular to the sun.
+    const texel = (2 * SHADOW_REACH) / SHADOW_MAP;
+    const up = Math.abs(dir.y) > 0.99 ? this.shadowX.set(1, 0, 0) : this.shadowX.set(0, 1, 0);
+    const right = this.shadowRight.crossVectors(up, dir).normalize();
+    const above = this.shadowUp.crossVectors(dir, right).normalize();
+    const r = Math.round(centre.dot(right) / texel) * texel;
+    const u = Math.round(centre.dot(above) / texel) * texel;
+    const d = centre.dot(dir);
+    centre.copy(right).multiplyScalar(r).addScaledVector(above, u).addScaledVector(dir, d);
+    this.sun.target.position.copy(centre);
+    this.sun.position.copy(centre).addScaledVector(dir, 1000 * M);
+    this.sun.target.updateMatrixWorld();
+  }
+
+  /** New meshes (traffic, props) turn up all game; mark each one once. */
+  private flagShadows(): void {
+    this.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || mesh.userData.shadowFlagged) return;
+      mesh.userData.shadowFlagged = true;
+      const mat = mesh.material as THREE.Material;
+      if (mat instanceof THREE.ShaderMaterial || mat instanceof THREE.MeshBasicMaterial) return;
+      if (mat.transparent) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    });
   }
 
   /**
@@ -835,6 +908,7 @@ export class CityView {
     fog.far = this.fogFar;
     this.lighting(world.hour);
     this.skyDome.position.copy(this.camera.position);
+    this.shadows();
     this.renderer.render(this.scene, this.camera);
     this.hud?.draw(world);
   }
@@ -865,6 +939,7 @@ export class CityView {
         Math.cos(light.sunBearing) * Math.sqrt(Math.max(0, 1 - light.sunHeight ** 2)),
       )
       .multiplyScalar(1000 * M);
+    this.sunDir.copy(this.sun.position).normalize();
 
     this.fill.color.set(light.fill);
     this.fill.groundColor.set(light.bounce);
