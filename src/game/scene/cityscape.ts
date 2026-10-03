@@ -115,7 +115,7 @@ export class Cityscape {
   /** Each road's tarmac pieces, built once (`piecesOf`). */
   private readonly pieces = new Map<CityRoad, RoadPiece[]>();
 
-  /** `?look=materials` (#581): photo-sourced surfaces where a set exists. */
+  /** `?look=materials` (#581): photo-sourced walls (the asphalt is always photo). */
   private readonly photo: boolean;
 
   constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean; leaves?: boolean } = {}) {
@@ -616,7 +616,9 @@ export class Cityscape {
 
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2); // lie flat, facing up
-    const photo = this.photo && surface === 'asphalt';
+    // Photo asphalt is the default look (owner, 2026-10-03); walls stay behind
+    // `?look=materials` (`this.photo`).
+    const photo = surface === 'asphalt';
     const material: THREE.MeshLambertMaterial | THREE.MeshStandardMaterial = photo
       ? new THREE.MeshStandardMaterial({ color: '#9a9ea2', ...asphaltSet(), metalness: 0 })
       : new THREE.MeshLambertMaterial({

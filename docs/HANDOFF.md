@@ -11,7 +11,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   - **`LOOK_SWITCHES` is env, pbr, materials.** The owner has not yet seen the
     car in motion; ask before making any a default. To see them: `npm run dev`
     in the look worktree, then `?look=env,pbr`, `?look=materials` or `?look=all`.
-    The owner is also to say whether the subtle asphalt is worth keeping.
+    Photo asphalt (with its wear) is the default as of 2026-10-03; only the
+    walls are behind `materials`.
   - **Materials (ADR-0012, `scene/materials.ts`, `materials/CREDITS.md`):**
     CC0 from ambientCG, JPEG via Vite `?url`, 10 MB cap (1.3 MB used), 1K maps.
     Asphalt goes on carriageways through `worldUvs`; walls go on set pieces by
