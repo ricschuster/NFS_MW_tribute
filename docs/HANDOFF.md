@@ -3,7 +3,24 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03, evening; #580 lighting, haze done, shadows next).**
+- **Start here (2026-10-03 night; #580 lighting built, defaults not chosen).**
+  - **Merged:** #591 grade+haze, #592 `?look=shadow|env|pbr`, GPU look tools.
+    **PR #593** (branch `look-ao`, worktree `../crosstown-lighting`) adds
+    `?look=ao`: half-res SSAO in `scene/ao.ts`, first in the effect chain,
+    reading the output target's depth texture (the depth buffer is
+    logarithmic: decode with `exp2(d * log2(far + 1)) - 1`; world units are
+    135 per metre). `LOOK_SIZE=WxH` now really works in `looktime`.
+  - **Cost** (GPU, 1920x1080): ao adds about 0-0.6 ms; `env,pbr` is x1.01 (the
+    old x1.45 was not reproduced: first-frame cut or the software path).
+  - **Next:** (1) ask the owner which switches become the default look (my
+    recommendation: grade, shadow, ao yes; env and pbr after seeing the car in
+    motion), then delete those names from `LOOK_SWITCHES`. (2) A second shadow
+    cascade only if a low-sun frame needs it. (3) Then #580's rest: cloud
+    layer, tunnel roof/lining/lights, then #581. The before/after sheet holds
+    git-ignored reference frames, so never attach it to a PR.
+  - **AO gotchas:** `smoothstep` with reversed edges is undefined in GLSL;
+    tune against a raw-AO debug output, not the composited frame.
+- **Earlier today (the entry below predates #592 and #593).**
   - **PR #591 (branch `look-grade-haze`, worktree `../crosstown-lighting`)**
     holds #580's first step behind `?look=grade`: `scene/grade.ts` (a shader
     pass before ACES: desaturate, mild contrast, cool lifted blacks, warm
