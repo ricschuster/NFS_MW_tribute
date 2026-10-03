@@ -49,6 +49,16 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   - Screenshots in `screenshots/` are git-ignored. The `reference` symlink in
     the worktree needs `/reference` in its `info/exclude`.
 
+- **#580 progress (2026-10-03 night, PR #592):** the grade follows the hour
+  (`setGradeHour` in `scene/grade.ts`: a low day sun gets saturation, exposure
+  and a warm horizon veil; the area is not used yet). Sun shadows are behind
+  `?look=shadow`: one 4096 map, 220 m half-width frustum ahead of the camera,
+  texel-snapped (`CityView.shadows`), not true cascades. `looktime`
+  `grade;grade,shadow`: downtown 3.1/4.8, woods 1.5/2.2, industrial 1.5/2.4,
+  wall 1.3/1.7, tunnel 1.4/2.0, haze 1.9/2.5, sunhaze 4.1/6.1, dusk 2.8/4.8
+  (about x1.4). Still to do: a second cascade for long shadows, AO, env map,
+  clearcoat paint.
+
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
     only, the sim and citylap baselines untouched). `?look=grade,shadow,ao,env,pbr`
