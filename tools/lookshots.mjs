@@ -5,6 +5,9 @@ export const SHOTS = [
   { name: 'downtown', ref: 'maxresdefault-400676361.jpg', place: 'downtown', hour: 13 },
   { name: 'woods', ref: 'maxresdefault-1603548640.jpg', place: 'woods', hour: 13 },
   { name: 'industrial', ref: 'maxresdefault-535176847.jpg', place: 'industrial', hour: 13 },
+  { name: 'wall', ref: 'Screenshot_20261003_052037.png', place: 'wall', hour: 13 },
+  { name: 'tunnel', ref: 'Screenshot_20261003_050209.png', place: 'tunnel', hour: 13 },
+  { name: 'haze', ref: 'Screenshot_20261003_050141.png', place: 'haze', hour: 13 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -17,11 +20,8 @@ export function place({ place, hour }) {
   const longest = (pred) =>
     city.roads.filter((r) => !r.bridge && pred(r)).sort((a, b) => b.length - a.length)[0];
   let x, z, heading;
-  if (place === 'industrial') {
-    // The silo with the most silos around it, then the road nearest them.
-    const silos = city.setPieces.filter((p) => p.kind === 'silo');
-    const near = (p) => silos.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;
-    const hub = silos.sort((a, b) => near(b) - near(a))[0].at;
+  // Stand on the road nearest `hub`, `back` metres short of it, facing it.
+  const approach = (hub, back) => {
     let best = null;
     for (const r of city.roads) {
       if (r.bridge) continue;
@@ -38,8 +38,47 @@ export function place({ place, hour }) {
     const sign = dx * (hub.x - best.px) + dz * (hub.z - best.pz) >= 0 ? 1 : -1;
     const len = Math.hypot(dx, dz);
     heading = Math.atan2(dx * sign, dz * sign);
-    x = best.px - ((dx * sign) / len) * 70 * M;
-    z = best.pz - ((dz * sign) / len) * 70 * M;
+    x = best.px - ((dx * sign) / len) * back * M;
+    z = best.pz - ((dz * sign) / len) * back * M;
+  };
+  if (place === 'industrial') {
+    // The silo with the most silos around it, then the road nearest them.
+    const silos = city.setPieces.filter((p) => p.kind === 'silo');
+    const near = (p) => silos.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;
+    approach(silos.sort((a, b) => near(b) - near(a))[0].at, 70);
+  } else if (place === 'wall') {
+    // A warehouse wall close to the road, for weathering: the one nearest any road.
+    const gap = (p) =>
+      Math.min(
+        ...city.roads.filter((r) => !r.bridge).map((r) => {
+          const [a, b] = ends(r);
+          const len2 = (b.x - a.x) ** 2 + (b.z - a.z) ** 2 || 1;
+          const t = Math.max(0, Math.min(1, ((p.at.x - a.x) * (b.x - a.x) + (p.at.z - a.z) * (b.z - a.z)) / len2));
+          return Math.hypot(p.at.x - (a.x + (b.x - a.x) * t), p.at.z - (a.z + (b.z - a.z) * t));
+        }),
+      );
+    const wall = city.setPieces
+      .filter((p) => p.kind === 'warehouse')
+      .map((p) => ({ p, d: gap(p) }))
+      .filter((w) => w.d > 12 * M)
+      .sort((u, v) => u.d - v.d)[0];
+    approach(wall.p.at, 40);
+  } else if (place === 'tunnel') {
+    const road = longest((r) => city.nodes[r.a].level === 'tunnel' && city.nodes[r.b].level === 'tunnel');
+    const [a, b] = ends(road);
+    x = a.x + (b.x - a.x) * 0.3;
+    z = a.z + (b.z - a.z) * 0.3;
+    heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.y = city.nodes[road.a].y;
+  } else if (place === 'haze') {
+    // The middle of the longest bridge, looking along it: open water and the
+    // longest view the city has at street level.
+    const road = city.roads.filter((r) => r.bridge && city.nodes[r.a].level === 'surface').sort((p, q) => q.length - p.length)[0];
+    const [a, b] = ends(road);
+    x = (a.x + b.x) / 2;
+    z = (a.z + b.z) / 2;
+    heading = Math.atan2(b.x - a.x, b.z - a.z);
+    world.y = (city.nodes[road.a].y + city.nodes[road.b].y) / 2;
   } else {
     let road;
     let at = 0.3;

@@ -11,14 +11,16 @@
 // checkout.
 //
 // Shots are chosen by rule from the generated city, not by coordinate, so they
-// survive the map being edited: the longest downtown street, the longest street
-// in Highmoor Park, the densest cluster of silos in Industrial, and the first
-// again at dusk. Heading follows the road.
+// survive the map being edited: the longest downtown street, the street
+// with the most trees in Highmoor Park, the densest cluster of silos in Industrial,
+// the warehouse wall nearest a road, the longest tunnel, the longest bridge looking
+// along it, and the downtown street again
+// at dusk. Heading follows the road.
 //
 // Usage:
 //   npm run looksheet                                # today's look -> screenshots/looksheet.png
 //   npm run looksheet -- --look 'none;grade;grade,ao'  # one column per ';'-separated switch set ('none' = off)
-//   npm run looksheet -- --shot industrial           # one row (downtown, woods, industrial, dusk)
+//   npm run looksheet -- --shot industrial           # one row (downtown, woods, industrial, wall, tunnel, haze, dusk)
 //   npm run looksheet -- --out screenshots/before.png
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
