@@ -31,9 +31,15 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     lamps on the same side of a road. Lamps in the generated city stand 60-70 m
     apart, not `LAMP_SPACING`, so the pairing allows 90 m and about 25 deg; 564
     spans from 1409 lamps. Faint by design.
-  - **Still owed for #582:** kerbs, railings and a fence along the whole wall.
-    Their placement is in `city/`, which must not change, so derive it in the
-    renderer from roads or leave it; ask the owner which.
+  - **Roadside (`?look=clutter`, `scene/roadside.ts`):** derived in the renderer
+    from the roads, `city/` untouched (owner's pick, 2026-10-03). Deck rails: a
+    wall and coping down both edges of the interstate and ramps, which had none
+    (394 pieces; not where a road is wholly in a tunnel). Waterside guardrail
+    along `embankment` roads where water is within 6 m of the edge (181 panels).
+    Red-and-white kerbs on the outside of two-road bends of 25 deg or more (2416
+    blocks). **Skipped: a fence "along the whole wall"** - the phrase has no
+    clear referent in this city (bridges, water ends and Marrow Field already
+    have parapets or fences); ask the owner what wall it means.
   - **Next, in the owner's order:** wet roads once #585 gives a weather state
     (parked; do not pull a weather flag forward); a second shadow cascade only
     if a low-sun frame needs it (dusk and sunhaze showed none); races are
