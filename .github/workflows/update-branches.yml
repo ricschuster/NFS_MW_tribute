@@ -5,7 +5,8 @@ name: Keep PRs up to date
 # someone updates it - and parallel sessions merge several a minute here.
 # After each push to main, this updates each open PR that has auto-merge
 # armed; its checks then run again and auto-merge takes it from there. PRs
-# without auto-merge are left alone.
+# without auto-merge are left alone. A PR armed after main's last push is
+# brought level by auto-merge.yml as it is armed.
 
 on:
   push:
