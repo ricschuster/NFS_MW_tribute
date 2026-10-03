@@ -12,6 +12,7 @@ import { QuickWheel } from '../quickwheel';
 import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
+import { AoPass } from './ao';
 import { makeGradePass } from './grade';
 import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
@@ -288,7 +289,11 @@ export class CityView {
       BLOOM_RADIUS,
       BLOOM_THRESHOLD,
     );
-    this.renderer.setEffects(look.has('grade') ? [this.bloom, makeGradePass()] : [this.bloom]);
+    this.renderer.setEffects([
+      ...(look.has('ao') ? [new AoPass(this.camera)] : []),
+      this.bloom,
+      ...(look.has('grade') ? [makeGradePass()] : []),
+    ]);
 
     this.look('aerial');
     this.listen(canvas);
