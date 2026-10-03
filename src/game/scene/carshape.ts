@@ -170,6 +170,14 @@ const BODIES: Record<CarBody, BodyShape> = {
   frame: { ...COUPE, length: 0.9, height: 0.55, nose: 0.1, taper: 0.7, width: 0.72, glassLength: 0.12, glassHeight: 0.5, roofFront: 0.2, roofBack: 0.3, glassAt: 0.05, tyre: 0.2, track: 0.5, open: true },
   wedge: { ...COUPE, length: 1.05, height: 0.8, nose: 0.32, glassLength: 0.45, glassHeight: 0.62, roofFront: 0.3, roofBack: 0.6, glassAt: 0.02, pillar: 0.7, spoiler: 0.2 },
   suv: { ...COUPE, length: 1.03, height: 1.55, nose: 0.08, taper: 0.94, glassLength: 0.62, glassHeight: 0.85, roofFront: 0.55, roofBack: 0.95, glassAt: -0.05, tyre: 0.21, lift: 1.4, tail: 1, pillar: 0.2, bpillar: true },
+  // A rear-engined fastback: the roof runs back in one slope to a high tail.
+  fastback: { ...COUPE, length: 0.95, nose: 0.26, glassLength: 0.56, glassHeight: 0.74, roofFront: 0.38, roofBack: 0.2, glassAt: -0.1, tail: 0.94, pillar: 0.6 },
+  // Long bonnet, cabin set back, short deck, broad: the muscle car's proportions.
+  muscle: { ...COUPE, length: 1.12, nose: 0.1, width: 1.04, glassLength: 0.42, glassHeight: 0.66, roofFront: 0.5, roofBack: 0.45, glassAt: -0.14, tail: 0.92, pillar: 0.35, track: 0.41 },
+  // Grand tourer: long and low, with the cabin well back and a fastback tail.
+  gt: { ...COUPE, length: 1.12, height: 0.9, nose: 0.2, width: 1.02, glassLength: 0.4, glassHeight: 0.66, roofFront: 0.4, roofBack: 0.35, glassAt: -0.12, tail: 0.9, pillar: 0.55 },
+  // Mid-engined and flat: the lowest and widest closed shape, with a wing.
+  hyper: { ...COUPE, length: 1.08, height: 0.66, nose: 0.34, taper: 0.82, width: 1.08, glassLength: 0.4, glassHeight: 0.55, roofFront: 0.26, roofBack: 0.5, glassAt: 0.04, tyre: 0.15, track: 0.42, tail: 0.95, pillar: 0.85, spoiler: 0.24 },
   pickup: { ...COUPE, length: 1.2, height: 1.45, nose: 0.06, taper: 0.95, glassLength: 0.3, glassHeight: 0.85, roofFront: 0.6, roofBack: 0.95, glassAt: 0.12, tyre: 0.22, lift: 1.5, bed: true, pillar: 0, bpillar: false },
 };
 
@@ -383,7 +391,9 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
   // Wheel arches: the dark gap round a tyre, drawn as the top half of a disc
   // on the flank. A frame's wheels stand outside its body, so it has none.
   if (b.track * w < half) {
-    const arch = new THREE.CircleGeometry(tyre * 1.16, 12, 0, Math.PI);
+    // No taller than the flank above the axle: a low car's wheel is nearly as
+    // tall as its body, and a full-size arch is then a black blot.
+    const arch = new THREE.CircleGeometry(Math.min(tyre * 1.1, (deckAt(wheelZ) - tyre) * 0.85), 12, 0, Math.PI);
     for (const side of [-1, 1]) {
       for (const end of [-1, 1]) {
         const mesh = add(arch.clone().rotateY((side * Math.PI) / 2), trim, side * (half + 1), tyre, end * wheelZ);
