@@ -5,10 +5,11 @@
 // shot and each switch set it loads the page, stands the car at the shot, lets
 // the first frames compile, then averages the gaps between animation frames.
 //
-// Read it as a ratio, not as a frame rate. Headless Chromium draws on the CPU
-// (SwiftShader), so the absolute milliseconds say nothing about a player's GPU;
-// what carries over is how much one switch adds to the baseline in the same
-// run. A report: it asserts nothing.
+// Read it as a ratio, not as a frame rate: headless Chromium may be capped at
+// the display's rate, and the GPU is this machine's, not a player's; what carries
+// over is how much one switch adds to the baseline in the same run. It draws on
+// the GPU (ANGLE gl-egl); LOOK_GL=software is the old SwiftShader path, whose
+// numbers are not comparable. A report: it asserts nothing.
 //
 // Usage:
 //   npm run looktime                                   # every shot, switches off
@@ -33,7 +34,11 @@ const server = await createServer({ server: { port: 0 }, logLevel: 'error' });
 await server.listen();
 const base = `http://localhost:${server.config.server.port ?? server.httpServer?.address()?.port}`;
 const browser = await chromium.launch({
-  args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  // The GPU by default; LOOK_GL=software is the old SwiftShader path.
+  args:
+    process.env.LOOK_GL === 'software'
+      ? ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+      : ['--no-sandbox', '--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'],
 });
 const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
 page.setDefaultNavigationTimeout(120000);
@@ -70,7 +75,7 @@ for (const shot of shots) {
 
 const w = Math.max(12, ...looks.map((l) => l.length + 2));
 const pad = (s, n) => String(s).padStart(n);
-console.log(`ms per frame (SwiftShader, 640x400, ${FRAMES} frames; compare columns, not absolutes)`);
+console.log(`ms per frame (${process.env.LOOK_GL === 'software' ? 'SwiftShader' : 'GPU'}, 640x400, ${FRAMES} frames; compare columns, not absolutes)`);
 console.log(`${'shot'.padEnd(12)}${looks.map((l) => pad(l, w)).join('')}${looks.length > 1 ? pad('last/first', w) : ''}`);
 for (const row of table) {
   const cols = looks.map((l) => pad(row[l].toFixed(1), w)).join('');
