@@ -3,46 +3,35 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03; Industrial's props pass signed off, races next).**
-  - **This session:**
-    - **Industrial's once-over is PR #575** (branch `industrial-dressing`,
-      worktree `../crosstown-industrial`). The owner's note was "too many rail
-      yards". `npm run industrialdraft` (ids `di...` props, `dz...` yards)
-      cut the 15 yards to 3 (the owner's crest yard, the one beside the main
-      line, the biggest of the rest), thinned small tanks by a third and kept
-      chimneys 45 m apart, then filled the cleared yards with container
-      depots, aggregate and scrap yards, silo plants and site offices, fenced
-      and paved. It also added 27 pipe racks, 2 cooling-tower pairs, 2 gas
-      works with flare stacks and 2 jumps beside the Works Circuit (off its
-      race line).
-    - Five new kinds: `pipe-rack`, `cooling-tower`, `fence-line`,
-      `flare-stack`, `gas-holder` (solids, models, editor entries, propsync).
-    - **Sunk warehouses fixed** (second commit on #575): `warehouseBase` in
-      `city/setpieces.ts` raises a shed's base to the highest ground under it
-      less 0.9 m, within its footing. It applies to every `warehouse`, so the
-      4 on Marrow Field came up too (the owner was told). `groundfit` lists no
-      warehouse now; Ashford's villas and manors are still reported.
-    - `citylap`: nothing moved. Tests, ramps, grades and plan pass. The owner
-      signed it off from the dev server and the editor. If #575 is still open,
-      check CI; if it is stuck, rebase on `main` and re-push.
-    - **Re-running `industrialdraft` does not redo the cull**: what it removed
-      is gone, so the cleared-yard fill has nothing to work from and a re-run
-      replaces the new works with a smaller set. Edit in the Industrial Props
-      editor instead, then `propsync`.
-    - Not drafted: gates (a gate has to sit on a road; the yards are closed to
-      traffic) and billboards (collectibles, #469).
-    - A broad `pkill -f chrom` was run during the session and may have closed
-      the owner's Chrome windows. The owner was told.
+- **Start here (2026-10-03; issues triaged, Industrial merged, races next).**
+  - **This session** changed no game code:
+    - **Industrial's once-over (#575) merged.** Re-running `industrialdraft`
+      does not redo the cull (what it removed is gone, so a re-run replaces
+      the new works with a smaller set): edit in the Industrial Props editor,
+      then `propsync`. Gates and billboards are not drafted there (gates need
+      a road; billboards are #469).
+    - **Issues closed on the owner's word:** #301 (`CITY_STREET_GRID = false`
+      is the end state), #253, #256, #260, #265 (done per area or out of scope
+      for the finished map). **#11 was closed by mistake and reopened**: it is
+      now "The look: the reference game's daytime grade, haze and materials",
+      the one issue holding the look target, pointing at
+      `docs/design/03_the_look.md`. #514 and #368 got status comments.
+    - **Open issues now:** #14, #266, #269, #368 (undulation and 2-3 hill
+      roads not done), #469, #484, #500, #514 (rest of the loop is only the
+      `railway-loop-draft` proposal), #11. #14 (car feel) could close: its
+      blocker #255 shipped.
+    - The agent memory folder was trimmed (diary entries cut, five broken
+      links fixed); the repo itself is unchanged by that.
   - **Next, per the owner's order: races.**
     1. Tune rival pace and speed-run targets against #347's human pace.
     2. `RIVAL_CIRCUITS` beyond Rim and Quay.
     3. Unpark #469 (collectibles).
   - **Waiting for the owner:** the heat-6 "neither" in `endings`, traffic
     downtown, #484's moved road ends, and the railway (#514, parked).
-  - **Branches and worktrees:** `main`, `industrial-dressing` (#575; delete
-    after merge, on the owner's word), `railway-loop-draft` (#514) and
+  - **Branches and worktrees:** `main`, `industrial-dressing` (#575 merged;
+    delete on the owner's word), `railway-loop-draft` (#514) and
     `collectibles-frozen` (#469, local). Worktrees: `crosstown-main` (the
-    served copy), `crosstown-industrial` (remove after #575 merges; a dev
+    served copy), `crosstown-industrial` (#575 merged, so it can go; a dev
     server on port 5174 may still be running from it) and `crosstown-highmoor`
     (#573 merged, so it can go).
   - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
