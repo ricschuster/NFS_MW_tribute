@@ -3,61 +3,39 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03; Highmoor Park's props drafted, not yet reviewed).**
+- **Start here (2026-10-03; Highmoor signed off, Industrial's props next).**
   - **This session:**
-    - #570 and #571 had both failed CI on one test that timed out
-      (`setpieces.test.ts`, Highmoor's "car park open"). It checked every
-      bench in the city against every tree, so downtown's and Tidewater's
-      furniture had grown it past 5 s. It now checks only Highmoor's
-      furniture: 4.9 s down to 17 ms. Both PRs merged.
-    - The owner approved Tidewater as drafted. Its editor store was empty,
-      so there was nothing to sync.
-    - The `crosstown-tidewater` worktree and its branches were removed on
-      the owner's word.
-    - **Highmoor Park's once-over: a WIP commit on branch
-      `highmoor-dressing`** (worktree `../crosstown-highmoor`, pushed, no
-      PR). The owner's picks:
-      - more picnic tables and bins; car park facilities (ranger hut,
-        toilet block, kiosk, picnic shelter);
-      - waymarkers, a field gate with a stile, dry-stone walls along the
-        meadow's edge (the 105 m contour);
-      - logs, log piles and boulders in the woods;
-      - a timber lookout on the meadow, a radio mast on the summit, and a
-        campsite (fire ring, tents, camper vans) in the southern woods;
-      - gravel trails, the path prop's new `trail` variant.
-      Not picked: benches along the paths, viewpoint railings, a
-      footbridge.
-    - It adds 12 new kinds: `waymarker`, `field-gate`, `stone-wall`, `log`,
-      `log-pile`, `boulder`, `ranger-hut`, `timber-lookout`, `tent`,
-      `campfire`, `camper-van` and `radio-mast`. Each has a solid, a model,
-      an editor entry and a `propsync` entry.
-    - `woodsFor` now keeps the trees off the trails, and a woodland piece
-      only keeps a trunk off itself rather than clearing 14 m round it.
-    - `npm run highmoordraft` placed 188 props (ids `hm…`). The city tests
-      pass and typecheck is clean.
-  - **Highmoor, left to do:**
-    1. Look in 3D at the mast, the walls and the woods up close. The car
-       park, campsite and lookout already look right.
-       `cityshot --view at` snaps the car to a road. For off-road views,
-       temporarily set `world.x/z` again after `world.recover()`.
-    2. Only one field gate went in. The north mouth is the Descent's
-       finish, and the walls beside the gates were refused because they
-       were too close to the Climb's race line. Ask the owner, or accept
-       it.
-    3. Write a `highmoor.test.ts` like `tidewater.test.ts`. Update
-       `docs/map-areas.md` and CLAUDE.md's drafter list. Run `citylap`:
-       the woods moved round the new pieces, near the Climb and the
-       Descent.
-    4. Open the PR, then republish the Highmoor Props editor
-       (`npm run propexport -- --place highmoor`) for the owner's edits.
-  - **Waiting for the owner:** their review of Highmoor. After that
-    Industrial, or races. From before: the heat-6 "neither" in `endings`,
-    traffic downtown, #484's moved road ends, and the railway (#514,
-    parked).
-  - **Branches and worktrees:** `main`, `highmoor-dressing` (WIP),
-    `railway-loop-draft` (#514) and `collectibles-frozen` (#469, local).
-    Worktrees: `crosstown-main` (the served copy) and
-    `crosstown-highmoor`.
+    - **Highmoor Park's once-over is PR #573** (branch `highmoor-dressing`,
+      worktree `../crosstown-highmoor`). The owner looked at it in the dev
+      server and the editor and signed it off. 188 props from
+      `npm run highmoordraft`, 12 new kinds, the path prop's `trail` variant,
+      `highmoor.test.ts`, docs. `citylap`: nothing moved.
+    - CI failed once: `tidewater.test.ts` counted every picnic shelter in the
+      city, and Highmoor adds one. It now counts Tidewater's own. If #573 is
+      still open, check it merged; if it is stuck, rebase on `main` and
+      re-push.
+    - Only one field gate went in (the north mouth is the Descent's finish;
+      walls beside the gates were too close to the Climb's race line). The
+      owner did not ask for more.
+    - The Highmoor Props editor was exported
+      (`screenshots/highmoor-propeditor.html`) but the owner made no edits, so
+      there is nothing to `propsync`.
+  - **Next: Industrial's props pass** (the owner's pick). Same loop as
+    downtown, Tidewater and Highmoor: ask the owner for picks first, write
+    `tools/industrialdraft.mjs` (replace only its own ids on a re-run),
+    shoot it, add a test and docs, open the PR, then export the editor.
+    `worksdraft` already did Industrial's buildings and the railway;
+    `groundfit` reports 28 warehouses sunk up to 2 m there, an owner call.
+  - **After that: races**, per the owner's order.
+    1. Tune rival pace and speed-run targets against #347's human pace.
+    2. `RIVAL_CIRCUITS` beyond Rim and Quay.
+    3. Unpark #469 (collectibles).
+  - **Waiting for the owner:** the heat-6 "neither" in `endings`, traffic
+    downtown, #484's moved road ends, and the railway (#514, parked).
+  - **Branches and worktrees:** `main`, `highmoor-dressing` (#573; delete
+    after merge, on the owner's word), `railway-loop-draft` (#514) and
+    `collectibles-frozen` (#469, local). Worktrees: `crosstown-main` (the
+    served copy) and `crosstown-highmoor` (remove after #573 merges).
   - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
     keyed off the checkout path, so either Claude account sees it.
   - **Next, per the owner's order: races**, once the props pass is done.
