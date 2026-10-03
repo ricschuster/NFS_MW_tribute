@@ -3,33 +3,34 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-03, later; #580 lighting step 1 in review).**
-  - **PR #591 (branch `look-grade-haze`, worktree `../crosstown-lighting`)** is
-    #580's first step behind `?look=grade`: `scene/grade.ts` (a shader pass in
-    the effect chain, linear HDR before ACES: desaturate, mild contrast, cool
-    lifted blacks, warm lights, light vignette) plus a shorter street fog
-    (120-1700 m) and a sun-side glow in the sky dome. Tuned on the downtown and
-    dusk rows (the first numbers crushed dusk to black). No `looktime` reading
-    yet.
-  - **Next, in order:** (1) a sun-facing haze shot in `tools/lookshots.mjs`
-    (the current `haze` row looks along the longest bridge at 13:00, away from
-    the sun, so the fog and glow barely show; add one near 17:00 with the
-    heading on the sun's bearing and a skyline in view) and tune the fog and
-    glow against `reference/Screenshot_20261003_050141.png`; (2) grade that
-    follows the hour and area; (3) cascaded sun shadows, the biggest perf risk,
-    so record a `looktime` baseline first; then AO, env map, car paint.
-  - **Update:** `looksheet` now renders on the GPU (ANGLE gl-egl, RTX 3090): a
-    shot takes about 25 s, not 2 min. `LOOK_GL=software` gives the SwiftShader
-    path back; `looktime` stays on SwiftShader so its ratios are comparable. The
-    `sunhaze` shot (18:00, facing the sun's bearing from outside downtown) is
-    done and the fog is 120-2000 m with a wider sun glow. The owner does not
-    need to supply a haze frame.
-  - **`looktime` is on the GPU too** (vsync and the frame-rate cap lifted;
-    `LOOK_GL=software` for the old path). Baseline at 640x400, 40 frames, ms per
-    frame, `none` / `grade`: downtown 3.5/3.2, woods 1.6/1.6, industrial 1.6/1.7,
-    wall 1.2/1.3, tunnel 1.4/1.6, haze 2.0/1.8, sunhaze 3.7/4.0, dusk 3.3/3.1.
-    The grade costs nothing measurable; differences under about 0.3 ms are noise.
-    Re-record it before each later phase.
+- **Start here (2026-10-03, evening; #580 lighting, haze done, shadows next).**
+  - **PR #591 (branch `look-grade-haze`, worktree `../crosstown-lighting`)**
+    holds #580's first step behind `?look=grade`: `scene/grade.ts` (a shader
+    pass before ACES: desaturate, mild contrast, cool lifted blacks, warm
+    lights, light vignette), street fog 120-2000 m and a wide sun-side glow in
+    the sky dome. The haze tuning is done against
+    `reference/Screenshot_20261003_050141.png`: the skyline now sits in haze,
+    but the whole frame is still duller and greyer than the reference's warm,
+    bright horizon. That gap is step 2 below, not more fog.
+  - **Tools changed:** `looksheet` and `looktime` render on the GPU (ANGLE
+    gl-egl, RTX 3090; `looktime` also lifts vsync and the frame cap). A shot is
+    about 25 s, a whole looktime under a minute. `LOOK_GL=software` is the old
+    SwiftShader path (not comparable). New shot `sunhaze` (18:00, facing the
+    sun's bearing -0.8 from outside downtown); its bearing and hour are
+    hard-coded in `tools/lookshots.mjs` against the 17:00 and 19:00 keys in
+    `daylight.ts`: keep them in step.
+  - **`looktime` baseline** (GPU, 640x400, 40 frames, ms/frame, `none`/`grade`):
+    downtown 3.5/3.2, woods 1.6/1.6, industrial 1.6/1.7, wall 1.2/1.3,
+    tunnel 1.4/1.6, haze 2.0/1.8, sunhaze 3.7/4.0, dusk 3.3/3.1. The grade costs
+    nothing measurable; under about 0.3 ms is noise. Re-record before each phase.
+  - **Next, in order:** (1) merge #591 if the owner is happy with it; (2) grade
+    that follows the hour and area (warmer, brighter golden-hour horizon; the
+    sunhaze row is the test); (3) cascaded sun shadows behind `?look=shadow`,
+    the biggest perf risk: read the sun light and shadow setup in
+    `scene/cityview.ts` first, compare `looktime` `none;shadow`; then AO, env
+    map, clearcoat car paint. Attach a looksheet before/after to each PR.
+  - Screenshots in `screenshots/` are git-ignored. The `reference` symlink in
+    the worktree needs `/reference` in its `info/exclude`.
 
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
