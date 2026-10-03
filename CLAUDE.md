@@ -279,6 +279,10 @@ paragraph there and a line here, in the same PR.
   building's `variant`, which is what that field is for: a rooftop box is
   geometry, so it belongs on this side of the seam. Street furniture is still
   boxes, though the lamps have arms.
+- AI-generated assets (meshes, textures, concept images) are allowed
+  ([ADR-0013](docs/decisions/0013-ai-generated-assets-and-car-models.md)) on the
+  same test as everything else: original, licence-clean, one credits row each.
+  Prompts never name a real car.
 - Not the online social layer. The 2012 game's social layer is out of scope.
 - Not the mid-2000s template it started as. The old city, the ladder of
   fifteen, bounty, its milestone career and impound strikes belong to the other

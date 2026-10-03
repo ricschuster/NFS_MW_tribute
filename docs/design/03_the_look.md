@@ -116,9 +116,10 @@ and the same constraint would push the same way in an engine.
 ## Before the first asset
 
 - **Sourcing rule.** CC0 libraries (Poly Haven, ambientCG for textures;
-  Kenney, Quaternius for models) are clean. AI-generated textures are the grey
-  area and are best ruled out. Keep a credits list per file from the first
-  asset.
+  Kenney, Quaternius for models) are clean. AI-generated assets were once ruled out;
+  [ADR-0013](decisions/0013-ai-generated-assets-and-car-models.md) allows them,
+  original and licence-clean, with a credits row each. Keep a credits list per
+  file from the first asset.
 - **An ADR for the asset pipeline** once real files are loaded: glTF, KTX2 for
   compressed textures, a size budget, level of detail at distance. The loaders
   ship inside three.js, so no new dependency.
