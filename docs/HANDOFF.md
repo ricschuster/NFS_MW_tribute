@@ -3,6 +3,32 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, close of the day): every look switch is a default; next is cars (#584).**
+  - **State:** #607 (building kit) and #608 (all seven switches default:
+    env, pbr, materials, trees, particles, clutter, buildings; `?look=none` is
+    the plain city; `DEFAULT_LOOK` in `scene/look.ts`) are merged. #609 (branch
+    `look-contact-shadow`, auto-merge armed) adds a contact shadow under every
+    car (`cars.ts`, name `contact`, on with the clearcoat paint); it is subtle
+    and invisible in shaded streets. That finishes #580 step 6. Docks shot now
+    frames a door (stand-off is `(cos a, -sin a)`). Grep `origin/main` for #609
+    and run `git log origin/main..look-contact-shadow` before trusting this.
+  - **Issues #579-#583 are still open on GitHub** though the work is in; close
+    with the owner's word. #583 has one leftover: a framed still of each
+    landmark (they hide among downtown towers from any road; needs a camera
+    aimed at the building, a tool change), and a unit test per landmark.
+  - **Cars (#584), not started.** What exists: 44 `CarProfile`s in `cars.ts`
+    (multipliers only, `docs/research/car-roster.md`), eight shared body shapes
+    in `scene/carshape.ts` (`BODIES`: coupe, hatch, saloon, roadster, frame,
+    wedge, suv, pickup) built as deformed boxes with a greenhouse and four
+    cylinder wheels; `scene/cars.ts` `makeCar` adds lights and the contact
+    shadow; `CarPool` repaints `children[0]` (the body must stay the first
+    child). Paint is Lambert, or `MeshPhysicalMaterial` clearcoat under `pbr`.
+    **Sourcing is the owner's call and is undecided** (CC0 bases, hand
+    modelling, or better procedural shapes); ask first. AI-generated assets are
+    ruled out, and each car must read as its stand-in without copying it.
+  - **Parked:** HUD (#586, wait for the owner), weather and wet roads (#585, no
+    weather flag early), races. The owner has not been asked about the car
+    paint in motion; #608 made it default.
 - **Update (2026-10-03, end of day): the owner has seen the building kit in motion and approved it.**
   PR #607 (`look-buildings`, auto-merge armed) holds all three passes. The
   owner drove `?look=all` with the spawn moved downtown (a local, uncommitted
