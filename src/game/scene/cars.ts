@@ -2,7 +2,41 @@ import * as THREE from 'three';
 import { CAR_WIDTH_WORLD, CAR_ASPECT } from '../constants';
 import { carParts, CAR_PAINT } from './carshape';
 import type { CarBody } from '../cars';
+import type { CopKind } from '../constants';
 import { lampGlowTexture } from './signage';
+
+/**
+ * What each police unit is drawn as (#584). Drawing only, and kept here rather
+ * than in `COP_UNITS`: the sim reads that table and nothing in it should change
+ * for a look. A cruiser is a saloon, the heavy ones are what they scale like.
+ */
+export const COP_BODY: Record<CopKind, CarBody> = {
+  cruiser: 'saloon',
+  unmarked: 'saloon',
+  state: 'muscle',
+  suv: 'suv',
+  federal: 'fastback',
+  elite: 'gt',
+  enforcer: 'suv',
+};
+
+/**
+ * The shapes of ambient traffic, as a pick list: mostly saloons and hatches,
+ * a few of everything else. A traffic car has a colour and no kind (the sim
+ * does not care what it is), so the view deals the shapes out as cars first
+ * appear and remembers which each got.
+ */
+const TRAFFIC_BODIES: CarBody[] = ['saloon', 'hatch', 'saloon', 'coupe', 'hatch', 'suv', 'saloon', 'pickup', 'hatch', 'coupe', 'saloon', 'suv'];
+const dealt = new WeakMap<object, CarBody>();
+let dealtCount = 0;
+export function trafficBody(car: object): CarBody {
+  let body = dealt.get(car);
+  if (!body) {
+    body = TRAFFIC_BODIES[dealtCount++ % TRAFFIC_BODIES.length];
+    dealt.set(car, body);
+  }
+  return body;
+}
 
 const BODY_W = CAR_WIDTH_WORLD;
 const BODY_H = CAR_WIDTH_WORLD * CAR_ASPECT * 0.62;
