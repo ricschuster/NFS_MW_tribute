@@ -1,7 +1,8 @@
 # Material credits
 
 Every photo-sourced texture in the game is CC0 and listed here, one entry per
-set, from the first one (ADR-0012). Nothing AI-generated, nothing licensed.
+set, from the first one (ADR-0012). Nothing licensed. AI-generated assets are allowed by ADR-0013 and get a row
+here like any other; none are in yet.
 
 | Set | Source | Licence | Used for | Processing |
 |-----|--------|---------|----------|------------|

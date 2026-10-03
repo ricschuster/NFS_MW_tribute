@@ -1,6 +1,6 @@
 # 12. The asset pipeline: CC0 photo textures, small and cached
 
-- Status: accepted
+- Status: accepted; rule 1's AI clause amended by [0013](0013-ai-generated-assets-and-car-models.md)
 - Date: 2026-10-03
 - From: [design/03](../design/03_the_look.md), "Before the first asset"; #581
 
@@ -16,8 +16,9 @@ from, what format and size it ships at, how it loads, and how it is credited.
 ## Decision
 
 1. **Source: CC0 only.** ambientCG and Poly Haven for textures; Kenney and
-   Quaternius for models when #584 gets there. AI-generated textures are ruled
-   out, as are any with a licence that needs attribution to ship. Nothing
+   Quaternius for models when #584 gets there. AI-generated assets were ruled
+   out here, since lifted by [0013](0013-ai-generated-assets-and-car-models.md);
+   so are any with a licence that needs attribution to ship. Nothing
    third-party from the reference game, ever (CLAUDE.md).
 2. **Credits from the first file.** `src/game/scene/materials/CREDITS.md` has
    one row per set: source page, licence, where it is used, and what was done
