@@ -3,10 +3,10 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:
-  #597-#603 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
-  dust, photo asphalt as default). This branch adds autumn broadleaves and lamp
-  wires. After each merge, `git log origin/main..<branch>` for stranded commits.
+- **Update (2026-10-03, night): #581 and #582 are done (#605 merged).** Merged:
+  #597-#605 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
+  dust, photo asphalt as default, autumn trees and wires, deck rails, guardrail
+  and bend kerbs). After each merge, `git log origin/main..<branch>` for stranded commits.
   - **`LOOK_SWITCHES` is env, pbr, materials, trees, particles, clutter.**
     The owner has not seen the car in motion; ask before defaulting any. To see
     them: `npm run dev`, then `?look=trees,particles,clutter`, `?look=all` etc.
@@ -37,9 +37,8 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     (394 pieces; not where a road is wholly in a tunnel). Waterside guardrail
     along `embankment` roads where water is within 6 m of the edge (181 panels).
     Red-and-white kerbs on the outside of two-road bends of 25 deg or more (2416
-    blocks). **Skipped: a fence "along the whole wall"** - the phrase has no
-    clear referent in this city (bridges, water ends and Marrow Field already
-    have parapets or fences); ask the owner what wall it means.
+    blocks). **The fence "along the whole wall" is dropped** (owner, 2026-10-03:
+    no referent; `03_the_look.md` reworded). #582 is finished.
   - **Next, in the owner's order:** wet roads once #585 gives a weather state
     (parked; do not pull a weather flag forward); a second shadow cascade only
     if a low-sun frame needs it (dusk and sunhaze showed none); races are
