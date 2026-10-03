@@ -123,7 +123,7 @@ export class Cityscape {
   /** `?look=materials` (#581): photo-sourced walls (the asphalt is always photo). */
   private readonly photo: boolean;
 
-  constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean; leaves?: boolean; wires?: boolean } = {}) {
+  constructor(city: City, provider: BuildingProvider = new BoxBuildings(), options: { photo?: boolean; leaves?: boolean; wires?: boolean; kit?: boolean } = {}) {
     this.provider = provider;
     this.photo = options.photo ?? false;
 
@@ -164,7 +164,7 @@ export class Cityscape {
 
     this.breakables = new CityBreakables(city.breakables);
     for (const mesh of this.breakables.meshes) this.group.add(mesh);
-    this.setPieces = new CitySetPieces(city.setPieces, { photo: this.photo, leaves: options.leaves });
+    this.setPieces = new CitySetPieces(city.setPieces, { photo: this.photo, leaves: options.leaves, kit: options.kit });
     for (const mesh of this.setPieces.meshes) this.group.add(mesh);
     this.jumps = new CityJumps(city.jumps);
     for (const mesh of this.jumps.meshes) this.group.add(mesh);

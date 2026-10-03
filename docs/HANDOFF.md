@@ -3,6 +3,47 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, end of day): the owner has seen the building kit in motion and approved it.**
+  PR #607 (`look-buildings`, auto-merge armed) holds all three passes. The
+  owner drove `?look=all` with the spawn moved downtown (a local, uncommitted
+  edit, since reverted) and said "Looks great! Approved." That is the kit
+  only: `LOOK_SWITCHES` is still env, pbr, materials (walls), trees, particles,
+  clutter, buildings, and none is a default yet. Whether `buildings` becomes
+  the default is the first question next session (a one-line change in
+  `scene/look.ts`; ask, do not assume). Open items: framed stills of a loading
+  dock and of each landmark; then HUD (#586), weather (#585), cars (#584).
+- **Update (2026-10-03, late night): #583 building kit, first pass, `?look=buildings` (PR #607).**
+  `scene/buildingkit.ts` derives detail from a model's own parts, in metres,
+  before `grown` scales it (`kitted` in `setpieces.ts`): sills and lintels from
+  the window boxes; mullions on ribbon windows and glass towers; trim bands on
+  stone and deco towers; cornice, parapet and roof plant (kept to the front of
+  the roof, the models put tanks at the back); ground-floor piers, door
+  canopies, shopfront risers, transoms and mullions; a tower entrance canopy;
+  sheds get ribs, bay canopies and bollards. Kinds: townhouse, loft, midrise,
+  shop, flat, apartment, tower, warehouse. Not house, villa, manor or the
+  landmarks. Nothing sits more than half a metre proud of a wall below the
+  cornice (the sim collides with the footprint).
+  - **Shots** (`tools/lookshots.mjs`): `terrace`, `skyline`, `roofs` (chase camera
+    lifted 7 m: `lift` is in world units times 135, 45 put it a kilometre up),
+    `crowns` (lift 25, back 150). `npm run looksheet -- --shot roofs --look 'none;buildings'`.
+  - **Judged on stills only; not a default.** Sills are faint at this wall tone.
+  - **Second pass (same PR):** tower podium (stone skin, glazing bays, piers,
+    cap, within 0.55 m), house/villa/manor (plinth, sills, lintels, shutters,
+    door surround and step, chimney caps, manor quoins), silo (seam rings,
+    ladder, rail, hatch). Shots `suburb` (seen) and `silos` (aimed along the
+    road, silos out of frame: unseen, only unit-tested).
+  - **Third pass:** loading docks (bumpers, yellow frame, leveller plate, roof
+    vents, downpipes), landmarks (`LANDMARKS` in `buildingkit.ts`: chateau,
+    city hall, gallery, cathedral, library, stadium, cruise terminal, dome,
+    lookout and twist towers; the flatiron already had its cornice). Shots
+    `silos` (rings seen), `civic`, `terracedusk` (kit reads at dusk; windows
+    are lit by the sim, untouched). Landmarks and docks are seen only in part:
+    `civic` shows the lookout tower's piers, not the cathedral or hall; a
+    `docks` shot never framed a warehouse door (the stand-off by `angle` did
+    not work), so it was dropped and the dock kit is unit-tested only.
+  - **Not done:** a framed still of each landmark and of a loading dock;
+    a unit test per landmark beyond a count.
+  - After the merge: `git log origin/main..look-buildings` for stranded commits.
 - **Update (2026-10-03, night): #581 and #582 are done (#605 merged).** Merged:
   #597-#605 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
   dust, photo asphalt as default, autumn trees and wires, deck rails, guardrail

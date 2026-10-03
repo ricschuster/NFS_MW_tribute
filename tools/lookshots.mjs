@@ -11,10 +11,21 @@ export const SHOTS = [
   // Bearing is the sun's at that hour: the 17:00 and 19:00 keys are -0.4 and
   // -1.2 (daylight.ts), so 18:00 is -0.8. Keep the two in step.
   { name: 'sunhaze', ref: 'Screenshot_20261003_050141.png', place: 'sunhaze', hour: 18, bearing: -0.8 },
+  { name: 'terrace', ref: 'none', place: 'terrace', hour: 13 },
+  { name: 'skyline', ref: 'none', place: 'skyline', hour: 13 },
+  // The same street from 7 m above the chase camera, for rooflines: a car-height camera cannot see a cornice.
+  { name: 'roofs', ref: 'none', place: 'terrace', hour: 13, lift: 7, back: 60 },
+  { name: 'crowns', ref: 'none', place: 'skyline', hour: 13, lift: 25, back: 150 },
+  // Houses, villas and manor (#583): the densest cluster of them, from the road.
+  { name: 'suburb', ref: 'none', place: 'suburb', hour: 13, lift: 2, back: 40 },
+  { name: 'silos', ref: 'none', place: 'silos', hour: 13, lift: 3, back: 35 },
+  // The kit at dusk, where lit windows meet sills and mullions that the kit does not light.
+  { name: 'terracedusk', ref: 'none', place: 'terrace', hour: 19.5, lift: 2 },
+  { name: 'civic', ref: 'none', place: 'civic', hour: 13, lift: 4, back: 130 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
-export function place({ place, hour, bearing }) {
+export function place({ place, hour, bearing, lift, back }) {
   const { world } = globalThis.crosstown;
   const M = 135;
   const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
@@ -44,7 +55,46 @@ export function place({ place, hour, bearing }) {
     x = best.px - ((dx * sign) / len) * back * M;
     z = best.pz - ((dz * sign) / len) * back * M;
   };
-  if (place === 'industrial') {
+  if (place === 'skyline') {
+    // Towers from a distance, for crowns and mullions: the most towers within 80 m of one.
+    const towers = city.setPieces.filter((p) => p.kind === 'tower');
+    const near = (p) => towers.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 80 * M).length;
+    approach(towers.sort((a, b) => near(b) - near(a))[0].at, back ?? 110);
+  } else if (place === 'terrace') {
+    // The building kit (#583): the densest run of street-wall buildings
+    // (shops, flats, townhouses, lofts), seen from the road in front of it.
+    const wall = city.setPieces.filter((p) => ['shop', 'flat', 'townhouse', 'loft', 'midrise', 'apartment'].includes(p.kind));
+    const near = (p) => wall.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
+    approach(wall.sort((a, b) => near(b) - near(a))[0].at, back ?? 45);
+  } else if (place === 'suburb') {
+    const homes = city.setPieces.filter((p) => ['house', 'villa', 'manor'].includes(p.kind));
+    const near = (p) => homes.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 50 * M).length;
+    approach(homes.sort((a, b) => near(b) - near(a))[0].at, back ?? 40);
+  } else if (place === 'silos' || place === 'docks' || place === 'civic') {
+    // Stand on the nearest road and face the thing itself, not along the road.
+    const kinds = { silos: ['silo'], docks: ['warehouse'], civic: ['city-hall', 'cathedral', 'gallery'] }[place];
+    const things = city.setPieces.filter((p) => kinds.includes(p.kind) && (place !== 'docks' || p.variant !== 'small'));
+    const near = (p) => things.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;
+    const target = things.sort((a, b) => near(b) - near(a))[0];
+    // Stand off from it on the side that shows most: a warehouse's loading
+    // doors face its local +x, which `angle` turns; anything else from the
+    // side nearest a road. The car may stand off-road: the shot only needs it there.
+    let dx, dz;
+    if (place === 'docks') {
+      dx = Math.cos(target.angle);
+      dz = Math.sin(target.angle);
+    } else {
+      approach(target.at, 0);
+      dx = x - target.at.x;
+      dz = z - target.at.z;
+      const len = Math.hypot(dx, dz) || 1;
+      dx /= len;
+      dz /= len;
+    }
+    x = target.at.x + dx * (back ?? 45) * M;
+    z = target.at.z + dz * (back ?? 45) * M;
+    heading = Math.atan2(-dx, -dz);
+  } else if (place === 'industrial') {
     // The silo with the most silos around it, then the road nearest them.
     const silos = city.setPieces.filter((p) => p.kind === 'silo');
     const near = (p) => silos.filter((q) => Math.hypot(q.at.x - p.at.x, q.at.z - p.at.z) < 60 * M).length;
@@ -144,4 +194,14 @@ export function place({ place, hour, bearing }) {
   globalThis.crosstown.view.director.started = false;
   for (let t = 0; t < 2; t += 1 / 60) world.step(1 / 60, none);
   world.hour = hour;
+  if (lift) {
+    // Wrap the director so its shot is raised, then looks down at the car.
+    const director = globalThis.crosstown.view.director;
+    const plain = director.update.bind(director);
+    director.update = (dt, w) => {
+      const shot = plain(dt, w);
+      shot.position.y += lift * M;
+      return shot;
+    };
+  }
 }
