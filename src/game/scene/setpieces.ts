@@ -880,6 +880,128 @@ function streetTree(): Part[] {
   ];
 }
 
+const STREET_IRON = '#2f3336';
+const PALE_STONE = '#b9b2a4';
+
+/**
+ * A bus shelter (downtown's once-over): a glass back and ends on a dark
+ * frame, a flat roof, a bench inside and a timetable panel on one end. Open
+ * at the front, which faces the kerb.
+ */
+function busShelter(): Part[] {
+  return [
+    ...[-1.95, 1.95].flatMap((x) => [-0.75, 0.75].map((z) => ({ geometry: at(box(0.08, 2.4, 0.08), x, 1.2, z), colour: STREET_IRON }))),
+    { geometry: at(box(4.2, 0.12, 1.8), 0, 2.46, 0), colour: STREET_IRON },
+    { geometry: at(box(3.8, 1.9, 0.04), 0, 1.2, -0.75), colour: '#9fc0cc' },
+    ...[-1.95, 1.95].map((x) => ({ geometry: at(box(0.04, 1.9, 1.3), x, 1.2, -0.05), colour: '#9fc0cc' })),
+    { geometry: at(box(2.4, 0.06, 0.4), 0, 0.48, -0.5), colour: '#6d7378' },
+    { geometry: at(box(0.1, 1.6, 1.1), 1.98, 1.3, 0.1), colour: '#e6c84a' },
+  ];
+}
+
+/** A cast-iron bollard: a post with a ring near its top. */
+function bollard(): Part[] {
+  return [
+    { geometry: at(upright(0.1, 0.12, 1, 10), 0, 0.5, 0), colour: STREET_IRON },
+    { geometry: at(upright(0.13, 0.13, 0.08, 10), 0, 0.82, 0), colour: '#b89a4a' },
+  ];
+}
+
+/** A concrete planter with a clipped shrub in it. */
+function planter(): Part[] {
+  return [
+    { geometry: at(box(2.4, 0.8, 1.2), 0, 0.4, 0), colour: CONCRETE },
+    { geometry: at(new THREE.IcosahedronGeometry(0.75, 1).scale(1.4, 0.7, 0.75), 0, 1.15, 0), colour: '#3f6a37' },
+  ];
+}
+
+/** A litter bin on the pavement. */
+function bin(): Part[] {
+  return [
+    { geometry: at(upright(0.3, 0.26, 0.95, 12), 0, 0.475, 0), colour: '#2f4a3a' },
+    { geometry: at(upright(0.32, 0.32, 0.08, 12), 0, 0.99, 0), colour: STREET_IRON },
+  ];
+}
+
+/**
+ * A square's fountain, in game metres: a wide stone basin of water, and a
+ * column of two bowls rising out of the middle of it.
+ */
+function fountain(): Part[] {
+  return [
+    { geometry: at(upright(7, 7.2, 0.9, 28), 0, 0.45, 0), colour: PALE_STONE },
+    { geometry: at(upright(6.5, 6.5, 0.1, 28), 0, 0.86, 0), colour: '#4f86a0' },
+    { geometry: at(upright(0.7, 1, 3.4, 12), 0, 1.7, 0), colour: PALE_STONE },
+    { geometry: at(upright(2.6, 1.2, 0.5, 18), 0, 2.6, 0), colour: PALE_STONE },
+    { geometry: at(upright(1.4, 0.6, 0.4, 14), 0, 3.9, 0), colour: PALE_STONE },
+    { geometry: at(upright(0.25, 0.4, 1.4, 8), 0, 4.6, 0), colour: '#cfe4ee' },
+  ];
+}
+
+/**
+ * A monument on a stepped plinth, in game metres: a bronze figure, or an
+ * obelisk (`variant`).
+ */
+function statue(variant?: string): Part[] {
+  const plinth = [
+    { geometry: at(box(4.4, 0.6, 4.4), 0, 0.3, 0), colour: PALE_STONE },
+    { geometry: at(box(3, 3, 3), 0, 2.1, 0), colour: PALE_STONE },
+  ];
+  if (variant === 'obelisk') {
+    return [...plinth, { geometry: at(upright(0.7, 1.1, 10, 4).rotateY(Math.PI / 4), 0, 8.6, 0), colour: '#cfc8b8' }, { geometry: at(new THREE.ConeGeometry(0.75, 1.2, 4).rotateY(Math.PI / 4), 0, 14.2, 0), colour: '#cfc8b8' }];
+  }
+  const bronze = '#5d6b4f';
+  return [
+    ...plinth,
+    { geometry: at(box(1.2, 1.8, 0.7), 0, 4.5, 0), colour: bronze },
+    { geometry: at(box(1.4, 1.6, 0.8), 0, 6.2, 0), colour: bronze },
+    { geometry: at(new THREE.IcosahedronGeometry(0.45, 1), 0, 7.4, 0), colour: bronze },
+    { geometry: at(box(0.3, 1.4, 0.3).rotateZ(-0.6), 1, 7.1, 0), colour: bronze },
+  ];
+}
+
+const KIOSK_COLOURS: Record<string, string> = { green: '#2f5d45', red: '#8c2f2a', blue: '#2d4f73' };
+
+/** A news or coffee kiosk: a little hut with a shuttered counter and an awning. */
+function kiosk(variant?: string): Part[] {
+  const paint = KIOSK_COLOURS[variant ?? 'green'] ?? KIOSK_COLOURS.green;
+  return [
+    { geometry: at(box(3, 2.7, 2.5), 0, 1.35, 0), colour: paint },
+    { geometry: at(box(2.2, 1, 0.06), 0, 1.5, 1.26), colour: '#e8e4da' },
+    { geometry: at(box(3.4, 0.25, 2.9), 0, 2.85, 0), colour: '#33383b' },
+    { geometry: at(box(3, 0.08, 0.9).rotateX(0.35), 0, 2.4, 1.6), colour: '#e8e4da' },
+  ];
+}
+
+const DUMPSTER_COLOURS: Record<string, string> = { green: '#3b5e3a', blue: '#2d4a6b', grey: '#5d6266' };
+
+/** A commercial dumpster behind a building, its lid down. */
+function dumpster(variant?: string): Part[] {
+  return [
+    { geometry: at(box(2, 1.3, 1.8), 0, 0.75, 0), colour: DUMPSTER_COLOURS[variant ?? 'green'] ?? DUMPSTER_COLOURS.green },
+    { geometry: at(box(2.05, 0.08, 1.9).rotateX(-0.08), 0, 1.45, 0), colour: '#2a2d2f' },
+    ...[-0.8, 0.8].flatMap((x) => [-0.7, 0.7].map((z) => ({ geometry: at(box(0.15, 0.1, 0.15), x, 0.05, z), colour: '#2a2d2f' }))),
+  ];
+}
+
+const VAN_COLOURS: Record<string, string> = { white: '#e8e6df', yellow: '#e2b33c', teal: '#3f8f8a', pink: '#d97b8f' };
+
+/**
+ * A food truck parked with its hatch open: a box body, a cab at the front,
+ * the serving hatch and its awning on the left side, which faces the square.
+ */
+function foodTruck(variant?: string): Part[] {
+  const paint = VAN_COLOURS[variant ?? 'white'] ?? VAN_COLOURS.white;
+  return [
+    { geometry: at(box(2.3, 2.6, 4.6), 0, 1.75, -0.9), colour: paint },
+    { geometry: at(box(2.2, 1.8, 1.8), 0, 1.35, 2.3), colour: paint },
+    { geometry: at(box(2, 0.7, 0.05), 0, 1.9, 3.21), colour: '#2b3540' },
+    { geometry: at(box(0.05, 1, 2.6), -1.16, 2, -0.9), colour: '#2b3540' },
+    { geometry: at(box(0.9, 0.06, 2.8).rotateZ(-0.35), -1.55, 2.75, -0.9), colour: '#c94f3d' },
+    ...[-1.9, 2.2].flatMap((z) => [-1.05, 1.05].map((x) => ({ geometry: at(tube(0.42, 0.42, 0.3, 12).rotateY(Math.PI / 2), x, 0.42, z), colour: '#1e2022' }))),
+  ];
+}
+
 /**
  * The working quarry's machinery is drawn bigger than life. A car here is
  * 4.8 m across, so a haul truck at its real 6.5 m is scarcely wider than the
@@ -966,6 +1088,16 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   'cruise-terminal': cruiseTerminal,
   'geodesic-dome': geodesicDome,
   flatiron,
+  // Downtown's once-over (2026-10-02), grown as `city/setpieces.ts` grows their solids.
+  'bus-shelter': grown(busShelter, 2),
+  bollard: grown(bollard, 2),
+  planter: grown(planter, 2),
+  bin: grown(bin, 2),
+  fountain,
+  statue,
+  kiosk: grown(kiosk, HOUSE_GROWN),
+  dumpster: grown(dumpster, HOUSE_GROWN),
+  'food-truck': grown(foodTruck, 2),
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

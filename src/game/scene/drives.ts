@@ -8,7 +8,7 @@ const M = UNITS_PER_METRE;
 const STEP = 3 * M;
 /** Over the ground by this much, and pulled forward in depth, so the two never fight. */
 const LIFT = 0.08 * M;
-const COLOURS: Record<Apron['look'], string> = { cobbles: '#6f665c', gravel: '#8c826f', concrete: '#9a9890' };
+const COLOURS: Record<Apron['look'], string> = { cobbles: '#6f665c', gravel: '#8c826f', concrete: '#9a9890', flags: '#9a9890', grass: '#4f7d3c' };
 
 /**
  * Ashford Point's drives and forecourts (#293), and downtown's pavements and

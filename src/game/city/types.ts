@@ -398,7 +398,7 @@ export interface RepairShop {
  * City data like everything else here: the sim has to be able to bring one
  * down without a renderer in the room.
  */
-export type BreakableKind = 'gate' | 'stack';
+export type BreakableKind = 'gate' | 'stack' | 'cafe-tables';
 
 export interface Breakable {
   id: number;
@@ -466,11 +466,12 @@ export interface AuthoredProp {
 }
 
 /**
- * Everything the prop editor can place. Gates and stacks become `Breakable`s
- * and billboards `Collectible`s, which already exist; a jump becomes a `Jump`
- * (#307); the rest are set pieces.
+ * Everything the prop editor can place. Gates, stacks and café tables become
+ * `Breakable`s and billboards `Collectible`s, which already exist; a jump
+ * becomes a `Jump` (#307); a lawn is ground, a pocket of grass left in
+ * downtown's paving (`city/downtownground.ts`); the rest are set pieces.
  */
-export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump' | 'billboard';
+export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump' | 'billboard' | 'lawn';
 
 /** The set pieces: things that stand somewhere and are driven round, not through. */
 export type SetPieceKind =
@@ -548,7 +549,18 @@ export type SetPieceKind =
   | 'city-hall'
   | 'cruise-terminal'
   | 'geodesic-dome'
-  | 'flatiron';
+  | 'flatiron'
+  // Downtown's once-over (2026-10-02): its streets' furniture, its squares'
+  // centrepieces, and the clutter of a working city centre.
+  | 'bus-shelter'
+  | 'bollard'
+  | 'planter'
+  | 'bin'
+  | 'fountain'
+  | 'statue'
+  | 'kiosk'
+  | 'dumpster'
+  | 'food-truck';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
@@ -593,7 +605,11 @@ export interface Jump {
 export interface Apron {
   outline: Vec2[];
   margin: number;
-  look: 'concrete' | 'cobbles' | 'gravel';
+  /**
+   * `flags` is downtown's paving, concrete laid in smaller slabs; `grass`
+   * takes paving back off, for a lawn left in it (`city/downtownground.ts`).
+   */
+  look: 'concrete' | 'cobbles' | 'gravel' | 'flags' | 'grass';
   yard: boolean;
 }
 

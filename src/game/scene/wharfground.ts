@@ -3,7 +3,8 @@ import type { Apron, Vec2 } from '../city/types';
 
 /**
  * Paved ground (#410, #454, #460): Sablet Wharf's yard is concrete, Kestrel
- * Head's castle courtyards are cobbled, and Highmoor's car park is gravel, not grass.
+ * Head's castle courtyards are cobbled, Highmoor's car park is gravel, and
+ * downtown is paved from edge to edge but for its lawns, not grass.
  *
  * The same move as the quarry's ground (`quarryground.ts`): a patch on the
  * ground's own material rather than a second mesh, so the terrain, its
@@ -27,6 +28,8 @@ import type { Apron, Vec2 } from '../city/types';
  */
 const SLAB = 8;
 const SETT = 0.9;
+/** Downtown's paving (2026-10-02): the same concrete as the wharf's, in pavement-sized slabs. */
+const FLAG = 2.4;
 /** Gravel has no joints: a grain this size, speckled light and dark, as a car park at the foot of Highmoor (#460) is. */
 const GRIT = 0.35;
 /** Each apron's outline is resampled to this many points. */
@@ -45,10 +48,11 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
     const xs = outline.map((p) => p.x);
     const zs = outline.map((p) => p.z);
     data.set([Math.min(...xs) - apron.margin, Math.min(...zs) - apron.margin, Math.max(...xs) + apron.margin, Math.max(...zs) + apron.margin], row);
-    // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles, 2 gravel).
-    const cobbles = apron.look === 'cobbles';
-    const look = cobbles ? 1 : apron.look === 'gravel' ? 2 : 0;
-    data.set([apron.margin, (cobbles ? SETT : apron.look === 'gravel' ? GRIT : SLAB) * unitsPerMetre, look, 0], row + 4);
+    // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles, 2 gravel,
+    // 3 grass). Flags are concrete in smaller slabs.
+    const look = { concrete: 0, flags: 0, cobbles: 1, gravel: 2, grass: 3 }[apron.look];
+    const spacing = { concrete: SLAB, flags: FLAG, cobbles: SETT, gravel: GRIT, grass: SLAB }[apron.look];
+    data.set([apron.margin, spacing * unitsPerMetre, look, 0], row + 4);
     outline.forEach((p, i) => data.set([p.x, p.z], row + (2 + i) * 4));
   });
   const texture = new THREE.DataTexture(data, COLUMNS, used.length, THREE.RGBAFormat, THREE.FloatType);
@@ -83,6 +87,8 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
         `#include <map_fragment>
         {
           vec2 p = vApronWorld.xz;
+          // What the ground was before any apron, for a lawn to put back.
+          vec3 unpaved = diffuseColor.rgb;
           for (int k = 0; k < uApronCount; k++) {
             vec4 box = texelFetch(uAprons, ivec2(0, k), 0);
             if (p.x < box.x || p.y < box.y || p.x > box.z || p.y > box.w) continue;
@@ -100,6 +106,11 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
             }
             float paved = inside ? 1.0 : 1.0 - smoothstep(params.x * 0.75, params.x, d);
             if (paved <= 0.0) continue;
+            if (params.z > 2.5) {
+              // Grass: a lawn left in paving, painted after it, takes it back off.
+              diffuseColor.rgb = mix(diffuseColor.rgb, unpaved, paved);
+              continue;
+            }
             if (params.z > 1.5) {
               // Gravel: no joints, a speckle of light and dark stones.
               vec2 grain = floor(p / params.y);
