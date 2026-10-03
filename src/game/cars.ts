@@ -23,7 +23,7 @@
 /** The body styles a car can be drawn with (#434). */
 export type CarBody =
   | 'coupe' | 'hatch' | 'saloon' | 'roadster' | 'frame' | 'wedge' | 'suv' | 'pickup'
-  | 'muscle' | 'gt' | 'fastback' | 'hyper' | 'cobra';
+  | 'muscle' | 'gt' | 'fastback' | 'hyper' | 'cobra' | 'brute' | 'pony' | 'viper';
 
 export interface CarProfile {
   /** Stable across saves: it is what a save file records. */
@@ -167,7 +167,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 0.97,
     scale: 1.05,
-    body: 'muscle',
+    body: 'coupe',
     source: 'street',
   },
   {
@@ -180,7 +180,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 0.98,
     scale: 1.05,
-    body: 'muscle',
+    body: 'pony',
     source: 'street',
   },
   {
@@ -388,7 +388,7 @@ export const CARS: CarProfile[] = [
     grip: 0.94,
     nitro: 1.16,
     scale: 1.05,
-    body: 'muscle',
+    body: 'viper',
     source: 'street',
   },
   {
@@ -615,7 +615,7 @@ export const CARS: CarProfile[] = [
     grip: 1.19,
     nitro: 1.25,
     scale: 1.02,
-    body: 'hyper',
+    body: 'brute',
     source: 'rival',
   },
   {
