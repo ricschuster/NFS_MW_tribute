@@ -17,15 +17,15 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
  */
 export const GRADE = {
   /** 1 is untouched, 0 is monochrome. */
-  saturation: 0.8,
+  saturation: 0.84,
   /** Contrast about mid grey; above 1 is steeper. */
   contrast: 1.06,
   /** Added to the blacks, tinted cool. */
-  lift: new THREE.Color(0.012, 0.016, 0.022),
+  lift: new THREE.Color(0.03, 0.036, 0.046),
   /** Multiplied into the lights: warm. Shadows get the inverse tint. */
   warmth: new THREE.Color(1.04, 1.0, 0.94),
   /** 0 is none; darkens the corners by about this much. */
-  vignette: 0.22,
+  vignette: 0.1,
 } as const;
 
 const GradeShader = {
@@ -60,7 +60,7 @@ const GradeShader = {
       // further and a dark wall is not crushed before the tone mapper.
       c = 0.18 * pow(max(c, vec3(1e-4)) / 0.18, vec3(contrast));
       // Split tone: the shadows lean to the lift's cool, the lights to warm.
-      float lit = smoothstep(0.02, 0.9, luma);
+      float lit = smoothstep(0.0, 0.5, luma);
       c *= mix(vec3(2.0) - warmth, warmth, lit);
       c += lift * (1.0 - lit);
       float edge = length(vUv - 0.5) * 1.4142;
