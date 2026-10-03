@@ -34,7 +34,8 @@ Roughly in order of how much of the impression each carries:
 - **Trees.** Conifers built from cut-out leaf cards, and a broadleaf in autumn
   colour. No cones.
 - **Street clutter.** Lamps, traffic lights, signs, red-and-white kerbs,
-  railings, a fence along the whole wall.
+  railings. (The first draft also listed "a fence along the whole wall";
+  nobody could say which wall it meant, so it was dropped, 2026-10-03.)
 - **Particles.** Snow or dust in the air.
 - **The HUD.** Angled panels, a cyan glow, a clean typeface. Ours has had no
   pass at all.
