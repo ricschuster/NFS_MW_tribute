@@ -3,6 +3,19 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, late night): AI assets allowed; car sourcing is a pilot (#584).**
+  The owner asked to consider "considerably" better cars, ruled out nothing, is
+  **not an artist and will not hire one**, and said the no-AI rule made no sense
+  for a project an AI wrote. [ADR-0013](decisions/0013-ai-generated-assets-and-car-models.md)
+  lifts it (original, licence-clean, a credits row each; prompts never name a
+  real car) and sets the plan: **motion first** (body roll, dive, squat, spinning
+  and steering wheels, light glow; view-side only), then a **pilot on one car**
+  with a shared glTF pipeline, comparing scripted-Blender (D) against
+  image-to-3D (E, local on the RTX 3090) in the city, in motion. Procedural cars
+  stay the fallback. **Blender 5.2.2 is installed** (`snap`); run it headless
+  (`blender -b -P`). Nothing is built yet. Check the licence of TRELLIS and
+  Hunyuan3D before downloading either (Hunyuan's is believed to exclude some
+  territories; unverified). Owner has still not seen the cars in motion.
 - **Update (2026-10-03, night): cars pass (#584), procedural, #610-#614 merged.**
   Owner delegated ("go as far as you can", then "keep going"), so sourcing is
   **better procedural shapes**: no asset, no `CREDITS.md` row, all 44 cars.
