@@ -3,15 +3,25 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Update (2026-10-03, late night): #583 building kit started, `?look=buildings`.**
+- **Update (2026-10-03, late night): #583 building kit, first pass, `?look=buildings` (PR #607).**
   `scene/buildingkit.ts` derives detail from a model's own parts, in metres,
-  before `grown` scales it: sills and lintels from the window boxes, mullions
-  on ribbon windows and glass towers, cornice, parapet and roof plant, ground
-  floor piers and door canopies; sheds get ribs, canopies and bollards. Kinds:
-  townhouse, loft, midrise, shop, flat, apartment, tower, warehouse (not
-  house, villa, manor or the landmarks). `lookshots.mjs` has `terrace`, `skyline`, `crowns` and `roofs` (the chase camera lifted 7 m, since a car-height camera cannot see a cornice).
-  First pass, judged on stills only; sills are faint and the roofline is not yet
-  seen from any shot. Not a default.
+  before `grown` scales it (`kitted` in `setpieces.ts`): sills and lintels from
+  the window boxes; mullions on ribbon windows and glass towers; trim bands on
+  stone and deco towers; cornice, parapet and roof plant (kept to the front of
+  the roof, the models put tanks at the back); ground-floor piers, door
+  canopies, shopfront risers, transoms and mullions; a tower entrance canopy;
+  sheds get ribs, bay canopies and bollards. Kinds: townhouse, loft, midrise,
+  shop, flat, apartment, tower, warehouse. Not house, villa, manor or the
+  landmarks. Nothing sits more than half a metre proud of a wall below the
+  cornice (the sim collides with the footprint).
+  - **Shots** (`tools/lookshots.mjs`): `terrace`, `skyline`, `roofs` (chase camera
+    lifted 7 m: `lift` is in world units times 135, 45 put it a kilometre up),
+    `crowns` (lift 25, back 150). `npm run looksheet -- --shot roofs --look 'none;buildings'`.
+  - **Judged on stills only; not a default.** Sills are faint at this wall tone.
+  - **Not done:** silos and loading bays beyond the warehouse, a real podium,
+    houses/villas/manor, the landmarks, `unit` test for shopfront parts, a dusk
+    look (lit windows are untouched by the kit).
+  - After the merge: `git log origin/main..look-buildings` for stranded commits.
 - **Update (2026-10-03, night): #581 and most of #582 are in.** Merged:
   #597-#603 (clouds and tunnel, ADR-0012, walls, weathering, leaf-card trees,
   dust, photo asphalt as default). This branch adds autumn broadleaves and lamp
