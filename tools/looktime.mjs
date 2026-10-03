@@ -11,6 +11,8 @@
 // the GPU (ANGLE gl-egl); LOOK_GL=software is the old SwiftShader path, whose
 // numbers are not comparable. A report: it asserts nothing.
 //
+// LOOK_SIZE=1920x1080 times at another size.
+//
 // Usage:
 //   npm run looktime                                   # every shot, switches off
 //   npm run looktime -- --look 'none;grade;all'        # ';'-separated switch sets
@@ -40,7 +42,8 @@ const browser = await chromium.launch({
       ? ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
       : ['--no-sandbox', '--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'],
 });
-const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
+const [VW, VH] = (process.env.LOOK_SIZE ?? '640x400').split('x').map(Number);
+const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 page.setDefaultNavigationTimeout(120000);
 page.on('pageerror', (err) => console.error(`  page error: ${err.message}`));
 
@@ -75,7 +78,7 @@ for (const shot of shots) {
 
 const w = Math.max(12, ...looks.map((l) => l.length + 2));
 const pad = (s, n) => String(s).padStart(n);
-console.log(`ms per frame (${process.env.LOOK_GL === 'software' ? 'SwiftShader' : 'GPU'}, 640x400, ${FRAMES} frames; compare columns, not absolutes)`);
+console.log(`ms per frame (${process.env.LOOK_GL === 'software' ? 'SwiftShader' : 'GPU'}, ${VW}x${VH}, ${FRAMES} frames; compare columns, not absolutes)`);
 console.log(`${'shot'.padEnd(12)}${looks.map((l) => pad(l, w)).join('')}${looks.length > 1 ? pad('last/first', w) : ''}`);
 for (const row of table) {
   const cols = looks.map((l) => pad(row[l].toFixed(1), w)).join('');

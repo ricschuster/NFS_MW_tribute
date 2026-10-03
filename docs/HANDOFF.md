@@ -42,6 +42,16 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
   (about x1.4). Still to do: a second cascade for long shadows, AO, env map,
   clearcoat paint.
 
+- **#580 env + paint (PR #592):** `?look=env` bakes the sky dome into a PMREM
+  map (`CityView.cutEnvironment`, re-cut every 0.25 h) and `?look=pbr` makes
+  car bodies `MeshPhysicalMaterial` with a light clearcoat (`CAR_PAINT` in
+  `carshape.ts`); the map only goes on physical materials, so buildings are
+  untouched. A stronger clearcoat blew the sun's glint out through bloom on the
+  player's rear deck: kept subtle on purpose. `LOOK_SIZE=1920x1080` times at
+  another size (cost barely moves with size: the frame is draw-call bound).
+  `grade,shadow` vs `grade,shadow,env,pbr` at 1080p: x1.01-1.17, sunhaze x1.45
+  (probably the first cut of the map; check). Next: AO.
+
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
     only, the sim and citylap baselines untouched). `?look=grade,shadow,ao,env,pbr`
