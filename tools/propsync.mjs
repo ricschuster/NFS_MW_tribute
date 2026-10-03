@@ -79,6 +79,7 @@ const KINDS = [
   'lifeguard-tower', 'lighthouse', 'railing', 'path', 'plaza', 'beach',
   'waymarker', 'field-gate', 'stone-wall', 'log', 'log-pile', 'boulder', 'ranger-hut', 'timber-lookout',
   'tent', 'campfire', 'camper-van', 'radio-mast',
+  'pipe-rack', 'cooling-tower', 'fence-line', 'flare-stack', 'gas-holder',
 ];
 const unknown = props.filter((p) => !KINDS.includes(p.kind));
 if (unknown.length) {

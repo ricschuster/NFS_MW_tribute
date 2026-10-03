@@ -26,6 +26,7 @@
     "roadsync": "node tools/roadsync.mjs",
     "suburbdraft": "node tools/suburbdraft.mjs",
     "worksdraft": "node tools/worksdraft.mjs",
+    "industrialdraft": "node tools/industrialdraft.mjs",
     "quarrydraft": "node tools/quarrydraft.mjs",
     "islanddraft": "node tools/islanddraft.mjs",
     "groundfit": "node tools/groundfit.mjs",

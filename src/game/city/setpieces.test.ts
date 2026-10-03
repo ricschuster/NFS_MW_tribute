@@ -378,6 +378,18 @@ describe('the works (#489)', () => {
     expect(hitsSetPiece([piece('tank', 'small')], 12 * M, 0, 0, r, CAR_HEIGHT)).toBe(false);
   });
 
+  // Industrial's once-over (2026-10-03).
+  it('lets a car drive under a pipe rack, and not through its legs, a fence or a tower', () => {
+    const rack = [piece('pipe-rack')];
+    expect(hitsSetPiece(rack, 0, 4.5 * M, 0, r, CAR_HEIGHT)).toBe(false);
+    expect(hitsSetPiece(rack, 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece(rack, 0, 4.5 * M, 0, r, 7 * M)).toBe(true);
+    expect(hitsSetPiece([piece('fence-line')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('cooling-tower')], 10 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('gas-holder')], 15 * M, 0, 0, r, CAR_HEIGHT)).toBe(true);
+    expect(hitsSetPiece([piece('flare-stack')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);
+  });
+
   it('lets a car drive over rail track, and not through a wagon on it', () => {
     expect(hitsSetPiece([piece('rails')], 0, 0, 0, r, CAR_HEIGHT)).toBe(false);
     expect(hitsSetPiece([piece('wagon')], 0, 0, 0, r, CAR_HEIGHT)).toBe(true);

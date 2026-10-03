@@ -328,6 +328,15 @@ export const SET_PIECE_SOLIDS: Record<SetPieceKind, Solid[]> = {
     { u: -8, v: 0, w: 0.2, l: 16, y0: 0, y1: 2.4 },
     post(0, 2, 1.4, 46),
   ],
+  // Industrial's once-over (2026-10-03), in game metres. A pipe rack is solid
+  // at its legs and its run is overhead, so a car drives under it between
+  // them; a fence is a thin wall a car does not get through; the stack, the
+  // tower and the holder are their shells.
+  'pipe-rack': [post(-9, 0, 0.5, 6), post(0, 0, 0.5, 6), post(9, 0, 0.5, 6), { u: 0, v: 0, w: 4, l: 20, y0: 5.5, y1: 7.5 }],
+  'fence-line': [{ u: 0, v: 0, w: 0.2, l: 6, y0: 0, y1: 2.4 }],
+  'cooling-tower': [{ u: 0, v: 0, r: 15, y0: 0, y1: 55 }],
+  'flare-stack': [{ u: 0, v: 0, w: 6, l: 6, y0: 0, y1: 2 }, post(0, 0, 1, 60)],
+  'gas-holder': [{ u: 0, v: 0, r: 21, y0: 0, y1: 28 }],
 };
 
 /**

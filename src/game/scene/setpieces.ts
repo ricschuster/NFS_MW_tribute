@@ -1205,6 +1205,68 @@ function railing(): Part[] {
   ];
 }
 
+/**
+ * A pipe rack (Industrial's once-over): twenty metres of elevated pipe run on
+ * three steel frames, six metres up so a car drives under it, with four pipes
+ * in two colours and an expansion loop in the middle.
+ */
+function pipeRack(): Part[] {
+  const frames = [-9, 0, 9].flatMap((z) => [
+    ...[-1.8, 1.8].map((x) => ({ geometry: at(box(0.4, 6, 0.4), x, 3, z), colour: DARK_METAL })),
+    { geometry: at(box(4.2, 0.4, 0.4), 0, 6, z), colour: DARK_METAL },
+  ]);
+  const pipes = [-1.4, -0.5, 0.5, 1.4].map((x, i) => ({ geometry: at(tube(0.3 + (i % 2) * 0.1, 0.3 + (i % 2) * 0.1, 20, 10), x, 6.7, 0), colour: ['#b8b4a8', '#8a5a3c', '#3f6fa0', '#b8b4a8'][i] }));
+  return [...frames, ...pipes, { geometry: at(box(3.2, 0.3, 0.3), 0, 7.4, 0), colour: '#b8b4a8' }];
+}
+
+/** A cooling tower: the hyperbolic shell, a dark rim and a pale drift of stain below it. */
+function coolingTower(): Part[] {
+  const profile = Array.from({ length: 16 }, (_, i) => {
+    const t = i / 15;
+    return new THREE.Vector2(11.5 + 3.5 * Math.pow(2 * t - 0.62, 2) * 2.1 + 0.6 * (1 - t), t * 55);
+  });
+  return [
+    { geometry: new THREE.LatheGeometry(profile, 28), colour: '#aeaaa0' },
+    { geometry: at(upright(profile[15].x + 0.3, profile[15].x + 0.3, 0.8, 28), 0, 54.6, 0), colour: '#5f625f' },
+    { geometry: at(upright(profile[0].x + 0.4, profile[0].x + 0.4, 3, 28), 0, 1.5, 0), colour: CONCRETE },
+  ];
+}
+
+/** Six metres of chain-link fence: two posts, a mesh panel and a top rail. */
+function fenceLine(): Part[] {
+  return [
+    ...[-3, 3].map((x) => ({ geometry: at(box(0.12, 2.5, 0.12), x, 1.25, 0), colour: '#5a5f62' })),
+    { geometry: at(box(6, 2, 0.04), 0, 1.3, 0), colour: '#a9b0b3' },
+    { geometry: at(box(6.1, 0.08, 0.08), 0, 2.4, 0), colour: '#5a5f62' },
+  ];
+}
+
+/** A flare stack: a slim steel tower on a base, a flame tip at sixty metres and a stay ring. */
+function flareStack(): Part[] {
+  return [
+    { geometry: at(box(6, 2, 6), 0, 1, 0), colour: CONCRETE },
+    { geometry: at(upright(0.7, 1, 56, 12), 0, 30, 0), colour: '#7b8185' },
+    { geometry: at(upright(1.1, 0.8, 2, 12), 0, 59, 0), colour: DARK_METAL },
+    { geometry: at(new THREE.ConeGeometry(0.9, 3.2, 8), 0, 61.6, 0), colour: '#f08a24' },
+    ...[20, 40].map((y) => ({ geometry: at(new THREE.TorusGeometry(1.2, 0.08, 4, 12).rotateX(Math.PI / 2), 0, y, 0), colour: DARK_METAL })),
+  ];
+}
+
+/** A gas holder: a round steel drum in a guide frame, its crown domed and its stair spiralling up. */
+function gasHolder(): Part[] {
+  const ribs = Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * Math.PI * 2;
+    return { geometry: at(box(0.5, 30, 0.5), Math.cos(a) * 21.4, 15, Math.sin(a) * 21.4), colour: '#5a5f62' };
+  });
+  return [
+    { geometry: at(upright(20.5, 20.5, 26, 32), 0, 13, 0), colour: '#8f9a94' },
+    { geometry: at(new THREE.SphereGeometry(20.5, 32, 6, 0, Math.PI * 2, 0, 0.35).scale(1, 0.5, 1), 0, 26, 0), colour: '#7b8185' },
+    ...ribs,
+    { geometry: at(upright(21.6, 21.6, 0.5, 32), 0, 30, 0), colour: '#5a5f62' },
+    { geometry: at(upright(22, 22, 1.2, 32), 0, 0.6, 0), colour: CONCRETE },
+  ];
+}
+
 const STONE_WALL = ['#8e8a7e', '#7d7a70', '#9a968a'];
 const BARK = '#5e4630';
 const CUT = '#c8a67a';
@@ -1536,6 +1598,12 @@ const MODELS: Record<SetPieceKind, (variant?: string) => Part[]> = {
   campfire: grown(campfire, 2),
   'camper-van': grown(camperVan, 2),
   'radio-mast': radioMast,
+  // Industrial's once-over (2026-10-03), in game metres.
+  'pipe-rack': pipeRack,
+  'cooling-tower': coolingTower,
+  'fence-line': fenceLine,
+  'flare-stack': flareStack,
+  'gas-holder': gasHolder,
 };
 
 /** The haul truck's parts, for the moving ones (#330) to draw with the same model the parked ones use. */

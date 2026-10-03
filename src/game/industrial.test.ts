@@ -48,7 +48,19 @@ describe("Industrial's railway (#489, #514)", () => {
     const count = (kind: string) => inside.filter((p) => p.kind === kind).length;
     expect(count('tank')).toBeGreaterThan(100);
     expect(count('warehouse')).toBeGreaterThan(20);
-    expect(count('gantry')).toBeGreaterThan(5);
+    expect(count('gantry')).toBeGreaterThan(2);
+  });
+
+  // The owner's note on the first draft: too many rail yards. Three are left
+  // (nineteen lengths of siding), and what stands where the rest were is
+  // other plant: depots, yards, silos and the landmarks (2026-10-03).
+  it('keeps a few rail yards and fills the rest with other plant', () => {
+    const inside = city.setPieces.filter((p) => inArea(industrial.poly, p.at));
+    const count = (kind: string) => inside.filter((p) => p.kind === kind).length;
+    expect(count('rails')).toBeLessThan(40);
+    for (const kind of ['container-block', 'stockpile', 'silo', 'pipe-rack', 'cooling-tower', 'gas-holder', 'flare-stack', 'fence-line']) {
+      expect(count(kind), kind).toBeGreaterThan(0);
+    }
   });
 
   // A street over the line on the level is the street's: tarmac under the
