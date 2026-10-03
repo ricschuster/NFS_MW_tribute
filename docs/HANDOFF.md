@@ -3,36 +3,46 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-02, night; housekeeping done, races next).**
-  - **This session was cleanup, no game changes.**
-    - #562: dead exports gone, and this file's dated history cut
-      (`git log -p` has it).
-    - #563: CLAUDE.md's Commands section is one line per tool.
-    - #564: CLAUDE.md's Architecture section is a one-line index per rule.
-      The paragraphs moved verbatim to `docs/architecture.md`. A new rule
-      gets a paragraph there and a line in CLAUDE.md, in the same PR.
-  - **Open, auto-merging:** #564 (docs only), and this handoff.
-  - **Branches:** `main`, plus the two parked drafts: `railway-loop-draft`
-    (#514, on GitHub) and `collectibles-frozen` (#469, local only). The
-    other 14 GitHub branches and about 120 local ones were deleted on the
-    owner's OK, along with the agent worktrees and four old stashes (SHAs
-    in a #562 comment). Worktrees: `crosstown-main` (the served copy) only.
-    No dev servers running.
+- **Start here (2026-10-02, late night; downtown's props drafted, races next).**
+  - **This session:**
+    - #566: `docs/map-areas.md`'s downtown row back to Done. #542 had
+      restored it from before #539 instead of after it.
+    - #567: downtown's once-over, the owner's picks after a props review of
+      every area. It adds ten new kinds (bus shelter, bollard, planter, bin,
+      fountain, statue, kiosk, dumpster, food truck, and café tables as a
+      breakable) and a `lawn` prop that is ground. Downtown is now paved edge
+      to edge (`city/downtownground.ts`), so its open ground drives at
+      `APRON_SPEED_FRAC`, a gameplay change flagged in the PR.
+      `npm run downtowndraft` placed it all (ids `do…`). The draft is in the
+      game and in the Downtown Props editor, republished for the owner to
+      edit.
+    - In #567 too: `propsync` writes areas over 900 props in parts (TS2590),
+      and `cityshot` now actually waits its 60 s.
+  - **Waiting for the owner:**
+    - their Downtown Props editor save. Read it back
+      (`edits/props`), then `npm run propsync -- --place downtown`.
+    - which area's props to revisit next. Measured as thin: Tidewater Park
+      (13 pieces), Highmoor Park (12) and Industrial (big structures, no
+      small clutter); Sablet Wharf and Kestrel Head's ridge want a lighter
+      pass. Ask for picks before drafting, as for downtown.
+    - from before: the last heat-6 "neither" in `endings`, traffic downtown
+      (1.71 civilians a second on screen against 0.60), #484's moved road
+      ends, and the railway (#514), parked.
+  - **Branches:** `main`, plus `railway-loop-draft` (#514, on GitHub) and
+    `collectibles-frozen` (#469, local only). Worktrees: `crosstown-main`
+    (the served copy) only. No dev servers running.
   - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
     keyed off the checkout path, so either Claude account sees it. Artifacts
-    are still owned by the main account only.
-  - **Waiting for the owner:**
-    - the last heat-6 "neither" in `endings` (a stopped car escapes 0.7 s
-      past the probe's three minutes)
-    - traffic downtown (1.71 civilians a second on screen against 0.60)
-    - #484's moved road ends
-    - the railway (#514), parked
-  - **A `cityshot --view at` flake:** two runs at the same `--at` can put
-    the car in two different places. Shoot a pair twice before trusting it.
-  - **Next, per the owner's order: races.**
+    are owned by the main account; the second account can edit them.
+  - **`cityshot --view at`:** the "car in two different places" flake was
+    a run that timed out and left the previous `city-at.png` behind. The
+    timeout is fixed in #567. Still check for `captured` in the output
+    before trusting a picture.
+  - **Next, per the owner's order: races** (unless props come first).
     1. Tune rival pace and speed-run targets against #347's human pace.
     2. `RIVAL_CIRCUITS` beyond Rim and Quay.
-    3. Unpark #469 (collectibles).
+    3. Unpark #469 (collectibles). Downtown's draft adds no billboards, so
+       it moves no collectible ids.
   - **This file's later sections** (architecture, commands, known
     problems) predate the cleanup and may repeat or contradict
     `docs/architecture.md` and CLAUDE.md, which are current. Trimming
