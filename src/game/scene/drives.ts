@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { UNITS_PER_METRE } from '../constants';
 import { groundAt } from '../city/terrain';
-import type { Apron, City, Vec2 } from '../city/types';
+import type { Apron, City } from '../city/types';
 
 const M = UNITS_PER_METRE;
 /** How far a drive is sampled along its length, to follow the ground. */
@@ -26,15 +26,26 @@ export function drivesFor(city: City): THREE.Mesh[] {
     byLook.set(drive.look, positions);
     const [a0, a1, b1, b0] = drive.outline;
     const along = Math.hypot((a1.x + b1.x - a0.x - b0.x) / 2, (a1.z + b1.z - a0.z - b0.z) / 2);
+    const across = Math.hypot((b0.x + b1.x - a0.x - a1.x) / 2, (b0.z + b1.z - a0.z - a1.z) / 2);
     const steps = Math.max(1, Math.ceil(along / STEP));
-    const at = (p: Vec2, q: Vec2, t: number) => {
-      const x = p.x + (q.x - p.x) * t, z = p.z + (q.z - p.z) * t;
+    // Across as well as along: a drive is two edges and a straight line
+    // between them, but Tidewater Park's beach (2026-10-02) is sixty metres
+    // from the promenade down to the sea, and a straight line across that runs
+    // under the shore's bulge, where the grass shows through the sand.
+    const rows = Math.max(1, Math.ceil(across / STEP));
+    const at = (t: number, u: number) => {
+      const lx = a0.x + (a1.x - a0.x) * t, lz = a0.z + (a1.z - a0.z) * t;
+      const rx = b0.x + (b1.x - b0.x) * t, rz = b0.z + (b1.z - b0.z) * t;
+      const x = lx + (rx - lx) * u, z = lz + (rz - lz) * u;
       return [x, groundAt(city.terrain, x, z) + LIFT, z];
     };
     for (let i = 0; i < steps; i++) {
       const t0 = i / steps, t1 = (i + 1) / steps;
-      const l0 = at(a0, a1, t0), l1 = at(a0, a1, t1), r0 = at(b0, b1, t0), r1 = at(b0, b1, t1);
-      positions.push(...l0, ...r0, ...l1, ...l1, ...r0, ...r1);
+      for (let j = 0; j < rows; j++) {
+        const u0 = j / rows, u1 = (j + 1) / rows;
+        const l0 = at(t0, u0), l1 = at(t1, u0), r0 = at(t0, u1), r1 = at(t1, u1);
+        positions.push(...l0, ...r0, ...l1, ...l1, ...r0, ...r1);
+      }
     }
   }
   const meshes: THREE.Mesh[] = [];
