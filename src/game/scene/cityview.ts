@@ -366,6 +366,10 @@ export class CityView {
           sunDir: { value: new THREE.Vector3(0, 1, 0) },
           sunTint: { value: new THREE.Color('#ffd9a0') },
           glow: { value: 0 },
+          // Clouds (#580): how much of the day they are, and how dark the night
+          // leaves them.
+          cover: { value: 0.5 },
+          dayness: { value: 1 },
         },
         vertexShader: `
           varying vec3 vWorld;
@@ -380,7 +384,43 @@ export class CityView {
           uniform vec3 sunDir;
           uniform vec3 sunTint;
           uniform float glow;
+          uniform float cover;
+          uniform float dayness;
           varying vec3 vWorld;
+
+          float hash(vec2 p) {
+            p = fract(p * vec2(123.34, 456.21));
+            p += dot(p, p + 45.32);
+            return fract(p.x * p.y);
+          }
+          float vnoise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                       mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+          }
+          // Five octaves, each rotated so the grid does not show.
+          float fbm(vec2 p) {
+            float sum = 0.0;
+            float amp = 0.5;
+            mat2 rot = mat2(0.8, -0.6, 0.6, 0.8);
+            for (int i = 0; i < 5; i++) {
+              sum += amp * vnoise(p);
+              p = rot * p * 2.03;
+              amp *= 0.5;
+            }
+            return sum;
+          }
+          // Cloud density along a direction, from a flat deck overhead: the
+          // projection is what makes the clouds crowd together toward the
+          // horizon, which is most of what makes them read as far away.
+          float clouds(vec3 dir) {
+            vec2 uv = dir.xz / (dir.y + 0.12) * 0.9;
+            float d = fbm(uv + vec2(3.7, 1.3));
+            // Wide soft masses with a ragged edge, not scattered puffs.
+            return smoothstep(1.0 - cover, 1.0 - cover + 0.32, d);
+          }
           void main() {
             // A flatter curve than before, so the sky holds its blue overhead
             // and blows out over a wide band at the horizon rather than in a
@@ -392,6 +432,23 @@ export class CityView {
             float toSun = pow(max(dot(dir, normalize(sunDir)), 0.0), 2.0);
             vec3 col = mix(bottom, top, h);
             col = mix(col, sunTint, glow * toSun * (1.0 - h) * 0.9);
+            // Clouds: lit from the sun's side and shaded on the other, thinning
+            // into the haze at the horizon so none of them has an edge there.
+            if (dir.y > 0.0) {
+              float c = clouds(dir);
+              if (c > 0.0) {
+                vec3 sd = normalize(sunDir);
+                float c2 = clouds(normalize(dir + vec3(sd.x, 0.0, sd.z) * 0.06));
+                float lit = clamp(1.0 - (c2 - c) * 2.5, 0.0, 1.0);
+                vec3 bright = mix(vec3(1.0), sunTint, 0.35);
+                vec3 shade = mix(top, bottom, 0.55) * 0.85;
+                vec3 cc = mix(shade, bright, lit * 0.8 + 0.1);
+                // Night keeps them, dark.
+                cc *= mix(0.12, 1.0, dayness);
+                float edge = smoothstep(0.0, 0.2, dir.y);
+                col = mix(col, cc, c * edge * 0.92);
+              }
+            }
             gl_FragColor = vec4(col, 1.0);
           }`,
       }),
@@ -965,6 +1022,7 @@ export class CityView {
     dome.uniforms.sunDir.value.copy(this.sun.position).normalize();
     dome.uniforms.sunTint.value.set(light.sun);
     dome.uniforms.glow.value = 1;
+    dome.uniforms.dayness.value = 1 - light.lamps;
     setGradeHour(this.gradePass, light);
 
     if (this.switches.has('env') && Math.abs(hour - this.envAt) > 0.25) this.cutEnvironment();
