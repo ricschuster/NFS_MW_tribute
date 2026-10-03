@@ -8,10 +8,13 @@ export const SHOTS = [
   { name: 'wall', ref: 'Screenshot_20261003_052037.png', place: 'wall', hour: 13 },
   { name: 'tunnel', ref: 'Screenshot_20261003_050209.png', place: 'tunnel', hour: 13 },
   { name: 'haze', ref: 'Screenshot_20261003_050141.png', place: 'haze', hour: 13 },
+  // Bearing is the sun's at that hour: the 17:00 and 19:00 keys are -0.4 and
+  // -1.2 (daylight.ts), so 18:00 is -0.8. Keep the two in step.
+  { name: 'sunhaze', ref: 'Screenshot_20261003_050141.png', place: 'sunhaze', hour: 18, bearing: -0.8 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
-export function place({ place, hour }) {
+export function place({ place, hour, bearing }) {
   const { world } = globalThis.crosstown;
   const M = 135;
   const none = { up: false, down: false, left: false, right: false, nitro: false, confirm: false };
@@ -70,6 +73,34 @@ export function place({ place, hour }) {
     z = a.z + (b.z - a.z) * 0.3;
     heading = Math.atan2(b.x - a.x, b.z - a.z);
     world.y = city.nodes[road.a].y;
+  } else if (place === 'sunhaze') {
+    // Facing the sun with downtown's skyline between us and it: stand on the
+    // road nearest a point 1.7 downtown-radii from its centre on the far side
+    // from the sun (clear of the towers), then face the sun's bearing.
+    const dt = city.roads.filter((r) => !r.bridge && r.district === 'downtown');
+    const pts = dt.flatMap(ends);
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cz = pts.reduce((s, p) => s + p.z, 0) / pts.length;
+    const reach = Math.max(...pts.map((p) => Math.hypot(p.x - cx, p.z - cz)));
+    const hub = { x: cx - Math.sin(bearing) * reach * 1.7, z: cz - Math.cos(bearing) * reach * 1.7 };
+    // Among the 25 roads nearest that point take the one running most nearly along
+    // the sun's bearing, so the view down it is not a side wall.
+    const sx = Math.sin(bearing);
+    const sz = Math.cos(bearing);
+    const near = city.roads
+      .filter((r) => !r.bridge && r.length > 20 * M)
+      .map((r) => {
+        const [a, b] = ends(r);
+        const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+        const align = Math.abs(((b.x - a.x) * sx + (b.z - a.z) * sz) / len);
+        return { a, b, align, d: Math.hypot((a.x + b.x) / 2 - hub.x, (a.z + b.z) / 2 - hub.z) };
+      })
+      .sort((p, q) => p.d - q.d)
+      .slice(0, 25)
+      .sort((p, q) => q.align - p.align)[0];
+    x = (near.a.x + near.b.x) / 2;
+    z = (near.a.z + near.b.z) / 2;
+    heading = bearing;
   } else if (place === 'haze') {
     // The middle of the longest bridge, looking along it: open water and the
     // longest view the city has at street level.
