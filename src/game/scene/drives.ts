@@ -8,11 +8,12 @@ const M = UNITS_PER_METRE;
 const STEP = 3 * M;
 /** Over the ground by this much, and pulled forward in depth, so the two never fight. */
 const LIFT = 0.08 * M;
-const COLOURS: Record<Apron['look'], string> = { cobbles: '#6f665c', gravel: '#8c826f', concrete: '#9a9890', flags: '#9a9890', grass: '#4f7d3c' };
+const COLOURS: Record<Apron['look'], string> = { cobbles: '#6f665c', gravel: '#8c826f', concrete: '#9a9890', flags: '#9a9890', grass: '#4f7d3c', sand: '#d6c69a' };
 
 /**
- * Ashford Point's drives and forecourts (#293), and downtown's pavements and
- * squares (#268), one mesh per look: each a
+ * Ashford Point's drives and forecourts (#293), downtown's pavements and
+ * squares (#268), and Tidewater Park's paths, plaza and beach (2026-10-02),
+ * one mesh per look: each a
  * four-cornered strip draped over the ground, sampled along its length. Its
  * own geometry rather than the ground shader's apron loop (`wharfground.ts`),
  * which every fragment of the ground pays for once per apron.

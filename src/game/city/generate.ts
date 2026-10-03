@@ -59,6 +59,7 @@ import { TIDEWATER_PROPS } from './tidewaterprops';
 import { HIGHMOOR_CAR_PARK, woodsFor } from './highmoor';
 import { airfieldRiseFor, quarryIslandWildsFor } from './quarryisland';
 import { digTidewaterPonds, parkTreesFor } from './tidewater';
+import { levelTidewaterPads, tidewaterGround } from './tidewaterground';
 import { ashfordWoodsFor, digAshfordPonds, estateDrives, gardenTreesFor } from './ashford';
 import { MIDTOWN_PROPS } from './midtownprops';
 import { MIDTOWN_SOUTH_PROPS } from './midtownsouthprops';
@@ -175,6 +176,9 @@ export function generateCity(seed: number): City {
   shapeForPlaces(terrain, water);
   // Tidewater Park's ponds (#461) sit in hollows dug the same way.
   const parkPonds = digTidewaterPonds(terrain);
+  // And its pitches, courts and playground on pads levelled the same way
+  // (the once-over, 2026-10-02); the ponds are there exactly when the park is.
+  if (parkPonds.length > 0) levelTidewaterPads(terrain, TIDEWATER_PROPS);
   // And Ashford Point's (#293), among its estates.
   const estatePonds = digAshfordPonds(terrain);
   // And cut and fill the roads into it (#252). After the places, because a road
@@ -610,6 +614,8 @@ export function generateCity(seed: number): City {
     ['w1', 'w2'].every((id) => AUTHORED_ROADS.some((road) => road.id === id));
   // Ashford Point's drives (#293), from the estates as they stand.
   const drives = estateDrives(ASHFORD_PROPS, roads, nodes);
+  // And Tidewater Park's paths, promenade, plaza and beach (2026-10-02).
+  if (parkPonds.length > 0) drives.push(...tidewaterGround(TIDEWATER_PROPS));
   const city: City = {
     seed,
     bounds,
@@ -708,12 +714,14 @@ export function generateCity(seed: number): City {
   if (placed.length > 0) {
     // Highmoor's woods (#460) go last, round everything placed before them:
     // generated, on a stream of their own, so they move nothing else.
-    const first = airfieldProps(terrain, city.breakables.length, placed);
+    // A boat or a jetty floats on whichever pond it is in.
+    const afloat = (x: number, z: number) => parkPonds.find((pond) => inArea(pond.outline, { x, z }))?.level ?? null;
+    const first = airfieldProps(terrain, city.breakables.length, placed, afloat);
     const raced = city.routes.map((route) => route.points);
     const woods = [
       ...(hasHighmoor ? woodsFor(terrain, roads, nodes, first.pieces, HIGHMOOR_PROPS, raced) : []),
       // And Tidewater Park's trees (#461), on the same terms.
-      ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced),
+      ...parkTreesFor(terrain, roads, nodes, first.pieces, placed, raced, drives),
       // And the quarry island's wild hills round the quarry (2026-10-02).
       ...(hasQuarry ? quarryIslandWildsFor(terrain, roads, nodes, first.pieces, placed, (x, z) => inWaterAt(city, x, z), raced) : []),
       // And Marrow Field's rise, as country (2026-10-02).
@@ -725,7 +733,7 @@ export function generateCity(seed: number): City {
       ...gardens,
       ...ashfordWoodsFor(terrain, roads, nodes, first.pieces, [...ASHFORD_PROPS, ...gardens], drives, [...city.collectibles.map((c) => c.at), ...city.breakables.map((b) => b.at), ...gardens.map((g) => ({ x: g.x * UNITS_PER_METRE, z: g.z * UNITS_PER_METRE }))], raced),
     );
-    const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods]) : first;
+    const authored = woods.length > 0 ? airfieldProps(terrain, city.breakables.length, [...placed, ...woods], afloat) : first;
     city.setPieces = authored.pieces;
     city.jumps = authored.jumps.map((jump) => ({ ...jump, y: Math.max(jump.y, deckUnder(nodes, roads, jump.at) ?? -Infinity) }));
     // Billboards number on from the generated ones, the same way the

@@ -51,6 +51,12 @@ describe('Marrow Field props (#295)', () => {
   it('stands every piece on the ground where it was placed', () => {
     for (const piece of city.setPieces) {
       const ground = groundAt(city.terrain, piece.at.x, piece.at.z);
+      // A boat or a jetty (Tidewater Park) floats on its pond, at the water's surface.
+      if (piece.kind === 'rowing-boat' || piece.kind === 'jetty') {
+        const pond = city.water.find((w) => w.kind === 'pond' && inArea(w.outline, piece.at));
+        expect(piece.y).toBeCloseTo(pond ? Math.max(ground, pond.level!) : ground, 6);
+        continue;
+      }
       // Bar a cruise terminal (#268), out on its pier over the bay: at sea level, not on the bed.
       expect(piece.y).toBeCloseTo(piece.kind === 'cruise-terminal' ? Math.max(0, ground) : ground, 6);
     }

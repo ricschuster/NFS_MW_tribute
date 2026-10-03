@@ -49,9 +49,10 @@ export function wharfGround(material: THREE.Material, aprons: readonly Apron[], 
     const zs = outline.map((p) => p.z);
     data.set([Math.min(...xs) - apron.margin, Math.min(...zs) - apron.margin, Math.max(...xs) + apron.margin, Math.max(...zs) + apron.margin], row);
     // x: margin, y: joint spacing, z: the look (0 concrete, 1 cobbles, 2 gravel,
-    // 3 grass). Flags are concrete in smaller slabs.
-    const look = { concrete: 0, flags: 0, cobbles: 1, gravel: 2, grass: 3 }[apron.look];
-    const spacing = { concrete: SLAB, flags: FLAG, cobbles: SETT, gravel: GRIT, grass: SLAB }[apron.look];
+    // 3 grass). Flags are concrete in smaller slabs; sand, which is drawn as a
+    // drive and only lands here if somebody makes it an apron, as gravel.
+    const look = { concrete: 0, flags: 0, cobbles: 1, gravel: 2, sand: 2, grass: 3 }[apron.look];
+    const spacing = { concrete: SLAB, flags: FLAG, cobbles: SETT, gravel: GRIT, sand: GRIT, grass: SLAB }[apron.look];
     data.set([apron.margin, spacing * unitsPerMetre, look, 0], row + 4);
     outline.forEach((p, i) => data.set([p.x, p.z], row + (2 + i) * 4));
   });

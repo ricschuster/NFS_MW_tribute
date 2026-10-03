@@ -23,7 +23,8 @@ export function onApron(city: City, x: number, z: number): boolean {
   // drawn as a mesh rather than in the ground's shader; what looks paved
   // drives paved, whichever of the two draws it.
   for (const list of [city.aprons, city.drives, city.pavements]) for (const apron of list) {
-    if (apron.look !== 'grass' && within(apron, x, z)) return true;
+    // Sand is a beach (Tidewater Park): drawn like paving, driven like grass.
+    if (apron.look !== 'grass' && apron.look !== 'sand' && within(apron, x, z)) return true;
   }
   return false;
 }

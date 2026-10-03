@@ -398,7 +398,7 @@ export interface RepairShop {
  * City data like everything else here: the sim has to be able to bring one
  * down without a renderer in the room.
  */
-export type BreakableKind = 'gate' | 'stack' | 'cafe-tables';
+export type BreakableKind = 'gate' | 'stack' | 'cafe-tables' | 'picnic-shelter';
 
 export interface Breakable {
   id: number;
@@ -466,12 +466,17 @@ export interface AuthoredProp {
 }
 
 /**
- * Everything the prop editor can place. Gates, stacks and café tables become
- * `Breakable`s and billboards `Collectible`s, which already exist; a jump
- * becomes a `Jump` (#307); a lawn is ground, a pocket of grass left in
- * downtown's paving (`city/downtownground.ts`); the rest are set pieces.
+ * Everything the prop editor can place. Gates, stacks, café tables and picnic
+ * shelters become `Breakable`s and billboards `Collectible`s, which already
+ * exist; a jump becomes a `Jump` (#307); a lawn is ground, a pocket of grass
+ * left in downtown's paving (`city/downtownground.ts`), and so are Tidewater
+ * Park's paths, plaza and beach (`city/tidewaterground.ts`); the rest are set
+ * pieces.
  */
-export type AuthoredPropKind = BreakableKind | SetPieceKind | 'jump' | 'billboard' | 'lawn';
+export type AuthoredPropKind = BreakableKind | SetPieceKind | GroundPropKind | 'jump' | 'billboard';
+
+/** The props that are ground rather than things: drawn on it, never stood on it. */
+export type GroundPropKind = 'lawn' | 'path' | 'plaza' | 'beach';
 
 /** The set pieces: things that stand somewhere and are driven round, not through. */
 export type SetPieceKind =
@@ -560,7 +565,20 @@ export type SetPieceKind =
   | 'statue'
   | 'kiosk'
   | 'dumpster'
-  | 'food-truck';
+  | 'food-truck'
+  // Tidewater Park's once-over (2026-10-02): a playground, a boathouse with
+  // its jetty and boats on the big pond, pitches, the seafront's huts and
+  // lifeguard tower, a lighthouse on the point, and the promenade's railing.
+  | 'playground'
+  | 'boathouse'
+  | 'jetty'
+  | 'rowing-boat'
+  | 'football-pitch'
+  | 'tennis-court'
+  | 'beach-hut'
+  | 'lifeguard-tower'
+  | 'lighthouse'
+  | 'railing';
 
 /**
  * A set piece in the world (#295): a crashed plane, a silo, a tree. Placed by
@@ -608,8 +626,10 @@ export interface Apron {
   /**
    * `flags` is downtown's paving, concrete laid in smaller slabs; `grass`
    * takes paving back off, for a lawn left in it (`city/downtownground.ts`).
+   * `sand` is a beach (`city/tidewaterground.ts`): drawn like paving, driven
+   * like grass.
    */
-  look: 'concrete' | 'cobbles' | 'gravel' | 'flags' | 'grass';
+  look: 'concrete' | 'cobbles' | 'gravel' | 'flags' | 'grass' | 'sand';
   yard: boolean;
 }
 

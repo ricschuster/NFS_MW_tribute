@@ -6,7 +6,7 @@ import type { Breakable } from '../city/types';
 const M = UNITS_PER_METRE;
 
 /**
- * Gates, stacks and café tables, on the same provider seam as everything else (#57).
+ * Gates, stacks, café tables and picnic shelters, on the same provider seam as everything else (#57).
  *
  * One instanced mesh per kind, and a broken one is scaled away rather than
  * rebuilt - the same trick the smashed billboards use, and for the same
@@ -24,6 +24,7 @@ export class CityBreakables {
     const gates = items.filter((item) => item.kind === 'gate');
     const stacks = items.filter((item) => item.kind === 'stack');
     const tables = items.filter((item) => item.kind === 'cafe-tables');
+    const shelters = items.filter((item) => item.kind === 'picnic-shelter');
 
     // A gate is a wide thin panel across the mouth of a yard; a stack is a
     // squat block of pallets on a kerb. Both read at a distance by shape.
@@ -33,6 +34,10 @@ export class CityBreakables {
     // under parasols, white tables and red parasols, one mesh for each colour.
     this.add('cafe-tables', tables, '#ece8de', terrace('tables'));
     this.add('cafe-parasols', tables, '#c94f3d', terrace('parasols'));
+    // A picnic shelter (Tidewater Park's once-over): a roof on four posts
+    // over two picnic tables, timber and a dark green roof.
+    this.add('shelter-timber', shelters, '#7a5a3c', shelter('timber'));
+    this.add('shelter-roofs', shelters, '#3f5d4a', shelter('roof'));
   }
 
   private add(name: string, items: Breakable[], colour: string, geometry: THREE.BufferGeometry): void {
@@ -113,6 +118,31 @@ function terrace(part: 'tables' | 'parasols'): THREE.BufferGeometry {
       ...[-0.55, 0.55].map((x) => new THREE.BoxGeometry(0.4, 0.45, 0.4).translate(x, 0.225, z)),
     ];
   });
+  const merged = mergeGeometries(pieces.map((g) => (g.index ? g.toNonIndexed() : g)));
+  for (const g of pieces) g.dispose();
+  return merged.scale(k, k, k);
+}
+
+/**
+ * A picnic shelter, its timber or its roof: four posts and two tables under
+ * a shallow pitched roof, drawn 1.6 times life size like the park's
+ * buildings, so the roof is over a car.
+ */
+function shelter(part: 'timber' | 'roof'): THREE.BufferGeometry {
+  const k = 1.6 * M;
+  const pieces =
+    part === 'roof'
+      ? [-1, 1].map((side) => new THREE.BoxGeometry(3.3, 0.12, 4.6).rotateZ(side * -0.3).translate(side * 1.55, 2.95, 0))
+      : [
+          ...[-2.6, 2.6].flatMap((x) => [-2, 2].map((z) => new THREE.BoxGeometry(0.18, 2.6, 0.18).translate(x, 1.3, z))),
+          new THREE.BoxGeometry(6, 0.14, 0.14).translate(0, 2.6, -2),
+          new THREE.BoxGeometry(6, 0.14, 0.14).translate(0, 2.6, 2),
+          ...[-1.3, 1.3].flatMap((x) => [
+            new THREE.BoxGeometry(1.8, 0.06, 0.8).translate(x, 0.75, 0),
+            ...[-0.75, 0.75].map((z) => new THREE.BoxGeometry(1.8, 0.05, 0.3).translate(x, 0.45, z)),
+            ...[-0.7, 0.7].map((dx) => new THREE.BoxGeometry(0.08, 0.75, 0.6).translate(x + dx, 0.375, 0)),
+          ]),
+        ];
   const merged = mergeGeometries(pieces.map((g) => (g.index ? g.toNonIndexed() : g)));
   for (const g of pieces) g.dispose();
   return merged.scale(k, k, k);

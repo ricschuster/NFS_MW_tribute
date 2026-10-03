@@ -6,6 +6,8 @@ import { groundAt } from './city/terrain';
 import { inWater } from './city/grid';
 import { TIDEWATER_PONDS } from './city/tidewater';
 import { TIDEWATER_PROPS } from './city/tidewaterprops';
+import { PAD_SIZES, padOutline, tidewaterGround } from './city/tidewaterground';
+import { insideOrNear, onApron } from './city/aprons';
 
 const M = UNITS_PER_METRE;
 const { city } = new CityWorld(undefined, { traffic: false, police: false });
@@ -101,3 +103,61 @@ describe('Tidewater Park (#461)', () => {
     }
   });
 });
+
+describe("Tidewater Park's once-over (2026-10-02)", () => {
+  it('has every one of the owner\'s picks', () => {
+    const kinds = new Set(TIDEWATER_PROPS.map((p) => p.kind));
+    for (const kind of [
+      'picnic-table', 'bin', 'bench', 'telescope', 'kiosk', 'food-truck',
+      'playground', 'boathouse', 'jetty', 'rowing-boat', 'football-pitch', 'tennis-court', 'picnic-shelter',
+      'path', 'beach', 'beach-hut', 'lifeguard-tower', 'lighthouse', 'railing', 'plaza', 'fountain',
+    ] as const) expect(kinds.has(kind), kind).toBe(true);
+    expect(TIDEWATER_PROPS.some((p) => p.kind === 'path' && p.variant === 'promenade')).toBe(true);
+  });
+
+  it('lays its paths, promenade, plaza and beach as drives: paved drives paved, sand does not', () => {
+    const ground = tidewaterGround(TIDEWATER_PROPS);
+    for (const g of ground) expect(city.drives).toContainEqual(g);
+    const centre = (look: string) => {
+      const g = ground.find((d) => d.look === look && !ground.some((o) => o !== d && o.look !== look && insideOrNear(o.outline, (d.outline[0].x + d.outline[2].x) / 2, (d.outline[0].z + d.outline[2].z) / 2, 0)))!;
+      return { x: (g.outline[0].x + g.outline[2].x) / 2, z: (g.outline[0].z + g.outline[2].z) / 2 };
+    };
+    const path = centre('concrete');
+    expect(onApron(city, path.x, path.z)).toBe(true);
+    const sand = centre('sand');
+    expect(onApron(city, sand.x, sand.z)).toBe(false);
+  });
+
+  it('levels the ground under its pitch, courts and playground', () => {
+    const pads = TIDEWATER_PROPS.filter((p) => PAD_SIZES[p.kind]);
+    expect(pads.length).toBeGreaterThanOrEqual(4);
+    for (const p of pads) {
+      const outline = padOutline(p)!;
+      const heights: number[] = [];
+      // Inset a cell from the edge, where the grade back to the lawn begins.
+      for (let i = 1; i < 10; i++) for (let j = 1; j < 10; j++) {
+        const u = 0.1 + (0.8 * i) / 10, v = 0.1 + (0.8 * j) / 10;
+        const x = outline[0].x + (outline[1].x - outline[0].x) * u + (outline[3].x - outline[0].x) * v;
+        const z = outline[0].z + (outline[1].z - outline[0].z) * u + (outline[3].z - outline[0].z) * v;
+        heights.push(groundAt(city.terrain, x, z));
+      }
+      expect((Math.max(...heights) - Math.min(...heights)) / M, p.kind).toBeLessThan(0.5);
+    }
+  });
+
+  it('makes its picnic shelters breakable', () => {
+    const shelters = city.breakables.filter((b) => b.kind === 'picnic-shelter');
+    expect(shelters.length).toBe(TIDEWATER_PROPS.filter((p) => p.kind === 'picnic-shelter').length);
+    for (const s of shelters) expect(inArea(park.poly, s.at)).toBe(true);
+  });
+
+  it('mixes broadleaves into its trees, and keeps them off its paths and pads', () => {
+    const trees = city.setPieces.filter((piece) => piece.kind === 'tree' && inArea(park.poly, piece.at));
+    const broad = trees.filter((t) => t.variant === 'broadleaf').length;
+    expect(broad / trees.length).toBeGreaterThan(0.4);
+    expect(broad / trees.length).toBeLessThan(0.8);
+    const kept = [...tidewaterGround(TIDEWATER_PROPS).map((g) => g.outline), ...TIDEWATER_PROPS.map(padOutline).filter((o) => o !== null)];
+    for (const tree of trees) for (const outline of kept) expect(insideOrNear(outline, tree.at.x, tree.at.z, 0)).toBe(false);
+  });
+});
+
