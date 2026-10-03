@@ -53,13 +53,6 @@ export function signTexture(): THREE.CanvasTexture | null {
   return cached;
 }
 
-export function disposeSignage(): void {
-  cached?.dispose();
-  cached = null;
-  glow?.dispose();
-  glow = null;
-}
-
 /**
  * The pool of light a street lamp throws (#180).
  *

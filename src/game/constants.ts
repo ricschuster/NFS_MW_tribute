@@ -828,7 +828,6 @@ export const ROUTE_SMOOTHING = 3;
  * round is usually cheaper, low enough that a short crossing beats a long
  * detour: the path then finds the narrows on its own.
  */
-export const ROUTE_FREEWAY = { cap: 0.06, water: 30, climb: 26, shore: m(700), shyness: 2.2 };
 export const ROUTE_ARTERIAL = { cap: 0.1, water: 55, climb: 16, shore: m(250), shyness: 0.8 };
 export const ROUTE_COUNTRY = { cap: 0.13, water: 120, climb: 9, shore: m(900), shyness: 3 };
 export const CITY_COAST_RIPPLE = 0.17;
