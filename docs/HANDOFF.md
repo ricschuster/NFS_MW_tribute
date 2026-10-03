@@ -3,46 +3,63 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Start here (2026-10-02, late night; downtown's props drafted, races next).**
+- **Start here (2026-10-02, night; Tidewater Park's props drafted, races next).**
   - **This session:**
-    - #566: `docs/map-areas.md`'s downtown row back to Done. #542 had
-      restored it from before #539 instead of after it.
-    - #567: downtown's once-over, the owner's picks after a props review of
-      every area. It adds ten new kinds (bus shelter, bollard, planter, bin,
-      fountain, statue, kiosk, dumpster, food truck, and café tables as a
-      breakable) and a `lawn` prop that is ground. Downtown is now paved edge
-      to edge (`city/downtownground.ts`), so its open ground drives at
-      `APRON_SPEED_FRAC`, a gameplay change flagged in the PR.
-      `npm run downtowndraft` placed it all (ids `do…`). The draft is in the
-      game and in the Downtown Props editor, republished for the owner to
-      edit.
-    - In #567 too: `propsync` writes areas over 900 props in parts (TS2590),
-      and `cityshot` now actually waits its 60 s.
+    - The owner was happy with downtown's draft as it stands (#567). Its
+      editor store is empty, so there is nothing to sync.
+    - #569: Tidewater Park's once-over, every option the owner was offered
+      except car parks.
+      - Eleven new kinds: playground, boathouse, jetty, rowing boat,
+        football pitch, tennis court, beach hut, lifeguard tower,
+        lighthouse, seafront railing, and picnic shelters as a breakable.
+      - Ground props `path` (path or promenade), `plaza` and `beach`
+        (`city/tidewaterground.ts`), laid as drives. Paths, the promenade
+        and the plaza drive paved; sand drives like grass.
+      - The pitch, the courts and the playground stand on pads levelled
+        before roads are laid (`levelTidewaterPads`).
+      - Boats and the jetty float at the pond's surface (`afloat` in
+        `airfieldProps`).
+      - 60% of the park's generated trees are now broadleaves.
+      - `npm run tidewaterdraft` placed it all (ids `tw…`). After the
+        owner's notes: sand the whole shore to the point, and the path
+        round the big pond closes. The rings are laid first and the café
+        moved 9 m off one.
+    - #570 (auto-merging): drives are draped every 3 m across as well as
+      along. The beach's sand showed grass through it in the game; #569
+      merged a moment before this fix was pushed to it.
+  - **Tidewater Park Props editor:** a new one on this account,
+    https://claude.ai/artifact/5DXgDA3T1yGGWru3AkwukM (db `edits/props`).
+    The old one (LV7Q…) belongs to the other account and could not be read
+    from here. Its store was empty at the last republish.
   - **Waiting for the owner:**
-    - their Downtown Props editor save. Read it back
-      (`edits/props`), then `npm run propsync -- --place downtown`.
-    - which area's props to revisit next. Measured as thin: Tidewater Park
-      (13 pieces), Highmoor Park (12) and Industrial (big structures, no
+    - their Tidewater editor save. Read it back, write it to
+      `docs/tidewater-props-edited.json`, then
+      `npm run propsync -- --place tidewater`. A re-run of
+      `tidewaterdraft` replaces only `tw…` ids, but it would overwrite
+      hand edits to them: sync the save, don't redraft over it.
+    - the next area for props: Highmoor Park (12 pieces) or Industrial (no
       small clutter); Sablet Wharf and Kestrel Head's ridge want a lighter
-      pass. Ask for picks before drafting, as for downtown.
+      pass. Ask for picks before drafting.
     - from before: the last heat-6 "neither" in `endings`, traffic downtown
       (1.71 civilians a second on screen against 0.60), #484's moved road
       ends, and the railway (#514), parked.
-  - **Branches:** `main`, plus `railway-loop-draft` (#514, on GitHub) and
-    `collectibles-frozen` (#469, local only). Worktrees: `crosstown-main`
-    (the served copy) only. No dev servers running.
+  - **Branches and worktrees:** `main`, `railway-loop-draft` (#514) and
+    `collectibles-frozen` (#469, local). Worktrees: `crosstown-main`, the
+    served copy on :5173 with a 30 s watcher following main; and
+    `crosstown-tidewater` on `beach-drape`, served on :5174 for a look
+    before merge. Remove it once #570 lands. `tools/.tmp/` (debug scripts)
+    is excluded in `.git/info/exclude`.
   - **Memory** is a git repo (`ricschuster/claude-memory-nfs-mw-tribute`)
-    keyed off the checkout path, so either Claude account sees it. Artifacts
-    are owned by the main account; the second account can edit them.
-  - **`cityshot --view at`:** the "car in two different places" flake was
-    a run that timed out and left the previous `city-at.png` behind. The
-    timeout is fixed in #567. Still check for `captured` in the output
-    before trusting a picture.
+    keyed off the checkout path, so either Claude account sees it. Most
+    artifacts belong to the other account; a session on this one can't
+    read them and has to publish its own.
+  - **`cityshot --view at`:** check for `captured` in the output before
+    trusting a picture.
   - **Next, per the owner's order: races** (unless props come first).
     1. Tune rival pace and speed-run targets against #347's human pace.
     2. `RIVAL_CIRCUITS` beyond Rim and Quay.
-    3. Unpark #469 (collectibles). Downtown's draft adds no billboards, so
-       it moves no collectible ids.
+    3. Unpark #469 (collectibles). Neither downtown's nor Tidewater's
+       draft adds billboards, so no collectible ids move.
   - **This file's later sections** (architecture, commands, known
     problems) predate the cleanup and may repeat or contradict
     `docs/architecture.md` and CLAUDE.md, which are current. Trimming
