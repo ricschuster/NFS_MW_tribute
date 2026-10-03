@@ -13,6 +13,7 @@ import { TouchControls, CITY_BUTTONS, type ControlId } from '../touch';
 import { GameAudio } from '../audio';
 import { daylightAt } from './daylight';
 import { AoPass } from './ao';
+import { CAR_PAINT } from './carshape';
 import { makeGradePass, setGradeHour } from './grade';
 import { NO_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
@@ -135,6 +136,10 @@ export class CityView {
   private readonly sun: THREE.DirectionalLight;
   private readonly sunDir = new THREE.Vector3(0, 1, 0);
   private shadowFlagTick = 0;
+  /** Sky reflections for lacquered paint (#580), re-cut as the hour moves. */
+  private envMap: THREE.Texture | null = null;
+  private envAt = -99;
+  private pmrem?: THREE.PMREMGenerator;
   private readonly shadowTmp = new THREE.Vector3();
   private readonly shadowCentre = new THREE.Vector3();
   private readonly shadowX = new THREE.Vector3();
@@ -220,6 +225,8 @@ export class CityView {
     // `outputBufferType` is what lets the renderer run post-processing effects
     // at all (#75): it renders into a half-float buffer, applies the effects,
     // and then does the tone mapping and the colour conversion once at the end.
+    CAR_PAINT.clearcoat = look.has('pbr');
+    if (CAR_PAINT.clearcoat) this.car = makeCar('#d8442f');
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
@@ -642,8 +649,8 @@ export class CityView {
    * in light space, or the shadow edges crawl as the camera moves.
    */
   private shadows(): void {
+    if (++this.shadowFlagTick % 60 === 1) this.flagMeshes();
     if (!this.sun.castShadow) return;
-    if (++this.shadowFlagTick % 60 === 1) this.flagShadows();
     const dir = this.sunDir;
     const cam = this.camera;
     const fwd = cam.getWorldDirection(this.shadowTmp);
@@ -667,12 +674,18 @@ export class CityView {
   }
 
   /** New meshes (traffic, props) turn up all game; mark each one once. */
-  private flagShadows(): void {
+  private flagMeshes(): void {
+    const physical = this.switches.has('pbr') && this.switches.has('env');
     this.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh || mesh.userData.shadowFlagged) return;
-      mesh.userData.shadowFlagged = true;
+      if (!mesh.isMesh) return;
       const mat = mesh.material as THREE.Material;
+      if (physical && mat instanceof THREE.MeshPhysicalMaterial && mat.envMap !== this.envMap) {
+        mat.envMap = this.envMap;
+        mat.needsUpdate = true;
+      }
+      if (!this.sun.castShadow || mesh.userData.shadowFlagged) return;
+      mesh.userData.shadowFlagged = true;
       if (mat instanceof THREE.ShaderMaterial || mat instanceof THREE.MeshBasicMaterial) return;
       if (mat.transparent) return;
       mesh.castShadow = true;
@@ -959,12 +972,26 @@ export class CityView {
       if (this.gradePass) setGradeHour(this.gradePass, light);
     }
 
+    if (this.switches.has('env') && Math.abs(hour - this.envAt) > 0.25) this.cutEnvironment();
+
     this.cityscape.setNight(light.lamps);
     // Kept, because the car pools have to be told every frame rather than only
     // when the hour moves: `CarPool.setNight` reaches the cars *placed this
     // frame*, and which cars those are changes constantly as traffic comes and
     // goes around the player.
     this.lamps = light.lamps;
+  }
+
+  /** Bake the sky dome as it is now into a reflection map (#580). */
+  private cutEnvironment(): void {
+    this.envAt = this.litAt;
+    this.pmrem ??= new THREE.PMREMGenerator(this.renderer);
+    const probe = new THREE.Scene();
+    probe.add(new THREE.Mesh(this.skyDome.geometry, this.skyDome.material));
+    const old = this.envMap;
+    this.envMap = this.pmrem.fromScene(probe, 0.02, 1 * M, 8000 * M).texture;
+    old?.dispose();
+    this.shadowFlagTick = 0;
   }
 
   /**

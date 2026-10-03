@@ -89,6 +89,13 @@ const BODIES: Record<CarBody, BodyShape> = {
   pickup: { ...COUPE, length: 1.2, height: 1.45, nose: 0.06, taper: 0.95, glassLength: 0.3, glassHeight: 0.85, roofFront: 0.6, roofBack: 0.95, glassAt: 0.12, tyre: 0.22, lift: 1.5 },
 };
 
+/**
+ * Car paint (#580, behind `?look=pbr`): `CityView` sets this before any car is
+ * built. A lacquered body is a different material, not a tweak of Lambert's,
+ * and the callers only ever touch `.color`, which both have.
+ */
+export const CAR_PAINT = { clearcoat: false };
+
 export interface CarParts {
   body: THREE.Mesh;
   glass: THREE.Mesh;
@@ -136,7 +143,19 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
       v.x *= 0.94;
     },
   );
-  const body = new THREE.Mesh(bodyGeometry, new THREE.MeshLambertMaterial());
+  const body = new THREE.Mesh(
+    bodyGeometry,
+    CAR_PAINT.clearcoat
+      ? new THREE.MeshPhysicalMaterial({
+          roughness: 0.6,
+          metalness: 0.05,
+          envMapIntensity: 0.6,
+          clearcoat: 0.3,
+          clearcoatRoughness: 0.55,
+          specularIntensity: 0.15,
+        })
+      : new THREE.MeshLambertMaterial(),
+  );
   body.position.y = floor + height / 2;
 
   // The greenhouse: narrower than the body, set back, and raked at both ends.
