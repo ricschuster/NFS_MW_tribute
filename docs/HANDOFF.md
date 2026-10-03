@@ -24,6 +24,12 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     `sunhaze` shot (18:00, facing the sun's bearing from outside downtown) is
     done and the fog is 120-2000 m with a wider sun glow. The owner does not
     need to supply a haze frame.
+  - **`looktime` is on the GPU too** (vsync and the frame-rate cap lifted;
+    `LOOK_GL=software` for the old path). Baseline at 640x400, 40 frames, ms per
+    frame, `none` / `grade`: downtown 3.5/3.2, woods 1.6/1.6, industrial 1.6/1.7,
+    wall 1.2/1.3, tunnel 1.4/1.6, haze 2.0/1.8, sunhaze 3.7/4.0, dusk 3.3/3.1.
+    The grade costs nothing measurable; differences under about 0.3 ms are noise.
+    Re-record it before each later phase.
 
 - **Earlier (2026-10-03; the look's phase 0 done, #580 lighting next).**
   - **#579, the look-dev harness, is done** (PRs #588, #589; scene and tools
