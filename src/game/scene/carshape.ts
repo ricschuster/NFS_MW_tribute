@@ -407,6 +407,8 @@ export function carParts(width: number, aspect: number, style: CarBody = 'coupe'
       // look like a van.
       wheel.position.set(side * wheelX, tyre, end * wheelZ);
       wheel.add(new THREE.Mesh(rimGeometry, rimMaterial), new THREE.Mesh(dishGeometry, dishMaterial));
+      // The view finds them by this to steer and spin them (carmotion.ts).
+      wheel.userData.wheel = true;
       wheels.push(wheel);
     }
   }

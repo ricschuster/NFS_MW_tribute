@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TyreSmoke } from './smoke';
+import { CarMotion, poseWheels, tyreRadius } from './carmotion';
 import { AirDust } from './airdust';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import type { City } from '../city/types';
@@ -172,6 +173,8 @@ export class CityView {
   private world: CityWorld | null = null;
   private hud: Hud | null = null;
   private car = makeCar('#d8442f');
+  /** Lean, dive and wheel turn for the player's car (#584). */
+  private readonly motion = new CarMotion();
   /** The body the player's car mesh was built as, so a change of car rebuilds it (#434). */
   private carStyle: CarBody = 'coupe';
   /** Off the rear tyres while they spin on the spot (#360). */
@@ -795,6 +798,7 @@ export class CityView {
       this.scene.remove(was);
       this.scene.add(this.car);
       this.carStyle = world.car.body;
+      this.motion.reset();
       this.wearing = '';
     }
     this.car.position.set(world.x, world.y, world.z);
@@ -804,7 +808,22 @@ export class CityView {
     // turn about x tips the nose down.
     this.car.rotation.order = 'YXZ';
     this.car.rotation.y = world.heading;
-    this.car.rotation.x = -world.pitch;
+    // Lean, dive and wheel turn (#584): view-side, read off the sim's own
+    // speed and heading, so nothing here can reach back into it.
+    const wheels = this.car.children.filter((c) => c.userData.wheel) as THREE.Mesh[];
+    this.motion.update(dt, {
+      speed: world.speed,
+      heading: world.heading,
+      steer: (input.right ? 1 : 0) - (input.left ? 1 : 0),
+      airborne: world.airborne,
+      maxSpeed: world.maxSpeed,
+    });
+    if (wheels.length > 0) {
+      this.motion.advanceWheel(dt, world.speed, tyreRadius(wheels[0]));
+      poseWheels(wheels, this.motion.steerAngle, this.motion.spin);
+    }
+    this.car.rotation.x = -world.pitch + this.motion.pitch;
+    this.car.rotation.z = this.motion.roll;
     // Repaint and resize only when the car actually changed. A Street Find
     // swaps the profile mid-drive, and the mesh has to follow it.
     // Repainted when the car changes, and dulled as it gets beaten up (#95):
