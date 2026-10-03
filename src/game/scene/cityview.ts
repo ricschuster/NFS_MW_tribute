@@ -16,7 +16,7 @@ import { daylightAt } from './daylight';
 import { AoPass } from './ao';
 import { CAR_PAINT } from './carshape';
 import { makeGradePass, setGradeHour } from './grade';
-import { NO_LOOK, type Look } from './look';
+import { DEFAULT_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { makeCar, CarPool } from './cars';
 import { CityTrucks } from './trucks';
@@ -215,7 +215,7 @@ export class CityView {
   /** Confirm as of last frame, so a flyover skips on a press and not on the hold that started the race (#359). */
   private confirmWas = false;
 
-  constructor(canvas: HTMLCanvasElement, city: City, look: Look = NO_LOOK) {
+  constructor(canvas: HTMLCanvasElement, city: City, look: Look = DEFAULT_LOOK) {
     this.city = city;
     this.switches = look;
     this.fogNear = 120 * M;
