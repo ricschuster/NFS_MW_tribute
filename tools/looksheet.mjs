@@ -62,7 +62,7 @@ for (const shot of shots) {
   const ref = `reference/${shot.ref}`;
   if (existsSync(ref)) row.refs = `data:image/jpeg;base64,${readFileSync(ref).toString('base64')}`;
   for (const look of columns) {
-    await page.goto(`${base}/${look === 'none' ? '' : `?look=${look}`}`, { waitUntil: 'load' });
+    await page.goto(`${base}/?look=${look}`, { waitUntil: 'load' });
     await page.waitForSelector('#game3d', { timeout: 20000 });
     await page.waitForFunction(() => globalThis.crosstown?.view?.director?.mode === 'chase', undefined, { timeout: 60000 });
     await page.evaluate(place, shot);

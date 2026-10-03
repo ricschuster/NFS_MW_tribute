@@ -22,6 +22,8 @@ export const SHOTS = [
   // The kit at dusk, where lit windows meet sills and mullions that the kit does not light.
   { name: 'terracedusk', ref: 'none', place: 'terrace', hour: 19.5, lift: 2 },
   { name: 'civic', ref: 'none', place: 'civic', hour: 13, lift: 4, back: 130 },
+  // A loading dock framed: the stand-off follows the warehouse's own door side.
+  { name: 'docks', ref: 'none', place: 'docks', hour: 13, lift: 0.5, back: 24 },
   { name: 'dusk', ref: 'Need-for-Speed-Most-Wanted_11-624779118.jpg', place: 'downtown', hour: 19.5 },
 ];
 
@@ -81,8 +83,9 @@ export function place({ place, hour, bearing, lift, back }) {
     // side nearest a road. The car may stand off-road: the shot only needs it there.
     let dx, dz;
     if (place === 'docks') {
+      // rotation.y = angle turns local +x to (cos, -sin) in world x, z.
       dx = Math.cos(target.angle);
-      dz = Math.sin(target.angle);
+      dz = -Math.sin(target.angle);
     } else {
       approach(target.at, 0);
       dx = x - target.at.x;
