@@ -3,15 +3,35 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
-- **Update (2026-10-03, later): #580's cloud layer and tunnel interior merged
-  (#597); #581 slice one is #598** (ADR-0012, Asphalt 031 behind
-  `?look=materials`). `LOOK_SWITCHES` is env, pbr, materials; the owner has not
-  yet seen the car in motion, so ask before making any a default. Next:
-  concrete, brick and corrugated sets for buildings (`facades.ts`), procedural
-  weathering, wet roads after #585's weather state; a second shadow cascade only
-  if a low-sun frame needs it (dusk and sunhaze showed none). The tunnel tube is
-  `scene/tunnels.ts`: 7-8 m high because the chase camera is 6 m up, and it
-  stands proud of the riverbed, under the water.
+- **Update (2026-10-03, end of day): #580's cloud layer and tunnel interior
+  merged (#597); #581 slice one merged (#598); slice two is #599** (CC0 concrete,
+  brick and corrugated steel on set-piece walls, plus two commits #598 missed:
+  the darker tunnel deck and the 10 MB ADR budget). Check `git log
+  origin/main..` for stranded commits again after #599 merges.
+  - **`LOOK_SWITCHES` is env, pbr, materials.** The owner has not yet seen the
+    car in motion; ask before making any a default. To see them: `npm run dev`
+    in the look worktree, then `?look=env,pbr`, `?look=materials` or `?look=all`.
+    The owner is also to say whether the subtle asphalt is worth keeping.
+  - **Materials (ADR-0012, `scene/materials.ts`, `materials/CREDITS.md`):**
+    CC0 from ambientCG, JPEG via Vite `?url`, 10 MB cap (1.3 MB used), 1K maps.
+    Asphalt goes on carriageways through `worldUvs`; walls go on set pieces by
+    wall colour (`WALL_FINISH_BY_COLOUR` in `setpieces.ts`) through
+    `scene/triplanar.ts`. Buildings are set pieces: `BoxBuildings` draws only
+    five sheds now, so do not work in `facades.ts`.
+  - **Next, in the owner's order:** procedural weathering (dirt at wall bases,
+    streaks, wheel-track wear, by world position in the shader), then wet roads
+    once #585 gives a weather state; a second shadow cascade only if a low-sun
+    frame needs it (dusk and sunhaze showed none). Then #582 trees and clutter.
+  - **Tunnels (`scene/tunnels.ts`):** a tube 7-8 m high because the chase
+    camera is 6 m up; under the riverbed it stands proud of the bed, below the
+    water. The terrain is single-sided, so a camera under it sees through.
+  - **Gotchas:** world units are 135 per metre (`UNITS_PER_METRE`); shots in
+    `looksheet` can land differently run to run; never attach a looksheet to a
+    PR (git-ignored third-party frames); kill only your own processes. A dev
+    server for `look-walls` may still be running on port 5175.
+  - **Worktrees:** the old `crosstown-look`, `-industrial`, `-highmoor` and
+    `-lighting` were removed (owner's word). `crosstown-lighting-2` is on
+    `look-walls`; `crosstown-main` is the served copy.
 - **Start here (2026-10-03; #580 defaults chosen: grade, shadow, ao).**
   - **What changed:** the owner chose `grade`, `shadow` and `ao` as the look.
     They are no longer switches: `LOOK_SWITCHES` is `env`, `pbr`, and

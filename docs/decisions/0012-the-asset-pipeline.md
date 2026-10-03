@@ -28,7 +28,7 @@ from, what format and size it ships at, how it loads, and how it is credited.
    them with everything else (#98). KTX2 would cut GPU memory and decode time,
    but it needs a transcoder and an encoder in the toolchain; revisit when the
    set count makes GPU memory the problem, not before.
-4. **Size budget: 4 MB of material files in total, 1K at most per map.** The
+4. **Size budget: 10 MB of material files in total (the owner chose a loose cap, 2026-10-03; tighten if need be), 1K at most per map.** The
    roughness map is halved to 512 px since it carries little detail. One set is
    about 570 KB. The budget is checked by looking at `dist/assets`, and a set
    that would break it replaces one rather than adding to it.
