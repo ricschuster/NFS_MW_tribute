@@ -3,6 +3,15 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, end of day): the owner has seen the building kit in motion and approved it.**
+  PR #607 (`look-buildings`, auto-merge armed) holds all three passes. The
+  owner drove `?look=all` with the spawn moved downtown (a local, uncommitted
+  edit, since reverted) and said "Looks great! Approved." That is the kit
+  only: `LOOK_SWITCHES` is still env, pbr, materials (walls), trees, particles,
+  clutter, buildings, and none is a default yet. Whether `buildings` becomes
+  the default is the first question next session (a one-line change in
+  `scene/look.ts`; ask, do not assume). Open items: framed stills of a loading
+  dock and of each landmark; then HUD (#586), weather (#585), cars (#584).
 - **Update (2026-10-03, late night): #583 building kit, first pass, `?look=buildings` (PR #607).**
   `scene/buildingkit.ts` derives detail from a model's own parts, in metres,
   before `grown` scales it (`kitted` in `setpieces.ts`): sills and lintels from
