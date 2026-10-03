@@ -6,6 +6,11 @@ name: Enable auto-merge
 # it. Scoped to this one author on purpose: a PR from anyone or anything else
 # (a future collaborator, Dependabot) still merges by hand. A draft is not
 # armed (GitHub refuses it); it is when it is marked ready for review.
+#
+# It also brings the PR level with main as it arms it. Branch protection wants
+# an up-to-date branch, and update-branches.yml only runs on a push to main, so
+# a PR armed after main's last push would sit BEHIND until the next one
+# (#575 did). The update goes through the PAT so the PR's check runs on it.
 
 on:
   pull_request:
@@ -19,6 +24,9 @@ jobs:
   enable-auto-merge:
     if: github.actor == 'ricschuster' && !github.event.pull_request.draft
     runs-on: ubuntu-24.04
+    env:
+      # A step's `if` cannot read a secret or its own env, only the job's.
+      HAVE_PAT: ${{ secrets.AUTO_MERGE_TOKEN != '' }}
     steps:
       - name: Enable auto-merge
         run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
@@ -31,4 +39,14 @@ jobs:
           # update-branches.yml uses) makes the merge ricschuster's.
           # Falls back to GITHUB_TOKEN if the secret is ever removed.
           GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+
+      - name: Bring it level with main
+        # Only with the PAT: an update pushed with GITHUB_TOKEN starts no
+        # workflows, which would leave the PR with no check on its new head and
+        # stuck for good. Already level is not an error worth failing for.
+        if: env.HAVE_PAT == 'true'
+        run: gh pr update-branch "${{ github.event.pull_request.number }}" || echo "already level with main"
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
           GH_REPO: ${{ github.repository }}
