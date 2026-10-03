@@ -22,6 +22,11 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     base dirt and rain streaks on set-piece walls (through `triplanar`, height
     measured from the instance origin) and wheel-track wear on photo asphalt
     (`worldUvs` option `wear`). Strengths are first guesses, judged on a still.
+  - **Trees (#582, slice one, `?look=trees`):** `scene/leafcards.ts` rebuilds
+    the foliage of `tree`, `tree:broadleaf` and `street-tree` from alpha-tested
+    cards with a generated canvas texture; trunks stay flat parts. Still owed:
+    autumn variants, kerbs, railings, fences, wires, particles. The broadleaf
+    crown is a little boxy.
   - **Next, in the owner's order:** wet roads
     once #585 gives a weather state; a second shadow cascade only if a low-sun
     frame needs it (dusk and sunhaze showed none). Then #582 trees and clutter.
