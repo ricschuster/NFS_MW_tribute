@@ -3,6 +3,56 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, night): car pilot, three routes tried; route D (scripted Blender) is the one the owner liked (#584).**
+  Full write-up with every attempt: [docs/research/car-pilot-trellis.md](research/car-pilot-trellis.md) (Runs 1-5).
+  - **Result so far:** *Wheels are a huge improvement; the rest are improvements
+    too but need more work; handling feels much better* (owner, after driving it
+    with `?look=models`). The handling is #617's body motion plus real steering
+    wheels; the sim and the `citylap` baselines are untouched.
+  - **Route D, built:** `tools/cars/kestrel.py` authors the Kestrel in headless
+    Blender (lofted shell, subdivision, creases, boolean arches, separate glass,
+    lamps, mirrors, four wheels with tyre, rim, disc, caliper). `blender -b -P
+    tools/cars/kestrel.py -- public/models/kestrel.glb PREVIEW_PREFIX` writes the
+    model (27.4k triangles, 1.7 MB) and five preview renders;
+    `python3 tools/cars/sheet.py PREFIX` makes a contact sheet. Loader:
+    `src/game/scene/glbcar.ts`, behind **`?look=models`, off by default** (a bare
+    `?look=models` turns the other defaults off; use
+    `?look=env,pbr,materials,trees,particles,clutter,buildings,models`, and
+    `LOOK=` the same way for `cityshot`). Replaces fastback bodies that are not
+    police. Original work, nothing generated: **no credits row**.
+  - **Two bugs worth remembering:** GLTFLoader splits a multi-material node into
+    a mesh per material (merge wheels back, keep the paint primitive as
+    `children[0]`); and the paint material must be cloned per car, because parked
+    cars of the same body repaint a shared one.
+  - **Route E, not taken:** TRELLIS.2 on FLUX.1-schnell concept images works
+    (`tools/trellis/flux_concept.py`, `run.py`, `render_glb.py`; seed 1 of the
+    unbranded prompt is the pick) and looks better than D at chase distance, but
+    the wheels are fused and the glass is a blob; the wheel fix is about half a
+    day per car. **FLUX with a "no real car" prompt still drew Toyota and Mustang
+    badges: look at every image.** Parked, not rejected: the owner chose D. The
+    Copilot-account concept image was an experiment and is in no commit.
+  - **Open on D (owner's call which first):** (a) detail: hood line, lamp
+    recesses, spoiler lip, rim detail, a firmer shoulder; (b) a kit: turn the
+    script into parameter sets so the other 15 body styles come out of it,
+    budgeted against the 10 MB asset cap; (c) lamp glow at night (`headlight`
+    nodes are unlit basic materials, untested at night); (d) if signed off, make
+    `models` a default look and delete the switch name (#579 rule).
+  - **Dev server:** one was left on port 5190 from this working directory
+    (`npx vite --port 5190 --strictPort`); stop only that PID, never `pkill -f`.
+  - **Continue with this prompt:**
+    > Continue the car pilot (#584), route D. Read docs/HANDOFF.md (the
+    > "route D" entry), docs/research/car-pilot-trellis.md (Run 5 and Pass 2) and
+    > memory project_car_pilot_trellis first. The Kestrel is authored by
+    > `tools/cars/kestrel.py` and loaded by `scene/glbcar.ts` behind
+    > `?look=models`; the owner liked the wheels and the handling, and wants more
+    > work on the rest. Ask which of (a) detail, (b) a body-style kit, (c) night
+    > lamps comes first if they have not said. Iterate by rendering
+    > (`blender -b -P tools/cars/kestrel.py -- public/models/kestrel.glb PREFIX`,
+    > then `LOOK=<all defaults>,models npm run cityshot -- --view drive`) and look
+    > at the picture before claiming anything. Keep it original and unbranded: no
+    > real car, no reference-game assets, nothing from the Copilot experiment. Keep
+    > the sim untouched; `npm run typecheck` and `npm run test` before a PR. Never
+    > `pkill -f` broadly.
 - **Update (2026-10-03, late night): AI assets allowed; car sourcing is a pilot (#584).**
   The owner asked to consider "considerably" better cars, ruled out nothing, is
   **not an artist and will not hire one**, and said the no-AI rule made no sense
