@@ -3,6 +3,53 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, end of night 2): car pilot passes 3 and 4 done, kit is next (#584).**
+  On top of the route D entry below (read it for the pipeline and the gotchas):
+  - **Pass 3, detail (`952f3b9`):** shut lines as ray-cast ribbons (`seam()`),
+    lamp bezels, a spoiler blade, twin-spoke rims with lug nuts, firmer
+    shoulder, dark mirrors. 29.3k triangles, 1.4 MB.
+  - **Night lamps (`f9f97be`):** `addLampHalos` / `setHalos` in `scene/cars.ts`,
+    additive sprites on head and tail lamps, faded by `CarPool.setNight` and
+    `CityView.setCarNight`. Not done: brake lights (the view does not read the
+    sim's brake).
+  - **Lessons:** tagging shell faces for fine lines or bezels is pixelated (use
+    ribbons and blobs); a raised tail lip in the `BELT` curve folds the loft and
+    the car goes dark and blotchy in the game while Blender looks fine, so
+    **always check in the game, not just the preview**; `hit()` flips normals to
+    face the ray because the shell's face normals can point inward.
+  - **`cityshot` fails about every other launch** (Node exits with no message);
+    just rerun. `HOUR=23 LOOK=<defaults>,models npm run cityshot -- --view hour`
+    is the night shot.
+  - **Next, owner's order: (b) the body-style kit.** Nothing is written. Plan:
+    parameterise `kestrel.py` by body style from `BODIES` in
+    `scene/carshape.ts` (length, height, width, glass position and length,
+    roofFront/roofBack slope, nose, tail, tyre, track, lift, open, bed, spoiler,
+    stripe); remap the Kestrel's `ROOF`/`BELT` keys piecewise through the cabin
+    breakpoints so `fastback` stays what it is; place lamps, mirrors and seams
+    relative to the cabin, not in fixed metres; one .glb per body. **Size is the
+    decision to take with the owner first:** 16 bodies at 1.4 MB is over any
+    sensible budget (the body is 1 MB of it), so subdivision level 1 for all but
+    the hero, shared wheels, and loading per body on demand are the levers;
+    check whether the generated service worker precaches `public/models`.
+    Loader work: `kestrelParts()` is fastback-only and `makeCar` checks
+    `style === 'fastback'`. Then (d) make `models` a default look (#579 rule).
+  - **Dev server:** one on port 5190 may still run from this directory; stop it
+    by PID only, never `pkill -f`.
+  - **Continue with this prompt:**
+    > Continue the car pilot (#584), route D, with (b) the body-style kit. Read
+    > docs/HANDOFF.md (the "end of night 2" entry, then the "route D" entry),
+    > docs/research/car-pilot-trellis.md (Run 5, Passes 2-3 and Night lamps) and
+    > memory project_car_pilot_trellis first. The Kestrel is authored by
+    > tools/cars/kestrel.py and loaded by scene/glbcar.ts behind ?look=models;
+    > detail and night lamps are done. Settle the size budget with the owner
+    > before building 16 bodies (HANDOFF lists the levers), then parameterise the
+    > script from carshape.ts's BODIES and generalise the loader. Iterate by
+    > rendering (blender -b -P tools/cars/kestrel.py -- OUT.glb PREFIX, then
+    > LOOK=<all defaults>,models npm run cityshot -- --view drive, rerun if it
+    > exits silently) and look at the picture, in the game, before claiming
+    > anything. Keep it original and unbranded: no real car, no reference-game
+    > assets, nothing from the Copilot experiment. Keep the sim untouched;
+    > npm run typecheck and npm run test before a PR. Never pkill -f broadly.
 - **Update (2026-10-03, night): car pilot, three routes tried; route D (scripted Blender) is the one the owner liked (#584).**
   Full write-up with every attempt: [docs/research/car-pilot-trellis.md](research/car-pilot-trellis.md) (Runs 1-5).
   - **Result so far:** *Wheels are a huge improvement; the rest are improvements
