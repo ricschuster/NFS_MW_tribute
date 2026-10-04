@@ -54,6 +54,7 @@ M_CALIPER = mat('caliper', (0.7, 0.05, 0.04, 1), 0.2, 0.4)
 M_HEAD = mat('lamp_head', (0.9, 0.95, 1, 1), 0.0, 0.1, emit=(0.8, 0.9, 1, 1))
 M_TAIL = mat('lamp_tail', (0.9, 0.05, 0.03, 1), 0.0, 0.2, emit=(1, 0.05, 0.02, 1))
 M_CHROME = mat('chrome', (0.8, 0.8, 0.82, 1), 1.0, 0.2)
+M_PLATE = mat('plate', (0.85, 0.85, 0.8, 1), 0.0, 0.5)
 
 # ---- profile curves along the car -------------------------------------------
 def pchip(keys, x):
@@ -199,6 +200,11 @@ for sx in (-1, 1):
 # ---- glass: carve window faces out of the shell ------------------------------
 bm = bmesh.new(); bm.from_mesh(body.data)
 bm.faces.ensure_lookup_table()
+# The flat end caps are one polygon each in the loft, so the lower part of the nose and
+# tail would stay paint between the dark flank strips: darken it below the lamp line.
+for f in bm.faces:
+    c = f.calc_center_median()
+    if abs(c.y) > 1.6 and c.z < 0.45 and f.material_index == 0: f.material_index = 1
 glass_faces = [f for f in bm.faces if f.material_index == 2]
 ng = bmesh.new()
 vmap = {}
@@ -345,13 +351,57 @@ for s in (-1, 1):
     if loc:
         mr = blob('mirror_l' if s < 0 else 'mirror_r', (0.11, 0.07, 0.06), loc, n, M_TRIM, sink=-0.8)
         fit.append(mr)
-loc, n = hit((0, -3.0, 0.35), (0, 1, 0))
-if loc: fit.append(blob('grille', (0.5, 0.04, 0.07), loc, n, M_TRIM, sink=0.5))
+def box(name, size, loc, material, rot=(0, 0, 0)):
+    """A flat-shaded box centred on `loc`; `size` is the full extent in x, y, z."""
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    o = bpy.context.active_object; o.name = name
+    o.scale = size; o.location = loc; o.rotation_euler = rot
+    o.data.materials.append(material)
+    return o
+
+# ---- nose: grille opening with slats, corner intakes, splitter lip, hood bulge and vents -------
+loc, n = hit((0, -3.0, 0.36), (0, 1, 0))
+if loc:
+    fit.append(blob('grille', (0.46, 0.05, 0.085), loc, n, M_TRIM, sink=0.7))
+    for k in range(3):          # three bars across the opening, each laid on the shell
+        bl, bn = hit((0, -3.0, 0.315 + 0.045 * k), (0, 1, 0))
+        if bl: fit.append(blob('grille_bar', (0.36, 0.02, 0.009), bl, bn, M_DISC, sink=0.2))
+for s in (-1, 1):               # small corner intakes either side of the grille
+    loc, n = hit((s * 0.60, -3.0, 0.30), (0, 1, 0))
+    if loc: fit.append(blob('intake_' + str(s), (0.12, 0.035, 0.05), loc, n, M_TRIM, sink=0.7))
+loc, n = hit((0, -3.0, 0.20), (0, 1, 0))
+if loc:                         # the splitter: a thin blade under the nose, proud of the bumper
+    fit.append(box('splitter', (1.34, 0.17, 0.014), (0, loc.y - 0.05, CLEAR + 0.012), M_TRIM))
+loc, n = hit((0, -1.25, 2.0), (0, 0, -1))
+if loc:                         # a low power bulge, painted so it repaints with the car
+    bulge = blob('hood_bulge', (0.17, 0.36, 0.035), loc, n, M_PAINT, sink=0.5)
+for s in (-1, 1):               # twin vent slits either side of it
+    loc, n = hit((s * 0.34, -1.30, 2.0), (0, 0, -1))
+    if loc: fit.append(blob('hood_vent_' + str(s), (0.035, 0.17, 0.01), loc, n, M_TRIM, sink=0.4))
+
+# ---- tail: lamp bar, plate recess, diffuser, exhaust tips ---------------------------------
 loc, n = hit((0, 3.0, 0.72), (0, -1, 0))
 if loc: fit.append(blob('tail_bar', (0.28, 0.02, 0.015), loc, n, M_TAIL, sink=0.6))
-for s in (-1, 1):
-    loc, n = hit((s * 0.40, 3.0, 0.40), (0, -1, 0))
-    if loc: fit.append(blob('exhaust_' + ('l' if s < 0 else 'r'), (0.045, 0.045, 0.06), loc, n, M_CHROME, sink=0.3))
+loc, n = hit((0, 3.0, 0.53), (0, -1, 0))
+if loc:                         # a blank, unmarked plate in a dark surround
+    fit.append(blob('plate_recess', (0.27, 0.02, 0.085), loc, n, M_TRIM, sink=0.3, shape='cube'))
+    fit.append(blob('plate', (0.235, 0.02, 0.06), loc + n * 0.012, n, M_PLATE, sink=0.3, shape='cube'))
+loc, n = hit((0, 3.0, 0.24), (0, -1, 0))
+if loc:                         # diffuser: a dark floor blade with fins
+    fit.append(box('diffuser', (1.06, 0.2, 0.012), (0, loc.y - 0.04, CLEAR + 0.02), M_TRIM))
+    for k in range(-3, 4):
+        fit.append(box('diffuser_fin', (0.012, 0.19, 0.05), (k * 0.15, loc.y - 0.04, CLEAR + 0.045), M_TRIM))
+for s in (-1, 1):               # round exhaust tips: a chrome ring around a dark bore
+    loc, n = hit((s * 0.42, 3.0, 0.36), (0, -1, 0))
+    if loc:
+        for nm, r, d, mt, off in (('exhaust_' + ('l' if s < 0 else 'r'), 0.052, 0.12, M_CHROME, 0.0),
+                                  ('exhaust_bore', 0.036, 0.125, M_TRIM, 0.004)):
+            bpy.ops.mesh.primitive_cylinder_add(vertices=20, radius=r, depth=d,
+                                                location=(loc.x, loc.y + 0.03 + off, loc.z), rotation=(math.pi / 2, 0, 0))
+            o = bpy.context.active_object; o.name = nm
+            o.data.materials.append(mt)
+            for p_ in o.data.polygons: p_.use_smooth = True
+            fit.append(o)
 
 # ---- spoiler blade: a thin lip across the rear deck -------------------------------
 loc, n = hit((0, 1.66, 2.0), (0, 0, -1))
@@ -381,6 +431,14 @@ fit += [o for o in (
     seam('seam_hood_front', line((-0.62, -2.55, 2.0), (0.62, -2.55, 2.0), 24), DOWN, 0.006),
     seam('seam_boot', line((-0.60, 1.62, 2.0), (0.60, 1.62, 2.0)), DOWN, 0.006),
 ) if o]
+
+# ---- the bulge joins the body: the loader repaints only the `a_body` mesh, so a separate
+# painted part would keep the model's colour on every car.
+if 'bulge' in globals():
+    bpy.ops.object.select_all(action='DESELECT')
+    bulge.select_set(True); body.select_set(True)
+    bpy.context.view_layer.objects.active = body
+    bpy.ops.object.join()
 
 # ---- export ---------------------------------------------------------------------
 body.name = 'a_body'; glass.name = 'b_glass'
