@@ -70,17 +70,17 @@ def pchip(keys, x):
     return h00*ys[i] + h10*h*m[i] + h01*ys[i+1] + h11*h*m[i+1]
 
 # t runs tail (0) to nose (1). Heights in metres above the ground.
-ROOF = [(0, .70), (.03, .84), (.10, .93), (.20, 1.02), (.32, 1.15), (.44, 1.27), (.54, 1.28),
+ROOF = [(0, .70), (.025, .88), (.07, .93), (.20, 1.02), (.32, 1.15), (.44, 1.27), (.54, 1.28),
         (.62, 1.18), (.71, .90), (.80, .74), (.90, .66), (.97, .54), (1, .46)]
-BELT = [(0, .76), (.05, .90), (.15, .94), (.35, .93), (.6, .88), (.75, .84), (.9, .72), (1, .55)]
+BELT = [(0, .78), (.04, .92), (.15, .95), (.35, .93), (.6, .88), (.75, .84), (.9, .72), (1, .55)]
 def roof(t): return pchip(ROOF, t)
 def belt(t): return pchip(BELT, t)
 
 def half_width(t):
     u = abs(2 * t - 1)
-    e = max(0.0, min(1.0, (u - 0.70) / 0.30))
-    h = HW * (1 - e ** 2.3) ** 0.5
-    return h * (1 + 0.025 * math.exp(-(((t - 0.17) / 0.09) ** 2)))   # rear haunch
+    e = max(0.0, min(1.0, (u - 0.76) / 0.24))
+    h = HW * (1 - e ** 2.8) ** 0.5
+    return h * (1 + 0.04 * math.exp(-(((t - 0.17) / 0.09) ** 2)) + 0.03 * math.exp(-(((t - 0.80) / 0.09) ** 2)))   # rear haunch
 
 def bottom(t):
     u = abs(2 * t - 1)
@@ -100,9 +100,9 @@ def ring(t):
         (hw * 0.80, B),
         (hw * 0.96, B + 0.045),
         (hw * 1.0, B + (Bl - B) * 0.30),
-        (hw * 1.0, B + (Bl - B) * 0.62),
-        (hw * 0.985, Bl - 0.05),
-        (hw * 0.94, Bl),
+        (hw * 0.955, B + (Bl - B) * 0.55),
+        (hw * 1.0, Bl - 0.085),
+        (hw * 0.90, Bl),
         (gx, Bl + 0.012),
         (gx + (rw - gx) * 0.35, Bl + ch * 0.45),
         (rw * 1.0, Bl + ch * 0.93),
@@ -111,7 +111,7 @@ def ring(t):
     ]
     return pts
 
-N = 90
+N = 64
 ts = [0.5 - 0.5 * math.cos(math.pi * i / N) for i in range(N + 1)]
 bm = bmesh.new()
 rings = []
@@ -139,7 +139,9 @@ for e in bm.edges:
     if a in ring_of and b in ring_of:
         (ia, ja), (ib, jb) = ring_of[a], ring_of[b]
         if ia == ib and {ja, jb} in ({6, 7}, {2, 3}, {15, 16}, {19, 20}):
-            e[crease] = 0.8
+            e[crease] = 1.0
+        elif ia == ib and {ja, jb} in ({5, 6}, {16, 17}):
+            e[crease] = 0.6
 for f in bm.faces:
     idx = [ring_of[v] for v in f.verts if v in ring_of]
     if len(idx) != 4: continue
@@ -148,6 +150,12 @@ for f in bm.faces:
     js = sorted(set(j for _, j in idx))
     seg = js[0] if len(js) == 2 and js[1] - js[0] == 1 else None
     if seg is None: continue
+    # Dark under-body: the floor and sill everywhere, the whole lower flank
+    # at the nose and tail, which reads as a splitter and a diffuser.
+    ends = t < 0.08 or t > 0.9
+    if seg in (0, 1, 21, 20) or (ends and seg in (2, 19)):
+        f.material_index = 1
+        continue
     side = (seg in (7, 8) or seg in (13, 14)) and 0.27 < t < 0.64
     screen = seg in (10, 11) and 0.58 < t < 0.70
     rear = seg in (10, 11) and 0.13 < t < 0.29
@@ -207,7 +215,7 @@ gm.materials.append(M_GLASS)
 for p in gm.polygons: p.use_smooth = True
 
 # ---- wheels ------------------------------------------------------------------
-def spin(profile, material, segs=48):
+def spin(profile, material, segs=32):
     """Lathe a (axial, radial) profile about the X axis into a new bmesh piece."""
     b = bmesh.new(); vs = []
     for a, r in profile:
@@ -293,17 +301,17 @@ fit = []
 for s in (-1, 1):
     # headlamps: low on the nose, swept back toward the wing
     loc, n = hit((s * 0.62, -3.0, 0.50), (0, 1, 0))
-    if loc: fit.append(blob('lamp_head_l' if s < 0 else 'lamp_head_r', (0.15, 0.04, 0.03), loc, n, M_HEAD, sink=0.6))
+    if loc: fit.append(blob('lamp_head_l' if s < 0 else 'lamp_head_r', (0.19, 0.045, 0.035), loc, n, M_HEAD, sink=0.6))
     loc, n = hit((s * 0.42, 3.0, 0.78), (0, -1, 0))
-    if loc: fit.append(blob('lamp_tail_l' if s < 0 else 'lamp_tail_r', (0.17, 0.04, 0.04), loc, n, M_TAIL, sink=0.6))
+    if loc: fit.append(blob('lamp_tail_l' if s < 0 else 'lamp_tail_r', (0.2, 0.04, 0.045), loc, n, M_TAIL, sink=0.6))
     loc, n = hit((s * 2.0, -0.55, 0.95), (-s, 0, 0))
     if loc:
         mr = blob('mirror_l' if s < 0 else 'mirror_r', (0.11, 0.07, 0.06), loc, n, M_PAINT, sink=-0.8)
         fit.append(mr)
 loc, n = hit((0, -3.0, 0.35), (0, 1, 0))
-if loc: fit.append(blob('grille', (0.42, 0.04, 0.06), loc, n, M_TRIM, sink=0.5))
+if loc: fit.append(blob('grille', (0.5, 0.04, 0.07), loc, n, M_TRIM, sink=0.5))
 loc, n = hit((0, 3.0, 0.72), (0, -1, 0))
-if loc: fit.append(blob('tail_bar', (0.2, 0.02, 0.015), loc, n, M_TAIL, sink=0.6))
+if loc: fit.append(blob('tail_bar', (0.28, 0.02, 0.015), loc, n, M_TAIL, sink=0.6))
 for s in (-1, 1):
     loc, n = hit((s * 0.40, 3.0, 0.40), (0, -1, 0))
     if loc: fit.append(blob('exhaust_' + ('l' if s < 0 else 'r'), (0.045, 0.045, 0.06), loc, n, M_CHROME, sink=0.3))

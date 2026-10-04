@@ -226,9 +226,14 @@ three renders to get right.
   car it is plainer and softer: no shut lines, no lamp internals, no rim detail
   at this distance. It reads as a competent generic coupe, which is what a
   script and a day get. Not yet judged in motion by the owner.
-- **Open:** shoulder crease is too soft to show; nose and tail are blobby; paint
-  looks pink under the game's sky (roughness/coat to tune against `?look=pbr`);
-  triangle budget; headlight glow check at night; other bodies would need their
+- **Pass 2 (owner: wheels a huge improvement, the rest better but needs work):**
+  dark valances and sills tagged on the lofted grid, fuller nose and tail,
+  tail kick, a ridge under the shoulder, bigger lamps and grille, 27.4k
+  triangles (in budget). The loader now gives the paint the procedural cars'
+  lacquer and the same baked dirt shading, which removed the pink wash.
+  Pictures: `blender/v3_sheet.png`, `v4_sheet.png`, `game_v4.png`.
+- **Open:** the shoulder is still soft at chase distance; nose and tail are
+  still plain; headlight glow check at night; other bodies would need their
   own parameter sets (the script is one car, not yet a kit).
 
 ### Where that leaves the pilot

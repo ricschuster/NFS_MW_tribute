@@ -36,6 +36,21 @@ export function hasKestrelModel(): boolean {
   return source !== null;
 }
 
+/** Darker low on the flank and at the ends: the dirt and shadow a sunlit car has under its sills. */
+function shade(geometry: THREE.BufferGeometry): void {
+  geometry.computeBoundingBox();
+  const box = geometry.boundingBox!;
+  const at = geometry.attributes.position;
+  const rgb = new Float32Array(at.count * 3);
+  for (let i = 0; i < at.count; i++) {
+    const low = THREE.MathUtils.smoothstep(at.getY(i), box.min.y, box.min.y + (box.max.y - box.min.y) * 0.5);
+    const end = 1 - THREE.MathUtils.smoothstep(Math.abs(at.getZ(i)), (box.max.z) * 0.7, box.max.z);
+    const v = 0.55 + 0.45 * low * (0.8 + 0.2 * end);
+    rgb.set([v, v, v], i * 3);
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(rgb, 3));
+}
+
 /** The meshes under one glTF node: a node with several materials loads as a group of primitives. */
 function primitives(node: THREE.Object3D): THREE.Mesh[] {
   const found: THREE.Mesh[] = [];
@@ -85,7 +100,17 @@ export function kestrelParts(): THREE.Mesh[] | null {
       // The paint is repainted per car, so each car owns its copy: shared, the
       // last car placed would colour every Kestrel in the city. Mirrors are
       // not repainted and stay the model's colour.
-      const own = (mesh.material as THREE.Material).name === 'paint' ? (mesh.material as THREE.Material).clone() : mesh.material;
+      const painted = (mesh.material as THREE.Material).name === 'paint';
+      let own = mesh.material;
+      if (painted) {
+        // The procedural cars' lacquer (carshape.ts), so the two read as one
+        // family under the sky, with the same baked dirt on the lower flank.
+        own = new THREE.MeshPhysicalMaterial({
+          roughness: 0.6, metalness: 0.05, envMapIntensity: 0.6, clearcoat: 0.3, clearcoatRoughness: 0.55,
+          specularIntensity: 0.15, vertexColors: true, name: 'paint',
+        });
+        shade(geometry);
+      }
       const part = new THREE.Mesh(geometry, own);
       part.name = name;
       if (name.startsWith('lamp_head')) {
