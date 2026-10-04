@@ -244,6 +244,17 @@ three renders to get right.
   separate part. `hit()` now flips the ray-cast normal to face the ray, since
   the shell's face normals can point inward. Mirrors were white balls in game
   (paint-named material got the vertex-colour treatment); they are trim now.
+- **Night lamps (owner chose (c) after (a)):** the authored lamps already took
+  the night code's contract (`headlight` basic material, tail lamps unlit) and
+  worked, but flat. `addLampHalos` in `scene/cars.ts` adds an additive sprite on
+  each head and tail lamp (the street lamps' glow texture, tinted), faded by
+  `setHalos` from `CarPool.setNight` and `CityView.setCarNight`, so the player
+  and traffic agree. First try used three tail halos (lamps and the bar) and
+  merged into one red blob; two small ones read as lamps. Looked at with
+  `HOUR=23 LOOK=<defaults>,models npm run cityshot -- --view hour`, rear and an
+  oncoming parked car. Not done: brake lights (the sim's brake is not read by
+  the view), and the cityshot run fails about every other launch for reasons
+  not looked into.
 - **Open:** the shoulder is still soft at chase distance; nose and tail are
   still plain; headlight glow check at night; other bodies would need their
   own parameter sets (the script is one car, not yet a kit).

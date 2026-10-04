@@ -20,7 +20,7 @@ import { makeGradePass, setGradeHour } from './grade';
 import { DEFAULT_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
 import { loadKestrelModel } from './glbcar';
-import { makeCar, CarPool, COP_BODY, trafficBody } from './cars';
+import { makeCar, CarPool, COP_BODY, trafficBody, setHalos } from './cars';
 import { CityTrucks } from './trucks';
 import { RouteLines } from './routelines';
 import { carById, type CarBody } from '../cars';
@@ -1089,6 +1089,7 @@ export class CityView {
       (beam.material as THREE.MeshBasicMaterial).opacity = lit * 0.30;
       beam.visible = lit > 0.02;
     }
+    setHalos(car, lit);
     for (const part of car.children) {
       if (part.name !== 'headlight') continue;
       ((part as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(
