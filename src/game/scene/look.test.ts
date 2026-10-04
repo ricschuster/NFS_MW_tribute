@@ -5,7 +5,8 @@ describe('look switches (#579)', () => {
   it('are all on by default, off for ?look=none', () => {
     expect(parseLook(null)).toBe(DEFAULT_LOOK);
     expect(parseLook('')).toBe(DEFAULT_LOOK);
-    expect(parseLook(null).size).toBe(LOOK_SWITCHES.length);
+    expect(parseLook(null).size).toBe(LOOK_SWITCHES.length - 1);
+    expect(parseLook(null).has('models')).toBe(false);
     expect(parseLook('none')).toBe(NO_LOOK);
   });
 

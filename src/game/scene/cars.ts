@@ -4,6 +4,7 @@ import { carParts, CAR_PAINT } from './carshape';
 import type { CarBody } from '../cars';
 import type { CopKind } from '../constants';
 import { lampGlowTexture } from './signage';
+import { kestrelParts } from './glbcar';
 
 /**
  * What each police unit is drawn as (#584). Drawing only, and kept here rather
@@ -53,6 +54,15 @@ const BODY_L = CAR_WIDTH_WORLD * 1.9;
  */
 export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): THREE.Group {
   const car = new THREE.Group();
+  // An authored body (`?look=models`, glbcar.ts), once it has loaded: it brings
+  // its own wheels, glass and lamps, so none of the procedural fittings below.
+  const authored = style === 'fastback' && !cop ? kestrelParts() : null;
+  if (authored) {
+    (authored[0].material as THREE.MeshStandardMaterial).color.set(color);
+    for (const part of authored) car.add(part);
+    addLampHalos(car);
+    return addGlows(car);
+  }
   const parts = carParts(BODY_W, CAR_ASPECT, style);
   // The lights sit on the body this is, not the coupe's (#434).
   const bodyH = parts.height;
@@ -121,6 +131,57 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     car.add(strip);
   }
 
+  return addGlows(car);
+}
+
+/**
+ * A glow round each lamp of an authored body, which turns on with the night.
+ *
+ * The lenses are flat unlit colour, which is all a procedural lamp is, but an
+ * authored car is looked at closely enough that a lit lamp with no bloom reads
+ * as a painted one. An additive sprite on the lamp's centre does what the
+ * street lamps' pools do (`lampGlowTexture`), and `setNight` fades it.
+ */
+function addLampHalos(car: THREE.Group): void {
+  const map = lampGlowTexture();
+  const lamps = car.children.filter((c) => c.name === 'headlight' || /^lamp_tail/.test(c.name));
+  for (const lamp of lamps) {
+    const geometry = (lamp as THREE.Mesh).geometry;
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox!;
+    const head = lamp.name === 'headlight';
+    const halo = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map,
+        color: head ? '#fff4dc' : '#ff2412',
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        fog: true,
+      }),
+    );
+    halo.name = 'halo';
+    halo.userData.strength = head ? 0.8 : 0.55;
+    halo.position.copy(box.getCenter(new THREE.Vector3())).add(lamp.position);
+    const size = (box.max.x - box.min.x) * (head ? 1.9 : 1.6) + BODY_W * 0.04;
+    halo.scale.set(size, size * 0.7, 1);
+    halo.visible = false;
+    car.add(halo);
+  }
+}
+
+/** Fade a car's lamp halos with the night. */
+export function setHalos(car: THREE.Object3D, lit: number): void {
+  for (const part of car.children) {
+    if (part.name !== 'halo') continue;
+    (part as THREE.Sprite).material.opacity = lit * (part.userData.strength as number);
+    part.visible = lit > 0.02;
+  }
+}
+
+/** The contact shadow and the headlight beam, which any body wears. */
+function addGlows(car: THREE.Group): THREE.Group {
   // Contact shadow (#580, behind `?look=pbr` with the car paint): the sun's
   // shadow map does not reach the dark crease under a car, which is what stops
   // it floating. A black quad on the road under it, made of the lamp glow's
@@ -272,6 +333,7 @@ export class CarPool {
         material.opacity = lit * 0.30;
         beam.visible = lit > 0.02;
       }
+      setHalos(car, lit);
       for (const part of car.children) {
         if (part.name !== 'headlight') continue;
         ((part as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(

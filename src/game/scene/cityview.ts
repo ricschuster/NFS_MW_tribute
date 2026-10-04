@@ -19,7 +19,8 @@ import { CAR_PAINT } from './carshape';
 import { makeGradePass, setGradeHour } from './grade';
 import { DEFAULT_LOOK, type Look } from './look';
 import { Cityscape } from './cityscape';
-import { makeCar, CarPool, COP_BODY, trafficBody } from './cars';
+import { loadKestrelModel } from './glbcar';
+import { makeCar, CarPool, COP_BODY, trafficBody, setHalos } from './cars';
 import { CityTrucks } from './trucks';
 import { RouteLines } from './routelines';
 import { carById, type CarBody } from '../cars';
@@ -232,6 +233,8 @@ export class CityView {
     // at all (#75): it renders into a half-float buffer, applies the effects,
     // and then does the tone mapping and the colour conversion once at the end.
     CAR_PAINT.clearcoat = look.has('pbr');
+    // Authored car bodies (#584): fetched in the background, then the car is rebuilt.
+    if (look.has('models')) void loadKestrelModel().then(() => { this.carStyle = '' as CarBody; });
     if (CAR_PAINT.clearcoat) this.car = makeCar('#d8442f');
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -1086,6 +1089,7 @@ export class CityView {
       (beam.material as THREE.MeshBasicMaterial).opacity = lit * 0.30;
       beam.visible = lit > 0.02;
     }
+    setHalos(car, lit);
     for (const part of car.children) {
       if (part.name !== 'headlight') continue;
       ((part as THREE.Mesh).material as THREE.MeshBasicMaterial).color.set(

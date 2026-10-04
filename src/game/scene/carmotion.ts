@@ -122,7 +122,8 @@ export class CarMotion {
 
 /** The tyre's radius, read off the wheel mesh `carshape` built. */
 export function tyreRadius(wheel: THREE.Mesh): number {
-  return (wheel.geometry as THREE.CylinderGeometry).parameters.radiusTop;
+  // An authored wheel (glbcar.ts) is not a cylinder and says its radius itself.
+  return (wheel.userData.tyreRadius as number | undefined) ?? (wheel.geometry as THREE.CylinderGeometry).parameters.radiusTop;
 }
 
 /**

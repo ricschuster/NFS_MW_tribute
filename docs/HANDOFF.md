@@ -3,6 +3,104 @@
 Where the project stands, so a fresh session can pick it up without re-deriving
 anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
 
+- **Update (2026-10-03, end of night 2): car pilot passes 3 and 4 done, kit is next (#584).**
+  On top of the route D entry below (read it for the pipeline and the gotchas):
+  - **Pass 3, detail (`952f3b9`):** shut lines as ray-cast ribbons (`seam()`),
+    lamp bezels, a spoiler blade, twin-spoke rims with lug nuts, firmer
+    shoulder, dark mirrors. 29.3k triangles, 1.4 MB.
+  - **Night lamps (`f9f97be`):** `addLampHalos` / `setHalos` in `scene/cars.ts`,
+    additive sprites on head and tail lamps, faded by `CarPool.setNight` and
+    `CityView.setCarNight`. Not done: brake lights (the view does not read the
+    sim's brake).
+  - **Lessons:** tagging shell faces for fine lines or bezels is pixelated (use
+    ribbons and blobs); a raised tail lip in the `BELT` curve folds the loft and
+    the car goes dark and blotchy in the game while Blender looks fine, so
+    **always check in the game, not just the preview**; `hit()` flips normals to
+    face the ray because the shell's face normals can point inward.
+  - **`cityshot` fails about every other launch** (Node exits with no message);
+    just rerun. `HOUR=23 LOOK=<defaults>,models npm run cityshot -- --view hour`
+    is the night shot.
+  - **Next, owner's order: (b) the body-style kit.** Nothing is written. Plan:
+    parameterise `kestrel.py` by body style from `BODIES` in
+    `scene/carshape.ts` (length, height, width, glass position and length,
+    roofFront/roofBack slope, nose, tail, tyre, track, lift, open, bed, spoiler,
+    stripe); remap the Kestrel's `ROOF`/`BELT` keys piecewise through the cabin
+    breakpoints so `fastback` stays what it is; place lamps, mirrors and seams
+    relative to the cabin, not in fixed metres; one .glb per body. **Size is the
+    decision to take with the owner first:** 16 bodies at 1.4 MB is over any
+    sensible budget (the body is 1 MB of it), so subdivision level 1 for all but
+    the hero, shared wheels, and loading per body on demand are the levers;
+    check whether the generated service worker precaches `public/models`.
+    Loader work: `kestrelParts()` is fastback-only and `makeCar` checks
+    `style === 'fastback'`. Then (d) make `models` a default look (#579 rule).
+  - **Dev server:** one on port 5190 may still run from this directory; stop it
+    by PID only, never `pkill -f`.
+  - **Continue with this prompt:**
+    > Continue the car pilot (#584), route D, with (b) the body-style kit. Read
+    > docs/HANDOFF.md (the "end of night 2" entry, then the "route D" entry),
+    > docs/research/car-pilot-trellis.md (Run 5, Passes 2-3 and Night lamps) and
+    > memory project_car_pilot_trellis first. The Kestrel is authored by
+    > tools/cars/kestrel.py and loaded by scene/glbcar.ts behind ?look=models;
+    > detail and night lamps are done. Settle the size budget with the owner
+    > before building 16 bodies (HANDOFF lists the levers), then parameterise the
+    > script from carshape.ts's BODIES and generalise the loader. Iterate by
+    > rendering (blender -b -P tools/cars/kestrel.py -- OUT.glb PREFIX, then
+    > LOOK=<all defaults>,models npm run cityshot -- --view drive, rerun if it
+    > exits silently) and look at the picture, in the game, before claiming
+    > anything. Keep it original and unbranded: no real car, no reference-game
+    > assets, nothing from the Copilot experiment. Keep the sim untouched;
+    > npm run typecheck and npm run test before a PR. Never pkill -f broadly.
+- **Update (2026-10-03, night): car pilot, three routes tried; route D (scripted Blender) is the one the owner liked (#584).**
+  Full write-up with every attempt: [docs/research/car-pilot-trellis.md](research/car-pilot-trellis.md) (Runs 1-5).
+  - **Result so far:** *Wheels are a huge improvement; the rest are improvements
+    too but need more work; handling feels much better* (owner, after driving it
+    with `?look=models`). The handling is #617's body motion plus real steering
+    wheels; the sim and the `citylap` baselines are untouched.
+  - **Route D, built:** `tools/cars/kestrel.py` authors the Kestrel in headless
+    Blender (lofted shell, subdivision, creases, boolean arches, separate glass,
+    lamps, mirrors, four wheels with tyre, rim, disc, caliper). `blender -b -P
+    tools/cars/kestrel.py -- public/models/kestrel.glb PREVIEW_PREFIX` writes the
+    model (27.4k triangles, 1.7 MB) and five preview renders;
+    `python3 tools/cars/sheet.py PREFIX` makes a contact sheet. Loader:
+    `src/game/scene/glbcar.ts`, behind **`?look=models`, off by default** (a bare
+    `?look=models` turns the other defaults off; use
+    `?look=env,pbr,materials,trees,particles,clutter,buildings,models`, and
+    `LOOK=` the same way for `cityshot`). Replaces fastback bodies that are not
+    police. Original work, nothing generated: **no credits row**.
+  - **Two bugs worth remembering:** GLTFLoader splits a multi-material node into
+    a mesh per material (merge wheels back, keep the paint primitive as
+    `children[0]`); and the paint material must be cloned per car, because parked
+    cars of the same body repaint a shared one.
+  - **Route E, not taken:** TRELLIS.2 on FLUX.1-schnell concept images works
+    (`tools/trellis/flux_concept.py`, `run.py`, `render_glb.py`; seed 1 of the
+    unbranded prompt is the pick) and looks better than D at chase distance, but
+    the wheels are fused and the glass is a blob; the wheel fix is about half a
+    day per car. **FLUX with a "no real car" prompt still drew Toyota and Mustang
+    badges: look at every image.** Parked, not rejected: the owner chose D. The
+    Copilot-account concept image was an experiment and is in no commit.
+  - **Pass 3 done (2026-10-03): (a) detail** - seams, bezels, spoiler blade, twin-spoke rims, firmer shoulder; see Run 5 "Pass 3" in the research note. Night lamps (c) done too: lamp halos, see the research note. Still open: (b) kit, (d) default look. The nose and tail are still plain.
+  - **Open on D (owner's call which first):** (a) detail: hood line, lamp
+    recesses, spoiler lip, rim detail, a firmer shoulder; (b) a kit: turn the
+    script into parameter sets so the other 15 body styles come out of it,
+    budgeted against the 10 MB asset cap; (c) lamp glow at night (`headlight`
+    nodes are unlit basic materials, untested at night); (d) if signed off, make
+    `models` a default look and delete the switch name (#579 rule).
+  - **Dev server:** one was left on port 5190 from this working directory
+    (`npx vite --port 5190 --strictPort`); stop only that PID, never `pkill -f`.
+  - **Continue with this prompt:**
+    > Continue the car pilot (#584), route D. Read docs/HANDOFF.md (the
+    > "route D" entry), docs/research/car-pilot-trellis.md (Run 5 and Pass 2) and
+    > memory project_car_pilot_trellis first. The Kestrel is authored by
+    > `tools/cars/kestrel.py` and loaded by `scene/glbcar.ts` behind
+    > `?look=models`; the owner liked the wheels and the handling, and wants more
+    > work on the rest. Ask which of (a) detail, (b) a body-style kit, (c) night
+    > lamps comes first if they have not said. Iterate by rendering
+    > (`blender -b -P tools/cars/kestrel.py -- public/models/kestrel.glb PREFIX`,
+    > then `LOOK=<all defaults>,models npm run cityshot -- --view drive`) and look
+    > at the picture before claiming anything. Keep it original and unbranded: no
+    > real car, no reference-game assets, nothing from the Copilot experiment. Keep
+    > the sim untouched; `npm run typecheck` and `npm run test` before a PR. Never
+    > `pkill -f` broadly.
 - **Update (2026-10-03, late night): AI assets allowed; car sourcing is a pilot (#584).**
   The owner asked to consider "considerably" better cars, ruled out nothing, is
   **not an artist and will not hire one**, and said the no-AI rule made no sense
@@ -27,20 +125,34 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     anything from `reference/`. Model: TRELLIS.2 (MIT) with the DINOv3 encoder
     (gated, Meta's licence, owner's access granted). Both are downloaded
     (about 16 GB), `hf auth login` is done.
-  - **`tools/trellis/install.sh` is run by the owner by hand**; Claude Code's
-    classifier refused to run it (it builds CUDA code from GitHub). It was
-    mid-build (CuMesh, then FlexGEMM, o-voxel) when the session ended; check
-    `~/trellis-install.log` for `INSTALL-DONE`. `tools/trellis/run.py` has never
-    run, so a first-run error is expected.
+  - **Update (2026-10-03, night): install finished and `run.py` works.** The
+    env is `trellis2` (`~/micromamba-bin/bin/micromamba run -n trellis2 python
+    tools/trellis/run.py IMG OUT --type 512`); one fix was needed (transformers
+    5 renamed DINOv3's `.layer`, aliased in `run.py`). A 512 run takes about
+    two minutes and 2.8 GB of GPU. Results, with pictures in
+    `~/Pictures/crosstown-compare/`: see the Results section of the research
+    note. Short version: with a detailed photoreal input it looks good at
+    chase-cam distance, but the wheels are fused into the body, the glass is a
+    blob and it is 200k triangles; with our own low-poly Kestrel render as the
+    input it copies the car and adds nothing. So the input must be a detailed
+    concept image from a licence-clean source.
+  - **Not usable, experiment only:** the first concept image came from the
+    owner's employer's Copilot account. It, its .glb and its renders never go
+    in the repo, the credits or the game.
+  - **FLUX.1-schnell** (Apache-2.0) is fully downloaded (23 GB transformer, in
+    the HF cache; `du` on the snapshot folder misleadingly shows 454 MB because
+    of symlinks) and the `flux` micromamba env has diffusers 0.40. Not run yet.
   - **`briaai/RMBG-2.0`** is what TRELLIS's `pipeline.json` uses to remove
     backgrounds: gated, believed non-commercial, not licence-checked, not
     downloaded. `run.py` stubs it and cuts the car out itself.
   - **Gotcha:** the car group has a blob-shadow plane (about 2340 x 6792 units)
     that wrecks `Box3` measurements; remove it before measuring.
-  - **Next:** run it on `front34.png` at `--type 512`, open the `.glb` in
-    Blender, judge wheels, symmetry and "does it read as a real car", then
-    script the clean-up. No credits row, no merge. If it fails the procedural
-    cars stay.
+  - **Next:** generate original-coupe concept images with FLUX.1-schnell
+    (prompt names no real car; keep prompt, seed and date for the credits row),
+    run TRELLIS on the best, then decide the wheels: replace them with our own
+    at the hub positions (reuses #617's spin and steer). Judge in the chase
+    camera, not close up. Nothing merges without a credits row. If it does not
+    beat the procedural cars the procedural cars stay.
 - **Update (2026-10-03, night): cars pass (#584), procedural, #610-#614 merged.**
   Owner delegated ("go as far as you can", then "keep going"), so sourcing is
   **better procedural shapes**: no asset, no `CREDITS.md` row, all 44 cars.
