@@ -31,6 +31,7 @@ anything. This is a solo project: see [CONTRIBUTING](../CONTRIBUTING.md).
     day per car. **FLUX with a "no real car" prompt still drew Toyota and Mustang
     badges: look at every image.** Parked, not rejected: the owner chose D. The
     Copilot-account concept image was an experiment and is in no commit.
+  - **Pass 3 done (2026-10-03): (a) detail** - seams, bezels, spoiler blade, twin-spoke rims, firmer shoulder; see Run 5 "Pass 3" in the research note. Still open: (b) kit, (c) night lamps, (d) default look. The nose and tail are still plain.
   - **Open on D (owner's call which first):** (a) detail: hood line, lamp
     recesses, spoiler lip, rim detail, a firmer shoulder; (b) a kit: turn the
     script into parameter sets so the other 15 body styles come out of it,

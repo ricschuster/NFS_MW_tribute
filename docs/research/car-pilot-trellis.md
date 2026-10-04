@@ -232,6 +232,18 @@ three renders to get right.
   triangles (in budget). The loader now gives the paint the procedural cars'
   lacquer and the same baked dirt shading, which removed the pink wash.
   Pictures: `blender/v3_sheet.png`, `v4_sheet.png`, `game_v4.png`.
+- **Pass 3 (detail, owner chose (a) first):** shut lines for hood, doors and
+  boot laid as thin ribbons ray-cast onto the shell (`seam()`); dark lamp
+  bezels behind the lenses; a thin spoiler blade on the rear deck; twin-spoke
+  rims with a centre cap and lug nuts; shoulder creases firmed (0.85/0.4);
+  mirror housings dark. 29.3k triangles, 1.4 MB. Two lessons: **tagging faces
+  for lines or bezels on the finished shell looks pixelated** (the faces are
+  1 cm), so use ribbons and blobs; and **a raised tail lip written into the
+  `BELT` curve folds the loft over itself**, which rendered fine in Blender but
+  came out dark and blotchy in the game (inverted normals), so the lip is a
+  separate part. `hit()` now flips the ray-cast normal to face the ray, since
+  the shell's face normals can point inward. Mirrors were white balls in game
+  (paint-named material got the vertex-colour treatment); they are trim now.
 - **Open:** the shoulder is still soft at chase distance; nose and tail are
   still plain; headlight glow check at night; other bodies would need their
   own parameter sets (the script is one car, not yet a kit).

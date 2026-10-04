@@ -141,7 +141,9 @@ for e in bm.edges:
         if ia == ib and {ja, jb} in ({6, 7}, {2, 3}, {15, 16}, {19, 20}):
             e[crease] = 1.0
         elif ia == ib and {ja, jb} in ({5, 6}, {16, 17}):
-            e[crease] = 0.6
+            e[crease] = 0.85
+        elif ia == ib and {ja, jb} in ({4, 5}, {17, 18}):
+            e[crease] = 0.4
 for f in bm.faces:
     idx = [ring_of[v] for v in f.verts if v in ring_of]
     if len(idx) != 4: continue
@@ -243,19 +245,29 @@ def wheel_mesh(outboard):
     add(spin(tyre, 0), 0)
     rim = [(hw*.82, .205), (hw*.9, .212), (hw*.84, .2), (hw*.45, .196), (hw*.2, .09), (hw*.14, .05), (hw*.14, 0.0)]
     add(spin(rim, 1), 1)
-    # five spokes from the hub to the lip, slightly proud of the dish
+    # five twin spokes from the hub to the lip, slightly proud of the dish
     for k in range(5):
-        a = 2 * math.pi * k / 5 + 0.3
-        pb = bmesh.new()
-        def v(ax, r, w):
-            return pb.verts.new((ax, r * math.cos(a) - w * math.sin(a), r * math.sin(a) + w * math.cos(a)))
-        o = [v(hw*.80, 0.06, 0.035), v(hw*.80, 0.06, -0.035), v(hw*.86, 0.2, -0.018), v(hw*.86, 0.2, 0.018)]
-        i = [v(hw*.45, 0.06, 0.035), v(hw*.45, 0.06, -0.035), v(hw*.5, 0.2, -0.018), v(hw*.5, 0.2, 0.018)]
-        for f in ((o[0], o[1], o[2], o[3]), (o[0], o[3], i[3], i[0]), (o[1], i[1], i[2], o[2]),
-                  (o[3], o[2], i[2], i[3]), (o[0], i[0], i[1], o[1])):
-            try: pb.faces.new(f)
-            except ValueError: pass
-        add(pb, 1)
+        for off in (-0.11, 0.11):
+            a = 2 * math.pi * k / 5 + 0.3 + off
+            pb = bmesh.new()
+            def v(ax, r, w):
+                return pb.verts.new((ax, r * math.cos(a) - w * math.sin(a), r * math.sin(a) + w * math.cos(a)))
+            o = [v(hw*.80, 0.07, 0.02), v(hw*.80, 0.07, -0.02), v(hw*.86, 0.2, -0.011), v(hw*.86, 0.2, 0.011)]
+            i = [v(hw*.45, 0.07, 0.02), v(hw*.45, 0.07, -0.02), v(hw*.5, 0.2, -0.011), v(hw*.5, 0.2, 0.011)]
+            for f in ((o[0], o[1], o[2], o[3]), (o[0], o[3], i[3], i[0]), (o[1], i[1], i[2], o[2]),
+                      (o[3], o[2], i[2], i[3]), (o[0], i[0], i[1], o[1])):
+                try: pb.faces.new(f)
+                except ValueError: pass
+            add(pb, 1)
+    # centre cap and five lug nuts
+    add(spin([(hw*.8, 0.0), (hw*.9, 0.035), (hw*.9, 0.075), (hw*.8, 0.08)], 1, 16), 1)
+    for k in range(5):
+        a = 2 * math.pi * k / 5
+        nb = bmesh.new()
+        bmesh.ops.create_cone(nb, cap_ends=True, segments=6, radius1=0.014, radius2=0.012, depth=0.016)
+        bmesh.ops.rotate(nb, cent=(0, 0, 0), matrix=mathutils.Matrix.Rotation(math.pi / 2, 3, 'Y'), verts=nb.verts)
+        bmesh.ops.translate(nb, vec=(hw*.92, 0.055 * math.cos(a), 0.055 * math.sin(a)), verts=nb.verts)
+        add(nb, 2)
     # brake disc behind the spokes, and a caliper
     add(spin([(-hw*.25, .0), (-hw*.25, .19), (-hw*.1, .19), (-hw*.1, .0)], 2), 2)
     cb = bmesh.new()
@@ -281,6 +293,7 @@ bpy.context.view_layer.update()
 dg = bpy.context.evaluated_depsgraph_get()
 def hit(origin, direction):
     ok, loc, nrm, *_ = scene.ray_cast(dg, Vector(origin), Vector(direction))
+    if ok and nrm.dot(Vector(direction)) > 0: nrm = -nrm       # always face the ray's origin
     return (loc, nrm) if ok else (None, None)
 
 def blob(name, size, loc, nrm, material, sink=0.35, shape='sphere'):
@@ -298,15 +311,39 @@ def blob(name, size, loc, nrm, material, sink=0.35, shape='sphere'):
     return o
 
 fit = []
+def seam(name, pts, direction, width=0.007, lift=0.0015):
+    """A thin dark ribbon laid on the shell along a polyline: a panel shut line.
+    Each point is ray-cast along `direction` so the ribbon follows the surface."""
+    hits = []
+    for p_ in pts:
+        loc, n = hit(p_, direction)
+        if loc: hits.append((loc, n))
+    if len(hits) < 2: return None
+    bmx = bmesh.new(); row = []
+    for i, (loc, n) in enumerate(hits):
+        a_ = hits[min(i + 1, len(hits) - 1)][0] - hits[max(i - 1, 0)][0]
+        side = a_.cross(n).normalized() * (width / 2)
+        row.append((bmx.verts.new(loc + n * lift + side), bmx.verts.new(loc + n * lift - side)))
+    for (a0, b0), (a1, b1) in zip(row, row[1:]):
+        bmx.faces.new((a0, a1, b1, b0))
+    bmesh.ops.recalc_face_normals(bmx, faces=bmx.faces)
+    m = bpy.data.meshes.new(name); bmx.to_mesh(m); bmx.free()
+    m.materials.append(M_TRIM)
+    o = bpy.data.objects.new(name, m); scene.collection.objects.link(o)
+    return o
+
+fit = []
 for s in (-1, 1):
     # headlamps: low on the nose, swept back toward the wing
     loc, n = hit((s * 0.62, -3.0, 0.50), (0, 1, 0))
+    if loc: fit.append(blob('bezel_h' + str(s), (0.215, 0.058, 0.03), loc, n, M_TRIM, sink=0.75))
     if loc: fit.append(blob('lamp_head_l' if s < 0 else 'lamp_head_r', (0.19, 0.045, 0.035), loc, n, M_HEAD, sink=0.6))
     loc, n = hit((s * 0.42, 3.0, 0.78), (0, -1, 0))
+    if loc: fit.append(blob('bezel_t' + str(s), (0.23, 0.056, 0.04), loc, n, M_TRIM, sink=0.75))
     if loc: fit.append(blob('lamp_tail_l' if s < 0 else 'lamp_tail_r', (0.2, 0.04, 0.045), loc, n, M_TAIL, sink=0.6))
     loc, n = hit((s * 2.0, -0.55, 0.95), (-s, 0, 0))
     if loc:
-        mr = blob('mirror_l' if s < 0 else 'mirror_r', (0.11, 0.07, 0.06), loc, n, M_PAINT, sink=-0.8)
+        mr = blob('mirror_l' if s < 0 else 'mirror_r', (0.11, 0.07, 0.06), loc, n, M_TRIM, sink=-0.8)
         fit.append(mr)
 loc, n = hit((0, -3.0, 0.35), (0, 1, 0))
 if loc: fit.append(blob('grille', (0.5, 0.04, 0.07), loc, n, M_TRIM, sink=0.5))
@@ -315,6 +352,35 @@ if loc: fit.append(blob('tail_bar', (0.28, 0.02, 0.015), loc, n, M_TAIL, sink=0.
 for s in (-1, 1):
     loc, n = hit((s * 0.40, 3.0, 0.40), (0, -1, 0))
     if loc: fit.append(blob('exhaust_' + ('l' if s < 0 else 'r'), (0.045, 0.045, 0.06), loc, n, M_CHROME, sink=0.3))
+
+# ---- spoiler blade: a thin lip across the rear deck -------------------------------
+loc, n = hit((0, 1.66, 2.0), (0, 0, -1))
+if loc:
+    bpy.ops.mesh.primitive_cube_add(size=2)
+    sp = bpy.context.active_object; sp.name = 'spoiler'
+    sp.scale = (0.54, 0.07, 0.012)
+    sp.rotation_euler = (math.atan2(-n.y, n.z) + 0.05, 0, 0)
+    sp.location = loc + Vector((0, 0.0, 0.006))
+    sp.data.materials.append(M_TRIM)
+    for p_ in sp.data.polygons: p_.use_smooth = False
+    fit.append(sp)
+
+# ---- shut lines: hood, doors, boot -------------------------------------------------
+def line(a, b, k=40):
+    return [tuple(a[i] + (b[i] - a[i]) * j / (k - 1) for i in range(3)) for j in range(k)]
+DOWN = (0, 0, -1)
+for sd in (-1, 1):
+    fit += [o for o in (
+        seam('seam_hood_side', line((sd * 0.62, -2.55, 2.0), (sd * 0.62, -0.72, 2.0)), DOWN),
+        seam('seam_door_f', line((sd * 2.0, -0.52, 0.36), (sd * 2.0, -0.52, 0.80)), (-sd, 0, 0), 0.006),
+        seam('seam_door_r', line((sd * 2.0, 0.70, 0.36), (sd * 2.0, 0.70, 0.80)), (-sd, 0, 0), 0.006),
+        seam('seam_boot_side', line((sd * 0.60, 1.62, 2.0), (sd * 0.60, 2.9, 2.0), 20), DOWN, 0.006),
+    ) if o]
+fit += [o for o in (
+    seam('seam_hood_rear', line((-0.62, -0.74, 2.0), (0.62, -0.74, 2.0)), DOWN),
+    seam('seam_hood_front', line((-0.62, -2.55, 2.0), (0.62, -2.55, 2.0), 24), DOWN, 0.006),
+    seam('seam_boot', line((-0.60, 1.62, 2.0), (0.60, 1.62, 2.0)), DOWN, 0.006),
+) if o]
 
 # ---- export ---------------------------------------------------------------------
 body.name = 'a_body'; glass.name = 'b_glass'
