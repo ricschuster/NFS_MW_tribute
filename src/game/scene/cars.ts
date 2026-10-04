@@ -4,6 +4,7 @@ import { carParts, CAR_PAINT } from './carshape';
 import type { CarBody } from '../cars';
 import type { CopKind } from '../constants';
 import { lampGlowTexture } from './signage';
+import { kestrelParts } from './glbcar';
 
 /**
  * What each police unit is drawn as (#584). Drawing only, and kept here rather
@@ -53,6 +54,14 @@ const BODY_L = CAR_WIDTH_WORLD * 1.9;
  */
 export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): THREE.Group {
   const car = new THREE.Group();
+  // An authored body (`?look=models`, glbcar.ts), once it has loaded: it brings
+  // its own wheels, glass and lamps, so none of the procedural fittings below.
+  const authored = style === 'fastback' && !cop ? kestrelParts() : null;
+  if (authored) {
+    (authored[0].material as THREE.MeshStandardMaterial).color.set(color);
+    for (const part of authored) car.add(part);
+    return addGlows(car);
+  }
   const parts = carParts(BODY_W, CAR_ASPECT, style);
   // The lights sit on the body this is, not the coupe's (#434).
   const bodyH = parts.height;
@@ -121,6 +130,11 @@ export function makeCar(color: string, cop = false, style: CarBody = 'coupe'): T
     car.add(strip);
   }
 
+  return addGlows(car);
+}
+
+/** The contact shadow and the headlight beam, which any body wears. */
+function addGlows(car: THREE.Group): THREE.Group {
   // Contact shadow (#580, behind `?look=pbr` with the car paint): the sun's
   // shadow map does not reach the dark crease under a car, which is what stops
   // it floating. A black quad on the road under it, made of the lamp glow's

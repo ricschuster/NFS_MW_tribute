@@ -13,7 +13,7 @@
  *
  * Read by the renderer only. Nothing in the sim or `city/` may look at this.
  */
-export const LOOK_SWITCHES = ['env', 'pbr', 'materials', 'trees', 'particles', 'clutter', 'buildings'] as const;
+export const LOOK_SWITCHES = ['env', 'pbr', 'materials', 'trees', 'particles', 'clutter', 'buildings', 'models'] as const;
 
 export type LookSwitch = (typeof LOOK_SWITCHES)[number];
 
@@ -22,8 +22,11 @@ export type Look = ReadonlySet<LookSwitch>;
 
 export const NO_LOOK: Look = new Set();
 
-/** What a player gets with no query string: every switch the owner has signed off. */
-export const DEFAULT_LOOK: Look = new Set(LOOK_SWITCHES);
+/**
+ * What a player gets with no query string: every switch the owner has signed off.
+ * `models` (authored car bodies, #584) has not been.
+ */
+export const DEFAULT_LOOK: Look = new Set(LOOK_SWITCHES.filter((name) => name !== 'models'));
 
 /**
  * No `?look` is the default look (all of it, signed off 2026-10-03);

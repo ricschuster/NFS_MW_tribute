@@ -194,6 +194,43 @@ So one car is about half a day, nearly all of it step 1. Per car that is not
 cheap, so it only makes sense for a hero car (the Kestrel). Risk: arch
 openings left by deleted wheels look wrong if the fitted radius is off.
 
+### Run 5: route D spike, the Kestrel authored in Blender by script
+
+Owner chose this over the wheel fix (2026-10-03), without the FLUX reference.
+`tools/cars/kestrel.py` (`blender -b -P tools/cars/kestrel.py -- OUT.glb PREVIEW_PREFIX`),
+nothing generated, nothing third-party, so no credits row. About two hours,
+three renders to get right.
+
+- **How it is built:** a lofted shell (90 cross-sections of 22 points, curves
+  through monotone cubics for the roofline, belt line and plan), shoulder and
+  sill creases, subdivision level 2, wheel arches cut by exact boolean.
+  Window faces are tagged on the lofted grid before smoothing, so their edges
+  are straight and they lift off the shell as a separate `b_glass` mesh. Lamps,
+  mirrors, grille and exhausts are placed by ray-casting onto the finished shell.
+  Four wheels (tyre, five-spoke rim, disc, caliper) are separate nodes about
+  their hubs, nose +z, front pair at +z, as `poseWheels` wants.
+- **Size:** 37.6k triangles (the 15-30k budget wants a decimate or a lower
+  subdivision level), 1.7 MB .glb, `public/models/kestrel.glb`.
+- **Loader:** `scene/glbcar.ts`, behind `?look=models` (off by default; the
+  default look is every *other* switch). Merges each wheel back into one mesh,
+  keeps the paint primitive as `children[0]`, clones the paint material per car.
+  Two bugs found by looking: the loader splits multi-material nodes into a mesh
+  per material (so the wheels and the body's first child were wrong), and the
+  paint material was shared, so parked cars of the same body repainted the
+  player's car dark. Tests: 825 pass, typecheck clean.
+- **Pictures** (`~/Pictures/crosstown-compare/blender/`): `v1`/`v2_sheet.png`
+  (Blender), `game_procedural.png`, `game_v3.png`, and
+  `compare_procedural_blender_trellis.png` (procedural | Blender | TRELLIS).
+- **Verdict so far:** against the low-poly Kestrel it is a clear but modest step:
+  rounder body, real glass, real wheels that spin and steer. Against the TRELLIS
+  car it is plainer and softer: no shut lines, no lamp internals, no rim detail
+  at this distance. It reads as a competent generic coupe, which is what a
+  script and a day get. Not yet judged in motion by the owner.
+- **Open:** shoulder crease is too soft to show; nose and tail are blobby; paint
+  looks pink under the game's sky (roughness/coat to tune against `?look=pbr`);
+  triangle budget; headlight glow check at night; other bodies would need their
+  own parameter sets (the script is one car, not yet a kit).
+
 ### Where that leaves the pilot
 
 The only route that gave a better-looking car is a detailed concept image in
