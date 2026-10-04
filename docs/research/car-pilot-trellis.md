@@ -255,8 +255,38 @@ three renders to get right.
   oncoming parked car. Not done: brake lights (the sim's brake is not read by
   the view), and the cityshot run fails about every other launch for reasons
   not looked into.
-- **Open:** the shoulder is still soft at chase distance; nose and tail are
-  still plain; headlight glow check at night; other bodies would need their
+- **Nose and tail (#620, tier 1 item 1):** grille bars ray-cast onto the nose,
+  corner intakes, a splitter blade, a hood bulge with two vent slits, a recessed
+  blank plate, a diffuser with fins and round exhaust tips. Lessons: a part that
+  must take the car's colour has to be **joined into `a_body`** (the loader
+  repaints only that mesh, and a separate painted part rendered white in the
+  game while Blender looked fine); the loft's flat end caps are one polygon, so
+  the lower nose and tail showed paint between the dark strips until those faces
+  were tagged dark; the bulge goes on the flat of the hood, not near the nose.
+  31.2k triangles. The triangle budget is deliberately not a constraint yet.
+- **Paint (#620, tier 1 item 2), decided with the owner:** metallic with subtle
+  flake. The in-game paint is a three.js material built in `scene/glbcar.ts`
+  (Blender's paint never reaches the game), and the model has no UVs, so every
+  effect is a baked vertex colour or shader maths on position and normal. Order:
+  (a) hard clearcoat, ~35% metallic base, flake under the coat only; (b) baked
+  ambient occlusion and edge highlights replacing `shade()`; (c) physical dirt,
+  moderate so night still reads; (d) wear from the sim's damage value, read in
+  the view only; (e) reflective glass and black trim. Each is checked in the
+  game on a dark, a white and a red car. Player's car and parked cars first;
+  traffic stays satin until the owner says otherwise (traffic never draws the
+  Kestrel anyway: `TRAFFIC_BODIES` has no fastback).
+  **2a done:** `lacquer()` in `glbcar.ts`, a physical material with a clear coat
+  over a satin base and flake hashed from object-space position (random tilt of
+  the base normal only, so it reads as under the coat, plus a small brightness
+  change), faded where a cell is under a pixel so chase distance is clean. One
+  shader program for all cars. Lessons: a strongly metallic base with a hard
+  coat **washes red and white out to pink and glare** (it mirrors the pale
+  sky), so the base is only 12% metallic with a 0.5 coat and the depth comes
+  from the coat; flake cells of 1.5 cm looked like a mosaic up close, 0.7 cm at
+  a gentle tilt looks like grain. Checked on red, white, black and blue with a
+  throwaway Playwright script (respray through `crosstown.world.resprays`, and
+  the director's `update` wrapped to pull the camera in); not committed.
+- **Open:** the shoulder is still soft at chase distance; headlight glow check at night; other bodies would need their
   own parameter sets (the script is one car, not yet a kit).
 
 ### Where that leaves the pilot
